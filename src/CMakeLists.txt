@@ -1,0 +1,90 @@
+# MIT License
+#
+# Copyright (c) 2024 Andrew Smith
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+# to find the version of cmake do
+# $ cmake --version
+cmake_minimum_required(VERSION 3.30)
+
+add_library(server OBJECT
+  server.hpp
+  server.cpp)
+
+add_library(connection OBJECT
+  connection.hpp
+  connection.cpp)
+
+add_library(request_handler OBJECT
+  request_handler.hpp
+  request_handler.cpp)
+
+add_library(methylome OBJECT
+  methylome.hpp
+  methylome.cpp)
+
+add_library(methylome_set OBJECT
+  methylome_set.hpp
+  methylome_set.cpp)
+
+add_library(cpg_index OBJECT
+  cpg_index.hpp
+  cpg_index.cpp)
+
+add_library(genomic_interval OBJECT
+  genomic_interval.hpp
+  genomic_interval.cpp)
+
+add_library(response OBJECT
+  response.hpp
+  response.cpp)
+
+add_library(request OBJECT
+  request.hpp
+  request.cpp)
+
+add_executable(mc16-server)
+target_sources(mc16-server PRIVATE mc16_server.cpp)
+target_link_libraries(
+  mc16-server
+  methylome
+  methylome_set
+  server
+  connection
+  request_handler
+  request
+  response
+  ZLIB::ZLIB
+  Boost::program_options
+)
+
+add_executable(mc16-client)
+target_sources(mc16-client PRIVATE mc16_client.cpp)
+target_link_libraries(
+  mc16-client
+  genomic_interval
+  cpg_index
+  methylome
+  request
+  response
+  ZLIB::ZLIB
+  Boost::program_options
+)
+install(TARGETS mc16-client mc16-server DESTINATION bin)
