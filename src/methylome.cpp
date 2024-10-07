@@ -41,6 +41,7 @@ using std::uint16_t;
 using std::uint32_t;
 using std::uint8_t;
 using std::vector;
+using std::error_code;
 
 namespace rg = std::ranges;
 namespace vs = std::views;
@@ -116,7 +117,10 @@ decompress(vector<uint8_t> &in, T &out) -> int {
 
 [[nodiscard]] auto
 methylome::read(const string &filename, const uint32_t n_cpgs) -> int {
-  const auto filesize = std::filesystem::file_size(filename);
+  error_code errc;
+  const auto filesize = std::filesystem::file_size(filename, errc);
+  if (errc)
+    return -1;
   std::ifstream in(filename);
   if (!in) return -1;
   uint64_t flags{};
