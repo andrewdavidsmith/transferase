@@ -27,7 +27,6 @@
 #include "methylome.hpp"
 #include "utilities.hpp"
 
-#include <filesystem>
 #include <format>
 #include <print>
 #include <sstream>
@@ -38,8 +37,6 @@
 #include <regex>
 #include <tuple>
 #include <chrono>
-
-namespace fs = std::filesystem;
 
 using std::format;
 using std::println;
