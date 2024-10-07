@@ -24,7 +24,7 @@
 #ifndef SRC_RESPONSE_HPP_
 #define SRC_RESPONSE_HPP_
 
-#include "methylome.hpp"
+#include "methylome.hpp"  // for counts_res
 #include "status_code.hpp"
 
 #include <array>
@@ -33,10 +33,10 @@
 #include <vector>
 
 struct response {
-  static constexpr std::uint32_t buf_size = 8;
+  static constexpr std::uint32_t buf_size = 8;  // ADS: possibly not needed
 
   // buffers do not own underlying memory; keep the data alive!
-  std::array<char, buf_size> buf{};
+  std::array<char, buf_size> buf{};  // ADS: possibly not needed
   status_code::value status{};
   std::uint32_t methylome_size{};
   std::vector<counts_res> counts;  // counts_res from methylome.hpp
