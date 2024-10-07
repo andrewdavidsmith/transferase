@@ -25,6 +25,7 @@
 #include "cpg_index.hpp"
 #include "genomic_interval.hpp"
 #include "methylome.hpp"
+#include "utilities.hpp"
 
 #include <boost/program_options.hpp>
 
@@ -55,14 +56,7 @@ namespace vs = std::views;
 namespace po = boost::program_options;
 using po::value;
 
-namespace chrono = std::chrono;
-using hr_clock = chrono::high_resolution_clock;
-
-// ADS: multiply defined
-[[nodiscard]] static inline auto
-duration(const auto start, const auto stop) {
-  return chrono::duration_cast<chrono::duration<double>>(stop - start).count();
-}
+using hr_clock = std::chrono::high_resolution_clock;
 
 auto
 lookup_main(int argc, char *argv[]) -> int {

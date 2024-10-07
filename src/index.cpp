@@ -23,6 +23,7 @@
 
 #include "index.hpp"
 #include "cpg_index.hpp"
+#include "utilities.hpp"
 
 #include <boost/program_options.hpp>
 
@@ -40,12 +41,6 @@ using hr_clock = chrono::high_resolution_clock;
 
 namespace po = boost::program_options;
 using po::value;
-
-// ADS TODO: multiply defined
-static inline auto
-duration(const auto start, const auto stop) {
-  return chrono::duration_cast<chrono::duration<double>>(stop - start).count();
-}
 
 auto
 index_main(int argc, char *argv[]) -> int {

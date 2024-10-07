@@ -25,6 +25,7 @@
 #include "request.hpp"
 #include "request_handler.hpp"
 #include "methylome.hpp"
+#include "utilities.hpp"
 
 #include <filesystem>
 #include <format>
@@ -47,13 +48,7 @@ using std::pair;
 using std::uint32_t;
 using std::get;
 
-namespace chrono = std::chrono;
-using hr_clock = chrono::high_resolution_clock;
-
-[[nodiscard]] static inline auto
-duration(const auto start, const auto stop) {
-  return chrono::duration_cast<chrono::duration<double>>(stop - start).count();
-}
+using hr_clock = std::chrono::high_resolution_clock;
 
 [[nodiscard]] static auto
 is_valid_accession(const string &accession) -> bool {
