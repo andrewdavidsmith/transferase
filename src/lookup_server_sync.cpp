@@ -21,7 +21,7 @@
  * SOFTWARE.
  */
 
-#include "server_sync.hpp"
+#include "lookup_server_sync.hpp"
 
 #include "cpg_index.hpp"
 #include "methylome.hpp"

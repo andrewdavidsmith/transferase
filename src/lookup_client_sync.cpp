@@ -21,7 +21,7 @@
  * SOFTWARE.
  */
 
-#include "client_sync.hpp"
+#include "lookup_client_sync.hpp"
 
 #include "cpg_index.hpp"
 #include "genomic_interval.hpp"
