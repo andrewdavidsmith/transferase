@@ -21,6 +21,8 @@
  * SOFTWARE.
  */
 
+#include "lookup_server.hpp"
+
 #include "methylome_set.hpp"
 #include "server.hpp"
 
@@ -40,12 +42,14 @@ using std::uint32_t;
 namespace po = boost::program_options;
 
 auto
-main(int argc, char *argv[]) -> int {
+lookup_server_main(int argc, char *argv[]) -> int {
+  static constexpr auto default_n_threads{4};
+
   static const auto description = "server";
 
   bool verbose{};
 
-  uint32_t n_threads{4};
+  uint32_t n_threads{};
   string port{};
   string hostname{};
   string methylome_dir;
@@ -58,7 +62,8 @@ main(int argc, char *argv[]) -> int {
     ("port,p", po::value(&port)->required(), "port")
     ("hostname,H", po::value(&hostname)->required(), "server hostname")
     ("methylomes,m", po::value(&methylome_dir)->required(), "methylome dir")
-    ("threads,t", po::value(&n_threads), "number of threads")
+    ("threads,t", po::value(&n_threads)->default_value(default_n_threads),
+     "number of threads")
     ("live,l", po::value(&max_live_methylomes)->default_value(
      methylome_set::default_max_live_methylomes), "max live methylomes")
     ("verbose,v", po::bool_switch(&verbose), "print more run info")
