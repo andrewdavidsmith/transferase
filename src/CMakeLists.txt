@@ -48,6 +48,14 @@ add_library(lookup_server_sync OBJECT
   lookup_server_sync.hpp
   lookup_server_sync.cpp)
 
+add_library(lookup_client OBJECT
+  lookup_client.hpp
+  lookup_client.cpp)
+
+add_library(lookup_server OBJECT
+  lookup_server.hpp
+  lookup_server.cpp)
+
 add_library(server OBJECT
   server.hpp
   server.cpp)
@@ -84,10 +92,20 @@ add_library(request OBJECT
   request.hpp
   request.cpp)
 
-add_executable(mc16-server)
-target_sources(mc16-server PRIVATE mc16_server.cpp)
+add_executable(mc16)
+target_sources(mc16 PRIVATE mc16.cpp)
 target_link_libraries(
-  mc16-server
+  mc16
+  lookup
+  index
+  compress
+  lookup_client
+  lookup_server
+  lookup_client_sync
+  lookup_server_sync
+  bins
+  genomic_interval
+  cpg_index
   methylome
   methylome_set
   server
@@ -98,34 +116,4 @@ target_link_libraries(
   ZLIB::ZLIB
   Boost::program_options
 )
-
-add_executable(mc16-client)
-target_sources(mc16-client PRIVATE mc16_client.cpp)
-target_link_libraries(
-  mc16-client
-  genomic_interval
-  cpg_index
-  methylome
-  request
-  response
-  ZLIB::ZLIB
-  Boost::program_options
-)
-
-add_executable(mc16)
-target_sources(mc16 PRIVATE mc16.cpp)
-target_link_libraries(
-  mc16
-  lookup
-  index
-  compress
-  lookup_client_sync
-  lookup_server_sync
-  bins
-  genomic_interval
-  cpg_index
-  methylome
-  ZLIB::ZLIB
-  Boost::program_options
-)
-install(TARGETS mc16 mc16-client mc16-server DESTINATION bin)
+install(TARGETS mc16 DESTINATION bin)
