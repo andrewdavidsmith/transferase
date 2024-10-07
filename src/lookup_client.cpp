@@ -33,6 +33,7 @@
 #include "request.hpp"
 #include "response.hpp"
 #include "status_code.hpp"
+#include "utilities.hpp"
 
 #include <array>
 #include <chrono>
@@ -57,19 +58,13 @@ using std::vector;
 
 namespace rg = std::ranges;
 namespace vs = std::views;
-namespace chrono = std::chrono;
-using hr_clock = chrono::high_resolution_clock;
+using hr_clock = std::chrono::high_resolution_clock;
 
 namespace asio = boost::asio;
 namespace ph = asio::placeholders;
 namespace bs = boost::system;
 namespace po = boost::program_options;
 using tcp = asio::ip::tcp;
-
-// ADS TODO: this is defined in multiple places
-[[nodiscard]] static inline auto duration(const auto start, const auto stop) {
-  return chrono::duration_cast<chrono::duration<double>>(stop - start).count();
-}
 
 struct mc16_client {
   mc16_client(asio::io_context &io_context, const string &server,
@@ -166,43 +161,6 @@ struct mc16_client {
   bool verbose{};
 };
 
-static auto write_intervals(std::ostream &out, const cpg_index &index,
-                            const vector<genomic_interval> &gis,
-                            const vector<counts_res> &results) -> void {
-  static constexpr auto buf_size{512};
-
-  array<char, buf_size> buf{};
-  const auto buf_end = buf.data() + buf_size;
-
-  using gis_res = std::pair<const genomic_interval &, const counts_res &>;
-  const auto same_chrom = [](const gis_res &a, const gis_res &b) {
-    return a.first.ch_id == b.first.ch_id;
-  };
-
-  for (const auto &chunk : vs::zip(gis, results) | vs::chunk_by(same_chrom)) {
-    const auto ch_id = get<0>(chunk.front()).ch_id;
-    const string chrom{index.chrom_order[ch_id]};
-    rg::copy(chrom, buf.data());
-    buf[size(chrom)] = '\t';
-    for (const auto &[gi, res] : chunk) {
-      std::to_chars_result tcr{buf.data() + size(chrom) + 1, std::errc()};
-#pragma GCC diagnostic push
-#pragma GCC diagnostic error "-Wstringop-overflow=0"
-      tcr = std::to_chars(tcr.ptr, buf_end, gi.start);
-      *tcr.ptr++ = '\t';
-      tcr = std::to_chars(tcr.ptr, buf_end, gi.stop);
-      *tcr.ptr++ = '\t';
-      tcr = std::to_chars(tcr.ptr, buf_end, res.n_meth);
-      *tcr.ptr++ = '\t';
-      tcr = std::to_chars(tcr.ptr, buf_end, res.n_unmeth);
-      *tcr.ptr++ = '\t';
-      tcr = std::to_chars(tcr.ptr, buf_end, res.n_covered);
-      *tcr.ptr++ = '\n';
-#pragma GCC diagnostic push
-      out.write(buf.data(), std::distance(buf.data(), tcr.ptr));
-    }
-  }
-}
 
 auto lookup_client_main(int argc, char *argv[]) -> int {
   static constexpr auto default_port = "5000";

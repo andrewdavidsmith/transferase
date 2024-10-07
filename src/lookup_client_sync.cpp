@@ -26,6 +26,7 @@
 #include "cpg_index.hpp"
 #include "genomic_interval.hpp"
 #include "methylome.hpp"
+#include "utilities.hpp"
 
 #include <boost/asio.hpp>
 #include <boost/program_options.hpp>
@@ -37,12 +38,14 @@
 #include <print>
 #include <ranges>
 #include <string>
+#include <system_error>
 #include <tuple>
 #include <utility>
 #include <vector>
 
 using std::array;
 using std::cerr;
+using std::error_code;
 using std::make_pair;
 using std::ofstream;
 using std::pair;
@@ -66,19 +69,13 @@ namespace vs = std::views;
 using hr_clock = chrono::high_resolution_clock;
 using tcp = ip::tcp;
 
-// ADS TODO: multiply defined
-[[nodiscard]] static inline auto duration(const auto start, const auto stop) {
-  return chrono::duration_cast<chrono::duration<double>>(stop - start).count();
-}
-
 [[nodiscard]] static auto
-write_accession(tcp::socket &socket,
-                const string &accession) -> bs::error_code {
+write_accession(tcp::socket &socket, const string &accession) -> error_code {
   // ADS: change to using boost system errors
   constexpr auto buf_size = 64;
   array<char, buf_size> buf{};
   if (size(accession) > buf_size)
-    return bs::errc::make_error_code(bs::errc::value_too_large);
+    return std::make_error_code(std::errc::value_too_large);
   rg::copy(accession, buf.data());
   bs::error_code error;
   // ADS: using transfer_exactly to match the read_accession function
@@ -88,8 +85,8 @@ write_accession(tcp::socket &socket,
 }
 
 template <typename T>
-[[nodiscard]] static inline auto write_value(tcp::socket &socket,
-                                             T value) -> bs::error_code {
+[[nodiscard]] static inline auto
+write_value(tcp::socket &socket, T value) -> error_code {
   bs::error_code error;
   [[maybe_unused]]
   const auto n = asio::write(socket, asio::buffer(&value, sizeof(T)),
@@ -100,7 +97,7 @@ template <typename T>
 
 template <typename T>
 [[nodiscard]] static inline auto
-read_value(tcp::socket &socket) -> tuple<T, bs::error_code> {
+read_value(tcp::socket &socket) -> tuple<T, error_code> {
   bs::error_code error;
   T value{};
   [[maybe_unused]]
@@ -110,9 +107,9 @@ read_value(tcp::socket &socket) -> tuple<T, bs::error_code> {
 }
 
 template <class T>
-[[nodiscard]] static auto read_vector(tcp::socket &socket,
-                                      const uint32_t n_items,
-                                      vector<T> &data) -> bs::error_code {
+[[nodiscard]] static auto
+read_vector(tcp::socket &socket, const uint32_t n_items,
+            vector<T> &data) -> error_code {
   assert(size(data) >= static_cast<uint64_t>(n_items));
 
   constexpr auto buf_size = 256 * 1024;
@@ -144,8 +141,8 @@ template <class T>
   return error;
 }
 
-[[nodiscard]] static auto write_vector(tcp::socket &socket,
-                                       const auto &data) -> bs::error_code {
+[[nodiscard]] static auto
+write_vector(tcp::socket &socket, const auto &data) -> error_code {
   bs::error_code error;
   asio::write(socket, asio::buffer(data), asio::transfer_all(), error);
   return error;
@@ -209,46 +206,6 @@ struct remote_methylome {
   tcp::socket socket;
   bool verbose{};
 };
-
-// ADS TODO: multiply defined
-static auto
-write_intervals(std::ostream &out, const cpg_index &index,
-                const vector<genomic_interval> &gis,
-                const vector<counts_res> &results) -> void {
-  static constexpr auto buf_size{512};
-
-  array<char, buf_size> buf{};
-  const auto buf_end = buf.data() + buf_size;
-
-  using gis_res = pair<const genomic_interval &, const counts_res &>;
-  const auto same_chrom = [](const gis_res &a, const gis_res &b) {
-    return a.first.ch_id == b.first.ch_id;
-  };
-
-  for (const auto &chunk : vs::zip(gis, results) | vs::chunk_by(same_chrom)) {
-    const auto ch_id = get<0>(chunk.front()).ch_id;
-    const string chrom{index.chrom_order[ch_id]};
-    rg::copy(chrom, buf.data());
-    buf[size(chrom)] = '\t';
-    for (const auto &[gi, res] : chunk) {
-      std::to_chars_result tcr{buf.data() + size(chrom) + 1, std::errc()};
-#pragma GCC diagnostic push
-#pragma GCC diagnostic error "-Wstringop-overflow=0"
-      tcr = std::to_chars(tcr.ptr, buf_end, gi.start);
-      *tcr.ptr++ = '\t';
-      tcr = std::to_chars(tcr.ptr, buf_end, gi.stop);
-      *tcr.ptr++ = '\t';
-      tcr = std::to_chars(tcr.ptr, buf_end, res.n_meth);
-      *tcr.ptr++ = '\t';
-      tcr = std::to_chars(tcr.ptr, buf_end, res.n_unmeth);
-      *tcr.ptr++ = '\t';
-      tcr = std::to_chars(tcr.ptr, buf_end, res.n_covered);
-      *tcr.ptr++ = '\n';
-#pragma GCC diagnostic push
-      out.write(buf.data(), std::distance(buf.data(), tcr.ptr));
-    }
-  }
-}
 
 auto
 lookup_client_sync_main(int argc, char *argv[]) -> int {
