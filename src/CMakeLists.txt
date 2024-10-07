@@ -24,6 +24,30 @@
 # $ cmake --version
 cmake_minimum_required(VERSION 3.30)
 
+add_library(lookup OBJECT
+  lookup.hpp
+  lookup.cpp)
+
+add_library(bins OBJECT
+  bins.hpp
+  bins.cpp)
+
+add_library(compress OBJECT
+  compress.hpp
+  compress.cpp)
+
+add_library(index OBJECT
+  index.hpp
+  index.cpp)
+
+add_library(lookup_client_sync OBJECT
+  lookup_client_sync.hpp
+  lookup_client_sync.cpp)
+
+add_library(lookup_server_sync OBJECT
+  lookup_server_sync.hpp
+  lookup_server_sync.cpp)
+
 add_library(server OBJECT
   server.hpp
   server.cpp)
@@ -87,4 +111,21 @@ target_link_libraries(
   ZLIB::ZLIB
   Boost::program_options
 )
-install(TARGETS mc16-client mc16-server DESTINATION bin)
+
+add_executable(mc16)
+target_sources(mc16 PRIVATE mc16.cpp)
+target_link_libraries(
+  mc16
+  lookup
+  index
+  compress
+  lookup_client_sync
+  lookup_server_sync
+  bins
+  genomic_interval
+  cpg_index
+  methylome
+  ZLIB::ZLIB
+  Boost::program_options
+)
+install(TARGETS mc16 mc16-client mc16-server DESTINATION bin)
