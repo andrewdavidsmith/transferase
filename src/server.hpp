@@ -24,36 +24,31 @@
 #ifndef SRC_SERVER_HPP_
 #define SRC_SERVER_HPP_
 
-#include <boost/asio.hpp>
-#include <string>
-#include <cstdint>
-
-#include "connection_manager.hpp"
 #include "request_handler.hpp"
 
-// ADS TODO: need a connection reference
+#include <boost/asio.hpp>
+#include <cstdint>
+#include <string>
+
 struct server {
-  server(const server&) = delete;
-  server& operator=(const server&) = delete;
+  server(const server &) = delete;
+  server &operator=(const server &) = delete;
 
   explicit server(const std::string &address, const std::string &port,
                   const std::uint32_t n_threads,
                   const std::string &methylome_dir,
-                  const std::uint32_t max_live_methylomes,
-                  bool verbose);
+                  const std::uint32_t max_live_methylomes, bool verbose);
 
   auto run() -> void;
   auto do_accept() -> void;      // do async accept operation
   auto do_await_stop() -> void;  // wait for request to stop server
 
-  std::atomic<int> transaction_id{};
   bool verbose{};
-  std::uint32_t n_threads{};                // n threads to call io_context::run()
-  boost::asio::io_context ioc;              // perform async ops
-  boost::asio::signal_set signals;          // registers termination signals
+  std::uint32_t n_threads{};
+  boost::asio::io_context ioc;      // performs async ops
+  boost::asio::signal_set signals;  // registers termination signals
   boost::asio::ip::tcp::acceptor acceptor;  // listens for connections
-  connection_manager manager;               // owns live connections
-  request_handler handler;                  // handles incoming requests
+  request_handler handler;  // handles incoming requests
 };
 
 #endif  // SRC_SERVER_HPP_

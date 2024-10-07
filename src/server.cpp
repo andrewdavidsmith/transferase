@@ -22,19 +22,22 @@
  */
 
 #include "server.hpp"
+#include "connection.hpp"
 
 #include <boost/asio.hpp>
 #include <boost/lexical_cast.hpp>
 
+#include <cstdint>
 #include <print>
 #include <string>
-#include <utility>
 #include <thread>
+#include <utility>
 #include <vector>
 
+using std::jthread;
 using std::println;
 using std::string;
-using std::jthread;
+using std::uint32_t;
 using std::vector;
 
 namespace asio = boost::asio;
@@ -43,15 +46,13 @@ namespace ip = asio::ip;
 
 using tcp = ip::tcp;
 
-server::server(const string &address, const string &port, const uint32_t n_threads,
-               const string &methylome_dir, const uint32_t max_live_methylomes,
-               bool verbose)
-    : verbose{verbose},
-      n_threads{n_threads},
-      // ioc(1),  // using default constructor
-      signals(ioc),
-      acceptor(ioc),
-      handler(methylome_dir, max_live_methylomes, verbose) {
+server::server(const string &address, const string &port,
+               const uint32_t n_threads, const string &methylome_dir,
+               const uint32_t max_live_methylomes, bool verbose) :
+  verbose{verbose}, n_threads{n_threads}, signals(ioc), acceptor(ioc),
+  handler(methylome_dir, max_live_methylomes, verbose) {
+  // io_context ios uses default constructor
+
   signals.add(SIGINT);
   signals.add(SIGTERM);
 #if defined(SIGQUIT)
@@ -60,14 +61,18 @@ server::server(const string &address, const string &port, const uint32_t n_threa
 
   do_await_stop();  // start waiting for signals
 
-  // ADS TODO: summarize the empty methylome set?
-  // if (verbose)
-  //   println("Endpoint: {}", boost::lexical_cast<string>(endpoint));
+  /* ADS TODO: summarize the initial empty methylome set? */
 
-  // open acceptor with option to reuse the address (SO_REUSEADDR)
+  // if (verbose)
+  //   println("Methylome set: {}", handler.something());
+
   tcp::resolver resolver(ioc);
   tcp::endpoint endpoint = *resolver.resolve(address, port).begin();
-  if (verbose) println("Endpoint: {}", boost::lexical_cast<string>(endpoint));
+
+  if (verbose)
+    println("Endpoint: {}", boost::lexical_cast<string>(endpoint));
+
+  // open acceptor with option to reuse the address (SO_REUSEADDR)
   acceptor.open(endpoint.protocol());
   acceptor.set_option(tcp::acceptor::reuse_address(true));
   acceptor.bind(endpoint);
@@ -76,43 +81,41 @@ server::server(const string &address, const string &port, const uint32_t n_threa
   do_accept();
 }
 
-auto
-server::run() -> void {
-  ioc.run();  // blocks until all async ops have finnished
-
-  // create a pool of threads to run the io_context
+auto server::run() -> void {
+  /* From the docs (v1.86.0): "Multiple threads may call the run()
+     function to set up a pool of threads from which the io_context
+     may execute handlers. All threads that are waiting in the pool
+     are equivalent and the io_context may choose any one of them to
+     invoke a handler."
+  */
   vector<jthread> threads;
-  for (size_t i = 0; i < n_threads; ++i)
-    threads.emplace_back([this]{ ioc.run(); });
-
-  // // wait for all threads in the pool to exit
-  // for (size_t i = 0; i < size(threads); ++i)
-  //   threads[i].join();
+  for (uint32_t i = 0u; i < n_threads; ++i)
+    threads.emplace_back([this] { ioc.run(); });
 }
 
-auto
-server::do_accept() -> void {
-  // pass accepted connection to connection manager
-  acceptor.async_accept([this](const bs::error_code ec, tcp::socket socket) {
-    // quit if server already stopped by signal
-    if (!acceptor.is_open()) return;
-    if (!ec) {
-      manager.start(std::make_shared<connection>(std::move(socket), manager,
-                                                 handler, verbose));
-    }
-    do_accept();  // listen for more connections
-  });
+auto server::do_accept() -> void {
+  acceptor.async_accept(
+    asio::make_strand(ioc),  // ADS: make a strand with the io_context
+    [this](const bs::error_code ec, tcp::socket socket) {
+      // quit if server already stopped by signal
+      if (!acceptor.is_open())
+        return;
+      if (!ec) {
+        // ADS: accepted socket moved into connection which is started
+        std::make_shared<connection>(std::move(socket), handler, verbose)
+          ->start();
+      }
+      do_accept();  // keep listening for more connections
+    });
 }
 
-auto
-server::do_await_stop() -> void {
+auto server::do_await_stop() -> void {
   // capture brings 'this' into search for names
   signals.async_wait([this](const bs::error_code ec, const int signo) {
     if (verbose)
       println("received termination signal {} ({})", signo, ec.message());
     // stop server by cancelling all outstanding async ops; when all
     // have finished, the call to io_context::run() will finish
-    acceptor.close();
-    manager.stop_all();
+    ioc.stop();
   });
 }
