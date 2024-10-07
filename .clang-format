@@ -23,16 +23,16 @@
 BasedOnStyle: LLVM
 ColumnLimit: 80
 IndentWidth: 2
-ContinuationIndentWidth: 2
-ConstructorInitializerIndentWidth: 2
-BreakBeforeBraces: Custom
-BraceWrapping:
-  BeforeElse: true
-  BeforeCatch: true
-AlwaysBreakAfterReturnType: All
-SpacesBeforeTrailingComments: 2
-BreakAfterReturnType: Automatic
-BreakConstructorInitializers: AfterColon
 AlignTrailingComments:
   Kind: Leave
   OverEmptyLines: 1
+AlwaysBreakAfterReturnType: All
+ContinuationIndentWidth: 2
+ConstructorInitializerIndentWidth: 2
+BraceWrapping:
+  BeforeElse: true
+  BeforeCatch: true
+BreakAfterReturnType: TopLevel
+BreakBeforeBraces: Custom
+BreakConstructorInitializers: AfterColon
+SpacesBeforeTrailingComments: 2
