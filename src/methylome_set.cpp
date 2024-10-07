@@ -36,6 +36,7 @@
 #include <print>
 #include <ranges>
 #include <algorithm>
+#include <mutex>
 
 using std::string;
 using std::vector;
@@ -43,6 +44,8 @@ using std::size_t;
 using std::tuple;
 using std::unordered_map;
 using std::println;
+using std::make_shared;
+using std::mutex;
 
 namespace rg = std::ranges;
 namespace fs = std::filesystem;
@@ -56,7 +59,7 @@ is_valid_accession(const string &accession) -> bool {
 
 [[nodiscard]] auto
 methylome_set::get_methylome(const string &accession)
-  -> tuple<const methylome *, int> {
+  -> tuple<std::shared_ptr<methylome>, int> {
   if (!is_valid_accession(accession)) {
     if (verbose)
       println(std::cout, "not valid accession: {}", accession);
@@ -65,7 +68,9 @@ methylome_set::get_methylome(const string &accession)
   if (verbose)
     println(std::cout, "valid accession: {}", accession);
 
-  unordered_map<string, methylome>::const_iterator meth{};
+  unordered_map<string, std::shared_ptr<methylome>>::const_iterator meth{};
+
+  std::scoped_lock lock{mtx};
 
   // ADS TODO: add error codes for return values
 
@@ -99,15 +104,17 @@ methylome_set::get_methylome(const string &accession)
                 filename, ec);
       return {nullptr, -1};
     }
+
     std::tie(meth, std::ignore) =
-      accession_to_methylome.emplace(accession, std::move(m));
+      accession_to_methylome.emplace(accession,
+                                     make_shared<methylome>(std::move(m)));
   }
   else
     meth = acc_meth_itr;  // already loaded
 
-  n_total_cpgs = size(meth->second.cpgs);
+  n_total_cpgs = size(meth->second->cpgs);
 
-  return {&meth->second, 0};
+  return {meth->second, 0};
 }
 
 [[nodiscard]] auto

@@ -26,63 +26,74 @@
 
 #include "methylome.hpp"
 
-#include <tuple>
-#include <string>
-#include <vector>
-#include <cstdlib>
 #include <cstdint>
+#include <cstdlib>
+#include <memory>
+#include <string>
+#include <tuple>
+#include <vector>
+#include <mutex>
 
 template <typename T> struct ring_buffer {
-  // queue ops and iterable
-  ring_buffer(const std::size_t max_size) :
-    max_size{max_size}, counter{0}, buf{max_size} {}
+  // support queue ops and be iterable
+  ring_buffer(const std::size_t capacity) :
+    capacity{capacity}, counter{0}, buf{capacity} {}
   auto push(T t) -> T {
-    std::swap(buf[counter++ % max_size], t);
+    std::swap(buf[counter++ % capacity], t);
     return t;
   }
-  auto size() const { return counter < max_size ? counter : max_size; }
-  auto front() const {
-    return buf[counter < max_size ? 0 : (counter + 1) % max_size];
+  [[nodiscard]] auto size() const {
+    return counter < capacity ? counter : capacity;
+  }
+  [[nodiscard]] auto front() const {
+    return buf[counter < capacity ? 0 : (counter + 1) % capacity];
+  }
+  [[nodiscard]] auto begin() { return std::begin(buf); }
+  [[nodiscard]] auto begin() const { return std::cbegin(buf); }
+  [[nodiscard]] auto end() {
+    return std::begin(buf) + std::min(counter, capacity);
+  }
+  [[nodiscard]] auto end() const {
+    return std::cbegin(buf) + std::min(counter, capacity);
   }
 
-  auto begin() { return std::begin(buf); }
-  auto begin() const { return std::cbegin(buf); }
-  auto end() { return std::begin(buf) + std::min(counter, max_size); }
-  auto end() const { return std::cbegin(buf) + std::min(counter, max_size); }
-
-  // ADS: just use capacity within vector
-  std::size_t max_size{};
+  // ADS: just use capacity inside the vector?
+  // ADS: use boost circular buffer?
+  std::size_t capacity{};
   std::size_t counter{};
   std::vector<T> buf;
 };
 
 struct methylome_set {
-  methylome_set(const methylome_set&) = delete;
-  methylome_set& operator=(const methylome_set&) = delete;
+  methylome_set(const methylome_set &) = delete;
+  methylome_set &operator=(const methylome_set &) = delete;
 
   methylome_set(const bool verbose, const std::uint32_t max_live_methylomes,
-                const std::string &mc16_directory)
-      : verbose{verbose}, n_total_cpgs{},
-        max_live_methylomes{max_live_methylomes},
-        mc16_directory{mc16_directory}, accessions{max_live_methylomes} {}
+                const std::string &mc16_directory) :
+    verbose{verbose}, n_total_cpgs{}, max_live_methylomes{max_live_methylomes},
+    mc16_directory{mc16_directory}, accessions{max_live_methylomes} {}
 
-  [[nodiscard]] auto
-  get_methylome(const std::string &accession) -> std::tuple<const methylome *, int>;
+  [[nodiscard]] auto get_methylome(const std::string &accession)
+    -> std::tuple<std::shared_ptr<methylome>, int>;
 
-  [[nodiscard]] auto
-  summary() const -> std::string;
+  [[nodiscard]] auto summary() const -> std::string;
 
-  [[nodiscard]] auto
-  get_n_total_cpgs() const -> std::uint32_t {return n_total_cpgs;}
+  [[nodiscard]] auto get_n_total_cpgs() const -> std::uint32_t {
+    return n_total_cpgs;
+  }
 
   static constexpr std::uint32_t default_max_live_methylomes{128};
 
+  std::mutex mtx;
   bool verbose{};
   std::uint32_t n_total_cpgs{};
   std::uint32_t max_live_methylomes{};
   std::string mc16_directory;
+
   ring_buffer<std::string> accessions;
-  std::unordered_map<std::string, methylome> accession_to_methylome;
+
+  std::unordered_map<std::string, std::shared_ptr<methylome>>
+    accession_to_methylome;
 };
 
 #endif  // SRC_METHYLOME_SET_HPP_
