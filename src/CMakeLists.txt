@@ -24,6 +24,10 @@
 # $ cmake --version
 cmake_minimum_required(VERSION 3.30)
 
+add_library(utilities OBJECT
+  utilities.hpp
+  utilities.cpp)
+
 add_library(lookup OBJECT
   lookup.hpp
   lookup.cpp)
@@ -96,6 +100,7 @@ add_executable(mc16)
 target_sources(mc16 PRIVATE mc16.cpp)
 target_link_libraries(
   mc16
+  utilities
   lookup
   index
   compress
