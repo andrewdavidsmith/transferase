@@ -25,6 +25,7 @@
 
 #include "cpg_index.hpp"
 #include "methylome.hpp"
+#include "utilities.hpp"
 
 #include <boost/asio.hpp>
 #include <boost/program_options.hpp>
@@ -65,19 +66,14 @@ using std::vector;
 
 namespace asio = boost::asio;
 namespace bs = boost::system;
-namespace chrono = std::chrono;
 namespace fs = std::filesystem;
 namespace ip = asio::ip;
 namespace po = boost::program_options;
 namespace rg = std::ranges;
 namespace vs = std::views;
 
-using hr_clock = chrono::high_resolution_clock;
+using hr_clock = std::chrono::high_resolution_clock;
 using tcp = ip::tcp;
-
-[[nodiscard]] static inline auto duration(const auto start, const auto stop) {
-  return chrono::duration_cast<chrono::duration<double>>(stop - start).count();
-}
 
 [[nodiscard]] static auto is_valid_accession(const string &accession) -> bool {
   static constexpr auto experiment_ptrn = R"(^(D|E|S)RX\d+$)";
