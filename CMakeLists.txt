@@ -48,8 +48,6 @@ add_compile_options(-Wall -Wextra -Wpedantic -Werror -Wfatal-errors)
 
 add_subdirectory(src)
 target_include_directories(mc16 PUBLIC "${PROJECT_BINARY_DIR}")
-target_include_directories(mc16-client PUBLIC "${PROJECT_BINARY_DIR}")
-target_include_directories(mc16-server PUBLIC "${PROJECT_BINARY_DIR}")
 
 configure_file(config.h.in config.h)
 
