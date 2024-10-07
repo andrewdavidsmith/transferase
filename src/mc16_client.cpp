@@ -64,6 +64,7 @@ namespace bs = boost::system;
 namespace po = boost::program_options;
 using tcp = asio::ip::tcp;
 
+// ADS TODO: this is defined in multiple places
 [[nodiscard]] static inline auto duration(const auto start, const auto stop) {
   return chrono::duration_cast<chrono::duration<double>>(stop - start).count();
 }
@@ -134,22 +135,24 @@ struct mc16_client {
   }
 
   auto do_read_counts() -> void {
-    // ADS: this seems to belong with the response class
+    // ADS: this 'resize' seems to belong with the response class
     resp.counts.resize(req.n_intervals);
     asio::async_read(socket, asio::buffer(resp.counts),
                      asio::transfer_exactly(resp.get_counts_n_bytes()),
                      std::bind(&mc16_client::do_finish, this, ph::error));
   }
 
+  // ADS: need to move to using status codes as we probably don't
+  // really care here about the bs::error_code here
+  // auto do_finish(const status_code::value status) const -> void
   auto
-  // do_finish(const status_code::value status) const -> void {
   do_finish(const bs::error_code &err) const -> void {
-    if (!err) {  // status == status_code::ok) {
+    if (!err) {  // status == status_code::ok
       if (verbose)
-        println("Completing transaction: {}", err.message());  // status);
+        println("Completing transaction: {}", err.message());  // status
     }
     else if (verbose)
-      println("Error reading counts: {}", err.message());  // status);
+      println("Error reading counts: {}", err.message());  // status
   }
 
   tcp::resolver resolver;
