@@ -257,7 +257,7 @@ struct methylome_set {
   unordered_map<string, methylome> accession_to_methylome;
 };
 
-auto lookup_server_main(int argc, char *argv[]) -> int {
+auto lookup_server_sync_main(int argc, char *argv[]) -> int {
   static constexpr auto default_max_live_methylomes = 32;
   // static constexpr auto default_log_file = "lookup_server.log";
   static constexpr auto default_port = 5000;

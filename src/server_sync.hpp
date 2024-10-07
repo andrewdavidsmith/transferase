@@ -25,6 +25,6 @@
 #define SRC_SERVER_SYNC_HPP_
 
 auto
-server_sync_main(int argc, char *argv[]) -> int;
+lookup_server_sync_main(int argc, char *argv[]) -> int;
 
 #endif  // SRC_SERVER_SYNC_HPP_
