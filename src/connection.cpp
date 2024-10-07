@@ -22,7 +22,6 @@
  */
 
 #include "connection.hpp"
-#include "connection_manager.hpp"
 #include "request.hpp"
 #include "request_handler.hpp"
 #include "response.hpp"
@@ -42,14 +41,9 @@ namespace bs = boost::system;
 
 using tcp = asio::ip::tcp;
 
-connection::connection(tcp::socket socket, connection_manager &manager,
-                       request_handler &handler, bool verbose)
-    : socket{std::move(socket)}, manager{manager}, handler{handler},
-      verbose{verbose} {}
-
 auto
 connection::prepare_to_read_offsets() -> void {
-  req.offsets.resize(req.n_intervals);  // allocate space for the offsets
+  req.offsets.resize(req.n_intervals); // get space for offsets
   offset_remaining = req.get_offsets_n_bytes();  // init counters
   offset_byte = 0;
 }
@@ -86,10 +80,9 @@ connection::read_request() -> void {
           respond_with_error();
         }
       }
-      else if (ec != asio::error::operation_aborted) {
-        if (verbose) println("Error reading request: {}", ec.message());
-        manager.stop(shared_from_this());
-      }
+      // ADS: on error: no new asyncs start; references to this
+      // connection disappear; this connection gets destroyed when
+      // this handler returns; that destructor destroys the socket
     });
 }
 
@@ -137,11 +130,6 @@ connection::respond_with_header() -> void {
         bs::error_code ignored_ec{};  // any reason to handle this?
         // graceful connection closure
         socket.shutdown(tcp::socket::shutdown_both, ignored_ec);
-        if (ec != asio::error::operation_aborted) {
-          if (verbose)
-            println("Closing connection from manager.");
-          manager.stop(shared_from_this());
-        }
       }
     });
 }
@@ -160,11 +148,6 @@ connection::respond_with_counts() -> void {
         // graceful connection closure
         socket.shutdown(tcp::socket::shutdown_both, ignored_ec);
       }
-      if (ec != asio::error::operation_aborted) {
-        if (verbose)
-          println("Status: {}\nClosing connection from manager.", ec.message());
-        manager.stop(shared_from_this());
-      }
     });
 }
 
@@ -182,11 +165,6 @@ connection::respond_with_error() -> void {
         bs::error_code ignored_ec{};  // any reason to handle this?
         // graceful connection closure
         socket.shutdown(tcp::socket::shutdown_both, ignored_ec);
-      }
-      if (ec != asio::error::operation_aborted) {
-        if (verbose)
-          println("Status: {}\nClosing connection from manager.", ec.message());
-        manager.stop(shared_from_this());
       }
     });
 }

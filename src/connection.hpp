@@ -31,10 +31,8 @@
 
 #include <array>
 #include <cstddef>
-#include <cstdint>
 #include <memory>
 
-struct connection_manager;
 struct request_handler;
 
 struct connection : public std::enable_shared_from_this<connection> {
@@ -42,27 +40,30 @@ struct connection : public std::enable_shared_from_this<connection> {
   connection& operator=(const connection&) = delete;
 
   explicit connection(boost::asio::ip::tcp::socket socket,
-                      connection_manager& manager, request_handler& handler,
-                      bool verbose = false);
+                       request_handler &handler, bool verbose)
+  : socket{std::move(socket)},
+    handler{handler},
+    verbose{verbose} {}
 
   auto start() -> void {read_request();} // start first async op
-  auto stop() -> void {socket.close();}  // stop all async ops
 
   auto prepare_to_read_offsets() -> void;
-  auto read_request() -> void;  // read and parses request_ then some offset data
-  auto read_offsets() -> void;  // finishes reading offset data
-  auto respond_with_header() -> void;
-  auto respond_with_error() -> void;
-  auto respond_with_counts() -> void;
 
-  boost::asio::ip::tcp::socket socket;  // connection's socket
-  connection_manager &manager;  // manages this connection
-  request req;  // incoming methylome request
-  request_handler &handler;  // handles incoming requests
-  response resp;  // response to send back to client
+  auto read_request() -> void;  // read header of request
+  auto read_offsets() -> void;  // read offsets part of request
+
+  auto respond_with_header() -> void; // write good header
+  auto respond_with_error() -> void;  // write error header
+  auto respond_with_counts() -> void; // write counts
+
+  boost::asio::ip::tcp::socket socket;  // this connection's socket
+  request req;                          // this connection's request
+  request_handler &handler;             // handles incoming requests
+  response resp;                        // response to send back
 
   bool verbose{};
 
+  // these help keep track of where we are in the incoming offsets
   std::size_t offset_byte{};
   std::size_t offset_remaining{};
 };
