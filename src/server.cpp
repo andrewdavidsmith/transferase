@@ -39,6 +39,7 @@ using std::println;
 using std::string;
 using std::uint32_t;
 using std::vector;
+using std::make_shared;
 
 namespace asio = boost::asio;
 namespace bs = boost::system;
@@ -49,15 +50,15 @@ using tcp = ip::tcp;
 server::server(const string &address, const string &port,
                const uint32_t n_threads, const string &methylome_dir,
                const uint32_t max_live_methylomes, bool verbose) :
-  verbose{verbose}, n_threads{n_threads}, signals(ioc), acceptor(ioc),
+  verbose{verbose}, n_threads{n_threads},
+#if defined(SIGQUIT)
+  signals(ioc, SIGINT, SIGTERM, SIGQUIT),
+#else
+  signals(ioc, SIGINT, SIGTERM),
+#endif
+  acceptor(ioc),
   handler(methylome_dir, max_live_methylomes, verbose) {
   // io_context ios uses default constructor
-
-  signals.add(SIGINT);
-  signals.add(SIGTERM);
-#if defined(SIGQUIT)
-  signals.add(SIGQUIT);
-#endif  // defined(SIGQUIT)
 
   do_await_stop();  // start waiting for signals
 
@@ -81,7 +82,8 @@ server::server(const string &address, const string &port,
   do_accept();
 }
 
-auto server::run() -> void {
+auto
+server::run() -> void {
   /* From the docs (v1.86.0): "Multiple threads may call the run()
      function to set up a pool of threads from which the io_context
      may execute handlers. All threads that are waiting in the pool
@@ -93,7 +95,8 @@ auto server::run() -> void {
     threads.emplace_back([this] { ioc.run(); });
 }
 
-auto server::do_accept() -> void {
+auto
+server::do_accept() -> void {
   acceptor.async_accept(
     asio::make_strand(ioc),  // ADS: make a strand with the io_context
     [this](const bs::error_code ec, tcp::socket socket) {
@@ -102,14 +105,14 @@ auto server::do_accept() -> void {
         return;
       if (!ec) {
         // ADS: accepted socket moved into connection which is started
-        std::make_shared<connection>(std::move(socket), handler, verbose)
-          ->start();
+        make_shared<connection>(std::move(socket), handler, verbose)->start();
       }
       do_accept();  // keep listening for more connections
     });
 }
 
-auto server::do_await_stop() -> void {
+auto
+server::do_await_stop() -> void {
   // capture brings 'this' into search for names
   signals.async_wait([this](const bs::error_code ec, const int signo) {
     if (verbose)
