@@ -41,8 +41,6 @@ struct request {
   std::uint32_t n_intervals{};
   std::vector<offset_type> offsets;
 
-  // auto init(const char *data, const std::size_t n_bytes) -> status_code::value;
-
   auto summary() const -> std::string;
   auto summary_serial() const -> std::string;
 
