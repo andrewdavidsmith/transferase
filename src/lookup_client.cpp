@@ -21,6 +21,8 @@
  * SOFTWARE.
  */
 
+#include "lookup_client.hpp"
+
 #include <boost/asio.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/program_options.hpp>
@@ -200,9 +202,9 @@ static auto write_intervals(std::ostream &out, const cpg_index &index,
   }
 }
 
-auto main(int argc, char *argv[]) -> int {
+auto lookup_client_main(int argc, char *argv[]) -> int {
   static constexpr auto default_port = "5000";
-  static const auto description = "mc16-client";
+  static const auto description = "client";
 
   bool verbose{};
 
