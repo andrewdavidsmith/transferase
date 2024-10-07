@@ -33,3 +33,6 @@ AlwaysBreakAfterReturnType: All
 SpacesBeforeTrailingComments: 2
 BreakAfterReturnType: Automatic
 BreakConstructorInitializers: AfterColon
+AlignTrailingComments:
+  Kind: Leave
+  OverEmptyLines: 1
