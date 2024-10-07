@@ -21,7 +21,7 @@
  * SOFTWARE.
  */
 
-#include "lookup_client.hpp"
+#include "client_sync.hpp"
 
 #include "cpg_index.hpp"
 #include "genomic_interval.hpp"
@@ -251,7 +251,7 @@ write_intervals(std::ostream &out, const cpg_index &index,
 }
 
 auto
-lookup_client_main(int argc, char *argv[]) -> int {
+lookup_client_sync_main(int argc, char *argv[]) -> int {
   static constexpr auto default_port = "5000";
   static const auto description = "client-sync";
 
