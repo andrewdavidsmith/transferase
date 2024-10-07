@@ -94,8 +94,9 @@ struct mc16_client {
 
   void handle_connect(const bs::error_code &err) {
     if (!err) {
-      println("Connected to server: {}",
-              boost::lexical_cast<string>(socket.remote_endpoint()));
+      if (verbose)
+        println("Connected to server: {}",
+                boost::lexical_cast<string>(socket.remote_endpoint()));
       req.to_buffer();  // ADS: remove copying from this?
       asio::async_write(
         socket,
@@ -123,7 +124,8 @@ struct mc16_client {
     if (!err) {
       // ADS: convert the buffer into the values
       const auto result = resp.from_buffer();
-      println("Response header: {}", resp.summary_serial());
+      if (verbose)
+        println("Response header: {}", resp.summary_serial());
       if (result == status_code::ok) {
         do_read_counts();
       }
