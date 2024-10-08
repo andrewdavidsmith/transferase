@@ -32,9 +32,20 @@
 #include <vector>
 
 struct counts_res {
-  uint32_t n_meth{};
-  uint32_t n_unmeth{};
-  uint32_t n_covered{};
+  std::uint32_t n_meth{};
+  std::uint32_t n_unmeth{};
+  std::uint32_t n_covered{};
+};
+
+template <>
+struct std::formatter<counts_res> : std::formatter<std::string> {
+  auto
+  format(const counts_res &cr, std::format_context &ctx) const {
+    return std::formatter<std::string>::format(
+      std::format(R"({{"n_meth": {}, "n_unmeth": {}, "n_covered": {}}})",
+                  cr.n_meth, cr.n_unmeth, cr.n_covered),
+      ctx);
+  }
 };
 
 // ADS TODO: error codes
@@ -53,6 +64,9 @@ struct methylome {
   get_counts(const cpg_index::vec &positions, const std::uint32_t offset,
              const std::uint32_t start, const std::uint32_t stop) const
     -> counts_res;
+
+  [[nodiscard]] auto
+  total_counts() const -> counts_res;
 
   // takes only the pair of positions within the methylome::vec
   // and accumulates between those
