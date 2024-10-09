@@ -135,9 +135,7 @@ lookup_main(int argc, char *argv[]) -> int {
     println(cerr, "failed to open output file: {}", output_file);
     return EXIT_FAILURE;
   }
-
-  for (const auto [gi, res] : vs::zip(gis, results))
-    println(out, "{}\t{}\t{}\t{}", gi, res.n_meth, res.n_unmeth, res.n_covered);
+  write_intervals(out, index, gis, results);
 
   return EXIT_SUCCESS;
 }
