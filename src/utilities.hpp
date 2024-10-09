@@ -30,6 +30,7 @@
 
 #include <ostream>
 #include <chrono>
+#include <numeric>
 
 #include "genomic_interval.hpp"
 #include "cpg_index.hpp"
@@ -44,6 +45,24 @@ write_intervals(std::ostream &out, const cpg_index &index,
 duration(const auto start, const auto stop) {
   const auto d = stop - start;
   return std::chrono::duration_cast<std::chrono::duration<double>>(d).count();
+}
+
+template <typename T, typename U>
+inline auto
+round_to_fit(U &a, U &b) -> void {
+  const T c = std::max(a, b);
+  a = (a == c) ? std::numeric_limits<T>::max() :
+    (a / static_cast<double>(c)) * std::numeric_limits<T>::max();
+  b = (b == c) ? std::numeric_limits<T>::max() :
+    (b / static_cast<double>(c)) * std::numeric_limits<T>::max();
+}
+
+template <typename T, typename U>
+inline auto
+conditional_round_to_fit(U &a, U &b) -> void {
+  // ADS: optimization possible here?
+  if (std::max(a, b) > std::numeric_limits<T>::max())
+    round_to_fit<T>(a, b);
 }
 
 #endif  // SRC_UTILITIES_HPP_
