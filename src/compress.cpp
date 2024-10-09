@@ -25,6 +25,7 @@
 #include "cpg_index.hpp"
 #include "genomic_interval.hpp"
 #include "methylome.hpp"
+#include "utilities.hpp"
 
 #include <zlib.h>
 
@@ -157,17 +158,6 @@ verify_header_line(const cpg_index &idx, int32_t &n_chroms_seen,
   return true;
 }
 
-template <typename T>
-static inline auto
-round_to_fit(uint32_t &n_meth, uint32_t &n_unmeth) -> void {
-  const uint32_t m = max(n_unmeth, n_meth);
-  n_meth = n_meth == m ? num_lim<T>::max()
-                       : (n_meth / static_cast<double>(m)) * num_lim<T>::max();
-  n_unmeth = n_unmeth == m
-               ? num_lim<T>::max()
-               : (n_unmeth / static_cast<double>(m)) * num_lim<T>::max();
-}
-
 static auto
 process_cpg_sites(const string &infile, const string &outfile,
                   const cpg_index &index, const bool zip) -> int {
@@ -232,8 +222,7 @@ process_cpg_sites(const string &infile, const string &outfile,
         cpg_idx_out += skip_absent_cpgs(curr_pos, *positions, cpg_idx_in);
 
       // ADS: prevent counts from overflowing
-      if (max(n_meth, n_unmeth) > num_lim<methylome::m_count_t>::max())
-        round_to_fit<methylome::m_count_t>(n_meth, n_unmeth);
+      conditional_round_to_fit<methylome::m_count_t>(n_meth, n_unmeth);
 
       cpgs[cpg_idx_out++] = {static_cast<methylome::m_count_t>(n_meth),
                              static_cast<methylome::m_count_t>(n_unmeth)};
