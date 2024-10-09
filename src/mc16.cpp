@@ -29,6 +29,7 @@
 #include "index.hpp"
 #include "lookup.hpp"
 #include "check.hpp"
+#include "merge.hpp"
 
 #include "lookup_client.hpp"
 #include "lookup_server.hpp"
@@ -98,6 +99,7 @@ const pair<string_view, main_fun> commands[] = {
   {"compress", compress_main},
   {"check", check_main},
   {"lookup", lookup_main},
+  {"merge", merge_main},
   {"bins", bins_main},
   {"client", lookup_client_main},
   {"server", lookup_server_main},
@@ -110,6 +112,7 @@ constexpr string_view command_names[] = {
   "index",
   "compress",
   "check",
+  "merge",
   "lookup",
   "bins",
   "client",

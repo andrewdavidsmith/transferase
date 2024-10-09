@@ -44,6 +44,10 @@ add_library(check OBJECT
   check.hpp
   check.cpp)
 
+add_library(merge OBJECT
+  merge.hpp
+  merge.cpp)
+
 add_library(index OBJECT
   index.hpp
   index.cpp)
@@ -108,6 +112,7 @@ target_link_libraries(
   index
   compress
   check
+  merge
   lookup
   lookup_client
   lookup_server
