@@ -40,6 +40,10 @@ add_library(compress OBJECT
   compress.hpp
   compress.cpp)
 
+add_library(check OBJECT
+  check.hpp
+  check.cpp)
+
 add_library(index OBJECT
   index.hpp
   index.cpp)
@@ -101,9 +105,10 @@ target_sources(mc16 PRIVATE mc16.cpp)
 target_link_libraries(
   mc16
   utilities
-  lookup
   index
   compress
+  check
+  lookup
   lookup_client
   lookup_server
   lookup_client_sync

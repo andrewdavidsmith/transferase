@@ -28,6 +28,7 @@
 #include "compress.hpp"
 #include "index.hpp"
 #include "lookup.hpp"
+#include "check.hpp"
 
 #include "lookup_client.hpp"
 #include "lookup_server.hpp"
@@ -95,6 +96,7 @@ typedef std::function<int(int, char **)> main_fun;
 const pair<string_view, main_fun> commands[] = {
   {"index", index_main},
   {"compress", compress_main},
+  {"check", check_main},
   {"lookup", lookup_main},
   {"bins", bins_main},
   {"client", lookup_client_main},
@@ -107,6 +109,7 @@ const pair<string_view, main_fun> commands[] = {
 constexpr string_view command_names[] = {
   "index",
   "compress",
+  "check",
   "lookup",
   "bins",
   "client",

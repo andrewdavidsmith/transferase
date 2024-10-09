@@ -208,3 +208,16 @@ methylome::get_counts(const vector<pair<uint32_t, uint32_t>> &queries) const
     res[i] = get_counts_impl(cpg_beg + q.first, cpg_beg + q.second);
   return res;
 }
+
+[[nodiscard]] auto
+methylome::total_counts() const -> counts_res {
+  uint32_t n_meth{};
+  uint32_t n_unmeth{};
+  uint32_t n_covered{};
+  for (const auto &cpg : cpgs) {
+    n_meth += cpg.first;
+    n_unmeth += cpg.second;
+    n_covered += cpg != pair<uint16_t, uint16_t>{};
+  }
+  return {n_meth, n_unmeth, n_covered};
+}
