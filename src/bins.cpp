@@ -29,6 +29,7 @@
 #include <boost/program_options.hpp>
 
 #include <algorithm>
+#include <array>
 #include <cassert>
 #include <format>
 #include <fstream>
@@ -38,7 +39,9 @@
 #include <string>
 #include <tuple>
 #include <vector>
+#include <cstdint>
 
+using std::array;
 using std::cbegin;
 using std::cend;
 using std::cerr;
@@ -52,6 +55,7 @@ using std::tuple;
 using std::uint32_t;
 using std::vector;
 
+namespace rg = std::ranges;
 namespace vs = std::views;
 
 namespace po = boost::program_options;
@@ -61,7 +65,7 @@ static auto
 bin_counts(cpg_index::vec::const_iterator &posn_itr,
            const cpg_index::vec::const_iterator posn_end,
            const uint32_t bin_end, methylome::vec::const_iterator &cpg_itr)
-  -> tuple<uint32_t, uint32_t, uint32_t> {
+  -> counts_res {
   uint32_t n_meth{};
   uint32_t n_unmeth{};
   uint32_t n_covered{};
@@ -73,6 +77,45 @@ bin_counts(cpg_index::vec::const_iterator &posn_itr,
     ++posn_itr;
   }
   return {n_meth, n_unmeth, n_covered};
+}
+
+static auto
+write_bins(std::ostream &out, const uint32_t bin_size,
+           const cpg_index &index, const vector<counts_res> &results) -> void {
+  static constexpr auto buf_size{512};
+  static constexpr auto delim{'\t'};
+
+  array<char, buf_size> buf{};
+  const auto buf_beg = buf.data();
+  const auto buf_end = buf.data() + buf_size;
+
+  vector<counts_res>::const_iterator res{cbegin(results)};
+
+  const auto zipped = vs::zip(index.chrom_size, index.chrom_order);
+  for (const auto [chrom_size, chrom_name] : zipped) {
+    rg::copy(chrom_name, buf_beg);
+    buf[size(chrom_name)] = delim;
+    for (uint32_t bin_beg = 0; bin_beg < chrom_size; bin_beg += bin_size) {
+      const auto bin_end = min(bin_beg + bin_size, chrom_size);
+      std::to_chars_result tcr{buf_beg + size(chrom_name) + 1, std::errc()};
+#pragma GCC diagnostic push
+#pragma GCC diagnostic error "-Wstringop-overflow=0"
+      tcr = std::to_chars(tcr.ptr, buf_end, bin_beg);
+      *tcr.ptr++ = delim;
+      tcr = std::to_chars(tcr.ptr, buf_end, bin_end);
+      *tcr.ptr++ = delim;
+      tcr = std::to_chars(tcr.ptr, buf_end, res->n_meth);
+      *tcr.ptr++ = delim;
+      tcr = std::to_chars(tcr.ptr, buf_end, res->n_unmeth);
+      *tcr.ptr++ = delim;
+      tcr = std::to_chars(tcr.ptr, buf_end, res->n_covered);
+      *tcr.ptr++ = '\n';
+#pragma GCC diagnostic push
+      out.write(buf_beg, rg::distance(buf_beg, tcr.ptr));
+      ++res;
+    }
+  }
+  assert(res == cend(results));
 }
 
 auto
@@ -141,7 +184,7 @@ bins_main(int argc, char *argv[]) -> int {
     return EXIT_FAILURE;
   }
 
-  vector<tuple<uint32_t, uint32_t, uint32_t>> results;
+  vector<counts_res> results;
   string chrom_name;
   const auto zipped =
     vs::zip(index.positions, index.chrom_size, index.chrom_offset);
@@ -149,15 +192,13 @@ bins_main(int argc, char *argv[]) -> int {
     auto posn_itr = cbegin(positions);
     const auto posn_end = cend(positions);
     auto cpg_itr = cbegin(meth.cpgs) + offset;
-    // ADS TODO: is this chunks?
     for (uint32_t i = 0; i < chrom_size; i += bin_size) {
       const auto bin_end = min(i + bin_size, chrom_size);
       results.emplace_back(bin_counts(posn_itr, posn_end, bin_end, cpg_itr));
     }
   }
 
-  for (const auto &[n_meth, n_unmeth, n_covered] : results)
-    println(out, "{}\t{}\t{}", n_meth, n_unmeth, n_covered);
+  write_bins(out, bin_size, index, results);
 
   return EXIT_SUCCESS;
 }
