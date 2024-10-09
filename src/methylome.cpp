@@ -34,26 +34,27 @@
 #include <string>
 #include <utility>  // std::move
 #include <vector>
-#include <cassert>
 
+using std::error_code;
 using std::pair;
+using std::size;
 using std::string;
 using std::uint16_t;
 using std::uint32_t;
 using std::uint8_t;
 using std::vector;
-using std::error_code;
-using std::size;
 
 namespace rg = std::ranges;
 namespace vs = std::views;
 
-template<typename T> [[nodiscard]] static inline auto
+template <typename T>
+[[nodiscard]] static inline auto
 compress(const T &in, vector<uint8_t> &out) -> int {
   z_stream strm{};
   int ret = deflateInit2(&strm, Z_BEST_SPEED, Z_DEFLATED, MAX_WBITS,
                          MAX_MEM_LEVEL, Z_RLE);
-  if (ret != Z_OK) return ret;
+  if (ret != Z_OK)
+    return ret;
 
   // pointer to bytes to compress
   // ADS: 'next_in' is 'z_const' defined as 'const' in zconf.h
@@ -80,11 +81,13 @@ compress(const T &in, vector<uint8_t> &out) -> int {
   return ret;
 }
 
-template<typename T> [[nodiscard]] static inline auto
+template <typename T>
+[[nodiscard]] static inline auto
 decompress(vector<uint8_t> &in, T &out) -> int {
   z_stream strm{};
   int ret = inflateInit(&strm);
-  if (ret != Z_OK) return ret;
+  if (ret != Z_OK)
+    return ret;
 
   strm.next_in = in.data();  // pointer to compressed bytes
   strm.avail_in = size(in);  // bytes available to decompress
@@ -124,14 +127,18 @@ methylome::read(const string &filename, const uint32_t n_cpgs) -> int {
   if (errc)
     return -1;
   std::ifstream in(filename);
-  if (!in) return -1;
+  if (!in)
+    return -1;
   uint64_t flags{};
-  if (!in.read(reinterpret_cast<char *>(&flags), sizeof(flags))) return -1;
-  if (flags == 1 && n_cpgs == 0) return -1;  // can't know how much to inflate
+  if (!in.read(reinterpret_cast<char *>(&flags), sizeof(flags)))
+    return -1;
+  if (flags == 1 && n_cpgs == 0)
+    return -1;  // can't know how much to inflate
   const auto datasize = filesize - sizeof(flags);
   if (flags == 1) {
     vector<uint8_t> buf(datasize);
-    if (!in.read(reinterpret_cast<char *>(buf.data()), datasize)) return -1;
+    if (!in.read(reinterpret_cast<char *>(buf.data()), datasize))
+      return -1;
     cpgs.resize(n_cpgs);
     return decompress(buf, cpgs);
   }
@@ -143,10 +150,12 @@ methylome::read(const string &filename, const uint32_t n_cpgs) -> int {
 [[nodiscard]] auto
 methylome::write(const string &filename, const bool zip) const -> int {
   vector<uint8_t> buf;
-  if (zip && compress(cpgs, buf)) return -1;
+  if (zip && compress(cpgs, buf))
+    return -1;
 
   std::ofstream out(filename);
-  if (!out) return -1;
+  if (!out)
+    return -1;
   const uint64_t flags = zip;
   if (!out.write(reinterpret_cast<const char *>(&flags), sizeof(flags)))
     return -1;
@@ -194,7 +203,8 @@ methylome::get_counts(const cpg_index::vec &positions, const uint32_t offset,
   return {n_meth, n_unmeth, n_sites_covered};
 }
 
-template<typename T> [[nodiscard]] static inline auto
+template <typename T>
+[[nodiscard]] static inline auto
 get_counts_impl(const T b, const T e) -> counts_res {
   counts_res t;
   for (auto cursor = b; cursor != e; ++cursor) {

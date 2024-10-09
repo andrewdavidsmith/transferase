@@ -31,30 +31,29 @@
 
 #include <array>
 #include <cstddef>
-#include <memory>
+#include <memory>  // std::shared_ptr
+#include <utility>  // std::move
 
 struct request_handler;
 
 struct connection : public std::enable_shared_from_this<connection> {
-  connection(const connection&) = delete;
-  connection& operator=(const connection&) = delete;
+  connection(const connection &) = delete;
+  connection &operator=(const connection &) = delete;
 
   explicit connection(boost::asio::ip::tcp::socket socket,
-                       request_handler &handler, bool verbose)
-  : socket{std::move(socket)},
-    handler{handler},
-    verbose{verbose} {}
+                      request_handler &handler, bool verbose) :
+    socket{std::move(socket)}, handler{handler}, verbose{verbose} {}
 
-  auto start() -> void {read_request();} // start first async op
+  auto start() -> void { read_request(); }  // start first async op
 
   auto prepare_to_read_offsets() -> void;
 
   auto read_request() -> void;  // read header of request
   auto read_offsets() -> void;  // read offsets part of request
 
-  auto respond_with_header() -> void; // write good header
-  auto respond_with_error() -> void;  // write error header
-  auto respond_with_counts() -> void; // write counts
+  auto respond_with_header() -> void;  // write good header
+  auto respond_with_error() -> void;   // write error header
+  auto respond_with_counts() -> void;  // write counts
 
   boost::asio::ip::tcp::socket socket;  // this connection's socket
   request req;                          // this connection's request

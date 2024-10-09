@@ -28,12 +28,15 @@
   Functions declared here are used by multiple source files
  */
 
-#include <ostream>
+#include <algorithm>
 #include <chrono>
+#include <limits>
 #include <numeric>
+#include <ostream>
+#include <vector>
 
-#include "genomic_interval.hpp"
 #include "cpg_index.hpp"
+#include "genomic_interval.hpp"
 #include "methylome.hpp"
 
 auto
@@ -51,10 +54,10 @@ template <typename T, typename U>
 inline auto
 round_to_fit(U &a, U &b) -> void {
   const T c = std::max(a, b);
-  a = (a == c) ? std::numeric_limits<T>::max() :
-    (a / static_cast<double>(c)) * std::numeric_limits<T>::max();
-  b = (b == c) ? std::numeric_limits<T>::max() :
-    (b / static_cast<double>(c)) * std::numeric_limits<T>::max();
+  a = (a == c) ? std::numeric_limits<T>::max()
+               : (a / static_cast<double>(c)) * std::numeric_limits<T>::max();
+  b = (b == c) ? std::numeric_limits<T>::max()
+               : (b / static_cast<double>(c)) * std::numeric_limits<T>::max();
 }
 
 template <typename T, typename U>

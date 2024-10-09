@@ -31,16 +31,14 @@
 
 template <class T> struct aligned_allocator {
   typedef T value_type;
-  [[nodiscard]] T *
-  allocate(const std::size_t n) {
+  [[nodiscard]] T *allocate(const std::size_t n) {
     if (n > std::numeric_limits<std::size_t>::max() / sizeof(T))
       throw std::bad_array_new_length();
     if (auto p = static_cast<T *>(std::aligned_alloc(4096, n * sizeof(T))))
       return p;
     throw std::bad_alloc();
   }
-  void
-  deallocate(T *p, [[maybe_unused]] const std::size_t n) noexcept {
+  void deallocate(T *p, [[maybe_unused]] const std::size_t n) noexcept {
     std::free(p);
   }
 };

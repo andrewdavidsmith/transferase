@@ -26,10 +26,11 @@
 
 #include "status_code.hpp"
 
-#include <string>
-#include <cstdint>
-#include <vector>
 #include <array>
+#include <cstdint>
+#include <string>
+#include <utility>  // pair<>
+#include <vector>
 
 struct request {
   static constexpr std::uint32_t buf_size = 256;  // full header
@@ -48,10 +49,10 @@ struct request {
   auto to_buffer() -> status_code::value;
 
   auto get_offsets_n_bytes() const -> uint32_t {
-    return sizeof(offset_type)*size(offsets);
+    return sizeof(offset_type) * size(offsets);
   }
-  auto get_offsets_data() -> char* {
-    return reinterpret_cast<char*>(offsets.data());
+  auto get_offsets_data() -> char * {
+    return reinterpret_cast<char *>(offsets.data());
   }
 };
 

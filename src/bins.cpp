@@ -34,10 +34,10 @@
 #include <fstream>
 #include <iostream>
 #include <print>
+#include <ranges>
 #include <string>
 #include <tuple>
 #include <vector>
-#include <ranges>
 
 using std::cbegin;
 using std::cend;
@@ -106,7 +106,8 @@ bins_main(int argc, char *argv[]) -> int {
       return EXIT_SUCCESS;
     }
     po::notify(vm);
-  } catch (po::error &e) {
+  }
+  catch (po::error &e) {
     println(cerr, "{}", e.what());
     desc.print(std::cout);
     return EXIT_FAILURE;
@@ -142,7 +143,6 @@ bins_main(int argc, char *argv[]) -> int {
 
   vector<tuple<uint32_t, uint32_t, uint32_t>> results;
   string chrom_name;
-  vector<cpg_index::vec>::const_iterator posns;
   const auto zipped =
     vs::zip(index.positions, index.chrom_size, index.chrom_offset);
   for (const auto [positions, chrom_size, offset] : zipped) {

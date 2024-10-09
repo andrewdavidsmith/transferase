@@ -31,6 +31,7 @@
 #include <boost/asio.hpp>
 #include <boost/program_options.hpp>
 
+#include <algorithm>
 #include <array>
 #include <chrono>
 #include <fstream>

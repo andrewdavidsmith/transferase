@@ -27,20 +27,22 @@
   Functions defined here are used by multiple source files
  */
 
-#include "genomic_interval.hpp"
 #include "cpg_index.hpp"
+#include "genomic_interval.hpp"
 #include "methylome.hpp"
 
-#include <ostream>
-#include <vector>
-#include <string>
+#include <algorithm>
 #include <array>
+#include <ostream>
 #include <ranges>
+#include <string>
+#include <utility>
+#include <vector>
 
 using std::array;
-using std::vector;
-using std::string;
 using std::pair;
+using std::string;
+using std::vector;
 
 namespace rg = std::ranges;
 namespace vs = std::views;

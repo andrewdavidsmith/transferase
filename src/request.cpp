@@ -57,21 +57,27 @@ request::from_buffer() -> status_code::value {
 
   const auto data_end = cbegin(buf) + buf_size;
   auto cursor = rg::find(cbegin(buf), data_end, delim);
-  if (cursor == data_end) return status_code::malformed_accession;
+  if (cursor == data_end)
+    return status_code::malformed_accession;
   accession = string(cbegin(buf), rg::distance(cbegin(buf), cursor));
-  if (*cursor++ != delim) return status_code::malformed_methylome_size;
+  if (*cursor++ != delim)
+    return status_code::malformed_methylome_size;
   {
     const auto [ptr, ec] = from_chars(cursor, data_end, methylome_size);
-    if (ec != std::errc{}) return status_code::malformed_methylome_size;
+    if (ec != std::errc{})
+      return status_code::malformed_methylome_size;
     cursor = ptr;
   }
-  if (*cursor++ != delim) return status_code::malformed_n_intervals;
+  if (*cursor++ != delim)
+    return status_code::malformed_n_intervals;
   {
     const auto [ptr, ec] = from_chars(cursor, data_end, n_intervals);
-    if (ec != std::errc{}) return status_code::malformed_n_intervals;
+    if (ec != std::errc{})
+      return status_code::malformed_n_intervals;
     cursor = ptr;
   }
-  if (*cursor++ != term) return status_code::malformed_n_intervals;
+  if (*cursor++ != term)
+    return status_code::malformed_n_intervals;
   return status_code::ok;
 }
 

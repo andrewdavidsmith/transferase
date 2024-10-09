@@ -85,14 +85,14 @@ lookup_server_main(int argc, char *argv[]) -> int {
   }
 
   if (verbose)
-    println(
-      "Hostname: {}\n"
-      "Port: {}\n"
-      "Methylome directory: {}\n"
-      "Max live methylomes: {}\n",
-      hostname, port, methylome_dir, max_live_methylomes);
+    println("Hostname: {}\n"
+            "Port: {}\n"
+            "Methylome directory: {}\n"
+            "Max live methylomes: {}\n",
+            hostname, port, methylome_dir, max_live_methylomes);
 
-  server s(hostname, port, n_threads, methylome_dir, max_live_methylomes, verbose);
+  server s(hostname, port, n_threads, methylome_dir, max_live_methylomes,
+           verbose);
 
   s.run();
 

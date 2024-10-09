@@ -37,8 +37,7 @@ struct genomic_interval {
   std::uint32_t start{};
   std::uint32_t stop{};
 
-  auto
-  operator<=>(const genomic_interval &) const = default;
+  auto operator<=>(const genomic_interval &) const = default;
 
   [[nodiscard]] static auto
   load(const cpg_index &index,
@@ -47,8 +46,7 @@ struct genomic_interval {
 
 template <>
 struct std::formatter<genomic_interval> : std::formatter<std::string> {
-  auto
-  format(const genomic_interval &gi, std::format_context &ctx) const {
+  auto format(const genomic_interval &gi, std::format_context &ctx) const {
     return std::formatter<std::string>::format(
       std::format("{}\t{}\t{}", gi.ch_id, gi.start, gi.stop), ctx);
   }

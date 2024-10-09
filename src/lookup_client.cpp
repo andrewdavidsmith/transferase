@@ -144,8 +144,7 @@ struct mc16_client {
   // ADS: need to move to using status codes as we probably don't
   // really care here about the bs::error_code here
   // auto do_finish(const status_code::value status) const -> void
-  auto
-  do_finish(const bs::error_code &err) const -> void {
+  auto do_finish(const bs::error_code &err) const -> void {
     if (!err) {  // status == status_code::ok
       if (verbose)
         println("Completing transaction: {}", err.message());  // status
@@ -161,8 +160,8 @@ struct mc16_client {
   bool verbose{};
 };
 
-
-auto lookup_client_main(int argc, char *argv[]) -> int {
+auto
+lookup_client_main(int argc, char *argv[]) -> int {
   static constexpr auto default_port = "5000";
   static const auto description = "client";
 

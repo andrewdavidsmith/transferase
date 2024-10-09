@@ -24,35 +24,35 @@
 #ifndef SRC_STATUS_CODE_HPP_
 #define SRC_STATUS_CODE_HPP_
 
-#include <cstdint>
-#include <type_traits>
-#include <format>
 #include <bitset>
+#include <cstdint>
+#include <format>
 #include <string>
+#include <type_traits>
 
 namespace status_code {
 enum value : std::uint32_t {
-  ok                       = 0,
-  indeterminate            = 1 << 0,
+  ok = 0,
+  indeterminate = 1 << 0,
   // parsing request
-  malformed_accession      = 1 << 1,
+  malformed_accession = 1 << 1,
   malformed_methylome_size = 1 << 2,
-  malformed_n_intervals    = 1 << 3,
-  malformed_offsets        = 1 << 4,
+  malformed_n_intervals = 1 << 3,
+  malformed_offsets = 1 << 4,
   // handling request
-  invalid_accession        = 1 << 5,
-  invalid_methylome_size   = 1 << 6,
+  invalid_accession = 1 << 5,
+  invalid_methylome_size = 1 << 6,
   // server-side problems
-  index_not_found          = 1 << 7,
-  methylome_not_found      = 1 << 8,
+  index_not_found = 1 << 7,
+  methylome_not_found = 1 << 8,
   // general server problem
-  server_failure           = 1 << 9,
+  server_failure = 1 << 9,
   // others
-  bad_request              = 1 << 10,
+  bad_request = 1 << 10,
 };
 static constexpr std::uint32_t n_codes = 12;
 
-[[maybe_unused]] static const char* msg[] = {
+[[maybe_unused]] static const char *msg[] = {
   "ok",
   "indeterminate",
   // parsing request
@@ -74,10 +74,9 @@ static constexpr std::uint32_t n_codes = 12;
 
 }  // end namespace status_code
 
-template<>
+template <>
 struct std::formatter<status_code::value> : std::formatter<std::string> {
-  auto
-  format(const status_code::value &v, std::format_context &ctx) const {
+  auto format(const status_code::value &v, std::format_context &ctx) const {
     const auto u = std::bitset<status_code::n_codes>(static_cast<uint32_t>(v));
     return std::formatter<std::string>::format(u.to_string(), ctx);
   }

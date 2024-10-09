@@ -88,7 +88,8 @@ lookup_main(int argc, char *argv[]) -> int {
       return EXIT_SUCCESS;
     }
     po::notify(vm);
-  } catch (po::error &e) {
+  }
+  catch (po::error &e) {
     println(cerr, "{}", e.what());
     desc.print(cerr);
     return EXIT_FAILURE;

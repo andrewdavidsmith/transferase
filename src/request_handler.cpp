@@ -21,29 +21,29 @@
  * SOFTWARE.
  */
 
-#include "response.hpp"
-#include "request.hpp"
 #include "request_handler.hpp"
 #include "methylome.hpp"
+#include "request.hpp"
+#include "response.hpp"
 #include "utilities.hpp"
 
+#include <chrono>
+#include <cstdint>
 #include <format>
+#include <fstream>
 #include <print>
+#include <regex>
 #include <sstream>
 #include <string>
-#include <cstdint>
-#include <vector>
-#include <fstream>
-#include <regex>
 #include <tuple>
-#include <chrono>
+#include <vector>
 
 using std::format;
+using std::get;
+using std::pair;
 using std::println;
 using std::string;
-using std::pair;
 using std::uint32_t;
-using std::get;
 
 using hr_clock = std::chrono::high_resolution_clock;
 

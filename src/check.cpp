@@ -144,8 +144,7 @@ check_main(int argc, char *argv[]) -> int {
         "total_counts: {}\n"
         "sites_covered_fraction: {}\n"
         "mean_meth_weighted: {}\n",
-        check_outcome,
-        methylome_size, index.n_cpgs_total, total_counts,
+        check_outcome, methylome_size, index.n_cpgs_total, total_counts,
         sites_covered_fraction, mean_meth_weighted);
 
   return EXIT_SUCCESS;

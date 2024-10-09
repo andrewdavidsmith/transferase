@@ -68,7 +68,8 @@ index_main(int argc, char *argv[]) -> int {
       return EXIT_SUCCESS;
     }
     po::notify(vm);
-  } catch (po::error &e) {
+  }
+  catch (po::error &e) {
     println(std::cerr, "{}", e.what());
     desc.print(std::cerr);
     return EXIT_FAILURE;

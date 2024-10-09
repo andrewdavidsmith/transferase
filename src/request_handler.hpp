@@ -33,8 +33,8 @@ struct request;
 
 // handles all incoming requests
 struct request_handler {
-  request_handler(const request_handler&) = delete;
-  request_handler& operator=(const request_handler&) = delete;
+  request_handler(const request_handler &) = delete;
+  request_handler &operator=(const request_handler &) = delete;
 
   explicit request_handler(const std::string &methylome_dir,
                            const std::uint32_t max_live_methylomes,
@@ -42,14 +42,12 @@ struct request_handler {
     methylome_dir{methylome_dir},
     ms(verbose, max_live_methylomes, methylome_dir), verbose{verbose} {}
 
-  auto
-  handle_header(const request &req, response &resp) -> void;
+  auto handle_header(const request &req, response &resp) -> void;
 
-  auto
-  handle_get_counts(const request &req, response &resp) -> void;
+  auto handle_get_counts(const request &req, response &resp) -> void;
 
-  std::string methylome_dir;  // dir of available methylomes
-  std::string cpg_index_file; // file with cpg_index
+  std::string methylome_dir;   // dir of available methylomes
+  std::string cpg_index_file;  // file with cpg_index
   methylome_set ms;
   cpg_index index;
   bool verbose{};

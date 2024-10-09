@@ -38,22 +38,16 @@ struct genomic_interval;
 struct cpg_index {
   typedef std::uint32_t cpg_pos_t;
   typedef std::vector<cpg_pos_t, aligned_allocator<cpg_pos_t>> vec;
-  auto
-  construct(const std::string &genome_file) -> int;
-  auto
-  read(const std::string &index_file) -> int;
-  auto
-  write(const std::string &index_file) const -> int;
-  auto
-  tostring() const -> std::string;
+  auto construct(const std::string &genome_file) -> int;
+  auto read(const std::string &index_file) -> int;
+  auto write(const std::string &index_file) const -> int;
+  auto tostring() const -> std::string;
 
   // given the chromosome id (from chrom_index) and a position within
   // the chrom, get the offset of the CpG site from std::lower_bound
-  auto
-  get_offset_within_chrom(const std::int32_t ch_id,
-                          const std::uint32_t pos) const -> std::uint32_t;
-  auto
-  get_offsets_within_chrom(
+  auto get_offset_within_chrom(const std::int32_t ch_id,
+                               const std::uint32_t pos) const -> std::uint32_t;
+  auto get_offsets_within_chrom(
     const std::int32_t ch_id,
     const std::vector<std::pair<std::uint32_t, std::uint32_t>> &pos) const
     -> std::vector<std::pair<std::uint32_t, std::uint32_t>>;
@@ -66,8 +60,7 @@ struct cpg_index {
 
   // get the offset from the start of the data structure given genomic
   // intervals
-  auto
-  get_offsets(const std::vector<genomic_interval> &gis) const
+  auto get_offsets(const std::vector<genomic_interval> &gis) const
     -> std::vector<std::pair<std::uint32_t, std::uint32_t>>;
 
   std::vector<std::string> chrom_order;
@@ -79,8 +72,7 @@ struct cpg_index {
 };
 
 template <> struct std::formatter<cpg_index> : std::formatter<std::string> {
-  auto
-  format(const cpg_index &ci, std::format_context &ctx) const {
+  auto format(const cpg_index &ci, std::format_context &ctx) const {
     return std::formatter<std::string>::format(ci.tostring(), ctx);
   }
 };

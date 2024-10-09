@@ -27,10 +27,11 @@
 #include "aligned_allocator.hpp"
 #include "cpg_index.hpp"
 
+#include <cstddef>
 #include <cstdint>
 #include <string>
+#include <utility>  // pair<>
 #include <vector>
-#include <cstddef>
 
 struct counts_res {
   std::uint32_t n_meth{};
@@ -38,10 +39,8 @@ struct counts_res {
   std::uint32_t n_covered{};
 };
 
-template <>
-struct std::formatter<counts_res> : std::formatter<std::string> {
-  auto
-  format(const counts_res &cr, std::format_context &ctx) const {
+template <> struct std::formatter<counts_res> : std::formatter<std::string> {
+  auto format(const counts_res &cr, std::format_context &ctx) const {
     return std::formatter<std::string>::format(
       std::format(R"({{"n_meth": {}, "n_unmeth": {}, "n_covered": {}}})",
                   cr.n_meth, cr.n_unmeth, cr.n_covered),
@@ -55,35 +54,31 @@ struct methylome {
   typedef std::pair<m_count_t, m_count_t> m_elem;
   typedef std::vector<m_elem, aligned_allocator<m_elem>> vec;
 
-  [[nodiscard]] auto
-  read(const std::string &filename, const uint32_t n_cpgs = 0) -> int;
+  [[nodiscard]] auto read(const std::string &filename,
+                          const uint32_t n_cpgs = 0) -> int;
 
-  [[nodiscard]] auto
-  write(const std::string &filename, const bool zip = false) const -> int;
+  [[nodiscard]] auto write(const std::string &filename,
+                           const bool zip = false) const -> int;
 
-  auto
-  operator+=(const methylome &rhs) -> methylome&;
+  auto operator+=(const methylome &rhs) -> methylome &;
 
-  [[nodiscard]] auto
-  get_counts(const cpg_index::vec &positions, const std::uint32_t offset,
-             const std::uint32_t start, const std::uint32_t stop) const
-    -> counts_res;
+  [[nodiscard]] auto get_counts(const cpg_index::vec &positions,
+                                const std::uint32_t offset,
+                                const std::uint32_t start,
+                                const std::uint32_t stop) const -> counts_res;
 
-  [[nodiscard]] auto
-  total_counts() const -> counts_res;
+  [[nodiscard]] auto total_counts() const -> counts_res;
 
   // takes only the pair of positions within the methylome::vec
   // and accumulates between those
-  [[nodiscard]] auto
-  get_counts(const std::uint32_t start, const std::uint32_t stop) const
-    -> counts_res;
+  [[nodiscard]] auto get_counts(const std::uint32_t start,
+                                const std::uint32_t stop) const -> counts_res;
 
   // takes a vector of pairs of positions (endpoints; eps) within the
   // methylome::vec and accumulates between each of those pairs of
   // enpoints
   typedef std::pair<std::uint32_t, std::uint32_t> offset_pair;
-  [[nodiscard]] auto
-  get_counts(const std::vector<offset_pair> &eps) const
+  [[nodiscard]] auto get_counts(const std::vector<offset_pair> &eps) const
     -> std::vector<counts_res>;
 
   methylome::vec cpgs{};
@@ -91,6 +86,8 @@ struct methylome {
 };
 
 [[nodiscard]] inline auto
-size(const methylome &m) -> std::size_t { return std::size(m.cpgs); }
+size(const methylome &m) -> std::size_t {
+  return std::size(m.cpgs);
+}
 
 #endif  // SRC_METHYLOME_HPP_

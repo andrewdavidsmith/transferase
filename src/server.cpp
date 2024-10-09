@@ -28,6 +28,7 @@
 #include <boost/lexical_cast.hpp>
 
 #include <cstdint>
+#include <memory>  // make_shared<>
 #include <print>
 #include <string>
 #include <thread>
@@ -35,11 +36,11 @@
 #include <vector>
 
 using std::jthread;
+using std::make_shared;
 using std::println;
 using std::string;
 using std::uint32_t;
 using std::vector;
-using std::make_shared;
 
 namespace asio = boost::asio;
 namespace bs = boost::system;
@@ -56,8 +57,7 @@ server::server(const string &address, const string &port,
 #else
   signals(ioc, SIGINT, SIGTERM),
 #endif
-  acceptor(ioc),
-  handler(methylome_dir, max_live_methylomes, verbose) {
+  acceptor(ioc), handler(methylome_dir, max_live_methylomes, verbose) {
   // io_context ios uses default constructor
 
   do_await_stop();  // start waiting for signals

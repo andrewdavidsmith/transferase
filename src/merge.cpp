@@ -33,12 +33,12 @@
 #include <fstream>
 #include <iostream>
 #include <print>
+#include <ranges>
 #include <string>
 #include <system_error>
 #include <tuple>
 #include <utility>
 #include <vector>
-#include <ranges>
 
 using std::cout;
 using std::error_code;
@@ -48,11 +48,11 @@ using std::ostream;
 using std::pair;
 using std::print;
 using std::println;
+using std::size;
 using std::string;
 using std::tuple;
 using std::uint32_t;
 using std::vector;
-using std::size;
 
 namespace fs = std::filesystem;
 namespace vs = std::views;
@@ -102,7 +102,8 @@ merge_main(int argc, char *argv[]) -> int {
     print("output: {}\n"
           "input files: {}\n",
           output_file, n_inputs);
-    for (const auto &i: input_files) println("{}", i);
+    for (const auto &i : input_files)
+      println("{}", i);
   }
 
   const auto last_file = input_files.back();
@@ -118,7 +119,7 @@ merge_main(int argc, char *argv[]) -> int {
 
   double total_merge_time{};
 
-  for (const auto &filename: input_files | vs::take(n_inputs - 1)) {
+  for (const auto &filename : input_files | vs::take(n_inputs - 1)) {
     methylome tmp{};
     const auto methylome_read_start{hr_clock::now()};
     const auto ret = tmp.read(filename);
@@ -141,7 +142,8 @@ merge_main(int argc, char *argv[]) -> int {
     println(cout, "failed to write methylome to file: {}", output_file);
     return EXIT_FAILURE;
   }
-  const auto total_write_time = duration(methylome_write_start, hr_clock::now());
+  const auto total_write_time =
+    duration(methylome_write_start, hr_clock::now());
 
   if (verbose)
     println("total read time: {:.3}s\n"

@@ -61,23 +61,20 @@ using po::value;
 template <typename T> using num_lim = std::numeric_limits<T>;
 
 struct meth_file {
-  [[nodiscard]] auto
-  open(const string &filename) -> int {
+  [[nodiscard]] auto open(const string &filename) -> int {
     in = gzopen(filename.data(), "rb");
     if (in == nullptr)
       return -1;
     return 0;
   }
 
-  [[nodiscard]] auto
-  read() -> int {
+  [[nodiscard]] auto read() -> int {
     len = gzread(in, buf.data(), buf_size);
     pos = 0;
     return len;
   }
 
-  [[nodiscard]] auto
-  getline(string &line) -> bool {
+  [[nodiscard]] auto getline(string &line) -> bool {
     line.clear();
     if (pos == len && !read())
       return false;
@@ -275,7 +272,8 @@ compress_main(int argc, char *argv[]) -> int {
       return EXIT_SUCCESS;
     }
     po::notify(vm);
-  } catch (po::error &e) {
+  }
+  catch (po::error &e) {
     println("{}", e.what());
     desc.print(std::cout);
     return EXIT_FAILURE;

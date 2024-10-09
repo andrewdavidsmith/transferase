@@ -28,7 +28,8 @@
 #include <format>
 #include <string>
 
-auto response::to_buffer() -> status_code::value {
+auto
+response::to_buffer() -> status_code::value {
   static constexpr auto sz1 = sizeof(status_code::value);
   static constexpr auto sz2 = sizeof(uint32_t);
   std::memcpy(buf.data(), reinterpret_cast<char *>(&status), sz1);
@@ -36,7 +37,8 @@ auto response::to_buffer() -> status_code::value {
   return status;
 }
 
-auto response::from_buffer() -> status_code::value {
+auto
+response::from_buffer() -> status_code::value {
   static constexpr auto sz1 = sizeof(status_code::value);
   static constexpr auto sz2 = sizeof(uint32_t);
   std::memcpy(reinterpret_cast<char *>(&status), buf.data(), sz1);
@@ -44,21 +46,25 @@ auto response::from_buffer() -> status_code::value {
   return status;
 }
 
-auto response::not_found() -> response {
+auto
+response::not_found() -> response {
   return {{}, status_code::methylome_not_found, 0, {}};
 }
 
-auto response::bad_request() -> response {
+auto
+response::bad_request() -> response {
   return {{}, status_code::bad_request, 0, {}};
 }
 
-auto response::summary() const -> std::string {
+auto
+response::summary() const -> std::string {
   static constexpr auto fmt = "status: {}\n"
                               "methylome_size: {}";
   return std::format(fmt, status, methylome_size);
 }
 
-auto response::summary_serial() const -> std::string {
+auto
+response::summary_serial() const -> std::string {
   static constexpr auto fmt = "{{\"status\": {}, \"methylome_size\": {}}}";
   return std::format(fmt, status, methylome_size);
 }

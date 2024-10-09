@@ -25,10 +25,10 @@
  */
 
 #include "bins.hpp"
+#include "check.hpp"
 #include "compress.hpp"
 #include "index.hpp"
 #include "lookup.hpp"
-#include "check.hpp"
 #include "merge.hpp"
 
 #include "lookup_client.hpp"
@@ -75,15 +75,13 @@ struct mc16_command {
   string description;
   std::function<int(const int, const char **)> fun;
 
-  auto
-  operator()(const int argc, const char **argv) const -> int {
+  auto operator()(const int argc, const char **argv) const -> int {
     return fun(argc - 1, argv + 1);
   }
 };
 
 template <> struct std::formatter<mc16_command> : formatter<string> {
-  auto
-  format(const mc16_command &cmd, format_context &ctx) const {
+  auto format(const mc16_command &cmd, format_context &ctx) const {
     static constexpr auto pad_size = 4;
     static constexpr auto pad = string(pad_size, ' ');
     return std::formatter<std::string>::format(
@@ -109,16 +107,8 @@ const pair<string_view, main_fun> commands[] = {
 // clang-format on
 
 constexpr string_view command_names[] = {
-  "index",
-  "compress",
-  "check",
-  "merge",
-  "lookup",
-  "bins",
-  "client",
-  "server",
-  "client-sync",
-  "server-sync",
+  "index", "compress", "check",  "merge",       "lookup",
+  "bins",  "client",   "server", "client-sync", "server-sync",
 };
 
 static auto

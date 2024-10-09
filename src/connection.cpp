@@ -29,6 +29,7 @@
 
 #include <cstdint>  // std::uint32_t, etc.
 #include <print>
+#include <string>
 #include <utility>  // memcpy
 
 using std::println;
@@ -43,7 +44,7 @@ using tcp = asio::ip::tcp;
 
 auto
 connection::prepare_to_read_offsets() -> void {
-  req.offsets.resize(req.n_intervals); // get space for offsets
+  req.offsets.resize(req.n_intervals);  // get space for offsets
   offset_remaining = req.get_offsets_n_bytes();  // init counters
   offset_byte = 0;
 }
@@ -105,7 +106,8 @@ connection::read_offsets() -> void {
           respond_with_header();
         }
         // ADS: keep conditions exclusive
-        else read_offsets();
+        else
+          read_offsets();
       }
       else {
         println("Error reading offsets: {}", ec.message());
@@ -122,11 +124,13 @@ connection::respond_with_header() -> void {
     socket, asio::buffer(resp.buf),
     [this, self](const bs::error_code ec,
                  [[maybe_unused]] const size_t bytes_transferred) {
-      if (!ec) respond_with_counts();
+      if (!ec)
+        respond_with_counts();
       else {
         if (verbose)
           println("Error responding with header: {}"
-                  "Initiating connection shutdown.", ec.message());
+                  "Initiating connection shutdown.",
+                  ec.message());
         bs::error_code ignored_ec{};  // any reason to handle this?
         // graceful connection closure
         socket.shutdown(tcp::socket::shutdown_both, ignored_ec);
@@ -143,7 +147,8 @@ connection::respond_with_counts() -> void {
       if (!ec) {
         if (verbose)
           println("Responded with counts [{} Bytes]. "
-                  "Initiating connection shutdown.", bytes_transferred);
+                  "Initiating connection shutdown.",
+                  bytes_transferred);
         bs::error_code ignored_ec{};  // any reason to handle this?
         // graceful connection closure
         socket.shutdown(tcp::socket::shutdown_both, ignored_ec);
@@ -161,7 +166,8 @@ connection::respond_with_error() -> void {
       if (!ec) {
         if (verbose)
           println("Responded with error [{} Bytes]. "
-                  "Initiating connection shutdown.", bytes_transferred);
+                  "Initiating connection shutdown.",
+                  bytes_transferred);
         bs::error_code ignored_ec{};  // any reason to handle this?
         // graceful connection closure
         socket.shutdown(tcp::socket::shutdown_both, ignored_ec);

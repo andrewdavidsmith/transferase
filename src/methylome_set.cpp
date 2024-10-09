@@ -25,27 +25,28 @@
 
 #include "methylome.hpp"
 
+#include <algorithm>
 #include <cstdint>
-#include <string>
-#include <vector>
-#include <tuple>
-#include <regex>
-#include <iostream>
-#include <unordered_map>
 #include <filesystem>
+#include <iostream>
+#include <mutex>
 #include <print>
 #include <ranges>
-#include <algorithm>
-#include <mutex>
+#include <regex>
+#include <string>
+#include <tuple>
+#include <unordered_map>
+#include <utility>  // std::move
+#include <vector>
 
-using std::string;
-using std::vector;
-using std::size_t;
-using std::tuple;
-using std::unordered_map;
-using std::println;
 using std::make_shared;
 using std::mutex;
+using std::println;
+using std::size_t;
+using std::string;
+using std::tuple;
+using std::unordered_map;
+using std::vector;
 
 namespace rg = std::ranges;
 namespace fs = std::filesystem;
@@ -105,9 +106,8 @@ methylome_set::get_methylome(const string &accession)
       return {nullptr, -1};
     }
 
-    std::tie(meth, std::ignore) =
-      accession_to_methylome.emplace(accession,
-                                     make_shared<methylome>(std::move(m)));
+    std::tie(meth, std::ignore) = accession_to_methylome.emplace(
+      accession, make_shared<methylome>(std::move(m)));
   }
   else
     meth = acc_meth_itr;  // already loaded

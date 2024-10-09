@@ -26,17 +26,20 @@
 
 #include "methylome.hpp"
 
+#include <algorithm>
 #include <cstdint>
 #include <cstdlib>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <tuple>
+#include <unordered_map>
+#include <utility>
 #include <vector>
-#include <mutex>
 
 template <typename T> struct ring_buffer {
   // support queue ops and be iterable
-  ring_buffer(const std::size_t capacity) :
+  explicit ring_buffer(const std::size_t capacity) :
     capacity{capacity}, counter{0}, buf{capacity} {}
   auto push(T t) -> T {
     std::swap(buf[counter++ % capacity], t);

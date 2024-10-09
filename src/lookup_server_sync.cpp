@@ -30,6 +30,7 @@
 #include <boost/asio.hpp>
 #include <boost/program_options.hpp>
 
+#include <algorithm>
 #include <array>
 #include <cassert>
 #include <chrono>
@@ -75,7 +76,8 @@ namespace vs = std::views;
 using hr_clock = std::chrono::high_resolution_clock;
 using tcp = ip::tcp;
 
-[[nodiscard]] static auto is_valid_accession(const string &accession) -> bool {
+[[nodiscard]] static auto
+is_valid_accession(const string &accession) -> bool {
   static constexpr auto experiment_ptrn = R"(^(D|E|S)RX\d+$)";
   std::regex experiment_re(experiment_ptrn);
   return std::regex_search(accession, experiment_re);
@@ -95,8 +97,8 @@ read_accession(tcp::socket &socket) -> tuple<string, bs::error_code> {
 }
 
 template <typename T>
-[[nodiscard]] static inline auto write_value(tcp::socket &socket,
-                                             T value) -> bs::error_code {
+[[nodiscard]] static inline auto
+write_value(tcp::socket &socket, T value) -> bs::error_code {
   bs::error_code error;
   [[maybe_unused]]
   const auto n = asio::write(socket, asio::buffer(&value, sizeof(T)),
@@ -151,8 +153,8 @@ read_vector(tcp::socket &socket, const uint32_t n_items,
   return error;
 }
 
-[[nodiscard]] static auto write_vector(tcp::socket &socket,
-                                       const auto &data) -> bs::error_code {
+[[nodiscard]] static auto
+write_vector(tcp::socket &socket, const auto &data) -> bs::error_code {
   bs::error_code error;
   asio::write(socket, asio::buffer(data), asio::transfer_all(), error);
   return error;
@@ -160,7 +162,7 @@ read_vector(tcp::socket &socket, const uint32_t n_items,
 
 template <typename T> struct ring_buffer {
   // queue ops and iterable
-  ring_buffer(const uint64_t max_size) :
+  explicit ring_buffer(const uint64_t max_size) :
     max_size{max_size}, counter{0}, buf{max_size} {}
   auto push(T t) -> T {
     std::swap(buf[counter++ % max_size], t);
@@ -253,7 +255,8 @@ struct methylome_set {
   unordered_map<string, methylome> accession_to_methylome;
 };
 
-auto lookup_server_sync_main(int argc, char *argv[]) -> int {
+auto
+lookup_server_sync_main(int argc, char *argv[]) -> int {
   static constexpr auto default_max_live_methylomes = 32;
   // static constexpr auto default_log_file = "lookup_server.log";
   static constexpr auto default_port = 5000;
@@ -271,6 +274,7 @@ auto lookup_server_sync_main(int argc, char *argv[]) -> int {
 
   po::options_description desc(description);
   // clang-format off
+  // NOLINTBEGIN
   desc.add_options()
     ("help,h", "produce help message")
     ("index,x", po::value(&index_file)->required(), "index file (consistency check)")
@@ -281,6 +285,7 @@ auto lookup_server_sync_main(int argc, char *argv[]) -> int {
     // ("log,l", po::value(&log_file)->default_value(default_log_file), "log file")
     ("verbose,v", po::bool_switch(&verbose), "print more run info")
     ;
+  // NOLINTEND
   // clang-format on
   try {
     po::variables_map vm;
@@ -327,7 +332,6 @@ auto lookup_server_sync_main(int argc, char *argv[]) -> int {
   tcp::acceptor acceptor(io_context, tcp::endpoint(tcp::v6(), port));
 
   for (;;) {
-
     tcp::socket socket(io_context);
     acceptor.accept(socket);
 
