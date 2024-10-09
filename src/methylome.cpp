@@ -34,6 +34,7 @@
 #include <string>
 #include <utility>  // std::move
 #include <vector>
+#include <cassert>
 
 using std::pair;
 using std::string;
@@ -42,6 +43,7 @@ using std::uint32_t;
 using std::uint8_t;
 using std::vector;
 using std::error_code;
+using std::size;
 
 namespace rg = std::ranges;
 namespace vs = std::views;
@@ -158,6 +160,16 @@ methylome::write(const string &filename, const bool zip) const -> int {
       return -1;
   }
   return 0;
+}
+
+auto
+methylome::operator+=(const methylome &rhs) -> methylome & {
+  assert(size(cpgs) == size(rhs.cpgs));
+  rg::transform(cpgs, rhs.cpgs, begin(cpgs),
+                [](const auto &l, const auto &r) -> m_elem {
+                  return {l.first + r.first, l.second + r.second};
+                });
+  return *this;
 }
 
 [[nodiscard]] auto

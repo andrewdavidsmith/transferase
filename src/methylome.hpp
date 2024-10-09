@@ -30,6 +30,7 @@
 #include <cstdint>
 #include <string>
 #include <vector>
+#include <cstddef>
 
 struct counts_res {
   std::uint32_t n_meth{};
@@ -60,6 +61,9 @@ struct methylome {
   [[nodiscard]] auto
   write(const std::string &filename, const bool zip = false) const -> int;
 
+  auto
+  operator+=(const methylome &rhs) -> methylome&;
+
   [[nodiscard]] auto
   get_counts(const cpg_index::vec &positions, const std::uint32_t offset,
              const std::uint32_t start, const std::uint32_t stop) const
@@ -85,5 +89,8 @@ struct methylome {
   methylome::vec cpgs{};
   static constexpr auto record_size = sizeof(m_elem);
 };
+
+[[nodiscard]] inline auto
+size(const methylome &m) -> std::size_t { return std::size(m.cpgs); }
 
 #endif  // SRC_METHYLOME_HPP_
