@@ -74,12 +74,19 @@ struct methylome {
   [[nodiscard]] auto get_counts(const std::uint32_t start,
                                 const std::uint32_t stop) const -> counts_res;
 
+  typedef std::pair<std::uint32_t, std::uint32_t> offset_pair;
+
   // takes a vector of pairs of positions (endpoints; eps) within the
   // methylome::vec and accumulates between each of those pairs of
   // enpoints
-  typedef std::pair<std::uint32_t, std::uint32_t> offset_pair;
   [[nodiscard]] auto get_counts(const std::vector<offset_pair> &eps) const
     -> std::vector<counts_res>;
+
+  // takes a bins size and a cpg_index and calculates the counts in
+  // each bin along all chromosomes
+  [[nodiscard]] auto
+  get_bins(const std::uint32_t bin_size,
+           const cpg_index &index) const -> std::vector<counts_res>;
 
   methylome::vec cpgs{};
   static constexpr auto record_size = sizeof(m_elem);
