@@ -62,24 +62,6 @@ namespace po = boost::program_options;
 using po::value;
 
 static auto
-bin_counts(cpg_index::vec::const_iterator &posn_itr,
-           const cpg_index::vec::const_iterator posn_end,
-           const uint32_t bin_end, methylome::vec::const_iterator &cpg_itr)
-  -> counts_res {
-  uint32_t n_meth{};
-  uint32_t n_unmeth{};
-  uint32_t n_covered{};
-  while (posn_itr != posn_end && *posn_itr < bin_end) {
-    n_meth += cpg_itr->first;
-    n_unmeth += cpg_itr->second;
-    n_covered += (cpg_itr->first + cpg_itr->second > 0);
-    ++cpg_itr;
-    ++posn_itr;
-  }
-  return {n_meth, n_unmeth, n_covered};
-}
-
-static auto
 write_bins(std::ostream &out, const uint32_t bin_size,
            const cpg_index &index, const vector<counts_res> &results) -> void {
   static constexpr auto buf_size{512};
@@ -184,19 +166,7 @@ bins_main(int argc, char *argv[]) -> int {
     return EXIT_FAILURE;
   }
 
-  vector<counts_res> results;
-  string chrom_name;
-  const auto zipped =
-    vs::zip(index.positions, index.chrom_size, index.chrom_offset);
-  for (const auto [positions, chrom_size, offset] : zipped) {
-    auto posn_itr = cbegin(positions);
-    const auto posn_end = cend(positions);
-    auto cpg_itr = cbegin(meth.cpgs) + offset;
-    for (uint32_t i = 0; i < chrom_size; i += bin_size) {
-      const auto bin_end = min(i + bin_size, chrom_size);
-      results.emplace_back(bin_counts(posn_itr, posn_end, bin_end, cpg_itr));
-    }
-  }
+  const vector<counts_res> results = meth.get_bins(bin_size, index);
 
   write_bins(out, bin_size, index, results);
 
