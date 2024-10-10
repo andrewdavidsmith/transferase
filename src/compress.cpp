@@ -60,12 +60,70 @@ using po::value;
 
 template <typename T> using num_lim = std::numeric_limits<T>;
 
+/*
+  These comments should be associated with xcounts
+
+  The verify_header_line function might detect multiple possible
+  errors and these should each be given a different code:
+
+  -- dnmtools version number(?)
+  -- bad header format
+  -- too many chroms
+  -- missing chroms
+  -- wrong chrom order
+  -- wrong chrom size
+
+  -- There is no consistent chrom order among the assembly.chrom.size
+  -- There seems to be a consistent order within the reference genome files
+ */
+
+enum class compress_err {
+  // clang-format off
+  ok                                         = 0,
+  xcounts_file_open_failure                  = 1,
+  xcounts_file_header_failure                = 2,
+  xcounts_file_chromosome_not_found          = 3,
+  xcounts_file_inconsistent_chromosome_order = 4,
+  xcounts_file_incorrect_chromosome_size     = 5,
+  methylome_compression_failure              = 6,
+  methylome_file_write_failure               = 7,
+  // clang-format on
+};
+
+struct compress_err_cat : std::error_category {
+  const char* name() const noexcept override {
+    return "compress error";
+  }
+  string message(const int condition) const override {
+    using namespace std::string_literals;
+    switch (condition) {
+    case 0: return "ok"s;
+    case 1: return "failed to open methylome file"s;
+    case 2: return "failed to parse xcounts header"s;
+    case 3: return "inconsistent chromosome order"s;
+    case 4: return "incorrect chromosome size"s;
+    case 5: return "failed to find chromosome in xcounts header"s;
+    case 6: return "failed to generate methylome file"s;
+    case 7: return "failed to write methylome file"s;
+    }
+    std::abort();  // unreacheable
+  }
+};
+
+template <>
+struct std::is_error_code_enum<compress_err> : public std::true_type {};
+
+std::error_code make_error_code(compress_err e) {
+  static auto category = compress_err_cat{};
+  return std::error_code(std::to_underlying(e), category);
+}
+
 struct meth_file {
-  [[nodiscard]] auto open(const string &filename) -> int {
+  [[nodiscard]] auto open(const string &filename) -> std::error_code {
     in = gzopen(filename.data(), "rb");
     if (in == nullptr)
-      return -1;
-    return 0;
+      return compress_err::xcounts_file_open_failure;
+    return compress_err::ok;
   }
 
   [[nodiscard]] auto read() -> int {
@@ -83,7 +141,7 @@ struct meth_file {
       if (pos == len && !read())
         return false;
     }
-    ++pos;  // here means buf[pos] == '\n'
+    ++pos;  // if here, then buf[pos] == '\n'
     return true;
   }
 
@@ -123,46 +181,50 @@ get_ch_id(const cpg_index &ci, const string &chrom_name) -> int32_t {
 
 static auto
 verify_header_line(const cpg_index &idx, int32_t &n_chroms_seen,
-                   const string &line) -> bool {
+                   const string &line) -> std::error_code {
   // ignore the version line and the header end line
   if (line.substr(0, 9) == "#DNMTOOLS" || size(line) == 1)
-    return true;
+    return compress_err::ok;
 
   // parse the chrom and its size
   string chrom;
   uint64_t chrom_size{};
   std::istringstream iss{line};
   if (!(iss >> chrom >> chrom_size))
-    return false;
+    return compress_err::xcounts_file_header_failure;
+
   chrom = chrom.substr(1);  // remove leading '#'
 
   // validate the chromosome order is consistent between the index and
   // methylome mc16 file
   const auto order_itr = idx.chrom_index.find(chrom);
   if (order_itr == cend(idx.chrom_index))
-    return false;
+    return compress_err::xcounts_file_chromosome_not_found;
+
   if (n_chroms_seen != order_itr->second)
-    return false;
+    return compress_err::xcounts_file_inconsistent_chromosome_order;
 
   // validate that the chromosome size is the same between the index
   // and the methylome mc16 file
   const auto size_itr = idx.chrom_size[order_itr->second];
   if (chrom_size != size_itr)
-    return false;
+    return compress_err::xcounts_file_incorrect_chromosome_size;
 
   ++n_chroms_seen;  // increment the number of chroms seen in the
                     // methylome file header
-  return true;
+
+  return compress_err::ok;
 }
 
 static auto
 process_cpg_sites(const string &infile, const string &outfile,
-                  const cpg_index &index, const bool zip) -> int {
+                  const cpg_index &index, const bool zip) -> std::error_code {
+
   meth_file mf{};
-  const auto open_ret = mf.open(infile);
-  if (open_ret != 0) {
-    println("failed to open input file: {}", infile);
-    return -1;
+  std::error_code err = mf.open(infile);
+  if (err != compress_err::ok) {
+    println("Error reading xcounts file: {}", infile);
+    return err;
   }
 
   methylome::vec cpgs(index.n_cpgs_total, {0, 0});
@@ -182,9 +244,9 @@ process_cpg_sites(const string &infile, const string &outfile,
     if (line[0] == '#') {
       // consistency check between reference used for the index and
       // reference used for the methylome
-      if (!verify_header_line(index, n_chroms_seen, line)) {
-        println("inconsistent chrom info: {}", line);
-        return -1;
+      if (err = verify_header_line(index, n_chroms_seen, line); err) {
+        println("Error parsing xcounts header line: {}", line);
+        return err;
       }
       continue;  // ADS: early loop exit
     }
@@ -195,8 +257,8 @@ process_cpg_sites(const string &infile, const string &outfile,
 
       const int32_t ch_id = get_ch_id(index, line);
       if (ch_id < 0) {
-        println("failed to find chromosome: {}", line);
-        return -1;
+        println("Failed to find chromosome in index: {}", line);
+        return compress_err::xcounts_file_chromosome_not_found;
       }
 
       cpg_idx_out += add_all_cpgs(prev_ch_id, ch_id, index);
@@ -231,13 +293,21 @@ process_cpg_sites(const string &infile, const string &outfile,
   cpg_idx_out += add_all_cpgs(prev_ch_id, size(index.positions), index);
 
   if (cpg_idx_out != index.n_cpgs_total) {
-    println("failed to build entire compressed file: {}", outfile);
-    return -1;
+    println("Failed to generate mc16 methylome");
+    return compress_err::methylome_compression_failure;
   }
 
   methylome m;
   m.cpgs = std::move(cpgs);
-  return m.write(outfile, zip);
+  const auto ret = m.write(outfile, zip);
+  if (ret != 0) {
+    println("Failed to write mc16 methylome file: {}", outfile);
+    return compress_err::methylome_file_write_failure;
+  }
+
+  assert(err == compress_err::ok);
+
+  return err;
 }
 
 auto
@@ -280,9 +350,9 @@ compress_main(int argc, char *argv[]) -> int {
   }
 
   if (verbose)
-    print("meth: {}\n"
-          "index: {}\n"
-          "output: {}\n"
+    print("methylome file: {}\n"
+          "index file: {}\n"
+          "output file: {}\n"
           "zip: {}\n",
           methylation_input, methylation_output, index_file, zip);
 
@@ -295,5 +365,8 @@ compress_main(int argc, char *argv[]) -> int {
   if (verbose)
     println("{}", index);
 
-  return process_cpg_sites(methylation_input, methylation_output, index, zip);
+  const std::error_code err =
+    process_cpg_sites(methylation_input, methylation_output, index, zip);
+
+  return err ? EXIT_FAILURE : EXIT_SUCCESS;
 }
