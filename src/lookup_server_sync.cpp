@@ -25,6 +25,7 @@
 
 #include "cpg_index.hpp"
 #include "methylome.hpp"
+#include "methylome_set.hpp"
 #include "utilities.hpp"
 
 #include <boost/asio.hpp>
@@ -75,13 +76,6 @@ namespace vs = std::views;
 
 using hr_clock = std::chrono::high_resolution_clock;
 using tcp = ip::tcp;
-
-[[nodiscard]] static auto
-is_valid_accession(const string &accession) -> bool {
-  static constexpr auto experiment_ptrn = R"(^(D|E|S)RX\d+$)";
-  std::regex experiment_re(experiment_ptrn);
-  return std::regex_search(accession, experiment_re);
-}
 
 [[nodiscard]] static auto
 read_accession(tcp::socket &socket) -> tuple<string, bs::error_code> {
@@ -159,101 +153,6 @@ write_vector(tcp::socket &socket, const auto &data) -> bs::error_code {
   asio::write(socket, asio::buffer(data), asio::transfer_all(), error);
   return error;
 }
-
-template <typename T> struct ring_buffer {
-  // queue ops and iterable
-  explicit ring_buffer(const uint64_t max_size) :
-    max_size{max_size}, counter{0}, buf{max_size} {}
-  auto push(T t) -> T {
-    std::swap(buf[counter++ % max_size], t);
-    return t;
-  }
-  auto size() const { return counter < max_size ? counter : max_size; }
-  auto front() const {
-    return buf[counter < max_size ? 0 : (counter + 1) % max_size];
-  }
-
-  auto begin() { return begin(buf); }
-  auto begin() const { return cbegin(buf); }
-  auto end() { return begin(buf) + std::min(counter, max_size); }
-  auto end() const { return cbegin(buf) + std::min(counter, max_size); }
-
-  uint64_t max_size{};
-  uint64_t counter{};
-  vector<T> buf{};
-};
-
-struct methylome_set {
-  methylome_set(const bool verbose, const uint32_t max_live_methylomes,
-                const string &mc16_directory) :
-    verbose{verbose}, max_live_methylomes{max_live_methylomes},
-    mc16_directory{mc16_directory}, accessions{max_live_methylomes} {}
-
-  [[nodiscard]] auto
-  get_methylome(const string &accession) -> tuple<const methylome *, int> {
-    if (!is_valid_accession(accession)) {
-      if (verbose)
-        println(std::cout, "not valid accession: {}", accession);
-      return {nullptr, -1};
-    }
-    if (verbose)
-      println(std::cout, "valid accession: {}", accession);
-
-    unordered_map<string, methylome>::const_iterator meth{};
-
-    // check if methylome is loaded
-    const auto acc_meth_itr = accession_to_methylome.find(accession);
-    if (acc_meth_itr == cend(accession_to_methylome)) {
-      if (verbose)
-        println(std::cout, "methylome not loaded: {}", accession);
-      const auto filename = format("{}/{}.mc16", mc16_directory, accession);
-      if (verbose)
-        println(std::cout, "filename for methylome: {}", filename);
-      if (!fs::exists(filename)) {
-        println(std::cout, "file not found: {}", filename);
-        return {nullptr, -1};
-      }
-      const string to_eject = accessions.push(accession);
-      if (!to_eject.empty()) {
-        const auto to_eject_itr = accession_to_methylome.find(to_eject);
-        if (to_eject_itr == cend(accession_to_methylome)) {
-          if (verbose)
-            println("error ejecting methylome: {}", to_eject);
-          return {nullptr, -2};
-        }
-        accession_to_methylome.erase(to_eject_itr);
-      }
-      methylome m{};
-      if (const auto ec = m.read(filename)) {
-        println("error reading methylome file: {} (error={})", filename, ec);
-        return {nullptr, -1};
-      }
-      std::tie(meth, std::ignore) =
-        accession_to_methylome.emplace(accession, std::move(m));
-    }
-    else
-      meth = acc_meth_itr;  // already loaded
-
-    return {&meth->second, 0};
-  }
-
-  [[nodiscard]] auto summary() const {
-    constexpr auto fmt = "n_live_methylomes: {}\n"
-                         "max_live_methylomes: {}\n"
-                         "mc16_directory: {}\n"
-                         "methylomes:";
-    string r{
-      format(fmt, accessions.size(), max_live_methylomes, mc16_directory)};
-    rg::for_each(accessions, [&](const auto &x) { r += format("\n{}", x); });
-    return r;
-  }
-
-  bool verbose{};
-  uint32_t max_live_methylomes{};
-  string mc16_directory{};
-  ring_buffer<string> accessions;
-  unordered_map<string, methylome> accession_to_methylome;
-};
 
 auto
 lookup_server_sync_main(int argc, char *argv[]) -> int {
