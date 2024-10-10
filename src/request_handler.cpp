@@ -26,6 +26,7 @@
 #include "request.hpp"
 #include "response.hpp"
 #include "utilities.hpp"
+#include "status_code.hpp"
 
 #include <chrono>
 #include <cstdint>
