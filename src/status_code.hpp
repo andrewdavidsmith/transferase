@@ -33,22 +33,22 @@
 namespace status_code {
 enum value : std::uint32_t {
   ok = 0,
-  indeterminate = 1 << 0,
+  indeterminate = 1,
   // parsing request
-  malformed_accession = 1 << 1,
-  malformed_methylome_size = 1 << 2,
-  malformed_n_intervals = 1 << 3,
-  malformed_offsets = 1 << 4,
+  malformed_accession = 2,
+  malformed_methylome_size = 3,
+  malformed_n_intervals = 4,
+  malformed_offsets = 5,
   // handling request
-  invalid_accession = 1 << 5,
-  invalid_methylome_size = 1 << 6,
+  invalid_accession = 6,
+  invalid_methylome_size = 7,
   // server-side problems
-  index_not_found = 1 << 7,
-  methylome_not_found = 1 << 8,
+  index_not_found = 8,
+  methylome_not_found = 9,
   // general server problem
-  server_failure = 1 << 9,
+  server_failure = 10,
   // others
-  bad_request = 1 << 10,
+  bad_request = 11,
 };
 static constexpr std::uint32_t n_codes = 12;
 
@@ -72,13 +72,12 @@ static constexpr std::uint32_t n_codes = 12;
   "bad_request",
 };
 
-}  // end namespace status_code
+}  // namespace status_code
 
 template <>
 struct std::formatter<status_code::value> : std::formatter<std::string> {
   auto format(const status_code::value &v, std::format_context &ctx) const {
-    const auto u = std::bitset<status_code::n_codes>(static_cast<uint32_t>(v));
-    return std::formatter<std::string>::format(u.to_string(), ctx);
+    return std::formatter<std::string>::format(status_code::msg[v], ctx);
   }
 };
 
