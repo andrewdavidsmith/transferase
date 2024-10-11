@@ -121,11 +121,11 @@ struct mc16_client {
       const auto result = resp.from_buffer();
       if (verbose)
         println("Response header: {}", resp.summary_serial());
-      if (result == status_code::ok) {
+      if (result == server_response_code::ok) {
         do_read_counts();
       }
       else {
-        println("Received error: {}", result);
+        println("Received error: {}", make_error_condition(result).message());
         do_finish(err);  // ADS TODO: convert result into an error
       }
     }
