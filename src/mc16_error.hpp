@@ -121,8 +121,8 @@ template <>
 struct std::formatter<std::error_condition> : std::formatter<std::string> {
   auto format(const std::error_condition &e, std::format_context &ctx) const {
     return std::formatter<std::string>::format(
-      std::format(R"({}: "{} {}")",
-                  e.category().name(), e.message(), e.value()), ctx);
+      std::format(R"({}: "{}")",
+                  e.category().name(), e.message()), ctx);
   }
 };
 
@@ -133,8 +133,8 @@ template <>
 struct std::formatter<boost::system::error_code> : std::formatter<std::string> {
   auto format(const boost::system::error_code &e, std::format_context &ctx) const {
     return std::formatter<std::string>::format(
-      std::format(R"({}: "{} {}")",
-                  e.category().name(), e.message(), e.value()), ctx);
+      std::format(R"({}: "{}")",
+                  e.category().name(), e.message()), ctx);
   }
 };
 
