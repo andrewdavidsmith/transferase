@@ -25,29 +25,33 @@
 #define SRC_RESPONSE_HPP_
 
 #include "methylome.hpp"  // for counts_res
-#include "status_code.hpp"
+
+#include "mc16_error.hpp"
 
 #include <array>
 #include <cstdint>
 #include <string>
 #include <vector>
+#include <system_error>
 
 struct response {
   static constexpr std::uint32_t buf_size = 8;  // ADS: possibly not needed
 
   // buffers do not own underlying memory; keep the data alive!
   std::array<char, buf_size> buf{};  // ADS: possibly not needed
-  status_code::value status{};
+  std::error_condition status{make_error_condition(server_response_code::ok)};
   std::uint32_t methylome_size{};
   std::vector<counts_res> counts;  // counts_res from methylome.hpp
 
   auto summary() const -> std::string;
   auto summary_serial() const -> std::string;
 
-  auto is_good() const -> bool { return status == 0; }
+  auto error() const -> bool {
+    return bool(status);
+  }
 
-  auto from_buffer() -> status_code::value;
-  auto to_buffer() -> status_code::value;
+  auto from_buffer() -> std::error_condition;
+  auto to_buffer() -> std::error_condition;
 
   auto get_counts_n_bytes() const -> std::uint32_t {
     return sizeof(counts_res) * size(counts);

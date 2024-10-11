@@ -26,7 +26,8 @@
 #include "request.hpp"
 #include "response.hpp"
 #include "utilities.hpp"
-#include "status_code.hpp"
+
+#include "mc16_error.hpp"
 
 #include <chrono>
 #include <cstdint>
@@ -68,7 +69,7 @@ request_handler::handle_header(const request &req, response &resp) -> void {
   if (!is_valid_accession(req.accession)) {
     if (verbose)
       println("Malformed accession: {}.", req.accession);
-    resp.status = status_code::invalid_accession;
+    resp.status = server_response_code::invalid_accession;
     return;
   }
 
@@ -83,7 +84,7 @@ request_handler::handle_header(const request &req, response &resp) -> void {
   if (get<1>(meth_ec)) {
     if (verbose)
       println("Methylome not found: {}", req.accession);
-    resp.status = status_code::methylome_not_found;
+    resp.status = server_response_code::methylome_not_found;
     return;
   }
 
@@ -92,7 +93,7 @@ request_handler::handle_header(const request &req, response &resp) -> void {
     if (verbose)
       println("Incorrect methylome size (provided={}, expected={}).",
               req.methylome_size, ms.n_total_cpgs);
-    resp.status = status_code::invalid_methylome_size;
+    resp.status = server_response_code::invalid_methylome_size;
     return;
   }
 
@@ -110,7 +111,7 @@ request_handler::handle_get_counts(const request &req, response &resp) -> void {
   if (ec) {
     if (verbose)
       println("Failed to load methylome: {}", ec);
-    resp.status = status_code::server_failure;
+    resp.status = server_response_code::server_failure;
     return;
   }
 
