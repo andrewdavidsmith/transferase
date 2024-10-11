@@ -31,18 +31,27 @@
 #include <string>
 #include <utility>  // pair<>
 #include <vector>
+#include <charconv>
 
 struct request_buffer {
   static constexpr std::uint32_t buf_size = 256;  // full request
   std::array<char, buf_size> buf{};
 };
 
-struct request {
-  typedef std::pair<std::uint32_t, std::uint32_t> offset_type;
-
+struct request_header {
   std::string accession;
   std::uint32_t methylome_size{};
   std::uint32_t request_type{};
+  auto from_buffer(const request_buffer &buf) -> std::from_chars_result;
+  auto to_buffer(request_buffer &buf) -> std::to_chars_result;
+  auto summary() const -> std::string;
+  auto summary_serial() const -> std::string;
+};
+
+struct request {
+  typedef std::pair<std::uint32_t, std::uint32_t> offset_type;
+
+  request_header header;
   std::uint32_t n_intervals{};
   std::vector<offset_type> offsets;
 
