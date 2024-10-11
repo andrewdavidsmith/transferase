@@ -60,7 +60,7 @@ connection::read_request() -> void {
                  [[maybe_unused]] const size_t bytes_transferred) {
       if (!ec) {
         const auto result = req.from_buffer();
-        if (result == status_code::ok) {
+        if (result == request_error_code::ok) {
           if (verbose)
             println("Received request: {}", req.summary_serial());
           handler.handle_header(req, resp);
@@ -76,7 +76,8 @@ connection::read_request() -> void {
         }
         else {  // if (result != status_code::ok) {
           if (verbose)
-            println("Request parse error: {}", result);
+            println("Request parse error: {}",
+                    make_error_code(result).message());
           resp = response::bad_request();
           respond_with_error();
         }
@@ -97,7 +98,8 @@ connection::read_offsets() -> void {
         offset_remaining -= bytes_transferred;
         offset_byte += bytes_transferred;
         if (offset_remaining == 0) {
-          println("Finished reading offsets [{} Bytes].", offset_byte);
+          if (verbose)
+            println("Finished reading offsets [{} Bytes].", offset_byte);
           handler.handle_get_counts(req, resp);
           if (verbose)
             println("Finished methylation counts.");
