@@ -37,17 +37,17 @@ using std::from_chars;
 using std::string;
 
 auto
-request::to_buffer() -> request_error {
+request::to_buffer(request_buffer &buf) -> request_error {
   // ADS: use to_chars here
-  const string s =
-    format("{}\t{}\t{}\n", accession, methylome_size, n_intervals);
-  rg::fill_n(begin(buf), buf_size, 0);
-  rg::copy(s, begin(buf));
+  const string s = format("{}\t{}\t{}\t{}\n", accession, methylome_size,
+                          request_type, n_intervals);
+  rg::fill_n(begin(buf.buf), buf.buf_size, 0);
+  rg::copy(s, begin(buf.buf));
   return request_error::ok;
 }
 
 auto
-request::from_buffer() -> request_error {
+request::from_buffer(const request_buffer &buf) -> request_error {
   static constexpr auto delim = '\t';
   static constexpr auto term = '\n';
 
@@ -55,11 +55,14 @@ request::from_buffer() -> request_error {
   methylome_size = 0;
   n_intervals = 0;
 
-  const auto data_end = cbegin(buf) + buf_size;
-  auto cursor = rg::find(cbegin(buf), data_end, delim);
+  const auto data_end = cbegin(buf.buf) + buf.buf_size;
+  auto cursor = rg::find(cbegin(buf.buf), data_end, delim);
   if (cursor == data_end)
     return request_error::header_parse_error_accession;
-  accession = string(cbegin(buf), rg::distance(cbegin(buf), cursor));
+  accession = string(cbegin(buf.buf), rg::distance(cbegin(buf.buf), cursor));
+
+  // methylome size
+
   if (*cursor++ != delim)
     return request_error::header_parse_error_methylome_size;
   {
@@ -68,6 +71,18 @@ request::from_buffer() -> request_error {
       return request_error::header_parse_error_methylome_size;
     cursor = ptr;
   }
+
+  // request type
+  if (*cursor++ != delim)
+    return status_code::malformed_methylome_size;
+  {
+    const auto [ptr, ec] = from_chars(cursor, data_end, request_type);
+    if (ec != std::errc{})
+      return status_code::malformed_methylome_size;
+    cursor = ptr;
+  }
+
+  // number of intervals
   if (*cursor++ != delim)
     return request_error::lookup_parse_error_n_intervals;
   {
@@ -76,6 +91,7 @@ request::from_buffer() -> request_error {
       return request_error::lookup_parse_error_n_intervals;
     cursor = ptr;
   }
+
   if (*cursor++ != term)
     return request_error::lookup_parse_error_n_intervals;
   return request_error::ok;
@@ -85,14 +101,16 @@ auto
 request::summary() const -> string {
   return format("accession: {}\n"
                 "methylome_size: {}\n"
+                "request_type: {}\n"
                 "n_intervals: {}",
-                accession, methylome_size, n_intervals);
+                accession, methylome_size, request_type, n_intervals);
 }
 
 auto
 request::summary_serial() const -> string {
   return format("{{\"accession\": \"{}\", "
                 "\"methylome_size\": {}, "
+                "\"request_type\": {}, "
                 "\"n_intervals\": {}}}",
-                accession, methylome_size, n_intervals);
+                accession, methylome_size, request_type, n_intervals);
 }

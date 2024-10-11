@@ -32,13 +32,17 @@
 #include <utility>  // pair<>
 #include <vector>
 
+struct request_buffer {
+  static constexpr std::uint32_t buf_size = 256;  // full request
+  std::array<char, buf_size> buf{};
+};
+
 struct request {
-  static constexpr std::uint32_t buf_size = 256;  // full header
   typedef std::pair<std::uint32_t, std::uint32_t> offset_type;
 
-  std::array<char, buf_size> buf{};
   std::string accession;
   std::uint32_t methylome_size{};
+  std::uint32_t request_type{};
   std::uint32_t n_intervals{};
   std::vector<offset_type> offsets;
 
@@ -47,6 +51,9 @@ struct request {
 
   auto from_buffer() -> request_error;
   auto to_buffer() -> request_error;
+
+  auto from_buffer(const request_buffer &buf) -> status_code::value;
+  auto to_buffer(request_buffer &buf) -> status_code::value;
 
   auto get_offsets_n_bytes() const -> uint32_t {
     return sizeof(offset_type) * size(offsets);
