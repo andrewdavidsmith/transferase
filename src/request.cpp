@@ -23,7 +23,7 @@
 
 #include "request.hpp"
 
-#include "status_code.hpp"
+#include "mc16_error.hpp"
 
 #include <algorithm>
 #include <charconv>
@@ -62,7 +62,6 @@ request::from_buffer(const request_buffer &buf) -> request_error {
   accession = string(cbegin(buf.buf), rg::distance(cbegin(buf.buf), cursor));
 
   // methylome size
-
   if (*cursor++ != delim)
     return request_error::header_parse_error_methylome_size;
   {
@@ -74,11 +73,11 @@ request::from_buffer(const request_buffer &buf) -> request_error {
 
   // request type
   if (*cursor++ != delim)
-    return status_code::malformed_methylome_size;
+    return request_error::header_parse_error_request_type;
   {
     const auto [ptr, ec] = from_chars(cursor, data_end, request_type);
     if (ec != std::errc{})
-      return status_code::malformed_methylome_size;
+      return request_error::header_parse_error_request_type;
     cursor = ptr;
   }
 

@@ -52,8 +52,8 @@ struct request {
   auto from_buffer() -> request_error;
   auto to_buffer() -> request_error;
 
-  auto from_buffer(const request_buffer &buf) -> status_code::value;
-  auto to_buffer(request_buffer &buf) -> status_code::value;
+  auto from_buffer(const request_buffer &buf) -> request_error;
+  auto to_buffer(request_buffer &buf) -> request_error;
 
   auto get_offsets_n_bytes() const -> uint32_t {
     return sizeof(offset_type) * size(offsets);
