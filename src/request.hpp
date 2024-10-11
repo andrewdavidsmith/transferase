@@ -45,8 +45,8 @@ struct request {
   auto summary() const -> std::string;
   auto summary_serial() const -> std::string;
 
-  auto from_buffer() -> request_error_code;
-  auto to_buffer() -> request_error_code;
+  auto from_buffer() -> request_error;
+  auto to_buffer() -> request_error;
 
   auto get_offsets_n_bytes() const -> uint32_t {
     return sizeof(offset_type) * size(offsets);
