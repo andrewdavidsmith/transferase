@@ -23,54 +23,86 @@
 
 #include "response.hpp"
 #include "mc16_error.hpp"
+#include "utilities.hpp"
 
+#include <algorithm>
 #include <cstring>
 #include <format>
 #include <string>
+#include <ranges>
 
 using std::string;
+using std::format;
+
+namespace rg = std::ranges;
 
 auto
-response::to_buffer() -> std::error_condition {
-  const int v = static_cast<int>(status.value());
-  static constexpr auto sz1 = sizeof(int);
-  static constexpr auto sz2 = sizeof(uint32_t);
-  std::memcpy(buf.data(), reinterpret_cast<const char *>(&v), sz1);
-  std::memcpy(buf.data() + sz1, reinterpret_cast<const char *>(&methylome_size), sz2);
-  return status;
+to_chars(char *first, [[maybe_unused]] char *last,
+         const response_header &hdr) -> mc16_to_chars_result {
+  // ADS: use to_chars here
+  const string s = format("{}\t{}\n", hdr.status.value(), hdr.methylome_size);
+  assert(ssize(s) < std::distance(first, last));
+  auto data_end = rg::copy(s, first);  // in_out_result
+  return {data_end.out, request_error::ok};
 }
 
 auto
-response::from_buffer() -> std::error_condition {
-  static constexpr auto sz1 = sizeof(int);
-  static constexpr auto sz2 = sizeof(uint32_t);
+from_chars(const char *first, const char *last,
+           response_header &hdr) -> mc16_from_chars_result {
+  static constexpr auto delim = '\t';
+  static constexpr auto term = '\n';
+
+  auto cursor = first;
+
+  // status
   int v{};
-  std::memcpy(reinterpret_cast<char *>(&v), buf.data(), sz1);
-  status = make_error_condition(static_cast<server_response_code>(v));
-  std::memcpy(reinterpret_cast<char *>(&methylome_size), buf.data() + sz1, sz2);
-  return status;
+  {
+    const auto [ptr, ec] = std::from_chars(cursor, last, v);
+    if (ec != std::errc{})
+      return {ptr, server_response_code::server_failure};
+    cursor = ptr;
+  }
+  hdr.status = make_error_condition(static_cast<server_response_code>(v));
+
+  if (*cursor != delim)
+    return {cursor, server_response_code::server_failure};
+  ++cursor;
+
+  // methylome size
+  {
+    const auto [ptr, ec] = std::from_chars(cursor, last, hdr.methylome_size);
+    if (ec != std::errc{})
+      return {ptr, server_response_code::server_failure};
+    cursor = ptr;
+  }
+
+  // terminator
+  if (*cursor != term)
+    return {cursor, server_response_code::server_failure};
+  ++cursor;
+
+  return {cursor, server_response_code::ok};
 }
 
 auto
-response::not_found() -> response {
-  return {
-    {}, server_response_code::methylome_not_found, 0, {}};
+response_header::not_found() -> response_header {
+  return {server_response_code::methylome_not_found, 0};
 }
 
 auto
-response::bad_request() -> response {
-  return {{}, server_response_code::bad_request, 0, {}};
+response_header::bad_request() -> response_header {
+  return {server_response_code::bad_request, 0};
 }
 
 auto
-response::summary() const -> string {
-  static constexpr auto fmt = R"({}: "{}"\nmethylome_size: {})";
+response_header::summary() const -> string {
+  static constexpr auto fmt = "{}: \"{}\"\nmethylome_size: {}";
   return std::format(fmt, status.category().name(), status.message(),
                      methylome_size);
 }
 
 auto
-response::summary_serial() const -> string {
+response_header::summary_serial() const -> string {
   static constexpr auto fmt = R"({{"{}": "{}", "methylome_size": {}}})";
   return std::format(fmt, status.category().name(), status.message(),
                      methylome_size);
