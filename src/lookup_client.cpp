@@ -125,7 +125,7 @@ struct mc16_client {
         do_read_counts();
       }
       else {
-        println("Received error: {}", make_error_condition(result).message());
+        println("Received error: {}", result);
         do_finish(err);  // ADS TODO: convert result into an error
       }
     }
