@@ -24,7 +24,7 @@
 #ifndef SRC_REQUEST_HPP_
 #define SRC_REQUEST_HPP_
 
-#include "status_code.hpp"
+#include "mc16_error.hpp"
 
 #include <array>
 #include <cstdint>
@@ -45,8 +45,8 @@ struct request {
   auto summary() const -> std::string;
   auto summary_serial() const -> std::string;
 
-  auto from_buffer() -> status_code::value;
-  auto to_buffer() -> status_code::value;
+  auto from_buffer() -> request_error_code;
+  auto to_buffer() -> request_error_code;
 
   auto get_offsets_n_bytes() const -> uint32_t {
     return sizeof(offset_type) * size(offsets);

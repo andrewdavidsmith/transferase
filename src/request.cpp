@@ -37,17 +37,17 @@ using std::from_chars;
 using std::string;
 
 auto
-request::to_buffer() -> status_code::value {
+request::to_buffer() -> request_error_code {
   // ADS: use to_chars here
   const string s =
     format("{}\t{}\t{}\n", accession, methylome_size, n_intervals);
   rg::fill_n(begin(buf), buf_size, 0);
   rg::copy(s, begin(buf));
-  return status_code::ok;
+  return request_error_code::ok;
 }
 
 auto
-request::from_buffer() -> status_code::value {
+request::from_buffer() -> request_error_code {
   static constexpr auto delim = '\t';
   static constexpr auto term = '\n';
 
@@ -58,27 +58,27 @@ request::from_buffer() -> status_code::value {
   const auto data_end = cbegin(buf) + buf_size;
   auto cursor = rg::find(cbegin(buf), data_end, delim);
   if (cursor == data_end)
-    return status_code::malformed_accession;
+    return request_error_code::header_parse_error_accession;
   accession = string(cbegin(buf), rg::distance(cbegin(buf), cursor));
   if (*cursor++ != delim)
-    return status_code::malformed_methylome_size;
+    return request_error_code::header_parse_error_methylome_size;
   {
     const auto [ptr, ec] = from_chars(cursor, data_end, methylome_size);
     if (ec != std::errc{})
-      return status_code::malformed_methylome_size;
+      return request_error_code::header_parse_error_methylome_size;
     cursor = ptr;
   }
   if (*cursor++ != delim)
-    return status_code::malformed_n_intervals;
+    return request_error_code::lookup_parse_error_n_intervals;
   {
     const auto [ptr, ec] = from_chars(cursor, data_end, n_intervals);
     if (ec != std::errc{})
-      return status_code::malformed_n_intervals;
+      return request_error_code::lookup_parse_error_n_intervals;
     cursor = ptr;
   }
   if (*cursor++ != term)
-    return status_code::malformed_n_intervals;
-  return status_code::ok;
+    return request_error_code::lookup_parse_error_n_intervals;
+  return request_error_code::ok;
 }
 
 auto
