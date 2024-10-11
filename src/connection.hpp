@@ -31,6 +31,7 @@
 
 #include <array>
 #include <cstddef>
+#include <cstdint>
 #include <memory>  // std::shared_ptr
 #include <utility>  // std::move
 
@@ -55,6 +56,7 @@ struct connection : public std::enable_shared_from_this<connection> {
   auto respond_with_error() -> void;   // write error header
   auto respond_with_counts() -> void;  // write counts
 
+  request_buffer buf;
   boost::asio::ip::tcp::socket socket;  // this connection's socket
   request req;                          // this connection's request
   request_handler &handler;             // handles incoming requests

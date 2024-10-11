@@ -55,11 +55,11 @@ connection::read_request() -> void {
   auto self(shared_from_this());
   // default capturing 'this' puts names in search
   asio::async_read(
-    socket, asio::buffer(req.buf), asio::transfer_exactly(req.buf_size),
+    socket, asio::buffer(buf.buf), asio::transfer_exactly(request_buffer::buf_size),
     [this, self](const bs::error_code ec,
                  [[maybe_unused]] const size_t bytes_transferred) {
       if (!ec) {
-        const std::error_condition req_err = req.from_buffer();
+        const std::error_condition req_err = req.from_buffer(buf);
         if (!req_err) {
           if (verbose)
             println("Received request: {}", req.summary_serial());
