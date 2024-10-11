@@ -92,11 +92,11 @@ struct mc16_client {
       if (verbose)
         println("Connected to server: {}",
                 boost::lexical_cast<string>(socket.remote_endpoint()));
-      req.to_buffer();  // ADS: remove copying from this?
+      req.to_buffer(buf);  // ADS: remove copying from this?
       asio::async_write(
         socket,
         vector<asio::const_buffer>{
-          asio::buffer(req.buf),
+          asio::buffer(buf.buf),
           asio::buffer(req.offsets),
         },
         std::bind(&mc16_client::handle_write_request, this, ph::error));
@@ -155,6 +155,7 @@ struct mc16_client {
 
   tcp::resolver resolver;
   tcp::socket socket;
+  request_buffer buf;
   request req;
   response resp;
   bool verbose{};
@@ -232,9 +233,9 @@ lookup_client_main(int argc, char *argv[]) -> int {
     println("Elapsed time to get offsets: {:.3}s",
             duration(get_offsets_start, get_offsets_stop));
 
-  request req{{},
-              accession,
+  request req{accession,
               index.n_cpgs_total,
+              0,  // ADS TODO: turn this into an enum?
               static_cast<uint32_t>(size(offsets)),
               offsets};
 
