@@ -31,8 +31,8 @@
 using std::string;
 
 auto
-response::to_buffer() -> server_response_code {
-  const int v = static_cast<int>(status);
+response::to_buffer() -> std::error_condition {
+  const int v = static_cast<int>(status.value());
   static constexpr auto sz1 = sizeof(int);
   static constexpr auto sz2 = sizeof(uint32_t);
   std::memcpy(buf.data(), reinterpret_cast<const char *>(&v), sz1);
@@ -41,19 +41,20 @@ response::to_buffer() -> server_response_code {
 }
 
 auto
-response::from_buffer() -> server_response_code {
+response::from_buffer() -> std::error_condition {
   static constexpr auto sz1 = sizeof(int);
   static constexpr auto sz2 = sizeof(uint32_t);
   int v{};
   std::memcpy(reinterpret_cast<char *>(&v), buf.data(), sz1);
-  status = static_cast<server_response_code>(v);
+  status = make_error_condition(static_cast<server_response_code>(v));
   std::memcpy(reinterpret_cast<char *>(&methylome_size), buf.data() + sz1, sz2);
   return status;
 }
 
 auto
 response::not_found() -> response {
-  return {{}, server_response_code::methylome_not_found, 0, {}};
+  return {
+    {}, server_response_code::methylome_not_found, 0, {}};
 }
 
 auto
@@ -63,13 +64,14 @@ response::bad_request() -> response {
 
 auto
 response::summary() const -> string {
-  static constexpr auto fmt = "{}\n"
-                              "methylome_size: {}";
-  return std::format(fmt, status, methylome_size);
+  static constexpr auto fmt = R"({}: "{}"\nmethylome_size: {})";
+  return std::format(fmt, status.category().name(), status.message(),
+                     methylome_size);
 }
 
 auto
 response::summary_serial() const -> string {
-  static constexpr auto fmt = R"({{{}, "methylome_size": {}}})";
-  return std::format(fmt, status, methylome_size);
+  static constexpr auto fmt = R"({{"{}": "{}", "methylome_size": {}}})";
+  return std::format(fmt, status.category().name(), status.message(),
+                     methylome_size);
 }
