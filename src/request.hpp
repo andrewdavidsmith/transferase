@@ -25,44 +25,42 @@
 #define SRC_REQUEST_HPP_
 
 #include "mc16_error.hpp"
+#include "utilities.hpp"
 
 #include <array>
 #include <cstdint>
 #include <string>
 #include <utility>  // pair<>
 #include <vector>
-#include <charconv>
+#include <system_error>
 
-struct request_buffer {
-  static constexpr std::uint32_t buf_size = 256;  // full request
-  std::array<char, buf_size> buf{};
-};
+static constexpr std::uint32_t request_buf_size = 256;  // full request
+typedef std::array<char, request_buf_size> request_buffer;
 
 struct request_header {
   std::string accession;
   std::uint32_t methylome_size{};
   std::uint32_t request_type{};
-  auto from_buffer(const request_buffer &buf) -> std::from_chars_result;
-  auto to_buffer(request_buffer &buf) -> std::to_chars_result;
   auto summary() const -> std::string;
   auto summary_serial() const -> std::string;
 };
 
+auto
+to_chars(char *first, char *last,
+         const request_header &header) -> mc16_to_chars_result;
+
+auto
+from_chars(const char *first, const char *last,
+           request_header &header) -> mc16_from_chars_result;
+
 struct request {
   typedef std::pair<std::uint32_t, std::uint32_t> offset_type;
 
-  request_header header;
   std::uint32_t n_intervals{};
   std::vector<offset_type> offsets;
 
   auto summary() const -> std::string;
   auto summary_serial() const -> std::string;
-
-  auto from_buffer() -> request_error;
-  auto to_buffer() -> request_error;
-
-  auto from_buffer(const request_buffer &buf) -> request_error;
-  auto to_buffer(request_buffer &buf) -> request_error;
 
   auto get_offsets_n_bytes() const -> uint32_t {
     return sizeof(offset_type) * size(offsets);
@@ -71,5 +69,13 @@ struct request {
     return reinterpret_cast<char *>(offsets.data());
   }
 };
+
+auto
+to_chars(char *first, char *last,
+         const request &header) -> mc16_to_chars_result;
+
+auto
+from_chars(const char *first, const char *last,
+           request &header) -> mc16_from_chars_result;
 
 #endif  // SRC_REQUEST_HPP_
