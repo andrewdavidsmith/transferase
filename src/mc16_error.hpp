@@ -24,6 +24,8 @@
 #ifndef SRC_MC16_ERROR_HPP_
 #define SRC_MC16_ERROR_HPP_
 
+#include <boost/system.hpp>
+
 #include <format>
 #include <cstdint>
 #include <string>
@@ -31,7 +33,7 @@
 #include <system_error>
 #include <utility>
 
-enum class request_error_code : std::uint32_t {
+enum class request_error : std::uint32_t {
   ok = 0,
   header_parse_error_accession = 1,
   header_parse_error_methylome_size = 2,
@@ -40,16 +42,16 @@ enum class request_error_code : std::uint32_t {
   lookup_error_offsets = 5,
 };
 
-static constexpr std::uint32_t request_error_code_n = 6;
+static constexpr std::uint32_t request_error_n = 6;
 
-// register request_header_parse_error as error code enum
+// register request_error as error condition enum
 template <>
-struct std::is_error_code_enum<request_error_code> : public std::true_type {};
+struct std::is_error_condition_enum<request_error> : public std::true_type {};
 
 // category to provide text descriptions
 struct request_error_category : std::error_category {
   const char* name() const noexcept override {
-    return "mc16_request";
+    return "request_error";
   }
   std::string message(int condition) const override {
     using namespace std::string_literals;
@@ -65,15 +67,8 @@ struct request_error_category : std::error_category {
   }
 };
 
-// mapping from error code enum to category
 inline
-std::error_code make_error_code(request_error_code e) {
-  static auto category = request_error_category{};
-  return std::error_code(std::to_underlying(e), category);
-}
-
-inline
-std::error_condition make_error_condition(request_error_code e) {
+std::error_condition make_error_condition(request_error e) {
   static auto category = request_error_category{};
   return std::error_condition(std::to_underlying(e), category);
 }
@@ -93,12 +88,12 @@ static constexpr std::uint32_t server_response_code_n = 8;
 
 // register request_header_parse_error as error code enum
 template <> struct
-std::is_error_code_enum<server_response_code> : public std::true_type {};
+std::is_error_condition_enum<server_response_code> : public std::true_type {};
 
 // category to provide text descriptions
 struct server_response_category : std::error_category {
   const char* name() const noexcept override {
-    return "mc16_server_response";
+    return "server_response";
   }
   std::string message(int condition) const override {
     using namespace std::string_literals;
@@ -116,13 +111,6 @@ struct server_response_category : std::error_category {
   }
 };
 
-// mapping from error code enum to category
-inline
-std::error_code make_error_code(server_response_code e) {
-  static auto category = server_response_category{};
-  return std::error_code(std::to_underlying(e), category);
-}
-
 inline
 std::error_condition make_error_condition(server_response_code e) {
   static auto category = server_response_category{};
@@ -130,20 +118,23 @@ std::error_condition make_error_condition(server_response_code e) {
 }
 
 template <>
-struct std::formatter<request_error_code> : std::formatter<std::string> {
-  auto format(const request_error_code &e, std::format_context &ctx) const {
-    const auto ec = make_error_condition(e);
+struct std::formatter<std::error_condition> : std::formatter<std::string> {
+  auto format(const std::error_condition &e, std::format_context &ctx) const {
     return std::formatter<std::string>::format(
-      std::format(R"({}: "{}")", ec.category().name(), ec.message()), ctx);
+      std::format(R"({}: "{} {}")",
+                  e.category().name(), e.message(), e.value()), ctx);
   }
 };
 
+/*
+  Helper to print messages from boost::system::error_code
+ */
 template <>
-struct std::formatter<server_response_code> : std::formatter<std::string> {
-  auto format(const server_response_code &e, std::format_context &ctx) const {
-    const auto ec = make_error_condition(e);
+struct std::formatter<boost::system::error_code> : std::formatter<std::string> {
+  auto format(const boost::system::error_code &e, std::format_context &ctx) const {
     return std::formatter<std::string>::format(
-      std::format(R"("{}": "{}")", ec.category().name(), ec.message()), ctx);
+      std::format(R"({}: "{} {}")",
+                  e.category().name(), e.message(), e.value()), ctx);
   }
 };
 
