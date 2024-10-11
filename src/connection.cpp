@@ -59,25 +59,24 @@ connection::read_request() -> void {
     [this, self](const bs::error_code ec,
                  [[maybe_unused]] const size_t bytes_transferred) {
       if (!ec) {
-        const auto result = req.from_buffer();
-        if (result == request_error_code::ok) {
+        const std::error_condition req_err = req.from_buffer();
+        if (!req_err) {
           if (verbose)
             println("Received request: {}", req.summary_serial());
           handler.handle_header(req, resp);
-          if (resp.is_good()) {
-            prepare_to_read_offsets();
-            read_offsets();
-          }
-          else {
+          if (resp.error()) {
             if (verbose)
               println("Responding with error: {}", resp.summary_serial());
             respond_with_error();
           }
+          else {
+            prepare_to_read_offsets();
+            read_offsets();
+          }
         }
-        else {  // if (result != status_code::ok) {
+        else {  // if (req_err != status_code::ok) {
           if (verbose)
-            println("Request parse error: {}",
-                    make_error_code(result).message());
+            println("Request parse error: {}", req_err); // .message());
           resp = response::bad_request();
           respond_with_error();
         }
@@ -112,7 +111,7 @@ connection::read_offsets() -> void {
           read_offsets();
       }
       else {
-        println("Error reading offsets: {}", ec.message());
+        println("Error reading offsets: {}", ec);
         respond_with_error();
       }
     });
@@ -131,8 +130,7 @@ connection::respond_with_header() -> void {
       else {
         if (verbose)
           println("Error responding with header: {}"
-                  "Initiating connection shutdown.",
-                  ec.message());
+                  "Initiating connection shutdown.", ec);
         bs::error_code ignored_ec{};  // any reason to handle this?
         // graceful connection closure
         socket.shutdown(tcp::socket::shutdown_both, ignored_ec);
