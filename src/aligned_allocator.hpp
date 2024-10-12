@@ -30,11 +30,12 @@
 #include <numeric>
 
 template <class T> struct aligned_allocator {
+  static constexpr std::size_t align_at = 4096;
   typedef T value_type;
   [[nodiscard]] T *allocate(const std::size_t n) {
     if (n > std::numeric_limits<std::size_t>::max() / sizeof(T))
       throw std::bad_array_new_length();
-    if (auto p = static_cast<T *>(std::aligned_alloc(4096, n * sizeof(T))))
+    if (auto p = static_cast<T *>(std::aligned_alloc(align_at, n * sizeof(T))))
       return p;
     throw std::bad_alloc();
   }
