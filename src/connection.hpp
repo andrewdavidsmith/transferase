@@ -34,6 +34,7 @@
 #include <cstdint>
 #include <memory>  // std::shared_ptr
 #include <utility>  // std::move
+#include <system_error>  // std::error_condition
 
 struct request_handler;
 
@@ -49,17 +50,20 @@ struct connection : public std::enable_shared_from_this<connection> {
 
   auto prepare_to_read_offsets() -> void;
 
-  auto read_request() -> void;  // read header of request
+  auto read_request() -> void;  // read request
   auto read_offsets() -> void;  // read offsets part of request
 
   auto respond_with_header() -> void;  // write good header
   auto respond_with_error() -> void;   // write error header
   auto respond_with_counts() -> void;  // write counts
 
-  request_buffer buf;
   boost::asio::ip::tcp::socket socket;  // this connection's socket
-  request req;                          // this connection's request
   request_handler &handler;             // handles incoming requests
+  request_buffer req_buf;
+  request_header req_hdr;               // this connection's request header
+  request req;                          // this connection's request
+  response_buffer resp_buf;
+  response_header resp_hdr;             // header of the response
   response resp;                        // response to send back
 
   bool verbose{};
