@@ -34,9 +34,6 @@
 #include "lookup_client.hpp"
 #include "lookup_server.hpp"
 
-#include "lookup_client_sync.hpp"
-#include "lookup_server_sync.hpp"
-
 #include <config.h>
 
 #include <boost/program_options.hpp>
@@ -91,24 +88,30 @@ template <> struct std::formatter<mc16_command> : formatter<string> {
 
 typedef std::function<int(int, char **)> main_fun;
 
-// clang-format off
 const pair<string_view, main_fun> commands[] = {
+  // clang-format off
   {"index", index_main},
   {"compress", compress_main},
   {"check", check_main},
   {"lookup", lookup_main},
   {"merge", merge_main},
   {"bins", bins_main},
-  {"client", lookup_client_main},
-  {"server", lookup_server_main},
-  {"lookup-client", lookup_client_sync_main},
-  {"lookup-server", lookup_server_sync_main},
+  {"lookup-remote", lookup_client_main},
+  {"lookup-server", lookup_server_main},
+  // clang-format on
 };
-// clang-format on
 
 constexpr string_view command_names[] = {
-  "index", "compress", "check",  "merge",       "lookup",
-  "bins",  "client",   "server", "client-sync", "server-sync",
+  // clang-format off
+  "index",
+  "compress",
+  "check",
+  "merge",
+  "lookup",
+  "bins",
+  "lookup-remote",
+  "lookup-server",
+  //clang-format on
 };
 
 static auto
