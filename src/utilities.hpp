@@ -42,12 +42,12 @@
 
 struct mc16_to_chars_result {
   char *ptr{};
-  std::error_condition e{};
+  std::error_code e{};
 };
 
 struct mc16_from_chars_result {
   const char *ptr{};
-  std::error_condition e{};
+  std::error_code e{};
 };
 
 auto
