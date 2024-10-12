@@ -72,10 +72,10 @@ struct request {
 
 auto
 to_chars(char *first, char *last,
-         const request &header) -> mc16_to_chars_result;
+         const request &req) -> mc16_to_chars_result;
 
 auto
 from_chars(const char *first, const char *last,
-           request &header) -> mc16_from_chars_result;
+           request &req) -> mc16_from_chars_result;
 
 #endif  // SRC_REQUEST_HPP_
