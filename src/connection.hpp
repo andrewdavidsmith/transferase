@@ -34,7 +34,6 @@
 #include <cstdint>
 #include <memory>  // std::shared_ptr
 #include <utility>  // std::move
-#include <system_error>  // std::error_condition
 
 struct request_handler;
 
