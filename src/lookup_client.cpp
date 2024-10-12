@@ -32,7 +32,6 @@
 #include "methylome.hpp"
 #include "request.hpp"
 #include "response.hpp"
-#include "status_code.hpp"
 #include "utilities.hpp"
 
 #include <array>
@@ -45,6 +44,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <system_error>
 
 using std::array;
 using std::cerr;
@@ -72,7 +72,7 @@ struct mc16_client {
               bool verbose = false) :
     resolver(io_context), socket(io_context),
     req_hdr{req_hdr},
-    req{std::move(req)},  // part might be big
+    req{std::move(req)},  // part of req might be big
     verbose{verbose} {
     resolver.async_resolve(
       server, port,
@@ -86,8 +86,11 @@ struct mc16_client {
         socket, endpoints,
         std::bind(&mc16_client::handle_connect, this, ph::error));
     }
-    else if (verbose)
-      println("Error resolving server: {}", err.message());
+    else {
+      status = err;
+      if (verbose)
+        println("Error resolving server: {}", status.message());
+    }
   }
 
   void handle_connect(const bs::error_code &err) {
@@ -97,8 +100,8 @@ struct mc16_client {
                 boost::lexical_cast<string>(socket.remote_endpoint()));
       const auto [hdr_ptr, hdr_err] =
         to_chars(req_buf.data(), req_buf.data() + request_buf_size, req_hdr);
-      // req.to_buffer(buf);  // ADS: remove copying from this?
       if (hdr_err) {
+        status = err;
         if (verbose)
           println("Error forming request header: {}", hdr_err.message());
       }
@@ -106,6 +109,7 @@ struct mc16_client {
         const auto [req_ptr, req_err] =
           to_chars(hdr_ptr, req_buf.data() + request_buf_size, req);
         if (req_err) {
+          status = err;
           if (verbose)
             println("Error forming request: {}", req_err.message());
         }
@@ -120,8 +124,11 @@ struct mc16_client {
         }
       }
     }
-    else if (verbose)
-      println("Error connecting: {}", err.message());
+    else {
+      status = err;
+      if (verbose)
+        println("Error connecting: {}", err.message());
+    }
   }
 
   auto handle_write_request(const bs::error_code &err) -> void {
@@ -130,8 +137,11 @@ struct mc16_client {
         socket, asio::buffer(resp_buf), asio::transfer_exactly(response_buf_size),
         std::bind(&mc16_client::handle_read_response_header, this, ph::error));
     }
-    else if (verbose)
-      println("Error writing request: {}", err.message());
+    else {
+      status = err;
+      if (verbose)
+        println("Error writing request: {}", err.message());
+    }
   }
 
   auto handle_read_response_header(const bs::error_code &err) -> void {
@@ -141,8 +151,9 @@ struct mc16_client {
                                                    resp_buf.data() + response_buf_size,
                                                    resp_hdr);
       if (resp_err) {
+        status = resp_err;
         println("Received error: {}", resp_err);
-        do_response_header_error(resp_err);  // ADS TODO: convert result into an error
+        do_response_header_error(resp_err);
       }
       else {
         if (verbose)
@@ -150,8 +161,11 @@ struct mc16_client {
         do_read_counts();
       }
     }
-    else if (verbose)
-      println("Error reading response header: {}", err.message());
+    else {
+      status = err;
+      if (verbose)
+        println("Error reading response header: {}", err.message());
+    }
   }
 
   auto do_read_counts() -> void {
@@ -162,26 +176,28 @@ struct mc16_client {
                      std::bind(&mc16_client::do_finish, this, ph::error));
   }
 
-  // ADS: need to move to using status codes as we probably don't
-  // really care here about the bs::error_code here
-  // auto do_finish(const status_code::value status) const -> void
-  // auto do_finish(const bs::error_code &err) const -> void {
-  auto do_finish(const bs::error_code &err) const -> void {
-    if (!err) {  // status == status_code::ok
+  auto do_finish(const bs::error_code &err) -> void {
+    if (!err) {
       if (verbose)
-        println("Completing transaction: {}", err.message());  // status
+        println("Completing transaction: {}", err.message());
     }
-    else if (verbose)
-      println("Error reading counts: {}", err.message());  // status
+    else {
+      status = err;
+      if (verbose)
+        println("Error reading counts: {}", err.message());
+    }
   }
 
-  auto do_response_header_error(const std::error_condition &err) const -> void {
-    if (!err) {  // status == status_code::ok
+  auto do_response_header_error(const std::error_code &err) -> void {
+    if (!err) {
       if (verbose)
-        println("Completing transaction: {}", err.message());  // status
+        println("Completing transaction: {}", err.message());
     }
-    else if (verbose)
-      println("Error reading counts: {}", err.message());  // status
+    else {
+      status = err;
+      if (verbose)
+        println("Error reading counts: {}", err.message());
+    }
   }
 
   tcp::resolver resolver;
@@ -192,6 +208,7 @@ struct mc16_client {
   response_buffer resp_buf;
   response_header resp_hdr;
   response resp;
+  std::error_code status;
   bool verbose{};
 };
 
@@ -201,6 +218,7 @@ lookup_client_main(int argc, char *argv[]) -> int {
   static const auto description = "client";
 
   bool verbose{};
+  bool debug{};
 
   string port{};
   string accession{};
@@ -220,6 +238,7 @@ lookup_client_main(int argc, char *argv[]) -> int {
     ("intervals,i", po::value(&intervals_file)->required(), "intervals file")
     ("output,o", po::value(&output_file)->required(), "output file")
     ("verbose,v", po::bool_switch(&verbose), "print more run info")
+    ("debug,d", po::bool_switch(&debug), "print debug info")
     ;
   // clang-format on
   try {
@@ -236,6 +255,7 @@ lookup_client_main(int argc, char *argv[]) -> int {
     desc.print(cerr);
     return EXIT_FAILURE;
   }
+  verbose = verbose || debug;  // if debug, then verbose
 
   if (verbose)
     print("accession: {}\n"
@@ -271,16 +291,20 @@ lookup_client_main(int argc, char *argv[]) -> int {
   request req{static_cast<uint32_t>(size(offsets)), offsets};
 
   asio::io_context io_context;
-  mc16_client mc16c(io_context, hostname, port, hdr, req, verbose);
+  mc16_client mc16c(io_context, hostname, port, hdr, req, debug);
   const auto client_start{hr_clock::now()};
   io_context.run();
   const auto client_stop{hr_clock::now()};
-  if (verbose)
-    println("Elapsed time for query: {:.3}s",
-            duration(client_start, client_stop));
 
   if (verbose)
-    println("Response summary:\n{}", mc16c.resp_hdr.summary());
+    println("Elapsed time for query: {:.3}s\n"
+            "Response header: {}\n"
+            R"(Transaction status: "{}")",
+            duration(client_start, client_stop),
+            mc16c.resp_hdr.summary_serial(), mc16c.status.message());
+
+  if (mc16c.status)
+    return EXIT_FAILURE;
 
   std::ofstream out(output_file);
   if (!out) {
@@ -292,7 +316,7 @@ lookup_client_main(int argc, char *argv[]) -> int {
   write_intervals(out, index, gis, mc16c.resp.counts);
   const auto output_stop{hr_clock::now()};
   if (verbose)
-    println("elapsed time for output: {:.3}s",
+    println("Elapsed time for output: {:.3}s",
             duration(output_start, output_stop));
 
   return EXIT_SUCCESS;
