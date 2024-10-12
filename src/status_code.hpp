@@ -37,20 +37,21 @@ enum value : std::uint32_t {
   // parsing request
   malformed_accession = 2,
   malformed_methylome_size = 3,
-  malformed_n_intervals = 4,
-  malformed_offsets = 5,
+  malformed_request_type = 4,
+  malformed_n_intervals = 5,
+  malformed_offsets = 6,
   // handling request
-  invalid_accession = 6,
-  invalid_methylome_size = 7,
+  invalid_accession = 7,
+  invalid_methylome_size = 8,
   // server-side problems
-  index_not_found = 8,
-  methylome_not_found = 9,
+  index_not_found = 9,
+  methylome_not_found = 10,
   // general server problem
-  server_failure = 10,
+  server_failure = 11,
   // others
-  bad_request = 11,
+  bad_request = 12,
 };
-static constexpr std::uint32_t n_codes = 12;
+static constexpr std::uint32_t n_codes = 13;
 
 [[maybe_unused]] static const char *msg[] = {
   "ok",
@@ -58,6 +59,7 @@ static constexpr std::uint32_t n_codes = 12;
   // parsing request
   "malformed_accession",
   "malformed_methylome_size",
+  "malformed_request_type",
   "malformed_n_intervals",
   "malformed_offsets",
   // handling request

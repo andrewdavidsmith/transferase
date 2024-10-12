@@ -23,7 +23,7 @@
 
 #include "request.hpp"
 
-#include "status_code.hpp"
+#include "mc16_error.hpp"
 
 #include <algorithm>
 #include <charconv>
@@ -35,64 +35,123 @@ namespace rg = std::ranges;
 using std::format;
 using std::from_chars;
 using std::string;
+using std::ssize;
 
 auto
-request::to_buffer() -> request_error {
+to_chars(char *first, [[maybe_unused]] char *last,
+         const request_header &header) -> mc16_to_chars_result {
   // ADS: use to_chars here
-  const string s =
-    format("{}\t{}\t{}\n", accession, methylome_size, n_intervals);
-  rg::fill_n(begin(buf), buf_size, 0);
-  rg::copy(s, begin(buf));
-  return request_error::ok;
+  const string s = format("{}\t{}\t{}\n", header.accession,
+                          header.methylome_size, header.request_type);
+  assert(ssize(s) < std::distance(first, last));
+  auto data_end = rg::copy(s, first);  // rg::in_out_result
+  return {data_end.out, request_error::ok};
 }
 
 auto
-request::from_buffer() -> request_error {
+from_chars(const char *first, const char *last,
+           request_header &header) -> mc16_from_chars_result {
   static constexpr auto delim = '\t';
   static constexpr auto term = '\n';
 
-  accession.clear();
-  methylome_size = 0;
-  n_intervals = 0;
+  header.methylome_size = 0;
+  header.request_type = 0;
 
-  const auto data_end = cbegin(buf) + buf_size;
-  auto cursor = rg::find(cbegin(buf), data_end, delim);
-  if (cursor == data_end)
-    return request_error::header_parse_error_accession;
-  accession = string(cbegin(buf), rg::distance(cbegin(buf), cursor));
-  if (*cursor++ != delim)
-    return request_error::header_parse_error_methylome_size;
+  // accession
+  header.accession.clear();
+  auto cursor = std::find(first, last, delim);
+
+  if (cursor == last)
+    return {cursor, request_error::header_parse_error_accession};
+  header.accession = string(first, std::distance(first, cursor));
+
+  // methylome size
+  if (*cursor != delim)
+    return {cursor, request_error::header_parse_error_methylome_size};
+  ++cursor;
   {
-    const auto [ptr, ec] = from_chars(cursor, data_end, methylome_size);
+    const auto [ptr, ec] = from_chars(cursor, last, header.methylome_size);
     if (ec != std::errc{})
-      return request_error::header_parse_error_methylome_size;
+      return {ptr, request_error::header_parse_error_methylome_size};
     cursor = ptr;
   }
-  if (*cursor++ != delim)
-    return request_error::lookup_parse_error_n_intervals;
+
+  // request type
+  if (*cursor != delim)
+    return {cursor, request_error::header_parse_error_request_type};
+  ++cursor;
   {
-    const auto [ptr, ec] = from_chars(cursor, data_end, n_intervals);
+    const auto [ptr, ec] = from_chars(cursor, last, header.request_type);
     if (ec != std::errc{})
-      return request_error::lookup_parse_error_n_intervals;
+      return {ptr, request_error::header_parse_error_request_type};
     cursor = ptr;
   }
-  if (*cursor++ != term)
-    return request_error::lookup_parse_error_n_intervals;
-  return request_error::ok;
+
+  if (*cursor != term)
+    return {cursor, request_error::header_parse_error_request_type};
+  ++cursor;
+
+  return {cursor, request_error::ok};
 }
 
 auto
-request::summary() const -> string {
+request_header::summary() const -> string {
   return format("accession: {}\n"
                 "methylome_size: {}\n"
-                "n_intervals: {}",
-                accession, methylome_size, n_intervals);
+                "request_type: {}",
+                accession, methylome_size, request_type);
+}
+
+auto
+request_header::summary_serial() const -> string {
+  return format(R"({{"accession": "{}", )"
+                R"("methylome_size": {}, )"
+                R"("request_type": {}}})",
+                accession, methylome_size, request_type);
+}
+
+// request
+
+auto
+request::summary() const -> string {
+  return format("n_intervals: {}", n_intervals);
 }
 
 auto
 request::summary_serial() const -> string {
-  return format("{{\"accession\": \"{}\", "
-                "\"methylome_size\": {}, "
-                "\"n_intervals\": {}}}",
-                accession, methylome_size, n_intervals);
+  return format(R"({{"n_intervals": {}}})", n_intervals);
+}
+
+auto
+to_chars(char *first, [[maybe_unused]] char *last,
+         const request &req) -> mc16_to_chars_result {
+  // ADS: use to_chars here
+  const string s = format("{}\n", req.n_intervals);
+  assert(ssize(s) < std::distance(first, last));
+  auto data_end = rg::copy(s, first);  // rg::in_out_result
+  return {data_end.out, request_error::ok};
+}
+
+auto
+from_chars(const char *first, const char *last,
+           request &req) -> mc16_from_chars_result {
+  [[maybe_unused]] static constexpr auto delim = '\t';
+  static constexpr auto term = '\n';
+
+  auto cursor = first;
+
+  // number of intervals
+  {
+    const auto [ptr, ec] = from_chars(cursor, last, req.n_intervals);
+    if (ec != std::errc{})
+      return {ptr, request_error::lookup_parse_error_n_intervals};
+    cursor = ptr;
+  }
+
+  // terminator
+  if (*cursor != term)
+    return {cursor, request_error::lookup_parse_error_n_intervals};
+  ++cursor;
+
+  return {cursor, request_error::ok};
 }

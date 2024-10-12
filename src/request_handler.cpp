@@ -60,63 +60,71 @@ is_valid_accession(const string &accession) -> bool {
 // need the offsets to have been allocated or have any values read
 // into them.
 auto
-request_handler::handle_header(const request &req, response &resp) -> void {
-  // ADS: just to be sure?
-  resp.methylome_size = 0;
-  resp.counts.clear();
+request_handler::handle_header(const request_header &req_hdr,
+                               response_header &resp_hdr) -> void {
+  resp_hdr.methylome_size = 0;
 
   // verify that the accession makes sense
-  if (!is_valid_accession(req.accession)) {
+  if (!is_valid_accession(req_hdr.accession)) {
     if (verbose)
-      println("Malformed accession: {}.", req.accession);
-    resp.status = server_response_code::invalid_accession;
+      println("Malformed accession: {}.", req_hdr.accession);
+    resp_hdr.status = server_response_code::invalid_accession;
     return;
   }
 
   // ADS TODO: move more of this into methylome_set?
 
   const auto get_methylome_start{hr_clock::now()};
-  const auto meth_ec = ms.get_methylome(req.accession);
+  const auto meth_ec = ms.get_methylome(req_hdr.accession);
   const auto get_methylome_stop{hr_clock::now()};
   if (verbose)
     println("Elapsed time for get methylome: {:.3}s",
             duration(get_methylome_start, get_methylome_stop));
   if (get<1>(meth_ec)) {
     if (verbose)
-      println("Methylome not found: {}", req.accession);
-    resp.status = server_response_code::methylome_not_found;
+      println("Methylome not found: {}", req_hdr.accession);
+    resp_hdr.status = server_response_code::methylome_not_found;
     return;
   }
 
   // confirm that the methylome size is as expected
-  if (req.methylome_size != ms.n_total_cpgs) {
+  if (req_hdr.methylome_size != ms.n_total_cpgs) {
     if (verbose)
       println("Incorrect methylome size (provided={}, expected={}).",
-              req.methylome_size, ms.n_total_cpgs);
-    resp.status = server_response_code::invalid_methylome_size;
+              req_hdr.methylome_size, ms.n_total_cpgs);
+    resp_hdr.status = server_response_code::invalid_methylome_size;
     return;
   }
 
   // ADS TODO: set up the methylome for loading here?
   /* This would involve the methylome_set */
 
-  // ADS TODO: allocate the space to start reading offsets?
-  resp.methylome_size = req.methylome_size;
+  // ADS TODO: allocate the space to start reading offsets? Can't do
+  // that if the number of intervals is not yet known
+  resp_hdr.methylome_size = req_hdr.methylome_size;
 }
 
 auto
-request_handler::handle_get_counts(const request &req, response &resp) -> void {
+request_handler::handle_get_counts(const request_header &req_hdr,
+                                   const request &req,
+                                   response_header &resp_hdr,
+                                   response &resp) -> void {
+  // ADS TODO: can this matter? Will it get cleared somewhere
+  // automatically?
+  resp.counts.clear();
+
   // assume methylome availability has been determined
-  const auto [m, ec] = ms.get_methylome(req.accession);
+  const auto [m, ec] = ms.get_methylome(req_hdr.accession);
   if (ec) {
     if (verbose)
       println("Failed to load methylome: {}", ec);
-    resp.status = server_response_code::server_failure;
+    // keep methylome size in response header
+    resp_hdr.status = server_response_code::server_failure;
     return;
   }
 
   if (verbose)
-    println("Computing counts for methylome: {}", req.accession);
+    println("Computing counts for methylome: {}", req_hdr.accession);
 
   // generate the counts
   resp.counts = m->get_counts(req.offsets);

@@ -34,10 +34,21 @@
 #include <numeric>
 #include <ostream>
 #include <vector>
+#include <system_error>
 
 #include "cpg_index.hpp"
 #include "genomic_interval.hpp"
 #include "methylome.hpp"
+
+struct mc16_to_chars_result {
+  char *ptr{};
+  std::error_code e{};
+};
+
+struct mc16_from_chars_result {
+  const char *ptr{};
+  std::error_code e{};
+};
 
 auto
 write_intervals(std::ostream &out, const cpg_index &index,

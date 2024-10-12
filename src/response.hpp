@@ -27,6 +27,7 @@
 #include "methylome.hpp"  // for counts_res
 
 #include "mc16_error.hpp"
+#include "utilities.hpp"
 
 #include <array>
 #include <cstdint>
@@ -34,31 +35,39 @@
 #include <vector>
 #include <system_error>
 
-struct response {
-  static constexpr std::uint32_t buf_size = 8;  // ADS: possibly not needed
+static constexpr std::uint32_t response_buf_size = 256;  // how much needed?
+// buffers do not own underlying memory; keep the data alive!
+typedef std::array<char, response_buf_size> response_buffer;
 
-  // buffers do not own underlying memory; keep the data alive!
-  std::array<char, buf_size> buf{};  // ADS: possibly not needed
-  std::error_condition status{make_error_condition(server_response_code::ok)};
+struct response_header {
+  std::error_code status{make_error_code(server_response_code::ok)};
   std::uint32_t methylome_size{};
-  std::vector<counts_res> counts;  // counts_res from methylome.hpp
-
-  auto summary() const -> std::string;
-  auto summary_serial() const -> std::string;
 
   auto error() const -> bool {
     return bool(status);
   }
 
-  auto from_buffer() -> std::error_condition;
-  auto to_buffer() -> std::error_condition;
+  auto summary() const -> std::string;
+  auto summary_serial() const -> std::string;
+
+  static response_header not_found();
+  static response_header bad_request();
+};
+
+auto
+to_chars(char *first, char *last,
+         const response_header &header) -> mc16_to_chars_result;
+
+auto
+from_chars(const char *first, const char *last,
+           response_header &header) -> mc16_from_chars_result;
+
+struct response {
+  std::vector<counts_res> counts;  // counts_res from methylome.hpp
 
   auto get_counts_n_bytes() const -> std::uint32_t {
     return sizeof(counts_res) * size(counts);
   }
-
-  static response not_found();
-  static response bad_request();
 };
 
 #endif  // SRC_RESPONSE_HPP_

@@ -28,8 +28,10 @@
 
 #include <string>
 
-struct response;
+struct request_header;
 struct request;
+struct response_header;
+struct response;
 
 // handles all incoming requests
 struct request_handler {
@@ -42,9 +44,13 @@ struct request_handler {
     methylome_dir{methylome_dir},
     ms(verbose, max_live_methylomes, methylome_dir), verbose{verbose} {}
 
-  auto handle_header(const request &req, response &resp) -> void;
+  auto handle_header(const request_header &req_hdr,
+                     response_header &resp_hdr) -> void;
 
-  auto handle_get_counts(const request &req, response &resp) -> void;
+  auto handle_get_counts(const request_header &req_hdr,
+                         const request &req,
+                         response_header &resp_hdr,
+                         response &resp) -> void;
 
   std::string methylome_dir;   // dir of available methylomes
   std::string cpg_index_file;  // file with cpg_index
