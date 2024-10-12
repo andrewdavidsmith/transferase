@@ -40,6 +40,7 @@
 #include <string>
 #include <tuple>
 #include <vector>
+#include <chrono>
 
 using std::array;
 using std::cbegin;
@@ -57,6 +58,7 @@ using std::vector;
 
 namespace rg = std::ranges;
 namespace vs = std::views;
+using hr_clock = std::chrono::high_resolution_clock;
 
 namespace po = boost::program_options;
 using po::value;
@@ -117,17 +119,23 @@ bins_main(int argc, char *argv[]) -> int {
 
   methylome meth{};
   if (meth.read(meth_file, index.n_cpgs_total) != 0) {
-    println(cerr, "failed to read methylome: {}", meth_file);
+    println(cerr, "Failed to read methylome: {}", meth_file);
     return EXIT_FAILURE;
   }
 
   ofstream out(output_file);
   if (!out) {
-    println(cerr, "failed to open output file: {}", output_file);
+    println(cerr, "Failed to open output file: {}", output_file);
     return EXIT_FAILURE;
   }
 
+  const auto get_bins_start{hr_clock::now()};
   const vector<counts_res> results = meth.get_bins(bin_size, index);
+  const auto get_bins_stop{hr_clock::now()};
+
+  if (verbose)
+    println("Elapsed time to get bins: {:.3}s",
+            duration(get_bins_start, get_bins_stop));
 
   write_bins(out, bin_size, index, results);
 
