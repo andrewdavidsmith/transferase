@@ -40,7 +40,7 @@ static constexpr std::uint32_t response_buf_size = 256;  // how much needed?
 typedef std::array<char, response_buf_size> response_buffer;
 
 struct response_header {
-  std::error_condition status{make_error_condition(server_response_code::ok)};
+  std::error_code status{make_error_code(server_response_code::ok)};
   std::uint32_t methylome_size{};
 
   auto error() const -> bool {
@@ -64,12 +64,6 @@ from_chars(const char *first, const char *last,
 
 struct response {
   std::vector<counts_res> counts;  // counts_res from methylome.hpp
-
-  // auto summary() const -> std::string;
-  // auto summary_serial() const -> std::string;
-
-  // auto from_buffer() -> std::error_condition;
-  // auto to_buffer() -> std::error_condition;
 
   auto get_counts_n_bytes() const -> std::uint32_t {
     return sizeof(counts_res) * size(counts);
