@@ -32,8 +32,8 @@
 #include <array>
 #include <cstdint>
 #include <string>
-#include <vector>
 #include <system_error>
+#include <vector>
 
 static constexpr std::uint32_t response_buf_size = 256;  // how much needed?
 // buffers do not own underlying memory; keep the data alive!
@@ -43,9 +43,7 @@ struct response_header {
   std::error_code status{make_error_code(server_response_code::ok)};
   std::uint32_t methylome_size{};
 
-  auto error() const -> bool {
-    return bool(status);
-  }
+  auto error() const -> bool { return bool(status); }
 
   auto summary() const -> std::string;
   auto summary_serial() const -> std::string;

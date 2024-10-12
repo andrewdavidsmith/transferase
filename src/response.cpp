@@ -28,11 +28,11 @@
 #include <algorithm>
 #include <cstring>
 #include <format>
-#include <string>
 #include <ranges>
+#include <string>
 
-using std::string;
 using std::format;
+using std::string;
 
 namespace rg = std::ranges;
 

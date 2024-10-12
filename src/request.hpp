@@ -30,9 +30,9 @@
 #include <array>
 #include <cstdint>
 #include <string>
+#include <system_error>
 #include <utility>  // pair<>
 #include <vector>
-#include <system_error>
 
 static constexpr std::uint32_t request_buf_size = 256;  // full request
 typedef std::array<char, request_buf_size> request_buffer;

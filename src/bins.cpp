@@ -31,6 +31,7 @@
 #include <algorithm>
 #include <array>
 #include <cassert>
+#include <cstdint>
 #include <format>
 #include <fstream>
 #include <iostream>
@@ -39,7 +40,6 @@
 #include <string>
 #include <tuple>
 #include <vector>
-#include <cstdint>
 
 using std::array;
 using std::cbegin;
@@ -62,8 +62,8 @@ namespace po = boost::program_options;
 using po::value;
 
 static auto
-write_bins(std::ostream &out, const uint32_t bin_size,
-           const cpg_index &index, const vector<counts_res> &results) -> void {
+write_bins(std::ostream &out, const uint32_t bin_size, const cpg_index &index,
+           const vector<counts_res> &results) -> void {
   static constexpr auto buf_size{512};
   static constexpr auto delim{'\t'};
 
