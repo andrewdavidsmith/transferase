@@ -55,29 +55,42 @@ connection::read_request() -> void {
   auto self(shared_from_this());
   // default capturing 'this' puts names in search
   asio::async_read(
-    socket, asio::buffer(buf.buf), asio::transfer_exactly(request_buffer::buf_size),
+    socket, asio::buffer(req_buf), asio::transfer_exactly(request_buf_size),
     [this, self](const bs::error_code ec,
                  [[maybe_unused]] const size_t bytes_transferred) {
       if (!ec) {
-        const std::error_condition req_err = req.from_buffer(buf);
-        if (!req_err) {
+        const auto [req_hdr_ptr, req_hdr_err] =
+          from_chars(req_buf.data(), req_buf.data() + request_buf_size, req_hdr);
+        // std::error_condition req_err = req.from_buffer(buf);
+        if (!req_hdr_err) {
           if (verbose)
-            println("Received request: {}", req.summary_serial());
-          handler.handle_header(req, resp);
-          if (resp.error()) {
+            println("Received request header: {}", req_hdr.summary_serial());
+          handler.handle_header(req_hdr, resp_hdr);
+          if (resp_hdr.error()) {
             if (verbose)
-              println("Responding with error: {}", resp.summary_serial());
+              println("Responding with error: {}", resp_hdr.summary_serial());
             respond_with_error();
           }
           else {
-            prepare_to_read_offsets();
-            read_offsets();
+            const auto [req_ptr, req_err] =
+              from_chars(req_hdr_ptr, req_buf.data() + request_buf_size, req);
+            if (req_err) {
+              if (verbose)
+                println("Request parse error: {}", req_err); // .message());
+              // ADS TODO: this is a failure to parse the request non-hdr
+              resp_hdr = response_header::bad_request();
+              respond_with_error();
+            }
+            else {
+              prepare_to_read_offsets();
+              read_offsets();
+            }
           }
         }
         else {  // if (req_err != status_code::ok) {
           if (verbose)
-            println("Request parse error: {}", req_err); // .message());
-          resp = response::bad_request();
+            println("Request parse error: {}", req_hdr_err); // .message());
+          resp_hdr = response_header::bad_request();
           respond_with_error();
         }
       }
@@ -99,11 +112,11 @@ connection::read_offsets() -> void {
         if (offset_remaining == 0) {
           if (verbose)
             println("Finished reading offsets [{} Bytes].", offset_byte);
-          handler.handle_get_counts(req, resp);
+          handler.handle_get_counts(req_hdr, req, resp_hdr, resp);
           if (verbose)
             println("Finished methylation counts.");
           if (verbose)
-            println("Responding with header: {}", resp.summary_serial());
+            println("Responding with header: {}", resp_hdr.summary_serial());
           respond_with_header();
         }
         // ADS: keep conditions exclusive
@@ -120,22 +133,35 @@ connection::read_offsets() -> void {
 auto
 connection::respond_with_header() -> void {
   auto self(shared_from_this());
-  resp.to_buffer();  // ADS: must do this before write
-  asio::async_write(
-    socket, asio::buffer(resp.buf),
-    [this, self](const bs::error_code ec,
-                 [[maybe_unused]] const size_t bytes_transferred) {
-      if (!ec)
-        respond_with_counts();
-      else {
-        if (verbose)
-          println("Error responding with header: {}"
-                  "Initiating connection shutdown.", ec);
-        bs::error_code ignored_ec{};  // any reason to handle this?
-        // graceful connection closure
-        socket.shutdown(tcp::socket::shutdown_both, ignored_ec);
-      }
-    });
+  const auto [resp_ptr, resp_err] = to_chars(resp_buf.data(),
+                                             resp_buf.data() + response_buf_size,
+                                             resp_hdr);
+  if (resp_err) {
+    if (verbose)
+      println("Error responding with header: {} "
+              "Initiating connection shutdown.", resp_err);
+    bs::error_code ignored_ec{};  // any reason to handle this?
+    // graceful connection closure
+    socket.shutdown(tcp::socket::shutdown_both, ignored_ec);
+  }
+  else {
+    // resp.to_buffer();  // ADS: must do this before write
+    asio::async_write(
+      socket, asio::buffer(resp_buf),
+      [this, self](const bs::error_code ec,
+                   [[maybe_unused]] const size_t bytes_transferred) {
+        if (!ec)
+          respond_with_counts();
+        else {
+          if (verbose)
+            println("Error responding with header: {}"
+                    "Initiating connection shutdown.", ec);
+          bs::error_code ignored_ec{};  // any reason to handle this?
+          // graceful connection closure
+          socket.shutdown(tcp::socket::shutdown_both, ignored_ec);
+        }
+      });
+  }
 }
 
 auto
@@ -159,18 +185,30 @@ connection::respond_with_counts() -> void {
 auto
 connection::respond_with_error() -> void {
   auto self(shared_from_this());
-  resp.to_buffer();  // ADS: must do this before write
-  asio::async_write(
-    socket, asio::buffer(resp.buf),
-    [this, self](const bs::error_code ec, const size_t bytes_transferred) {
-      if (!ec) {
-        if (verbose)
-          println("Responded with error [{} Bytes]. "
-                  "Initiating connection shutdown.",
-                  bytes_transferred);
-        bs::error_code ignored_ec{};  // any reason to handle this?
+  const auto [resp_ptr, resp_err] =
+    from_chars(resp_buf.data(), resp_buf.data() + response_buf_size, resp_hdr);
+  if (resp_err) {
+    if (verbose)
+      println("Error responding with header: {}"
+              "Initiating connection shutdown.",
+              resp_err);
+    bs::error_code ignored_ec{};  // any reason to handle this?
+    // graceful connection closure
+    socket.shutdown(tcp::socket::shutdown_both, ignored_ec);
+  }
+  else {
+    asio::async_write(
+      socket, asio::buffer(resp_buf),
+      [this, self](const bs::error_code ec, const size_t bytes_transferred) {
+        if (!ec) {
+          if (verbose)
+            println("Responded with error [{} Bytes]. "
+                    "Initiating connection shutdown.",
+                    bytes_transferred);
+          bs::error_code ignored_ec{};  // any reason to handle this?
         // graceful connection closure
-        socket.shutdown(tcp::socket::shutdown_both, ignored_ec);
-      }
-    });
+          socket.shutdown(tcp::socket::shutdown_both, ignored_ec);
+        }
+      });
+  }
 }
