@@ -247,8 +247,8 @@ methylome::total_counts() const -> counts_res {
 static auto
 bin_counts(cpg_index::vec::const_iterator &posn_itr,
            const cpg_index::vec::const_iterator posn_end,
-           const uint32_t bin_end, methylome::vec::const_iterator &cpg_itr)
-  -> counts_res {
+           const uint32_t bin_end,
+           methylome::vec::const_iterator &cpg_itr) -> counts_res {
   uint32_t n_meth{};
   uint32_t n_unmeth{};
   uint32_t n_covered{};
@@ -265,7 +265,6 @@ bin_counts(cpg_index::vec::const_iterator &posn_itr,
 [[nodiscard]] auto
 methylome::get_bins(const uint32_t bin_size,
                     const cpg_index &index) const -> vector<counts_res> {
-
   // ADS TODO: reserve n_bins
   vector<counts_res> results;
 

@@ -42,9 +42,9 @@
 #include <print>
 #include <ranges>
 #include <string>
+#include <system_error>
 #include <utility>
 #include <vector>
-#include <system_error>
 
 using std::array;
 using std::cerr;
@@ -70,8 +70,7 @@ struct mc16_client {
   mc16_client(asio::io_context &io_context, const string &server,
               const string &port, request_header &req_hdr, request &req,
               bool verbose = false) :
-    resolver(io_context), socket(io_context),
-    req_hdr{req_hdr},
+    resolver(io_context), socket(io_context), req_hdr{req_hdr},
     req{std::move(req)},  // part of req might be big
     verbose{verbose} {
     resolver.async_resolve(
@@ -134,7 +133,8 @@ struct mc16_client {
   auto handle_write_request(const bs::error_code &err) -> void {
     if (!err) {
       asio::async_read(
-        socket, asio::buffer(resp_buf), asio::transfer_exactly(response_buf_size),
+        socket, asio::buffer(resp_buf),
+        asio::transfer_exactly(response_buf_size),
         std::bind(&mc16_client::handle_read_response_header, this, ph::error));
     }
     else {
@@ -147,9 +147,8 @@ struct mc16_client {
   auto handle_read_response_header(const bs::error_code &err) -> void {
     if (!err) {
       // ADS: convert the buffer into the values
-      const auto [resp_ptr, resp_err] = from_chars(resp_buf.data(),
-                                                   resp_buf.data() + response_buf_size,
-                                                   resp_hdr);
+      const auto [resp_ptr, resp_err] = from_chars(
+        resp_buf.data(), resp_buf.data() + response_buf_size, resp_hdr);
       if (resp_err) {
         status = resp_err;
         println("Received error: {}", resp_err);

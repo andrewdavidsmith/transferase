@@ -26,11 +26,11 @@
 
 #include <boost/system.hpp>
 
-#include <format>
 #include <cstdint>
+#include <format>
 #include <string>
-#include <type_traits>
 #include <system_error>
+#include <type_traits>
 #include <utility>
 
 enum class request_error : std::uint32_t {
@@ -51,26 +51,31 @@ struct std::is_error_code_enum<request_error> : public std::true_type {};
 
 // category to provide text descriptions
 struct request_error_category : std::error_category {
-  const char* name() const noexcept override {
-    return "request_error";
-  }
+  const char *name() const noexcept override { return "request_error"; }
   std::string message(int code) const override {
-    using namespace std::string_literals;
-    switch(code) {
-    case 0: return "ok"s;
-    case 1: return "header parse error accession"s;
-    case 2: return "header parse error methylome size"s;
-    case 3: return "header parse error request type"s;
-    case 4: return "lookup parse error n_intervals"s;
-    case 5: return "lookup error reading offsets"s;
-    case 6: return "lookup error offsets"s;
+    using std::string_literals::operator""s;
+    switch (code) {
+    case 0:
+      return "ok"s;
+    case 1:
+      return "header parse error accession"s;
+    case 2:
+      return "header parse error methylome size"s;
+    case 3:
+      return "header parse error request type"s;
+    case 4:
+      return "lookup parse error n_intervals"s;
+    case 5:
+      return "lookup error reading offsets"s;
+    case 6:
+      return "lookup error offsets"s;
     }
-    std::abort(); // unreacheable
+    std::abort();  // unreacheable
   }
 };
 
-inline
-std::error_code make_error_code(request_error e) {
+inline std::error_code
+make_error_code(request_error e) {
   static auto category = request_error_category{};
   return std::error_code(std::to_underlying(e), category);
 }
@@ -89,32 +94,38 @@ enum class server_response_code : std::uint32_t {
 static constexpr std::uint32_t server_response_code_n = 8;
 
 // register request_header_parse_error as error code enum
-template <> struct
-std::is_error_code_enum<server_response_code> : public std::true_type {};
+template <>
+struct std::is_error_code_enum<server_response_code> : public std::true_type {};
 
 // category to provide text descriptions
 struct server_response_category : std::error_category {
-  const char* name() const noexcept override {
-    return "server_response";
-  }
+  const char *name() const noexcept override { return "server_response"; }
   std::string message(int code) const override {
-    using namespace std::string_literals;
-    switch(code) {
-    case 0: return "ok"s;
-    case 1: return "invalid accession"s;
-    case 2: return "invalid request type"s;
-    case 3: return "invalid methylome size"s;
-    case 4: return "methylome not found"s;
-    case 5: return "index not found"s;
-    case 6: return "server failure"s;
-    case 7: return "bad request"s;
+    using std::string_literals::operator""s;
+    switch (code) {
+    case 0:
+      return "ok"s;
+    case 1:
+      return "invalid accession"s;
+    case 2:
+      return "invalid request type"s;
+    case 3:
+      return "invalid methylome size"s;
+    case 4:
+      return "methylome not found"s;
+    case 5:
+      return "index not found"s;
+    case 6:
+      return "server failure"s;
+    case 7:
+      return "bad request"s;
     }
-    std::abort(); // unreacheable
+    std::abort();  // unreacheable
   }
 };
 
-inline
-std::error_code make_error_code(server_response_code e) {
+inline std::error_code
+make_error_code(server_response_code e) {
   static auto category = server_response_category{};
   return std::error_code(std::to_underlying(e), category);
 }
@@ -123,8 +134,7 @@ template <>
 struct std::formatter<std::error_code> : std::formatter<std::string> {
   auto format(const std::error_code &e, std::format_context &ctx) const {
     return std::formatter<std::string>::format(
-      std::format(R"({}: "{}")",
-                  e.category().name(), e.message()), ctx);
+      std::format(R"({}: "{}")", e.category().name(), e.message()), ctx);
   }
 };
 
@@ -133,10 +143,10 @@ struct std::formatter<std::error_code> : std::formatter<std::string> {
  */
 template <>
 struct std::formatter<boost::system::error_code> : std::formatter<std::string> {
-  auto format(const boost::system::error_code &e, std::format_context &ctx) const {
+  auto format(const boost::system::error_code &e,
+              std::format_context &ctx) const {
     return std::formatter<std::string>::format(
-      std::format(R"({}: "{}")",
-                  e.category().name(), e.message()), ctx);
+      std::format(R"({}: "{}")", e.category().name(), e.message()), ctx);
   }
 };
 

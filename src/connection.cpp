@@ -59,8 +59,8 @@ connection::read_request() -> void {
     [this, self](const bs::error_code ec,
                  [[maybe_unused]] const size_t bytes_transferred) {
       if (!ec) {
-        const auto [req_hdr_ptr, req_hdr_err] =
-          from_chars(req_buf.data(), req_buf.data() + request_buf_size, req_hdr);
+        const auto [req_hdr_ptr, req_hdr_err] = from_chars(
+          req_buf.data(), req_buf.data() + request_buf_size, req_hdr);
         if (!req_hdr_err) {
           if (verbose)
             println("Received request header: {}", req_hdr.summary_serial());
@@ -118,7 +118,8 @@ connection::read_offsets() -> void {
             println("Responding with header: {}", resp_hdr.summary_serial());
           respond_with_header();
         }
-        else read_offsets();
+        else
+          read_offsets();
       }
       else {
         println("Error reading offsets: {}", ec);
@@ -144,7 +145,8 @@ connection::respond_with_header() -> void {
         else {
           if (verbose)
             println("Error sneding response header: {} "
-                    "Initiating connection shutdown.", ec);
+                    "Initiating connection shutdown.",
+                    ec);
           bs::error_code ignored_ec{};
           socket.shutdown(tcp::socket::shutdown_both, ignored_ec);
         }
@@ -153,7 +155,8 @@ connection::respond_with_header() -> void {
   else {
     if (verbose)
       println("Error sending response header: {}."
-              "Initiating connection shutdown.", resp_err);
+              "Initiating connection shutdown.",
+              resp_err);
     bs::error_code ignored_ec{};
     socket.shutdown(tcp::socket::shutdown_both, ignored_ec);
   }

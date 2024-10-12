@@ -34,8 +34,8 @@
 namespace rg = std::ranges;
 using std::format;
 using std::from_chars;
-using std::string;
 using std::ssize;
+using std::string;
 
 auto
 to_chars(char *first, [[maybe_unused]] char *last,

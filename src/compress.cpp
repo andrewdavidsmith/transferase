@@ -91,20 +91,26 @@ enum class compress_err {
 };
 
 struct compress_err_cat : std::error_category {
-  const char* name() const noexcept override {
-    return "compress error";
-  }
+  const char *name() const noexcept override { return "compress error"; }
   string message(const int condition) const override {
-    using namespace std::string_literals;
+    using std::string_literals::operator""s;
     switch (condition) {
-    case 0: return "ok"s;
-    case 1: return "failed to open methylome file"s;
-    case 2: return "failed to parse xcounts header"s;
-    case 3: return "inconsistent chromosome order"s;
-    case 4: return "incorrect chromosome size"s;
-    case 5: return "failed to find chromosome in xcounts header"s;
-    case 6: return "failed to generate methylome file"s;
-    case 7: return "failed to write methylome file"s;
+    case 0:
+      return "ok"s;
+    case 1:
+      return "failed to open methylome file"s;
+    case 2:
+      return "failed to parse xcounts header"s;
+    case 3:
+      return "inconsistent chromosome order"s;
+    case 4:
+      return "incorrect chromosome size"s;
+    case 5:
+      return "failed to find chromosome in xcounts header"s;
+    case 6:
+      return "failed to generate methylome file"s;
+    case 7:
+      return "failed to write methylome file"s;
     }
     std::abort();  // unreacheable
   }
@@ -113,7 +119,8 @@ struct compress_err_cat : std::error_category {
 template <>
 struct std::is_error_code_enum<compress_err> : public std::true_type {};
 
-std::error_code make_error_code(compress_err e) {
+std::error_code
+make_error_code(compress_err e) {
   static auto category = compress_err_cat{};
   return std::error_code(std::to_underlying(e), category);
 }
@@ -219,7 +226,6 @@ verify_header_line(const cpg_index &idx, int32_t &n_chroms_seen,
 static auto
 process_cpg_sites(const string &infile, const string &outfile,
                   const cpg_index &index, const bool zip) -> std::error_code {
-
   meth_file mf{};
   std::error_code err = mf.open(infile);
   if (err != compress_err::ok) {

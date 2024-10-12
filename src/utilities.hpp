@@ -33,8 +33,8 @@
 #include <limits>
 #include <numeric>
 #include <ostream>
-#include <vector>
 #include <system_error>
+#include <vector>
 
 #include "cpg_index.hpp"
 #include "genomic_interval.hpp"
