@@ -35,6 +35,7 @@
 #include <ostream>
 #include <system_error>
 #include <vector>
+#include <cstdint>
 
 #include "cpg_index.hpp"
 #include "genomic_interval.hpp"
@@ -54,6 +55,11 @@ auto
 write_intervals(std::ostream &out, const cpg_index &index,
                 const std::vector<genomic_interval> &gis,
                 const std::vector<counts_res> &results) -> void;
+
+auto
+write_bins(std::ostream &out, const std::uint32_t bin_size,
+           const cpg_index &index,
+           const std::vector<counts_res> &results) -> void;
 
 [[nodiscard]] inline auto
 duration(const auto start, const auto stop) {
