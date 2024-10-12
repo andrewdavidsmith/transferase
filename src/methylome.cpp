@@ -265,7 +265,6 @@ bin_counts(cpg_index::vec::const_iterator &posn_itr,
 [[nodiscard]] auto
 methylome::get_bins(const uint32_t bin_size,
                     const cpg_index &index) const -> vector<counts_res> {
-
   // ADS TODO: reserve n_bins
   vector<counts_res> results;
 

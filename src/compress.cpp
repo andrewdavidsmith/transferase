@@ -93,7 +93,7 @@ enum class compress_err {
 struct compress_err_cat : std::error_category {
   const char *name() const noexcept override { return "compress error"; }
   string message(const int condition) const override {
-    using namespace std::string_literals;
+    using std::string_literals::operator""s;
     switch (condition) {
     case 0:
       return "ok"s;
@@ -226,7 +226,6 @@ verify_header_line(const cpg_index &idx, int32_t &n_chroms_seen,
 static auto
 process_cpg_sites(const string &infile, const string &outfile,
                   const cpg_index &index, const bool zip) -> std::error_code {
-
   meth_file mf{};
   std::error_code err = mf.open(infile);
   if (err != compress_err::ok) {

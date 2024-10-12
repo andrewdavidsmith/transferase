@@ -43,7 +43,8 @@ struct response_header {
   std::error_code status{make_error_code(server_response_code::ok)};
   std::uint32_t methylome_size{};
 
-  auto error() const -> bool { return bool(status); }
+  // ADS: doing the strange stuff below for cpplint...
+  auto error() const -> bool { return (status) ? true : false; }
 
   auto summary() const -> std::string;
   auto summary_serial() const -> std::string;

@@ -53,7 +53,7 @@ struct std::is_error_code_enum<request_error> : public std::true_type {};
 struct request_error_category : std::error_category {
   const char *name() const noexcept override { return "request_error"; }
   std::string message(int code) const override {
-    using namespace std::string_literals;
+    using std::string_literals::operator""s;
     switch (code) {
     case 0:
       return "ok"s;
@@ -70,7 +70,7 @@ struct request_error_category : std::error_category {
     case 6:
       return "lookup error offsets"s;
     }
-    std::abort(); // unreacheable
+    std::abort();  // unreacheable
   }
 };
 
@@ -101,7 +101,7 @@ struct std::is_error_code_enum<server_response_code> : public std::true_type {};
 struct server_response_category : std::error_category {
   const char *name() const noexcept override { return "server_response"; }
   std::string message(int code) const override {
-    using namespace std::string_literals;
+    using std::string_literals::operator""s;
     switch (code) {
     case 0:
       return "ok"s;
@@ -120,7 +120,7 @@ struct server_response_category : std::error_category {
     case 7:
       return "bad request"s;
     }
-    std::abort(); // unreacheable
+    std::abort();  // unreacheable
   }
 };
 
