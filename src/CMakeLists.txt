@@ -52,14 +52,6 @@ add_library(index OBJECT
   index.hpp
   index.cpp)
 
-add_library(lookup_client_sync OBJECT
-  lookup_client_sync.hpp
-  lookup_client_sync.cpp)
-
-add_library(lookup_server_sync OBJECT
-  lookup_server_sync.hpp
-  lookup_server_sync.cpp)
-
 add_library(lookup_client OBJECT
   lookup_client.hpp
   lookup_client.cpp)
@@ -116,8 +108,6 @@ target_link_libraries(
   lookup
   lookup_client
   lookup_server
-  lookup_client_sync
-  lookup_server_sync
   bins
   genomic_interval
   cpg_index
