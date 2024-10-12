@@ -62,7 +62,7 @@ from_chars(const char *first, const char *last,
       return {ptr, server_response_code::server_failure};
     cursor = ptr;
   }
-  hdr.status = make_error_condition(static_cast<server_response_code>(v));
+  hdr.status = make_error_code(static_cast<server_response_code>(v));
 
   if (*cursor != delim)
     return {cursor, server_response_code::server_failure};
