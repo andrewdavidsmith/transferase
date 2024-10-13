@@ -24,21 +24,18 @@
 #ifndef SRC_LOGGING_HPP_
 #define SRC_LOGGING_HPP_
 
-#include <cstdint>
+#include <unistd.h>
+
+#include <chrono>
+#include <cstdint>  // std::uint32_t
+#include <cstring>  // std::memcpy
 #include <fstream>
 #include <iostream>
 #include <mutex>
 #include <string>
 #include <string_view>
-
-template <typename t_logger_impl>
-concept logger_like = requires(t_logger_impl log) {
-  log.debug(std::string_view{});
-  log.info(std::string_view{});
-  log.error(std::string_view{});
-};
-
-template <logger_like t_logger_impl> struct logger : t_logger_impl {};
+#include <system_error>
+#include <utility>  // std::to_underlying
 
 /*
   - date (YYYY-MM-DD)
@@ -47,23 +44,76 @@ template <logger_like t_logger_impl> struct logger : t_logger_impl {};
   - appname
   - process id
   - thread id
+  - log level
+  - message
 */
+
+enum class mc16_log_level : std::uint32_t {
+  debug,
+  info,
+  warning,
+  error,
+  n_levels,
+};
+
+static constexpr std::uint32_t mc16_n_log_levels =
+  std::to_underlying(mc16_log_level::n_levels);
 
 // ADS: also need a logger for the terminal
 struct file_logger {
+  static constexpr std::string_view date_time_fmt_expanded =
+    "YYYY-MM-DD HH:MM:SS";
+  static constexpr std::uint32_t date_time_fmt_size =
+    std::size(date_time_fmt_expanded);
+  static constexpr auto delim = ' ';
+  static constexpr auto date_time_fmt = "{:%F}{}{:%T}";
+  static constexpr std::array<const char *, mc16_n_log_levels> level_name = {
+    "debug",
+    "info",
+    "warning",
+    "error",
+  };
+  static constexpr auto level_name_sz{[]() constexpr {
+    std::array<std::uint32_t, mc16_n_log_levels> tmp{};
+    for (std::uint32_t i = 0; i < mc16_n_log_levels; ++i)
+      tmp[i] = std::size(std::string_view(level_name[i]));
+    return tmp;
+  }()};
 
-  static file_logger &instance(std::string log_file_name, std::string appname) {
-    static file_logger fl(log_file_name, appname);
+  static file_logger &instance(std::string log_file_name, std::string appname,
+                               const mc16_log_level min_log_level) {
+    static file_logger fl(log_file_name, appname, min_log_level);
     return fl;
-  }  // instance
+  }
 
-  file_logger(std::string log_file_name, std::string appname);
-  auto debug(std::string_view message) -> void;
-  auto info(std::string_view message) -> void;
-  auto error(std::string_view message) -> void;
+  file_logger(std::string log_file_name, std::string appname,
+              mc16_log_level min_log_level = mc16_log_level::info) :
+    min_log_level{min_log_level} {
+    log_file.open(log_file_name, std::ios::app);
+    if (!log_file)
+      status = std::make_error_code(std::errc(errno));
+    buf.fill(' ');  // ADS: not sure this is needed
+    if (const auto ec = set_attributes(appname))
+      status = ec;
+  }
 
-  auto format_time() -> void;
-  auto set_attributes(std::string_view) -> int;
+  operator bool() const { return (status) ? false : true; }
+
+  template <mc16_log_level the_level>
+  auto log(std::string_view message) -> void {
+    static constexpr auto idx = std::to_underlying(the_level);
+    static constexpr auto sz = level_name_sz[idx];
+    static constexpr auto lvl = level_name[idx];
+    if (the_level >= min_log_level) {
+      const auto thread_id = gettid();  // syscall;unistd.h
+      std::lock_guard lck{mtx};
+      format_time();
+      const auto buf_data_end = fill_buffer(thread_id, lvl, sz, message);
+      log_file.write(buf.data(), std::distance(buf.data(), buf_data_end));
+    }
+  }
+
+  auto set_attributes(std::string_view) -> std::error_code;
 
   static constexpr std::uint32_t buf_size{1024};  // max log line
   std::array<char, buf_size> buf{};
@@ -71,6 +121,8 @@ struct file_logger {
   std::ofstream log_file;
   std::mutex mtx{};
   char *cursor{};
+  const mc16_log_level min_log_level{};
+  std::error_code status{};
 
   file_logger(const file_logger &) = delete;
   file_logger &operator=(const file_logger &) = delete;
@@ -78,6 +130,27 @@ struct file_logger {
 private:
   file_logger() {}
   ~file_logger() {}
+
+  [[nodiscard]]
+  auto fill_buffer(std::uint32_t thread_id, const char *const lvl,
+                   const std::uint32_t sz, std::string_view message) -> char * {
+    auto [buf_data_end, ec] = std::to_chars(cursor, buf_end, thread_id);
+    *buf_data_end++ = delim;
+    std::memcpy(buf_data_end, lvl, sz);
+    buf_data_end += sz;
+    *buf_data_end++ = delim;
+    return std::format_to(buf_data_end, "{}\n", message);
+  }
+
+  auto format_time() -> void {
+    const auto now{std::chrono::system_clock::now()};
+    const std::chrono::year_month_day ymd{
+      std::chrono::floor<std::chrono::days>(now)};
+    const std::chrono::hh_mm_ss hms{
+      std::chrono::floor<std::chrono::seconds>(now) -
+      std::chrono::floor<std::chrono::days>(now)};
+    std::format_to(buf.data(), "{:%F}{}{:%T}", ymd, delim, hms);
+  }
 };  // struct file_logger
 
 #endif  // SRC_LOGGING_HPP_
