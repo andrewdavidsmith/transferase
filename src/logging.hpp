@@ -60,7 +60,8 @@ static constexpr std::uint32_t mc16_n_log_levels =
   std::to_underlying(mc16_log_level::n_levels);
 
 // ADS: also need a logger for the terminal
-struct file_logger {
+class file_logger {
+private:
   static constexpr std::string_view date_time_fmt_expanded =
     "YYYY-MM-DD HH:MM:SS";
   static constexpr std::uint32_t date_time_fmt_size =
@@ -80,6 +81,7 @@ struct file_logger {
     return tmp;
   }()};
 
+public:
   static file_logger &
   instance(std::string log_file_name = "", std::string appname = "",
            mc16_log_level min_log_level = mc16_log_level::debug) {
@@ -97,6 +99,8 @@ struct file_logger {
     if (const auto ec = set_attributes(appname))
       status = ec;
   }
+
+  [[nodiscard]] auto get_status() const -> std::error_code { return status; }
 
   operator bool() const { return (status) ? false : true; }
 
@@ -131,6 +135,7 @@ struct file_logger {
     }
   }
 
+private:
   auto set_attributes(std::string_view) -> std::error_code;
 
   static constexpr std::uint32_t buf_size{1024};  // max log line
