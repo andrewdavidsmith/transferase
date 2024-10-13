@@ -48,16 +48,19 @@ namespace ip = asio::ip;
 
 using tcp = ip::tcp;
 
+typedef mc16_log_level lvl;
+
 server::server(const string &address, const string &port,
                const uint32_t n_threads, const string &methylome_dir,
-               const uint32_t max_live_methylomes, bool verbose) :
+               const uint32_t max_live_methylomes, file_logger &fl,
+               bool verbose) :
   verbose{verbose}, n_threads{n_threads},
 #if defined(SIGQUIT)
   signals(ioc, SIGINT, SIGTERM, SIGQUIT),
 #else
   signals(ioc, SIGINT, SIGTERM),
 #endif
-  acceptor(ioc), handler(methylome_dir, max_live_methylomes, verbose) {
+  acceptor(ioc), handler(methylome_dir, max_live_methylomes, verbose), fl{fl} {
   // io_context ios uses default constructor
 
   do_await_stop();  // start waiting for signals
@@ -70,8 +73,8 @@ server::server(const string &address, const string &port,
   tcp::resolver resolver(ioc);
   tcp::endpoint endpoint = *resolver.resolve(address, port).begin();
 
-  if (verbose)
-    println("Endpoint: {}", boost::lexical_cast<string>(endpoint));
+  fl.log<lvl::info>("Server endpoint: {}",
+                    boost::lexical_cast<string>(endpoint));
 
   // open acceptor with option to reuse the address (SO_REUSEADDR)
   acceptor.open(endpoint.protocol());
@@ -105,7 +108,8 @@ server::do_accept() -> void {
         return;
       if (!ec) {
         // ADS: accepted socket moved into connection which is started
-        make_shared<connection>(std::move(socket), handler, verbose)->start();
+        make_shared<connection>(std::move(socket), handler, fl, verbose)
+          ->start();
       }
       do_accept();  // keep listening for more connections
     });
@@ -115,8 +119,8 @@ auto
 server::do_await_stop() -> void {
   // capture brings 'this' into search for names
   signals.async_wait([this](const bs::error_code ec, const int signo) {
-    if (verbose)
-      println("received termination signal {} ({})", signo, ec.message());
+    fl.log<lvl::info>("Received termination signal {} ({})", signo,
+                      ec.message());
     // stop server by cancelling all outstanding async ops; when all
     // have finished, the call to io_context::run() will finish
     ioc.stop();
