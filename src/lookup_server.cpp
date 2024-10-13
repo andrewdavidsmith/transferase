@@ -91,7 +91,7 @@ lookup_server_main(int argc, char *argv[]) -> int {
 
   file_logger &fl = file_logger::instance(log_file, description, log_level);
   if (!fl) {
-    println("Failure initializing logger: {}.", fl.status.message());
+    println("Failure initializing logger: {}.", fl.get_status().message());
     return EXIT_FAILURE;
   }
 
