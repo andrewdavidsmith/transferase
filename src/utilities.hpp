@@ -43,13 +43,15 @@
 
 struct mc16_to_chars_result {
   char *ptr{};
-  std::error_code e{};
+  std::error_code error{};
 };
+typedef mc16_to_chars_result compose_result;
 
 struct mc16_from_chars_result {
   const char *ptr{};
-  std::error_code e{};
+  std::error_code error{};
 };
+typedef mc16_from_chars_result parse_result;
 
 auto
 write_intervals(std::ostream &out, const cpg_index &index,
