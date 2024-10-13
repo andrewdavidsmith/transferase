@@ -23,6 +23,7 @@
 
 #include "lookup_server.hpp"
 
+#include "logging.hpp"
 #include "methylome_set.hpp"
 #include "server.hpp"
 
@@ -44,20 +45,23 @@ namespace po = boost::program_options;
 auto
 lookup_server_main(int argc, char *argv[]) -> int {
   static constexpr auto default_n_threads{4};
+  static constexpr auto log_level{mc16_log_level::debug};
 
   static const auto description = "server";
 
   bool verbose{};
 
-  uint32_t n_threads{};
   string port{};
   string hostname{};
   string methylome_dir;
+  string log_file;
+
+  uint32_t n_threads{};
   uint32_t max_live_methylomes{};
 
   po::options_description desc(description);
-  // clang-format off
   desc.add_options()
+    // clang-format off
     ("help,h", "produce help message")
     ("port,p", po::value(&port)->required(), "port")
     ("hostname,H", po::value(&hostname)->required(), "server hostname")
@@ -66,9 +70,10 @@ lookup_server_main(int argc, char *argv[]) -> int {
      "number of threads")
     ("live,l", po::value(&max_live_methylomes)->default_value(
      methylome_set::default_max_live_methylomes), "max live methylomes")
+    ("log", po::value(&log_file)->required(), "log file")
     ("verbose,v", po::bool_switch(&verbose), "print more run info")
+    // clang-format on
     ;
-  // clang-format on
   try {
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -84,14 +89,21 @@ lookup_server_main(int argc, char *argv[]) -> int {
     return EXIT_FAILURE;
   }
 
+  file_logger &fl = file_logger::instance(log_file, description, log_level);
+  if (!fl) {
+    println("Failure initializing logger: {}.", fl.status.message());
+    return EXIT_FAILURE;
+  }
+
   if (verbose)
     println("Hostname: {}\n"
             "Port: {}\n"
+            "Log file: {}\n"
             "Methylome directory: {}\n"
             "Max live methylomes: {}\n",
-            hostname, port, methylome_dir, max_live_methylomes);
+            hostname, port, log_file, methylome_dir, max_live_methylomes);
 
-  server s(hostname, port, n_threads, methylome_dir, max_live_methylomes,
+  server s(hostname, port, n_threads, methylome_dir, max_live_methylomes, fl,
            verbose);
 
   s.run();
