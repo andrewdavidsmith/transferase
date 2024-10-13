@@ -97,22 +97,11 @@ struct mc16_client {
       if (verbose)
         println("Connected to server: {}",
                 boost::lexical_cast<string>(socket.remote_endpoint()));
-      const auto [hdr_ptr, hdr_err] =
-        to_chars(req_buf.data(), req_buf.data() + request_buf_size, req_hdr);
-      if (hdr_err) {
-        status = err;
-        if (verbose)
-          println("Error forming request header: {}", hdr_err.message());
-      }
-      else {
-        const auto [req_ptr, req_err] =
-          to_chars(hdr_ptr, req_buf.data() + request_buf_size, req);
-        if (req_err) {
-          status = err;
-          if (verbose)
-            println("Error forming request: {}", req_err.message());
-        }
-        else {
+      if (const auto req_hdr_compose{compose(req_buf, req_hdr)};
+          !req_hdr_compose.error) {
+        if (const auto req_body_compose = to_chars(
+              req_hdr_compose.ptr, req_buf.data() + request_buf_size, req);
+            !req_body_compose.error) {
           asio::async_write(
             socket,
             vector<asio::const_buffer>{
@@ -121,12 +110,22 @@ struct mc16_client {
             },
             std::bind(&mc16_client::handle_write_request, this, ph::error));
         }
+        else {
+          status = req_body_compose.error;
+          if (verbose)
+            println("Error forming request body: {}", req_body_compose.error);
+        }
+      }
+      else {
+        status = req_hdr_compose.error;
+        if (verbose)
+          println("Error forming request header: {}", req_hdr_compose.error);
       }
     }
     else {
       status = err;
       if (verbose)
-        println("Error connecting: {}", err.message());
+        println("Error connecting: {}", err);
     }
   }
 
@@ -146,18 +145,16 @@ struct mc16_client {
 
   auto handle_read_response_header(const bs::error_code &err) -> void {
     if (!err) {
-      // ADS: convert the buffer into the values
-      const auto [resp_ptr, resp_err] = from_chars(
-        resp_buf.data(), resp_buf.data() + response_buf_size, resp_hdr);
-      if (resp_err) {
-        status = resp_err;
-        println("Received error: {}", resp_err);
-        do_response_header_error(resp_err);
-      }
-      else {
+      if (const auto resp_hdr_parse{parse(resp_buf, resp_hdr)};
+          !resp_hdr_parse.error) {
         if (verbose)
           println("Response header: {}", resp_hdr.summary_serial());
         do_read_counts();
+      }
+      else {
+        status = resp_hdr_parse.error;
+        println("Received error: {}", resp_hdr_parse.error);
+        do_finish(resp_hdr_parse.error);
       }
     }
     else {
@@ -175,19 +172,7 @@ struct mc16_client {
                      std::bind(&mc16_client::do_finish, this, ph::error));
   }
 
-  auto do_finish(const bs::error_code &err) -> void {
-    if (!err) {
-      if (verbose)
-        println("Completing transaction: {}", err.message());
-    }
-    else {
-      status = err;
-      if (verbose)
-        println("Error reading counts: {}", err.message());
-    }
-  }
-
-  auto do_response_header_error(const std::error_code &err) -> void {
+  auto do_finish(const std::error_code &err) -> void {
     if (!err) {
       if (verbose)
         println("Completing transaction: {}", err.message());
@@ -257,12 +242,13 @@ lookup_client_main(int argc, char *argv[]) -> int {
   verbose = verbose || debug;  // if debug, then verbose
 
   if (verbose)
-    print("accession: {}\n"
-          "hostname: {}\n"
-          "port: {}\n"
-          "index: {}\n"
-          "intervals: {}\n"
-          "output: {}\n",
+    print("Arguments:\n"
+          "Accession: {}\n"
+          "Hostname: {}\n"
+          "Port: {}\n"
+          "Index file: {}\n"
+          "Intervals file: {}\n"
+          "Output file: {}\n",
           accession, hostname, port, index_file, intervals_file, output_file);
 
   cpg_index index{};
@@ -270,6 +256,8 @@ lookup_client_main(int argc, char *argv[]) -> int {
     println(cerr, "failed to read cpg index: {}", index_file);
     return EXIT_FAILURE;
   }
+  if (debug)
+    println("Index:\n{}", index);
 
   const auto gis = genomic_interval::load(index, intervals_file);
   if (gis.empty()) {
@@ -277,7 +265,7 @@ lookup_client_main(int argc, char *argv[]) -> int {
     return EXIT_FAILURE;
   }
   if (verbose)
-    print("n_intervals: {}\n", size(gis));
+    print("Number of intervals: {}\n", size(gis));
 
   const auto get_offsets_start{hr_clock::now()};
   const vector<methylome::offset_pair> offsets = index.get_offsets(gis);
