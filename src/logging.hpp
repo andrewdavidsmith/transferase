@@ -80,8 +80,9 @@ struct file_logger {
     return tmp;
   }()};
 
-  static file_logger &instance(std::string log_file_name, std::string appname,
-                               const mc16_log_level min_log_level) {
+  static file_logger &
+  instance(std::string log_file_name = "", std::string appname = "",
+           mc16_log_level min_log_level = mc16_log_level::debug) {
     static file_logger fl(log_file_name, appname, min_log_level);
     return fl;
   }
@@ -110,6 +111,23 @@ struct file_logger {
       format_time();
       const auto buf_data_end = fill_buffer(thread_id, lvl, sz, message);
       log_file.write(buf.data(), std::distance(buf.data(), buf_data_end));
+      log_file.flush();
+    }
+  }
+
+  template <mc16_log_level the_level, typename... Args>
+  auto log(std::string_view fmt_str, Args &&...args) -> void {
+    static constexpr auto idx = std::to_underlying(the_level);
+    static constexpr auto sz = level_name_sz[idx];
+    static constexpr auto lvl = level_name[idx];
+    if (the_level >= min_log_level) {
+      const auto thread_id = gettid();  // syscall;unistd.h
+      const auto msg = std::vformat(fmt_str, std::make_format_args(args...));
+      std::lock_guard lck{mtx};
+      format_time();
+      const auto buf_data_end = fill_buffer(thread_id, lvl, sz, msg);
+      log_file.write(buf.data(), std::distance(buf.data(), buf_data_end));
+      log_file.flush();
     }
   }
 
