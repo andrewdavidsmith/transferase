@@ -27,11 +27,11 @@
 #include "response.hpp"
 #include "utilities.hpp"
 
+#include "logging.hpp"
 #include "mc16_error.hpp"
 
 #include <chrono>
 #include <cstdint>
-#include <format>
 #include <fstream>
 #include <print>
 #include <regex>
@@ -40,7 +40,6 @@
 #include <tuple>
 #include <vector>
 
-using std::format;
 using std::get;
 using std::pair;
 using std::println;
@@ -48,6 +47,8 @@ using std::string;
 using std::uint32_t;
 
 using hr_clock = std::chrono::high_resolution_clock;
+
+typedef mc16_log_level lvl;
 
 [[nodiscard]] static auto
 is_valid_accession(const string &accession) -> bool {
@@ -64,10 +65,11 @@ request_handler::handle_header(const request_header &req_hdr,
                                response_header &resp_hdr) -> void {
   resp_hdr.methylome_size = 0;
 
+  file_logger &fl = file_logger::instance();
+
   // verify that the accession makes sense
   if (!is_valid_accession(req_hdr.accession)) {
-    if (verbose)
-      println("Malformed accession: {}.", req_hdr.accession);
+    fl.log<lvl::warning>("Malformed accession: {}", req_hdr.accession);
     resp_hdr.status = server_response_code::invalid_accession;
     return;
   }
@@ -77,21 +79,18 @@ request_handler::handle_header(const request_header &req_hdr,
   const auto get_methylome_start{hr_clock::now()};
   const auto meth_ec = ms.get_methylome(req_hdr.accession);
   const auto get_methylome_stop{hr_clock::now()};
-  if (verbose)
-    println("Elapsed time for get methylome: {:.3}s",
-            duration(get_methylome_start, get_methylome_stop));
+  fl.log<lvl::debug>("Elapsed time for get methylome: {:.3}s",
+                     duration(get_methylome_start, get_methylome_stop));
   if (get<1>(meth_ec)) {
-    if (verbose)
-      println("Methylome not found: {}", req_hdr.accession);
+    fl.log<lvl::warning>("Methylome not found: {}", req_hdr.accession);
     resp_hdr.status = server_response_code::methylome_not_found;
     return;
   }
 
   // confirm that the methylome size is as expected
   if (req_hdr.methylome_size != ms.n_total_cpgs) {
-    if (verbose)
-      println("Incorrect methylome size (provided={}, expected={}).",
-              req_hdr.methylome_size, ms.n_total_cpgs);
+    fl.log<lvl::warning>("Incorrect methylome size (provided={}, expected={})",
+                         req_hdr.methylome_size, ms.n_total_cpgs);
     resp_hdr.status = server_response_code::invalid_methylome_size;
     return;
   }
@@ -113,18 +112,18 @@ request_handler::handle_get_counts(const request_header &req_hdr,
   // automatically?
   resp.counts.clear();
 
+  file_logger &fl = file_logger::instance();
+
   // assume methylome availability has been determined
   const auto [m, ec] = ms.get_methylome(req_hdr.accession);
   if (ec) {
-    if (verbose)
-      println("Failed to load methylome: {}", ec);
+    fl.log<mc16_log_level::error>("Failed to load methylome: {}", ec);
     // keep methylome size in response header
     resp_hdr.status = server_response_code::server_failure;
     return;
   }
 
-  if (verbose)
-    println("Computing counts for methylome: {}", req_hdr.accession);
+  fl.log<lvl::debug>("Computing counts for methylome: {}", req_hdr.accession);
 
   // generate the counts
   resp.counts = m->get_counts(req.offsets);
