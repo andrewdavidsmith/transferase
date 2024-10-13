@@ -67,7 +67,8 @@ struct connection : public std::enable_shared_from_this<connection> {
 
   bool verbose{};
 
-  // these help keep track of where we are in the incoming offsets
+  // These help keep track of where we are in the incoming offsets;
+  // they might best be associated with the request.
   std::size_t offset_byte{};
   std::size_t offset_remaining{};
 };
