@@ -95,6 +95,16 @@ from_chars(const char *first, const char *last,
 }
 
 auto
+compose(request_buffer &buf, const request_header &hdr) -> compose_result {
+  return to_chars(buf.data(), buf.data() + size(buf), hdr);
+}
+
+auto
+parse(const request_buffer &buf, request_header &hdr) -> parse_result {
+  return from_chars(buf.data(), buf.data() + size(buf), hdr);
+}
+
+auto
 request_header::summary() const -> string {
   return format("accession: {}\n"
                 "methylome_size: {}\n"

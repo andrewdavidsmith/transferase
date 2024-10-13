@@ -61,6 +61,14 @@ auto
 from_chars(const char *first, const char *last,
            response_header &header) -> mc16_from_chars_result;
 
+auto
+compose(std::array<char, response_buf_size> &buf,
+        const response_header &hdr) -> compose_result;
+
+auto
+parse(const std::array<char, response_buf_size> &buf,
+      response_header &hdr) -> parse_result;
+
 struct response {
   std::vector<counts_res> counts;  // counts_res from methylome.hpp
 

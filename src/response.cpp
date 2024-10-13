@@ -30,9 +30,11 @@
 #include <format>
 #include <ranges>
 #include <string>
+#include <array>
 
 using std::format;
 using std::string;
+using std::array;
 
 namespace rg = std::ranges;
 
@@ -82,6 +84,18 @@ from_chars(const char *first, const char *last,
   ++cursor;
 
   return {cursor, server_response_code::ok};
+}
+
+auto
+compose(array<char, response_buf_size> &buf,
+        const response_header &hdr) -> compose_result {
+  return to_chars(buf.data(), buf.data() + response_buf_size, hdr);
+}
+
+auto
+parse(const array<char, response_buf_size> &buf,
+      response_header &hdr) -> parse_result {
+  return from_chars(buf.data(), buf.data() + response_buf_size, hdr);
 }
 
 auto
