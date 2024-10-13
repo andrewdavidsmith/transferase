@@ -46,7 +46,7 @@ auto
 connection::prepare_to_read_offsets() -> void {
   req.offsets.resize(req.n_intervals);  // get space for offsets
   offset_remaining = req.get_offsets_n_bytes();  // init counters
-  offset_byte = 0;
+  offset_byte = 0;  // shouldn't need this
 }
 
 auto
@@ -59,37 +59,35 @@ connection::read_request() -> void {
     [this, self](const bs::error_code ec,
                  [[maybe_unused]] const size_t bytes_transferred) {
       if (!ec) {
-        const auto [req_hdr_ptr, req_hdr_err] = from_chars(
-          req_buf.data(), req_buf.data() + request_buf_size, req_hdr);
-        if (!req_hdr_err) {
+        if (const auto req_hdr_parse{parse(req_buf, req_hdr)};
+            !req_hdr_parse.error) {
           if (verbose)
             println("Received request header: {}", req_hdr.summary_serial());
           handler.handle_header(req_hdr, resp_hdr);
           if (!resp_hdr.error()) {
-            const auto [req_ptr, req_err] =
-              from_chars(req_hdr_ptr, req_buf.data() + request_buf_size, req);
-            if (!req_err) {
+            if (const auto req_body_parse =
+                  from_chars(req_hdr_parse.ptr, cend(req_buf), req);
+                !req_body_parse.error) {
               prepare_to_read_offsets();
               read_offsets();
             }
             else {
               if (verbose)
-                println("Request parse error: {}", req_err);
-              resp_hdr = {req_err, 0};
+                println("Request body parse error: {}", req_body_parse.error);
+              resp_hdr = {req_body_parse.error, 0};
               respond_with_error();
             }
           }
           else {
             if (verbose)
               println("Responding with error: {}", resp_hdr.summary_serial());
-            // response error already assigned
-            respond_with_error();
+            respond_with_error();  // response error already assigned
           }
         }
         else {
           if (verbose)
-            println("Request parse error: {}", req_hdr_err);
-          resp_hdr = {req_hdr_err, 0};
+            println("Request parse error: {}", req_hdr_parse.error);
+          resp_hdr = {req_hdr_parse.error, 0};
           respond_with_error();
         }
       }
@@ -130,35 +128,58 @@ connection::read_offsets() -> void {
 }
 
 auto
-connection::respond_with_header() -> void {
+connection::respond_with_error() -> void {
   auto self(shared_from_this());
-  const auto [resp_ptr, resp_err] =
-    to_chars(resp_buf.data(), resp_buf.data() + response_buf_size, resp_hdr);
-  if (!resp_err) {
+  if (const auto resp_hdr_compose{compose(resp_buf, resp_hdr)};
+      !resp_hdr_compose.error) {
     asio::async_write(
       socket, asio::buffer(resp_buf),
       [this, self](const bs::error_code ec,
                    [[maybe_unused]] const size_t bytes_transferred) {
         if (!ec) {
-          respond_with_counts();
-        }
-        else {
           if (verbose)
-            println("Error sneding response header: {} "
+            println("Responded with error: {}.\n"
                     "Initiating connection shutdown.",
-                    ec);
-          bs::error_code ignored_ec{};
-          socket.shutdown(tcp::socket::shutdown_both, ignored_ec);
+                    resp_hdr.summary_serial());
+          socket.shutdown(tcp::socket::shutdown_both);
         }
       });
   }
   else {
     if (verbose)
-      println("Error sending response header: {}."
+      println("Error responding: {}.\n"
               "Initiating connection shutdown.",
-              resp_err);
-    bs::error_code ignored_ec{};
-    socket.shutdown(tcp::socket::shutdown_both, ignored_ec);
+              resp_hdr_compose.error);
+    socket.shutdown(tcp::socket::shutdown_both);
+  }
+}
+
+auto
+connection::respond_with_header() -> void {
+  auto self(shared_from_this());
+  if (const auto resp_hdr_compose{compose(resp_buf, resp_hdr)};
+      !resp_hdr_compose.error) {
+    asio::async_write(
+      socket, asio::buffer(resp_buf),
+      [this, self](const bs::error_code ec,
+                   [[maybe_unused]] const size_t bytes_transferred) {
+        if (!ec)
+          respond_with_counts();
+        else {
+          if (verbose)
+            println("Error sending response header: {}."
+                    "Initiating connection shutdown.",
+                    ec);
+          socket.shutdown(tcp::socket::shutdown_both);
+        }
+      });
+  }
+  else {
+    if (verbose)
+      println("Error composing response header: {}."
+              "Initiating connection shutdown.",
+              resp_hdr_compose.error);
+    socket.shutdown(tcp::socket::shutdown_both);
   }
 }
 
@@ -173,36 +194,7 @@ connection::respond_with_counts() -> void {
           println("Responded with counts [{} Bytes].\n"
                   "Initiating connection shutdown.",
                   bytes_transferred);
-        bs::error_code ignored_ec{};
-        socket.shutdown(tcp::socket::shutdown_both, ignored_ec);
+        socket.shutdown(tcp::socket::shutdown_both);
       }
     });
-}
-
-auto
-connection::respond_with_error() -> void {
-  auto self(shared_from_this());
-  const auto status =
-    from_chars(resp_buf.data(), resp_buf.data() + response_buf_size, resp_hdr);
-  if (!status.e) {
-    asio::async_write(
-      socket, asio::buffer(resp_buf),
-      [this, self](const bs::error_code ec,
-                   [[maybe_unused]] const size_t bytes_transferred) {
-        if (!ec) {
-          if (verbose)
-            println("Responded with error. Initiating connection shutdown.");
-          bs::error_code ignored_ec{};
-          socket.shutdown(tcp::socket::shutdown_both, ignored_ec);
-        }
-      });
-  }
-  else {
-    if (verbose)
-      println("Error responding: {}.\n"
-              "Initiating connection shutdown.",
-              status.e);
-    bs::error_code ignored_ec{};
-    socket.shutdown(tcp::socket::shutdown_both, ignored_ec);
-  }
 }
