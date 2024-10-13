@@ -53,6 +53,12 @@ auto
 from_chars(const char *first, const char *last,
            request_header &header) -> mc16_from_chars_result;
 
+auto
+compose(request_buffer &buf, const request_header &header) -> compose_result;
+
+auto
+parse(const request_buffer &buf, request_header &header) -> parse_result;
+
 struct request {
   typedef std::pair<std::uint32_t, std::uint32_t> offset_type;
 
