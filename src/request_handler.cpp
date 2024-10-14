@@ -77,12 +77,15 @@ request_handler::handle_header(const request_header &req_hdr,
   // ADS TODO: move more of this into methylome_set?
 
   const auto get_methylome_start{hr_clock::now()};
-  const auto meth_ec = ms.get_methylome(req_hdr.accession);
+
+  std::error_code get_meth_err;
+  std::tie(std::ignore, get_meth_err) = ms.get_methylome(req_hdr.accession);
   const auto get_methylome_stop{hr_clock::now()};
   fl.log<lvl::debug>("Elapsed time for get methylome: {:.3}s",
                      duration(get_methylome_start, get_methylome_stop));
-  if (get<1>(meth_ec)) {
-    fl.log<lvl::warning>("Methylome not found: {}", req_hdr.accession);
+  if (get_meth_err) {
+    fl.log<lvl::warning>("Error loading methylome: {}", req_hdr.accession);
+    fl.log<lvl::warning>("Error: {}", get_meth_err);
     resp_hdr.status = server_response_code::methylome_not_found;
     return;
   }
@@ -115,9 +118,9 @@ request_handler::handle_get_counts(const request_header &req_hdr,
   file_logger &fl = file_logger::instance();
 
   // assume methylome availability has been determined
-  const auto [m, ec] = ms.get_methylome(req_hdr.accession);
-  if (ec) {
-    fl.log<mc16_log_level::error>("Failed to load methylome: {}", ec);
+  const auto [meth, get_meth_err] = ms.get_methylome(req_hdr.accession);
+  if (get_meth_err) {
+    fl.log<mc16_log_level::error>("Failed to load methylome: {}", get_meth_err);
     // keep methylome size in response header
     resp_hdr.status = server_response_code::server_failure;
     return;
@@ -126,5 +129,5 @@ request_handler::handle_get_counts(const request_header &req_hdr,
   fl.log<lvl::debug>("Computing counts for methylome: {}", req_hdr.accession);
 
   // generate the counts
-  resp.counts = m->get_counts(req.offsets);
+  resp.counts = meth->get_counts(req.offsets);
 }
