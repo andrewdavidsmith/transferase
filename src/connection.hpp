@@ -44,8 +44,8 @@ struct connection : public std::enable_shared_from_this<connection> {
   connection &operator=(const connection &) = delete;
 
   explicit connection(boost::asio::ip::tcp::socket socket_,
-                      request_handler &handler, file_logger &fl, bool verbose) :
-    socket{std::move(socket_)}, handler{handler}, fl{fl}, verbose{verbose} {
+                      request_handler &handler, file_logger &fl) :
+    socket{std::move(socket_)}, handler{handler}, fl{fl} {
     fl.log<mc16_log_level::info>(
       format("Request endpoint: {}",
              boost::lexical_cast<std::string>(socket.remote_endpoint())));
@@ -71,8 +71,6 @@ struct connection : public std::enable_shared_from_this<connection> {
   response_header resp_hdr;  // header of the response
   response resp;  // response to send back
   file_logger &fl;
-
-  bool verbose{};
 
   // These help keep track of where we are in the incoming offsets;
   // they might best be associated with the request.
