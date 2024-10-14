@@ -58,27 +58,33 @@ using std::vector;
 
 namespace rg = std::ranges;
 namespace vs = std::views;
+namespace chrono = std::chrono;
 using hr_clock = std::chrono::high_resolution_clock;
 
 namespace asio = boost::asio;
-namespace ph = asio::placeholders;
+namespace ph = boost::asio::placeholders;
 namespace bs = boost::system;
 namespace po = boost::program_options;
-using tcp = asio::ip::tcp;
+using tcp = boost::asio::ip::tcp;
 using steady_timer = asio::steady_timer;
+
+// ADS: Canceling the pending async waits by changing the timer might
+// be considered for avoiding. In most cases it will not be necessary
+// to extend the deadline only to do some non-I/O work.
 
 struct mc16_client {
   mc16_client(asio::io_context &io_context, const string &server,
               const string &port, request_header &req_hdr, request &req,
-              bool verbose = false) :
+              bool debug = false) :
     resolver(io_context), socket(io_context), deadline{socket.get_executor()},
     req_hdr{req_hdr}, req{std::move(req)},  // move b/c req can be big
-    verbose{verbose} {
+    debug{debug} {
     // (1) call async, (2) set deadline, (3) register check_deadline
     resolver.async_resolve(
       server, port,
       std::bind(&mc16_client::handle_resolve, this, ph::error, ph::results));
-    deadline.expires_after(std::chrono::seconds(read_timeout_seconds));
+    [[maybe_unused]] const auto n_cancels =
+      deadline.expires_after(chrono::seconds(read_timeout_seconds));
     deadline.async_wait(std::bind(&mc16_client::check_deadline, this));
   }
 
@@ -89,19 +95,21 @@ struct mc16_client {
         socket, endpoints,
         std::bind(&mc16_client::handle_connect, this, ph::error));
       // ADS: set deadline after calling async op
-      deadline.expires_after(std::chrono::seconds(read_timeout_seconds));
+      [[maybe_unused]] const auto n_cancels =
+        deadline.expires_after(chrono::seconds(read_timeout_seconds));
     }
     else {
       status = err;
-      if (verbose)
+      if (debug)
         println("Error resolving server: {}", status.message());
     }
   }
 
   void handle_connect(const bs::error_code &err) {
-    deadline.expires_at(steady_timer::time_point::max());
+    [[maybe_unused]] const auto n_cancels =
+      deadline.expires_at(steady_timer::time_point::max());
     if (!err) {
-      if (verbose)
+      if (debug)
         println("Connected to server: {}",
                 boost::lexical_cast<string>(socket.remote_endpoint()));
       if (const auto req_hdr_compose{compose(req_buf, req_hdr)};
@@ -116,50 +124,54 @@ struct mc16_client {
               asio::buffer(req.offsets),
             },
             std::bind(&mc16_client::handle_write_request, this, ph::error));
-          deadline.expires_after(std::chrono::seconds(read_timeout_seconds));
+          [[maybe_unused]] const auto n_cancels =
+            deadline.expires_after(chrono::seconds(read_timeout_seconds));
         }
         else {
           status = req_body_compose.error;
-          if (verbose)
+          if (debug)
             println("Error forming request body: {}", req_body_compose.error);
         }
       }
       else {
         status = req_hdr_compose.error;
-        if (verbose)
+        if (debug)
           println("Error forming request header: {}", req_hdr_compose.error);
       }
     }
     else {
       status = err;
-      if (verbose)
+      if (debug)
         println("Error connecting: {}", err);
     }
   }
 
   auto handle_write_request(const bs::error_code &err) -> void {
-    deadline.expires_at(steady_timer::time_point::max());
+    [[maybe_unused]] const auto n_cancels =
+      deadline.expires_at(steady_timer::time_point::max());
     if (!err) {
       asio::async_read(
         socket, asio::buffer(resp_buf),
         asio::transfer_exactly(response_buf_size),
         std::bind(&mc16_client::handle_read_response_header, this, ph::error));
-      deadline.expires_after(std::chrono::seconds(read_timeout_seconds));
+      [[maybe_unused]] const auto n_cancels =
+        deadline.expires_after(chrono::seconds(read_timeout_seconds));
     }
     else {
       status = err;
-      if (verbose)
+      if (debug)
         println("Error writing request: {}", err.message());
     }
   }
 
   auto handle_read_response_header(const bs::error_code &err) -> void {
     // ADS: does this go here?
-    deadline.expires_at(steady_timer::time_point::max());
+    [[maybe_unused]] const auto n_cancels =
+      deadline.expires_at(steady_timer::time_point::max());
     if (!err) {
       if (const auto resp_hdr_parse{parse(resp_buf, resp_hdr)};
           !resp_hdr_parse.error) {
-        if (verbose)
+        if (debug)
           println("Response header: {}", resp_hdr.summary_serial());
         do_read_counts();
       }
@@ -171,7 +183,7 @@ struct mc16_client {
     }
     else {
       status = err;
-      if (verbose)
+      if (debug)
         println("Error reading response header: {}", err.message());
     }
   }
@@ -182,38 +194,48 @@ struct mc16_client {
     asio::async_read(socket, asio::buffer(resp.counts),
                      asio::transfer_exactly(resp.get_counts_n_bytes()),
                      std::bind(&mc16_client::do_finish, this, ph::error));
-    // ADS: before or after the call to async?
-    deadline.expires_after(std::chrono::seconds(read_timeout_seconds));
+    [[maybe_unused]] const auto n_cancels =
+      deadline.expires_after(chrono::seconds(read_timeout_seconds));
   }
 
   auto do_finish(const std::error_code &err) -> void {
-    deadline.expires_at(steady_timer::time_point::max());
+    // same consequence as canceling
+    [[maybe_unused]] const auto n_cancels =
+      deadline.expires_at(steady_timer::time_point::max());
     if (!err) {
-      if (verbose)
+      if (debug)
         println("Completing transaction: {}", err.message());
     }
     else {
       status = err;
-      if (verbose)
+      if (debug)
         println("Error reading counts: {}", err.message());
     }
+    bs::error_code shutdown_ec;  // for non-throwing
+    socket.shutdown(tcp::socket::shutdown_both, shutdown_ec);
+    bs::error_code socket_close_ec;  // for non-throwing
+    socket.close(socket_close_ec);
   }
 
   auto check_deadline() -> void {
-    if (!socket.is_open())
+    if (!socket.is_open())  // ADS: when can this happen?
       return;
 
-    if (deadline.expiry() <= steady_timer::clock_type::now()) {
+    if (const auto right_now = steady_timer::clock_type::now();
+        deadline.expiry() <= right_now) {
       // deadline passed: close socket so remaining async ops are
       // cancelled (see below)
-      if (verbose)
-        println("Error deadline expired.");
+      const auto delta =
+        chrono::duration_cast<chrono::seconds>(right_now - deadline.expiry());
+      if (debug)
+        println("Error deadline expired by: {}", delta.count());
 
       bs::error_code shutdown_ec;  // for non-throwing
       socket.shutdown(tcp::socket::shutdown_both, shutdown_ec);
-      if (verbose)
+      if (debug)
         println("Shutdown status: {}", shutdown_ec);
-      deadline.expires_at(steady_timer::time_point::max());
+      [[maybe_unused]] const auto n_cancels =
+        deadline.expires_at(steady_timer::time_point::max());
 
       /* ADS: closing here if needed?? */
       bs::error_code socket_close_ec;  // for non-throwing
@@ -234,7 +256,7 @@ struct mc16_client {
   response_header resp_hdr;
   response resp;
   std::error_code status;
-  bool verbose{};
+  bool debug{};
   uint32_t read_timeout_seconds{3};
 };  // struct mc16_client
 
@@ -303,7 +325,7 @@ lookup_client_main(int argc, char *argv[]) -> int {
 
   const auto gis = genomic_interval::load(index, intervals_file);
   if (gis.empty()) {
-    println(cerr, "failed to read intervals file: {}", intervals_file);
+    println(cerr, "Error reading intervals file: {}", intervals_file);
     return EXIT_FAILURE;
   }
   if (verbose)
@@ -327,10 +349,8 @@ lookup_client_main(int argc, char *argv[]) -> int {
 
   if (verbose)
     println("Elapsed time for query: {:.3}s\n"
-            "Response header: {}\n"
-            R"(Transaction status: "{}")",
-            duration(client_start, client_stop),
-            mc16c.resp_hdr.summary_serial(), mc16c.status.message());
+            "Transaction status: {}",
+            duration(client_start, client_stop), mc16c.status.message());
 
   if (mc16c.status)
     return EXIT_FAILURE;
