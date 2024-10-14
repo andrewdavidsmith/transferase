@@ -59,7 +59,6 @@ connection::prepare_to_read_offsets() -> void {
 
 auto
 connection::read_request() -> void {
-  deadline.expires_after(std::chrono::seconds(read_timeout_seconds));
   // as long as lambda is alive, connection instance is too
   auto self(shared_from_this());
   // default capturing 'this' puts names in search
@@ -67,7 +66,7 @@ connection::read_request() -> void {
     socket, asio::buffer(req_buf), asio::transfer_exactly(request_buf_size),
     [this, self](const bs::error_code ec,
                  [[maybe_unused]] const size_t bytes_transferred) {
-      // waiting is done; clear deadline for now
+      // waiting is done; remove deadline for now
       deadline.expires_at(steady_timer::time_point::max());
       if (!ec) {
         if (const auto req_hdr_parse{parse(req_buf, req_hdr)};
@@ -108,11 +107,12 @@ connection::read_request() -> void {
       // connection disappear; this connection gets destroyed when
       // this handler returns; that destructor destroys the socket
     });
+  // ADS: put this before or after the call to asio::async?
+  deadline.expires_after(std::chrono::seconds(read_timeout_seconds));
 }
 
 auto
 connection::read_offsets() -> void {
-  deadline.expires_after(std::chrono::seconds(read_timeout_seconds));
   auto self(shared_from_this());
   socket.async_read_some(
     asio::buffer(req.get_offsets_data() + offset_byte, offset_remaining),
@@ -129,7 +129,7 @@ connection::read_offsets() -> void {
           fl.log<lvl::debug>("Finished methylation counts. "
                              "Responding with header: {}",
                              resp_hdr.summary_serial());
-          // exiting the read recursion -- shouldn't have deadline
+          // exiting the read loop -- no deadline for now
           respond_with_header();
         }
         else
@@ -138,38 +138,38 @@ connection::read_offsets() -> void {
       else {
         fl.log<lvl::warning>("Error reading offsets: {}", ec);
         resp_hdr = {request_error::lookup_error_reading_offsets, 0};
-        // exiting the read recursion -- remove deadline
+        // exiting the read loop -- no deadline for now
         respond_with_error();
       }
     });
+  deadline.expires_after(std::chrono::seconds(read_timeout_seconds));
 }
 
 auto
 connection::respond_with_error() -> void {
-  auto self(shared_from_this());
   if (const auto resp_hdr_compose{compose(resp_buf, resp_hdr)};
       !resp_hdr_compose.error) {
-    deadline.expires_after(std::chrono::seconds(read_timeout_seconds));
+    auto self(shared_from_this());
     asio::async_write(
       socket, asio::buffer(resp_buf),
       [this, self](const bs::error_code ec,
                    [[maybe_unused]] const size_t bytes_transferred) {
         deadline.expires_at(steady_timer::time_point::max());
         if (!ec) {
-          fl.log<lvl::warning>("Responded with error: {}. "
-                               "Initiating connection shutdown.",
-                               resp_hdr.summary_serial());
+          fl.log<lvl::warning>(
+            "Responded with error: {}. Initiating connection shutdown.",
+            resp_hdr.summary_serial());
         }
         else {
-          fl.log<lvl::error>("Error responding: {}. "
-                             "Initiating connection shutdown.",
-                             ec);
+          fl.log<lvl::error>(
+            "Error responding: {}. Initiating connection shutdown.", ec);
         }
         bs::error_code shutdown_ec, ignored_ec;  // for non-throwing
         socket.shutdown(tcp::socket::shutdown_both, shutdown_ec);
         if (shutdown_ec)
           fl.log<lvl::warning>("Shutdown error: {}", shutdown_ec);
       });
+    deadline.expires_after(std::chrono::seconds(read_timeout_seconds));
   }
   else {
     fl.log<lvl::error>("Error responding: {}. "
@@ -184,10 +184,9 @@ connection::respond_with_error() -> void {
 
 auto
 connection::respond_with_header() -> void {
-  auto self(shared_from_this());
   if (const auto resp_hdr_compose{compose(resp_buf, resp_hdr)};
       !resp_hdr_compose.error) {
-    deadline.expires_after(std::chrono::seconds(read_timeout_seconds));
+    auto self(shared_from_this());
     asio::async_write(
       socket, asio::buffer(resp_buf),
       [this, self](const bs::error_code ec,
@@ -196,8 +195,8 @@ connection::respond_with_header() -> void {
         if (!ec)
           respond_with_counts();
         else {
-          fl.log<lvl::warning>("Error sending response header: {}."
-                               "Initiating connection shutdown.",
+          fl.log<lvl::warning>("Error sending response header: {}. Initiating "
+                               "connection shutdown.",
                                ec);
           bs::error_code shutdown_ec;  // for non-throwing
           socket.shutdown(tcp::socket::shutdown_both, shutdown_ec);
@@ -205,23 +204,22 @@ connection::respond_with_header() -> void {
             fl.log<lvl::warning>("Shutdown error: {}", shutdown_ec);
         }
       });
+    deadline.expires_after(std::chrono::seconds(read_timeout_seconds));
   }
   else {
-    fl.log<lvl::error>("Error composing response header: {}."
-                       "Initiating connection shutdown.",
-                       resp_hdr_compose.error);
+    fl.log<lvl::error>(
+      "Error composing response header: {}. Initiating connection shutdown.",
+      resp_hdr_compose.error);
     bs::error_code shutdown_ec;  // for non-throwing
     socket.shutdown(tcp::socket::shutdown_both, shutdown_ec);
     if (shutdown_ec)
       fl.log<lvl::warning>("Shutdown error: {}", shutdown_ec);
-    deadline.expires_at(steady_timer::time_point::max());
   }
 }
 
 auto
 connection::respond_with_counts() -> void {
   auto self(shared_from_this());
-  deadline.expires_after(std::chrono::seconds(read_timeout_seconds));
   asio::async_write(
     socket, asio::buffer(resp.counts),
     [this, self](const bs::error_code ec, const size_t bytes_transferred) {
@@ -238,6 +236,7 @@ connection::respond_with_counts() -> void {
       else
         fl.log<lvl::warning>("Error sending counts: {}", ec);
     });
+  deadline.expires_after(std::chrono::seconds(read_timeout_seconds));
 }
 
 auto
@@ -247,7 +246,7 @@ connection::check_deadline() -> void {
 
   if (deadline.expiry() <= steady_timer::clock_type::now()) {
     // deadline passed: close socket so remaining async ops are
-    // cancelled (see below)
+    // cancelled (see comment below)
 
     bs::error_code shutdown_ec;  // for non-throwing
     socket.shutdown(tcp::socket::shutdown_both, shutdown_ec);
@@ -255,10 +254,13 @@ connection::check_deadline() -> void {
       fl.log<lvl::warning>("Shutdown error: {}", shutdown_ec);
     deadline.expires_at(steady_timer::time_point::max());
 
-    /* ADS: closing here if needed?? */
-    // socket.close();
+    /* ADS: closing here makes sense */
+    bs::error_code socket_close_ec;  // for non-throwing
+    socket.close(socket_close_ec);
+    if (socket_close_ec)
+      fl.log<lvl::warning>("Socket close error: {}", socket_close_ec);
   }
 
-  // wait again
+  // ADS: wait again; any issue if the underlying socket is closed?
   deadline.async_wait(std::bind(&connection::check_deadline, this));
 }
