@@ -103,8 +103,7 @@ lookup_server_main(int argc, char *argv[]) -> int {
             "Max live methylomes: {}\n",
             hostname, port, log_file, methylome_dir, max_live_methylomes);
 
-  server s(hostname, port, n_threads, methylome_dir, max_live_methylomes, fl,
-           verbose);
+  server s(hostname, port, n_threads, methylome_dir, max_live_methylomes, fl);
 
   s.run();
 
