@@ -65,17 +65,21 @@ namespace ph = asio::placeholders;
 namespace bs = boost::system;
 namespace po = boost::program_options;
 using tcp = asio::ip::tcp;
+using steady_timer = asio::steady_timer;
 
 struct mc16_client {
   mc16_client(asio::io_context &io_context, const string &server,
               const string &port, request_header &req_hdr, request &req,
               bool verbose = false) :
-    resolver(io_context), socket(io_context), req_hdr{req_hdr},
-    req{std::move(req)},  // part of req might be big
+    resolver(io_context), socket(io_context), deadline{socket.get_executor()},
+    req_hdr{req_hdr}, req{std::move(req)},  // move b/c req can be big
     verbose{verbose} {
+    // (1) call async, (2) set deadline, (3) register check_deadline
     resolver.async_resolve(
       server, port,
       std::bind(&mc16_client::handle_resolve, this, ph::error, ph::results));
+    deadline.expires_after(std::chrono::seconds(read_timeout_seconds));
+    deadline.async_wait(std::bind(&mc16_client::check_deadline, this));
   }
 
   auto handle_resolve(const bs::error_code &err,
@@ -84,6 +88,8 @@ struct mc16_client {
       asio::async_connect(
         socket, endpoints,
         std::bind(&mc16_client::handle_connect, this, ph::error));
+      // ADS: set deadline after calling async op
+      deadline.expires_after(std::chrono::seconds(read_timeout_seconds));
     }
     else {
       status = err;
@@ -93,6 +99,7 @@ struct mc16_client {
   }
 
   void handle_connect(const bs::error_code &err) {
+    deadline.expires_at(steady_timer::time_point::max());
     if (!err) {
       if (verbose)
         println("Connected to server: {}",
@@ -109,6 +116,7 @@ struct mc16_client {
               asio::buffer(req.offsets),
             },
             std::bind(&mc16_client::handle_write_request, this, ph::error));
+          deadline.expires_after(std::chrono::seconds(read_timeout_seconds));
         }
         else {
           status = req_body_compose.error;
@@ -130,11 +138,13 @@ struct mc16_client {
   }
 
   auto handle_write_request(const bs::error_code &err) -> void {
+    deadline.expires_at(steady_timer::time_point::max());
     if (!err) {
       asio::async_read(
         socket, asio::buffer(resp_buf),
         asio::transfer_exactly(response_buf_size),
         std::bind(&mc16_client::handle_read_response_header, this, ph::error));
+      deadline.expires_after(std::chrono::seconds(read_timeout_seconds));
     }
     else {
       status = err;
@@ -144,6 +154,8 @@ struct mc16_client {
   }
 
   auto handle_read_response_header(const bs::error_code &err) -> void {
+    // ADS: does this go here?
+    deadline.expires_at(steady_timer::time_point::max());
     if (!err) {
       if (const auto resp_hdr_parse{parse(resp_buf, resp_hdr)};
           !resp_hdr_parse.error) {
@@ -170,9 +182,12 @@ struct mc16_client {
     asio::async_read(socket, asio::buffer(resp.counts),
                      asio::transfer_exactly(resp.get_counts_n_bytes()),
                      std::bind(&mc16_client::do_finish, this, ph::error));
+    // ADS: before or after the call to async?
+    deadline.expires_after(std::chrono::seconds(read_timeout_seconds));
   }
 
   auto do_finish(const std::error_code &err) -> void {
+    deadline.expires_at(steady_timer::time_point::max());
     if (!err) {
       if (verbose)
         println("Completing transaction: {}", err.message());
@@ -184,8 +199,34 @@ struct mc16_client {
     }
   }
 
+  auto check_deadline() -> void {
+    if (!socket.is_open())
+      return;
+
+    if (deadline.expiry() <= steady_timer::clock_type::now()) {
+      // deadline passed: close socket so remaining async ops are
+      // cancelled (see below)
+      if (verbose)
+        println("Error deadline expired.");
+
+      bs::error_code shutdown_ec;  // for non-throwing
+      socket.shutdown(tcp::socket::shutdown_both, shutdown_ec);
+      if (verbose)
+        println("Shutdown status: {}", shutdown_ec);
+      deadline.expires_at(steady_timer::time_point::max());
+
+      /* ADS: closing here if needed?? */
+      bs::error_code socket_close_ec;  // for non-throwing
+      socket.close(socket_close_ec);
+    }
+
+    // wait again
+    deadline.async_wait(std::bind(&mc16_client::check_deadline, this));
+  }
+
   tcp::resolver resolver;
   tcp::socket socket;
+  steady_timer deadline;
   request_buffer req_buf;
   request_header req_hdr;
   request req;
@@ -194,7 +235,8 @@ struct mc16_client {
   response resp;
   std::error_code status;
   bool verbose{};
-};
+  uint32_t read_timeout_seconds{3};
+};  // struct mc16_client
 
 auto
 lookup_client_main(int argc, char *argv[]) -> int {

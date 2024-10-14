@@ -48,14 +48,21 @@ struct connection : public std::enable_shared_from_this<connection> {
                       request_handler &handler, file_logger &fl,
                       std::uint32_t connection_id) :
     // socket used below gets confused if arg has exact same name
-    socket{std::move(socket_)}, handler{handler}, fl{fl},
-    connection_id{connection_id} {
+    socket{std::move(socket_)}, deadline{socket.get_executor()},
+    handler{handler}, fl{fl}, connection_id{connection_id} {
     fl.log<mc16_log_level::info>(
       "Connection id: {}. Request endpoint: {}", connection_id,
       boost::lexical_cast<std::string>(socket.remote_endpoint()));
   }
 
-  auto start() -> void { read_request(); }  // start first async op
+  auto start() -> void {
+    read_request();  // start first async op; sets deadline
+
+    // this might best be done at the end of read_request, then
+    // cleared and re-done at the appropriate times in read_offsets
+    // NOTE: deadline already set for this one inside read_request()
+    deadline.async_wait(std::bind(&connection::check_deadline, this));
+  }
 
   auto prepare_to_read_offsets() -> void;
 
@@ -66,7 +73,10 @@ struct connection : public std::enable_shared_from_this<connection> {
   auto respond_with_error() -> void;  // write error header
   auto respond_with_counts() -> void;  // write counts
 
+  auto check_deadline() -> void;
+
   boost::asio::ip::tcp::socket socket;  // this connection's socket
+  boost::asio::steady_timer deadline;
   request_handler &handler;  // handles incoming requests
   request_buffer req_buf;
   request_header req_hdr;  // this connection's request header
@@ -76,6 +86,7 @@ struct connection : public std::enable_shared_from_this<connection> {
   response resp;  // response to send back
   file_logger &fl;
   std::uint32_t connection_id{};
+  std::uint32_t read_timeout_seconds{10};
 
   // These help keep track of where we are in the incoming offsets;
   // they might best be associated with the request.
