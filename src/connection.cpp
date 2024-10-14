@@ -42,6 +42,8 @@ namespace bs = boost::system;
 
 using tcp = asio::ip::tcp;
 
+typedef mc16_log_level lvl;
+
 auto
 connection::prepare_to_read_offsets() -> void {
   req.offsets.resize(req.n_intervals);  // get space for offsets
@@ -61,8 +63,8 @@ connection::read_request() -> void {
       if (!ec) {
         if (const auto req_hdr_parse{parse(req_buf, req_hdr)};
             !req_hdr_parse.error) {
-          if (verbose)
-            println("Received request header: {}", req_hdr.summary_serial());
+          fl.log<lvl::debug>("Received request header: {}",
+                             req_hdr.summary_serial());
           handler.handle_header(req_hdr, resp_hdr);
           if (!resp_hdr.error()) {
             if (const auto req_body_parse =
@@ -72,21 +74,20 @@ connection::read_request() -> void {
               read_offsets();
             }
             else {
-              if (verbose)
-                println("Request body parse error: {}", req_body_parse.error);
+              fl.log<lvl::warning>("Request body parse error: {}",
+                                   req_body_parse.error);
               resp_hdr = {req_body_parse.error, 0};
               respond_with_error();
             }
           }
           else {
-            if (verbose)
-              println("Responding with error: {}", resp_hdr.summary_serial());
+            fl.log<lvl::warning>("Responding with error: {}",
+                                 resp_hdr.summary_serial());
             respond_with_error();  // response error already assigned
           }
         }
         else {
-          if (verbose)
-            println("Request parse error: {}", req_hdr_parse.error);
+          fl.log<lvl::warning>("Request parse error: {}", req_hdr_parse.error);
           resp_hdr = {req_hdr_parse.error, 0};
           respond_with_error();
         }
@@ -107,20 +108,19 @@ connection::read_offsets() -> void {
         offset_remaining -= bytes_transferred;
         offset_byte += bytes_transferred;
         if (offset_remaining == 0) {
-          if (verbose)
-            println("Finished reading offsets [{} Bytes].", offset_byte);
+          fl.log<lvl::debug>("Finished reading offsets [{} Bytes].",
+                             offset_byte);
           handler.handle_get_counts(req_hdr, req, resp_hdr, resp);
-          if (verbose)
-            println("Finished methylation counts.");
-          if (verbose)
-            println("Responding with header: {}", resp_hdr.summary_serial());
+          fl.log<lvl::debug>("Finished methylation counts. "
+                             "Responding with header: {}",
+                             resp_hdr.summary_serial());
           respond_with_header();
         }
         else
           read_offsets();
       }
       else {
-        println("Error reading offsets: {}", ec);
+        fl.log<lvl::warning>("Error reading offsets: {}", ec);
         resp_hdr = {request_error::lookup_error_reading_offsets, 0};
         respond_with_error();
       }
@@ -137,19 +137,17 @@ connection::respond_with_error() -> void {
       [this, self](const bs::error_code ec,
                    [[maybe_unused]] const size_t bytes_transferred) {
         if (!ec) {
-          if (verbose)
-            println("Responded with error: {}.\n"
-                    "Initiating connection shutdown.",
-                    resp_hdr.summary_serial());
+          fl.log<lvl::warning>("Responded with error: {}. "
+                               "Initiating connection shutdown.",
+                               resp_hdr.summary_serial());
           socket.shutdown(tcp::socket::shutdown_both);
         }
       });
   }
   else {
-    if (verbose)
-      println("Error responding: {}.\n"
-              "Initiating connection shutdown.",
-              resp_hdr_compose.error);
+    fl.log<lvl::error>("Error responding: {}. "
+                       "Initiating connection shutdown.",
+                       resp_hdr_compose.error);
     socket.shutdown(tcp::socket::shutdown_both);
   }
 }
@@ -166,19 +164,17 @@ connection::respond_with_header() -> void {
         if (!ec)
           respond_with_counts();
         else {
-          if (verbose)
-            println("Error sending response header: {}."
-                    "Initiating connection shutdown.",
-                    ec);
+          fl.log<lvl::warning>("Error sending response header: {}."
+                               "Initiating connection shutdown.",
+                               ec);
           socket.shutdown(tcp::socket::shutdown_both);
         }
       });
   }
   else {
-    if (verbose)
-      println("Error composing response header: {}."
-              "Initiating connection shutdown.",
-              resp_hdr_compose.error);
+    fl.log<lvl::error>("Error composing response header: {}."
+                       "Initiating connection shutdown.",
+                       resp_hdr_compose.error);
     socket.shutdown(tcp::socket::shutdown_both);
   }
 }
@@ -190,10 +186,9 @@ connection::respond_with_counts() -> void {
     socket, asio::buffer(resp.counts),
     [this, self](const bs::error_code ec, const size_t bytes_transferred) {
       if (!ec) {
-        if (verbose)
-          println("Responded with counts [{} Bytes].\n"
-                  "Initiating connection shutdown.",
-                  bytes_transferred);
+        fl.log<lvl::info>("Responded with counts [{} Bytes]. "
+                          "Initiating connection shutdown.",
+                          bytes_transferred);
         socket.shutdown(tcp::socket::shutdown_both);
       }
     });

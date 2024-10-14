@@ -23,6 +23,7 @@
 
 #include "methylome_set.hpp"
 
+#include "mc16_error.hpp"
 #include "methylome.hpp"
 
 #include <algorithm>
@@ -60,61 +61,46 @@ is_valid_accession(const string &accession) -> bool {
 
 [[nodiscard]] auto
 methylome_set::get_methylome(const string &accession)
-  -> tuple<std::shared_ptr<methylome>, int> {
-  if (!is_valid_accession(accession)) {
-    if (verbose)
-      println(std::cout, "not valid accession: {}", accession);
-    return {nullptr, -1};
-  }
-  if (verbose)
-    println(std::cout, "valid accession: {}", accession);
+  -> tuple<std::shared_ptr<methylome>, std::error_code> {
+  if (!is_valid_accession(accession))
+    return {nullptr, methylome_set_code::invalid_accession};
 
   unordered_map<string, std::shared_ptr<methylome>>::const_iterator meth{};
 
   std::scoped_lock lock{mtx};
 
-  // ADS TODO: add error codes for return values
-
   // check if methylome is loaded
   const auto acc_meth_itr = accession_to_methylome.find(accession);
   if (acc_meth_itr == cend(accession_to_methylome)) {
-    if (verbose)
-      println(std::cout, "Methylome not live: {}", accession);
     const auto filename = format("{}/{}.mc16", mc16_directory, accession);
-    if (verbose)
-      println(std::cout, "Methylome filename: {}", filename);
-    if (!fs::exists(filename)) {
-      if (verbose)
-        println(std::cout, "File not found: {}", filename);
-      return {nullptr, -1};
-    }
+    if (!fs::exists(filename))
+      return {nullptr, methylome_set_code::methylome_file_not_found};
+
     const string to_eject = accessions.push(accession);
     if (!to_eject.empty()) {
       const auto to_eject_itr = accession_to_methylome.find(to_eject);
-      if (to_eject_itr == cend(accession_to_methylome)) {
-        if (verbose)
-          println(std::cout, "Error ejecting methylome: {}", to_eject);
-        return {nullptr, -2};
-      }
+      if (to_eject_itr == cend(accession_to_methylome))
+        return {nullptr, methylome_set_code::error_updating_live_methylomes};
+
       accession_to_methylome.erase(to_eject_itr);
     }
     methylome m{};
-    if (const auto ec = m.read(filename)) {
-      if (verbose)
-        println(std::cout, "Error reading methylome file: {} (error={})",
-                filename, ec);
-      return {nullptr, -1};
-    }
+    if (const auto ec = m.read(filename))
+      return {nullptr, methylome_set_code::error_reading_methylome_file};
 
-    std::tie(meth, std::ignore) = accession_to_methylome.emplace(
+    bool insertion_happened{false};
+    std::tie(meth, insertion_happened) = accession_to_methylome.emplace(
       accession, make_shared<methylome>(std::move(m)));
+    if (!insertion_happened)
+      return {nullptr, methylome_set_code::methylome_already_live};
   }
   else
     meth = acc_meth_itr;  // already loaded
 
+  // ADS TODO: use this as error condition
   n_total_cpgs = size(meth->second->cpgs);
 
-  return {meth->second, 0};
+  return {meth->second, methylome_set_code::ok};
 }
 
 [[nodiscard]] auto

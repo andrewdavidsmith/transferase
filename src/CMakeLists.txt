@@ -32,6 +32,10 @@ add_library(lookup OBJECT
   lookup.hpp
   lookup.cpp)
 
+add_library(logging OBJECT
+  logging.hpp
+  logging.cpp)
+
 add_library(bins OBJECT
   bins.hpp
   bins.cpp)
@@ -101,6 +105,7 @@ target_sources(mc16 PRIVATE mc16.cpp)
 target_link_libraries(
   mc16
   utilities
+  logging
   index
   compress
   check

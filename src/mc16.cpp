@@ -111,7 +111,7 @@ constexpr string_view command_names[] = {
   "bins",
   "lookup-remote",
   "lookup-server",
-  //clang-format on
+  // clang-format on
 };
 
 static auto

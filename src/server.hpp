@@ -24,9 +24,12 @@
 #ifndef SRC_SERVER_HPP_
 #define SRC_SERVER_HPP_
 
+#include "logging.hpp"
 #include "request_handler.hpp"
 
 #include <boost/asio.hpp>
+
+#include <atomic>
 #include <cstdint>
 #include <string>
 
@@ -37,18 +40,19 @@ struct server {
   explicit server(const std::string &address, const std::string &port,
                   const std::uint32_t n_threads,
                   const std::string &methylome_dir,
-                  const std::uint32_t max_live_methylomes, bool verbose);
+                  const std::uint32_t max_live_methylomes, file_logger &fl);
 
   auto run() -> void;
   auto do_accept() -> void;      // do async accept operation
   auto do_await_stop() -> void;  // wait for request to stop server
 
-  bool verbose{};
   std::uint32_t n_threads{};
   boost::asio::io_context ioc;      // performs async ops
   boost::asio::signal_set signals;  // registers termination signals
   boost::asio::ip::tcp::acceptor acceptor;  // listens for connections
   request_handler handler;  // handles incoming requests
+  file_logger &fl;
+  std::atomic_uint32_t connection_id{};  // incremented per thread
 };
 
 #endif  // SRC_SERVER_HPP_

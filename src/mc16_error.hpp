@@ -130,6 +130,57 @@ make_error_code(server_response_code e) {
   return std::error_code(std::to_underlying(e), category);
 }
 
+// methylome_set errors
+
+enum class methylome_set_code : std::uint32_t {
+  ok = 0,
+  invalid_accession = 1,
+  methylome_file_not_found = 2,
+  error_updating_live_methylomes = 3,
+  error_reading_methylome_file = 4,
+  methylome_already_live = 5,
+};
+
+static constexpr std::uint32_t methylome_set_code_n = 6;
+
+// register request_header_parse_error as error code enum
+template <>
+struct std::is_error_code_enum<methylome_set_code> : public std::true_type {};
+
+// category to provide text descriptions
+struct methylome_set_category : std::error_category {
+  const char *name() const noexcept override { return "methylome_set"; }
+  std::string message(int code) const override {
+    using std::string_literals::operator""s;
+    switch (code) {
+    case 0:
+      return "ok"s;
+    case 1:
+      return "invalid accession"s;
+    case 2:
+      return "methylome file not found"s;
+    case 3:
+      return "error updating live methylomes"s;
+    case 4:
+      return "error reading methylome file"s;
+    case 5:
+      return "methylome already live"s;
+    }
+    std::abort();  // unreacheable
+  }
+};
+
+inline std::error_code
+make_error_code(methylome_set_code e) {
+  static auto category = methylome_set_category{};
+  return std::error_code(std::to_underlying(e), category);
+}
+
+/*
+  Helpers to print messages from std::error_code and
+  boost::system::error_code
+ */
+
 template <>
 struct std::formatter<std::error_code> : std::formatter<std::string> {
   auto format(const std::error_code &e, std::format_context &ctx) const {
@@ -138,9 +189,6 @@ struct std::formatter<std::error_code> : std::formatter<std::string> {
   }
 };
 
-/*
-  Helper to print messages from boost::system::error_code
- */
 template <>
 struct std::formatter<boost::system::error_code> : std::formatter<std::string> {
   auto format(const boost::system::error_code &e,

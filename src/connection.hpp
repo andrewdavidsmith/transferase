@@ -24,15 +24,18 @@
 #ifndef SRC_CONNECTION_HPP_
 #define SRC_CONNECTION_HPP_
 
+#include "logging.hpp"
 #include "request.hpp"
 #include "response.hpp"
 
 #include <boost/asio.hpp>
+#include <boost/lexical_cast.hpp>
 
 #include <array>
 #include <cstddef>
 #include <cstdint>
 #include <memory>  // std::shared_ptr
+#include <string>
 #include <utility>  // std::move
 
 struct request_handler;
@@ -41,9 +44,16 @@ struct connection : public std::enable_shared_from_this<connection> {
   connection(const connection &) = delete;
   connection &operator=(const connection &) = delete;
 
-  explicit connection(boost::asio::ip::tcp::socket socket,
-                      request_handler &handler, bool verbose) :
-    socket{std::move(socket)}, handler{handler}, verbose{verbose} {}
+  explicit connection(boost::asio::ip::tcp::socket socket_,
+                      request_handler &handler, file_logger &fl,
+                      std::uint32_t connection_id) :
+    // socket used below gets confused if arg has exact same name
+    socket{std::move(socket_)}, handler{handler}, fl{fl},
+    connection_id{connection_id} {
+    fl.log<mc16_log_level::info>(
+      "Connection id: {}. Request endpoint: {}", connection_id,
+      boost::lexical_cast<std::string>(socket.remote_endpoint()));
+  }
 
   auto start() -> void { read_request(); }  // start first async op
 
@@ -53,19 +63,19 @@ struct connection : public std::enable_shared_from_this<connection> {
   auto read_offsets() -> void;  // read offsets part of request
 
   auto respond_with_header() -> void;  // write good header
-  auto respond_with_error() -> void;   // write error header
+  auto respond_with_error() -> void;  // write error header
   auto respond_with_counts() -> void;  // write counts
 
   boost::asio::ip::tcp::socket socket;  // this connection's socket
-  request_handler &handler;             // handles incoming requests
+  request_handler &handler;  // handles incoming requests
   request_buffer req_buf;
-  request_header req_hdr;               // this connection's request header
-  request req;                          // this connection's request
+  request_header req_hdr;  // this connection's request header
+  request req;  // this connection's request
   response_buffer resp_buf;
-  response_header resp_hdr;             // header of the response
-  response resp;                        // response to send back
-
-  bool verbose{};
+  response_header resp_hdr;  // header of the response
+  response resp;  // response to send back
+  file_logger &fl;
+  std::uint32_t connection_id{};
 
   // These help keep track of where we are in the incoming offsets;
   // they might best be associated with the request.

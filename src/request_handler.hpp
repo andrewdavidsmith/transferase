@@ -39,10 +39,8 @@ struct request_handler {
   request_handler &operator=(const request_handler &) = delete;
 
   explicit request_handler(const std::string &methylome_dir,
-                           const std::uint32_t max_live_methylomes,
-                           bool verbose) :
-    methylome_dir{methylome_dir},
-    ms(verbose, max_live_methylomes, methylome_dir), verbose{verbose} {}
+                           const std::uint32_t max_live_methylomes) :
+    methylome_dir{methylome_dir}, ms(max_live_methylomes, methylome_dir) {}
 
   auto handle_header(const request_header &req_hdr,
                      response_header &resp_hdr) -> void;
