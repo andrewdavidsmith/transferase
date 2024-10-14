@@ -28,6 +28,7 @@
 #include <boost/lexical_cast.hpp>
 
 #include <cstdint>
+#include <cstring>  // strsignal
 #include <memory>  // make_shared<>
 #include <print>
 #include <string>
@@ -113,7 +114,7 @@ auto
 server::do_await_stop() -> void {
   // capture brings 'this' into search for names
   signals.async_wait([this](const bs::error_code ec, const int signo) {
-    fl.log<lvl::info>("Received termination signal {} ({})", signo,
+    fl.log<lvl::info>("Received termination signal {} ({})", strsignal(signo),
                       ec.message());
     // stop server by cancelling all outstanding async ops; when all
     // have finished, the call to io_context::run() will finish
