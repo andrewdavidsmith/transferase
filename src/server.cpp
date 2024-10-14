@@ -102,7 +102,8 @@ server::do_accept() -> void {
         return;
       if (!ec) {
         // ADS: accepted socket moved into connection which is started
-        make_shared<connection>(std::move(socket), handler, fl)->start();
+        make_shared<connection>(std::move(socket), handler, fl, connection_id++)
+          ->start();
       }
       do_accept();  // keep listening for more connections
     });

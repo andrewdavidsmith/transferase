@@ -28,6 +28,8 @@
 #include "request_handler.hpp"
 
 #include <boost/asio.hpp>
+
+#include <atomic>
 #include <cstdint>
 #include <string>
 
@@ -50,6 +52,7 @@ struct server {
   boost::asio::ip::tcp::acceptor acceptor;  // listens for connections
   request_handler handler;  // handles incoming requests
   file_logger &fl;
+  std::atomic_uint32_t connection_id{};  // incremented per thread
 };
 
 #endif  // SRC_SERVER_HPP_
