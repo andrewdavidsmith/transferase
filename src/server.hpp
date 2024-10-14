@@ -38,14 +38,12 @@ struct server {
   explicit server(const std::string &address, const std::string &port,
                   const std::uint32_t n_threads,
                   const std::string &methylome_dir,
-                  const std::uint32_t max_live_methylomes, file_logger &fl,
-                  bool verbose);
+                  const std::uint32_t max_live_methylomes, file_logger &fl);
 
   auto run() -> void;
   auto do_accept() -> void;      // do async accept operation
   auto do_await_stop() -> void;  // wait for request to stop server
 
-  bool verbose{};
   std::uint32_t n_threads{};
   boost::asio::io_context ioc;      // performs async ops
   boost::asio::signal_set signals;  // registers termination signals

@@ -52,23 +52,17 @@ typedef mc16_log_level lvl;
 
 server::server(const string &address, const string &port,
                const uint32_t n_threads, const string &methylome_dir,
-               const uint32_t max_live_methylomes, file_logger &fl,
-               bool verbose) :
-  verbose{verbose}, n_threads{n_threads},
+               const uint32_t max_live_methylomes, file_logger &fl) :
+  n_threads{n_threads},
 #if defined(SIGQUIT)
   signals(ioc, SIGINT, SIGTERM, SIGQUIT),
 #else
   signals(ioc, SIGINT, SIGTERM),
 #endif
-  acceptor(ioc), handler(methylome_dir, max_live_methylomes, verbose), fl{fl} {
+  acceptor(ioc), handler(methylome_dir, max_live_methylomes), fl{fl} {
   // io_context ios uses default constructor
 
   do_await_stop();  // start waiting for signals
-
-  /* ADS TODO: summarize the initial empty methylome set? */
-
-  // if (verbose)
-  //   println("Methylome set: {}", handler.something());
 
   tcp::resolver resolver(ioc);
   tcp::endpoint endpoint = *resolver.resolve(address, port).begin();
@@ -108,8 +102,7 @@ server::do_accept() -> void {
         return;
       if (!ec) {
         // ADS: accepted socket moved into connection which is started
-        make_shared<connection>(std::move(socket), handler, fl, verbose)
-          ->start();
+        make_shared<connection>(std::move(socket), handler, fl)->start();
       }
       do_accept();  // keep listening for more connections
     });
