@@ -71,7 +71,7 @@ connection::read_request() -> void {
       if (!ec) {
         if (const auto req_hdr_parse{parse(req_buf, req_hdr)};
             !req_hdr_parse.error) {
-          fl.log<lvl::debug>("Received request header: {}",
+          fl.log<lvl::debug>("{} Received request header: {}", connection_id,
                              req_hdr.summary_serial());
           handler.handle_header(req_hdr, resp_hdr);
           if (!resp_hdr.error()) {
@@ -82,27 +82,28 @@ connection::read_request() -> void {
               read_offsets();
             }
             else {
-              fl.log<lvl::warning>("Request body parse error: {}",
-                                   req_body_parse.error);
+              fl.log<lvl::warning>("{} Request body parse error: {}",
+                                   connection_id, req_body_parse.error);
               resp_hdr = {req_body_parse.error, 0};
               respond_with_error();
             }
           }
           else {
-            fl.log<lvl::warning>("Responding with error: {}",
+            fl.log<lvl::warning>("{} Responding with error: {}", connection_id,
                                  resp_hdr.summary_serial());
             respond_with_error();  // response error already assigned
           }
         }
         else {
-          fl.log<lvl::warning>("Request parse error: {}", req_hdr_parse.error);
+          fl.log<lvl::warning>("{} Request parse error: {}", connection_id,
+                               req_hdr_parse.error);
           resp_hdr = {req_hdr_parse.error, 0};
           respond_with_error();
         }
       }
       else  // problem reading request
-        fl.log<lvl::warning>("Failed to read request: {}", ec);
-
+        fl.log<lvl::warning>("{} Failed to read request: {}", connection_id,
+                             ec);
       // ADS: on error: no new asyncs start; references to this
       // connection disappear; this connection gets destroyed when
       // this handler returns; that destructor destroys the socket
@@ -123,12 +124,12 @@ connection::read_offsets() -> void {
         offset_remaining -= bytes_transferred;
         offset_byte += bytes_transferred;
         if (offset_remaining == 0) {
-          fl.log<lvl::debug>("Finished reading offsets [{} Bytes].",
-                             offset_byte);
+          fl.log<lvl::debug>("{} Finished reading offsets ({} Bytes)",
+                             connection_id, offset_byte);
           handler.handle_get_counts(req_hdr, req, resp_hdr, resp);
-          fl.log<lvl::debug>("Finished methylation counts. "
-                             "Responding with header: {}",
-                             resp_hdr.summary_serial());
+          fl.log<lvl::debug>(
+            "{} Finished methylation counts. Responding with header: {}",
+            connection_id, resp_hdr.summary_serial());
           // exiting the read loop -- no deadline for now
           respond_with_header();
         }
@@ -136,7 +137,7 @@ connection::read_offsets() -> void {
           read_offsets();
       }
       else {
-        fl.log<lvl::warning>("Error reading offsets: {}", ec);
+        fl.log<lvl::warning>("{} Error reading offsets: {}", connection_id, ec);
         resp_hdr = {request_error::lookup_error_reading_offsets, 0};
         // exiting the read loop -- no deadline for now
         respond_with_error();
@@ -157,28 +158,30 @@ connection::respond_with_error() -> void {
         deadline.expires_at(steady_timer::time_point::max());
         if (!ec) {
           fl.log<lvl::warning>(
-            "Responded with error: {}. Initiating connection shutdown.",
-            resp_hdr.summary_serial());
+            "{} Responded with error: {}. Initiating connection shutdown.",
+            connection_id, resp_hdr.summary_serial());
         }
         else {
           fl.log<lvl::error>(
-            "Error responding: {}. Initiating connection shutdown.", ec);
+            "{} Error responding: {}. Initiating connection shutdown.",
+            connection_id, ec);
         }
         bs::error_code shutdown_ec, ignored_ec;  // for non-throwing
         socket.shutdown(tcp::socket::shutdown_both, shutdown_ec);
         if (shutdown_ec)
-          fl.log<lvl::warning>("Shutdown error: {}", shutdown_ec);
+          fl.log<lvl::warning>("{} Shutdown error: {}", connection_id,
+                               shutdown_ec);
       });
     deadline.expires_after(std::chrono::seconds(read_timeout_seconds));
   }
   else {
-    fl.log<lvl::error>("Error responding: {}. "
-                       "Initiating connection shutdown.",
-                       resp_hdr_compose.error);
+    fl.log<lvl::error>(
+      "{} Error responding: {}. Initiating connection shutdown.", connection_id,
+      resp_hdr_compose.error);
     bs::error_code shutdown_ec;  // for non-throwing
     socket.shutdown(tcp::socket::shutdown_both, shutdown_ec);
     if (shutdown_ec)
-      fl.log<lvl::warning>("Shutdown error: {}", shutdown_ec);
+      fl.log<lvl::warning>("{} Shutdown error: {}", connection_id, shutdown_ec);
   }
 }
 
@@ -195,25 +198,26 @@ connection::respond_with_header() -> void {
         if (!ec)
           respond_with_counts();
         else {
-          fl.log<lvl::warning>("Error sending response header: {}. Initiating "
-                               "connection shutdown.",
-                               ec);
+          fl.log<lvl::warning>("{} Error sending response header: {}. "
+                               "Initiating connection shutdown.",
+                               connection_id, ec);
           bs::error_code shutdown_ec;  // for non-throwing
           socket.shutdown(tcp::socket::shutdown_both, shutdown_ec);
           if (shutdown_ec)
-            fl.log<lvl::warning>("Shutdown error: {}", shutdown_ec);
+            fl.log<lvl::warning>("{} Shutdown error: {}", connection_id,
+                                 shutdown_ec);
         }
       });
     deadline.expires_after(std::chrono::seconds(read_timeout_seconds));
   }
   else {
     fl.log<lvl::error>(
-      "Error composing response header: {}. Initiating connection shutdown.",
-      resp_hdr_compose.error);
+      "{} Error composing response header: {}. Initiating connection shutdown.",
+      connection_id, resp_hdr_compose.error);
     bs::error_code shutdown_ec;  // for non-throwing
     socket.shutdown(tcp::socket::shutdown_both, shutdown_ec);
     if (shutdown_ec)
-      fl.log<lvl::warning>("Shutdown error: {}", shutdown_ec);
+      fl.log<lvl::warning>("{} Shutdown error: {}", connection_id, shutdown_ec);
   }
 }
 
@@ -225,16 +229,22 @@ connection::respond_with_counts() -> void {
     [this, self](const bs::error_code ec, const size_t bytes_transferred) {
       deadline.expires_at(steady_timer::time_point::max());
       if (!ec) {
-        fl.log<lvl::info>("Responded with counts [{} Bytes]. "
-                          "Initiating connection shutdown.",
-                          bytes_transferred);
+        fl.log<lvl::info>("{} Responded with counts ({} Bytes). Initiating "
+                          "connection shutdown.",
+                          connection_id, bytes_transferred);
         bs::error_code shutdown_ec;  // for non-throwing
         socket.shutdown(tcp::socket::shutdown_both, shutdown_ec);
         if (shutdown_ec)
-          fl.log<lvl::warning>("Shutdown error: {}", shutdown_ec);
+          fl.log<lvl::warning>("{} Shutdown error: {}", connection_id,
+                               shutdown_ec);
+        bs::error_code socket_close_ec;  // for non-throwing
+        socket.close(socket_close_ec);
+        if (socket_close_ec)
+          fl.log<lvl::warning>("{} Socket close error: {}", connection_id,
+                               socket_close_ec);
       }
       else
-        fl.log<lvl::warning>("Error sending counts: {}", ec);
+        fl.log<lvl::warning>("{} Error sending counts: {}", connection_id, ec);
     });
   deadline.expires_after(std::chrono::seconds(read_timeout_seconds));
 }
@@ -251,14 +261,15 @@ connection::check_deadline() -> void {
     bs::error_code shutdown_ec;  // for non-throwing
     socket.shutdown(tcp::socket::shutdown_both, shutdown_ec);
     if (shutdown_ec)
-      fl.log<lvl::warning>("Shutdown error: {}", shutdown_ec);
+      fl.log<lvl::warning>("{} Shutdown error: {}", connection_id, shutdown_ec);
     deadline.expires_at(steady_timer::time_point::max());
 
     /* ADS: closing here makes sense */
     bs::error_code socket_close_ec;  // for non-throwing
     socket.close(socket_close_ec);
     if (socket_close_ec)
-      fl.log<lvl::warning>("Socket close error: {}", socket_close_ec);
+      fl.log<lvl::warning>("{} Socket close error: {}", connection_id,
+                           socket_close_ec);
   }
 
   // ADS: wait again; any issue if the underlying socket is closed?
