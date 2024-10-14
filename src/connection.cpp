@@ -117,14 +117,14 @@ connection::read_offsets() -> void {
   socket.async_read_some(
     asio::buffer(req.get_offsets_data() + offset_byte, offset_remaining),
     [this, self](const bs::error_code ec, const size_t bytes_transferred) {
+      // remove deadline while doing computation
+      deadline.expires_at(steady_timer::time_point::max());
       if (!ec) {
         offset_remaining -= bytes_transferred;
         offset_byte += bytes_transferred;
         if (offset_remaining == 0) {
           fl.log<lvl::debug>("Finished reading offsets [{} Bytes].",
                              offset_byte);
-          // remove deadline while doing computation
-          deadline.expires_at(steady_timer::time_point::max());
           handler.handle_get_counts(req_hdr, req, resp_hdr, resp);
           fl.log<lvl::debug>("Finished methylation counts. "
                              "Responding with header: {}",
@@ -139,7 +139,6 @@ connection::read_offsets() -> void {
         fl.log<lvl::warning>("Error reading offsets: {}", ec);
         resp_hdr = {request_error::lookup_error_reading_offsets, 0};
         // exiting the read recursion -- remove deadline
-        deadline.expires_at(steady_timer::time_point::max());
         respond_with_error();
       }
     });
@@ -150,10 +149,12 @@ connection::respond_with_error() -> void {
   auto self(shared_from_this());
   if (const auto resp_hdr_compose{compose(resp_buf, resp_hdr)};
       !resp_hdr_compose.error) {
+    deadline.expires_after(std::chrono::seconds(read_timeout_seconds));
     asio::async_write(
       socket, asio::buffer(resp_buf),
       [this, self](const bs::error_code ec,
                    [[maybe_unused]] const size_t bytes_transferred) {
+        deadline.expires_at(steady_timer::time_point::max());
         if (!ec) {
           fl.log<lvl::warning>("Responded with error: {}. "
                                "Initiating connection shutdown.",
@@ -168,7 +169,6 @@ connection::respond_with_error() -> void {
         socket.shutdown(tcp::socket::shutdown_both, shutdown_ec);
         if (shutdown_ec)
           fl.log<lvl::warning>("Shutdown error: {}", shutdown_ec);
-        deadline.expires_at(steady_timer::time_point::max());
       });
   }
   else {
@@ -179,7 +179,6 @@ connection::respond_with_error() -> void {
     socket.shutdown(tcp::socket::shutdown_both, shutdown_ec);
     if (shutdown_ec)
       fl.log<lvl::warning>("Shutdown error: {}", shutdown_ec);
-    deadline.expires_at(steady_timer::time_point::max());
   }
 }
 
@@ -188,10 +187,12 @@ connection::respond_with_header() -> void {
   auto self(shared_from_this());
   if (const auto resp_hdr_compose{compose(resp_buf, resp_hdr)};
       !resp_hdr_compose.error) {
+    deadline.expires_after(std::chrono::seconds(read_timeout_seconds));
     asio::async_write(
       socket, asio::buffer(resp_buf),
       [this, self](const bs::error_code ec,
                    [[maybe_unused]] const size_t bytes_transferred) {
+        deadline.expires_at(steady_timer::time_point::max());
         if (!ec)
           respond_with_counts();
         else {
@@ -202,7 +203,6 @@ connection::respond_with_header() -> void {
           socket.shutdown(tcp::socket::shutdown_both, shutdown_ec);
           if (shutdown_ec)
             fl.log<lvl::warning>("Shutdown error: {}", shutdown_ec);
-          deadline.expires_at(steady_timer::time_point::max());
         }
       });
   }
@@ -221,9 +221,11 @@ connection::respond_with_header() -> void {
 auto
 connection::respond_with_counts() -> void {
   auto self(shared_from_this());
+  deadline.expires_after(std::chrono::seconds(read_timeout_seconds));
   asio::async_write(
     socket, asio::buffer(resp.counts),
     [this, self](const bs::error_code ec, const size_t bytes_transferred) {
+      deadline.expires_at(steady_timer::time_point::max());
       if (!ec) {
         fl.log<lvl::info>("Responded with counts [{} Bytes]. "
                           "Initiating connection shutdown.",
@@ -235,7 +237,6 @@ connection::respond_with_counts() -> void {
       }
       else
         fl.log<lvl::warning>("Error sending counts: {}", ec);
-      deadline.expires_at(steady_timer::time_point::max());
     });
 }
 
