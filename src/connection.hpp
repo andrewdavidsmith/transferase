@@ -35,6 +35,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>  // std::shared_ptr
+#include <string>
 #include <utility>  // std::move
 
 struct request_handler;
