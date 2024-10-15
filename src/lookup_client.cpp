@@ -29,6 +29,7 @@
 
 #include "cpg_index.hpp"
 #include "genomic_interval.hpp"
+#include "logger.hpp"
 #include "methylome.hpp"
 #include "request.hpp"
 #include "response.hpp"
@@ -39,6 +40,7 @@
 #include <format>
 #include <fstream>
 #include <iostream>
+#include <memory>  // std::make_shared
 #include <print>
 #include <ranges>
 #include <string>
@@ -66,7 +68,7 @@ namespace ph = boost::asio::placeholders;
 namespace bs = boost::system;
 namespace po = boost::program_options;
 using tcp = boost::asio::ip::tcp;
-using steady_timer = asio::steady_timer;
+using steady_timer = boost::asio::steady_timer;
 
 // ADS: Canceling the pending async waits by changing the timer might
 // be considered for avoiding. In most cases it will not be necessary
@@ -75,10 +77,10 @@ using steady_timer = asio::steady_timer;
 struct mc16_client {
   mc16_client(asio::io_context &io_context, const string &server,
               const string &port, request_header &req_hdr, request &req,
-              bool debug = false) :
+              logger &lgr) :
     resolver(io_context), socket(io_context), deadline{socket.get_executor()},
     req_hdr{req_hdr}, req{std::move(req)},  // move b/c req can be big
-    debug{debug} {
+    lgr{lgr} {
     // (1) call async, (2) set deadline, (3) register check_deadline
     resolver.async_resolve(
       server, port,
@@ -99,9 +101,8 @@ struct mc16_client {
         deadline.expires_after(chrono::seconds(read_timeout_seconds));
     }
     else {
-      status = err;
-      if (debug)
-        println("Error resolving server: {}", status.message());
+      lgr.debug("Error resolving server: {}", err);
+      do_finish(err);
     }
   }
 
@@ -109,8 +110,7 @@ struct mc16_client {
     [[maybe_unused]] const auto n_cancels =
       deadline.expires_at(steady_timer::time_point::max());
     if (!err) {
-      if (debug)
-        println("Connected to server: {}",
+      lgr.debug("Connected to server: {}",
                 boost::lexical_cast<string>(socket.remote_endpoint()));
       if (const auto req_hdr_compose{compose(req_buf, req_hdr)};
           !req_hdr_compose.error) {
@@ -128,21 +128,18 @@ struct mc16_client {
             deadline.expires_after(chrono::seconds(read_timeout_seconds));
         }
         else {
-          status = req_body_compose.error;
-          if (debug)
-            println("Error forming request body: {}", req_body_compose.error);
+          lgr.debug("Error forming request body: {}", req_body_compose.error);
+          do_finish(req_body_compose.error);
         }
       }
       else {
-        status = req_hdr_compose.error;
-        if (debug)
-          println("Error forming request header: {}", req_hdr_compose.error);
+        lgr.debug("Error forming request header: {}", req_hdr_compose.error);
+        do_finish(req_hdr_compose.error);
       }
     }
     else {
-      status = err;
-      if (debug)
-        println("Error connecting: {}", err);
+      lgr.debug("Error connecting: {}", err);
+      do_finish(err);
     }
   }
 
@@ -158,9 +155,8 @@ struct mc16_client {
         deadline.expires_after(chrono::seconds(read_timeout_seconds));
     }
     else {
-      status = err;
-      if (debug)
-        println("Error writing request: {}", err.message());
+      lgr.debug("Error writing request: {}", err);
+      do_finish(err);
     }
   }
 
@@ -171,20 +167,17 @@ struct mc16_client {
     if (!err) {
       if (const auto resp_hdr_parse{parse(resp_buf, resp_hdr)};
           !resp_hdr_parse.error) {
-        if (debug)
-          println("Response header: {}", resp_hdr.summary_serial());
+        lgr.debug("Response header: {}", resp_hdr.summary_serial());
         do_read_counts();
       }
       else {
-        status = resp_hdr_parse.error;
         println("Received error: {}", resp_hdr_parse.error);
         do_finish(resp_hdr_parse.error);
       }
     }
     else {
-      status = err;
-      if (debug)
-        println("Error reading response header: {}", err.message());
+      lgr.debug("Error reading response header: {}", err);
+      do_finish(err);
     }
   }
 
@@ -203,14 +196,12 @@ struct mc16_client {
     [[maybe_unused]] const auto n_cancels =
       deadline.expires_at(steady_timer::time_point::max());
     if (!err) {
-      if (debug)
-        println("Completing transaction: {}", err.message());
+      lgr.debug("Completing transaction: {}", err);
     }
     else {
-      status = err;
-      if (debug)
-        println("Error reading counts: {}", err.message());
+      lgr.debug("Completing with error: {}", err);
     }
+    status = err;
     bs::error_code shutdown_ec;  // for non-throwing
     socket.shutdown(tcp::socket::shutdown_both, shutdown_ec);
     bs::error_code socket_close_ec;  // for non-throwing
@@ -227,13 +218,11 @@ struct mc16_client {
       // cancelled (see below)
       const auto delta =
         chrono::duration_cast<chrono::seconds>(right_now - deadline.expiry());
-      if (debug)
-        println("Error deadline expired by: {}", delta.count());
+      lgr.debug("Error deadline expired by: {}", delta.count());
 
       bs::error_code shutdown_ec;  // for non-throwing
       socket.shutdown(tcp::socket::shutdown_both, shutdown_ec);
-      if (debug)
-        println("Shutdown status: {}", shutdown_ec);
+      lgr.debug("Shutdown status: {}", shutdown_ec);
       [[maybe_unused]] const auto n_cancels =
         deadline.expires_at(steady_timer::time_point::max());
 
@@ -256,17 +245,23 @@ struct mc16_client {
   response_header resp_hdr;
   response resp;
   std::error_code status;
-  bool debug{};
+  logger &lgr;
   uint32_t read_timeout_seconds{3};
 };  // struct mc16_client
 
+static auto
+log_debug_index(const cpg_index &index) {
+  static constexpr string delim = "\n";
+  logger &lgr = logger::instance();
+  for (const auto word : vs::split(format("{}", index), delim))
+    lgr.debug("cpg_index: {}", std::string_view(word));
+}
+
 auto
 lookup_client_main(int argc, char *argv[]) -> int {
+  static constexpr mc16_log_level default_log_level{mc16_log_level::warning};
   static constexpr auto default_port = "5000";
-  static const auto description = "client";
-
-  bool verbose{};
-  bool debug{};
+  static const auto description = "lookup-client";
 
   string port{};
   string accession{};
@@ -274,10 +269,11 @@ lookup_client_main(int argc, char *argv[]) -> int {
   string intervals_file{};
   string hostname{};
   string output_file{};
+  mc16_log_level log_level{};
 
   po::options_description desc(description);
-  // clang-format off
   desc.add_options()
+    // clang-format off
     ("help,h", "produce help message")
     ("hostname,H", po::value(&hostname)->required(), "hostname")
     ("port,p", po::value(&port)->default_value(default_port), "port")
@@ -285,10 +281,10 @@ lookup_client_main(int argc, char *argv[]) -> int {
     ("index,x", po::value(&index_file)->required(), "index file")
     ("intervals,i", po::value(&intervals_file)->required(), "intervals file")
     ("output,o", po::value(&output_file)->required(), "output file")
-    ("verbose,v", po::bool_switch(&verbose), "print more run info")
-    ("debug,d", po::bool_switch(&debug), "print debug info")
+    ("log-level", po::value(&log_level)->default_value(default_log_level),
+     "log level {debug,info,warning,error}")
+    // clang-format on
     ;
-  // clang-format on
   try {
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -303,69 +299,73 @@ lookup_client_main(int argc, char *argv[]) -> int {
     desc.print(cerr);
     return EXIT_FAILURE;
   }
-  verbose = verbose || debug;  // if debug, then verbose
 
-  if (verbose)
-    print("Arguments:\n"
-          "Accession: {}\n"
-          "Hostname: {}\n"
-          "Port: {}\n"
-          "Index file: {}\n"
-          "Intervals file: {}\n"
-          "Output file: {}\n",
-          accession, hostname, port, index_file, intervals_file, output_file);
+  logger &lgr = logger::instance(
+    std::make_shared<std::ostream>(std::cout.rdbuf()), description, log_level);
+  if (!lgr) {
+    println("Failure initializing logging: {}.", lgr.get_status());
+    return EXIT_FAILURE;
+  }
+
+  lgr.info("Arguments");
+  lgr.info("Accession: {}", accession);
+  lgr.info("Hostname: {}", hostname);
+  lgr.info("Port: {}", port);
+  lgr.info("Index file: {}", index_file);
+  lgr.info("Intervals file: {}", intervals_file);
+  lgr.info("Output file: {}", output_file);
 
   cpg_index index{};
   if (index.read(index_file) != 0) {
-    println(cerr, "failed to read cpg index: {}", index_file);
+    lgr.error("Failed to read cpg index: {}", index_file);
     return EXIT_FAILURE;
   }
-  if (debug)
-    println("Index:\n{}", index);
+
+  if (log_level == mc16_log_level::debug)
+    log_debug_index(index);
 
   const auto gis = genomic_interval::load(index, intervals_file);
   if (gis.empty()) {
-    println(cerr, "Error reading intervals file: {}", intervals_file);
+    lgr.error("Error reading intervals file: {}", intervals_file);
     return EXIT_FAILURE;
   }
-  if (verbose)
-    print("Number of intervals: {}\n", size(gis));
+  lgr.info("Number of intervals: {}", size(gis));
 
   const auto get_offsets_start{hr_clock::now()};
   const vector<methylome::offset_pair> offsets = index.get_offsets(gis);
   const auto get_offsets_stop{hr_clock::now()};
-  if (verbose)
-    println("Elapsed time to get offsets: {:.3}s",
+  lgr.debug("Elapsed time to get offsets: {:.3}s",
             duration(get_offsets_start, get_offsets_stop));
 
   request_header hdr{accession, index.n_cpgs_total, 0};
   request req{static_cast<uint32_t>(size(offsets)), offsets};
 
   asio::io_context io_context;
-  mc16_client mc16c(io_context, hostname, port, hdr, req, debug);
+  mc16_client mc16c(io_context, hostname, port, hdr, req, lgr);
   const auto client_start{hr_clock::now()};
   io_context.run();
   const auto client_stop{hr_clock::now()};
 
-  if (verbose)
-    println("Elapsed time for query: {:.3}s\n"
-            "Transaction status: {}",
-            duration(client_start, client_stop), mc16c.status.message());
+  lgr.debug("Elapsed time for query: {:.3}s",
+            duration(client_start, client_stop));
 
-  if (mc16c.status)
+  if (mc16c.status) {
+    lgr.error("Transaction failed: {}", mc16c.status);
     return EXIT_FAILURE;
+  }
+  else
+    lgr.info("Transaction status: {}", mc16c.status);
 
   std::ofstream out(output_file);
   if (!out) {
-    println("failed to open output file: {}", output_file);
+    lgr.error("failed to open output file: {}", output_file);
     return EXIT_FAILURE;
   }
 
   const auto output_start{hr_clock::now()};
   write_intervals(out, index, gis, mc16c.resp.counts);
   const auto output_stop{hr_clock::now()};
-  if (verbose)
-    println("Elapsed time for output: {:.3}s",
+  lgr.debug("Elapsed time for output: {:.3}s",
             duration(output_start, output_stop));
 
   return EXIT_SUCCESS;
