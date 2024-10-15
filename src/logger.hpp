@@ -54,11 +54,42 @@ enum class mc16_log_level : std::uint32_t {
   error,
   n_levels,
 };
-
 static constexpr std::uint32_t mc16_n_log_levels =
   std::to_underlying(mc16_log_level::n_levels);
 
-// ADS: also need a logger for the terminal
+static constexpr std::array<const char *, mc16_n_log_levels> level_name = {
+  "debug",
+  "info",
+  "warning",
+  "error",
+};
+
+static constexpr auto level_name_sz{[]() constexpr {
+  std::array<std::uint32_t, mc16_n_log_levels> tmp{};
+  for (std::uint32_t i = 0; i < mc16_n_log_levels; ++i)
+    tmp[i] = std::size(std::string_view(level_name[i]));
+  return tmp;
+}()};
+
+inline std::ostream &
+operator<<(std::ostream &o, const mc16_log_level &l) {
+  return o << level_name[std::to_underlying(l)];
+}
+
+inline std::istream &
+operator>>(std::istream &in, mc16_log_level &l) {
+  std::string tmp;
+  if (!(in >> tmp))
+    return in;
+  for (std::uint32_t i = 0; i < mc16_n_log_levels; ++i)
+    if (tmp == std::string_view(level_name[i])) {
+      l = static_cast<mc16_log_level>(i);
+      return in;
+    }
+  in.setstate(std::ios::failbit);
+  return in;
+}
+
 class logger {
 private:
   static constexpr std::string_view date_time_fmt_expanded =
@@ -68,10 +99,10 @@ private:
   static constexpr auto delim = ' ';
   static constexpr auto date_time_fmt = "{:%F}{}{:%T}";
   static constexpr std::array<const char *, mc16_n_log_levels> level_name = {
-    "debug",
-    "info",
-    "warning",
-    "error",
+    "DEBUG",
+    "INFO",
+    "WARNING",
+    "ERROR",
   };
   static constexpr auto level_name_sz{[]() constexpr {
     std::array<std::uint32_t, mc16_n_log_levels> tmp{};
@@ -134,6 +165,36 @@ public:
       log_file->write(buf.data(), std::distance(buf.data(), buf_data_end));
       log_file->flush();
     }
+  }
+
+  auto debug(std::string_view message) -> void {
+    log<mc16_log_level::debug>(message);
+  }
+  auto info(std::string_view message) -> void {
+    log<mc16_log_level::info>(message);
+  }
+  auto warning(std::string_view message) -> void {
+    log<mc16_log_level::warning>(message);
+  }
+  auto error(std::string_view message) -> void {
+    log<mc16_log_level::error>(message);
+  }
+
+  template <typename... Args>
+  auto debug(std::string_view fmt_str, Args &&...args) -> void {
+    log<mc16_log_level::debug>(fmt_str, args...);
+  }
+  template <typename... Args>
+  auto info(std::string_view fmt_str, Args &&...args) -> void {
+    log<mc16_log_level::info>(fmt_str, args...);
+  }
+  template <typename... Args>
+  auto warning(std::string_view fmt_str, Args &&...args) -> void {
+    log<mc16_log_level::warning>(fmt_str, args...);
+  }
+  template <typename... Args>
+  auto error(std::string_view fmt_str, Args &&...args) -> void {
+    log<mc16_log_level::error>(fmt_str, args...);
   }
 
 private:
