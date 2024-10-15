@@ -24,7 +24,7 @@
 #ifndef SRC_CONNECTION_HPP_
 #define SRC_CONNECTION_HPP_
 
-#include "logging.hpp"
+#include "logger.hpp"
 #include "request.hpp"
 #include "response.hpp"
 

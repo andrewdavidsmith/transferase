@@ -27,7 +27,7 @@
 #include "response.hpp"
 #include "utilities.hpp"
 
-#include "logging.hpp"
+#include "logger.hpp"
 #include "mc16_error.hpp"
 
 #include <chrono>

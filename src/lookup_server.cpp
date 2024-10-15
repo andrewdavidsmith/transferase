@@ -23,7 +23,7 @@
 
 #include "lookup_server.hpp"
 
-#include "logging.hpp"
+#include "logger.hpp"
 #include "methylome_set.hpp"
 #include "server.hpp"
 
