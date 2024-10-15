@@ -21,7 +21,7 @@
  * SOFTWARE.
  */
 
-#include "logging.hpp"
+#include "logger.hpp"
 
 #include <unistd.h>
 
@@ -33,7 +33,7 @@
 namespace chrn = std::chrono;
 
 [[nodiscard]] auto
-file_logger::set_attributes(std::string_view appname) -> std::error_code {
+logger::set_attributes(std::string_view appname) -> std::error_code {
   // get the hostname
   static constexpr std::uint32_t max_hostname_size{256};
   std::string hostname;

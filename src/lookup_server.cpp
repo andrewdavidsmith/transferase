@@ -23,20 +23,27 @@
 
 #include "lookup_server.hpp"
 
-#include "logging.hpp"
+#include "logger.hpp"
 #include "methylome_set.hpp"
 #include "server.hpp"
 
 #include <boost/program_options.hpp>
 
 #include <cstdint>
+#include <fstream>
 #include <iostream>
+#include <memory>
 #include <print>
 #include <string>
 
 using std::cerr;
+using std::cout;
+using std::make_shared;
+using std::ofstream;
+using std::ostream;
 using std::print;
 using std::println;
+using std::shared_ptr;
 using std::string;
 using std::uint32_t;
 
@@ -54,7 +61,7 @@ lookup_server_main(int argc, char *argv[]) -> int {
   string port{};
   string hostname{};
   string methylome_dir;
-  string log_file;
+  string log_filename;
 
   uint32_t n_threads{};
   uint32_t max_live_methylomes{};
@@ -70,7 +77,7 @@ lookup_server_main(int argc, char *argv[]) -> int {
      "number of threads")
     ("live,l", po::value(&max_live_methylomes)->default_value(
      methylome_set::default_max_live_methylomes), "max live methylomes")
-    ("log", po::value(&log_file)->required(), "log file")
+    ("log", po::value(&log_filename), "log file name")
     ("verbose,v", po::bool_switch(&verbose), "print more run info")
     // clang-format on
     ;
@@ -78,7 +85,7 @@ lookup_server_main(int argc, char *argv[]) -> int {
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
     if (vm.count("help")) {
-      desc.print(std::cout);
+      desc.print(cout);
       return EXIT_SUCCESS;
     }
     po::notify(vm);
@@ -89,9 +96,13 @@ lookup_server_main(int argc, char *argv[]) -> int {
     return EXIT_FAILURE;
   }
 
-  file_logger &fl = file_logger::instance(log_file, description, log_level);
-  if (!fl) {
-    println("Failure initializing logger: {}.", fl.get_status().message());
+  shared_ptr<ostream> log_file =
+    log_filename.empty() ? make_shared<ostream>(cout.rdbuf())
+                         : make_shared<ofstream>(log_filename, std::ios::app);
+
+  logger &lgr = logger::instance(log_file, description, log_level);
+  if (!lgr) {
+    println("Failure initializing logging: {}.", lgr.get_status().message());
     return EXIT_FAILURE;
   }
 
@@ -101,9 +112,10 @@ lookup_server_main(int argc, char *argv[]) -> int {
             "Log file: {}\n"
             "Methylome directory: {}\n"
             "Max live methylomes: {}\n",
-            hostname, port, log_file, methylome_dir, max_live_methylomes);
+            hostname, port, log_filename.empty() ? "console" : log_filename,
+            methylome_dir, max_live_methylomes);
 
-  server s(hostname, port, n_threads, methylome_dir, max_live_methylomes, fl);
+  server s(hostname, port, n_threads, methylome_dir, max_live_methylomes, lgr);
 
   s.run();
 
