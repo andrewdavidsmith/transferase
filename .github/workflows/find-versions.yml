@@ -16,5 +16,6 @@ jobs:
           clang_formats=$(apt list --installed 2>/dev/null | grep clang-format | awk -F/ '{print $1}')
           # Loop through each version and run --version
           for clangFormat in $clang_formats; do
+              echo "${clangFormat}"
               $clangFormat --version
           done
