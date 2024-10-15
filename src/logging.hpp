@@ -27,9 +27,9 @@
 #include <chrono>
 #include <cstdint>  // std::uint32_t
 #include <cstring>  // std::memcpy
-#include <fstream>
-#include <iostream>
+#include <memory>
 #include <mutex>
+#include <ostream>
 #include <string>
 #include <string_view>
 #include <system_error>
@@ -59,7 +59,7 @@ static constexpr std::uint32_t mc16_n_log_levels =
   std::to_underlying(mc16_log_level::n_levels);
 
 // ADS: also need a logger for the terminal
-class file_logger {
+class logger {
 private:
   static constexpr std::string_view date_time_fmt_expanded =
     "YYYY-MM-DD HH:MM:SS";
@@ -81,19 +81,19 @@ private:
   }()};
 
 public:
-  static file_logger &
-  instance(std::string log_file_name = "", std::string appname = "",
+  static logger &
+  instance(std::shared_ptr<std::ostream> log_file_ptr = nullptr,
+           std::string appname = "",
            mc16_log_level min_log_level = mc16_log_level::debug) {
-    static file_logger fl(log_file_name, appname, min_log_level);
+    static logger fl(log_file_ptr, appname, min_log_level);
     return fl;
   }
 
-  file_logger(std::string log_file_name, std::string appname,
-              mc16_log_level min_log_level = mc16_log_level::info) :
-    min_log_level{min_log_level} {
-    log_file.open(log_file_name, std::ios::app);
-    if (!log_file)
-      status = std::make_error_code(std::errc(errno));
+  logger(std::shared_ptr<std::ostream> log_file_ptr, std::string appname,
+         mc16_log_level min_log_level = mc16_log_level::info) :
+    log_file{log_file_ptr}, min_log_level{min_log_level} {
+    // ADS: check for log file good here?
+    // status = std::make_error_code(std::errc(errno));
     buf.fill(' ');  // ADS: not sure this is needed
     if (const auto ec = set_attributes(appname))
       status = ec;
@@ -101,7 +101,7 @@ public:
 
   [[nodiscard]] auto get_status() const -> std::error_code { return status; }
 
-  operator bool() const { return (status) ? false : true; }
+  operator bool() const { return status ? false : true; }
 
   template <mc16_log_level the_level>
   auto log(std::string_view message) -> void {
@@ -114,8 +114,8 @@ public:
       std::lock_guard lck{mtx};
       format_time();
       const auto buf_data_end = fill_buffer(thread_id, lvl, sz, message);
-      log_file.write(buf.data(), std::distance(buf.data(), buf_data_end));
-      log_file.flush();
+      log_file->write(buf.data(), std::distance(buf.data(), buf_data_end));
+      log_file->flush();
     }
   }
 
@@ -131,8 +131,8 @@ public:
       std::lock_guard lck{mtx};
       format_time();
       const auto buf_data_end = fill_buffer(thread_id, lvl, sz, msg);
-      log_file.write(buf.data(), std::distance(buf.data(), buf_data_end));
-      log_file.flush();
+      log_file->write(buf.data(), std::distance(buf.data(), buf_data_end));
+      log_file->flush();
     }
   }
 
@@ -142,18 +142,18 @@ private:
   static constexpr std::uint32_t buf_size{1024};  // max log line
   std::array<char, buf_size> buf{};
   char *buf_end{buf.data() + buf_size};
-  std::ofstream log_file;
+  std::shared_ptr<std::ostream> log_file;
+  // std::ostream &log_file;
   std::mutex mtx{};
   char *cursor{};
   const mc16_log_level min_log_level{};
   std::error_code status{};
 
-  file_logger(const file_logger &) = delete;
-  file_logger &operator=(const file_logger &) = delete;
+  logger(const logger &) = delete;
+  logger &operator=(const logger &) = delete;
 
-private:
-  file_logger() {}
-  ~file_logger() {}
+  logger() {}
+  ~logger() {}
 
   [[nodiscard]]
   auto fill_buffer(std::uint32_t thread_id, const char *const lvl,
@@ -175,6 +175,6 @@ private:
       std::chrono::floor<std::chrono::days>(now)};
     std::format_to(buf.data(), "{:%F}{}{:%T}", ymd, delim, hms);
   }
-};  // struct file_logger
+};  // struct logger
 
 #endif  // SRC_LOGGING_HPP_
