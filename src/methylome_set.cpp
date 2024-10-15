@@ -30,6 +30,7 @@
 #include <cstdint>
 #include <filesystem>
 #include <iostream>
+#include <memory>  // std::make_shared
 #include <mutex>
 #include <print>
 #include <ranges>

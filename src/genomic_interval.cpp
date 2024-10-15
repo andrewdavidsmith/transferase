@@ -27,7 +27,9 @@
 #include <format>
 #include <fstream>
 #include <sstream>
+#include <string>
 #include <utility>
+#include <vector>
 
 using std::istream;
 using std::string;
