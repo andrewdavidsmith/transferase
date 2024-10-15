@@ -143,7 +143,6 @@ private:
   std::array<char, buf_size> buf{};
   char *buf_end{buf.data() + buf_size};
   std::shared_ptr<std::ostream> log_file;
-  // std::ostream &log_file;
   std::mutex mtx{};
   char *cursor{};
   const mc16_log_level min_log_level{};
