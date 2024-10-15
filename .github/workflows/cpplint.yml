@@ -1,0 +1,23 @@
+name: Linting with cpplint
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  cpplint:
+    runs-on: ubuntu-24.04
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install cpplint
+      run: pip install cpplint
+
+    - name: Run cpplint
+      run: |
+        cpplint --quiet --repository=. $(git ls-files '*.*pp')
