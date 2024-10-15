@@ -45,12 +45,12 @@ struct connection : public std::enable_shared_from_this<connection> {
   connection &operator=(const connection &) = delete;
 
   explicit connection(boost::asio::ip::tcp::socket socket_,
-                      request_handler &handler, file_logger &fl,
+                      request_handler &handler, logger &lgr,
                       std::uint32_t connection_id) :
     // socket used below gets confused if arg has exact same name
     socket{std::move(socket_)}, deadline{socket.get_executor()},
-    handler{handler}, fl{fl}, connection_id{connection_id} {
-    fl.log<mc16_log_level::info>(
+    handler{handler}, lgr{lgr}, connection_id{connection_id} {
+    lgr.log<mc16_log_level::info>(
       "Connection id: {}. Request endpoint: {}", connection_id,
       boost::lexical_cast<std::string>(socket.remote_endpoint()));
   }
@@ -84,7 +84,7 @@ struct connection : public std::enable_shared_from_this<connection> {
   response_buffer resp_buf;
   response_header resp_hdr;  // header of the response
   response resp;             // response to send back
-  file_logger &fl;
+  logger &lgr;
   std::uint32_t connection_id{};
   std::uint32_t read_timeout_seconds{10};
 
