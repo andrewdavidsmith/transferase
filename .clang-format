@@ -23,9 +23,6 @@
 BasedOnStyle: LLVM
 ColumnLimit: 80
 IndentWidth: 2
-AlignTrailingComments:
-  Kind: Leave
-  OverEmptyLines: 1
 AlwaysBreakAfterReturnType: All
 ContinuationIndentWidth: 2
 ConstructorInitializerIndentWidth: 2
