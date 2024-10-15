@@ -26,15 +26,15 @@
 #include "utilities.hpp"
 
 #include <algorithm>
+#include <array>
 #include <cstring>
 #include <format>
 #include <ranges>
 #include <string>
-#include <array>
 
+using std::array;
 using std::format;
 using std::string;
-using std::array;
 
 namespace rg = std::ranges;
 

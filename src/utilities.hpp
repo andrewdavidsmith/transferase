@@ -30,12 +30,12 @@
 
 #include <algorithm>
 #include <chrono>
+#include <cstdint>
 #include <limits>
 #include <numeric>
 #include <ostream>
 #include <system_error>
 #include <vector>
-#include <cstdint>
 
 #include "cpg_index.hpp"
 #include "genomic_interval.hpp"

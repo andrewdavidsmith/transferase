@@ -29,7 +29,7 @@
 
 #include <cstdint>
 #include <cstring>  // strsignal
-#include <memory>  // make_shared<>
+#include <memory>   // make_shared<>
 #include <print>
 #include <string>
 #include <thread>

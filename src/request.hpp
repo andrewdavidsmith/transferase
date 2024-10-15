@@ -77,8 +77,7 @@ struct request {
 };
 
 auto
-to_chars(char *first, char *last,
-         const request &req) -> mc16_to_chars_result;
+to_chars(char *first, char *last, const request &req) -> mc16_to_chars_result;
 
 auto
 from_chars(const char *first, const char *last,

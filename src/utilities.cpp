@@ -33,12 +33,12 @@
 
 #include <algorithm>
 #include <array>
+#include <cassert>
 #include <ostream>
 #include <ranges>
 #include <string>
 #include <utility>
 #include <vector>
-#include <cassert>
 
 using std::array;
 using std::pair;

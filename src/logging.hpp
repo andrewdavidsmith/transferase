@@ -24,8 +24,6 @@
 #ifndef SRC_LOGGING_HPP_
 #define SRC_LOGGING_HPP_
 
-#include <unistd.h>
-
 #include <chrono>
 #include <cstdint>  // std::uint32_t
 #include <cstring>  // std::memcpy
@@ -35,6 +33,7 @@
 #include <string>
 #include <string_view>
 #include <system_error>
+#include <thread>
 #include <utility>  // std::to_underlying
 
 /*
@@ -110,7 +109,8 @@ public:
     static constexpr auto sz = level_name_sz[idx];
     static constexpr auto lvl = level_name[idx];
     if (the_level >= min_log_level) {
-      const auto thread_id = gettid();  // syscall;unistd.h
+      const auto thread_id =
+        std::hash<std::thread::id>{}(std::this_thread::get_id());
       std::lock_guard lck{mtx};
       format_time();
       const auto buf_data_end = fill_buffer(thread_id, lvl, sz, message);
@@ -125,7 +125,8 @@ public:
     static constexpr auto sz = level_name_sz[idx];
     static constexpr auto lvl = level_name[idx];
     if (the_level >= min_log_level) {
-      const auto thread_id = gettid();  // syscall;unistd.h
+      const auto thread_id =
+        std::hash<std::thread::id>{}(std::this_thread::get_id());
       const auto msg = std::vformat(fmt_str, std::make_format_args(args...));
       std::lock_guard lck{mtx};
       format_time();

@@ -70,7 +70,7 @@ struct connection : public std::enable_shared_from_this<connection> {
   auto read_offsets() -> void;  // read offsets part of request
 
   auto respond_with_header() -> void;  // write good header
-  auto respond_with_error() -> void;  // write error header
+  auto respond_with_error() -> void;   // write error header
   auto respond_with_counts() -> void;  // write counts
 
   auto check_deadline() -> void;
@@ -80,10 +80,10 @@ struct connection : public std::enable_shared_from_this<connection> {
   request_handler &handler;  // handles incoming requests
   request_buffer req_buf;
   request_header req_hdr;  // this connection's request header
-  request req;  // this connection's request
+  request req;             // this connection's request
   response_buffer resp_buf;
   response_header resp_hdr;  // header of the response
-  response resp;  // response to send back
+  response resp;             // response to send back
   file_logger &fl;
   std::uint32_t connection_id{};
   std::uint32_t read_timeout_seconds{10};

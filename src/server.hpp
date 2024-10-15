@@ -47,10 +47,10 @@ struct server {
   auto do_await_stop() -> void;  // wait for request to stop server
 
   std::uint32_t n_threads{};
-  boost::asio::io_context ioc;      // performs async ops
-  boost::asio::signal_set signals;  // registers termination signals
+  boost::asio::io_context ioc;              // performs async ops
+  boost::asio::signal_set signals;          // registers termination signals
   boost::asio::ip::tcp::acceptor acceptor;  // listens for connections
-  request_handler handler;  // handles incoming requests
+  request_handler handler;                  // handles incoming requests
   file_logger &fl;
   std::atomic_uint32_t connection_id{};  // incremented per thread
 };

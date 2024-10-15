@@ -52,9 +52,9 @@ typedef mc16_log_level lvl;
 
 auto
 connection::prepare_to_read_offsets() -> void {
-  req.offsets.resize(req.n_intervals);  // get space for offsets
+  req.offsets.resize(req.n_intervals);           // get space for offsets
   offset_remaining = req.get_offsets_n_bytes();  // init counters
-  offset_byte = 0;  // should be init to this
+  offset_byte = 0;                               // should be init to this
 }
 
 auto
