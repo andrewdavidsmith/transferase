@@ -23,13 +23,12 @@
 BasedOnStyle: LLVM
 ColumnLimit: 80
 IndentWidth: 2
-AlwaysBreakAfterReturnType: All
+AlwaysBreakAfterReturnType: TopLevel
 ContinuationIndentWidth: 2
 ConstructorInitializerIndentWidth: 2
 BraceWrapping:
   BeforeElse: true
   BeforeCatch: true
-BreakAfterReturnType: TopLevel
 BreakBeforeBraces: Custom
 BreakConstructorInitializers: AfterColon
 SpacesBeforeTrailingComments: 2
