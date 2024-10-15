@@ -84,8 +84,10 @@ methylome_set::get_methylome(const string &accession)
 
       accession_to_methylome.erase(to_eject_itr);
     }
+
+    // ADS: get an error code from methylome::read and use it
     methylome m{};
-    if (const auto ec = m.read(filename))
+    if ([[maybe_unused]] const auto ec = m.read(filename))
       return {nullptr, methylome_set_code::error_reading_methylome_file};
 
     bool insertion_happened{false};
