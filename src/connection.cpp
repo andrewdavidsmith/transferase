@@ -166,7 +166,7 @@ connection::respond_with_error() -> void {
             "{} Error responding: {}. Initiating connection shutdown.",
             connection_id, ec);
         }
-        bs::error_code shutdown_ec, ignored_ec;  // for non-throwing
+        bs::error_code shutdown_ec;  // for non-throwing
         socket.shutdown(tcp::socket::shutdown_both, shutdown_ec);
         if (shutdown_ec)
           fl.log<lvl::warning>("{} Shutdown error: {}", connection_id,
