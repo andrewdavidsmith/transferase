@@ -30,6 +30,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <string>
+#include <system_error>
 #include <utility>  // pair<>
 #include <vector>
 
@@ -48,19 +49,19 @@ template <> struct std::formatter<counts_res> : std::formatter<std::string> {
   }
 };
 
-// ADS TODO: error codes
+// ADS TODO: n_cpgs in header
 struct methylome {
   typedef std::uint16_t m_count_t;
   typedef std::pair<m_count_t, m_count_t> m_elem;
   typedef std::vector<m_elem, aligned_allocator<m_elem>> vec;
 
   [[nodiscard]] auto read(const std::string &filename,
-                          const uint32_t n_cpgs = 0) -> int;
+                          const uint32_t n_cpgs = 0) -> std::error_code;
 
   [[nodiscard]] auto write(const std::string &filename,
-                           const bool zip = false) const -> int;
+                           const bool zip = false) const -> std::error_code;
 
-  auto operator+=(const methylome &rhs) -> methylome &;
+  auto add(const methylome &rhs) -> methylome &;
 
   [[nodiscard]] auto get_counts(const cpg_index::vec &positions,
                                 const std::uint32_t offset,
