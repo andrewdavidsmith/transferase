@@ -24,6 +24,7 @@
 #include "bins.hpp"
 #include "cpg_index.hpp"
 #include "genomic_interval.hpp"
+#include "mc16_error.hpp"
 #include "methylome.hpp"
 #include "utilities.hpp"
 
@@ -118,8 +119,9 @@ bins_main(int argc, char *argv[]) -> int {
     println("index:\n{}", index);
 
   methylome meth{};
-  if (meth.read(meth_file, index.n_cpgs_total) != 0) {
-    println(cerr, "Failed to read methylome: {}", meth_file);
+  const auto meth_read_err = meth.read(meth_file, index.n_cpgs_total);
+  if (meth_read_err) {
+    println(cerr, "Failed to read methylome: {}", meth_read_err);
     return EXIT_FAILURE;
   }
 
