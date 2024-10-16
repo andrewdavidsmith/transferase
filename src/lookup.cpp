@@ -24,6 +24,7 @@
 #include "lookup.hpp"
 #include "cpg_index.hpp"
 #include "genomic_interval.hpp"
+#include "mc16_error.hpp"
 #include "methylome.hpp"
 #include "utilities.hpp"
 
@@ -70,16 +71,16 @@ lookup_main(int argc, char *argv[]) -> int {
   string output_file{};
 
   po::options_description desc(description);
-  // clang-format off
   desc.add_options()
+    // clang-format off
     ("help,h", "produce help message")
     ("index,x", value(&index_file)->required(), "index file")
     ("intervals,i", value(&intervals_file)->required(), "intervals file")
     ("methylome,m", value(&meth_file)->required(), "methylome file")
     ("output,o", value(&output_file)->required(), "output file")
     ("verbose,v", po::bool_switch(&verbose), "print more run info")
+    // clang-format on
     ;
-  // clang-format on
   try {
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -112,14 +113,15 @@ lookup_main(int argc, char *argv[]) -> int {
     println("index:\n{}", index);
 
   methylome meth{};
-  if (meth.read(meth_file, index.n_cpgs_total) != 0) {
-    println(cerr, "failed to read methylome: {}", meth_file);
+  const auto meth_read_err = meth.read(meth_file, index.n_cpgs_total);
+  if (meth_read_err) {
+    println(cerr, "Error: {} ({})", meth_read_err, meth_file);
     return EXIT_FAILURE;
   }
 
   const auto gis = genomic_interval::load(index, intervals_file);
   if (gis.empty()) {
-    println(cerr, "failed to read intervals file: {}", intervals_file);
+    println(cerr, "Failed to read intervals file: {}", intervals_file);
     return EXIT_FAILURE;
   }
   const auto lookup_start{hr_clock::now()};
@@ -133,7 +135,7 @@ lookup_main(int argc, char *argv[]) -> int {
 
   ofstream out(output_file);
   if (!out) {
-    println(cerr, "failed to open output file: {}", output_file);
+    println(cerr, "Failed to open output file: {}", output_file);
     return EXIT_FAILURE;
   }
   write_intervals(out, index, gis, results);
