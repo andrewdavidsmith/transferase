@@ -23,6 +23,7 @@
 
 #include "merge.hpp"
 
+#include "mc16_error.hpp"
 #include "methylome.hpp"
 #include "utilities.hpp"
 
@@ -109,8 +110,9 @@ merge_main(int argc, char *argv[]) -> int {
   const auto last_file = input_files.back();
   const auto methylome_read_start{hr_clock::now()};
   methylome meth{};
-  if (meth.read(last_file) != 0) {
-    println(cout, "failed to read methylome: {}", last_file);
+  const auto meth_read_err = meth.read(last_file);
+  if (meth_read_err) {
+    println(cout, "Error: {} ({})", meth_read_err, last_file);
     return EXIT_FAILURE;
   }
   double total_read_time = duration(methylome_read_start, hr_clock::now());
@@ -122,10 +124,10 @@ merge_main(int argc, char *argv[]) -> int {
   for (const auto &filename : input_files | vs::take(n_inputs - 1)) {
     methylome tmp{};
     const auto methylome_read_start{hr_clock::now()};
-    const auto ret = tmp.read(filename);
+    const auto meth_read_err = tmp.read(filename);
     total_read_time += duration(methylome_read_start, hr_clock::now());
-    if (ret != 0) {
-      println(cout, "failed to read methylome: {}", filename);
+    if (meth_read_err) {
+      println(cout, "Error: {} ({})", meth_read_err, filename);
       return EXIT_FAILURE;
     }
     if (size(tmp) != n_cpgs) {
@@ -133,13 +135,13 @@ merge_main(int argc, char *argv[]) -> int {
       return EXIT_FAILURE;
     }
     const auto methylome_merge_start{hr_clock::now()};
-    meth += tmp;
+    meth.add(tmp);
     total_merge_time += duration(methylome_merge_start, hr_clock::now());
   }
 
   const auto methylome_write_start{hr_clock::now()};
-  if (meth.write(output_file) != 0) {
-    println(cout, "failed to write methylome to file: {}", output_file);
+  if (const auto meth_write_error = meth.write(output_file); meth_write_error) {
+    println(cout, "Error: {} ({})", meth_write_error, output_file);
     return EXIT_FAILURE;
   }
   const auto total_write_time =

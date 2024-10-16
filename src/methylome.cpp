@@ -23,6 +23,8 @@
 
 #include "methylome.hpp"
 
+#include "mc16_error.hpp"
+
 #include <zlib.h>
 
 #include <algorithm>
@@ -121,58 +123,84 @@ decompress(vector<uint8_t> &in, T &out) -> int {
 }
 
 [[nodiscard]] auto
-methylome::read(const string &filename, const uint32_t n_cpgs) -> int {
+methylome::read(const string &filename, const uint32_t n_cpgs) -> error_code {
   error_code errc;
   const auto filesize = std::filesystem::file_size(filename, errc);
   if (errc)
-    return -1;
+    return errc;
   std::ifstream in(filename);
   if (!in)
-    return -1;
+    return std::make_error_code(std::errc(errno));
+
   uint64_t flags{};
-  if (!in.read(reinterpret_cast<char *>(&flags), sizeof(flags)))
-    return -1;
-  if (flags == 1 && n_cpgs == 0)
-    return -1;  // can't know how much to inflate
+  {
+    in.read(reinterpret_cast<char *>(&flags), sizeof(flags));
+    const auto read_ok = static_cast<bool>(in);
+    const auto n_bytes = in.gcount();
+    if (!read_ok || n_bytes != static_cast<std::streamsize>(sizeof(flags)))
+      return methylome_code::error_reading_methylome_header;
+  }
+  if (flags != 0 && flags != 1)
+    return methylome_code::invalid_methylome_header;
+
+  if (flags == 1 && n_cpgs == 0)  // can't know how much to inflate
+    return methylome_code::invalid_methylome_header;
+
   const auto datasize = filesize - sizeof(flags);
+  if (n_cpgs != 0 && (n_cpgs * record_size != datasize))
+    return methylome_code::incorrect_methylome_size;
+
   if (flags == 1) {
     vector<uint8_t> buf(datasize);
-    if (!in.read(reinterpret_cast<char *>(buf.data()), datasize))
-      return -1;
+    in.read(reinterpret_cast<char *>(buf.data()), datasize);
+    const auto read_ok = static_cast<bool>(in);
+    const auto n_bytes = in.gcount();
+    if (!read_ok || n_bytes != static_cast<std::streamsize>(datasize))
+      return methylome_code::error_reading_methylome;
+    assert(n_cpgs != 0);
     cpgs.resize(n_cpgs);
-    return decompress(buf, cpgs);
+    return decompress(buf, cpgs) ? methylome_code::error_decompressing_methylome
+                                 : error_code{};
   }
   cpgs.resize(datasize / record_size);
   in.read(reinterpret_cast<char *>(cpgs.data()), datasize);
-  return in ? 0 : -1;
+  const auto read_ok = static_cast<bool>(in);
+  const auto n_bytes = in.gcount();
+  if (!read_ok || n_bytes != static_cast<std::streamsize>(datasize))
+    return methylome_code::error_reading_methylome;
+
+  return error_code{};
 }
 
 [[nodiscard]] auto
-methylome::write(const string &filename, const bool zip) const -> int {
+methylome::write(const string &filename,
+                 const bool zip) const -> std::error_code {
   vector<uint8_t> buf;
   if (zip && compress(cpgs, buf))
-    return -1;
+    return methylome_code::error_compressing_methylome;
 
   std::ofstream out(filename);
   if (!out)
-    return -1;
+    return std::make_error_code(std::errc(errno));
+
   const uint64_t flags = zip;
   if (!out.write(reinterpret_cast<const char *>(&flags), sizeof(flags)))
-    return -1;
+    return methylome_code::error_writing_methylome_header;
+
   if (zip) {
     if (!out.write(reinterpret_cast<const char *>(buf.data()), size(buf)))
-      return -1;
+      return methylome_code::error_writing_methylome;
   }
   else {
     if (!out.write(reinterpret_cast<const char *>(cpgs.data()),
                    size(cpgs) * record_size))
-      return -1;
+      return methylome_code::error_writing_methylome;
   }
-  return 0;
+  return error_code{};
 }
 
 auto
-methylome::operator+=(const methylome &rhs) -> methylome & {
+methylome::add(const methylome &rhs) -> methylome & {
   assert(size(cpgs) == size(rhs.cpgs));
   rg::transform(cpgs, rhs.cpgs, begin(cpgs),
                 [](const auto &l, const auto &r) -> m_elem {

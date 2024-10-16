@@ -23,6 +23,7 @@
 
 #include "check.hpp"
 #include "cpg_index.hpp"
+#include "mc16_error.hpp"
 #include "methylome.hpp"
 
 #include <boost/program_options.hpp>
@@ -112,8 +113,9 @@ check_main(int argc, char *argv[]) -> int {
     println("index:\n{}", index);
 
   methylome meth{};
-  if (meth.read(meth_file, index.n_cpgs_total) != 0) {
-    println(cout, "failed to read methylome: {}", meth_file);
+  const auto meth_read_err = meth.read(meth_file, index.n_cpgs_total);
+  if (meth_read_err) {
+    println(cout, "Error: {} ({})", meth_read_err, meth_file);
     return EXIT_FAILURE;
   }
 

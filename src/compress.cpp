@@ -24,6 +24,7 @@
 #include "compress.hpp"
 #include "cpg_index.hpp"
 #include "genomic_interval.hpp"
+#include "mc16_error.hpp"
 #include "methylome.hpp"
 #include "utilities.hpp"
 
@@ -305,9 +306,9 @@ process_cpg_sites(const string &infile, const string &outfile,
 
   methylome m;
   m.cpgs = std::move(cpgs);
-  const auto ret = m.write(outfile, zip);
-  if (ret != 0) {
-    println("Failed to write mc16 methylome file: {}", outfile);
+  const auto meth_write_err = m.write(outfile, zip);
+  if (meth_write_err) {
+    println("Error: {} ({})", meth_write_err, outfile);
     return compress_err::methylome_file_write_failure;
   }
 
