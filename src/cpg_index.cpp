@@ -31,14 +31,15 @@
 #include <format>
 #include <fstream>
 #include <functional>
-#include <print>
 #include <ranges>
 #include <string>
 #include <tuple>
 #include <utility>
 #include <vector>
+
 #ifdef DEBUG
 #include <iostream>
+#include <print>
 #endif
 
 // for mmap
@@ -51,7 +52,6 @@ using std::formatter;
 using std::ifstream;
 using std::make_tuple;
 using std::pair;
-using std::println;
 using std::size;
 using std::size_t;
 using std::string;
@@ -64,39 +64,47 @@ namespace rg = std::ranges;
 namespace vs = std::views;
 
 struct genome_file {
+  std::error_code ec{};
   char *data{};
   size_t sz{};
-  int fd{};
 };
 
 [[nodiscard]] auto
 mmap_genome(const string &filename) -> genome_file {
-  const int fd = open(filename.data(), O_RDONLY);
-  if (fd == -1)
-    return {nullptr, 0, fd};
-  const size_t filesize = std::filesystem::file_size(filename);
+  const int fd = open(filename.data(), O_RDONLY, 0);
+  if (fd < 0)
+    return {std::make_error_code(std::errc(errno)), nullptr, 0};
+
+  std::error_code errc;
+  const size_t filesize = std::filesystem::file_size(filename, errc);
+  if (errc)
+    return {std::make_error_code(std::errc(errno)), nullptr, 0};
   char *data =
     static_cast<char *>(mmap(NULL, filesize, PROT_READ, MAP_PRIVATE, fd, 0));
+
   if (data == MAP_FAILED)
-    return {nullptr, 0, fd};
-  return {data, filesize, fd};
+    return {std::make_error_code(std::errc(errno)), nullptr, 0};
+
+  close(fd);  // close file descriptor; kernel doesn't use it
+
+  return {std::error_code{}, data, filesize};
 }
 
 [[nodiscard]] static auto
-cleanup_mmap_genome(genome_file &gf) -> int {
-  const int rc =
-    gf.data == nullptr ? 0 : munmap(static_cast<void *>(gf.data), gf.sz);
-  if (gf.fd != -1)
-    close(gf.fd);
-  return rc;
+cleanup_mmap_genome(genome_file &gf) -> std::error_code {
+  assert(gf.data != nullptr);
+  const int rc = munmap(static_cast<void *>(gf.data), gf.sz);
+  return rc ? std::make_error_code(std::errc(errno)) : std::error_code{};
 }
 
 [[nodiscard]] static auto
 get_cpgs(const string_view &chrom) -> cpg_index::vec {
   static constexpr auto expeced_max_cpg_density = 50;
+
   bool prev_is_c = false, curr_is_g = false;
   cpg_index::vec cpgs;
   cpgs.reserve(rg::size(chrom) / expeced_max_cpg_density);
+
   uint32_t pos = 0;
   for (const auto &nuc : chrom) {
     curr_is_g = (nuc == 'g' || nuc == 'G');
@@ -132,18 +140,23 @@ get_chroms(const char *data, const size_t sz, const vector<size_t> &name_starts,
            const vector<size_t> &name_stops) -> vector<string_view> {
   vector<size_t> seq_stops(size(name_starts));
   seq_stops.back() = sz;
+
   rg::copy(cbegin(name_starts) + 1, cend(name_starts), begin(seq_stops));
   vector<size_t> seq_starts(name_stops);
+
   rg::for_each(seq_starts, [](auto &x) { ++x; });
   vector<string_view> chroms;
   for (const auto [sta, sto] : vs::zip(seq_starts, seq_stops))
     chroms.emplace_back(data + sta, sto - sta);
+
   return chroms;
 }
 
 [[nodiscard]] auto
-cpg_index::construct(const string &genome_file) -> int {
+cpg_index::construct(const string &genome_file) -> std::error_code {
   auto gf = mmap_genome(genome_file);  // memory map the genome file
+  if (gf.ec)
+    return gf.ec;
 
   // initialize the chromosome names and their order
   const auto name_starts = get_chrom_name_starts(gf.data, gf.sz);
@@ -166,8 +179,8 @@ cpg_index::construct(const string &genome_file) -> int {
     chrom_size.emplace_back(size(chrom) - rg::count(chrom, '\n'));
 
   // finished with views into 'data' so cleanup
-  if (cleanup_mmap_genome(gf))
-    return -1;
+  if (const auto munmap_err = cleanup_mmap_genome(gf); munmap_err)
+    return munmap_err;
 
   // initialize chrom offsets within the compressed files
   chrom_offset.clear();
@@ -182,38 +195,42 @@ cpg_index::construct(const string &genome_file) -> int {
   for (const auto [i, chrom_name] : vs::enumerate(chrom_order))
     chrom_index.emplace(chrom_name, i);
 
-  return 0;
+  return std::error_code{};
 }
 
 [[nodiscard]] auto
-cpg_index::read(const string &index_file) -> int {
+cpg_index::read(const string &index_file) -> std::error_code {
   // identifier is always 64 bytes
   static const auto expected_file_identifier = format("{:64}", "cpg_index");
 
   ifstream in(index_file);
   if (!in) {
 #ifdef DEBUG
-    println(std::cerr, "failed to open cpg index file: {}", index_file);
+    std::println(std::cerr, "Failed to open cpg index file: {}", index_file);
 #endif
-    return -1;
+    return std::make_error_code(std::errc(errno));
   }
 
   // write the identifier so we can check it
   string file_identifier_in_file(size(expected_file_identifier), '\0');
   in.read(file_identifier_in_file.data(), size(expected_file_identifier));
+
   if (file_identifier_in_file != expected_file_identifier) {
 #ifdef DEBUG
-    println(std::cerr,
-            "incorrect identifier:\n"
-            "found   \"{}\"\n"
-            "expeced \"{}\"",
-            file_identifier_in_file, expected_file_identifier);
+    std::println(std::cerr, R"(Bad identifier: found "{}" expected "{}")",
+                 file_identifier_in_file, expected_file_identifier);
 #endif
-    return -1;
+    return std::make_error_code(std::errc(errno));
   }
 
   uint32_t n_header_lines{};
-  in.read(reinterpret_cast<char *>(&n_header_lines), sizeof(uint32_t));
+  {
+    in.read(reinterpret_cast<char *>(&n_header_lines), sizeof(uint32_t));
+    const auto read_ok = static_cast<bool>(in);
+    const auto n_bytes = in.gcount();
+    if (!read_ok || n_bytes != static_cast<std::streamsize>(sizeof(uint32_t)))
+      return std::make_error_code(std::errc(errno));
+  }
 
   // clear all instance variables
   chrom_order.clear();
@@ -232,10 +249,11 @@ cpg_index::read(const string &index_file) -> int {
     uint32_t n_preceding_cpgs{};
     if (!(iss >> chrom_name >> chrom_sz >> n_cpgs >> n_preceding_cpgs)) {
 #ifdef DEBUG
-      println(std::cerr, "failed to parse header line:\n{}", line);
+      std::println(std::cerr, "Failed to parse header line:\n{}", line);
 #endif
-      return -1;
+      return std::make_error_code(std::errc(errno));
     }
+
     chrom_order.emplace_back(chrom_name);
     chrom_size.push_back(chrom_sz);
     chrom_offset.push_back(n_preceding_cpgs);
@@ -246,24 +264,31 @@ cpg_index::read(const string &index_file) -> int {
 
   if (n_lines != n_header_lines) {
 #ifdef DEBUG
-    println(std::cerr, "failed to parse header: {}", index_file);
+    std::println(std::cerr, "Failed to parse header: {}", index_file);
 #endif
-    return -1;
+    return std::make_error_code(std::errc(errno));
   }
   n_cpgs_total = std::reduce(cbegin(chrom_n_cpgs), cend(chrom_n_cpgs));
 
   positions.clear();
   for (const auto n_cpgs : chrom_n_cpgs) {
     positions.push_back(vec(n_cpgs));
-    in.read(reinterpret_cast<char *>(positions.back().data()),
-            n_cpgs * sizeof(uint32_t));
+    {
+      const std::streamsize n_bytes_expected = n_cpgs * sizeof(uint32_t);
+      in.read(reinterpret_cast<char *>(positions.back().data()),
+              n_bytes_expected);
+      const auto read_ok = static_cast<bool>(in);
+      const auto n_bytes = in.gcount();
+      if (!read_ok || n_bytes != n_bytes_expected)
+        return std::make_error_code(std::errc(errno));
+    }
   }
 
-  return 0;
+  return std::error_code{};
 }
 
 [[nodiscard]] auto
-cpg_index::write(const string &index_file) const -> int {
+cpg_index::write(const string &index_file) const -> std::error_code {
   // identifier is always 64 bytes
   static const auto file_identifier = format("{:64}", "cpg_index");
 
@@ -281,28 +306,38 @@ cpg_index::write(const string &index_file) const -> int {
   std::ofstream out(index_file.data());
   if (!out) {
 #ifdef DEBUG
-    println(std::cerr, "failed to open index file: {}", index_file);
+    std::println(std::cerr, "Failed to open index file: {}", index_file);
 #endif
-    return -1;
+    return std::make_error_code(std::errc(errno));
   }
 
-  // write the identifier so we can check it
-  out.write(file_identifier.data(), size(file_identifier));
+  {
+    // write the identifier so we can check it
+    out.write(file_identifier.data(), size(file_identifier));
+    const auto write_ok = static_cast<bool>(out);
+    if (!write_ok)
+      return std::make_error_code(std::errc(errno));
+  }
 
-  // write the number of header lines so we know how much to read
-  const uint32_t n_header_lines = size(chrom_order);
-  out.write(reinterpret_cast<const char *>(&n_header_lines), sizeof(uint32_t));
-
-  out.write(header.data(), size(header));
+  {
+    // write the number of header lines so we know how much to read
+    const uint32_t n_header_lines = size(chrom_order);
+    out.write(reinterpret_cast<const char *>(&n_header_lines),
+              sizeof(uint32_t));
+    const auto write_ok = static_cast<bool>(out);
+    if (!write_ok)
+      return std::make_error_code(std::errc(errno));
+  }
 
   for (const auto &cpgs : positions) {
-    // const auto writable_bytes = std::as_bytes(std::span{cpgs});
-    // out.write(writable_bytes.data(), writable_bytes.size_bytes());
     out.write(reinterpret_cast<const char *>(cpgs.data()),
               sizeof(uint32_t) * size(cpgs));
+    const auto write_ok = static_cast<bool>(out);
+    if (!write_ok)
+      return std::make_error_code(std::errc(errno));
   }
 
-  return 0;
+  return std::error_code{};
 }
 
 [[nodiscard]] auto

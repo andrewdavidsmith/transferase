@@ -213,6 +213,11 @@ methylome::add(const methylome &rhs) -> methylome & {
 methylome::get_counts(const cpg_index::vec &positions, const uint32_t offset,
                       const uint32_t start,
                       const uint32_t stop) const -> counts_res {
+  // ADS: it is possible that the intervals requested are past the cpg
+  // sites since they might be in the genome, but past the final cpg
+  // site location. This code *should* be able to handle such a
+  // situation.
+
   const auto cpg_beg_lb = rg::lower_bound(positions, start);
   const auto cpg_beg =
     cbegin(cpgs) + offset + rg::distance(cbegin(positions), cpg_beg_lb);
@@ -252,6 +257,10 @@ methylome::get_counts(const uint32_t start,
 [[nodiscard]] auto
 methylome::get_counts(const vector<pair<uint32_t, uint32_t>> &queries) const
   -> vector<counts_res> {
+  // ADS: it is possible that the intervals requested are past the cpg
+  // sites since they might be in the genome, but past the final cpg
+  // site location. This code *should* be able to handle such a
+  // situation.
   vector<counts_res> res(size(queries));
   const auto cpg_beg = cbegin(cpgs);
   for (const auto [i, q] : vs::enumerate(queries))

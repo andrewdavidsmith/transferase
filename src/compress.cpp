@@ -364,8 +364,8 @@ compress_main(int argc, char *argv[]) -> int {
           methylation_input, methylation_output, index_file, zip);
 
   cpg_index index{};
-  if (index.read(index_file) != 0) {
-    println("failed to read index file: {}", index_file);
+  if (const auto index_read_err = index.read(index_file); index_read_err) {
+    println("Error: {} ({})", index_read_err, index_file);
     return EXIT_FAILURE;
   }
 

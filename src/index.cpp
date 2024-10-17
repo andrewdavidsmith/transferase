@@ -23,6 +23,7 @@
 
 #include "index.hpp"
 #include "cpg_index.hpp"
+#include "mc16_error.hpp"
 #include "utilities.hpp"
 
 #include <boost/program_options.hpp>
@@ -89,5 +90,10 @@ index_main(int argc, char *argv[]) -> int {
             "{}",
             duration(constr_start, constr_stop), index);
 
-  return index.write(index_file);
+  if (const auto index_write_err = index.write(index_file); index_write_err) {
+    println("Error: {} ({})", index_write_err, index_file);
+    return EXIT_FAILURE;
+  }
+
+  return EXIT_SUCCESS;
 }
