@@ -104,8 +104,8 @@ check_main(int argc, char *argv[]) -> int {
           index_file, meth_file, output_file);
 
   cpg_index index{};
-  if (index.read(index_file) != 0) {
-    println("failed to read cpg index: {}", index_file);
+  if (const auto cpg_index_err = index.read(index_file); cpg_index_err) {
+    println("Error: {} ({})", cpg_index_err, index_file);
     return EXIT_FAILURE;
   }
 
