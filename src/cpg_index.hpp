@@ -29,6 +29,7 @@
 #include <cstdint>
 #include <format>
 #include <string>
+#include <system_error>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -38,9 +39,9 @@ struct genomic_interval;
 struct cpg_index {
   typedef std::uint32_t cpg_pos_t;
   typedef std::vector<cpg_pos_t, aligned_allocator<cpg_pos_t>> vec;
-  auto construct(const std::string &genome_file) -> int;
-  auto read(const std::string &index_file) -> int;
-  auto write(const std::string &index_file) const -> int;
+  auto construct(const std::string &genome_file) -> std::error_code;
+  auto read(const std::string &index_file) -> std::error_code;
+  auto write(const std::string &index_file) const -> std::error_code;
   auto tostring() const -> std::string;
 
   // given the chromosome id (from chrom_index) and a position within
