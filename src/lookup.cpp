@@ -104,8 +104,8 @@ lookup_main(int argc, char *argv[]) -> int {
           index_file, intervals_file, meth_file, output_file);
 
   cpg_index index{};
-  if (index.read(index_file) != 0) {
-    println(cerr, "failed to read cpg index: {}", index_file);
+  if (const auto index_read_err = index.read(index_file); index_read_err) {
+    println(cerr, "Error: {} ({})", index_read_err, index_file);
     return EXIT_FAILURE;
   }
 
