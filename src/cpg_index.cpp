@@ -206,7 +206,7 @@ cpg_index::read(const string &index_file) -> std::error_code {
   ifstream in(index_file);
   if (!in) {
 #ifdef DEBUG
-    std::println(std::cerr, "failed to open cpg index file: {}", index_file);
+    std::println(std::cerr, "Failed to open cpg index file: {}", index_file);
 #endif
     return std::make_error_code(std::errc(errno));
   }
@@ -217,7 +217,7 @@ cpg_index::read(const string &index_file) -> std::error_code {
 
   if (file_identifier_in_file != expected_file_identifier) {
 #ifdef DEBUG
-    std::println(std::cerr, R"(bad identifier: found "{}" expected "{}")",
+    std::println(std::cerr, R"(Bad identifier: found "{}" expected "{}")",
                  file_identifier_in_file, expected_file_identifier);
 #endif
     return std::make_error_code(std::errc(errno));
@@ -249,7 +249,7 @@ cpg_index::read(const string &index_file) -> std::error_code {
     uint32_t n_preceding_cpgs{};
     if (!(iss >> chrom_name >> chrom_sz >> n_cpgs >> n_preceding_cpgs)) {
 #ifdef DEBUG
-      std::println(std::cerr, "failed to parse header line:\n{}", line);
+      std::println(std::cerr, "Failed to parse header line:\n{}", line);
 #endif
       return std::make_error_code(std::errc(errno));
     }
@@ -264,7 +264,7 @@ cpg_index::read(const string &index_file) -> std::error_code {
 
   if (n_lines != n_header_lines) {
 #ifdef DEBUG
-    std::println(std::cerr, "failed to parse header: {}", index_file);
+    std::println(std::cerr, "Failed to parse header: {}", index_file);
 #endif
     return std::make_error_code(std::errc(errno));
   }
@@ -306,7 +306,7 @@ cpg_index::write(const string &index_file) const -> std::error_code {
   std::ofstream out(index_file.data());
   if (!out) {
 #ifdef DEBUG
-    std::println(std::cerr, "failed to open index file: {}", index_file);
+    std::println(std::cerr, "Failed to open index file: {}", index_file);
 #endif
     return std::make_error_code(std::errc(errno));
   }
