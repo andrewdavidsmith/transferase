@@ -30,6 +30,7 @@
 #include "cpg_index.hpp"
 #include "genomic_interval.hpp"
 #include "logger.hpp"
+#include "mc16_error.hpp"
 #include "methylome.hpp"
 #include "request.hpp"
 #include "response.hpp"
@@ -316,8 +317,8 @@ lookup_client_main(int argc, char *argv[]) -> int {
   lgr.info("Output file: {}", output_file);
 
   cpg_index index{};
-  if (index.read(index_file) != 0) {
-    lgr.error("Failed to read cpg index: {}", index_file);
+  if (const auto index_read_err = index.read(index_file); index_read_err) {
+    lgr.error("Failed to read cpg index: {} ({})", index_read_err, index_file);
     return EXIT_FAILURE;
   }
 
