@@ -31,14 +31,15 @@
 #include <format>
 #include <fstream>
 #include <functional>
-#include <print>
 #include <ranges>
 #include <string>
 #include <tuple>
 #include <utility>
 #include <vector>
+
 #ifdef DEBUG
 #include <iostream>
+#include <print>
 #endif
 
 // for mmap
@@ -51,7 +52,6 @@ using std::formatter;
 using std::ifstream;
 using std::make_tuple;
 using std::pair;
-using std::println;
 using std::size;
 using std::size_t;
 using std::string;
@@ -67,41 +67,44 @@ struct genome_file {
   std::error_code ec{};
   char *data{};
   size_t sz{};
-  int fd{};
 };
 
 [[nodiscard]] auto
 mmap_genome(const string &filename) -> genome_file {
-  const int fd = open(filename.data(), O_RDONLY);
+  const int fd = open(filename.data(), O_RDONLY, 0);
   if (fd < 0)
-    return {std::make_error_code(std::errc(errno)), nullptr, 0, fd};
+    return {std::make_error_code(std::errc(errno)), nullptr, 0};
 
   std::error_code errc;
   const size_t filesize = std::filesystem::file_size(filename, errc);
   if (errc)
-    return {std::make_error_code(std::errc(errno)), nullptr, 0, fd};
+    return {std::make_error_code(std::errc(errno)), nullptr, 0};
   char *data =
     static_cast<char *>(mmap(NULL, filesize, PROT_READ, MAP_PRIVATE, fd, 0));
+
   if (data == MAP_FAILED)
-    return {std::make_error_code(std::errc(errno)), nullptr, 0, fd};
-  return {{}, data, filesize, fd};
+    return {std::make_error_code(std::errc(errno)), nullptr, 0};
+
+  close(fd);  // close file descriptor; kernel doesn't use it
+
+  return {std::error_code{}, data, filesize};
 }
 
 [[nodiscard]] static auto
 cleanup_mmap_genome(genome_file &gf) -> std::error_code {
-  const int rc =
-    gf.data == nullptr ? 0 : munmap(static_cast<void *>(gf.data), gf.sz);
-  if (gf.fd != -1)
-    close(gf.fd);
+  assert(gf.data != nullptr);
+  const int rc = munmap(static_cast<void *>(gf.data), gf.sz);
   return rc ? std::make_error_code(std::errc(errno)) : std::error_code{};
 }
 
 [[nodiscard]] static auto
 get_cpgs(const string_view &chrom) -> cpg_index::vec {
   static constexpr auto expeced_max_cpg_density = 50;
+
   bool prev_is_c = false, curr_is_g = false;
   cpg_index::vec cpgs;
   cpgs.reserve(rg::size(chrom) / expeced_max_cpg_density);
+
   uint32_t pos = 0;
   for (const auto &nuc : chrom) {
     curr_is_g = (nuc == 'g' || nuc == 'G');
@@ -137,12 +140,15 @@ get_chroms(const char *data, const size_t sz, const vector<size_t> &name_starts,
            const vector<size_t> &name_stops) -> vector<string_view> {
   vector<size_t> seq_stops(size(name_starts));
   seq_stops.back() = sz;
+
   rg::copy(cbegin(name_starts) + 1, cend(name_starts), begin(seq_stops));
   vector<size_t> seq_starts(name_stops);
+
   rg::for_each(seq_starts, [](auto &x) { ++x; });
   vector<string_view> chroms;
   for (const auto [sta, sto] : vs::zip(seq_starts, seq_stops))
     chroms.emplace_back(data + sta, sto - sta);
+
   return chroms;
 }
 
@@ -200,7 +206,7 @@ cpg_index::read(const string &index_file) -> std::error_code {
   ifstream in(index_file);
   if (!in) {
 #ifdef DEBUG
-    println(std::cerr, "failed to open cpg index file: {}", index_file);
+    std::println(std::cerr, "failed to open cpg index file: {}", index_file);
 #endif
     return std::make_error_code(std::errc(errno));
   }
@@ -208,13 +214,11 @@ cpg_index::read(const string &index_file) -> std::error_code {
   // write the identifier so we can check it
   string file_identifier_in_file(size(expected_file_identifier), '\0');
   in.read(file_identifier_in_file.data(), size(expected_file_identifier));
+
   if (file_identifier_in_file != expected_file_identifier) {
 #ifdef DEBUG
-    println(std::cerr,
-            "incorrect identifier:\n"
-            "found   \"{}\"\n"
-            "expeced \"{}\"",
-            file_identifier_in_file, expected_file_identifier);
+    std::println(std::cerr, R"(bad identifier: found "{}" expected "{}")",
+                 file_identifier_in_file, expected_file_identifier);
 #endif
     return std::make_error_code(std::errc(errno));
   }
@@ -245,7 +249,7 @@ cpg_index::read(const string &index_file) -> std::error_code {
     uint32_t n_preceding_cpgs{};
     if (!(iss >> chrom_name >> chrom_sz >> n_cpgs >> n_preceding_cpgs)) {
 #ifdef DEBUG
-      println(std::cerr, "failed to parse header line:\n{}", line);
+      std::println(std::cerr, "failed to parse header line:\n{}", line);
 #endif
       return std::make_error_code(std::errc(errno));
     }
@@ -260,7 +264,7 @@ cpg_index::read(const string &index_file) -> std::error_code {
 
   if (n_lines != n_header_lines) {
 #ifdef DEBUG
-    println(std::cerr, "failed to parse header: {}", index_file);
+    std::println(std::cerr, "failed to parse header: {}", index_file);
 #endif
     return std::make_error_code(std::errc(errno));
   }
@@ -302,7 +306,7 @@ cpg_index::write(const string &index_file) const -> std::error_code {
   std::ofstream out(index_file.data());
   if (!out) {
 #ifdef DEBUG
-    println(std::cerr, "failed to open index file: {}", index_file);
+    std::println(std::cerr, "failed to open index file: {}", index_file);
 #endif
     return std::make_error_code(std::errc(errno));
   }
@@ -326,8 +330,6 @@ cpg_index::write(const string &index_file) const -> std::error_code {
   }
 
   for (const auto &cpgs : positions) {
-    // const auto writable_bytes = std::as_bytes(std::span{cpgs});
-    // out.write(writable_bytes.data(), writable_bytes.size_bytes());
     out.write(reinterpret_cast<const char *>(cpgs.data()),
               sizeof(uint32_t) * size(cpgs));
     const auto write_ok = static_cast<bool>(out);
