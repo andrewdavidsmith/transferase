@@ -36,10 +36,19 @@
 
 class mc16_client {
 public:
-  mc16_client(boost::asio::io_context &io_context, const std::string &server,
-              const std::string &port, request_header &req_hdr, request &req,
-              logger &lgr);
+  mc16_client(const std::string &server, const std::string &port,
+              request_header &req_hdr, request &req, logger &lgr);
 
+  auto run() -> std::error_code {
+    io_context.run();
+    return status;
+  }
+
+  auto get_counts() const -> const std::vector<counts_res> & {
+    return resp.counts;
+  }
+
+private:
   auto handle_resolve(
     const boost::system::error_code &err,
     const boost::asio::ip::tcp::resolver::results_type &endpoints) -> void;
@@ -53,6 +62,7 @@ public:
   auto do_finish(const std::error_code &err) -> void;
   auto check_deadline() -> void;
 
+  boost::asio::io_context io_context;
   boost::asio::ip::tcp::resolver resolver;
   boost::asio::ip::tcp::socket socket;
   boost::asio::steady_timer deadline;

@@ -46,9 +46,8 @@ namespace bs = boost::system;
 using tcp = boost::asio::ip::tcp;
 using steady_timer = boost::asio::steady_timer;
 
-mc16_client::mc16_client(asio::io_context &io_context, const string &server,
-                         const string &port, request_header &req_hdr,
-                         request &req, logger &lgr) :
+mc16_client::mc16_client(const string &server, const string &port,
+                         request_header &req_hdr, request &req, logger &lgr) :
   resolver(io_context), socket(io_context), deadline{socket.get_executor()},
   req_hdr{req_hdr}, req{std::move(req)},  // move b/c req can be big
   lgr{lgr} {
