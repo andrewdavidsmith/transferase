@@ -60,6 +60,10 @@ add_library(lookup_client OBJECT
   lookup_client.hpp
   lookup_client.cpp)
 
+add_library(client OBJECT
+  client.hpp
+  client.cpp)
+
 add_library(lookup_server OBJECT
   lookup_server.hpp
   lookup_server.cpp)
@@ -118,6 +122,7 @@ target_link_libraries(
   cpg_index
   methylome
   methylome_set
+  client
   server
   connection
   request_handler
