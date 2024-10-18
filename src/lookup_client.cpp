@@ -22,6 +22,7 @@
  */
 
 #include "lookup_client.hpp"
+#include "client.hpp"
 
 #include <boost/asio.hpp>
 #include <boost/lexical_cast.hpp>
@@ -65,190 +66,7 @@ namespace chrono = std::chrono;
 using hr_clock = std::chrono::high_resolution_clock;
 
 namespace asio = boost::asio;
-namespace ph = boost::asio::placeholders;
-namespace bs = boost::system;
 namespace po = boost::program_options;
-using tcp = boost::asio::ip::tcp;
-using steady_timer = boost::asio::steady_timer;
-
-// ADS: Canceling the pending async waits by changing the timer might
-// be considered for avoiding. In most cases it will not be necessary
-// to extend the deadline only to do some non-I/O work.
-
-struct mc16_client {
-  mc16_client(asio::io_context &io_context, const string &server,
-              const string &port, request_header &req_hdr, request &req,
-              logger &lgr) :
-    resolver(io_context), socket(io_context), deadline{socket.get_executor()},
-    req_hdr{req_hdr}, req{std::move(req)},  // move b/c req can be big
-    lgr{lgr} {
-    // (1) call async, (2) set deadline, (3) register check_deadline
-    resolver.async_resolve(
-      server, port,
-      std::bind(&mc16_client::handle_resolve, this, ph::error, ph::results));
-    [[maybe_unused]] const auto n_cancels =
-      deadline.expires_after(chrono::seconds(read_timeout_seconds));
-    deadline.async_wait(std::bind(&mc16_client::check_deadline, this));
-  }
-
-  auto handle_resolve(const bs::error_code &err,
-                      const tcp::resolver::results_type &endpoints) -> void {
-    if (!err) {
-      asio::async_connect(
-        socket, endpoints,
-        std::bind(&mc16_client::handle_connect, this, ph::error));
-      // ADS: set deadline after calling async op
-      [[maybe_unused]] const auto n_cancels =
-        deadline.expires_after(chrono::seconds(read_timeout_seconds));
-    }
-    else {
-      lgr.debug("Error resolving server: {}", err);
-      do_finish(err);
-    }
-  }
-
-  void handle_connect(const bs::error_code &err) {
-    [[maybe_unused]] const auto n_cancels =
-      deadline.expires_at(steady_timer::time_point::max());
-    if (!err) {
-      lgr.debug("Connected to server: {}",
-                boost::lexical_cast<string>(socket.remote_endpoint()));
-      if (const auto req_hdr_compose{compose(req_buf, req_hdr)};
-          !req_hdr_compose.error) {
-        if (const auto req_body_compose = to_chars(
-              req_hdr_compose.ptr, req_buf.data() + request_buf_size, req);
-            !req_body_compose.error) {
-          asio::async_write(
-            socket,
-            vector<asio::const_buffer>{
-              asio::buffer(req_buf),
-              asio::buffer(req.offsets),
-            },
-            std::bind(&mc16_client::handle_write_request, this, ph::error));
-          [[maybe_unused]] const auto n_cancels =
-            deadline.expires_after(chrono::seconds(read_timeout_seconds));
-        }
-        else {
-          lgr.debug("Error forming request body: {}", req_body_compose.error);
-          do_finish(req_body_compose.error);
-        }
-      }
-      else {
-        lgr.debug("Error forming request header: {}", req_hdr_compose.error);
-        do_finish(req_hdr_compose.error);
-      }
-    }
-    else {
-      lgr.debug("Error connecting: {}", err);
-      do_finish(err);
-    }
-  }
-
-  auto handle_write_request(const bs::error_code &err) -> void {
-    [[maybe_unused]] const auto n_cancels =
-      deadline.expires_at(steady_timer::time_point::max());
-    if (!err) {
-      asio::async_read(
-        socket, asio::buffer(resp_buf),
-        asio::transfer_exactly(response_buf_size),
-        std::bind(&mc16_client::handle_read_response_header, this, ph::error));
-      [[maybe_unused]] const auto n_cancels =
-        deadline.expires_after(chrono::seconds(read_timeout_seconds));
-    }
-    else {
-      lgr.debug("Error writing request: {}", err);
-      do_finish(err);
-    }
-  }
-
-  auto handle_read_response_header(const bs::error_code &err) -> void {
-    // ADS: does this go here?
-    [[maybe_unused]] const auto n_cancels =
-      deadline.expires_at(steady_timer::time_point::max());
-    if (!err) {
-      if (const auto resp_hdr_parse{parse(resp_buf, resp_hdr)};
-          !resp_hdr_parse.error) {
-        lgr.debug("Response header: {}", resp_hdr.summary_serial());
-        do_read_counts();
-      }
-      else {
-        println("Received error: {}", resp_hdr_parse.error);
-        do_finish(resp_hdr_parse.error);
-      }
-    }
-    else {
-      lgr.debug("Error reading response header: {}", err);
-      do_finish(err);
-    }
-  }
-
-  auto do_read_counts() -> void {
-    // ADS: this 'resize' seems to belong with the response class
-    resp.counts.resize(req.n_intervals);
-    asio::async_read(socket, asio::buffer(resp.counts),
-                     asio::transfer_exactly(resp.get_counts_n_bytes()),
-                     std::bind(&mc16_client::do_finish, this, ph::error));
-    [[maybe_unused]] const auto n_cancels =
-      deadline.expires_after(chrono::seconds(read_timeout_seconds));
-  }
-
-  auto do_finish(const std::error_code &err) -> void {
-    // same consequence as canceling
-    [[maybe_unused]] const auto n_cancels =
-      deadline.expires_at(steady_timer::time_point::max());
-    if (!err) {
-      lgr.debug("Completing transaction: {}", err);
-    }
-    else {
-      lgr.debug("Completing with error: {}", err);
-    }
-    status = err;
-    bs::error_code shutdown_ec;  // for non-throwing
-    socket.shutdown(tcp::socket::shutdown_both, shutdown_ec);
-    bs::error_code socket_close_ec;  // for non-throwing
-    socket.close(socket_close_ec);
-  }
-
-  auto check_deadline() -> void {
-    if (!socket.is_open())  // ADS: when can this happen?
-      return;
-
-    if (const auto right_now = steady_timer::clock_type::now();
-        deadline.expiry() <= right_now) {
-      // deadline passed: close socket so remaining async ops are
-      // cancelled (see below)
-      const auto delta =
-        chrono::duration_cast<chrono::seconds>(right_now - deadline.expiry());
-      lgr.debug("Error deadline expired by: {}", delta.count());
-
-      bs::error_code shutdown_ec;  // for non-throwing
-      socket.shutdown(tcp::socket::shutdown_both, shutdown_ec);
-      lgr.debug("Shutdown status: {}", shutdown_ec);
-      [[maybe_unused]] const auto n_cancels =
-        deadline.expires_at(steady_timer::time_point::max());
-
-      /* ADS: closing here if needed?? */
-      bs::error_code socket_close_ec;  // for non-throwing
-      socket.close(socket_close_ec);
-    }
-
-    // wait again
-    deadline.async_wait(std::bind(&mc16_client::check_deadline, this));
-  }
-
-  tcp::resolver resolver;
-  tcp::socket socket;
-  steady_timer deadline;
-  request_buffer req_buf;
-  request_header req_hdr;
-  request req;
-  response_buffer resp_buf;
-  response_header resp_hdr;
-  response resp;
-  std::error_code status;
-  logger &lgr;
-  uint32_t read_timeout_seconds{3};
-};  // struct mc16_client
 
 static auto
 log_debug_index(const cpg_index &index) {
@@ -256,6 +74,14 @@ log_debug_index(const cpg_index &index) {
   logger &lgr = logger::instance();
   for (const auto word : vs::split(format("{}", index), delim))
     lgr.debug("cpg_index: {}", std::string_view(word));
+}
+
+template <mc16_log_level the_level, typename... Args>
+auto
+log_key_value(vector<std::pair<string, string>> &&key_value_pairs) {
+  logger &lgr = logger::instance();
+  for (auto &&[k, v] : key_value_pairs)
+    lgr.log<the_level>("{}: {}", k, v);
 }
 
 auto
@@ -308,17 +134,19 @@ lookup_client_main(int argc, char *argv[]) -> int {
     return EXIT_FAILURE;
   }
 
-  lgr.info("Arguments");
-  lgr.info("Accession: {}", accession);
-  lgr.info("Hostname: {}", hostname);
-  lgr.info("Port: {}", port);
-  lgr.info("Index file: {}", index_file);
-  lgr.info("Intervals file: {}", intervals_file);
-  lgr.info("Output file: {}", output_file);
+  log_key_value<mc16_log_level::info>({
+    // clang-format off
+    {"Accession", accession},
+    {"Sever", format("{}:{}", hostname, port)},
+    {"Index", index_file},
+    {"Intervals", intervals_file},
+    {"Output", output_file}
+    // clang-format on
+  });
 
   cpg_index index{};
   if (const auto index_read_err = index.read(index_file); index_read_err) {
-    lgr.error("Failed to read cpg index: {} ({})", index_read_err, index_file);
+    lgr.error("Failed to read cpg index: {} ({})", index_file, index_read_err);
     return EXIT_FAILURE;
   }
 
@@ -327,10 +155,11 @@ lookup_client_main(int argc, char *argv[]) -> int {
 
   const auto gis = genomic_interval::load(index, intervals_file);
   if (gis.empty()) {
-    lgr.error("Error reading intervals file: {}", intervals_file);
+    lgr.error("Error reading intervals file: {} ({})", intervals_file,
+              std::make_error_code(std::errc(errno)));
     return EXIT_FAILURE;
   }
-  lgr.info("Number of intervals: {}", size(gis));
+  lgr.info("N intervals: {}", size(gis));
 
   const auto get_offsets_start{hr_clock::now()};
   const vector<methylome::offset_pair> offsets = index.get_offsets(gis);
@@ -341,30 +170,30 @@ lookup_client_main(int argc, char *argv[]) -> int {
   request_header hdr{accession, index.n_cpgs_total, 0};
   request req{static_cast<uint32_t>(size(offsets)), offsets};
 
-  asio::io_context io_context;
-  mc16_client mc16c(io_context, hostname, port, hdr, req, lgr);
+  mc16_client mc16c(hostname, port, hdr, req, lgr);
   const auto client_start{hr_clock::now()};
-  io_context.run();
+  const auto status = mc16c.run();
   const auto client_stop{hr_clock::now()};
 
   lgr.debug("Elapsed time for query: {:.3}s",
             duration(client_start, client_stop));
 
-  if (mc16c.status) {
-    lgr.error("Transaction failed: {}", mc16c.status);
+  if (status) {
+    lgr.error("Transaction status: {}", status);
     return EXIT_FAILURE;
   }
   else
-    lgr.info("Transaction status: {}", mc16c.status);
+    lgr.info("Transaction status: {}", status);
 
   std::ofstream out(output_file);
   if (!out) {
-    lgr.error("failed to open output file: {}", output_file);
+    lgr.error("Failed to open output file: {} ({})", output_file,
+              std::make_error_code(std::errc(errno)));
     return EXIT_FAILURE;
   }
 
   const auto output_start{hr_clock::now()};
-  write_intervals(out, index, gis, mc16c.resp.counts);
+  write_intervals(out, index, gis, mc16c.get_counts());
   const auto output_stop{hr_clock::now()};
   lgr.debug("Elapsed time for output: {:.3}s",
             duration(output_start, output_stop));
