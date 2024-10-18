@@ -33,6 +33,7 @@
 
 #include <cstdint>  // std::uint32_t
 #include <string>
+#include <vector>
 
 class mc16_client {
 public:
