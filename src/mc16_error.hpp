@@ -70,7 +70,7 @@ struct request_error_category : std::error_category {
     case 6:
       return "lookup error offsets"s;
     }
-    std::abort();  // unreacheable
+    std::unreachable();  // hopefully this is unreacheable
   }
 };
 
@@ -120,7 +120,7 @@ struct server_response_category : std::error_category {
     case 7:
       return "bad request"s;
     }
-    std::abort();  // unreacheable
+    std::unreachable();  // hopefully
   }
 };
 
@@ -166,7 +166,7 @@ struct methylome_set_category : std::error_category {
     case 5:
       return "methylome already live"s;
     }
-    std::abort();  // unreacheable
+    std::unreachable();  // hopefully
   }
 };
 
@@ -221,7 +221,7 @@ struct methylome_category : std::error_category {
     case 8:
       return "incorrect methylome size"s;
     }
-    std::abort();  // unreacheable
+    std::unreachable();  // hopefully
   }
 };
 
@@ -232,24 +232,25 @@ make_error_code(methylome_code e) {
 }
 
 /*
-  Helpers to print messages from std::error_code and
-  boost::system::error_code
+  print std::error_code messages
  */
-
 template <>
 struct std::formatter<std::error_code> : std::formatter<std::string> {
   auto format(const std::error_code &e, std::format_context &ctx) const {
-    return std::formatter<std::string>::format(
-      std::format(R"({}: "{}")", e.category().name(), e.message()), ctx);
+    return std::formatter<std::string>::format(std::format("{}", e.message()),
+                                               ctx);
   }
 };
 
+/*
+  print boost::system::error_code messages
+ */
 template <>
 struct std::formatter<boost::system::error_code> : std::formatter<std::string> {
   auto format(const boost::system::error_code &e,
               std::format_context &ctx) const {
-    return std::formatter<std::string>::format(
-      std::format(R"({}: "{}")", e.category().name(), e.message()), ctx);
+    return std::formatter<std::string>::format(std::format("{}", e.message()),
+                                               ctx);
   }
 };
 
