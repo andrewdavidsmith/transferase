@@ -83,9 +83,23 @@ struct mc16_client {
     req_hdr{req_hdr}, req{std::move(req)},  // move b/c req can be big
     lgr{lgr} {
     // (1) call async, (2) set deadline, (3) register check_deadline
-    resolver.async_resolve(
-      server, port,
-      std::bind(&mc16_client::handle_resolve, this, ph::error, ph::results));
+    bs::error_code ec;
+    asio::ip::address addr{};
+    addr.from_string(server, ec);
+    if (ec) {  // not an IP address
+      lgr.debug("Resolving address for hostname: {}", server);
+      resolver.async_resolve(
+        server, port,
+        std::bind(&mc16_client::handle_resolve, this, ph::error, ph::results));
+    }
+    else {
+      lgr.debug("Avoiding address resolution (ip: {})", server);
+      resolver.async_resolve(
+        server, port, asio::ip::resolver_query_base::numeric_service,
+        std::bind(&mc16_client::handle_resolve, this, ph::error, ph::results));
+    }
+    // tcp::resolver::query query(
+    //   host, PORT, boost::asio::ip::resolver_query_base::numeric_service);
     [[maybe_unused]] const auto n_cancels =
       deadline.expires_after(chrono::seconds(read_timeout_seconds));
     deadline.async_wait(std::bind(&mc16_client::check_deadline, this));
