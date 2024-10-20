@@ -78,10 +78,10 @@ struct connection : public std::enable_shared_from_this<connection> {
   boost::asio::ip::tcp::socket socket;  // this connection's socket
   boost::asio::steady_timer deadline;
   request_handler &handler;  // handles incoming requests
-  request_buffer req_buf;
+  request_buffer req_buf{};
   request_header req_hdr;  // this connection's request header
   request req;             // this connection's request
-  response_buffer resp_buf;
+  response_buffer resp_buf{};
   response_header resp_hdr;  // header of the response
   response resp;             // response to send back
   logger &lgr;
