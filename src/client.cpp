@@ -94,7 +94,7 @@ mc16_client::handle_resolve(const bs::error_code &err,
 
 void
 mc16_client::handle_connect(const bs::error_code &err) {
-  [[maybe_unused]] const auto n_cancels =
+  [[maybe_unused]] const auto n_cancels_removing =
     deadline.expires_at(steady_timer::time_point::max());
   if (!err) {
     lgr.debug("Connected to server: {}",
@@ -132,7 +132,7 @@ mc16_client::handle_connect(const bs::error_code &err) {
 
 auto
 mc16_client::handle_write_request(const bs::error_code &err) -> void {
-  [[maybe_unused]] const auto n_cancels =
+  [[maybe_unused]] const auto n_cancels_removing =
     deadline.expires_at(steady_timer::time_point::max());
   if (!err) {
     asio::async_read(
@@ -150,7 +150,7 @@ mc16_client::handle_write_request(const bs::error_code &err) -> void {
 auto
 mc16_client::handle_read_response_header(const bs::error_code &err) -> void {
   // ADS: does this go here?
-  [[maybe_unused]] const auto n_cancels =
+  [[maybe_unused]] const auto n_cancels_removing =
     deadline.expires_at(steady_timer::time_point::max());
   if (!err) {
     if (const auto resp_hdr_parse{parse(resp_buf, resp_hdr)};
@@ -183,7 +183,7 @@ mc16_client::do_read_counts() -> void {
 auto
 mc16_client::do_finish(const std::error_code &err) -> void {
   // same consequence as canceling
-  [[maybe_unused]] const auto n_cancels =
+  [[maybe_unused]] const auto n_cancels_removing =
     deadline.expires_at(steady_timer::time_point::max());
   lgr.debug("Transaction: {}", err);
   status = err;
@@ -209,7 +209,7 @@ mc16_client::check_deadline() -> void {
     bs::error_code shutdown_ec;  // for non-throwing
     socket.shutdown(tcp::socket::shutdown_both, shutdown_ec);
     lgr.debug("Shutdown status: {}", shutdown_ec);
-    [[maybe_unused]] const auto n_cancels =
+    [[maybe_unused]] const auto n_cancels_removing =
       deadline.expires_at(steady_timer::time_point::max());
 
     /* ADS: closing here if needed?? */
