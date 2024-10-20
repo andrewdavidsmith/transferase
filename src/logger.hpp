@@ -114,13 +114,13 @@ private:
 public:
   static logger &
   instance(std::shared_ptr<std::ostream> log_file_ptr = nullptr,
-           std::string appname = "",
+           const std::string &appname = "",
            mc16_log_level min_log_level = mc16_log_level::debug) {
     static logger fl(log_file_ptr, appname, min_log_level);
     return fl;
   }
 
-  logger(std::shared_ptr<std::ostream> log_file_ptr, std::string appname,
+  logger(std::shared_ptr<std::ostream> log_file_ptr, const std::string &appname,
          mc16_log_level min_log_level = mc16_log_level::info) :
     log_file{log_file_ptr}, min_log_level{min_log_level} {
     // ADS: check for log file good here?
