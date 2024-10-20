@@ -108,9 +108,9 @@ merge_main(int argc, char *argv[]) -> int {
   }
 
   const auto last_file = input_files.back();
-  const auto methylome_read_start{hr_clock::now()};
+  auto methylome_read_start{hr_clock::now()};
   methylome meth{};
-  const auto meth_read_err = meth.read(last_file);
+  auto meth_read_err = meth.read(last_file);
   if (meth_read_err) {
     println(cout, "Error: {} ({})", meth_read_err, last_file);
     return EXIT_FAILURE;
@@ -123,7 +123,7 @@ merge_main(int argc, char *argv[]) -> int {
 
   for (const auto &filename : input_files | vs::take(n_inputs - 1)) {
     methylome tmp{};
-    const auto methylome_read_start{hr_clock::now()};
+    methylome_read_start = hr_clock::now();
     const auto meth_read_err = tmp.read(filename);
     total_read_time += duration(methylome_read_start, hr_clock::now());
     if (meth_read_err) {
