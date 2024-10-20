@@ -241,7 +241,7 @@ process_cpg_sites(const string &infile, const string &outfile,
   int32_t prev_ch_id = -1;
   uint64_t pos = num_lim<uint64_t>::max();
 
-  vector<cpg_index::vec>::const_iterator positions;
+  vector<cpg_index::vec>::const_iterator positions{};
 
   unordered_map<string, int32_t> header_chroms_index;
 
