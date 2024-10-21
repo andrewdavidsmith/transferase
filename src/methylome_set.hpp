@@ -79,8 +79,6 @@ struct methylome_set {
   [[nodiscard]] auto get_methylome(const std::string &accession)
     -> std::tuple<std::shared_ptr<methylome>, std::error_code>;
 
-  [[nodiscard]] auto summary() const -> std::string;
-
   [[nodiscard]] auto get_n_total_cpgs() const -> std::uint32_t {
     return n_total_cpgs;
   }

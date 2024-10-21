@@ -129,9 +129,10 @@ get_chrom_name_starts(const char *data, const size_t sz) -> vector<size_t> {
 [[nodiscard]] static auto
 get_chrom_name_stops(vector<size_t> starts, const char *data,
                      const size_t sz) -> vector<size_t> {
-  // copy the 'starts' vector and return it as the stops
-  for (auto &s : starts)
-    s = std::distance(data, std::find(data + s, data + sz, '\n'));
+  const auto next_stop = [&](const size_t start) -> size_t {
+    return std::distance(data, std::find(data + start, data + sz, '\n'));
+  };  // finds the stop position following each start position
+  rg::transform(starts, begin(starts), next_stop);
   return starts;
 }
 
@@ -158,34 +159,38 @@ cpg_index::construct(const string &genome_file) -> std::error_code {
   if (gf.ec)
     return gf.ec;
 
-  // initialize the chromosome names and their order
+  // get start and stop positions of chrom names in the file
   const auto name_starts = get_chrom_name_starts(gf.data, gf.sz);
   const auto name_stops = get_chrom_name_stops(name_starts, gf.data, gf.sz);
+
+  // initialize the chromosome order
   chrom_order.clear();
   for (const auto [start, stop] : vs::zip(name_starts, name_stops))
     chrom_order.emplace_back(string_view(gf.data + start + 1, gf.data + stop));
 
-  /* chroms is a view into 'data' so don't free 'data' too early */
+  const auto n_chroms = std::size(chrom_order);
+
+  // chroms is a view into 'gf.data' so don't free gf.data too early
   const auto chroms = get_chroms(gf.data, gf.sz, name_starts, name_stops);
+
   // collect cpgs for each chrom; order must match chrom name order
-  positions.clear();
-  for (const auto &chrom : chroms)
-    positions.emplace_back(get_cpgs(chrom));
+  positions.resize(n_chroms);
+  rg::transform(chroms, begin(positions), get_cpgs);
 
-  // get the size of each chrom so we can cross-check for any data
-  // files using this index
-  chrom_size.clear();
-  for (const auto &chrom : chroms)
-    chrom_size.emplace_back(size(chrom) - rg::count(chrom, '\n'));
+  // get size of each chrom to cross-check data files using this index
+  chrom_size.resize(n_chroms);
+  rg::transform(chroms, begin(chrom_size), [](const auto &chrom) {
+    return size(chrom) - rg::count(chrom, '\n');
+  });
 
-  // finished with views into 'data' so cleanup
+  // finished with any views that look into 'data' so cleanup
   if (const auto munmap_err = cleanup_mmap_genome(gf); munmap_err)
     return munmap_err;
 
   // initialize chrom offsets within the compressed files
-  chrom_offset.clear();
-  for (const auto &cpgs : positions)
-    chrom_offset.emplace_back(size(cpgs));
+  chrom_offset.resize(n_chroms);
+  rg::transform(positions, begin(chrom_offset), std::size<cpg_index::vec>);
+
   n_cpgs_total = std::reduce(cbegin(chrom_offset), cend(chrom_offset));
   exclusive_scan(cbegin(chrom_offset), cend(chrom_offset), begin(chrom_offset),
                  0);

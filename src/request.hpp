@@ -42,7 +42,6 @@ struct request_header {
   std::uint32_t methylome_size{};
   std::uint32_t request_type{};
   auto summary() const -> std::string;
-  auto summary_serial() const -> std::string;
 };
 
 auto
@@ -66,7 +65,6 @@ struct request {
   std::vector<offset_type> offsets;
 
   auto summary() const -> std::string;
-  auto summary_serial() const -> std::string;
 
   auto get_offsets_n_bytes() const -> uint32_t {
     return sizeof(offset_type) * size(offsets);

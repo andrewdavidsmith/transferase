@@ -305,7 +305,6 @@ methylome::get_bins(const uint32_t bin_size,
   // ADS TODO: reserve n_bins
   vector<counts_res> results;
 
-  string chrom_name;
   const auto zipped =
     vs::zip(index.positions, index.chrom_size, index.chrom_offset);
   for (const auto [positions, chrom_size, offset] : zipped) {

@@ -47,10 +47,6 @@ struct response_header {
   auto error() const -> bool { return (status) ? true : false; }
 
   auto summary() const -> std::string;
-  auto summary_serial() const -> std::string;
-
-  static response_header not_found();
-  static response_header bad_request();
 };
 
 auto

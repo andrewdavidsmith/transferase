@@ -99,24 +99,7 @@ parse(const array<char, response_buf_size> &buf,
 }
 
 auto
-response_header::not_found() -> response_header {
-  return {server_response_code::methylome_not_found, 0};
-}
-
-auto
-response_header::bad_request() -> response_header {
-  return {server_response_code::bad_request, 0};
-}
-
-auto
 response_header::summary() const -> string {
-  static constexpr auto fmt = "{}: \"{}\"\nmethylome_size: {}";
-  return std::format(fmt, status.category().name(), status.message(),
-                     methylome_size);
-}
-
-auto
-response_header::summary_serial() const -> string {
   static constexpr auto fmt = R"({{"{}": "{}", "methylome_size": {}}})";
   return std::format(fmt, status.category().name(), status.message(),
                      methylome_size);

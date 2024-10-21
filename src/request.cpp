@@ -34,7 +34,7 @@
 namespace rg = std::ranges;
 using std::format;
 using std::from_chars;
-using std::ssize;
+using std::size;
 using std::string;
 
 auto
@@ -43,7 +43,7 @@ to_chars(char *first, [[maybe_unused]] char *last,
   // ADS: use to_chars here
   const string s = format("{}\t{}\t{}\n", header.accession,
                           header.methylome_size, header.request_type);
-  assert(ssize(s) < std::distance(first, last));
+  assert(size(s) < std::distance(first, last));
   auto data_end = rg::copy(s, first);  // rg::in_out_result
   return {data_end.out, request_error::ok};
 }
@@ -106,14 +106,6 @@ parse(const request_buffer &buf, request_header &hdr) -> parse_result {
 
 auto
 request_header::summary() const -> string {
-  return format("accession: {}\n"
-                "methylome_size: {}\n"
-                "request_type: {}",
-                accession, methylome_size, request_type);
-}
-
-auto
-request_header::summary_serial() const -> string {
   return format(R"({{"accession": "{}", )"
                 R"("methylome_size": {}, )"
                 R"("request_type": {}}})",
@@ -124,11 +116,6 @@ request_header::summary_serial() const -> string {
 
 auto
 request::summary() const -> string {
-  return format("n_intervals: {}", n_intervals);
-}
-
-auto
-request::summary_serial() const -> string {
   return format(R"({{"n_intervals": {}}})", n_intervals);
 }
 
@@ -137,7 +124,7 @@ to_chars(char *first, [[maybe_unused]] char *last,
          const request &req) -> mc16_to_chars_result {
   // ADS: use to_chars here
   const string s = format("{}\n", req.n_intervals);
-  assert(ssize(s) < std::distance(first, last));
+  assert(size(s) < std::distance(first, last));
   auto data_end = rg::copy(s, first);  // rg::in_out_result
   return {data_end.out, request_error::ok};
 }
