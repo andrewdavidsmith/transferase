@@ -27,10 +27,12 @@
 #include <cstdint>
 #include <format>
 #include <string>
+#include <system_error>
 #include <tuple>
 #include <vector>
 
 struct cpg_index;
+struct genomic_interval_load_ret;
 
 struct genomic_interval {
   std::int32_t ch_id{-1};
@@ -41,7 +43,12 @@ struct genomic_interval {
 
   [[nodiscard]] static auto
   load(const cpg_index &index,
-       const std::string &filename) -> std::vector<genomic_interval>;
+       const std::string &filename) -> genomic_interval_load_ret;
+};
+
+struct genomic_interval_load_ret {
+  std::vector<genomic_interval> gis;
+  std::error_code ec;
 };
 
 template <>
