@@ -153,10 +153,9 @@ lookup_client_main(int argc, char *argv[]) -> int {
   if (log_level == mc16_log_level::debug)
     log_debug_index(index);
 
-  const auto gis = genomic_interval::load(index, intervals_file);
-  if (gis.empty()) {
-    lgr.error("Error reading intervals file: {} ({})", intervals_file,
-              std::make_error_code(std::errc(errno)));
+  const auto [gis, ec] = genomic_interval::load(index, intervals_file);
+  if (ec) {
+    lgr.error("Error reading intervals file: {} ({})", intervals_file, ec);
     return EXIT_FAILURE;
   }
   lgr.info("N intervals: {}", size(gis));

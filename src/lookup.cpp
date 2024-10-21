@@ -119,9 +119,9 @@ lookup_main(int argc, char *argv[]) -> int {
     return EXIT_FAILURE;
   }
 
-  const auto gis = genomic_interval::load(index, intervals_file);
-  if (gis.empty()) {
-    println(cerr, "Failed to read intervals file: {}", intervals_file);
+  const auto [gis, ec] = genomic_interval::load(index, intervals_file);
+  if (ec) {
+    println(cerr, "Failed to read intervals file: {} ({})", intervals_file, ec);
     return EXIT_FAILURE;
   }
   const auto lookup_start{hr_clock::now()};

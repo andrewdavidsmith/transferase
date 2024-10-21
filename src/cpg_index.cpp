@@ -329,6 +329,14 @@ cpg_index::write(const string &index_file) const -> std::error_code {
       return std::make_error_code(std::errc(errno));
   }
 
+  {
+    // write the header itself
+    out.write(header.data(), size(header));
+    const auto write_ok = static_cast<bool>(out);
+    if (!write_ok)
+      return std::make_error_code(std::errc(errno));
+  }
+
   for (const auto &cpgs : positions) {
     out.write(reinterpret_cast<const char *>(cpgs.data()),
               sizeof(uint32_t) * size(cpgs));

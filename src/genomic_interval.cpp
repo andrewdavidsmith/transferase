@@ -22,47 +22,57 @@
  */
 
 #include "genomic_interval.hpp"
+
 #include "cpg_index.hpp"
+#include "mc16_error.hpp"
 
 #include <format>
 #include <fstream>
 #include <sstream>
 #include <string>
+#include <tuple>
 #include <utility>
 #include <vector>
 
 using std::istream;
 using std::string;
+using std::tuple;
 using std::uint32_t;
 using std::vector;
 
 [[nodiscard]] static auto
-parse(const cpg_index &index, const string &s) -> genomic_interval {
+parse(const cpg_index &index, const string &s,
+      std::error_code &ec) -> genomic_interval {
   std::istringstream iss(s);
   genomic_interval gi;
   string tmp;
-  if (!(iss >> tmp >> gi.start >> gi.stop))
+  if (!(iss >> tmp >> gi.start >> gi.stop)) {
+    ec = genomic_interval_code::error_parsing_bed_line;
     return gi;
+  }
   const auto ch_id_itr = index.chrom_index.find(tmp);
-  if (ch_id_itr == cend(index.chrom_index))
+  if (ch_id_itr == cend(index.chrom_index)) {
+    ec = genomic_interval_code::chrom_name_not_found_in_index;
     return gi;
+  }
   gi.ch_id = ch_id_itr->second;
   return gi;
 }
 
-auto
+[[nodiscard]] auto
 genomic_interval::load(const cpg_index &index,
-                       const string &filename) -> vector<genomic_interval> {
+                       const string &filename) -> genomic_interval_load_ret {
   std::ifstream in{filename};
   if (!in)
-    return {};  // empty means error
+    return {{}, std::make_error_code(std::errc(errno))};
   vector<genomic_interval> v;
   string line;
+  std::error_code ec;
   while (getline(in, line)) {
-    const auto gi = parse(index, line);
-    if (gi.ch_id == -1)
-      return {};  // empty means error
+    const auto gi = parse(index, line, ec);
+    if (ec)
+      return {{}, ec};
     v.push_back(std::move(gi));
   }
-  return v;
+  return {v, genomic_interval_code::ok};
 }
