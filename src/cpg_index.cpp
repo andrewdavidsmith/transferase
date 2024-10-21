@@ -23,6 +23,7 @@
 
 #include "cpg_index.hpp"
 #include "genomic_interval.hpp"
+#include "mc16_error.hpp"
 
 #include <algorithm>
 #include <cassert>
@@ -47,6 +48,7 @@
 #include <sys/mman.h>
 #include <unistd.h>
 
+using std::exclusive_scan;
 using std::format;
 using std::formatter;
 using std::ifstream;
@@ -209,12 +211,8 @@ cpg_index::read(const string &index_file) -> std::error_code {
   static const auto expected_file_identifier = format("{:64}", "cpg_index");
 
   ifstream in(index_file);
-  if (!in) {
-#ifdef DEBUG
-    std::println(std::cerr, "Failed to open cpg index file: {}", index_file);
-#endif
+  if (!in)
     return std::make_error_code(std::errc(errno));
-  }
 
   // write the identifier so we can check it
   string file_identifier_in_file(size(expected_file_identifier), '\0');
@@ -225,7 +223,7 @@ cpg_index::read(const string &index_file) -> std::error_code {
     std::println(std::cerr, R"(Bad identifier: found "{}" expected "{}")",
                  file_identifier_in_file, expected_file_identifier);
 #endif
-    return std::make_error_code(std::errc(errno));
+    return cpg_index_code::wrong_identifier_in_header;
   }
 
   uint32_t n_header_lines{};
@@ -256,7 +254,7 @@ cpg_index::read(const string &index_file) -> std::error_code {
 #ifdef DEBUG
       std::println(std::cerr, "Failed to parse header line:\n{}", line);
 #endif
-      return std::make_error_code(std::errc(errno));
+      return cpg_index_code::error_parsing_index_header_line;
     }
 
     chrom_order.emplace_back(chrom_name);
@@ -271,7 +269,7 @@ cpg_index::read(const string &index_file) -> std::error_code {
 #ifdef DEBUG
     std::println(std::cerr, "Failed to parse header: {}", index_file);
 #endif
-    return std::make_error_code(std::errc(errno));
+    return cpg_index_code::failure_reading_index_header;
   }
   n_cpgs_total = std::reduce(cbegin(chrom_n_cpgs), cend(chrom_n_cpgs));
 
@@ -285,10 +283,9 @@ cpg_index::read(const string &index_file) -> std::error_code {
       const auto read_ok = static_cast<bool>(in);
       const auto n_bytes = in.gcount();
       if (!read_ok || n_bytes != n_bytes_expected)
-        return std::make_error_code(std::errc(errno));
+        return cpg_index_code::failure_reading_index_body;
     }
   }
-
   return std::error_code{};
 }
 
