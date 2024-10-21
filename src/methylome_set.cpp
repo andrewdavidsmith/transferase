@@ -105,14 +105,3 @@ methylome_set::get_methylome(const string &accession)
 
   return {meth->second, methylome_set_code::ok};
 }
-
-[[nodiscard]] auto
-methylome_set::summary() const -> string {
-  constexpr auto fmt = "n_live_methylomes: {}\n"
-                       "max_live_methylomes: {}\n"
-                       "mc16_directory: {}\n"
-                       "methylomes:";
-  string r{format(fmt, accessions.size(), max_live_methylomes, mc16_directory)};
-  rg::for_each(accessions, [&](const auto &x) { r += format("\n{}", x); });
-  return r;
-}

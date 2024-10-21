@@ -155,7 +155,7 @@ mc16_client::handle_read_response_header(const bs::error_code &err) -> void {
   if (!err) {
     if (const auto resp_hdr_parse{parse(resp_buf, resp_hdr)};
         !resp_hdr_parse.error) {
-      lgr.debug("Response header: {}", resp_hdr.summary_serial());
+      lgr.debug("Response header: {}", resp_hdr.summary());
       do_read_counts();
     }
     else {

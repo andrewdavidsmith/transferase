@@ -72,7 +72,7 @@ connection::read_request() -> void {
         if (const auto req_hdr_parse{parse(req_buf, req_hdr)};
             !req_hdr_parse.error) {
           lgr.log<lvl::debug>("{} Received request header: {}", connection_id,
-                              req_hdr.summary_serial());
+                              req_hdr.summary());
           handler.handle_header(req_hdr, resp_hdr);
           if (!resp_hdr.error()) {
             if (const auto req_body_parse =
@@ -90,7 +90,7 @@ connection::read_request() -> void {
           }
           else {
             lgr.log<lvl::warning>("{} Responding with error: {}", connection_id,
-                                  resp_hdr.summary_serial());
+                                  resp_hdr.summary());
             respond_with_error();  // response error already assigned
           }
         }
@@ -129,7 +129,7 @@ connection::read_offsets() -> void {
           handler.handle_get_counts(req_hdr, req, resp_hdr, resp);
           lgr.log<lvl::debug>(
             "{} Finished methylation counts. Responding with header: {}",
-            connection_id, resp_hdr.summary_serial());
+            connection_id, resp_hdr.summary());
           // exiting the read loop -- no deadline for now
           respond_with_header();
         }
@@ -160,7 +160,7 @@ connection::respond_with_error() -> void {
         if (!ec) {
           lgr.log<lvl::warning>(
             "{} Responded with error: {}. Initiating connection shutdown.",
-            connection_id, resp_hdr.summary_serial());
+            connection_id, resp_hdr.summary());
         }
         else {
           lgr.log<lvl::error>(

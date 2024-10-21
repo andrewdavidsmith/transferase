@@ -124,7 +124,7 @@ merge_main(int argc, char *argv[]) -> int {
   for (const auto &filename : input_files | vs::take(n_inputs - 1)) {
     methylome tmp{};
     methylome_read_start = hr_clock::now();
-    const auto meth_read_err = tmp.read(filename);
+    meth_read_err = tmp.read(filename);
     total_read_time += duration(methylome_read_start, hr_clock::now());
     if (meth_read_err) {
       println(cout, "Error: {} ({})", meth_read_err, filename);
