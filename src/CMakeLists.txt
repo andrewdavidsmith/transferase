@@ -130,5 +130,6 @@ target_link_libraries(
   response
   ZLIB::ZLIB
   Boost::program_options
+  Threads::Threads
 )
 install(TARGETS mc16 DESTINATION bin)

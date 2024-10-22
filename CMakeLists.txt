@@ -37,12 +37,14 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS on)
 include(CheckIncludeFileCXX)
 include(CheckFunctionExists)
 
+
+find_package(Threads REQUIRED)
 find_package(
   Boost
   1.85.0 REQUIRED
   COMPONENTS
   program_options)
-find_package(ZLIB)
+find_package(ZLIB REQUIRED)
 
 add_compile_options(-Wall -Wextra -Wpedantic -Werror -Wfatal-errors)
 
