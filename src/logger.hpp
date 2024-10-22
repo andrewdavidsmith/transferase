@@ -24,6 +24,12 @@
 #ifndef SRC_LOGGER_HPP_
 #define SRC_LOGGER_HPP_
 
+#if not defined(__APPLE__) && not defined(__MACH__)
+#include <unistd.h>  // gettid
+#else
+#include <pthread.h>  // pthread_threadid_np
+#endif
+
 #include <chrono>
 #include <cstdint>  // std::uint32_t
 #include <cstring>  // std::memcpy
@@ -140,8 +146,12 @@ public:
     static constexpr auto sz = level_name_sz[idx];
     static constexpr auto lvl = level_name[idx];
     if (the_level >= min_log_level) {
-      const auto thread_id =
-        std::hash<std::thread::id>{}(std::this_thread::get_id());
+      std::uint64_t thread_id{};
+#if not defined(__APPLE__) && not defined(__MACH__)
+      thread_id = gettid();
+#else
+      pthread_threadid_np(nullptr, &thread_id);
+#endif
       std::lock_guard lck{mtx};
       format_time();
       const auto buf_data_end = fill_buffer(thread_id, lvl, sz, message);
@@ -156,8 +166,12 @@ public:
     static constexpr auto sz = level_name_sz[idx];
     static constexpr auto lvl = level_name[idx];
     if (the_level >= min_log_level) {
-      const auto thread_id =
-        std::hash<std::thread::id>{}(std::this_thread::get_id());
+      std::uint64_t thread_id{};
+#if not defined(__APPLE__) && not defined(__MACH__)
+      thread_id = gettid();
+#else
+      pthread_threadid_np(nullptr, &thread_id);
+#endif
       const auto msg = std::vformat(fmt_str, std::make_format_args(args...));
       std::lock_guard lck{mtx};
       format_time();
