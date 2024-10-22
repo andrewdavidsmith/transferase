@@ -67,8 +67,6 @@ mc16_client::mc16_client(const string &server, const string &port,
       server, port, asio::ip::resolver_query_base::numeric_service,
       std::bind(&mc16_client::handle_resolve, this, ph::error, ph::results));
   }
-  // tcp::resolver::query query(
-  //   host, PORT, boost::asio::ip::resolver_query_base::numeric_service);
   [[maybe_unused]] const auto n_cancels =
     deadline.expires_after(chrono::seconds(read_timeout_seconds));
   deadline.async_wait(std::bind(&mc16_client::check_deadline, this));
@@ -143,7 +141,12 @@ mc16_client::handle_write_request(const bs::error_code &err) -> void {
   }
   else {
     lgr.debug("Error writing request: {}", err);
-    do_finish(err);
+    [[maybe_unused]] const auto n_cancels =
+      deadline.expires_after(chrono::seconds(read_timeout_seconds));
+    // wait for an explanation of the problem
+    asio::async_read(
+      socket, asio::buffer(resp_buf), asio::transfer_exactly(response_buf_size),
+      std::bind(&mc16_client::handle_failure_explanation, this, ph::error));
   }
 }
 
@@ -157,6 +160,27 @@ mc16_client::handle_read_response_header(const bs::error_code &err) -> void {
         !resp_hdr_parse.error) {
       lgr.debug("Response header: {}", resp_hdr.summary());
       do_read_counts();
+    }
+    else {
+      lgr.debug("Error: {}", resp_hdr_parse.error);
+      do_finish(resp_hdr_parse.error);
+    }
+  }
+  else {
+    lgr.debug("Error reading response header: {}", err);
+    do_finish(err);
+  }
+}
+
+auto
+mc16_client::handle_failure_explanation(const bs::error_code &err) -> void {
+  [[maybe_unused]] const auto n_cancels_removing =
+    deadline.expires_at(steady_timer::time_point::max());
+  if (!err) {
+    if (const auto resp_hdr_parse{parse(resp_buf, resp_hdr)};
+        !resp_hdr_parse.error) {
+      lgr.debug("Response header: {}", resp_hdr.summary());
+      do_finish(resp_hdr.status);
     }
     else {
       lgr.debug("Error: {}", resp_hdr_parse.error);
@@ -185,7 +209,6 @@ mc16_client::do_finish(const std::error_code &err) -> void {
   // same consequence as canceling
   [[maybe_unused]] const auto n_cancels_removing =
     deadline.expires_at(steady_timer::time_point::max());
-  lgr.debug("Transaction: {}", err);
   status = err;
   bs::error_code shutdown_ec;  // for non-throwing
   socket.shutdown(tcp::socket::shutdown_both, shutdown_ec);
