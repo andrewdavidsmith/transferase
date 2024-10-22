@@ -24,7 +24,9 @@
 #ifndef SRC_METHYLOME_HPP_
 #define SRC_METHYLOME_HPP_
 
+#if not defined(__APPLE__) && not defined(__MACH__)
 #include "aligned_allocator.hpp"
+#endif
 #include "cpg_index.hpp"
 
 #include <cstddef>
@@ -53,7 +55,11 @@ template <> struct std::formatter<counts_res> : std::formatter<std::string> {
 struct methylome {
   typedef std::uint16_t m_count_t;
   typedef std::pair<m_count_t, m_count_t> m_elem;
+#if not defined(__APPLE__) && not defined(__MACH__)
   typedef std::vector<m_elem, aligned_allocator<m_elem>> vec;
+#else
+  typedef std::vector<m_elem> vec;
+#endif
 
   [[nodiscard]] auto read(const std::string &filename,
                           const uint32_t n_cpgs = 0) -> std::error_code;

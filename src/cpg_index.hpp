@@ -24,7 +24,9 @@
 #ifndef SRC_CPG_INDEX_HPP_
 #define SRC_CPG_INDEX_HPP_
 
+#if not defined(__APPLE__) && not defined(__MACH__)
 #include "aligned_allocator.hpp"
+#endif
 
 #include <cstdint>
 #include <format>
@@ -38,7 +40,11 @@ struct genomic_interval;
 
 struct cpg_index {
   typedef std::uint32_t cpg_pos_t;
+#if not defined(__APPLE__) && not defined(__MACH__)
   typedef std::vector<cpg_pos_t, aligned_allocator<cpg_pos_t>> vec;
+#else
+  typedef std::vector<cpg_pos_t> vec;
+#endif
   auto construct(const std::string &genome_file) -> std::error_code;
   auto read(const std::string &index_file) -> std::error_code;
   auto write(const std::string &index_file) const -> std::error_code;
