@@ -75,7 +75,7 @@ struct cpg_index {
   std::vector<cpg_index::vec> positions;
   std::vector<std::uint32_t> chrom_offset;
   std::unordered_map<std::string, std::int32_t> chrom_index;
-  uint32_t n_cpgs_total{};
+  std::uint32_t n_cpgs_total{};
 };
 
 template <> struct std::formatter<cpg_index> : std::formatter<std::string> {
