@@ -32,6 +32,7 @@
 #include <format>
 #include <fstream>
 #include <functional>
+#include <numeric>  // std::exclusive_scan
 #include <ranges>
 #include <string>
 #include <tuple>
@@ -77,9 +78,9 @@ mmap_genome(const string &filename) -> genome_file {
   if (fd < 0)
     return {std::make_error_code(std::errc(errno)), nullptr, 0};
 
-  std::error_code errc;
-  const size_t filesize = std::filesystem::file_size(filename, errc);
-  if (errc)
+  std::error_code err;
+  const size_t filesize = std::filesystem::file_size(filename, err);
+  if (err)
     return {std::make_error_code(std::errc(errno)), nullptr, 0};
   char *data =
     static_cast<char *>(mmap(NULL, filesize, PROT_READ, MAP_PRIVATE, fd, 0));
