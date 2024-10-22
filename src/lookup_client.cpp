@@ -68,14 +68,6 @@ using hr_clock = std::chrono::high_resolution_clock;
 namespace asio = boost::asio;
 namespace po = boost::program_options;
 
-[[maybe_unused]] static auto
-log_debug_index(const cpg_index &index) {
-  static constexpr string delim = "\n";
-  logger &lgr = logger::instance();
-  for (const auto word : vs::split(format("{}", index), delim))
-    lgr.debug("cpg_index: {}", std::string_view(word));
-}
-
 template <mc16_log_level the_level, typename... Args>
 auto
 log_key_value(vector<std::pair<string, string>> &&key_value_pairs) {
