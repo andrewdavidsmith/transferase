@@ -56,6 +56,10 @@ parse(const cpg_index &index, const string &s,
     return gi;
   }
   gi.ch_id = ch_id_itr->second;
+
+  if (gi.stop > index.chrom_size[gi.ch_id])
+    ec = genomic_interval_code::interval_past_chrom_end_in_index;
+
   return gi;
 }
 
