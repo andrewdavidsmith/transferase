@@ -237,9 +237,10 @@ enum class genomic_interval_code : std::uint32_t {
   ok = 0,
   error_parsing_bed_line = 1,
   chrom_name_not_found_in_index = 2,
+  interval_past_chrom_end_in_index = 3,
 };
 
-static constexpr std::uint32_t genomic_interval_code_n = 3;
+static constexpr std::uint32_t genomic_interval_code_n = 4;
 
 // register genomic_interval_code as error code enum
 template <>
@@ -258,6 +259,8 @@ struct genomic_interval_category : std::error_category {
       return "error parsing BED line"s;
     case 2:
       return "chrom name not found in index"s;
+    case 3:
+      return "interval past chrom end in index"s;
     }
     std::unreachable();  // hopefully
   }
