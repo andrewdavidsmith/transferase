@@ -68,7 +68,7 @@ using hr_clock = std::chrono::high_resolution_clock;
 namespace asio = boost::asio;
 namespace po = boost::program_options;
 
-static auto
+[[maybe_unused]] static auto
 log_debug_index(const cpg_index &index) {
   static constexpr string delim = "\n";
   logger &lgr = logger::instance();
@@ -151,7 +151,7 @@ lookup_client_main(int argc, char *argv[]) -> int {
   }
 
   if (log_level == mc16_log_level::debug)
-    log_debug_index(index);
+    lgr.debug("Number of CpGs in index: {}", index.n_cpgs_total);
 
   const auto [gis, ec] = genomic_interval::load(index, intervals_file);
   if (ec) {
