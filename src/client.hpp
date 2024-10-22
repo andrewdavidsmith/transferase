@@ -59,6 +59,7 @@ private:
   auto
   handle_read_response_header(const boost::system::error_code &err) -> void;
   auto do_read_counts() -> void;
+  auto handle_failure_explanation(const boost::system::error_code &err) -> void;
 
   auto do_finish(const std::error_code &err) -> void;
   auto check_deadline() -> void;
