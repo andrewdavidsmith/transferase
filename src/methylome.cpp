@@ -72,15 +72,18 @@ compress(const T &in, vector<uint8_t> &out) -> int {
   strm.avail_out = size(out);  // bytes available for compressed data
 
   ret = deflate(&strm, Z_FINISH);
-  assert(ret != Z_STREAM_ERROR);
+  // want ret == Z_STREAM_END here; should return error
+  assert(ret == Z_STREAM_END);
 
   const int ret_end = deflateEnd(&strm);
   ret = ret_end ? ret_end : ret;
-  assert(ret_end != Z_STREAM_ERROR);
+
+  // if deflateEnd was ok, we still want (ret == Z_STREAM_END)
+  assert(ret == Z_STREAM_END);
 
   out.resize(strm.total_out);
 
-  return ret;
+  return ret == Z_STREAM_END ? Z_OK : ret;
 }
 
 template <typename T>
@@ -147,7 +150,8 @@ methylome::read(const string &filename, const uint32_t n_cpgs) -> error_code {
     return methylome_code::invalid_methylome_header;
 
   const auto datasize = filesize - sizeof(flags);
-  if (n_cpgs != 0 && (n_cpgs * record_size != datasize))
+  // ADS: blow, not unzipping, have n_cpgs, but size not consistent
+  if (flags == 0 && n_cpgs != 0 && (n_cpgs * record_size != datasize))
     return methylome_code::incorrect_methylome_size;
 
   if (flags == 1) {
