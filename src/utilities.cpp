@@ -70,8 +70,10 @@ write_intervals(std::ostream &out, const cpg_index &index,
     buf[size(chrom)] = delim;
     for (const auto &[gi, res] : chunk) {
       std::to_chars_result tcr{buf.data() + size(chrom) + 1, std::errc()};
+#if defined(__GNUG__) and not defined(__clang__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic error "-Wstringop-overflow=0"
+#endif
       tcr = std::to_chars(tcr.ptr, buf_end, gi.start);
       *tcr.ptr++ = delim;
       tcr = std::to_chars(tcr.ptr, buf_end, gi.stop);
@@ -82,11 +84,14 @@ write_intervals(std::ostream &out, const cpg_index &index,
       *tcr.ptr++ = delim;
       tcr = std::to_chars(tcr.ptr, buf_end, res.n_covered);
       *tcr.ptr++ = '\n';
-#pragma GCC diagnostic push
+#if defined(__GNUG__) and not defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
       out.write(buf.data(), rg::distance(buf.data(), tcr.ptr));
     }
   }
 }
+
 auto
 write_bins(std::ostream &out, const uint32_t bin_size, const cpg_index &index,
            const vector<counts_res> &results) -> void {
@@ -106,8 +111,10 @@ write_bins(std::ostream &out, const uint32_t bin_size, const cpg_index &index,
     for (uint32_t bin_beg = 0; bin_beg < chrom_size; bin_beg += bin_size) {
       const auto bin_end = std::min(bin_beg + bin_size, chrom_size);
       std::to_chars_result tcr{buf_beg + size(chrom_name) + 1, std::errc()};
+#if defined(__GNUG__) and not defined(__clang__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic error "-Wstringop-overflow=0"
+#endif
       tcr = std::to_chars(tcr.ptr, buf_end, bin_beg);
       *tcr.ptr++ = delim;
       tcr = std::to_chars(tcr.ptr, buf_end, bin_end);
@@ -118,7 +125,9 @@ write_bins(std::ostream &out, const uint32_t bin_size, const cpg_index &index,
       *tcr.ptr++ = delim;
       tcr = std::to_chars(tcr.ptr, buf_end, res->n_covered);
       *tcr.ptr++ = '\n';
-#pragma GCC diagnostic push
+#if defined(__GNUG__) and not defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
       out.write(buf_beg, rg::distance(buf_beg, tcr.ptr));
       ++res;
     }

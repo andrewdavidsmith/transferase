@@ -61,11 +61,17 @@ logger::set_attributes(std::string_view appname) -> std::error_code {
   // process id in buffer
   std::to_chars_result tcr{cursor, std::errc()};
   const auto process_id = getpid();  // syscall;unistd.h
+#if defined(__GNUG__) and not defined(__clang__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic error "-Wstringop-overflow=0"
+#endif
   tcr = std::to_chars(tcr.ptr, buf_end, process_id);
+#if defined(__GNUG__) and not defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
+
+  // ADS: no complaints from gcc because it can't find buff?
   *tcr.ptr++ = delim;
-#pragma GCC diagnostic push
 
   if (tcr.ec != std::errc{})
     return std::make_error_code(tcr.ec);
