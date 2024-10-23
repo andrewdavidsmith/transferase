@@ -61,6 +61,8 @@ struct methylome {
   typedef std::vector<m_elem> vec;
 #endif
 
+  // ADS: use of n_cpgs to validate might be confusing and at least
+  // need to be documented
   [[nodiscard]] auto read(const std::string &filename,
                           const uint32_t n_cpgs = 0) -> std::error_code;
 
