@@ -43,7 +43,8 @@ to_chars(char *first, [[maybe_unused]] char *last,
   // ADS: use to_chars here
   const string s = format("{}\t{}\t{}\n", header.accession,
                           header.methylome_size, header.request_type);
-  assert(size(s) < std::distance(first, last));
+  assert(static_cast<std::iterator_traits<char *>::difference_type>(size(s)) <
+         std::distance(first, last));
   auto data_end = rg::copy(s, first);  // rg::in_out_result
   return {data_end.out, request_error::ok};
 }
@@ -124,7 +125,8 @@ to_chars(char *first, [[maybe_unused]] char *last,
          const request &req) -> mc16_to_chars_result {
   // ADS: use to_chars here
   const string s = format("{}\n", req.n_intervals);
-  assert(size(s) < std::distance(first, last));
+  assert(static_cast<std::iterator_traits<char *>::difference_type>(size(s)) <
+         std::distance(first, last));
   auto data_end = rg::copy(s, first);  // rg::in_out_result
   return {data_end.out, request_error::ok};
 }
