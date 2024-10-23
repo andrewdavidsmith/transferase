@@ -40,6 +40,10 @@ add_library(bins OBJECT
   bins.hpp
   bins.cpp)
 
+add_library(zip OBJECT
+  zip.hpp
+  zip.cpp)
+
 add_library(compress OBJECT
   compress.hpp
   compress.cpp)
@@ -113,6 +117,7 @@ target_link_libraries(
   index
   compress
   check
+  zip
   merge
   lookup
   lookup_client
