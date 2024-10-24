@@ -69,7 +69,6 @@ logger::set_attributes(std::string_view appname) -> std::error_code {
 #if defined(__GNUG__) and not defined(__clang__)
 #pragma GCC diagnostic pop
 #endif
-
   // ADS: no complaints from gcc because it can't find buff?
   *tcr.ptr++ = delim;
 
