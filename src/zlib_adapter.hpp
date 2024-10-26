@@ -31,6 +31,7 @@
 #include <system_error>
 #include <type_traits>
 #include <utility>
+#include <vector>
 
 // clang-format off
 // ADS: from zlib/zlib.h
@@ -55,10 +56,7 @@ enum class zlib_adapter_error : std::uint32_t {
   z_buf_error = 7,
   z_version_error = 8,
   unexpected_return_code = 9,
-  unknown_error = 10,
 };
-
-static constexpr std::uint32_t zlib_adapter_error_n = 11;
 
 // register zlib_adapter_error as error code enum
 template <>
@@ -69,30 +67,20 @@ struct zlib_adapter_error_category : std::error_category {
   const char *name() const noexcept override { return "zlib_adapter_error"; }
   std::string message(int code) const override {
     using std::string_literals::operator""s;
+    // clang-format off
     switch (code) {
-    case 0:
-      return "ok"s;
-    case 1:
-      return "value Z_STREAM_END"s;
-    case 2:
-      return "value Z_NEED_DICT"s;
-    case 3:
-      return "value Z_ERRNO"s;
-    case 4:
-      return "value Z_STREAM_ERROR"s;
-    case 5:
-      return "value Z_DATA_ERROR"s;
-    case 6:
-      return "value Z_MEM_ERROR"s;
-    case 7:
-      return "value Z_BUF_ERROR"s;
-    case 8:
-      return "value Z_VERSION_ERROR"s;
-    case 9:
-      return "unexpected return code from zlib"s;
-    case 10:
-      return "unknown error from zlib"s;
+    case 0: return "ok"s;
+    case 1: return "Z_STREAM_END"s;
+    case 2: return "Z_NEED_DICT"s;
+    case 3: return "Z_ERRNO"s;
+    case 4: return "Z_STREAM_ERROR"s;
+    case 5: return "Z_DATA_ERROR"s;
+    case 6: return "Z_MEM_ERROR"s;
+    case 7: return "Z_BUF_ERROR"s;
+    case 8: return "Z_VERSION_ERROR"s;
+    case 9: return "unexpected return code from zlib"s;
     }
+    // clang-format on
     std::unreachable();  // hopefully this is unreacheable
   }
 };
@@ -110,12 +98,13 @@ compress(const T &in, std::vector<std::uint8_t> &out) -> std::error_code {
   {
     const int ret = deflateInit2(&strm, Z_BEST_SPEED, Z_DEFLATED, MAX_WBITS,
                                  MAX_MEM_LEVEL, Z_RLE);
-    if (ret == Z_VERSION_ERROR)
+    switch (ret) {
+    case Z_VERSION_ERROR:
       return zlib_adapter_error::z_version_error;
-    else if (ret == Z_STREAM_ERROR)
+    case Z_STREAM_ERROR:
       return zlib_adapter_error::z_stream_error;
-    else if (ret != Z_OK)
-      return zlib_adapter_error::unknown_error;
+    }
+    assert(ret == Z_OK);
   }
 
   // pointer to bytes to compress
@@ -134,23 +123,25 @@ compress(const T &in, std::vector<std::uint8_t> &out) -> std::error_code {
   {
     // ADS: here we want (ret == Z_STREAM_END) and not (ret == Z_OK)
     const int ret = deflate(&strm, Z_FINISH);
-    if (ret == Z_STREAM_ERROR)
-      return zlib_adapter_error::z_stream_error;
-    else if (ret == Z_BUF_ERROR)
-      return zlib_adapter_error::z_buf_error;
-    else if (ret != Z_STREAM_END)
-      return zlib_adapter_error::unexpected_return_code;
+    // clang-format off
+    switch (ret) {
+    case Z_STREAM_ERROR: return zlib_adapter_error::z_stream_error;
+    case Z_BUF_ERROR: return zlib_adapter_error::z_buf_error;
+    }
+    // clang-format on
+    assert(ret == Z_STREAM_END);
   }
 
   {
     const int ret = deflateEnd(&strm);
-    if (ret == Z_STREAM_ERROR)
-      return zlib_adapter_error::z_stream_error;
-    else if (ret == Z_DATA_ERROR)
-      return zlib_adapter_error::z_data_error;
-    else if (ret != Z_STREAM_END)
-      return zlib_adapter_error::unexpected_return_code;
-    // if deflateEnd was ok, we still want (ret == Z_STREAM_END)
+    // clang-format off
+    switch (ret) {
+    case Z_STREAM_ERROR: return zlib_adapter_error::z_stream_error;
+    case Z_DATA_ERROR: return zlib_adapter_error::z_data_error;
+    }
+    // clang-format on
+    assert(ret == Z_OK);  // what about STREAM_END?
+    // ADS: if deflateEnd was ok, do we want (ret == Z_STREAM_END)???
   }
 
   out.resize(strm.total_out);
@@ -164,14 +155,14 @@ decompress(std::vector<std::uint8_t> &in, T &out) -> std::error_code {
   z_stream strm{};
   {
     const int ret = inflateInit(&strm);
-    if (ret == Z_VERSION_ERROR)
-      return zlib_adapter_error::z_version_error;
-    else if (ret == Z_STREAM_ERROR)
-      return zlib_adapter_error::z_stream_error;
-    else if (ret == Z_MEM_ERROR)
-      return zlib_adapter_error::z_mem_error;
-    else if (ret != Z_OK)
-      return zlib_adapter_error::unexpected_return_code;
+    // clang-format off
+    switch (ret) {
+    case Z_VERSION_ERROR: return zlib_adapter_error::z_version_error;
+    case Z_STREAM_ERROR: return zlib_adapter_error::z_stream_error;
+    case Z_MEM_ERROR: return zlib_adapter_error::z_mem_error;
+    }
+    // clang-format on
+    assert(ret == Z_OK);
   }
 
   strm.next_in = in.data();  // pointer to compressed bytes
@@ -185,45 +176,23 @@ decompress(std::vector<std::uint8_t> &in, T &out) -> std::error_code {
 
   {
     const int ret = inflate(&strm, Z_FINISH);
-    if (ret == Z_STREAM_ERROR)
-      return zlib_adapter_error::z_stream_error;
-    else if (ret == Z_NEED_DICT) {
+    if (ret == Z_NEED_DICT || ret == Z_MEM_ERROR || ret == Z_DATA_ERROR)
       inflateEnd(&strm);
-      return zlib_adapter_error::z_need_dict;
+    // clang-format off
+    switch (ret) {
+    case Z_STREAM_ERROR: return zlib_adapter_error::z_stream_error;
+    case Z_NEED_DICT: return zlib_adapter_error::z_need_dict;
+    case Z_MEM_ERROR: return zlib_adapter_error::z_mem_error;
+    case Z_DATA_ERROR: return zlib_adapter_error::z_data_error;
+    case Z_BUF_ERROR: return zlib_adapter_error::z_buf_error;
     }
-    else if (ret == Z_MEM_ERROR) {
-      inflateEnd(&strm);
-      return zlib_adapter_error::z_mem_error;
-    }
-    else if (ret == Z_DATA_ERROR) {
-      inflateEnd(&strm);
-      return zlib_adapter_error::z_data_error;
-    }
-    else if (ret == Z_STREAM_END)
-      return zlib_adapter_error::z_stream_end;
-    else if (ret == Z_BUF_ERROR)
-      return zlib_adapter_error::z_buf_error;
-    else if (ret != Z_OK)
-      return zlib_adapter_error::unexpected_return_code;
-    assert(ret == Z_OK);
+    // clang-format on
+    assert(ret == Z_STREAM_END);
+    // ADS: above, what about Z_OK??
   }
 
-  // switch (ret) {
-  // case Z_NEED_DICT:
-  //   ret = Z_DATA_ERROR;  // fall through
-  // case Z_DATA_ERROR:
-  // case Z_MEM_ERROR:
-  //   inflateEnd(&strm);
-  //   return ret;
-  // }
-  {
-    const int ret = inflateEnd(&strm);
-    if (ret == Z_STREAM_ERROR)
-      return zlib_adapter_error::z_stream_error;
-    // const int ret_end = inflateEnd(&strm);
-    // assert(ret_end != Z_STREAM_ERROR);
-    // ret = ret_end ? ret_end : ret;
-  }
+  if (inflateEnd(&strm) == Z_STREAM_ERROR)
+    return zlib_adapter_error::z_stream_error;
 
   // assume size(out) is an exact fit
   // out.resize(strm.total_out);
