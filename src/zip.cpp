@@ -24,16 +24,19 @@
 #include "zip.hpp"
 #include "mc16_error.hpp"
 #include "methylome.hpp"
+#include "utilities.hpp"
 
 #include <boost/program_options.hpp>
 
+#include <chrono>
 #include <iostream>
 #include <print>
 #include <string>
-#include <unordered_map>
 
 using std::println;
 using std::string;
+
+using hr_clock = std::chrono::high_resolution_clock;
 
 namespace po = boost::program_options;
 using po::value;
@@ -99,7 +102,7 @@ zip_main(int argc, char *argv[]) -> int {
   if (unzip && !index_file.empty()) {
     cpg_index index{};
     if (const auto index_read_err = index.read(index_file); index_read_err) {
-      println("Error: {} ({})", index_read_err, index_file);
+      println(std::cerr, "Error: {} ({})", index_read_err, index_file);
       return EXIT_FAILURE;
     }
     if (n_cpgs != 0 && n_cpgs != index.n_cpgs_total) {
@@ -111,17 +114,29 @@ zip_main(int argc, char *argv[]) -> int {
   }
 
   methylome m;
-  if (const std::error_code ec = m.read(input_file, n_cpgs); ec) {
-    println(std::cerr, "Error reading input: {} ({})", input_file, ec);
+  const auto meth_read_start{hr_clock::now()};
+  const auto meth_read_err = m.read(input_file, n_cpgs);
+  const auto meth_read_stop{hr_clock::now()};
+  if (meth_read_err) {
+    println(std::cerr, "Error reading input: {} ({})", input_file,
+            meth_read_err);
     return EXIT_FAILURE;
   }
+  if (verbose)
+    println("Methylome read time: {}s",
+            duration(meth_read_start, meth_read_stop));
 
-  if (const auto meth_write_err = m.write(output_file, !unzip);
-      meth_write_err) {
+  const auto meth_write_start{hr_clock::now()};
+  const auto meth_write_err = m.write(output_file, !unzip);
+  const auto meth_write_stop{hr_clock::now()};
+  if (meth_write_err) {
     println(std::cerr, "Error writing output: {} ({})", output_file,
             meth_write_err);
     return EXIT_FAILURE;
   }
+  if (verbose)
+    println("Methylome write time: {}s",
+            duration(meth_write_start, meth_write_stop));
 
   return EXIT_SUCCESS;
 }
