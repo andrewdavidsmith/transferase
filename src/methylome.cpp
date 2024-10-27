@@ -24,8 +24,8 @@
 #include "methylome.hpp"
 
 #include "mc16_error.hpp"
-
-#include <zlib.h>
+#include "utilities.hpp"
+#include "zlib_adapter.hpp"
 
 #include <algorithm>
 #include <cassert>
@@ -36,6 +36,10 @@
 #include <string>
 #include <utility>  // std::move
 #include <vector>
+#ifdef BENCHMARK
+#include <chrono>
+#include <iostream>
+#endif
 
 using std::error_code;
 using std::pair;
@@ -46,84 +50,12 @@ using std::uint32_t;
 using std::uint8_t;
 using std::vector;
 
+#ifdef BENCHMARK
+using hr_clock = std::chrono::high_resolution_clock;
+#endif
+
 namespace rg = std::ranges;
 namespace vs = std::views;
-
-template <typename T>
-[[nodiscard]] static inline auto
-compress(const T &in, vector<uint8_t> &out) -> int {
-  z_stream strm{};
-  int ret = deflateInit2(&strm, Z_BEST_SPEED, Z_DEFLATED, MAX_WBITS,
-                         MAX_MEM_LEVEL, Z_RLE);
-  if (ret != Z_OK)
-    return ret;
-
-  // pointer to bytes to compress
-  // ADS: 'next_in' is 'z_const' defined as 'const' in zconf.h
-  strm.next_in = reinterpret_cast<uint8_t *>(
-    const_cast<typename T::value_type *>(in.data()));
-  // bytes available to compress
-  const auto n_input_bytes = size(in) * sizeof(typename T::value_type);
-  strm.avail_in = n_input_bytes;
-
-  out.resize(deflateBound(&strm, n_input_bytes));
-
-  strm.next_out = out.data();  // pointer to bytes for compressed data
-  strm.avail_out = size(out);  // bytes available for compressed data
-
-  ret = deflate(&strm, Z_FINISH);
-  // want ret == Z_STREAM_END here; should return error
-  assert(ret == Z_STREAM_END);
-
-  const int ret_end = deflateEnd(&strm);
-  ret = ret_end ? ret_end : ret;
-
-  // if deflateEnd was ok, we still want (ret == Z_STREAM_END)
-  assert(ret == Z_STREAM_END);
-
-  out.resize(strm.total_out);
-
-  return ret == Z_STREAM_END ? Z_OK : ret;
-}
-
-template <typename T>
-[[nodiscard]] static inline auto
-decompress(vector<uint8_t> &in, T &out) -> int {
-  z_stream strm{};
-  int ret = inflateInit(&strm);
-  if (ret != Z_OK)
-    return ret;
-
-  strm.next_in = in.data();  // pointer to compressed bytes
-  strm.avail_in = size(in);  // bytes available to decompress
-
-  // pointer to bytes for decompressed data
-  strm.next_out = reinterpret_cast<uint8_t *>(out.data());
-  // bytes available for decompressed data
-  const auto n_output_bytes = size(out) * sizeof(typename T::value_type);
-  strm.avail_out = n_output_bytes;
-
-  ret = inflate(&strm, Z_FINISH);
-  assert(ret != Z_STREAM_ERROR);
-
-  switch (ret) {
-  case Z_NEED_DICT:
-    ret = Z_DATA_ERROR;  // fall through
-  case Z_DATA_ERROR:
-  case Z_MEM_ERROR:
-    inflateEnd(&strm);
-    return ret;
-  }
-
-  const int ret_end = inflateEnd(&strm);
-  assert(ret_end != Z_STREAM_ERROR);
-  ret = ret_end ? ret_end : ret;
-
-  // assume size(out) is an exact fit
-  // out.resize(strm.total_out);
-
-  return ret == Z_STREAM_END ? Z_OK : Z_DATA_ERROR;
-}
 
 [[nodiscard]] auto
 methylome::read(const string &filename, const uint32_t n_cpgs) -> error_code {
@@ -163,8 +95,16 @@ methylome::read(const string &filename, const uint32_t n_cpgs) -> error_code {
       return methylome_code::error_reading_methylome;
     assert(n_cpgs != 0);
     cpgs.resize(n_cpgs);
-    return decompress(buf, cpgs) ? methylome_code::error_decompressing_methylome
-                                 : error_code{};
+#ifdef BENCHMARK
+    const auto decompress_start{hr_clock::now()};
+#endif
+    const auto decompress_err = decompress(buf, cpgs);
+#ifdef BENCHMARK
+    const auto decompress_stop{hr_clock::now()};
+    std::println(std::cerr, "decompress(buf, cpgs) time: {}s",
+                 duration(decompress_start, decompress_stop));
+#endif
+    return decompress_err;
   }
   cpgs.resize(datasize / record_size);
   in.read(reinterpret_cast<char *>(cpgs.data()), datasize);
@@ -180,8 +120,19 @@ methylome::read(const string &filename, const uint32_t n_cpgs) -> error_code {
 methylome::write(const string &filename,
                  const bool zip) const -> std::error_code {
   vector<uint8_t> buf;
-  if (zip && compress(cpgs, buf))
-    return methylome_code::error_compressing_methylome;
+  if (zip) {
+#ifdef BENCHMARK
+    const auto compress_start{hr_clock::now()};
+#endif
+    const auto compress_err = compress(cpgs, buf);
+#ifdef BENCHMARK
+    const auto compress_stop{hr_clock::now()};
+    std::println(std::cerr, "compress(cpgs, buf) time: {}s",
+                 duration(compress_start, compress_stop));
+#endif
+    if (compress_err)
+      return compress_err;
+  }
 
   std::ofstream out(filename);
   if (!out)
