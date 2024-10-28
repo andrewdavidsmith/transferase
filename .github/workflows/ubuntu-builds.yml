@@ -10,6 +10,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install dependencies
+        run: apt-get install -y zlib1g-dev
+
       - name: Generate build system that uses GCC
         run: |
           cmake -B Release \
