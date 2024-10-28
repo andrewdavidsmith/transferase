@@ -1,0 +1,28 @@
+name: Build mc16 on Ubuntu
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: andrewdavidsmith/gcc-cmake-boost
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate build system that uses GCC
+        run: |
+          cmake -B Release \
+          -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON \
+          -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+          -DCMAKE_CXX_COMPILER=g++ \
+          -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build using GCC
+        run: |
+          cmake --build Release -j4
+
+      - name: Test the GCC build
+        run: |
+          export LD_LIBRARY_PATH=/usr/local/lib
+          ./Release/src/mc16
