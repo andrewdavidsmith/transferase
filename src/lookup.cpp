@@ -52,6 +52,7 @@ using std::tuple;
 using std::uint32_t;
 using std::vector;
 
+namespace rg = std::ranges;
 namespace vs = std::views;
 
 namespace po = boost::program_options;
@@ -64,6 +65,7 @@ lookup_main(int argc, char *argv[]) -> int {
   static const auto description = "lookup";
 
   bool verbose{};
+  bool write_scores{};
 
   string index_file{};
   string intervals_file{};
@@ -78,6 +80,7 @@ lookup_main(int argc, char *argv[]) -> int {
     ("intervals,i", value(&intervals_file)->required(), "intervals file")
     ("methylome,m", value(&meth_file)->required(), "methylome file")
     ("output,o", value(&output_file)->required(), "output file")
+    ("score,s", po::bool_switch(&write_scores), "write bedgraph with weighted methylation")
     ("verbose,v", po::bool_switch(&verbose), "print more run info")
     // clang-format on
     ;
@@ -138,7 +141,16 @@ lookup_main(int argc, char *argv[]) -> int {
     println(cerr, "Failed to open output file: {}", output_file);
     return EXIT_FAILURE;
   }
-  write_intervals(out, index, gis, results);
+
+  if (write_scores) {
+    const auto to_score = [](const auto &x) {
+      return static_cast<double>(x.n_meth) / (x.n_meth + x.n_unmeth);
+    };
+    write_bedgraph(out, index, gis,
+                   rg::transform_view(results, to_score) | rg::to<vector>());
+  }
+  else
+    write_intervals(out, index, gis, results);
 
   return EXIT_SUCCESS;
 }
