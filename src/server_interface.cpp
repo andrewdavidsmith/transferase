@@ -21,7 +21,7 @@
  * SOFTWARE.
  */
 
-#include "lookup_server.hpp"
+#include "server_interface.hpp"
 
 #include "logger.hpp"
 #include "methylome_set.hpp"
@@ -50,7 +50,7 @@ using std::uint32_t;
 namespace po = boost::program_options;
 
 auto
-lookup_server_main(int argc, char *argv[]) -> int {
+server_interface_main(int argc, char *argv[]) -> int {
   static constexpr auto default_n_threads{4};
   static constexpr auto log_level{mc16_log_level::debug};
 

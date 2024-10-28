@@ -21,10 +21,10 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_LOOKUP_SERVER_HPP_
-#define SRC_LOOKUP_SERVER_HPP_
+#ifndef SRC_SERVER_INTERFACE_HPP_
+#define SRC_SERVER_INTERFACE_HPP_
 
 auto
-lookup_server_main(int argc, char *argv[]) -> int;
+server_interface_main(int argc, char *argv[]) -> int;
 
-#endif  // SRC_LOOKUP_SERVER_HPP_
+#endif  // SRC_SERVER_INTERFACE_HPP_
