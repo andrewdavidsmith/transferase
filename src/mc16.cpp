@@ -33,7 +33,7 @@
 #include "zip.hpp"
 
 #include "lookup_client.hpp"
-#include "lookup_server.hpp"
+#include "server_interface.hpp"
 
 #include <config.h>
 
@@ -101,7 +101,7 @@ const pair<string_view, main_fun> commands[] = {
   {"zip", zip_main},
   {"bins", bins_main},
   {"lookup-remote", lookup_client_main},
-  {"lookup-server", lookup_server_main},
+  {"server", server_interface_main},
   // clang-format on
 };
 
@@ -115,7 +115,7 @@ constexpr string_view command_names[] = {
   "zip",
   "bins",
   "lookup-remote",
-  "lookup-server",
+  "server",
   // clang-format on
 };
 
