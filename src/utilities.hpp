@@ -28,6 +28,10 @@
   Functions declared here are used by multiple source files
  */
 
+#include "cpg_index.hpp"
+#include "genomic_interval.hpp"
+#include "methylome.hpp"
+
 #include <algorithm>
 #include <chrono>
 #include <cstdint>
@@ -36,10 +40,6 @@
 #include <ostream>
 #include <system_error>
 #include <vector>
-
-#include "cpg_index.hpp"
-#include "genomic_interval.hpp"
-#include "methylome.hpp"
 
 struct mc16_to_chars_result {
   char *ptr{};
@@ -57,6 +57,11 @@ auto
 write_intervals(std::ostream &out, const cpg_index &index,
                 const std::vector<genomic_interval> &gis,
                 const std::vector<counts_res> &results) -> void;
+
+auto
+write_bedgraph(std::ostream &out, const cpg_index &index,
+               const std::vector<genomic_interval> &gis,
+               const std::vector<double> &scores) -> void;
 
 auto
 write_bins(std::ostream &out, const std::uint32_t bin_size,

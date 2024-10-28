@@ -93,6 +93,46 @@ write_intervals(std::ostream &out, const cpg_index &index,
 }
 
 auto
+write_bedgraph(std::ostream &out, const cpg_index &index,
+               const vector<genomic_interval> &gis,
+               const vector<double> &scores) -> void {
+  static constexpr auto buf_size{512};
+  static constexpr auto delim{'\t'};
+
+  array<char, buf_size> buf{};
+  const auto buf_end = buf.data() + buf_size;
+
+  using gis_score = std::pair<const genomic_interval &, const double>;
+  const auto same_chrom = [](const gis_score &a, const gis_score &b) {
+    return a.first.ch_id == b.first.ch_id;
+  };
+
+  for (const auto &chunk : vs::zip(gis, scores) | vs::chunk_by(same_chrom)) {
+    const auto ch_id = get<0>(chunk.front()).ch_id;
+    const string chrom{index.chrom_order[ch_id]};
+    rg::copy(chrom, buf.data());
+    buf[size(chrom)] = delim;
+    for (const auto &[gi, score] : chunk) {
+      std::to_chars_result tcr{buf.data() + size(chrom) + 1, std::errc()};
+#if defined(__GNUG__) and not defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic error "-Wstringop-overflow=0"
+#endif
+      tcr = std::to_chars(tcr.ptr, buf_end, gi.start);
+      *tcr.ptr++ = delim;
+      tcr = std::to_chars(tcr.ptr, buf_end, gi.stop);
+      *tcr.ptr++ = delim;
+      tcr = std::to_chars(tcr.ptr, buf_end, score);
+      *tcr.ptr++ = '\n';
+#if defined(__GNUG__) and not defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
+      out.write(buf.data(), rg::distance(buf.data(), tcr.ptr));
+    }
+  }
+}
+
+auto
 write_bins(std::ostream &out, const uint32_t bin_size, const cpg_index &index,
            const vector<counts_res> &results) -> void {
   static constexpr auto buf_size{512};
