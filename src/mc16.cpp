@@ -29,23 +29,19 @@
 #include "compress.hpp"
 #include "index.hpp"
 #include "lookup.hpp"
-#include "merge.hpp"
-#include "zip.hpp"
-
 #include "lookup_client.hpp"
+#include "merge.hpp"
 #include "server_interface.hpp"
+#include "zip.hpp"
 
 #include <config.h>
 
 #include <boost/program_options.hpp>
 
 #include <algorithm>
-#include <cassert>
 #include <format>
 #include <fstream>
 #include <iostream>
-#include <limits>
-#include <numeric>
 #include <print>
 #include <ranges>
 #include <string>
@@ -55,8 +51,6 @@
 using std::cend;
 using std::cerr;
 using std::format;
-using std::formatter;
-using std::pair;
 using std::println;
 using std::string;
 using std::string_view;
@@ -68,79 +62,49 @@ namespace vs = std::views;
 namespace po = boost::program_options;
 using po::value;
 
-template <typename T> using num_lim = std::numeric_limits<T>;
-
-struct mc16_command {
-  string tag;
-  string description;
-  std::function<int(const int, const char **)> fun;
-
-  auto operator()(const int argc, const char **argv) const -> int {
-    return fun(argc - 1, argv + 1);
-  }
-};
-
-template <> struct std::formatter<mc16_command> : formatter<string> {
-  auto format(const mc16_command &cmd, format_context &ctx) const {
-    static constexpr auto pad_size = 4;
-    static constexpr auto pad = string(pad_size, ' ');
-    return std::formatter<std::string>::format(
-      std::format("{}: {}", cmd.tag, cmd.description), ctx);
-  }
-};
-
 typedef std::function<int(int, char **)> main_fun;
-
-const pair<string_view, main_fun> commands[] = {
+const std::tuple<string_view, main_fun, string_view> commands[] = {
   // clang-format off
-  {"index", index_main},
-  {"compress", compress_main},
-  {"check", check_main},
-  {"lookup", lookup_main},
-  {"merge", merge_main},
-  {"zip", zip_main},
-  {"bins", bins_main},
-  {"lookup-remote", lookup_client_main},
-  {"server", server_interface_main},
-  // clang-format on
-};
-
-constexpr string_view command_names[] = {
-  // clang-format off
-  "index",
-  "compress",
-  "check",
-  "lookup",
-  "merge",
-  "zip",
-  "bins",
-  "lookup-remote",
-  "server",
+  {"index", index_main, "make an index for a reference genome"},
+  {"compress", compress_main, "convert a methylome from xsym to mc16"},
+  {"check", check_main, "check that an mc16 file is valid for a reference"},
+  {"lookup", lookup_main, "get methylation levels in each interval"},
+  {"merge", merge_main, "merge a set of mc16 format methylomes"},
+  {"zip", zip_main, "make an mc16 format methylome smaller"},
+  {"bins", bins_main, "get methylation levels in each bin"},
+  {"lookup-remote", lookup_client_main, "same as lookup but queries a server"},
+  {"server", server_interface_main, "run a server to respond to lookup queries"},
   // clang-format on
 };
 
 static auto
-format_help(const string &description, rg::input_range auto &&command_names) {
-  print("Usage: {}\n"
-        "COMMAND may be one of the following:\n",
-        description);
-  for (const auto &cmd_nm : command_names)
-    print("\t{}\n", cmd_nm);
+format_help(const string &description, rg::input_range auto &&cmds) {
+  static constexpr auto sep_width = 4;
+  const auto cmds_comma = cmds | vs::elements<0> | vs::join_with(',');
+  const auto cmds_line = string(cbegin(cmds_comma), cend(cmds_comma));
+  println("usage: {} {{{}}}\n\n"
+          "version: {}\n",
+          description, cmds_line, VERSION);
+  println("commands:\n"
+          "  {{{}}}",
+          cmds_line);
+  const auto sz =
+    rg::max(vs::transform(cmds | vs::elements<0>, &string_view::size));
+  rg::for_each(cmds, [sz, w = sep_width](const auto &cmd) {
+    println("    {:{}}{}", get<0>(cmd), sz + w, get<2>(cmd));
+  });
 }
 
 int
 main(int argc, char *argv[]) {
   static constexpr auto program = "mc16";
-  const auto description = format("{} COMMAND <command_arguments>", program);
-  const auto cmd_nm = command_names | vs::join_with(' ');
-  const auto cmd_descr = "{ " + string(cbegin(cmd_nm), cend(cmd_nm)) + " }";
 
   string command;
   po::options_description arguments;
   arguments.add_options()
     // clang-format off
-    ("command", value(&command), cmd_descr.data())
-    ("subargs", value<vector<string>>(), "the sub arguments")
+    ("command", value(&command))
+    ("subargs", value<vector<string>>())
     // clang-format on
     ;
   // positional; one for "command" and the rest in "subargs"
@@ -155,18 +119,18 @@ main(int argc, char *argv[]) {
               .run(),
             vm);
   if (!vm.count("command")) {
-    format_help(description, command_names);
+    format_help(program, commands);
     return EXIT_SUCCESS;
   }
   po::notify(vm);
 
   const auto cmd_itr = rg::find_if(
-    commands, [&command](const auto c) { return c.first == command; });
+    commands, [&command](const auto c) { return get<0>(c) == command; });
 
   if (cmd_itr == cend(commands)) {
-    format_help(description, command_names);
+    format_help(program, commands);
     return EXIT_FAILURE;
   }
 
-  return cmd_itr->second(argc - 1, argv + 1);
+  return get<1>(*cmd_itr)(argc - 1, argv + 1);
 }
