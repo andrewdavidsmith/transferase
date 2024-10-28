@@ -68,9 +68,9 @@ add_library(client OBJECT
   client.hpp
   client.cpp)
 
-add_library(lookup_server OBJECT
-  lookup_server.hpp
-  lookup_server.cpp)
+add_library(server_interface OBJECT
+  server_interface.hpp
+  server_interface.cpp)
 
 add_library(server OBJECT
   server.hpp
@@ -121,7 +121,7 @@ target_link_libraries(
   merge
   lookup
   lookup_client
-  lookup_server
+  server_interface
   bins
   genomic_interval
   cpg_index
