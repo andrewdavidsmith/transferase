@@ -29,7 +29,6 @@
 #include "compress.hpp"
 #include "index.hpp"
 #include "lookup.hpp"
-#include "lookup_client.hpp"
 #include "merge.hpp"
 #include "server_interface.hpp"
 #include "zip.hpp"
@@ -73,7 +72,6 @@ const std::tuple<string_view, main_fun, string_view> commands[] = {
   {"merge", merge_main, "merge a set of mc16 format methylomes"},
   {"zip", zip_main, "make an mc16 format methylome smaller"},
   {"bins", bins_main, "get methylation levels in each bin"},
-  {"lookup-remote", lookup_client_main, "same as lookup but queries a server"},
   {"server", server_interface_main, "run a server to respond to lookup queries"},
   // clang-format on
 };
