@@ -26,6 +26,7 @@
 
 #include <zlib.h>
 
+#include <cassert>
 #include <cstdint>
 #include <string>
 #include <system_error>
