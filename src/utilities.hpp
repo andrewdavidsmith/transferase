@@ -34,6 +34,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <cmath>
 #include <cstdint>
 #include <limits>
 #include <numeric>
@@ -159,11 +160,15 @@ duration(const auto start, const auto stop) {
 template <typename T, typename U>
 inline auto
 round_to_fit(U &a, U &b) -> void {
-  const T c = std::max(a, b);
+  // ADS: assign the max of a and b to be the max possible value; the
+  // other one gets a fractional value then multiplied by max possible
+  const U c = std::max(a, b);
   a = (a == c) ? std::numeric_limits<T>::max()
-               : (a / static_cast<double>(c)) * std::numeric_limits<T>::max();
+               : std::round((a / static_cast<double>(c)) *
+                            std::numeric_limits<T>::max());
   b = (b == c) ? std::numeric_limits<T>::max()
-               : (b / static_cast<double>(c)) * std::numeric_limits<T>::max();
+               : std::round((b / static_cast<double>(c)) *
+                            std::numeric_limits<T>::max());
 }
 
 template <typename T, typename U>
