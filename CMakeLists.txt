@@ -37,6 +37,11 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS on)
 include(CheckIncludeFileCXX)
 include(CheckFunctionExists)
 
+set(use_static_libs $<CONFIG:Release>)
+if(use_static_libs)
+  set(Boost_USE_STATIC_LIBS on)
+  set(ZLIB_USE_STATIC_LIBS on)
+endif()
 
 find_package(Threads REQUIRED)
 find_package(
