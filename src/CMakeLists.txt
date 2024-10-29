@@ -106,8 +106,10 @@ add_library(request OBJECT
 
 add_executable(mc16)
 target_sources(mc16 PRIVATE mc16.cpp)
+target_link_libraries(mc16 PRIVATE $<$<CONFIG:Release>:-static>)
 target_link_libraries(
   mc16
+  PRIVATE
   utilities
   logger
   index
