@@ -50,6 +50,7 @@
 #include <vector>
 
 using std::cerr;
+using std::format;
 using std::max;
 using std::print;
 using std::println;
@@ -66,7 +67,8 @@ namespace po = boost::program_options;
 
 template <mc16_log_level the_level, typename... Args>
 auto
-log_key_value(auto &&key_value_pairs) {
+log_args(rg::input_range auto &&key_value_pairs) {
+  // auto &&key_value_pairs) {
   logger &lgr = logger::instance();
   for (auto &&[k, v] : key_value_pairs)
     lgr.log<the_level>("{}: {}", k, v);
@@ -123,12 +125,11 @@ auto
 lookup_main(int argc, char *argv[]) -> int {
   static constexpr auto usage_format =
     "Usage: mc16 lookup {} [options]\n\nOption groups";
-  static constexpr mc16_log_level default_log_level{mc16_log_level::warning};
+  static constexpr mc16_log_level default_log_level = mc16_log_level::warning;
   static constexpr auto default_port = "5000";
   static const auto command = "lookup";
 
   bool write_scores{};
-
   string port{};
   string accession{};
   string index_file{};
@@ -138,66 +139,60 @@ lookup_main(int argc, char *argv[]) -> int {
   string output_file{};
   mc16_log_level log_level{};
 
-  string subcommand;
-  po::options_description subcommands;
-  subcommands.add_options()
+  string subcmd;
+  po::options_description subcmds;
+  subcmds.add_options()
     // clang-format off
-    ("subcommand", po::value(&subcommand))
+    ("subcmd", po::value(&subcmd))
     ("subargs", po::value<vector<string>>())
     // clang-format on
     ;
-  // positional; one for "subcommand" and the rest else parser throws
+  // positional; one for "subcmd" and the rest else parser throws
   po::positional_options_description p;
-  p.add("subcommand", 1).add("subargs", -1);
+  p.add("subcmd", 1).add("subargs", -1);
 
-  po::variables_map vm_subcommand;
+  po::variables_map vm_subcmd;
   po::store(po::command_line_parser(argc, argv)
-              .options(subcommands)
+              .options(subcmds)
               .positional(p)
               .allow_unregistered()
               .run(),
-            vm_subcommand);
-  po::notify(vm_subcommand);
+            vm_subcmd);
+  po::notify(vm_subcmd);
 
-  if (subcommand != "local" && subcommand != "remote") {
+  if (subcmd != "local" && subcmd != "remote") {
     println(std::cerr, "Usage: mc16 lookup [local|remote] [options]");
     return EXIT_FAILURE;
   }
-  const bool remote_mode = subcommand == "remote";
+  const bool remote_mode = subcmd == "remote";
 
   po::options_description general("General");
+  // clang-format off
   general.add_options()
-    // clang-format off
     ("help,h", "produce help message")
     ("index,x", po::value(&index_file)->required(), "index file")
     ("intervals,i", po::value(&intervals_file)->required(), "intervals file")
     ("log-level,l", po::value(&log_level)->default_value(default_log_level),
      "log level {debug,info,warning,error}")
-    // clang-format on
     ;
   po::options_description output("Output");
   output.add_options()
-    // clang-format off
     ("output,o", po::value(&output_file)->required(), "output file")
     ("score,s", po::bool_switch(&write_scores), "weighted methylation bedgraph format ")
-    // clang-format on
     ;
   po::options_description remote("Remote");
   remote.add_options()
-    // clang-format off
     ("hostname,H", po::value(&hostname)->required(), "server hostname")
     ("port,p", po::value(&port)->default_value(default_port), "port")
     ("accession,a", po::value(&accession)->required(), "methylome accession")
-    // clang-format on
     ;
   po::options_description local("Local");
   local.add_options()
-    // clang-format off
     ("methylome,m", po::value(&meth_file)->required(), "local methylome file")
-    // clang-format on
     ;
+  // clang-format on
 
-  po::options_description all(std::format(usage_format, subcommand));
+  po::options_description all(format(usage_format, subcmd));
   all.add(general).add(output);
   all.add(remote_mode ? remote : local);
 
@@ -222,15 +217,22 @@ lookup_main(int argc, char *argv[]) -> int {
     return EXIT_FAILURE;
   }
 
-  log_key_value<mc16_log_level::info>(vector<tuple<string, string>>{
-    // clang-format off
-    {"Accession", accession},
-    {"Sever", std::format("{}:{}", hostname, port)},
+  // ADS: log the command line arguments (assuming right log level)
+  vector<tuple<string, string>> args_to_log{
     {"Index", index_file},
     {"Intervals", intervals_file},
-    {"Output", output_file}
-    // clang-format on
-  });
+    {"Output", output_file},
+    {"Bedgraph", format("{}", write_scores)},
+  };
+  vector<tuple<string, string>> remote_args{
+    {"Hostname:port", std::format("{}:{}", hostname, port)},
+    {"Accession", accession},
+  };
+  vector<tuple<string, string>> local_args{
+    {"Methylome", meth_file},
+  };
+  log_args<mc16_log_level::info>(args_to_log);
+  log_args<mc16_log_level::info>(remote_mode ? remote_args : local_args);
 
   cpg_index index{};
   if (const auto index_read_err = index.read(index_file); index_read_err) {
@@ -246,7 +248,7 @@ lookup_main(int argc, char *argv[]) -> int {
     lgr.error("Error reading intervals file: {} ({})", intervals_file, ec);
     return EXIT_FAILURE;
   }
-  lgr.info("N intervals: {}", size(gis));
+  lgr.info("Number of intervals: {}", size(gis));
 
   const auto get_offsets_start{hr_clock::now()};
   const vector<methylome::offset_pair> offsets = index.get_offsets(gis);
