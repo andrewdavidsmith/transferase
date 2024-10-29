@@ -33,6 +33,7 @@
 
 #include <cstdint>  // std::uint32_t
 #include <string>
+#include <utility>  // std::swap
 #include <vector>
 
 class mc16_client {
@@ -47,6 +48,13 @@ public:
 
   auto get_counts() const -> const std::vector<counts_res> & {
     return resp.counts;
+  }
+
+  auto take_counts() -> std::vector<counts_res> {
+    // ADS: this function resets resp.counts and avoids copy
+    std::vector<counts_res> moved_out;
+    std::swap(moved_out, resp.counts);
+    return moved_out;
   }
 
 private:
