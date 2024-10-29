@@ -27,6 +27,7 @@
 #include <boost/asio.hpp>
 #include <boost/lexical_cast.hpp>
 
+#include <csignal>  // std::raise
 #include <cstdint>
 #include <cstring>  // strsignal
 #include <memory>   // make_shared<>
@@ -66,17 +67,38 @@ server::server(const string &address, const string &port,
   do_await_stop();  // start waiting for signals
 
   tcp::resolver resolver(ioc);
-  tcp::endpoint endpoint = *resolver.resolve(address, port).begin();
+  boost::system::error_code resolver_ec;
+  const auto resolved = resolver.resolve(address, port, resolver_ec);
+  if (resolver_ec) {
+    lgr.log<lvl::error>("{} {}:{}", resolver_ec, address, port);
+    std::raise(SIGTERM);
+    return;  // don't wait for signal handler
+  }
 
-  lgr.log<lvl::info>("Server endpoint: {}",
+  const tcp::endpoint endpoint = *resolved.begin();
+  lgr.log<lvl::info>("Resolved endpoint {}",
                      boost::lexical_cast<string>(endpoint));
 
   // open acceptor with option to reuse the address (SO_REUSEADDR)
   acceptor.open(endpoint.protocol());
   acceptor.set_option(tcp::acceptor::reuse_address(true));
-  acceptor.bind(endpoint);
-  acceptor.listen();
 
+  boost::system::error_code acceptor_ec;
+  acceptor.bind(endpoint, acceptor_ec);
+  if (acceptor_ec) {
+    lgr.log<lvl::error>("Error binding endpoint {}: {}",
+                        boost::lexical_cast<string>(endpoint), acceptor_ec);
+    std::raise(SIGTERM);
+    return;  // don't wait for signal handler
+  }
+
+  acceptor.listen(asio::socket_base::max_listen_connections, acceptor_ec);
+  if (acceptor_ec) {
+    lgr.log<lvl::error>("Error listening  on endpoint {}: {}",
+                        boost::lexical_cast<string>(endpoint), acceptor_ec);
+    std::raise(SIGTERM);
+    return;  // don't wait for signal handler
+  }
   do_accept();
 }
 
@@ -97,7 +119,7 @@ auto
 server::do_accept() -> void {
   acceptor.async_accept(
     asio::make_strand(ioc),  // ADS: make a strand with the io_context
-    [this](const bs::error_code ec, tcp::socket socket) {
+    [this](const boost::system::error_code ec, tcp::socket socket) {
       // quit if server already stopped by signal
       if (!acceptor.is_open())
         return;
@@ -114,11 +136,12 @@ server::do_accept() -> void {
 auto
 server::do_await_stop() -> void {
   // capture brings 'this' into search for names
-  signals.async_wait([this](const bs::error_code ec, const int signo) {
-    lgr.log<lvl::info>("Received termination signal {} ({})", strsignal(signo),
-                       ec.message());
-    // stop server by cancelling all outstanding async ops; when all
-    // have finished, the call to io_context::run() will finish
-    ioc.stop();
-  });
+  signals.async_wait(
+    [this](const boost::system::error_code ec, const int signo) {
+      lgr.log<lvl::info>("Received termination signal {} ({})",
+                         strsignal(signo), ec.message());
+      // stop server by cancelling all outstanding async ops; when all
+      // have finished, the call to io_context::run() will finish
+      ioc.stop();
+    });
 }
