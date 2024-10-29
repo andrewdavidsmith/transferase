@@ -21,7 +21,7 @@
  * SOFTWARE.
  */
 
-#include "lookup_client.hpp"
+#include "lookup.hpp"
 
 #include "client.hpp"
 #include "cpg_index.hpp"
@@ -120,7 +120,7 @@ write_output(std::ostream &out, const vector<genomic_interval> &gis,
 }
 
 auto
-lookup_client_main(int argc, char *argv[]) -> int {
+lookup_main(int argc, char *argv[]) -> int {
   static constexpr auto usage_format =
     "Usage: mc16 lookup {} [options]\n\nOption groups";
   static constexpr mc16_log_level default_log_level{mc16_log_level::warning};
