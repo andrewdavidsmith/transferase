@@ -30,7 +30,7 @@
 #include <csignal>  // std::raise
 #include <cstdint>
 #include <cstring>  // strsignal
-#include <memory>   // make_shared<>
+#include <memory>   // std::make_shared<>
 #include <print>
 #include <string>
 #include <thread>
@@ -75,15 +75,29 @@ server::server(const string &address, const string &port,
     return;  // don't wait for signal handler
   }
 
+  assert(!resolved.empty());
   const tcp::endpoint endpoint = *resolved.begin();
   lgr.log<lvl::info>("Resolved endpoint {}",
                      boost::lexical_cast<string>(endpoint));
 
-  // open acceptor with option to reuse the address (SO_REUSEADDR)
-  acceptor.open(endpoint.protocol());
-  acceptor.set_option(tcp::acceptor::reuse_address(true));
-
+  // open acceptor...
   boost::system::error_code acceptor_ec;
+  acceptor.open(endpoint.protocol(), acceptor_ec);
+  if (acceptor_ec) {
+    lgr.log<lvl::error>("Error opening endpoint {}: {}",
+                        boost::lexical_cast<string>(endpoint), acceptor_ec);
+    std::raise(SIGTERM);
+    return;  // don't wait for signal handler
+  }
+
+  // ...with option to reuse the address (SO_REUSEADDR)
+  acceptor.set_option(tcp::acceptor::reuse_address(true), acceptor_ec);
+  if (acceptor_ec) {
+    lgr.log<lvl::error>("Error setting SO_REUSEADDR: {}", acceptor_ec);
+    std::raise(SIGTERM);
+    return;  // don't wait for signal handler
+  }
+
   acceptor.bind(endpoint, acceptor_ec);
   if (acceptor_ec) {
     lgr.log<lvl::error>("Error binding endpoint {}: {}",
@@ -111,7 +125,7 @@ server::run() -> void {
      invoke a handler."
   */
   vector<jthread> threads;
-  for (uint32_t i = 0u; i < n_threads; ++i)
+  for (uint32_t i = 0; i < n_threads; ++i)
     threads.emplace_back([this] { ioc.run(); });
 }
 
@@ -138,8 +152,8 @@ server::do_await_stop() -> void {
   // capture brings 'this' into search for names
   signals.async_wait(
     [this](const boost::system::error_code ec, const int signo) {
-      lgr.log<lvl::info>("Received termination signal {} ({})",
-                         strsignal(signo), ec.message());
+      lgr.log<lvl::info>("Received signal {} ({})", strsignal(signo),
+                         ec.message());
       // stop server by cancelling all outstanding async ops; when all
       // have finished, the call to io_context::run() will finish
       ioc.stop();
