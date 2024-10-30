@@ -33,6 +33,7 @@
 #include "methylome.hpp"
 
 #include <algorithm>
+#include <cerrno>
 #include <chrono>
 #include <cmath>
 #include <cstdint>
@@ -57,17 +58,18 @@ struct mc16_from_chars_result {
 };
 typedef mc16_from_chars_result parse_result;
 
+template <typename T>
 auto
 write_intervals(std::ostream &out, const cpg_index &index,
                 const std::vector<genomic_interval> &gis,
-                std::ranges::input_range auto &&results) -> void {
+                std::ranges::input_range auto &&results) -> std::error_code {
   static constexpr auto buf_size{512};
   static constexpr auto delim{'\t'};
 
   std::array<char, buf_size> buf{};
   const auto buf_end = buf.data() + buf_size;
 
-  using gis_res = std::pair<const genomic_interval &, const counts_res &>;
+  using gis_res = std::pair<const genomic_interval &, const counts_res_cov &>;
   const auto same_chrom = [](const gis_res &a, const gis_res &b) {
     return a.first.ch_id == b.first.ch_id;
   };
@@ -91,21 +93,26 @@ write_intervals(std::ostream &out, const cpg_index &index,
       tcr = std::to_chars(tcr.ptr, buf_end, res.n_meth);
       *tcr.ptr++ = delim;
       tcr = std::to_chars(tcr.ptr, buf_end, res.n_unmeth);
-      *tcr.ptr++ = delim;
-      tcr = std::to_chars(tcr.ptr, buf_end, res.n_covered);
+      if constexpr (std::is_same<T, counts_res_cov>::value) {
+        *tcr.ptr++ = delim;
+        tcr = std::to_chars(tcr.ptr, buf_end, res.n_covered);
+      }
       *tcr.ptr++ = '\n';
 #if defined(__GNUG__) and not defined(__clang__)
 #pragma GCC diagnostic pop
 #endif
       out.write(buf.data(), std::ranges::distance(buf.data(), tcr.ptr));
+      if (!out)
+        return std::make_error_code(std::errc(errno));
     }
   }
+  return {};
 }
 
 auto
 write_bedgraph(std::ostream &out, const cpg_index &index,
                const std::vector<genomic_interval> &gis,
-               std::ranges::input_range auto &&scores) -> void {
+               std::ranges::input_range auto &&scores) -> std::error_code {
   static constexpr auto score_precision{6};
   static constexpr auto buf_size{512};
   static constexpr auto delim{'\t'};
@@ -142,14 +149,17 @@ write_bedgraph(std::ostream &out, const cpg_index &index,
 #pragma GCC diagnostic pop
 #endif
       out.write(buf.data(), std::ranges::distance(buf.data(), tcr.ptr));
+      if (!out)
+        return std::make_error_code(std::errc(errno));
     }
   }
+  return {};
 }
 
 auto
 write_bins(std::ostream &out, const std::uint32_t bin_size,
            const cpg_index &index,
-           const std::vector<counts_res> &results) -> void;
+           const std::vector<counts_res_cov> &results) -> std::error_code;
 
 [[nodiscard]] inline auto
 duration(const auto start, const auto stop) {

@@ -51,7 +51,7 @@ namespace vs = std::views;
 
 auto
 write_bins(std::ostream &out, const uint32_t bin_size, const cpg_index &index,
-           const vector<counts_res> &results) -> void {
+           const vector<counts_res_cov> &results) -> std::error_code {
   static constexpr auto buf_size{512};
   static constexpr auto delim{'\t'};
 
@@ -59,7 +59,7 @@ write_bins(std::ostream &out, const uint32_t bin_size, const cpg_index &index,
   const auto buf_beg = buf.data();
   const auto buf_end = buf.data() + buf_size;
 
-  vector<counts_res>::const_iterator res{cbegin(results)};
+  vector<counts_res_cov>::const_iterator res{cbegin(results)};
 
   const auto zipped = vs::zip(index.chrom_size, index.chrom_order);
   for (const auto [chrom_size, chrom_name] : zipped) {
@@ -86,8 +86,11 @@ write_bins(std::ostream &out, const uint32_t bin_size, const cpg_index &index,
 #pragma GCC diagnostic pop
 #endif
       out.write(buf_beg, rg::distance(buf_beg, tcr.ptr));
+      if (!out)
+        return std::make_error_code(std::errc(errno));
       ++res;
     }
   }
   assert(res == cend(results));
+  return {};
 }
