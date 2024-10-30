@@ -68,18 +68,18 @@ namespace po = boost::program_options;
 template <mc16_log_level the_level, typename... Args>
 auto
 log_args(rg::input_range auto &&key_value_pairs) {
-  // auto &&key_value_pairs) {
   logger &lgr = logger::instance();
   for (auto &&[k, v] : key_value_pairs)
     lgr.log<the_level>("{}: {}", k, v);
 }
 
+template <typename T>
 [[nodiscard]] static inline auto
 do_remote_lookup(const string &accession, const cpg_index &index,
                  vector<methylome::offset_pair> offsets, const string &hostname,
-                 const string &port)
-  -> tuple<vector<counts_res>, std::error_code> {
-  request_header hdr{accession, index.n_cpgs_total, 0};
+                 const string &port) -> tuple<vector<T>, std::error_code> {
+  request_header hdr{accession, index.n_cpgs_total,
+                     request_header::request_type::counts_cov};
   request req{static_cast<uint32_t>(size(offsets)), offsets};
   mc16_client mc16c(hostname, port, hdr, req, logger::instance());
   const auto status = mc16c.run();
@@ -90,21 +90,23 @@ do_remote_lookup(const string &accession, const cpg_index &index,
   return {std::move(mc16c.take_counts()), {}};
 }
 
+template <typename T>
 [[nodiscard]] static inline auto
 do_local_lookup(const string &meth_file, const cpg_index &index,
                 vector<methylome::offset_pair> offsets)
-  -> tuple<vector<counts_res>, std::error_code> {
+  -> tuple<vector<T>, std::error_code> {
   methylome meth{};
   if (const auto meth_read_err = meth.read(meth_file, index.n_cpgs_total)) {
     logger::instance().error("Error: {} ({})", meth_read_err, meth_file);
     return {{}, meth_read_err};
   }
-  return {std::move(meth.get_counts(offsets)), {}};
+  return {std::move(meth.get_counts_cov(offsets)), {}};
 }
 
+template <typename T>
 static inline auto
 write_output(std::ostream &out, const vector<genomic_interval> &gis,
-             const cpg_index &index, const vector<counts_res> &results,
+             const cpg_index &index, const vector<counts_res_cov> &results,
              const bool write_scores) {
   if (write_scores) {
     // ADS: counting intervals that have no reads
@@ -118,7 +120,7 @@ write_output(std::ostream &out, const vector<genomic_interval> &gis,
                              zero_coverage);
   }
   else
-    write_intervals(out, index, gis, results);
+    write_intervals<T>(out, index, gis, results);
 }
 
 auto
@@ -258,8 +260,9 @@ lookup_main(int argc, char *argv[]) -> int {
 
   const auto lookup_start{hr_clock::now()};
   const auto [results, lookup_err] =
-    remote_mode ? do_remote_lookup(accession, index, offsets, hostname, port)
-                : do_local_lookup(meth_file, index, offsets);
+    remote_mode ? do_remote_lookup<counts_res_cov>(accession, index, offsets,
+                                                   hostname, port)
+                : do_local_lookup<counts_res_cov>(meth_file, index, offsets);
   const auto lookup_stop{hr_clock::now()};
   lgr.debug("Elapsed time for query: {:.3}s",
             duration(lookup_start, lookup_stop));
@@ -275,7 +278,7 @@ lookup_main(int argc, char *argv[]) -> int {
   }
 
   const auto output_start{hr_clock::now()};
-  write_output(out, gis, index, results, write_scores);
+  write_output<counts_res_cov>(out, gis, index, results, write_scores);
   const auto output_stop{hr_clock::now()};
   // ADS: elapsed time for output will include conversion to scores
   lgr.debug("Elapsed time for output: {:.3}s",
