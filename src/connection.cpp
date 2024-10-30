@@ -45,11 +45,6 @@ using tcp = asio::ip::tcp;
 
 typedef mc16_log_level lvl;
 
-// ADS TODO:
-// -- send back a response even if we didn't read the full request;
-// -- do not allow a response that is inconsistent in methylome size
-//    and error code;
-
 auto
 connection::prepare_to_read_offsets() -> void {
   req.offsets.resize(req.n_intervals);           // get space for offsets
@@ -126,7 +121,9 @@ connection::read_offsets() -> void {
         if (offset_remaining == 0) {
           lgr.log<lvl::debug>("{} Finished reading offsets ({} Bytes)",
                               connection_id, offset_byte);
-          handler.handle_get_counts(req_hdr, req, resp_hdr, resp);
+          // if (req_hdr.rq_type == request_header::request_type::counts_cov) {
+          handler.handle_get_counts_cov(req_hdr, req, resp_hdr, resp);
+          // }
           lgr.log<lvl::debug>(
             "{} Finished methylation counts. Responding with header: {}",
             connection_id, resp_hdr.summary());
