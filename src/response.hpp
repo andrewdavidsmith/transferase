@@ -24,7 +24,7 @@
 #ifndef SRC_RESPONSE_HPP_
 #define SRC_RESPONSE_HPP_
 
-#include "methylome.hpp"  // for counts_res
+#include "methylome.hpp"  // for counts_res_cov
 
 #include "mc16_error.hpp"
 #include "utilities.hpp"
@@ -65,11 +65,10 @@ auto
 parse(const std::array<char, response_buf_size> &buf,
       response_header &hdr) -> parse_result;
 
-struct response {
-  std::vector<counts_res> counts;  // counts_res from methylome.hpp
-
+template <typename counts_type> struct response {
+  std::vector<counts_type> counts;  // counts_type is from methylome.hpp
   auto get_counts_n_bytes() const -> std::uint32_t {
-    return sizeof(counts_res) * size(counts);
+    return sizeof(counts_type) * size(counts);
   }
 };
 
