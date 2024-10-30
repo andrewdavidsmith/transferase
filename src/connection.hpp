@@ -82,8 +82,8 @@ struct connection : public std::enable_shared_from_this<connection> {
   request_header req_hdr;  // this connection's request header
   request req;             // this connection's request
   response_buffer resp_buf{};
-  response_header resp_hdr;  // header of the response
-  response resp;             // response to send back
+  response_header resp_hdr;       // header of the response
+  response<counts_res_cov> resp;  // response to send back
   logger &lgr;
   std::uint32_t connection_id{};
   std::uint32_t read_timeout_seconds{10};
@@ -94,6 +94,6 @@ struct connection : public std::enable_shared_from_this<connection> {
   std::size_t offset_remaining{};
 };
 
-typedef std::shared_ptr<connection> connection_ptr;
+using connection_ptr = std::shared_ptr<connection>;
 
 #endif  // SRC_CONNECTION_HPP_
