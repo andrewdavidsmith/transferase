@@ -41,8 +41,7 @@ auto
 to_chars(char *first, [[maybe_unused]] char *last,
          const request_header &header) -> mc16_to_chars_result {
   // ADS: use to_chars here
-  const string s = format("{}\t{}\t{}\n", header.accession,
-                          header.methylome_size, header.request_type);
+  const string s = format("{}\n", header);
   assert(static_cast<std::iterator_traits<char *>::difference_type>(size(s)) <
          std::distance(first, last));
   auto data_end = rg::copy(s, first);  // rg::in_out_result
@@ -56,7 +55,7 @@ from_chars(const char *first, const char *last,
   static constexpr auto term = '\n';
 
   header.methylome_size = 0;
-  header.request_type = 0;
+  header.rq_type = static_cast<request_header::request_type>(0);
 
   // accession
   header.accession.clear();
@@ -82,9 +81,11 @@ from_chars(const char *first, const char *last,
     return {cursor, request_error::header_parse_error_request_type};
   ++cursor;
   {
-    const auto [ptr, ec] = from_chars(cursor, last, header.request_type);
+    std::underlying_type_t<request_header::request_type> tmp{};
+    const auto [ptr, ec] = from_chars(cursor, last, tmp);
     if (ec != std::errc{})
       return {ptr, request_error::header_parse_error_request_type};
+    header.rq_type = static_cast<request_header::request_type>(tmp);
     cursor = ptr;
   }
 
@@ -110,7 +111,7 @@ request_header::summary() const -> string {
   return format(R"({{"accession": "{}", )"
                 R"("methylome_size": {}, )"
                 R"("request_type": {}}})",
-                accession, methylome_size, request_type);
+                accession, methylome_size, rq_type);
 }
 
 // request

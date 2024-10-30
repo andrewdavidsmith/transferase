@@ -28,7 +28,7 @@
 #include "utilities.hpp"
 
 #include <array>
-#include <cstdint>
+#include <cstdint>  // std::uint32_t
 #include <string>
 #include <system_error>
 #include <utility>  // pair<>
@@ -38,10 +38,39 @@ static constexpr std::uint32_t request_buf_size = 256;  // full request
 typedef std::array<char, request_buf_size> request_buffer;
 
 struct request_header {
+  enum class request_type : std::uint32_t {
+    counts = 0,
+    counts_cov = 1,
+    bin_counts = 2,
+    bin_counts_cov = 3,
+    n_request_types = 4,
+  };
   std::string accession;
   std::uint32_t methylome_size{};
-  std::uint32_t request_type{};
+  request_type rq_type{};
   auto summary() const -> std::string;
+  auto is_valid_type() const -> bool {
+    return rq_type < request_type::n_request_types;
+  }
+};
+
+template <>
+struct std::formatter<request_header::request_type>
+  : std::formatter<std::string> {
+  auto format(const request_header::request_type &rt,
+              std::format_context &ctx) const {
+    return std::formatter<std::string>::format(
+      std::format("{}", std::to_underlying(rt)), ctx);
+  }
+};
+
+template <>
+struct std::formatter<request_header> : std::formatter<std::string> {
+  auto format(const request_header &rh, std::format_context &ctx) const {
+    return std::formatter<std::string>::format(
+      std::format("{}\t{}\t{}", rh.accession, rh.methylome_size, rh.rq_type),
+      ctx);
+  }
 };
 
 auto

@@ -60,10 +60,6 @@ add_library(index OBJECT
   index.hpp
   index.cpp)
 
-add_library(client OBJECT
-  client.hpp
-  client.cpp)
-
 add_library(server_interface OBJECT
   server_interface.hpp
   server_interface.cpp)
@@ -124,7 +120,6 @@ target_link_libraries(
   cpg_index
   methylome
   methylome_set
-  client
   server
   connection
   request_handler

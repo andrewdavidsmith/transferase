@@ -123,7 +123,7 @@ check_main(int argc, char *argv[]) -> int {
   const auto check_outcome =
     (methylome_size == index.n_cpgs_total) ? "pass" : "fail";
 
-  const auto total_counts = meth.total_counts();
+  const auto total_counts = meth.total_counts_cov();
 
   std::ofstream of;
   if (!output_file.empty())

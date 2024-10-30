@@ -34,6 +34,7 @@
 #include <fstream>
 #include <ranges>
 #include <string>
+#include <type_traits>
 #include <utility>  // std::move
 #include <vector>
 #ifdef BENCHMARK
@@ -164,10 +165,23 @@ methylome::add(const methylome &rhs) -> methylome & {
   return *this;
 }
 
+template <typename U, typename T>
+[[nodiscard]] static inline auto
+get_counts_impl(const T b, const T e) -> U {
+  U u;
+  for (auto cursor = b; cursor != e; ++cursor) {
+    u.n_meth += cursor->first;
+    u.n_unmeth += cursor->second;
+    if constexpr (std::is_same<U, counts_res_cov>::value)
+      u.n_covered += *cursor != pair<uint16_t, uint16_t>{};
+  }
+  return u;
+}
+
 [[nodiscard]] auto
-methylome::get_counts(const cpg_index::vec &positions, const uint32_t offset,
-                      const uint32_t start,
-                      const uint32_t stop) const -> counts_res {
+methylome::get_counts_cov(const cpg_index::vec &positions,
+                          const uint32_t offset, const uint32_t start,
+                          const uint32_t stop) const -> counts_res_cov {
   // ADS: it is possible that the intervals requested are past the cpg
   // sites since they might be in the genome, but past the final cpg
   // site location. This code *should* be able to handle such a
@@ -180,51 +194,42 @@ methylome::get_counts(const cpg_index::vec &positions, const uint32_t offset,
     cbegin(cpgs) + offset +
     rg::distance(cbegin(positions),
                  rg::lower_bound(cpg_beg_lb, cend(positions), stop));
-  uint32_t n_meth{};
-  uint32_t n_unmeth{};
-  uint32_t n_sites_covered{};
-  for (auto cursor = cpg_beg; cursor != cpg_end; ++cursor) {
-    n_meth += cursor->first;
-    n_unmeth += cursor->second;
-    n_sites_covered += (cursor->first + cursor->second > 0);
-  }
-  return {n_meth, n_unmeth, n_sites_covered};
-}
-
-template <typename T>
-[[nodiscard]] static inline auto
-get_counts_impl(const T b, const T e) -> counts_res {
-  counts_res t;
-  for (auto cursor = b; cursor != e; ++cursor) {
-    t.n_meth += cursor->first;
-    t.n_unmeth += cursor->second;
-    t.n_covered += *cursor != pair<uint16_t, uint16_t>{};
-  }
-  return t;
+  return get_counts_impl<counts_res_cov>(cpg_beg, cpg_end);
+  // uint32_t n_meth{};
+  // uint32_t n_unmeth{};
+  // uint32_t n_sites_covered{};
+  // for (auto cursor = cpg_beg; cursor != cpg_end; ++cursor) {
+  //   n_meth += cursor->first;
+  //   n_unmeth += cursor->second;
+  //   n_sites_covered += (cursor->first + cursor->second > 0);
+  // }
+  // return {n_meth, n_unmeth, n_sites_covered};
 }
 
 [[nodiscard]] auto
-methylome::get_counts(const uint32_t start,
-                      const uint32_t stop) const -> counts_res {
-  return get_counts_impl(cbegin(cpgs) + start, cbegin(cpgs) + stop);
+methylome::get_counts_cov(const uint32_t start,
+                          const uint32_t stop) const -> counts_res_cov {
+  return get_counts_impl<counts_res_cov>(cbegin(cpgs) + start,
+                                         cbegin(cpgs) + stop);
 }
 
 [[nodiscard]] auto
-methylome::get_counts(const vector<pair<uint32_t, uint32_t>> &queries) const
-  -> vector<counts_res> {
+methylome::get_counts_cov(const vector<pair<uint32_t, uint32_t>> &queries) const
+  -> vector<counts_res_cov> {
   // ADS: it is possible that the intervals requested are past the cpg
   // sites since they might be in the genome, but past the final cpg
   // site location. This code *should* be able to handle such a
   // situation.
-  vector<counts_res> res(size(queries));
+  vector<counts_res_cov> res(size(queries));
   const auto cpg_beg = cbegin(cpgs);
   for (const auto [i, q] : vs::enumerate(queries))
-    res[i] = get_counts_impl(cpg_beg + q.first, cpg_beg + q.second);
+    res[i] =
+      get_counts_impl<counts_res_cov>(cpg_beg + q.first, cpg_beg + q.second);
   return res;
 }
 
 [[nodiscard]] auto
-methylome::total_counts() const -> counts_res {
+methylome::total_counts_cov() const -> counts_res_cov {
   uint32_t n_meth{};
   uint32_t n_unmeth{};
   uint32_t n_covered{};
@@ -236,29 +241,30 @@ methylome::total_counts() const -> counts_res {
   return {n_meth, n_unmeth, n_covered};
 }
 
+template <typename T>
 static auto
-bin_counts(cpg_index::vec::const_iterator &posn_itr,
-           const cpg_index::vec::const_iterator posn_end,
-           const uint32_t bin_end,
-           methylome::vec::const_iterator &cpg_itr) -> counts_res {
-  uint32_t n_meth{};
-  uint32_t n_unmeth{};
-  uint32_t n_covered{};
+bin_counts_impl(cpg_index::vec::const_iterator &posn_itr,
+                const cpg_index::vec::const_iterator posn_end,
+                const uint32_t bin_end,
+                methylome::vec::const_iterator &cpg_itr) -> T {
+  T t{};
   while (posn_itr != posn_end && *posn_itr < bin_end) {
-    n_meth += cpg_itr->first;
-    n_unmeth += cpg_itr->second;
-    n_covered += (cpg_itr->first + cpg_itr->second > 0);
+    t.n_meth += cpg_itr->first;
+    t.n_unmeth += cpg_itr->second;
+    if constexpr (std::is_same<T, counts_res_cov>::value)
+      t.n_covered += (cpg_itr->first + cpg_itr->second > 0);
     ++cpg_itr;
     ++posn_itr;
   }
-  return {n_meth, n_unmeth, n_covered};
+  return t;
 }
 
-[[nodiscard]] auto
-methylome::get_bins(const uint32_t bin_size,
-                    const cpg_index &index) const -> vector<counts_res> {
-  // ADS TODO: reserve n_bins
-  vector<counts_res> results;
+template <typename T>
+[[nodiscard]]
+static auto
+get_bins_impl(const uint32_t bin_size, const cpg_index &index,
+              const methylome::vec &cpgs) -> vector<T> {
+  vector<T> results;  // ADS TODO: reserve n_bins
 
   const auto zipped =
     vs::zip(index.positions, index.chrom_size, index.chrom_offset);
@@ -268,8 +274,54 @@ methylome::get_bins(const uint32_t bin_size,
     auto cpg_itr = cbegin(cpgs) + offset;
     for (uint32_t i = 0; i < chrom_size; i += bin_size) {
       const auto bin_end = std::min(i + bin_size, chrom_size);
-      results.emplace_back(bin_counts(posn_itr, posn_end, bin_end, cpg_itr));
+      results.emplace_back(
+        bin_counts_impl<T>(posn_itr, posn_end, bin_end, cpg_itr));
     }
   }
   return results;
+}
+
+[[nodiscard]] auto
+methylome::get_bins(const uint32_t bin_size,
+                    const cpg_index &index) const -> vector<counts_res> {
+  return get_bins_impl<counts_res>(bin_size, index, cpgs);
+  // // ADS TODO: reserve n_bins
+  // vector<counts_res> results;
+
+  // const auto zipped =
+  //   vs::zip(index.positions, index.chrom_size, index.chrom_offset);
+  // for (const auto [positions, chrom_size, offset] : zipped) {
+  //   auto posn_itr = cbegin(positions);
+  //   const auto posn_end = cend(positions);
+  //   auto cpg_itr = cbegin(cpgs) + offset;
+  //   for (uint32_t i = 0; i < chrom_size; i += bin_size) {
+  //     const auto bin_end = std::min(i + bin_size, chrom_size);
+  //     results.emplace_back(
+  //       bin_counts_impl<counts_res>(posn_itr, posn_end, bin_end, cpg_itr));
+  //   }
+  // }
+  // return results;
+}
+
+[[nodiscard]] auto
+methylome::get_bins_cov(const uint32_t bin_size, const cpg_index &index) const
+  -> vector<counts_res_cov> {
+  return get_bins_impl<counts_res_cov>(bin_size, index, cpgs);
+  // // ADS TODO: reserve n_bins
+  // vector<counts_res_cov> results;
+
+  // const auto zipped =
+  //   vs::zip(index.positions, index.chrom_size, index.chrom_offset);
+  // for (const auto [positions, chrom_size, offset] : zipped) {
+  //   auto posn_itr = cbegin(positions);
+  //   const auto posn_end = cend(positions);
+  //   auto cpg_itr = cbegin(cpgs) + offset;
+  //   for (uint32_t i = 0; i < chrom_size; i += bin_size) {
+  //     const auto bin_end = std::min(i + bin_size, chrom_size);
+  //     results.emplace_back(
+  //       bin_counts_impl<counts_res_cov>(posn_itr, posn_end, bin_end,
+  //       cpg_itr));
+  //   }
+  // }
+  // return results;
 }
