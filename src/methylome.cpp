@@ -241,17 +241,6 @@ methylome::total_counts_cov() const -> counts_res_cov {
   return {n_meth, n_unmeth, n_covered};
 }
 
-[[nodiscard]] auto
-methylome::total_counts() const -> counts_res {
-  uint32_t n_meth{};
-  uint32_t n_unmeth{};
-  for (const auto &cpg : cpgs) {
-    n_meth += cpg.first;
-    n_unmeth += cpg.second;
-  }
-  return {n_meth, n_unmeth};
-}
-
 template <typename T>
 static auto
 bin_counts_impl(cpg_index::vec::const_iterator &posn_itr,

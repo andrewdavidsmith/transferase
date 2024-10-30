@@ -83,7 +83,6 @@ struct methylome {
                  const std::uint32_t stop) const -> counts_res_cov;
 
   [[nodiscard]] auto total_counts_cov() const -> counts_res_cov;
-  [[nodiscard]] auto total_counts() const -> counts_res;
 
   // takes only the pair of positions within the methylome::vec
   // and accumulates between those
