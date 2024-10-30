@@ -26,12 +26,11 @@
 
 #include "methylome_set.hpp"
 
-#include <string>
+#include "logger.hpp"
+#include "request.hpp"
+#include "response.hpp"
 
-struct request_header;
-struct request;
-struct response_header;
-struct response;
+#include <string>
 
 // handles all incoming requests
 struct request_handler {
@@ -45,8 +44,9 @@ struct request_handler {
   auto handle_header(const request_header &req_hdr,
                      response_header &resp_hdr) -> void;
 
-  auto handle_get_counts(const request_header &req_hdr, const request &req,
-                         response_header &resp_hdr, response &resp) -> void;
+  auto handle_get_counts_cov(const request_header &req_hdr, const request &req,
+                             response_header &resp_hdr,
+                             response<counts_res_cov> &resp) -> void;
 
   std::string methylome_dir;   // dir of available methylomes
   std::string cpg_index_file;  // file with cpg_index
