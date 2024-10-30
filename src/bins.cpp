@@ -132,7 +132,7 @@ bins_main(int argc, char *argv[]) -> int {
   }
 
   const auto get_bins_start{hr_clock::now()};
-  const vector<counts_res> results = meth.get_bins(bin_size, index);
+  const auto results = meth.get_bins_cov(bin_size, index);
   const auto get_bins_stop{hr_clock::now()};
 
   if (verbose)
