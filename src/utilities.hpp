@@ -37,14 +37,18 @@
 #include <chrono>
 #include <cmath>
 #include <cstdint>
+#include <filesystem>
+#include <fstream>
+#include <iostream>
 #include <limits>
 #include <numeric>
-#include <ostream>
 #include <ranges>
 #include <string>
 #include <system_error>
 #include <utility>
 #include <vector>
+
+#include <zlib.h>
 
 struct mc16_to_chars_result {
   char *ptr{};
@@ -158,8 +162,8 @@ write_bedgraph(std::ostream &out, const cpg_index &index,
 
 auto
 write_bins(std::ostream &out, const std::uint32_t bin_size,
-           const cpg_index &index,
-           const std::vector<counts_res_cov> &results) -> std::error_code;
+           const cpg_index &index, const std::vector<counts_res_cov> &results)
+  -> std::error_code;
 
 [[nodiscard]] inline auto
 duration(const auto start, const auto stop) {
@@ -187,6 +191,37 @@ conditional_round_to_fit(U &a, U &b) -> void {
   // ADS: optimization possible here?
   if (std::max(a, b) > std::numeric_limits<T>::max())
     round_to_fit<T>(a, b);
+}
+
+// ADS: this function should be replaced by one that can operate on a
+// the data as though it were serealized but without reading the file
+[[nodiscard]] inline auto
+get_adler(const std::string &filename) -> std::uint64_t {
+  const auto filesize = std::filesystem::file_size(filename);
+  std::vector<char> buf(filesize);
+  std::ifstream in(filename);
+  in.read(buf.data(), filesize);
+  return adler32_z(0, reinterpret_cast<std::uint8_t *>(buf.data()), filesize);
+}
+
+// ADS: this function should be replaced by one that can operate on a
+// the data as though it were serealized but without reading the file
+[[nodiscard]] inline auto
+get_adler(const std::string &filename, std::error_code &ec) -> std::uint64_t {
+  const auto filesize = std::filesystem::file_size(filename, ec);
+  if (ec)
+    return 0;
+  std::vector<char> buf(filesize);
+  std::ifstream in(filename);
+  if (!in) {
+    ec = std::make_error_code(std::errc(errno));
+    return 0;
+  }
+  if (!in.read(buf.data(), filesize)) {
+    ec = std::make_error_code(std::errc(errno));
+    return 0;
+  }
+  return adler32_z(0, reinterpret_cast<std::uint8_t *>(buf.data()), filesize);
 }
 
 #endif  // SRC_UTILITIES_HPP_
