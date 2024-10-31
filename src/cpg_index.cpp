@@ -61,6 +61,7 @@ using std::string;
 using std::string_view;
 using std::tuple;
 using std::uint32_t;
+using std::uint64_t;
 using std::vector;
 
 namespace rg = std::ranges;
@@ -130,8 +131,8 @@ get_chrom_name_starts(const char *data, const size_t sz) -> vector<size_t> {
 }
 
 [[nodiscard]] static auto
-get_chrom_name_stops(vector<size_t> starts, const char *data,
-                     const size_t sz) -> vector<size_t> {
+get_chrom_name_stops(vector<size_t> starts, const char *data, const size_t sz)
+  -> vector<size_t> {
   const auto next_stop = [&](const size_t start) -> size_t {
     return std::distance(data, std::find(data + start, data + sz, '\n'));
   };  // finds the stop position following each start position
@@ -215,7 +216,7 @@ cpg_index::read(const string &index_file) -> std::error_code {
   if (!in)
     return std::make_error_code(std::errc(errno));
 
-  // write the identifier so we can check it
+  // read the identifier so we can check it
   string file_identifier_in_file(size(expected_file_identifier), '\0');
   in.read(file_identifier_in_file.data(), size(expected_file_identifier));
 
