@@ -48,6 +48,8 @@ add_library(compress OBJECT
   compress.hpp
   compress.cpp)
 
+target_include_directories(compress PRIVATE "${PROJECT_BINARY_DIR}")
+
 add_library(check OBJECT
   check.hpp
   check.cpp)
@@ -101,11 +103,10 @@ add_library(request OBJECT
   request.cpp)
 
 add_executable(mc16)
+target_include_directories(mc16 PRIVATE "${PROJECT_BINARY_DIR}")
 target_sources(mc16 PRIVATE mc16.cpp)
-target_link_libraries(mc16 PRIVATE $<$<CONFIG:Release>:-static>)
 target_link_libraries(
   mc16
-  PRIVATE
   utilities
   logger
   index
