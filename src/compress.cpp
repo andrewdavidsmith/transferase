@@ -28,14 +28,19 @@
 #include "methylome.hpp"
 #include "utilities.hpp"
 
+#include <config.h>
+#include <sys/types.h>
+#include <unistd.h>
 #include <zlib.h>
 
+#include <boost/asio.hpp>  // boost::asio::ip::host_name();
 #include <boost/program_options.hpp>
 
 #include <algorithm>
 #include <array>
 #include <cassert>
 #include <charconv>
+#include <chrono>
 #include <filesystem>
 #include <iostream>
 #include <limits>
@@ -61,22 +66,54 @@ using po::value;
 
 template <typename T> using num_lim = std::numeric_limits<T>;
 
-/*
-  These comments should be associated with xcounts
+// ADS: this should be moved into methylome.hpp
+struct methylome_metadata {
+  std::string version{};
+  std::string host{};
+  std::int64_t user{};
+  std::chrono::time_point<std::chrono::utc_clock> creation_time{};
+  std::uint64_t methylome_adler{};
+  std::uint64_t index_adler{};
 
-  The verify_header_line function might detect multiple possible
-  errors and these should each be given a different code:
+  static auto init(const std::string &index_filename,
+                   const std::string &methylome_filename)
+    -> std::tuple<methylome_metadata, std::error_code> {
 
-  -- dnmtools version number(?)
-  -- bad header format
-  -- too many chroms
-  -- missing chroms
-  -- wrong chrom order
-  -- wrong chrom size
+    std::error_code err;
+    const auto index_adler = get_adler(index_filename, err);
+    if (err)
+      return {{}, err};
 
-  -- There is no consistent chrom order among the assembly.chrom.size
-  -- There seems to be a consistent order within the reference genome files
- */
+    const auto methylome_adler = get_adler(methylome_filename, err);
+    if (err)
+      return {{}, err};
+
+    boost::system::error_code boost_err;
+    const auto host = boost::asio::ip::host_name(boost_err);
+    if (boost_err)
+      return {{}, err};
+
+    const auto creation_time = std::chrono::utc_clock::now();
+    // std::chrono::floor<std::chrono::seconds>(std::chrono::utc_clock::now());
+
+    return {
+      {VERSION, host, getuid(), creation_time, methylome_adler, index_adler},
+      {}};
+  }
+
+  auto tostring() const -> std::string {
+    std::ostringstream oss;
+    println(oss,
+            "version: {}\n"
+            "host: {}\n"
+            "user: {}\n"
+            "creation_time: \"{}\"\n"
+            "methylome_adler: {}\n"
+            "index_adler: {}",
+            version, host, user, creation_time, methylome_adler, index_adler);
+    return oss.str();
+  }
+};
 
 enum class compress_err {
   // clang-format off
@@ -92,8 +129,10 @@ enum class compress_err {
 };
 
 struct compress_err_cat : std::error_category {
-  const char *name() const noexcept override { return "compress error"; }
-  string message(const int condition) const override {
+  auto name() const noexcept -> const char * override {
+    return "compress error";
+  }
+  auto message(const int condition) const -> std::string override {
     using std::string_literals::operator""s;
     switch (condition) {
     case 0:
@@ -103,11 +142,11 @@ struct compress_err_cat : std::error_category {
     case 2:
       return "failed to parse xcounts header"s;
     case 3:
-      return "inconsistent chromosome order"s;
-    case 4:
-      return "incorrect chromosome size"s;
-    case 5:
       return "failed to find chromosome in xcounts header"s;
+    case 4:
+      return "inconsistent chromosome order"s;
+    case 5:
+      return "incorrect chromosome size"s;
     case 6:
       return "failed to generate methylome file"s;
     case 7:
@@ -187,6 +226,8 @@ get_ch_id(const cpg_index &ci, const string &chrom_name) -> int32_t {
   return ch_id->second;
 }
 
+// ADS: this function is tied to the specifics of dnmtools::xcounts
+// code, and likely needs a review
 static auto
 verify_header_line(const cpg_index &idx, int32_t &n_chroms_seen,
                    const string &line) -> std::error_code {
@@ -252,7 +293,7 @@ process_cpg_sites(const string &infile, const string &outfile,
       // consistency check between reference used for the index and
       // reference used for the methylome
       if (err = verify_header_line(index, n_chroms_seen, line); err) {
-        println("Error parsing xcounts header line: {}", line);
+        println("Error parsing xcounts header line: {} ({})", line, err);
         return err;
       }
       continue;  // ADS: early loop exit
@@ -329,8 +370,8 @@ compress_main(int argc, char *argv[]) -> int {
   string index_file{};
 
   po::options_description desc(description);
-  // clang-format off
   desc.add_options()
+    // clang-format off
     ("help,h", "produce help message")
     ("meth,m", value(&methylation_input)->required(),
      "methylation input file")
@@ -339,8 +380,8 @@ compress_main(int argc, char *argv[]) -> int {
      "methylation output file")
     ("zip,z", po::bool_switch(&zip), "zip the output")
     ("verbose,v", po::bool_switch(&verbose), "print more run info")
+    // clang-format on
     ;
-  // clang-format on
   try {
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -372,8 +413,21 @@ compress_main(int argc, char *argv[]) -> int {
   if (verbose)
     println("{}", index);
 
-  const std::error_code err =
+  std::error_code err =
     process_cpg_sites(methylation_input, methylation_output, index, zip);
+  if (err) {
+    println("Error : {}", err);
+    return EXIT_FAILURE;
+  }
 
-  return err ? EXIT_FAILURE : EXIT_SUCCESS;
+  const auto [mm, metadata_err] =
+    methylome_metadata::init(index_file, methylation_output);
+  if (metadata_err) {
+    println("Error : {}", metadata_err);
+    return EXIT_FAILURE;
+  }
+
+  println("{}", mm.tostring());
+
+  return EXIT_SUCCESS;
 }
