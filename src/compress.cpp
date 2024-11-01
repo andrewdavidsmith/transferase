@@ -78,7 +78,6 @@ struct methylome_metadata {
   static auto init(const std::string &index_filename,
                    const std::string &methylome_filename)
     -> std::tuple<methylome_metadata, std::error_code> {
-
     std::error_code err;
     const auto index_adler = get_adler(index_filename, err);
     if (err)
