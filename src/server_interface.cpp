@@ -94,6 +94,8 @@ server_interface_main(int argc, char *argv[]) -> int {
     ("live,l", po::value(&args.max_live_methylomes)->default_value(
      methylome_set::default_max_live_methylomes), "max live methylomes")
     ("log", po::value(&args.log_filename), "log file name")
+    ("log-level,v", po::value(&args.log_level)->default_value(
+     server_interface_args::default_log_level), "log file name")
     // clang-format on
     ;
   try {
