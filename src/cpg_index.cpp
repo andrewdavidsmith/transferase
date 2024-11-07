@@ -131,8 +131,8 @@ get_chrom_name_starts(const char *data, const size_t sz) -> vector<size_t> {
 }
 
 [[nodiscard]] static auto
-get_chrom_name_stops(vector<size_t> starts, const char *data, const size_t sz)
-  -> vector<size_t> {
+get_chrom_name_stops(vector<size_t> starts, const char *data,
+                     const size_t sz) -> vector<size_t> {
   const auto next_stop = [&](const size_t start) -> size_t {
     return std::distance(data, std::find(data + start, data + sz, '\n'));
   };  // finds the stop position following each start position

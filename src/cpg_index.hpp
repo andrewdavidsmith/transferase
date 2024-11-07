@@ -53,19 +53,19 @@ struct cpg_index {
 
   // given the chromosome id (from chrom_index) and a position within
   // the chrom, get the offset of the CpG site from std::lower_bound
-  [[nodiscard]] auto get_offset_within_chrom(const std::int32_t ch_id,
-                                             const std::uint32_t pos) const
-    -> std::uint32_t;
+  [[nodiscard]] auto
+  get_offset_within_chrom(const std::int32_t ch_id,
+                          const std::uint32_t pos) const -> std::uint32_t;
   [[nodiscard]] auto get_offsets_within_chrom(
     const std::int32_t ch_id,
     const std::vector<std::pair<std::uint32_t, std::uint32_t>> &pos) const
     -> std::vector<std::pair<std::uint32_t, std::uint32_t>>;
 
   // get the offset from the start of the data structure
-  [[nodiscard]] auto get_offsets(
-    const std::int32_t ch_id,
-    const std::vector<std::pair<std::uint32_t, std::uint32_t>> &pos) const
-    -> std::vector<std::pair<std::uint32_t, std::uint32_t>>;
+  [[nodiscard]] auto
+  get_offsets(const std::int32_t ch_id,
+              const std::vector<std::pair<std::uint32_t, std::uint32_t>> &pos)
+    const -> std::vector<std::pair<std::uint32_t, std::uint32_t>>;
 
   // get the offset from the start of the data structure given genomic
   // intervals
