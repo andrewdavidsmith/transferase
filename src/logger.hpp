@@ -25,7 +25,12 @@
 #define SRC_LOGGER_HPP_
 
 #if not defined(__APPLE__) && not defined(__MACH__)
+#include <sys/syscall.h>
 #include <unistd.h>  // gettid
+#ifndef SYS_gettid
+#error "SYS_gettid unavailable on this system"
+#endif
+#define gettid() ((pid_t)syscall(SYS_gettid))
 #else
 #include <pthread.h>  // pthread_threadid_np
 #endif
