@@ -1,8 +1,9 @@
 name: Linting with clang-tidy
 
 on:
-  pull_request:
-    branches: [ "main" ]
+  # When this works, we can use it on PRs
+  # pull_request:
+  #   branches: [ "main" ]
   workflow_dispatch:
 
 jobs:
