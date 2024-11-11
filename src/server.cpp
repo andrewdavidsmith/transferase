@@ -58,6 +58,48 @@ namespace fs = std::filesystem;
 
 using tcp = ip::tcp;
 
+static auto
+write_pid_to_file(std::error_code &ec) -> void {
+  static const auto pid_file_rhs =
+    fs::path(".config") / "mc16" / "MC16_PID_FILE";
+
+  // write the pid of the daemon to a file
+  const auto env_home = std::getenv("HOME");
+  if (!env_home) {
+    ec = std::make_error_code(std::errc(errno));
+    const auto msg = format("Error forming config dir: {}", ec);
+    syslog(LOG_ERR | LOG_USER, "%s", msg.data());
+    return;
+  }
+  const fs::path pid_file = fs::path(env_home) / pid_file_rhs;
+  if (fs::exists(pid_file)) {
+    ec = std::make_error_code(std::errc::file_exists);
+    const auto msg = format("Error: {}", ec);
+    syslog(LOG_ERR | LOG_USER, "%s", msg.data());
+    return;
+  }
+  {
+    const auto pid = getpid();
+    logger::instance().info("mc16 daemon pid: {}", pid);
+    std::ofstream out(pid_file);
+    if (!out) {
+      ec = std::make_error_code(std::errc{errno});
+      const auto msg = format("Error writing pid file: {} ({})", ec, pid_file);
+      syslog(LOG_ERR | LOG_USER, "%s", msg.data());
+      return;
+    }
+    logger::instance().info("mc16 daemon pid file: {}", pid_file);
+    const auto pid_str = format("{}", pid);
+    out.write(pid_str.data(), size(pid_str));
+    if (!out) {
+      ec = std::make_error_code(std::errc{errno});
+      const auto msg = format("Error writing pid file: {} ({})", ec, pid_file);
+      syslog(LOG_ERR | LOG_USER, "%s", msg.data());
+      return;
+    }
+  }
+}
+
 server::server(const string &address, const string &port,
                const uint32_t n_threads, const string &methylome_dir,
                const uint32_t max_live_methylomes, logger &lgr) :
@@ -127,39 +169,15 @@ server::server(const string &address, const string &port,
                std::error_code &ec) :
   n_threads{n_threads},
 #if defined(SIGQUIT)
+  // ADS: (todo) SIGHUP should re-read config file
   signals(ioc, SIGINT, SIGTERM, SIGQUIT),
 #else
   signals(ioc, SIGINT, SIGTERM),
 #endif
   acceptor(ioc), handler(methylome_dir, max_live_methylomes), lgr{lgr} {
-  // io_context ios uses default constructor
+  // io_context ioc uses default constructor
 
-  // ADS: already exists as "ioc"
-  // boost::asio::io_context io_context;
-
-  // Initialise server before becoming a daemon. If process is started
-  // from a shell, this means errors will be reported back to user.
-
-  // ADS: already done; we are here!
-
-  // udp_daytime_server server(io_context);
-
-  do_daemon_await_stop();  // start waiting for signals
-
-  // ^^ ADS: above
-
-  // Register signal handlers so that the daemon may be shut down. You may
-  // also want to register for other signals, such as SIGHUP to trigger a
-  // re-read of a configuration file.
-
-  // boost::asio::signal_set signals(io_context, SIGINT, SIGTERM);
-  // signals.async_wait([&](boost::system::error_code /*ec*/, int /*signo*/) {
-  //   io_context.stop();
-  // });
-
-  // Inform the io_context that we are about to become a daemon. The
-  // io_context cleans up any internal resources, such as threads, that may
-  // interfere with forking.
+  do_daemon_await_stop();  // signals setup; start waiting for them
 
   // ADS: we are about to fork; clean up threads (what else?)
   ioc.notify_fork(boost::asio::io_context::fork_prepare);
@@ -169,47 +187,34 @@ server::server(const string &address, const string &port,
   // also a prerequisite for the subsequent call to setsid().
   if (const pid_t pid = fork()) {
     if (pid > 0) {
-      // We're in the parent process and need to exit.
-      //
-      // When the exit() function is used, the program terminates without
-      // invoking local variables' destructors. Only global variables are
-      // destroyed. As the io_context object is a local variable, this means
-      // we do not have to call:
-      //
-      //   io_context.notify_fork(boost::asio::io_context::fork_parent);
-      //
-      // However, this line should be added before each call to exit() if
-      // using a global io_context object. An additional call:
-      //
-      //   io_context.notify_fork(boost::asio::io_context::fork_prepare);
-      //
-      // should also precede the second fork().
+      // in parent and need to exit
       std::exit(EXIT_SUCCESS);
     }
     else {
       ec = std::make_error_code(std::errc(errno));
-      syslog(LOG_ERR | LOG_USER, "%s",
-             format("First fork failed: {}", ec).data());
+      const auto msg = format("First fork failed: {}", ec);
+      syslog(LOG_ERR | LOG_USER, "%s", msg.data());
       return;
     }
   }
 
-  // Make the process a new session leader. This detaches it from the
-  // terminal.
+  // Make the process a new session leader, detaching it from the
+  // terminal
   setsid();
 
   // Process inherits working dir from parent. Could be on a mounted
   // filesystem, which means that the daemon would prevent filesystem
   // from being unmounted. Changing to root dir avoids this problem.
-
   // chdir("/");
   chdir(fs::current_path().root_path().string().data());
 
-  // File mode creation mask is inherited from parent process. Don't
-  // want to restrict perms on created files, so the mask is cleared.
+  // File mode creation mask is inherited from parent process. We
+  // don't want to restrict perms on new files, so umask is cleared.
   umask(0);
 
-  // A second fork ensures the process cannot acquire a controlling terminal.
+  // A second fork ensures the process cannot acquire a controlling
+  // terminal.
+  // ioc.notify_fork(boost::asio::io_context::fork_prepare);
   if (pid_t pid = fork()) {
     if (pid > 0) {
       std::exit(EXIT_SUCCESS);
@@ -222,8 +227,14 @@ server::server(const string &address, const string &port,
     }
   }
 
-  // Close the standard streams. This decouples the daemon from the terminal
-  // that started it.
+  // write the pid of the daemon to a file
+  write_pid_to_file(ec);
+  // error reporting within the above function
+  if (ec)
+    return;
+
+  // close standard streams to decouple the daemon from the terminal
+  // that started it
   close(STDIN_FILENO);
   close(STDOUT_FILENO);
   close(STDERR_FILENO);
@@ -238,7 +249,7 @@ server::server(const string &address, const string &port,
   }
 
   // Send standard output to a log file.
-  const char *output = "/tmp/mc16.daemon.out";
+  const auto output = "/tmp/mc16_daemon.out";
   const int flags = O_WRONLY | O_CREAT | O_APPEND;
   const mode_t mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
   if (open(output, flags, mode) < 0) {
@@ -255,11 +266,6 @@ server::server(const string &address, const string &port,
     syslog(LOG_ERR | LOG_USER, "%s", msg.data());
     return;
   }
-
-  // Inform the io_context that we have finished becoming a daemon. The
-  // io_context uses this opportunity to create any internal file descriptors
-  // that need to be private to the new process.
-  // io_context.notify_fork(boost::asio::io_context::fork_child);
 
   ioc.notify_fork(boost::asio::io_context::fork_child);
 
