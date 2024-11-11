@@ -162,8 +162,8 @@ write_bedgraph(std::ostream &out, const cpg_index &index,
 
 auto
 write_bins(std::ostream &out, const std::uint32_t bin_size,
-           const cpg_index &index,
-           const std::vector<counts_res_cov> &results) -> std::error_code;
+           const cpg_index &index, const std::vector<counts_res_cov> &results)
+  -> std::error_code;
 
 [[nodiscard]] inline auto
 duration(const auto start, const auto stop) {
@@ -223,5 +223,15 @@ get_adler(const std::string &filename, std::error_code &ec) -> std::uint64_t {
   }
   return adler32_z(0, reinterpret_cast<std::uint8_t *>(buf.data()), filesize);
 }
+
+/*
+  print std::filesystem::path
+ */
+template <>
+struct std::formatter<std::filesystem::path> : std::formatter<std::string> {
+  auto format(const std::filesystem::path &p, std::format_context &ctx) const {
+    return std::formatter<std::string>::format(p.string(), ctx);
+  }
+};
 
 #endif  // SRC_UTILITIES_HPP_
