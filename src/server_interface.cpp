@@ -30,6 +30,7 @@
 #include <boost/program_options.hpp>
 
 #include <cstdint>
+#include <filesystem>
 #include <format>
 #include <fstream>
 #include <iostream>
@@ -55,6 +56,27 @@ using std::vector;
 
 namespace po = boost::program_options;
 namespace rg = std::ranges;
+namespace fs = std::filesystem;
+
+static auto
+get_canonical_dir(const string &methylome_dir) -> string {
+  std::error_code ec;
+  const string canonical_dir = fs::canonical(methylome_dir, ec);
+  if (ec) {
+    logger::instance().error("Error: {} ({})", ec, methylome_dir);
+    return {};
+  }
+  const bool isdir = fs::is_directory(canonical_dir, ec);
+  if (ec) {
+    logger::instance().error("Error: {} ({})", ec, canonical_dir);
+    return {};
+  }
+  if (!isdir) {
+    logger::instance().error("Not a directory: {}", canonical_dir);
+    return {};
+  }
+  return canonical_dir;
+}
 
 template <mc16_log_level the_level, typename... Args>
 auto
@@ -74,6 +96,7 @@ struct server_interface_args {
   std::string methylome_dir{};
   std::string log_filename{};
   std::uint32_t max_live_methylomes{};
+  bool daemonize{};
 };
 
 auto
@@ -96,6 +119,7 @@ server_interface_main(int argc, char *argv[]) -> int {
     ("log", po::value(&args.log_filename), "log file name")
     ("log-level,v", po::value(&args.log_level)->default_value(
      server_interface_args::default_log_level), "log file name")
+    ("daemonize", po::bool_switch(&args.daemonize), "daemonize the server")
     // clang-format on
     ;
   try {
@@ -124,6 +148,11 @@ server_interface_main(int argc, char *argv[]) -> int {
     return EXIT_FAILURE;
   }
 
+  args.methylome_dir = get_canonical_dir(args.methylome_dir);
+  // messages done already
+  if (args.methylome_dir.empty())
+    return EXIT_FAILURE;
+
   log_args<mc16_log_level::info>(vector<tuple<string, string>>{
     // clang-format off
     {"Hostname", args.hostname},
@@ -134,10 +163,22 @@ server_interface_main(int argc, char *argv[]) -> int {
     // clang-format on
   });
 
-  server s(args.hostname, args.port, args.n_threads, args.methylome_dir,
-           args.max_live_methylomes, lgr);
+  if (args.daemonize) {
+    std::error_code ec;
+    server s(args.hostname, args.port, args.n_threads, args.methylome_dir,
+             args.max_live_methylomes, lgr, ec);
+    if (ec) {
+      println("Failure daemonizing server: {}.", ec);
+      return EXIT_FAILURE;
+    }
+    s.run();
+  }
+  else {
+    server s(args.hostname, args.port, args.n_threads, args.methylome_dir,
+             args.max_live_methylomes, lgr);
 
-  s.run();
+    s.run();
+  }
 
   return EXIT_SUCCESS;
 }
