@@ -168,7 +168,7 @@ server_interface_main(int argc, char *argv[]) -> int {
     server s(args.hostname, args.port, args.n_threads, args.methylome_dir,
              args.max_live_methylomes, lgr, ec);
     if (ec) {
-      println("Failure daemonizing server: {}.", ec);
+      lgr.error("Failure daemonizing server: {}.", ec);
       return EXIT_FAILURE;
     }
     s.run();

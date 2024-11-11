@@ -224,4 +224,14 @@ get_adler(const std::string &filename, std::error_code &ec) -> std::uint64_t {
   return adler32_z(0, reinterpret_cast<std::uint8_t *>(buf.data()), filesize);
 }
 
+/*
+  print std::filesystem::path
+ */
+template <>
+struct std::formatter<std::filesystem::path> : std::formatter<std::string> {
+  auto format(const std::filesystem::path &p, std::format_context &ctx) const {
+    return std::formatter<std::string>::format(p.string(), ctx);
+  }
+};
+
 #endif  // SRC_UTILITIES_HPP_
