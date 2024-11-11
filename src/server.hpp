@@ -32,6 +32,7 @@
 #include <atomic>
 #include <cstdint>
 #include <string>
+#include <system_error>
 
 struct server {
   server(const server &) = delete;
@@ -42,9 +43,16 @@ struct server {
                   const std::string &methylome_dir,
                   const std::uint32_t max_live_methylomes, logger &lgr);
 
+  explicit server(const std::string &address, const std::string &port,
+                  const std::uint32_t n_threads,
+                  const std::string &methylome_dir,
+                  const std::uint32_t max_live_methylomes, logger &lgr,
+                  std::error_code &ec);
+
   auto run() -> void;
   auto do_accept() -> void;      // do async accept operation
   auto do_await_stop() -> void;  // wait for request to stop server
+  auto do_daemon_await_stop() -> void;
 
   std::uint32_t n_threads{};
   boost::asio::io_context ioc;              // performs async ops
