@@ -162,8 +162,8 @@ write_bedgraph(std::ostream &out, const cpg_index &index,
 
 auto
 write_bins(std::ostream &out, const std::uint32_t bin_size,
-           const cpg_index &index, const std::vector<counts_res_cov> &results)
-  -> std::error_code;
+           const cpg_index &index,
+           const std::vector<counts_res_cov> &results) -> std::error_code;
 
 [[nodiscard]] inline auto
 duration(const auto start, const auto stop) {
