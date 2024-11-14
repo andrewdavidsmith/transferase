@@ -66,15 +66,13 @@ write_pid_to_file(std::error_code &ec) -> void {
   const auto env_home = std::getenv("HOME");
   if (!env_home) {
     ec = std::make_error_code(std::errc(errno));
-    const auto msg = format("Error forming config dir: {}", ec);
-    syslog(LOG_ERR | LOG_USER, "%s", msg.data());
+    logger::instance().error("Error forming config dir: {}", ec);
     return;
   }
   const fs::path pid_file = fs::path(env_home) / pid_file_rhs;
   if (fs::exists(pid_file)) {
     ec = std::make_error_code(std::errc::file_exists);
-    const auto msg = format("Error: {}", ec);
-    syslog(LOG_ERR | LOG_USER, "%s", msg.data());
+    logger::instance().error("Error: {}", ec);
     return;
   }
   {
@@ -83,8 +81,7 @@ write_pid_to_file(std::error_code &ec) -> void {
     std::ofstream out(pid_file);
     if (!out) {
       ec = std::make_error_code(std::errc{errno});
-      const auto msg = format("Error writing pid file: {} ({})", ec, pid_file);
-      syslog(LOG_ERR | LOG_USER, "%s", msg.data());
+      logger::instance().error("Error writing pid file: {} ({})", ec, pid_file);
       return;
     }
     logger::instance().info("mxe daemon pid file: {}", pid_file);
@@ -92,8 +89,7 @@ write_pid_to_file(std::error_code &ec) -> void {
     out.write(pid_str.data(), size(pid_str));
     if (!out) {
       ec = std::make_error_code(std::errc{errno});
-      const auto msg = format("Error writing pid file: {} ({})", ec, pid_file);
-      syslog(LOG_ERR | LOG_USER, "%s", msg.data());
+      logger::instance().error("Error writing pid file: {} ({})", ec, pid_file);
       return;
     }
   }
@@ -191,8 +187,7 @@ server::server(const string &address, const string &port,
     }
     else {
       ec = std::make_error_code(std::errc(errno));
-      const auto msg = format("First fork failed: {}", ec);
-      syslog(LOG_ERR | LOG_USER, "%s", msg.data());
+      lgr.error("First fork failed: {}", ec);
       return;
     }
   }
@@ -220,8 +215,7 @@ server::server(const string &address, const string &port,
     }
     else {
       ec = std::make_error_code(std::errc(errno));
-      syslog(LOG_ERR | LOG_USER, "%s",
-             format("Second fork failed: {}", ec).data());
+      lgr.error("Second fork failed: {}", ec);
       return;
     }
   }
@@ -242,27 +236,25 @@ server::server(const string &address, const string &port,
   static constexpr auto dev_null = "/dev/null";
   if (open(dev_null, O_RDONLY) < 0) {
     ec = std::make_error_code(std::errc(errno));
-    const auto msg = format("Unable to open {}: {}", dev_null, ec);
-    syslog(LOG_ERR | LOG_USER, "%s", msg.data());
+    lgr.error("Unable to open {}: {}", dev_null, ec);
     return;
   }
 
-  // Send standard output to a log file.
+  // Send standard output to a log file in case something would be
+  // written there.
   const auto output = "/tmp/mxe_daemon.out";
   const int flags = O_WRONLY | O_CREAT | O_APPEND;
   const mode_t mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
   if (open(output, flags, mode) < 0) {
     ec = std::make_error_code(std::errc(errno));
-    const auto msg = format("Unable to open output file {}: {}", output, ec);
-    syslog(LOG_ERR | LOG_USER, "%s", msg.data());
+    lgr.error("Unable to open output file {}: {}", output, ec);
     return;
   }
 
   // Also send standard error to the same log file.
   if (dup(1) < 0) {
     ec = std::make_error_code(std::errc(errno));
-    const auto msg = format("Unable to dup output descriptor: {}", ec);
-    syslog(LOG_ERR | LOG_USER, "%s", msg.data());
+    lgr.error("Unable to dup output descriptor: {}", ec);
     return;
   }
 
@@ -270,6 +262,7 @@ server::server(const string &address, const string &port,
 
   // io_context 'ioc' can now be used normally
   syslog(LOG_INFO | LOG_USER, "Daemon started.");
+  lgr.info("Daemon started (pid: {})", getpid());
 
   tcp::resolver resolver(ioc);
   boost::system::error_code resolver_ec;
@@ -368,8 +361,10 @@ server::do_daemon_await_stop() -> void {
   // capture brings 'this' into search for names
   signals.async_wait(
     [this](const boost::system::error_code ec, const int signo) {
-      syslog(LOG_INFO | LOG_USER, "Daemon stopped.");
       lgr.error("Received signal {} ({})", strsignal(signo), ec);
+      const auto message = format("Daemon stopped (pid: {})", getpid());
+      syslog(LOG_INFO | LOG_USER, "%s", message.data());
+      lgr.error(message);
       // stop server by cancelling all outstanding async ops; when all
       // have finished, the call to io_context::run() will finish
       ioc.stop();
