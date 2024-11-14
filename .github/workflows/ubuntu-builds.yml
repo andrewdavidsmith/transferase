@@ -1,4 +1,4 @@
-name: Build mc16 on Ubuntu
+name: Build mxe on Ubuntu
 
 on:
   workflow_dispatch:
@@ -30,4 +30,4 @@ jobs:
       - name: Test the GCC build
         run: |
           export LD_LIBRARY_PATH=/usr/local/lib
-          ./Release/src/mc16
+          ./Release/src/mxe

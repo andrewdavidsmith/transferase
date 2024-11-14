@@ -23,7 +23,7 @@
 
 #include "methylome_set.hpp"
 
-#include "mc16_error.hpp"
+#include "mxe_error.hpp"
 #include "methylome.hpp"
 
 #include <algorithm>
@@ -73,7 +73,7 @@ methylome_set::get_methylome(const string &accession)
   // check if methylome is loaded
   const auto acc_meth_itr = accession_to_methylome.find(accession);
   if (acc_meth_itr == cend(accession_to_methylome)) {
-    const auto filename = format("{}/{}.mc16", mc16_directory, accession);
+    const auto filename = format("{}/{}.mxe", mxe_directory, accession);
     if (!fs::exists(filename))
       return {nullptr, methylome_set_code::methylome_file_not_found};
 

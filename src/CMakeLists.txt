@@ -102,11 +102,11 @@ add_library(request OBJECT
   request.hpp
   request.cpp)
 
-add_executable(mc16)
-target_include_directories(mc16 PRIVATE "${PROJECT_BINARY_DIR}")
-target_sources(mc16 PRIVATE mc16.cpp)
+add_executable(mxe)
+target_include_directories(mxe PRIVATE "${PROJECT_BINARY_DIR}")
+target_sources(mxe PRIVATE mxe.cpp)
 target_link_libraries(
-  mc16
+  mxe
   utilities
   logger
   index
@@ -130,4 +130,4 @@ target_link_libraries(
   Boost::program_options
   Threads::Threads
 )
-install(TARGETS mc16 DESTINATION bin)
+install(TARGETS mxe DESTINATION bin)

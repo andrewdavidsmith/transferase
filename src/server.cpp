@@ -61,7 +61,7 @@ using tcp = ip::tcp;
 static auto
 write_pid_to_file(std::error_code &ec) -> void {
   static const auto pid_file_rhs =
-    fs::path(".config") / "mc16" / "MC16_PID_FILE";
+    fs::path(".config") / "mxe" / "MXE_PID_FILE";
 
   // write the pid of the daemon to a file
   const auto env_home = std::getenv("HOME");
@@ -80,7 +80,7 @@ write_pid_to_file(std::error_code &ec) -> void {
   }
   {
     const auto pid = getpid();
-    logger::instance().info("mc16 daemon pid: {}", pid);
+    logger::instance().info("mxe daemon pid: {}", pid);
     std::ofstream out(pid_file);
     if (!out) {
       ec = std::make_error_code(std::errc{errno});
@@ -88,7 +88,7 @@ write_pid_to_file(std::error_code &ec) -> void {
       syslog(LOG_ERR | LOG_USER, "%s", msg.data());
       return;
     }
-    logger::instance().info("mc16 daemon pid file: {}", pid_file);
+    logger::instance().info("mxe daemon pid file: {}", pid_file);
     const auto pid_str = format("{}", pid);
     out.write(pid_str.data(), size(pid_str));
     if (!out) {
@@ -249,7 +249,7 @@ server::server(const string &address, const string &port,
   }
 
   // Send standard output to a log file.
-  const auto output = "/tmp/mc16_daemon.out";
+  const auto output = "/tmp/mxe_daemon.out";
   const int flags = O_WRONLY | O_CREAT | O_APPEND;
   const mode_t mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
   if (open(output, flags, mode) < 0) {

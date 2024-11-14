@@ -43,7 +43,7 @@ namespace bs = boost::system;
 using steady_timer = asio::steady_timer;
 using tcp = asio::ip::tcp;
 
-typedef mc16_log_level lvl;
+typedef mxe_log_level lvl;
 
 auto
 connection::prepare_to_read_offsets() -> void {

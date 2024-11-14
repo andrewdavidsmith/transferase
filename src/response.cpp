@@ -22,7 +22,7 @@
  */
 
 #include "response.hpp"
-#include "mc16_error.hpp"
+#include "mxe_error.hpp"
 #include "utilities.hpp"
 
 #include <algorithm>
@@ -40,7 +40,7 @@ namespace rg = std::ranges;
 
 auto
 to_chars(char *first, [[maybe_unused]] char *last,
-         const response_header &hdr) -> mc16_to_chars_result {
+         const response_header &hdr) -> mxe_to_chars_result {
   // ADS: use to_chars here
   const string s = format("{}\t{}\n", hdr.status.value(), hdr.methylome_size);
   assert(ssize(s) < std::distance(first, last));
@@ -50,7 +50,7 @@ to_chars(char *first, [[maybe_unused]] char *last,
 
 auto
 from_chars(const char *first, const char *last,
-           response_header &hdr) -> mc16_from_chars_result {
+           response_header &hdr) -> mxe_from_chars_result {
   static constexpr auto delim = '\t';
   static constexpr auto term = '\n';
 

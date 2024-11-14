@@ -78,7 +78,7 @@ get_canonical_dir(const string &methylome_dir) -> string {
   return canonical_dir;
 }
 
-template <mc16_log_level the_level, typename... Args>
+template <mxe_log_level the_level, typename... Args>
 auto
 log_args(rg::input_range auto &&key_value_pairs) {
   logger &lgr = logger::instance();
@@ -87,10 +87,10 @@ log_args(rg::input_range auto &&key_value_pairs) {
 }
 
 struct server_interface_args {
-  static constexpr mc16_log_level default_log_level{mc16_log_level::debug};
+  static constexpr mxe_log_level default_log_level{mxe_log_level::debug};
   static constexpr auto default_n_threads{4};
   std::uint32_t n_threads{};
-  mc16_log_level log_level{};
+  mxe_log_level log_level{};
   std::string port{"5000"};
   std::string hostname{};
   std::string methylome_dir{};
@@ -153,7 +153,7 @@ server_interface_main(int argc, char *argv[]) -> int {
   if (args.methylome_dir.empty())
     return EXIT_FAILURE;
 
-  log_args<mc16_log_level::info>(vector<tuple<string, string>>{
+  log_args<mxe_log_level::info>(vector<tuple<string, string>>{
     // clang-format off
     {"Hostname", args.hostname},
     {"Port", args.port},

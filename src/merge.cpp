@@ -23,7 +23,7 @@
 
 #include "merge.hpp"
 
-#include "mc16_error.hpp"
+#include "mxe_error.hpp"
 #include "methylome.hpp"
 #include "utilities.hpp"
 

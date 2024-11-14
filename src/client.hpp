@@ -38,9 +38,9 @@
 #include <utility>  // std::swap std::move
 #include <vector>
 
-template <typename counts_type = counts_res_cov> class mc16_client {
+template <typename counts_type = counts_res_cov> class mxe_client {
 public:
-  mc16_client(const std::string &server, const std::string &port,
+  mxe_client(const std::string &server, const std::string &port,
               request_header &req_hdr, request &req, logger &lgr);
 
   auto run() -> std::error_code {
@@ -87,10 +87,10 @@ private:
   std::error_code status;
   logger &lgr;
   std::chrono::seconds read_timeout_seconds{3};
-};  // class mc16_client
+};  // class mxe_client
 
 template <typename counts_type>
-mc16_client<counts_type>::mc16_client(const std::string &server,
+mxe_client<counts_type>::mxe_client(const std::string &server,
                                       const std::string &port,
                                       request_header &req_hdr, request &req,
                                       logger &lgr) :
@@ -119,7 +119,7 @@ mc16_client<counts_type>::mc16_client(const std::string &server,
 
 template <typename counts_type>
 auto
-mc16_client<counts_type>::handle_resolve(
+mxe_client<counts_type>::handle_resolve(
   const std::error_code &err,
   const boost::asio::ip::tcp::resolver::results_type &endpoints) {
   if (!err) {
@@ -136,7 +136,7 @@ mc16_client<counts_type>::handle_resolve(
 
 template <typename counts_type>
 auto
-mc16_client<counts_type>::handle_connect(const std::error_code &err) {
+mxe_client<counts_type>::handle_connect(const std::error_code &err) {
   deadline.expires_at(boost::asio::steady_timer::time_point::max());
   if (!err) {
     lgr.debug("Connected to server: {}",
@@ -173,7 +173,7 @@ mc16_client<counts_type>::handle_connect(const std::error_code &err) {
 
 template <typename counts_type>
 auto
-mc16_client<counts_type>::handle_write_request(const std::error_code &err) {
+mxe_client<counts_type>::handle_write_request(const std::error_code &err) {
   deadline.expires_at(boost::asio::steady_timer::time_point::max());
   if (!err) {
     boost::asio::async_read(
@@ -195,7 +195,7 @@ mc16_client<counts_type>::handle_write_request(const std::error_code &err) {
 
 template <typename counts_type>
 auto
-mc16_client<counts_type>::handle_read_response_header(
+mxe_client<counts_type>::handle_read_response_header(
   const std::error_code &err) {
   // ADS: does this go here?
   deadline.expires_at(boost::asio::steady_timer::time_point::max());
@@ -218,7 +218,7 @@ mc16_client<counts_type>::handle_read_response_header(
 
 template <typename counts_type>
 auto
-mc16_client<counts_type>::handle_failure_explanation(
+mxe_client<counts_type>::handle_failure_explanation(
   const std::error_code &err) {
   deadline.expires_at(boost::asio::steady_timer::time_point::max());
   if (!err) {
@@ -240,7 +240,7 @@ mc16_client<counts_type>::handle_failure_explanation(
 
 template <typename counts_type>
 auto
-mc16_client<counts_type>::do_read_counts() {
+mxe_client<counts_type>::do_read_counts() {
   // ADS: this 'resize' seems to belong with the response class
   resp.counts.resize(req.n_intervals);
   boost::asio::async_read(
@@ -252,7 +252,7 @@ mc16_client<counts_type>::do_read_counts() {
 
 template <typename counts_type>
 auto
-mc16_client<counts_type>::do_finish(const std::error_code &err) {
+mxe_client<counts_type>::do_finish(const std::error_code &err) {
   // same consequence as canceling
   deadline.expires_at(boost::asio::steady_timer::time_point::max());
   status = err;
@@ -264,7 +264,7 @@ mc16_client<counts_type>::do_finish(const std::error_code &err) {
 
 template <typename counts_type>
 auto
-mc16_client<counts_type>::check_deadline() {
+mxe_client<counts_type>::check_deadline() {
   if (!socket.is_open())  // ADS: when can this happen?
     return;
 
