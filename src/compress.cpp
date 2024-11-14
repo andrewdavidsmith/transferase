@@ -24,8 +24,8 @@
 #include "compress.hpp"
 #include "cpg_index.hpp"
 #include "genomic_interval.hpp"
-#include "mxe_error.hpp"
 #include "methylome.hpp"
+#include "mxe_error.hpp"
 #include "utilities.hpp"
 
 #include <config.h>

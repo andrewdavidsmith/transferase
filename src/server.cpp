@@ -60,8 +60,7 @@ using tcp = ip::tcp;
 
 static auto
 write_pid_to_file(std::error_code &ec) -> void {
-  static const auto pid_file_rhs =
-    fs::path(".config") / "mxe" / "MXE_PID_FILE";
+  static const auto pid_file_rhs = fs::path(".config") / "mxe" / "MXE_PID_FILE";
 
   // write the pid of the daemon to a file
   const auto env_home = std::getenv("HOME");

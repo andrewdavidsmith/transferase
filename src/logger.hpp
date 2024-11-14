@@ -123,10 +123,9 @@ private:
   }()};
 
 public:
-  static logger &
-  instance(std::shared_ptr<std::ostream> log_file_ptr = nullptr,
-           const std::string &appname = "",
-           mxe_log_level min_log_level = mxe_log_level::debug) {
+  static logger &instance(std::shared_ptr<std::ostream> log_file_ptr = nullptr,
+                          const std::string &appname = "",
+                          mxe_log_level min_log_level = mxe_log_level::debug) {
     static logger fl(log_file_ptr, appname, min_log_level);
     return fl;
   }

@@ -23,8 +23,8 @@
 
 #include "check.hpp"
 #include "cpg_index.hpp"
-#include "mxe_error.hpp"
 #include "methylome.hpp"
+#include "mxe_error.hpp"
 
 #include <boost/program_options.hpp>
 

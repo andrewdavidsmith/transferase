@@ -41,7 +41,7 @@
 template <typename counts_type = counts_res_cov> class mxe_client {
 public:
   mxe_client(const std::string &server, const std::string &port,
-              request_header &req_hdr, request &req, logger &lgr);
+             request_header &req_hdr, request &req, logger &lgr);
 
   auto run() -> std::error_code {
     io_context.run();
@@ -91,9 +91,9 @@ private:
 
 template <typename counts_type>
 mxe_client<counts_type>::mxe_client(const std::string &server,
-                                      const std::string &port,
-                                      request_header &req_hdr, request &req,
-                                      logger &lgr) :
+                                    const std::string &port,
+                                    request_header &req_hdr, request &req,
+                                    logger &lgr) :
   resolver(io_context), socket(io_context), deadline{socket.get_executor()},
   req_hdr{req_hdr}, req{std::move(req)},  // move b/c req can be big
   lgr{lgr} {
