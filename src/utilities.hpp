@@ -50,17 +50,17 @@
 
 #include <zlib.h>
 
-struct mc16_to_chars_result {
+struct mxe_to_chars_result {
   char *ptr{};
   std::error_code error{};
 };
-typedef mc16_to_chars_result compose_result;
+typedef mxe_to_chars_result compose_result;
 
-struct mc16_from_chars_result {
+struct mxe_from_chars_result {
   const char *ptr{};
   std::error_code error{};
 };
-typedef mc16_from_chars_result parse_result;
+typedef mxe_from_chars_result parse_result;
 
 template <typename T>
 auto

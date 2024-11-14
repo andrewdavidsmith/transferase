@@ -27,8 +27,8 @@
 #include "cpg_index.hpp"
 #include "genomic_interval.hpp"
 #include "logger.hpp"
-#include "mc16_error.hpp"
 #include "methylome.hpp"
+#include "mxe_error.hpp"
 #include "request.hpp"
 #include "response.hpp"
 #include "utilities.hpp"
@@ -65,7 +65,7 @@ using hr_clock = std::chrono::high_resolution_clock;
 
 namespace po = boost::program_options;
 
-template <mc16_log_level the_level, typename... Args>
+template <mxe_log_level the_level, typename... Args>
 auto
 log_args(rg::input_range auto &&key_value_pairs) {
   logger &lgr = logger::instance();
@@ -81,13 +81,13 @@ do_remote_lookup(const string &accession, const cpg_index &index,
   request_header hdr{accession, index.n_cpgs_total,
                      request_header::request_type::counts_cov};
   request req{static_cast<uint32_t>(size(offsets)), offsets};
-  mc16_client mc16c(hostname, port, hdr, req, logger::instance());
-  const auto status = mc16c.run();
+  mxe_client mxec(hostname, port, hdr, req, logger::instance());
+  const auto status = mxec.run();
   if (status) {
     logger::instance().error("Transaction status: {}", status);
     return {{}, status};
   }
-  return {std::move(mc16c.take_counts()), {}};
+  return {std::move(mxec.take_counts()), {}};
 }
 
 template <typename T>
@@ -126,8 +126,8 @@ write_output(std::ostream &out, const vector<genomic_interval> &gis,
 auto
 lookup_main(int argc, char *argv[]) -> int {
   static constexpr auto usage_format =
-    "Usage: mc16 lookup {} [options]\n\nOption groups";
-  static constexpr mc16_log_level default_log_level = mc16_log_level::warning;
+    "Usage: mxe lookup {} [options]\n\nOption groups";
+  static constexpr mxe_log_level default_log_level = mxe_log_level::warning;
   static constexpr auto default_port = "5000";
   static const auto command = "lookup";
 
@@ -139,7 +139,7 @@ lookup_main(int argc, char *argv[]) -> int {
   string intervals_file{};
   string hostname{};
   string output_file{};
-  mc16_log_level log_level{};
+  mxe_log_level log_level{};
 
   string subcmd;
   po::options_description subcmds;
@@ -163,7 +163,7 @@ lookup_main(int argc, char *argv[]) -> int {
   po::notify(vm_subcmd);
 
   if (subcmd != "local" && subcmd != "remote") {
-    println(std::cerr, "Usage: mc16 lookup [local|remote] [options]");
+    println(std::cerr, "Usage: mxe lookup [local|remote] [options]");
     return EXIT_FAILURE;
   }
   const bool remote_mode = subcmd == "remote";
@@ -233,8 +233,8 @@ lookup_main(int argc, char *argv[]) -> int {
   vector<tuple<string, string>> local_args{
     {"Methylome", meth_file},
   };
-  log_args<mc16_log_level::info>(args_to_log);
-  log_args<mc16_log_level::info>(remote_mode ? remote_args : local_args);
+  log_args<mxe_log_level::info>(args_to_log);
+  log_args<mxe_log_level::info>(remote_mode ? remote_args : local_args);
 
   cpg_index index{};
   if (const auto index_read_err = index.read(index_file); index_read_err) {
@@ -242,7 +242,7 @@ lookup_main(int argc, char *argv[]) -> int {
     return EXIT_FAILURE;
   }
 
-  if (log_level == mc16_log_level::debug)
+  if (log_level == mxe_log_level::debug)
     lgr.debug("Number of CpGs in index: {}", index.n_cpgs_total);
 
   const auto [gis, ec] = genomic_interval::load(index, intervals_file);

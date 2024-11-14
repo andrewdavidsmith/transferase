@@ -23,7 +23,7 @@
 
 #include "request.hpp"
 
-#include "mc16_error.hpp"
+#include "mxe_error.hpp"
 
 #include <algorithm>
 #include <charconv>
@@ -39,7 +39,7 @@ using std::string;
 
 auto
 to_chars(char *first, [[maybe_unused]] char *last,
-         const request_header &header) -> mc16_to_chars_result {
+         const request_header &header) -> mxe_to_chars_result {
   // ADS: use to_chars here
   const string s = format("{}\n", header);
   assert(static_cast<std::iterator_traits<char *>::difference_type>(size(s)) <
@@ -50,7 +50,7 @@ to_chars(char *first, [[maybe_unused]] char *last,
 
 auto
 from_chars(const char *first, const char *last,
-           request_header &header) -> mc16_from_chars_result {
+           request_header &header) -> mxe_from_chars_result {
   static constexpr auto delim = '\t';
   static constexpr auto term = '\n';
 
@@ -123,7 +123,7 @@ request::summary() const -> string {
 
 auto
 to_chars(char *first, [[maybe_unused]] char *last,
-         const request &req) -> mc16_to_chars_result {
+         const request &req) -> mxe_to_chars_result {
   // ADS: use to_chars here
   const string s = format("{}\n", req.n_intervals);
   assert(static_cast<std::iterator_traits<char *>::difference_type>(size(s)) <
@@ -134,7 +134,7 @@ to_chars(char *first, [[maybe_unused]] char *last,
 
 auto
 from_chars(const char *first, const char *last,
-           request &req) -> mc16_from_chars_result {
+           request &req) -> mxe_from_chars_result {
   [[maybe_unused]] static constexpr auto delim = '\t';
   static constexpr auto term = '\n';
 

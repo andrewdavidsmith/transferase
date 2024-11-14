@@ -24,7 +24,7 @@
 #ifndef SRC_REQUEST_HPP_
 #define SRC_REQUEST_HPP_
 
-#include "mc16_error.hpp"
+#include "mxe_error.hpp"
 #include "utilities.hpp"
 
 #include <array>
@@ -75,11 +75,11 @@ struct std::formatter<request_header> : std::formatter<std::string> {
 
 auto
 to_chars(char *first, char *last,
-         const request_header &header) -> mc16_to_chars_result;
+         const request_header &header) -> mxe_to_chars_result;
 
 auto
 from_chars(const char *first, const char *last,
-           request_header &header) -> mc16_from_chars_result;
+           request_header &header) -> mxe_from_chars_result;
 
 auto
 compose(request_buffer &buf, const request_header &header) -> compose_result;
@@ -104,10 +104,10 @@ struct request {
 };
 
 auto
-to_chars(char *first, char *last, const request &req) -> mc16_to_chars_result;
+to_chars(char *first, char *last, const request &req) -> mxe_to_chars_result;
 
 auto
 from_chars(const char *first, const char *last,
-           request &req) -> mc16_from_chars_result;
+           request &req) -> mxe_from_chars_result;
 
 #endif  // SRC_REQUEST_HPP_

@@ -26,7 +26,7 @@
 
 #include "methylome.hpp"  // for counts_res_cov
 
-#include "mc16_error.hpp"
+#include "mxe_error.hpp"
 #include "utilities.hpp"
 
 #include <array>
@@ -51,11 +51,11 @@ struct response_header {
 
 auto
 to_chars(char *first, char *last,
-         const response_header &header) -> mc16_to_chars_result;
+         const response_header &header) -> mxe_to_chars_result;
 
 auto
 from_chars(const char *first, const char *last,
-           response_header &header) -> mc16_from_chars_result;
+           response_header &header) -> mxe_from_chars_result;
 
 auto
 compose(std::array<char, response_buf_size> &buf,

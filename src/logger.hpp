@@ -58,17 +58,17 @@
   - message
 */
 
-enum class mc16_log_level : std::uint32_t {
+enum class mxe_log_level : std::uint32_t {
   debug,
   info,
   warning,
   error,
   n_levels,
 };
-static constexpr std::uint32_t mc16_n_log_levels =
-  std::to_underlying(mc16_log_level::n_levels);
+static constexpr std::uint32_t mxe_n_log_levels =
+  std::to_underlying(mxe_log_level::n_levels);
 
-static constexpr std::array<const char *, mc16_n_log_levels> level_name = {
+static constexpr std::array<const char *, mxe_n_log_levels> level_name = {
   "debug",
   "info",
   "warning",
@@ -76,25 +76,25 @@ static constexpr std::array<const char *, mc16_n_log_levels> level_name = {
 };
 
 static constexpr auto level_name_sz{[]() constexpr {
-  std::array<std::uint32_t, mc16_n_log_levels> tmp{};
-  for (std::uint32_t i = 0; i < mc16_n_log_levels; ++i)
+  std::array<std::uint32_t, mxe_n_log_levels> tmp{};
+  for (std::uint32_t i = 0; i < mxe_n_log_levels; ++i)
     tmp[i] = std::size(std::string_view(level_name[i]));
   return tmp;
 }()};
 
 inline std::ostream &
-operator<<(std::ostream &o, const mc16_log_level &l) {
+operator<<(std::ostream &o, const mxe_log_level &l) {
   return o << level_name[std::to_underlying(l)];
 }
 
 inline std::istream &
-operator>>(std::istream &in, mc16_log_level &l) {
+operator>>(std::istream &in, mxe_log_level &l) {
   std::string tmp;
   if (!(in >> tmp))
     return in;
-  for (std::uint32_t i = 0; i < mc16_n_log_levels; ++i)
+  for (std::uint32_t i = 0; i < mxe_n_log_levels; ++i)
     if (tmp == std::string_view(level_name[i])) {
-      l = static_cast<mc16_log_level>(i);
+      l = static_cast<mxe_log_level>(i);
       return in;
     }
   in.setstate(std::ios::failbit);
@@ -109,30 +109,29 @@ private:
     std::size(date_time_fmt_expanded);
   static constexpr auto delim = ' ';
   static constexpr auto date_time_fmt = "{:%F}{}{:%T}";
-  static constexpr std::array<const char *, mc16_n_log_levels> level_name = {
+  static constexpr std::array<const char *, mxe_n_log_levels> level_name = {
     "DEBUG",
     "INFO",
     "WARNING",
     "ERROR",
   };
   static constexpr auto level_name_sz{[]() constexpr {
-    std::array<std::uint32_t, mc16_n_log_levels> tmp{};
-    for (std::uint32_t i = 0; i < mc16_n_log_levels; ++i)
+    std::array<std::uint32_t, mxe_n_log_levels> tmp{};
+    for (std::uint32_t i = 0; i < mxe_n_log_levels; ++i)
       tmp[i] = std::size(std::string_view(level_name[i]));
     return tmp;
   }()};
 
 public:
-  static logger &
-  instance(std::shared_ptr<std::ostream> log_file_ptr = nullptr,
-           const std::string &appname = "",
-           mc16_log_level min_log_level = mc16_log_level::debug) {
+  static logger &instance(std::shared_ptr<std::ostream> log_file_ptr = nullptr,
+                          const std::string &appname = "",
+                          mxe_log_level min_log_level = mxe_log_level::debug) {
     static logger fl(log_file_ptr, appname, min_log_level);
     return fl;
   }
 
   logger(std::shared_ptr<std::ostream> log_file_ptr, const std::string &appname,
-         mc16_log_level min_log_level = mc16_log_level::info) :
+         mxe_log_level min_log_level = mxe_log_level::info) :
     log_file{log_file_ptr}, min_log_level{min_log_level} {
     // ADS: check for log file good here?
     // status = std::make_error_code(std::errc(errno));
@@ -145,7 +144,7 @@ public:
 
   operator bool() const { return status ? false : true; }
 
-  template <mc16_log_level the_level>
+  template <mxe_log_level the_level>
   auto log(std::string_view message) -> void {
     static constexpr auto idx = std::to_underlying(the_level);
     static constexpr auto sz = level_name_sz[idx];
@@ -165,7 +164,7 @@ public:
     }
   }
 
-  template <mc16_log_level the_level, typename... Args>
+  template <mxe_log_level the_level, typename... Args>
   auto log(std::string_view fmt_str, Args &&...args) -> void {
     static constexpr auto idx = std::to_underlying(the_level);
     static constexpr auto sz = level_name_sz[idx];
@@ -187,33 +186,33 @@ public:
   }
 
   auto debug(std::string_view message) -> void {
-    log<mc16_log_level::debug>(message);
+    log<mxe_log_level::debug>(message);
   }
   auto info(std::string_view message) -> void {
-    log<mc16_log_level::info>(message);
+    log<mxe_log_level::info>(message);
   }
   auto warning(std::string_view message) -> void {
-    log<mc16_log_level::warning>(message);
+    log<mxe_log_level::warning>(message);
   }
   auto error(std::string_view message) -> void {
-    log<mc16_log_level::error>(message);
+    log<mxe_log_level::error>(message);
   }
 
   template <typename... Args>
   auto debug(std::string_view fmt_str, Args &&...args) -> void {
-    log<mc16_log_level::debug>(fmt_str, args...);
+    log<mxe_log_level::debug>(fmt_str, args...);
   }
   template <typename... Args>
   auto info(std::string_view fmt_str, Args &&...args) -> void {
-    log<mc16_log_level::info>(fmt_str, args...);
+    log<mxe_log_level::info>(fmt_str, args...);
   }
   template <typename... Args>
   auto warning(std::string_view fmt_str, Args &&...args) -> void {
-    log<mc16_log_level::warning>(fmt_str, args...);
+    log<mxe_log_level::warning>(fmt_str, args...);
   }
   template <typename... Args>
   auto error(std::string_view fmt_str, Args &&...args) -> void {
-    log<mc16_log_level::error>(fmt_str, args...);
+    log<mxe_log_level::error>(fmt_str, args...);
   }
 
 private:
@@ -225,7 +224,7 @@ private:
   std::shared_ptr<std::ostream> log_file;
   std::mutex mtx{};
   char *cursor{};
-  const mc16_log_level min_log_level{};
+  const mxe_log_level min_log_level{};
   std::error_code status{};
 
   logger(const logger &) = delete;

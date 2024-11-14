@@ -24,7 +24,7 @@
 #include "genomic_interval.hpp"
 
 #include "cpg_index.hpp"
-#include "mc16_error.hpp"
+#include "mxe_error.hpp"
 
 #include <format>
 #include <fstream>

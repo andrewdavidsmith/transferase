@@ -21,7 +21,7 @@
  * SOFTWARE.
  */
 
-/* mc16: work with the mc16 methylome format
+/* mxe: work with the mxe methylome format
  */
 
 #include "bins.hpp"
@@ -66,11 +66,11 @@ typedef std::function<int(int, char **)> main_fun;
 const std::tuple<string_view, main_fun, string_view> commands[] = {
   // clang-format off
   {"index", index_main, "make an index for a reference genome"},
-  {"compress", compress_main, "convert a methylome from xsym to mc16"},
-  {"check", check_main, "check that an mc16 file is valid for a reference"},
+  {"compress", compress_main, "convert a methylome from xsym to mxe"},
+  {"check", check_main, "check that an mxe file is valid for a reference"},
   {"lookup", lookup_main, "get methylation levels in each interval"},
-  {"merge", merge_main, "merge a set of mc16 format methylomes"},
-  {"zip", zip_main, "make an mc16 format methylome smaller"},
+  {"merge", merge_main, "merge a set of mxe format methylomes"},
+  {"zip", zip_main, "make an mxe format methylome smaller"},
   {"bins", bins_main, "get methylation levels in each bin"},
   {"server", server_interface_main, "run a server to respond to lookup queries"},
   // clang-format on
@@ -96,7 +96,7 @@ format_help(const string &description, rg::input_range auto &&cmds) {
 
 int
 main(int argc, char *argv[]) {
-  static constexpr auto program = "mc16";
+  static constexpr auto program = "mxe";
 
   string command;
   po::options_description arguments;

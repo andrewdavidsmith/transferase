@@ -23,7 +23,7 @@
 
 #include "methylome.hpp"
 
-#include "mc16_error.hpp"
+#include "mxe_error.hpp"
 #include "utilities.hpp"
 #include "zlib_adapter.hpp"
 

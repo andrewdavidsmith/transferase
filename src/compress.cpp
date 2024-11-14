@@ -24,8 +24,8 @@
 #include "compress.hpp"
 #include "cpg_index.hpp"
 #include "genomic_interval.hpp"
-#include "mc16_error.hpp"
 #include "methylome.hpp"
+#include "mxe_error.hpp"
 #include "utilities.hpp"
 
 #include <config.h>
@@ -244,7 +244,7 @@ verify_header_line(const cpg_index &idx, int32_t &n_chroms_seen,
   chrom = chrom.substr(1);  // remove leading '#'
 
   // validate the chromosome order is consistent between the index and
-  // methylome mc16 file
+  // methylome mxe file
   const auto order_itr = idx.chrom_index.find(chrom);
   if (order_itr == cend(idx.chrom_index))
     return compress_err::xcounts_file_chromosome_not_found;
@@ -253,7 +253,7 @@ verify_header_line(const cpg_index &idx, int32_t &n_chroms_seen,
     return compress_err::xcounts_file_inconsistent_chromosome_order;
 
   // validate that the chromosome size is the same between the index
-  // and the methylome mc16 file
+  // and the methylome mxe file
   const auto size_itr = idx.chrom_size[order_itr->second];
   if (chrom_size != size_itr)
     return compress_err::xcounts_file_incorrect_chromosome_size;
@@ -340,7 +340,7 @@ process_cpg_sites(const string &infile, const string &outfile,
   cpg_idx_out += add_all_cpgs(prev_ch_id, size(index.positions), index);
 
   if (cpg_idx_out != index.n_cpgs_total) {
-    println("Failed to generate mc16 methylome");
+    println("Failed to generate mxe methylome");
     return compress_err::methylome_compression_failure;
   }
 

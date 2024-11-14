@@ -28,7 +28,7 @@
 #include "utilities.hpp"
 
 #include "logger.hpp"
-#include "mc16_error.hpp"
+#include "mxe_error.hpp"
 
 #include <chrono>
 #include <cstdint>
@@ -67,16 +67,16 @@ request_handler::handle_header(const request_header &req_hdr,
 
   // verify that the accession makes sense
   if (!is_valid_accession(req_hdr.accession)) {
-    lgr.log<mc16_log_level::warning>("Malformed accession: {}",
-                                     req_hdr.accession);
+    lgr.log<mxe_log_level::warning>("Malformed accession: {}",
+                                    req_hdr.accession);
     resp_hdr.status = server_response_code::invalid_accession;
     return;
   }
 
   // verify that the request type makes sense
   if (!req_hdr.is_valid_type()) {
-    lgr.log<mc16_log_level::warning>("Request type not valid: {}",
-                                     req_hdr.rq_type);
+    lgr.log<mxe_log_level::warning>("Request type not valid: {}",
+                                    req_hdr.rq_type);
     resp_hdr.status = server_response_code::invalid_request_type;
     return;
   }
@@ -88,20 +88,20 @@ request_handler::handle_header(const request_header &req_hdr,
   std::error_code get_meth_err;
   std::tie(std::ignore, get_meth_err) = ms.get_methylome(req_hdr.accession);
   const auto get_methylome_stop{hr_clock::now()};
-  lgr.log<mc16_log_level::debug>(
+  lgr.log<mxe_log_level::debug>(
     "Elapsed time for get methylome: {:.3}s",
     duration(get_methylome_start, get_methylome_stop));
   if (get_meth_err) {
-    lgr.log<mc16_log_level::warning>("Error loading methylome: {}",
-                                     req_hdr.accession);
-    lgr.log<mc16_log_level::warning>("Error: {}", get_meth_err);
+    lgr.log<mxe_log_level::warning>("Error loading methylome: {}",
+                                    req_hdr.accession);
+    lgr.log<mxe_log_level::warning>("Error: {}", get_meth_err);
     resp_hdr.status = server_response_code::methylome_not_found;
     return;
   }
 
   // confirm that the methylome size is as expected
   if (req_hdr.methylome_size != ms.n_total_cpgs) {
-    lgr.log<mc16_log_level::warning>(
+    lgr.log<mxe_log_level::warning>(
       "Incorrect methylome size (provided={}, expected={})",
       req_hdr.methylome_size, ms.n_total_cpgs);
     resp_hdr.status = server_response_code::invalid_methylome_size;
@@ -130,15 +130,14 @@ request_handler::handle_get_counts_cov(const request_header &req_hdr,
   // assume methylome availability has been determined
   const auto [meth, get_meth_err] = ms.get_methylome(req_hdr.accession);
   if (get_meth_err) {
-    lgr.log<mc16_log_level::error>("Failed to load methylome: {}",
-                                   get_meth_err);
+    lgr.log<mxe_log_level::error>("Failed to load methylome: {}", get_meth_err);
     // keep methylome size in response header
     resp_hdr.status = server_response_code::server_failure;
     return;
   }
 
-  lgr.log<mc16_log_level::debug>("Computing counts for methylome: {}",
-                                 req_hdr.accession);
+  lgr.log<mxe_log_level::debug>("Computing counts for methylome: {}",
+                                req_hdr.accession);
 
   // generate the counts
   resp.counts = meth->get_counts_cov(req.offsets);
