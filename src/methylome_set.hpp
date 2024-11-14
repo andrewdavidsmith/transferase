@@ -72,9 +72,10 @@ struct methylome_set {
   methylome_set &operator=(const methylome_set &) = delete;
 
   methylome_set(const std::uint32_t max_live_methylomes,
-                const std::string &mxe_directory) :
-    n_total_cpgs{}, max_live_methylomes{max_live_methylomes},
-    mxe_directory{mxe_directory}, accessions{max_live_methylomes} {}
+                const std::string &methylome_directory) :
+    n_total_cpgs{},
+    max_live_methylomes{max_live_methylomes},
+    methylome_directory{methylome_directory}, accessions{max_live_methylomes} {}
 
   [[nodiscard]] auto get_methylome(const std::string &accession)
     -> std::tuple<std::shared_ptr<methylome>, std::error_code>;
@@ -84,11 +85,12 @@ struct methylome_set {
   }
 
   static constexpr std::uint32_t default_max_live_methylomes{128};
+  static constexpr auto methylome_extension{"mc16"};
 
   std::mutex mtx;
   std::uint32_t n_total_cpgs{};
   std::uint32_t max_live_methylomes{};
-  std::string mxe_directory;
+  std::string methylome_directory;
 
   ring_buffer<std::string> accessions;
 

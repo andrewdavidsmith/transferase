@@ -29,6 +29,7 @@
 #include <algorithm>
 #include <cstdint>
 #include <filesystem>
+#include <format>
 #include <iostream>
 #include <memory>  // std::make_shared
 #include <mutex>
@@ -63,6 +64,8 @@ is_valid_accession(const string &accession) -> bool {
 [[nodiscard]] auto
 methylome_set::get_methylome(const string &accession)
   -> tuple<std::shared_ptr<methylome>, std::error_code> {
+  static constexpr auto methylome_filename_format = "{}/{}.{}";
+
   if (!is_valid_accession(accession))
     return {nullptr, methylome_set_code::invalid_accession};
 
@@ -73,7 +76,9 @@ methylome_set::get_methylome(const string &accession)
   // check if methylome is loaded
   const auto acc_meth_itr = accession_to_methylome.find(accession);
   if (acc_meth_itr == cend(accession_to_methylome)) {
-    const auto filename = format("{}/{}.mxe", mxe_directory, accession);
+    const auto filename =
+      std::format(methylome_filename_format, methylome_directory, accession,
+                  methylome_extension);
     if (!fs::exists(filename))
       return {nullptr, methylome_set_code::methylome_file_not_found};
 
