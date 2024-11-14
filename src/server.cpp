@@ -242,9 +242,10 @@ server::server(const string &address, const string &port,
 
   // Send standard output to a log file in case something would be
   // written there.
+  // ADS: (todo) fix this hardcoded file below
   const auto output = "/tmp/mxe_daemon.out";
   const int flags = O_WRONLY | O_CREAT | O_APPEND;
-  const mode_t mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
+  const mode_t mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;  // 644
   if (open(output, flags, mode) < 0) {
     ec = std::make_error_code(std::errc(errno));
     lgr.error("Unable to open output file {}: {}", output, ec);
@@ -364,7 +365,7 @@ server::do_daemon_await_stop() -> void {
       lgr.error("Received signal {} ({})", strsignal(signo), ec);
       const auto message = format("Daemon stopped (pid: {})", getpid());
       syslog(LOG_INFO | LOG_USER, "%s", message.data());
-      lgr.error(message);
+      lgr.info(message);
       // stop server by cancelling all outstanding async ops; when all
       // have finished, the call to io_context::run() will finish
       ioc.stop();
