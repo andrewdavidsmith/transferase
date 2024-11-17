@@ -102,6 +102,8 @@ add_library(request OBJECT
   request.hpp
   request.cpp)
 
+add_compile_options(-Wall -Wextra -Wpedantic -Werror -Wfatal-errors)
+
 add_executable(mxe)
 target_include_directories(mxe PRIVATE "${PROJECT_BINARY_DIR}")
 target_sources(mxe PRIVATE mxe.cpp)

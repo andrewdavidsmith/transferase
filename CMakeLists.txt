@@ -51,8 +51,6 @@ find_package(
   program_options)
 find_package(ZLIB REQUIRED)
 
-add_compile_options(-Wall -Wextra -Wpedantic -Werror -Wfatal-errors)
-
 add_subdirectory(src)
 
 configure_file(config.h.in config.h)
