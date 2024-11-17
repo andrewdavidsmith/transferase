@@ -93,7 +93,6 @@ struct methylome_metadata {
       return {{}, err};
 
     const auto creation_time = std::chrono::utc_clock::now();
-    // std::chrono::floor<std::chrono::seconds>(std::chrono::utc_clock::now());
 
     return {
       {VERSION, host, getuid(), creation_time, methylome_adler, index_adler},
