@@ -82,6 +82,16 @@ static constexpr auto level_name_sz{[]() constexpr {
   return tmp;
 }()};
 
+/*
+  print std::filesystem::path
+ */
+template <> struct std::formatter<mxe_log_level> : std::formatter<std::string> {
+  auto format(const mxe_log_level &l, std::format_context &ctx) const {
+    return std::formatter<std::string>::format(
+      level_name[std::to_underlying(l)], ctx);
+  }
+};
+
 inline std::ostream &
 operator<<(std::ostream &o, const mxe_log_level &l) {
   return o << level_name[std::to_underlying(l)];
