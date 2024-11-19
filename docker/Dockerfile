@@ -1,5 +1,5 @@
 # Use the build env from existing image
-FROM andrewdavidsmith/gcc-cmake-boost as build_mxe
+FROM andrewdavidsmith/gcc-cmake-boost as build
 ARG NUM_JOBS=4
 WORKDIR /build
 RUN apt-get update
@@ -18,7 +18,7 @@ RUN git clone https://github.com/andrewdavidsmith/mxe.git && \
     cmake --install Release --prefix /build
 
 # Build a light-weight image just with the binary
-FROM alpine:latest
-COPY --from=build_mxe /build/bin /usr/bin
+FROM ubuntu:latest
+COPY --from=build /build/bin /usr/bin
 
 ENTRYPOINT ["mxe"]
