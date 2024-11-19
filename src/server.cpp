@@ -350,7 +350,7 @@ server::do_await_stop() -> void {
   // capture brings 'this' into search for names
   signals.async_wait(
     [this](const boost::system::error_code ec, const int signo) {
-      lgr.error("Received signal {} ({})", strsignal(signo), ec);
+      lgr.warning("Received signal {} ({})", strsignal(signo), ec);
       // stop server by cancelling all outstanding async ops; when all
       // have finished, the call to io_context::run() will finish
       ioc.stop();
@@ -362,7 +362,7 @@ server::do_daemon_await_stop() -> void {
   // capture brings 'this' into search for names
   signals.async_wait(
     [this](const boost::system::error_code ec, const int signo) {
-      lgr.error("Received signal {} ({})", strsignal(signo), ec);
+      lgr.warning("Received signal {} ({})", strsignal(signo), ec);
       const auto message = format("Daemon stopped (pid: {})", getpid());
       syslog(LOG_INFO | LOG_USER, "%s", message.data());
       lgr.info(message);

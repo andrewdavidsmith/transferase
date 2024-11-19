@@ -23,9 +23,11 @@
 
 #include "server_interface.hpp"
 
+#include "arguments.hpp"
 #include "logger.hpp"
 #include "methylome_set.hpp"
 #include "server.hpp"
+#include "utilities.hpp"
 
 #include <boost/program_options.hpp>
 
@@ -34,13 +36,12 @@
 #include <format>
 #include <fstream>
 #include <iostream>
-#include <memory>
+#include <memory>  // std::make_shared
 #include <print>
 #include <string>
 #include <tuple>
 #include <vector>
 
-using std::cerr;
 using std::cout;
 using std::format;
 using std::make_shared;
@@ -54,8 +55,6 @@ using std::tuple;
 using std::uint32_t;
 using std::vector;
 
-namespace po = boost::program_options;
-namespace rg = std::ranges;
 namespace fs = std::filesystem;
 
 static auto
@@ -78,64 +77,84 @@ get_canonical_dir(const string &methylome_dir) -> string {
   return canonical_dir;
 }
 
-template <mxe_log_level the_level, typename... Args>
-auto
-log_args(rg::input_range auto &&key_value_pairs) {
-  logger &lgr = logger::instance();
-  for (auto &&[k, v] : key_value_pairs)
-    lgr.log<the_level>("{}: {}", k, v);
-}
+struct server_interface_argset : argset_base<server_interface_argset> {
+  static constexpr auto default_config_filename = "mxe_server_config.toml";
 
-struct server_interface_args {
-  static constexpr mxe_log_level default_log_level{mxe_log_level::debug};
-  static constexpr auto default_n_threads{4};
-  std::uint32_t n_threads{};
+  static auto get_default_config_file_impl() -> string {
+    std::error_code ec;
+    const auto config_dir = get_mxe_config_dir_default(ec);
+    if (ec)
+      return {};
+    return fs::path(config_dir) / default_config_filename;
+  }
+
+  static constexpr auto hostname_default{"localhost"};
+  static constexpr auto port_default{"5000"};
+  static constexpr auto log_level_default{mxe_log_level::warning};
+  static constexpr auto n_threads_default{1};
+  static constexpr auto max_resident_default = 32;
+  string hostname{};
+  string port{};
+  string methylome_dir{};
+  string log_filename{};
   mxe_log_level log_level{};
-  std::string port{"5000"};
-  std::string hostname{};
-  std::string methylome_dir{};
-  std::string log_filename{};
-  std::uint32_t max_live_methylomes{};
+  uint32_t n_threads{};
+  uint32_t max_resident{};
   bool daemonize{};
+
+  auto log_options_impl() const {
+    log_args<mxe_log_level::info>(vector<tuple<string, string>>{
+      // clang-format off
+        {"hostname", format("{}", hostname)},
+        {"port", format("{}", port)},
+        {"methylome_dir", format("{}", methylome_dir)},
+        {"log_filename", format("{}", log_filename)},
+        {"log_level", format("{}", log_level)},
+        {"n_threads", format("{}", n_threads)},
+        {"max_resident", format("{}", max_resident)},
+        {"daemonize", format("{}", daemonize)},
+      // clang-format on
+    });
+  }
+
+  [[nodiscard]] auto
+  set_common_opts_impl() -> boost::program_options::options_description {
+    namespace po = boost::program_options;
+    using po::value;
+    po::options_description opts("Command line or config file");
+    opts.add_options()
+      // clang-format off
+      ("hostname,s", value(&hostname)->default_value(hostname_default),
+       "server hostname")
+      ("port,p", value(&port)->default_value(port_default), "server port")
+      ("daemonize,d", po::bool_switch(&daemonize), "daemonize the server")
+      ("methylome-dir,m", value(&methylome_dir)->required(), "methylome directory")
+      ("max-resident,r",
+       value(&max_resident)->default_value(max_resident_default),
+       "max resident methylomes")
+      ("threads,t", value(&n_threads)->default_value(n_threads_default),
+       "number of threads")
+      ("log-level,v", value(&log_level)->default_value(log_level_default),
+       "log level {debug,info,warning,error}")
+      ("log-file,l", value(&log_filename)->value_name("console"),
+       "log file name")
+      // clang-format on
+      ;
+    return opts;
+  }
 };
 
 auto
 server_interface_main(int argc, char *argv[]) -> int {
+  static constexpr auto usage = "Usage: mxe server [options]";
   static const auto description = "server";
 
-  server_interface_args args{};
-
-  po::options_description desc(description);
-  desc.add_options()
-    // clang-format off
-    ("help,h", "produce help message")
-    ("hostname,H", po::value(&args.hostname)->required(), "server hostname")
-    ("port,p", po::value(&args.port)->required(), "port")
-    ("methylomes,m", po::value(&args.methylome_dir)->required(), "methylome dir")
-    ("threads,t", po::value(&args.n_threads)->default_value(args.default_n_threads),
-     "number of threads")
-    ("live,l", po::value(&args.max_live_methylomes)->default_value(
-     methylome_set::default_max_live_methylomes), "max live methylomes")
-    ("log", po::value(&args.log_filename), "log file name")
-    ("log-level,v", po::value(&args.log_level)->default_value(
-     server_interface_args::default_log_level), "log file name")
-    ("daemonize", po::bool_switch(&args.daemonize), "daemonize the server")
-    // clang-format on
-    ;
-  try {
-    po::variables_map vm;
-    po::store(po::parse_command_line(argc, argv, desc), vm);
-    if (vm.count("help")) {
-      desc.print(cout);
-      return EXIT_SUCCESS;
-    }
-    po::notify(vm);
-  }
-  catch (po::error &e) {
-    println(cerr, "{}", e.what());
-    desc.print(cerr);
+  server_interface_argset args;
+  std::error_code ec = args.parse(argc, argv, usage);
+  if (ec == argument_error::help_requested)
+    return EXIT_SUCCESS;
+  if (ec)
     return EXIT_FAILURE;
-  }
 
   shared_ptr<ostream> log_file =
     args.log_filename.empty()
@@ -148,25 +167,16 @@ server_interface_main(int argc, char *argv[]) -> int {
     return EXIT_FAILURE;
   }
 
+  args.log_options();
+
   args.methylome_dir = get_canonical_dir(args.methylome_dir);
-  // messages done already
+  // error messages done already
   if (args.methylome_dir.empty())
     return EXIT_FAILURE;
 
-  log_args<mxe_log_level::info>(vector<tuple<string, string>>{
-    // clang-format off
-    {"Hostname", args.hostname},
-    {"Port", args.port},
-    {"Log file", args.log_filename.empty() ? "console" : args.log_filename},
-    {"Methylome directory", args.methylome_dir},
-    {"Max live methylomes", format("{}", args.max_live_methylomes)},
-    // clang-format on
-  });
-
   if (args.daemonize) {
-    std::error_code ec;
     server s(args.hostname, args.port, args.n_threads, args.methylome_dir,
-             args.max_live_methylomes, lgr, ec);
+             args.max_resident, lgr, ec);
     if (ec) {
       lgr.error("Failure daemonizing server: {}.", ec);
       return EXIT_FAILURE;
@@ -175,8 +185,7 @@ server_interface_main(int argc, char *argv[]) -> int {
   }
   else {
     server s(args.hostname, args.port, args.n_threads, args.methylome_dir,
-             args.max_live_methylomes, lgr);
-
+             args.max_resident, lgr);
     s.run();
   }
 

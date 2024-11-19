@@ -41,6 +41,7 @@
 #include <memory>
 #include <mutex>
 #include <ostream>
+#include <ranges>
 #include <string>
 #include <string_view>
 #include <system_error>
@@ -81,6 +82,16 @@ static constexpr auto level_name_sz{[]() constexpr {
     tmp[i] = std::size(std::string_view(level_name[i]));
   return tmp;
 }()};
+
+/*
+  print std::filesystem::path
+ */
+template <> struct std::formatter<mxe_log_level> : std::formatter<std::string> {
+  auto format(const mxe_log_level &l, std::format_context &ctx) const {
+    return std::formatter<std::string>::format(
+      level_name[std::to_underlying(l)], ctx);
+  }
+};
 
 inline std::ostream &
 operator<<(std::ostream &o, const mxe_log_level &l) {
@@ -254,5 +265,13 @@ private:
     std::format_to(buf.data(), "{:%F}{}{:%T}", ymd, delim, hms);
   }
 };  // struct logger
+
+template <mxe_log_level lvl, typename... Args>
+auto
+log_args(std::ranges::input_range auto &&key_value_pairs) {
+  logger &lgr = logger::instance();
+  for (auto &&[k, v] : key_value_pairs)
+    lgr.log<lvl>("{}: {}", k, v);
+}
 
 #endif  // SRC_LOGGER_HPP_

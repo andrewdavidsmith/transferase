@@ -26,6 +26,8 @@ cmake_minimum_required(VERSION 3.30)
 project(
   mxe
   VERSION 0.1.0
+  DESCRIPTION "Methylome transfer engine"
+  HOMEPAGE_URL https://github.com/andrewdavidsmith/mxe
   LANGUAGES CXX)
 
 # Set language version used
@@ -37,8 +39,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS on)
 include(CheckIncludeFileCXX)
 include(CheckFunctionExists)
 
-set(use_static_libs $<CONFIG:Release>)
-if(use_static_libs)
+if(MXE_USE_STATIC_LIBS)
   set(Boost_USE_STATIC_LIBS on)
   set(ZLIB_USE_STATIC_LIBS on)
 endif()
@@ -50,8 +51,6 @@ find_package(
   COMPONENTS
   program_options)
 find_package(ZLIB REQUIRED)
-
-add_compile_options(-Wall -Wextra -Wpedantic -Werror -Wfatal-errors)
 
 add_subdirectory(src)
 

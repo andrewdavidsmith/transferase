@@ -94,3 +94,39 @@ write_bins(std::ostream &out, const uint32_t bin_size, const cpg_index &index,
   assert(res == cend(results));
   return {};
 }
+
+auto
+get_mxe_config_dir_default(std::error_code &ec) -> std::string {
+  static const auto config_dir_rhs = std::filesystem::path(".config/mxe");
+  static const auto env_home = std::getenv("HOME");
+  if (!env_home) {
+    ec = std::make_error_code(std::errc{errno});
+    return {};
+  }
+  const std::filesystem::path config_dir = env_home / config_dir_rhs;
+  return config_dir;
+}
+
+/*
+auto
+check_mxe_config_dir(const std::string &dirname, std::error_code &ec) -> bool {
+  const bool exists = std::filesystem::exists(dirname, ec);
+  if (ec)
+    return false;
+
+  if (!exists) {
+    ec = std::make_error_code(std::errc::no_such_file_or_directory);
+    return false;
+  }
+
+  const bool is_dir = std::filesystem::is_directory(dirname, ec);
+  if (ec)
+    return false;
+  if (!is_dir) {
+    ec = std::make_error_code(std::errc::not_a_directory);
+    return false;
+  }
+
+  return true;
+}
+*/

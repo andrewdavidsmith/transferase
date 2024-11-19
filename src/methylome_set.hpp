@@ -73,8 +73,7 @@ struct methylome_set {
 
   methylome_set(const std::uint32_t max_live_methylomes,
                 const std::string &methylome_directory) :
-    n_total_cpgs{},
-    max_live_methylomes{max_live_methylomes},
+    n_total_cpgs{}, max_live_methylomes{max_live_methylomes},
     methylome_directory{methylome_directory}, accessions{max_live_methylomes} {}
 
   [[nodiscard]] auto get_methylome(const std::string &accession)
