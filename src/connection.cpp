@@ -66,8 +66,8 @@ connection::read_request() -> void {
       if (!ec) {
         if (const auto req_hdr_parse{parse(req_buf, req_hdr)};
             !req_hdr_parse.error) {
-          lgr.log<lvl::debug>("{} Received request header: {}", connection_id,
-                              req_hdr.summary());
+          lgr.debug("{} Received request header: {}", connection_id,
+                    req_hdr.summary());
           handler.handle_header(req_hdr, resp_hdr);
           if (!resp_hdr.error()) {
             if (const auto req_body_parse =
@@ -77,28 +77,27 @@ connection::read_request() -> void {
               read_offsets();
             }
             else {
-              lgr.log<lvl::warning>("{} Request body parse error: {}",
-                                    connection_id, req_body_parse.error);
+              lgr.warning("{} Request body parse error: {}", connection_id,
+                          req_body_parse.error);
               resp_hdr = {req_body_parse.error, 0};
               respond_with_error();
             }
           }
           else {
-            lgr.log<lvl::warning>("{} Responding with error: {}", connection_id,
-                                  resp_hdr.summary());
+            lgr.warning("{} Responding with error: {}", connection_id,
+                        resp_hdr.summary());
             respond_with_error();  // response error already assigned
           }
         }
         else {
-          lgr.log<lvl::warning>("{} Request parse error: {}", connection_id,
-                                req_hdr_parse.error);
+          lgr.warning("{} Request parse error: {}", connection_id,
+                      req_hdr_parse.error);
           resp_hdr = {req_hdr_parse.error, 0};
           respond_with_error();
         }
       }
       else  // problem reading request
-        lgr.log<lvl::warning>("{} Failed to read request: {}", connection_id,
-                              ec);
+        lgr.warning("{} Failed to read request: {}", connection_id, ec);
       // ADS: on error: no new asyncs start; references to this
       // connection disappear; this connection gets destroyed when
       // this handler returns; that destructor destroys the socket
@@ -119,12 +118,12 @@ connection::read_offsets() -> void {
         offset_remaining -= bytes_transferred;
         offset_byte += bytes_transferred;
         if (offset_remaining == 0) {
-          lgr.log<lvl::debug>("{} Finished reading offsets ({} Bytes)",
-                              connection_id, offset_byte);
+          lgr.debug("{} Finished reading offsets ({} Bytes)", connection_id,
+                    offset_byte);
           // if (req_hdr.rq_type == request_header::request_type::counts_cov) {
           handler.handle_get_counts_cov(req_hdr, req, resp_hdr, resp);
           // }
-          lgr.log<lvl::debug>(
+          lgr.debug(
             "{} Finished methylation counts. Responding with header: {}",
             connection_id, resp_hdr.summary());
           // exiting the read loop -- no deadline for now
@@ -134,8 +133,7 @@ connection::read_offsets() -> void {
           read_offsets();
       }
       else {
-        lgr.log<lvl::warning>("{} Error reading offsets: {}", connection_id,
-                              ec);
+        lgr.warning("{} Error reading offsets: {}", connection_id, ec);
         resp_hdr = {request_error::lookup_error_reading_offsets, 0};
         // exiting the read loop -- no deadline for now
         respond_with_error();
@@ -155,32 +153,28 @@ connection::respond_with_error() -> void {
                    [[maybe_unused]] const size_t bytes_transferred) {
         deadline.expires_at(steady_timer::time_point::max());
         if (!ec) {
-          lgr.log<lvl::warning>(
+          lgr.warning(
             "{} Responded with error: {}. Initiating connection shutdown.",
             connection_id, resp_hdr.summary());
         }
         else {
-          lgr.log<lvl::error>(
-            "{} Error responding: {}. Initiating connection shutdown.",
-            connection_id, ec);
+          lgr.error("{} Error responding: {}. Initiating connection shutdown.",
+                    connection_id, ec);
         }
         bs::error_code shutdown_ec;  // for non-throwing
         socket.shutdown(tcp::socket::shutdown_both, shutdown_ec);
         if (shutdown_ec)
-          lgr.log<lvl::warning>("{} Shutdown error: {}", connection_id,
-                                shutdown_ec);
+          lgr.warning("{} Shutdown error: {}", connection_id, shutdown_ec);
       });
     deadline.expires_after(std::chrono::seconds(read_timeout_seconds));
   }
   else {
-    lgr.log<lvl::error>(
-      "{} Error responding: {}. Initiating connection shutdown.", connection_id,
-      resp_hdr_compose.error);
+    lgr.error("{} Error responding: {}. Initiating connection shutdown.",
+              connection_id, resp_hdr_compose.error);
     bs::error_code shutdown_ec;  // for non-throwing
     socket.shutdown(tcp::socket::shutdown_both, shutdown_ec);
     if (shutdown_ec)
-      lgr.log<lvl::warning>("{} Shutdown error: {}", connection_id,
-                            shutdown_ec);
+      lgr.warning("{} Shutdown error: {}", connection_id, shutdown_ec);
   }
 }
 
@@ -197,27 +191,25 @@ connection::respond_with_header() -> void {
         if (!ec)
           respond_with_counts();
         else {
-          lgr.log<lvl::warning>("{} Error sending response header: {}. "
-                                "Initiating connection shutdown.",
-                                connection_id, ec);
+          lgr.warning("{} Error sending response header: {}. "
+                      "Initiating connection shutdown.",
+                      connection_id, ec);
           bs::error_code shutdown_ec;  // for non-throwing
           socket.shutdown(tcp::socket::shutdown_both, shutdown_ec);
           if (shutdown_ec)
-            lgr.log<lvl::warning>("{} Shutdown error: {}", connection_id,
-                                  shutdown_ec);
+            lgr.warning("{} Shutdown error: {}", connection_id, shutdown_ec);
         }
       });
     deadline.expires_after(std::chrono::seconds(read_timeout_seconds));
   }
   else {
-    lgr.log<lvl::error>(
+    lgr.error(
       "{} Error composing response header: {}. Initiating connection shutdown.",
       connection_id, resp_hdr_compose.error);
     bs::error_code shutdown_ec;  // for non-throwing
     socket.shutdown(tcp::socket::shutdown_both, shutdown_ec);
     if (shutdown_ec)
-      lgr.log<lvl::warning>("{} Shutdown error: {}", connection_id,
-                            shutdown_ec);
+      lgr.warning("{} Shutdown error: {}", connection_id, shutdown_ec);
   }
 }
 
@@ -229,22 +221,21 @@ connection::respond_with_counts() -> void {
     [this, self](const bs::error_code ec, const size_t bytes_transferred) {
       deadline.expires_at(steady_timer::time_point::max());
       if (!ec) {
-        lgr.log<lvl::info>("{} Responded with counts ({} Bytes). Initiating "
-                           "connection shutdown.",
-                           connection_id, bytes_transferred);
+        lgr.info("{} Responded with counts ({} Bytes). Initiating "
+                 "connection shutdown.",
+                 connection_id, bytes_transferred);
         bs::error_code shutdown_ec;  // for non-throwing
         socket.shutdown(tcp::socket::shutdown_both, shutdown_ec);
         if (shutdown_ec)
-          lgr.log<lvl::warning>("{} Shutdown error: {}", connection_id,
-                                shutdown_ec);
+          lgr.warning("{} Shutdown error: {}", connection_id, shutdown_ec);
         bs::error_code socket_close_ec;  // for non-throwing
         socket.close(socket_close_ec);
         if (socket_close_ec)
-          lgr.log<lvl::warning>("{} Socket close error: {}", connection_id,
-                                socket_close_ec);
+          lgr.warning("{} Socket close error: {}", connection_id,
+                      socket_close_ec);
       }
       else
-        lgr.log<lvl::warning>("{} Error sending counts: {}", connection_id, ec);
+        lgr.warning("{} Error sending counts: {}", connection_id, ec);
     });
   deadline.expires_after(std::chrono::seconds(read_timeout_seconds));
 }
@@ -261,16 +252,14 @@ connection::check_deadline() -> void {
     bs::error_code shutdown_ec;  // for non-throwing
     socket.shutdown(tcp::socket::shutdown_both, shutdown_ec);
     if (shutdown_ec)
-      lgr.log<lvl::warning>("{} Shutdown error: {}", connection_id,
-                            shutdown_ec);
+      lgr.warning("{} Shutdown error: {}", connection_id, shutdown_ec);
     deadline.expires_at(steady_timer::time_point::max());
 
     /* ADS: closing here makes sense */
     bs::error_code socket_close_ec;  // for non-throwing
     socket.close(socket_close_ec);
     if (socket_close_ec)
-      lgr.log<lvl::warning>("{} Socket close error: {}", connection_id,
-                            socket_close_ec);
+      lgr.warning("{} Socket close error: {}", connection_id, socket_close_ec);
   }
 
   // ADS: wait again; any issue if the underlying socket is closed?
