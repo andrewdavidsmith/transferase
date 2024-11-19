@@ -163,7 +163,7 @@ server_interface_main(int argc, char *argv[]) -> int {
 
   logger &lgr = logger::instance(log_file, description, args.log_level);
   if (!lgr) {
-    println("Failure initializing logging: {}.", lgr.get_status().message());
+    println("Failure initializing logging: {}.", lgr.get_status());
     return EXIT_FAILURE;
   }
 

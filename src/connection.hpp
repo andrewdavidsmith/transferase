@@ -50,9 +50,8 @@ struct connection : public std::enable_shared_from_this<connection> {
     // socket used below gets confused if arg has exact same name
     socket{std::move(socket_)}, deadline{socket.get_executor()},
     handler{handler}, lgr{lgr}, connection_id{connection_id} {
-    lgr.log<mxe_log_level::info>(
-      "Connection id: {}. Request endpoint: {}", connection_id,
-      boost::lexical_cast<std::string>(socket.remote_endpoint()));
+    lgr.info("Connection id: {}. Request endpoint: {}", connection_id,
+             boost::lexical_cast<std::string>(socket.remote_endpoint()));
   }
 
   auto start() -> void {

@@ -101,6 +101,5 @@ parse(const array<char, response_buf_size> &buf,
 auto
 response_header::summary() const -> string {
   static constexpr auto fmt = R"({{"{}": "{}", "methylome_size": {}}})";
-  return std::format(fmt, status.category().name(), status.message(),
-                     methylome_size);
+  return std::format(fmt, status.category().name(), status, methylome_size);
 }
