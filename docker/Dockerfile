@@ -4,14 +4,14 @@ ARG NUM_JOBS=4
 WORKDIR /build
 RUN apt-get update
 RUN apt-get install -y --no-install-recommends \
-    zlib1g-dev
-RUN --mount=type=secret,id=github_token \
-    GITHUB_TOKEN=$(cat /run/secrets/github_token) && \
-    git clone https://oauth2:${GITHUB_TOKEN}@github.com/andrewdavidsmith/mxe.git && \
+    zlib1g-dev \
+    ca-certificates
+RUN git clone https://github.com/andrewdavidsmith/mxe.git && \
     cd /build/mxe && \
     cmake -B Release \
-    -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON \
-    -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+    -DMXE_USE_STATIC_LIBS=on \
+    -DCMAKE_VERBOSE_MAKEFILE=on \
+    -DCMAKE_EXPORT_COMPILE_COMMANDS=on \
     -DCMAKE_CXX_COMPILER=g++ \
     -DCMAKE_BUILD_TYPE=Release && \
     cmake --build Release -j${NUM_JOBS} && \
