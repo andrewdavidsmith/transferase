@@ -65,14 +65,6 @@ using hr_clock = std::chrono::high_resolution_clock;
 
 namespace po = boost::program_options;
 
-template <mxe_log_level the_level, typename... Args>
-auto
-log_args(rg::input_range auto &&key_value_pairs) {
-  logger &lgr = logger::instance();
-  for (auto &&[k, v] : key_value_pairs)
-    lgr.log<the_level>("{}: {}", k, v);
-}
-
 template <typename T>
 [[nodiscard]] static inline auto
 do_remote_lookup(const string &accession, const cpg_index &index,
