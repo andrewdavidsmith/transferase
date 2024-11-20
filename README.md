@@ -1,11 +1,11 @@
 # mxe
 Methylome transfer system
 
-# Usage
-
 There are several commands within `mxe` and the best way to start is
 to understand the `dnmtools roi` command, as the information
-functionality provided by `mxe` is the same.
+functionality provided by `mxe` is the same. If you need to learn
+about `dnmtools roi` you can find the docs
+[here](https://dnmtools.readthedocs.io/en/latest/roi/)
 
 ## Make an index file
 
@@ -77,12 +77,11 @@ levels on each line (i.e., for each interval) should be identical.
 ## Run the `lookup` command remotely
 
 We will assume for now that the hostname of the remote `mxe` server is
-example.com, and the port is 5000. The following command should give
+example.com, and the port is 5000 (the default). The following command should give
 identical output to the above command:
 ```console
-mxe lookup remote --log-level debug -x hg38.cpg_idx -m SRX012345 -o intervals.bed.info -i intervals.bed
+mxe lookup remote -s example.com -v debug -x hg38.cpg_idx -o intervals.bed.info -a SRX012345 -i intervals.bed
 ```
-
-Note that `SRX012345` now is not a file, but rather a methylome name,
+Note that now `SRX012345` is not a file, but rather a methylome name,
 or accession, that is available on the server. If it is not, the
 server will respond that the accession is not available.
