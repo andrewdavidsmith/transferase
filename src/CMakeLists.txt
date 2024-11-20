@@ -107,8 +107,13 @@ add_compile_options(-Wall -Wextra -Wpedantic -Werror -Wfatal-errors)
 add_executable(mxe)
 target_include_directories(mxe PRIVATE "${PROJECT_BINARY_DIR}")
 target_sources(mxe PRIVATE mxe.cpp)
+
+if(MXE_BUILD_STATIC)
+  target_link_libraries(mxe PRIVATE -static)
+endif()
+
 target_link_libraries(
-  mxe
+  mxe PRIVATE
   utilities
   logger
   index
