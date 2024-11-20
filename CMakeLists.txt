@@ -39,7 +39,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS on)
 include(CheckIncludeFileCXX)
 include(CheckFunctionExists)
 
-if(MXE_USE_STATIC_LIBS)
+if(MXE_BUILD_STATIC)
   set(Boost_USE_STATIC_LIBS on)
   set(ZLIB_USE_STATIC_LIBS on)
 endif()
@@ -59,3 +59,9 @@ configure_file(config.h.in config.h)
 # for installation:
 #
 # $ cmake --install . --prefix /path/to/install/root
+
+# Get ready for packaging
+set(CPACK_PACKAGE_VENDOR "Andrew D Smith")
+set(CPACK_GENERATOR "TGZ;STGZ")
+set(CPACK_RESOURCE_FILE_LICENSE LICENSE)
+include(CPack)
