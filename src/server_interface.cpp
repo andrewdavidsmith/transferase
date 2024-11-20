@@ -135,7 +135,7 @@ struct server_interface_argset : argset_base<server_interface_argset> {
       ("threads,t", value(&n_threads)->default_value(n_threads_default),
        "number of threads")
       ("log-level,v", value(&log_level)->default_value(log_level_default),
-       "log level {debug,info,warning,error}")
+       "log level {debug,info,warning,error,critical}")
       ("log-file,l", value(&log_filename)->value_name("console"),
        "log file name")
       // clang-format on

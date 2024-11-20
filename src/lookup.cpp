@@ -49,7 +49,6 @@
 #include <utility>
 #include <vector>
 
-using std::cerr;
 using std::format;
 using std::max;
 using std::print;
@@ -155,7 +154,7 @@ lookup_main(int argc, char *argv[]) -> int {
   po::notify(vm_subcmd);
 
   if (subcmd != "local" && subcmd != "remote") {
-    println(std::cerr, "Usage: mxe lookup [local|remote] [options]");
+    println("Usage: mxe lookup [local|remote] [options]");
     return EXIT_FAILURE;
   }
   const bool remote_mode = subcmd == "remote";
@@ -166,17 +165,17 @@ lookup_main(int argc, char *argv[]) -> int {
     ("help,h", "produce help message")
     ("index,x", po::value(&index_file)->required(), "index file")
     ("intervals,i", po::value(&intervals_file)->required(), "intervals file")
-    ("log-level,l", po::value(&log_level)->default_value(default_log_level),
-     "log level {debug,info,warning,error}")
+    ("log-level,v", po::value(&log_level)->default_value(default_log_level),
+     "log level {debug,info,warning,error,critical}")
     ;
   po::options_description output("Output");
   output.add_options()
     ("output,o", po::value(&output_file)->required(), "output file")
-    ("score,s", po::bool_switch(&write_scores), "weighted methylation bedgraph format ")
+    ("score", po::bool_switch(&write_scores), "weighted methylation bedgraph format ")
     ;
   po::options_description remote("Remote");
   remote.add_options()
-    ("hostname,H", po::value(&hostname)->required(), "server hostname")
+    ("hostname,s", po::value(&hostname)->required(), "server hostname")
     ("port,p", po::value(&port)->default_value(default_port), "port")
     ("accession,a", po::value(&accession)->required(), "methylome accession")
     ;
@@ -200,7 +199,8 @@ lookup_main(int argc, char *argv[]) -> int {
     po::notify(vm);
   }
   catch (po::error &e) {
-    all.print(cerr);
+    println("{}", e.what());
+    all.print(std::cout);
     return EXIT_FAILURE;
   }
 

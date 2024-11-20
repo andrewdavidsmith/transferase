@@ -64,16 +64,20 @@ enum class mxe_log_level : std::uint32_t {
   info,
   warning,
   error,
+  critical,
   n_levels,
 };
 static constexpr std::uint32_t mxe_n_log_levels =
   std::to_underlying(mxe_log_level::n_levels);
 
 static constexpr std::array<const char *, mxe_n_log_levels> level_name = {
+  // clang-format off
   "debug",
   "info",
   "warning",
   "error",
+  "critical",
+  // clang-format on
 };
 
 static constexpr auto level_name_sz{[]() constexpr {
@@ -121,10 +125,13 @@ private:
   static constexpr auto delim = ' ';
   static constexpr auto date_time_fmt = "{:%F}{}{:%T}";
   static constexpr std::array<const char *, mxe_n_log_levels> level_name = {
+    // clang-format off
     "DEBUG",
     "INFO",
     "WARNING",
     "ERROR",
+    "CRITICAL",
+    // clang-format on
   };
   static constexpr auto level_name_sz{[]() constexpr {
     std::array<std::uint32_t, mxe_n_log_levels> tmp{};
@@ -208,6 +215,9 @@ public:
   auto error(std::string_view message) -> void {
     log<mxe_log_level::error>(message);
   }
+  auto critical(std::string_view message) -> void {
+    log<mxe_log_level::critical>(message);
+  }
 
   template <typename... Args>
   auto debug(std::string_view fmt_str, Args &&...args) -> void {
@@ -224,6 +234,10 @@ public:
   template <typename... Args>
   auto error(std::string_view fmt_str, Args &&...args) -> void {
     log<mxe_log_level::error>(fmt_str, args...);
+  }
+  template <typename... Args>
+  auto critical(std::string_view fmt_str, Args &&...args) -> void {
+    log<mxe_log_level::critical>(fmt_str, args...);
   }
 
 private:
