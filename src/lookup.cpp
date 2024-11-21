@@ -49,20 +49,9 @@
 #include <utility>
 #include <vector>
 
-using std::format;
-using std::max;
-using std::print;
-using std::println;
 using std::string;
 using std::tuple;
-using std::uint32_t;
 using std::vector;
-
-namespace rg = std::ranges;
-namespace vs = std::views;
-using hr_clock = std::chrono::high_resolution_clock;
-
-namespace po = boost::program_options;
 
 template <typename T>
 [[nodiscard]] static inline auto
@@ -71,7 +60,7 @@ do_remote_lookup(const string &accession, const cpg_index &index,
                  const string &port) -> tuple<vector<T>, std::error_code> {
   request_header hdr{accession, index.n_cpgs_total,
                      request_header::request_type::counts_cov};
-  request req{static_cast<uint32_t>(size(offsets)), offsets};
+  request req{static_cast<std::uint32_t>(size(offsets)), offsets};
   mxe_client mxec(hostname, port, hdr, req, logger::instance());
   const auto status = mxec.run();
   if (status) {
@@ -81,37 +70,80 @@ do_remote_lookup(const string &accession, const cpg_index &index,
   return {std::move(mxec.take_counts()), {}};
 }
 
-template <typename T>
+template <typename counts_res_type>
 [[nodiscard]] static inline auto
 do_local_lookup(const string &meth_file, const cpg_index &index,
                 vector<methylome::offset_pair> offsets)
-  -> tuple<vector<T>, std::error_code> {
+  -> tuple<vector<counts_res_type>, std::error_code> {
   methylome meth{};
   if (const auto meth_read_err = meth.read(meth_file, index.n_cpgs_total)) {
     logger::instance().error("Error: {} ({})", meth_read_err, meth_file);
     return {{}, meth_read_err};
   }
-  return {std::move(meth.get_counts_cov(offsets)), {}};
+  if constexpr (std::is_same<counts_res_type, counts_res_cov>::value)
+    return {std::move(meth.get_counts_cov(offsets)), {}};
+  else
+    return {std::move(meth.get_counts(offsets)), {}};
 }
 
-template <typename T>
 static inline auto
 write_output(std::ostream &out, const vector<genomic_interval> &gis,
-             const cpg_index &index, const vector<counts_res_cov> &results,
+             const cpg_index &index, const auto &results,
              const bool write_scores) {
   if (write_scores) {
     // ADS: counting intervals that have no reads
-    uint32_t zero_coverage = 0;
+    std::uint32_t zero_coverage = 0;
     const auto to_score = [&zero_coverage](const auto &x) {
       zero_coverage += (x.n_meth + x.n_unmeth == 0);
-      return x.n_meth / max(1.0, static_cast<double>(x.n_meth + x.n_unmeth));
+      return x.n_meth /
+             std::max(1.0, static_cast<double>(x.n_meth + x.n_unmeth));
     };
-    write_bedgraph(out, index, gis, vs::transform(results, to_score));
+    write_bedgraph(out, index, gis, std::views::transform(results, to_score));
     logger::instance().debug("Number of intervals without reads: {}",
                              zero_coverage);
   }
   else
-    write_intervals<T>(out, index, gis, results);
+    write_intervals(out, index, gis, results);
+}
+
+template <typename counts_res_type>
+static auto
+do_lookup(const string &accession, const cpg_index &index,
+          const vector<methylome::offset_pair> &offsets, const string &hostname,
+          const string &port, const string &meth_file, std::ostream &out,
+          const vector<genomic_interval> &gis, const bool write_scores,
+          const bool remote_mode) -> std::error_code {
+  using hr_clock = std::chrono::high_resolution_clock;
+
+  const auto lookup_start{hr_clock::now()};
+
+  vector<counts_res_type> results;
+  std::error_code lookup_err;
+  if constexpr (std::is_same<counts_res_type, counts_res_cov>::value) {
+    std::tie(results, lookup_err) =
+      remote_mode ? do_remote_lookup<counts_res_type>(accession, index, offsets,
+                                                      hostname, port)
+                  : do_local_lookup<counts_res_type>(meth_file, index, offsets);
+  }
+  else
+    std::tie(results, lookup_err) =
+      do_local_lookup<counts_res_type>(meth_file, index, offsets);
+
+  const auto lookup_stop{hr_clock::now()};
+  logger::instance().debug("Elapsed time for query: {:.3}s",
+                           duration(lookup_start, lookup_stop));
+
+  if (lookup_err)  // ADS: error messages already logged
+    return std::make_error_code(std::errc::invalid_argument);
+
+  const auto output_start{hr_clock::now()};
+  write_output(out, gis, index, results, write_scores);
+  const auto output_stop{hr_clock::now()};
+  // ADS: elapsed time for output will include conversion to scores
+  logger::instance().debug("Elapsed time for output: {:.3}s",
+                           duration(output_start, output_stop));
+
+  return {};
 }
 
 auto
@@ -123,6 +155,7 @@ lookup_main(int argc, char *argv[]) -> int {
   static const auto command = "lookup";
 
   bool write_scores{};
+  bool count_covered{};
   string port{};
   string accession{};
   string index_file{};
@@ -133,6 +166,9 @@ lookup_main(int argc, char *argv[]) -> int {
   mxe_log_level log_level{};
 
   string subcmd;
+
+  namespace po = boost::program_options;
+
   po::options_description subcmds;
   subcmds.add_options()
     // clang-format off
@@ -154,7 +190,7 @@ lookup_main(int argc, char *argv[]) -> int {
   po::notify(vm_subcmd);
 
   if (subcmd != "local" && subcmd != "remote") {
-    println("Usage: mxe lookup [local|remote] [options]");
+    std::println("Usage: mxe lookup [local|remote] [options]");
     return EXIT_FAILURE;
   }
   const bool remote_mode = subcmd == "remote";
@@ -171,7 +207,8 @@ lookup_main(int argc, char *argv[]) -> int {
   po::options_description output("Output");
   output.add_options()
     ("output,o", po::value(&output_file)->required(), "output file")
-    ("score", po::bool_switch(&write_scores), "weighted methylation bedgraph format ")
+    ("covered", po::bool_switch(&count_covered), "count covered sites per interval")
+    ("score", po::bool_switch(&write_scores), "weighted methylation bedgraph format")
     ;
   po::options_description remote("Remote");
   remote.add_options()
@@ -185,7 +222,7 @@ lookup_main(int argc, char *argv[]) -> int {
     ;
   // clang-format on
 
-  po::options_description all(format(usage_format, subcmd));
+  po::options_description all(std::format(usage_format, subcmd));
   all.add(general).add(output);
   all.add(remote_mode ? remote : local);
 
@@ -199,7 +236,7 @@ lookup_main(int argc, char *argv[]) -> int {
     po::notify(vm);
   }
   catch (po::error &e) {
-    println("{}", e.what());
+    std::println("{}", e.what());
     all.print(std::cout);
     return EXIT_FAILURE;
   }
@@ -207,7 +244,7 @@ lookup_main(int argc, char *argv[]) -> int {
   logger &lgr = logger::instance(
     std::make_shared<std::ostream>(std::cout.rdbuf()), command, log_level);
   if (!lgr) {
-    println("Failure initializing logging: {}.", lgr.get_status());
+    std::println("Failure initializing logging: {}.", lgr.get_status());
     return EXIT_FAILURE;
   }
 
@@ -216,7 +253,8 @@ lookup_main(int argc, char *argv[]) -> int {
     {"Index", index_file},
     {"Intervals", intervals_file},
     {"Output", output_file},
-    {"Bedgraph", format("{}", write_scores)},
+    {"Covered", std::format("{}", count_covered)},
+    {"Bedgraph", std::format("{}", write_scores)},
   };
   vector<tuple<string, string>> remote_args{
     {"Hostname:port", std::format("{}:{}", hostname, port)},
@@ -244,23 +282,13 @@ lookup_main(int argc, char *argv[]) -> int {
   }
   lgr.info("Number of intervals: {}", size(gis));
 
+  using hr_clock = std::chrono::high_resolution_clock;
+
   const auto get_offsets_start{hr_clock::now()};
   const vector<methylome::offset_pair> offsets = index.get_offsets(gis);
   const auto get_offsets_stop{hr_clock::now()};
   lgr.debug("Elapsed time to get offsets: {:.3}s",
             duration(get_offsets_start, get_offsets_stop));
-
-  const auto lookup_start{hr_clock::now()};
-  const auto [results, lookup_err] =
-    remote_mode ? do_remote_lookup<counts_res_cov>(accession, index, offsets,
-                                                   hostname, port)
-                : do_local_lookup<counts_res_cov>(meth_file, index, offsets);
-  const auto lookup_stop{hr_clock::now()};
-  lgr.debug("Elapsed time for query: {:.3}s",
-            duration(lookup_start, lookup_stop));
-
-  if (lookup_err)  // ADS: error messages already logged
-    return EXIT_FAILURE;
 
   std::ofstream out(output_file);
   if (!out) {
@@ -269,12 +297,13 @@ lookup_main(int argc, char *argv[]) -> int {
     return EXIT_FAILURE;
   }
 
-  const auto output_start{hr_clock::now()};
-  write_output<counts_res_cov>(out, gis, index, results, write_scores);
-  const auto output_stop{hr_clock::now()};
-  // ADS: elapsed time for output will include conversion to scores
-  lgr.debug("Elapsed time for output: {:.3}s",
-            duration(output_start, output_stop));
+  const auto lookup_err =
+    count_covered
+      ? do_lookup<counts_res_cov>(accession, index, offsets, hostname, port,
+                                  meth_file, out, gis, write_scores,
+                                  remote_mode)
+      : do_lookup<counts_res>(accession, index, offsets, hostname, port,
+                              meth_file, out, gis, write_scores, remote_mode);
 
-  return EXIT_SUCCESS;
+  return lookup_err == std::errc() ? EXIT_SUCCESS : EXIT_FAILURE;
 }

@@ -37,7 +37,7 @@
 
 static constexpr std::uint32_t response_buf_size = 256;  // how much needed?
 // buffers do not own underlying memory; keep the data alive!
-typedef std::array<char, response_buf_size> response_buffer;
+typedef std::array<char, response_buf_size> response_header_buffer;
 
 struct response_header {
   std::error_code status{make_error_code(server_response_code::ok)};
@@ -65,11 +65,13 @@ auto
 parse(const std::array<char, response_buf_size> &buf,
       response_header &hdr) -> parse_result;
 
-template <typename counts_type> struct response {
+template <typename counts_type> struct response_tplt {
   std::vector<counts_type> counts;  // counts_type is from methylome.hpp
   auto get_counts_n_bytes() const -> std::uint32_t {
     return sizeof(counts_type) * size(counts);
   }
 };
+
+typedef response_tplt<counts_res_cov> response;
 
 #endif  // SRC_RESPONSE_HPP_

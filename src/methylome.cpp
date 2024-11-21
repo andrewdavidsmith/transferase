@@ -37,33 +37,20 @@
 #include <type_traits>
 #include <utility>  // std::move
 #include <vector>
-#ifdef BENCHMARK
+
+#ifdef MXE_BENCHMARK
 #include <chrono>
 #include <iostream>
-#endif
-
-using std::error_code;
-using std::pair;
-using std::size;
-using std::string;
-using std::uint16_t;
-using std::uint32_t;
-using std::uint8_t;
-using std::vector;
-
-#ifdef BENCHMARK
 using hr_clock = std::chrono::high_resolution_clock;
 #endif
 
-namespace rg = std::ranges;
-namespace vs = std::views;
-
 [[nodiscard]] auto
-methylome::read(const string &filename, const uint32_t n_cpgs) -> error_code {
-  error_code errc;
-  const auto filesize = std::filesystem::file_size(filename, errc);
-  if (errc)
-    return errc;
+methylome::read(const std::string &filename,
+                const std::uint32_t n_cpgs) -> std::error_code {
+  std::error_code ec;
+  const auto filesize = std::filesystem::file_size(filename, ec);
+  if (ec)
+    return ec;
   std::ifstream in(filename);
   if (!in)
     return std::make_error_code(std::errc(errno));
@@ -88,7 +75,7 @@ methylome::read(const string &filename, const uint32_t n_cpgs) -> error_code {
     return methylome_code::incorrect_methylome_size;
 
   if (flags == 1) {
-    vector<uint8_t> buf(datasize);
+    std::vector<std::uint8_t> buf(datasize);
     in.read(reinterpret_cast<char *>(buf.data()), datasize);
     const auto read_ok = static_cast<bool>(in);
     const auto n_bytes = in.gcount();
@@ -114,13 +101,13 @@ methylome::read(const string &filename, const uint32_t n_cpgs) -> error_code {
   if (!read_ok || n_bytes != static_cast<std::streamsize>(datasize))
     return methylome_code::error_reading_methylome;
 
-  return error_code{};
+  return std::error_code{};
 }
 
 [[nodiscard]] auto
-methylome::write(const string &filename,
+methylome::write(const std::string &filename,
                  const bool zip) const -> std::error_code {
-  vector<uint8_t> buf;
+  std::vector<std::uint8_t> buf;
   if (zip) {
 #ifdef BENCHMARK
     const auto compress_start{hr_clock::now()};
@@ -144,24 +131,24 @@ methylome::write(const string &filename,
     return methylome_code::error_writing_methylome_header;
 
   if (zip) {
-    if (!out.write(reinterpret_cast<const char *>(buf.data()), size(buf)))
+    if (!out.write(reinterpret_cast<const char *>(buf.data()), std::size(buf)))
       return methylome_code::error_writing_methylome;
   }
   else {
     if (!out.write(reinterpret_cast<const char *>(cpgs.data()),
-                   size(cpgs) * record_size))
+                   std::size(cpgs) * record_size))
       return methylome_code::error_writing_methylome;
   }
-  return error_code{};
+  return std::error_code{};
 }
 
 auto
 methylome::add(const methylome &rhs) -> methylome & {
-  assert(size(cpgs) == size(rhs.cpgs));
-  rg::transform(cpgs, rhs.cpgs, begin(cpgs),
-                [](const auto &l, const auto &r) -> m_elem {
-                  return {l.first + r.first, l.second + r.second};
-                });
+  assert(std::size(cpgs) == std::size(rhs.cpgs));
+  std::ranges::transform(cpgs, rhs.cpgs, std::begin(cpgs),
+                         [](const auto &l, const auto &r) -> m_elem {
+                           return {l.first + r.first, l.second + r.second};
+                         });
   return *this;
 }
 
@@ -173,79 +160,109 @@ get_counts_impl(const T b, const T e) -> U {
     u.n_meth += cursor->first;
     u.n_unmeth += cursor->second;
     if constexpr (std::is_same<U, counts_res_cov>::value)
-      u.n_covered += *cursor != pair<uint16_t, uint16_t>{};
+      u.n_covered += *cursor != std::pair<std::uint16_t, std::uint16_t>{};
   }
   return u;
 }
 
+template <typename U>
+[[nodiscard]] static inline auto
+get_counts_impl(const methylome::vec &cpgs, const cpg_index::vec &positions,
+                const std::uint32_t offset, const std::uint32_t start,
+                const std::uint32_t stop) -> U {
+  // ADS: it is possible that the intervals requested are past the cpg
+  // sites since they might be in the genome, but past the final cpg
+  // site location. This code *should* be able to handle such a
+  // situation.
+  namespace rg = std::ranges;
+  const auto cpg_beg_lb = rg::lower_bound(positions, start);
+  const auto cpg_beg_dist = rg::distance(std::cbegin(positions), cpg_beg_lb);
+  const auto cpg_beg = std::cbegin(cpgs) + offset + cpg_beg_dist;
+  const auto cpg_end_lb =
+    rg::lower_bound(cpg_beg_lb, std::cend(positions), stop);
+  const auto cpg_end_dist = rg::distance(std::cbegin(positions), cpg_end_lb);
+  const auto cpg_end = std::cbegin(cpgs) + offset + cpg_end_dist;
+  return get_counts_impl<U>(cpg_beg, cpg_end);
+}
+
 [[nodiscard]] auto
 methylome::get_counts_cov(const cpg_index::vec &positions,
-                          const uint32_t offset, const uint32_t start,
-                          const uint32_t stop) const -> counts_res_cov {
-  // ADS: it is possible that the intervals requested are past the cpg
-  // sites since they might be in the genome, but past the final cpg
-  // site location. This code *should* be able to handle such a
-  // situation.
-
-  const auto cpg_beg_lb = rg::lower_bound(positions, start);
-  const auto cpg_beg =
-    cbegin(cpgs) + offset + rg::distance(cbegin(positions), cpg_beg_lb);
-  const auto cpg_end =
-    cbegin(cpgs) + offset +
-    rg::distance(cbegin(positions),
-                 rg::lower_bound(cpg_beg_lb, cend(positions), stop));
-  return get_counts_impl<counts_res_cov>(cpg_beg, cpg_end);
-  // uint32_t n_meth{};
-  // uint32_t n_unmeth{};
-  // uint32_t n_sites_covered{};
-  // for (auto cursor = cpg_beg; cursor != cpg_end; ++cursor) {
-  //   n_meth += cursor->first;
-  //   n_unmeth += cursor->second;
-  //   n_sites_covered += (cursor->first + cursor->second > 0);
-  // }
-  // return {n_meth, n_unmeth, n_sites_covered};
+                          const std::uint32_t offset, const std::uint32_t start,
+                          const std::uint32_t stop) const -> counts_res_cov {
+  return get_counts_impl<counts_res_cov>(cpgs, positions, offset, start, stop);
 }
 
 [[nodiscard]] auto
-methylome::get_counts_cov(const uint32_t start,
-                          const uint32_t stop) const -> counts_res_cov {
-  return get_counts_impl<counts_res_cov>(cbegin(cpgs) + start,
-                                         cbegin(cpgs) + stop);
+methylome::get_counts(const cpg_index::vec &positions,
+                      const std::uint32_t offset, const std::uint32_t start,
+                      const std::uint32_t stop) const -> counts_res {
+  return get_counts_impl<counts_res>(cpgs, positions, offset, start, stop);
 }
 
 [[nodiscard]] auto
-methylome::get_counts_cov(const vector<pair<uint32_t, uint32_t>> &queries) const
-  -> vector<counts_res_cov> {
-  // ADS: it is possible that the intervals requested are past the cpg
-  // sites since they might be in the genome, but past the final cpg
-  // site location. This code *should* be able to handle such a
-  // situation.
-  vector<counts_res_cov> res(size(queries));
-  const auto cpg_beg = cbegin(cpgs);
-  for (const auto [i, q] : vs::enumerate(queries))
-    res[i] =
-      get_counts_impl<counts_res_cov>(cpg_beg + q.first, cpg_beg + q.second);
+methylome::get_counts_cov(const std::uint32_t start,
+                          const std::uint32_t stop) const -> counts_res_cov {
+  return get_counts_impl<counts_res_cov>(std::cbegin(cpgs) + start,
+                                         std::cbegin(cpgs) + stop);
+}
+
+[[nodiscard]] auto
+methylome::get_counts(const std::uint32_t start,
+                      const std::uint32_t stop) const -> counts_res {
+  return get_counts_impl<counts_res>(std::cbegin(cpgs) + start,
+                                     std::cbegin(cpgs) + stop);
+}
+
+[[nodiscard]] auto
+methylome::get_counts_cov(
+  const std::vector<std::pair<std::uint32_t, std::uint32_t>> &queries) const
+  -> std::vector<counts_res_cov> {
+  std::vector<counts_res_cov> res(std::size(queries));
+  const auto beg = std::cbegin(cpgs);
+  for (const auto [i, q] : std::views::enumerate(queries))
+    res[i] = get_counts_impl<counts_res_cov>(beg + q.first, beg + q.second);
+  return res;
+}
+
+[[nodiscard]] auto
+methylome::get_counts(const std::vector<std::pair<std::uint32_t, std::uint32_t>>
+                        &queries) const -> std::vector<counts_res> {
+  std::vector<counts_res> res(std::size(queries));
+  const auto beg = std::cbegin(cpgs);
+  for (const auto [i, q] : std::views::enumerate(queries))
+    res[i] = get_counts_impl<counts_res>(beg + q.first, beg + q.second);
   return res;
 }
 
 [[nodiscard]] auto
 methylome::total_counts_cov() const -> counts_res_cov {
-  uint32_t n_meth{};
-  uint32_t n_unmeth{};
-  uint32_t n_covered{};
+  std::uint32_t n_meth{};
+  std::uint32_t n_unmeth{};
+  std::uint32_t n_covered{};
   for (const auto &cpg : cpgs) {
     n_meth += cpg.first;
     n_unmeth += cpg.second;
-    n_covered += cpg != pair<uint16_t, uint16_t>{};
+    n_covered += cpg != std::pair<std::uint16_t, std::uint16_t>{};
   }
   return {n_meth, n_unmeth, n_covered};
+}
+
+[[nodiscard]] auto
+methylome::total_counts() const -> counts_res {
+  std::uint32_t n_meth{};
+  std::uint32_t n_unmeth{};
+  for (const auto &cpg : cpgs) {
+    n_meth += cpg.first;
+    n_unmeth += cpg.second;
+  }
+  return {n_meth, n_unmeth};
 }
 
 template <typename T>
 static auto
 bin_counts_impl(cpg_index::vec::const_iterator &posn_itr,
                 const cpg_index::vec::const_iterator posn_end,
-                const uint32_t bin_end,
+                const std::uint32_t bin_end,
                 methylome::vec::const_iterator &cpg_itr) -> T {
   T t{};
   while (posn_itr != posn_end && *posn_itr < bin_end) {
@@ -262,17 +279,17 @@ bin_counts_impl(cpg_index::vec::const_iterator &posn_itr,
 template <typename T>
 [[nodiscard]]
 static auto
-get_bins_impl(const uint32_t bin_size, const cpg_index &index,
-              const methylome::vec &cpgs) -> vector<T> {
-  vector<T> results;  // ADS TODO: reserve n_bins
+get_bins_impl(const std::uint32_t bin_size, const cpg_index &index,
+              const methylome::vec &cpgs) -> std::vector<T> {
+  std::vector<T> results;  // ADS TODO: reserve n_bins
 
   const auto zipped =
-    vs::zip(index.positions, index.chrom_size, index.chrom_offset);
+    std::views::zip(index.positions, index.chrom_size, index.chrom_offset);
   for (const auto [positions, chrom_size, offset] : zipped) {
-    auto posn_itr = cbegin(positions);
-    const auto posn_end = cend(positions);
-    auto cpg_itr = cbegin(cpgs) + offset;
-    for (uint32_t i = 0; i < chrom_size; i += bin_size) {
+    auto posn_itr = std::cbegin(positions);
+    const auto posn_end = std::cend(positions);
+    auto cpg_itr = std::cbegin(cpgs) + offset;
+    for (std::uint32_t i = 0; i < chrom_size; i += bin_size) {
       const auto bin_end = std::min(i + bin_size, chrom_size);
       results.emplace_back(
         bin_counts_impl<T>(posn_itr, posn_end, bin_end, cpg_itr));
@@ -282,46 +299,13 @@ get_bins_impl(const uint32_t bin_size, const cpg_index &index,
 }
 
 [[nodiscard]] auto
-methylome::get_bins(const uint32_t bin_size,
-                    const cpg_index &index) const -> vector<counts_res> {
+methylome::get_bins(const std::uint32_t bin_size,
+                    const cpg_index &index) const -> std::vector<counts_res> {
   return get_bins_impl<counts_res>(bin_size, index, cpgs);
-  // // ADS TODO: reserve n_bins
-  // vector<counts_res> results;
-
-  // const auto zipped =
-  //   vs::zip(index.positions, index.chrom_size, index.chrom_offset);
-  // for (const auto [positions, chrom_size, offset] : zipped) {
-  //   auto posn_itr = cbegin(positions);
-  //   const auto posn_end = cend(positions);
-  //   auto cpg_itr = cbegin(cpgs) + offset;
-  //   for (uint32_t i = 0; i < chrom_size; i += bin_size) {
-  //     const auto bin_end = std::min(i + bin_size, chrom_size);
-  //     results.emplace_back(
-  //       bin_counts_impl<counts_res>(posn_itr, posn_end, bin_end, cpg_itr));
-  //   }
-  // }
-  // return results;
 }
 
 [[nodiscard]] auto
-methylome::get_bins_cov(const uint32_t bin_size, const cpg_index &index) const
-  -> vector<counts_res_cov> {
+methylome::get_bins_cov(const std::uint32_t bin_size, const cpg_index &index)
+  const -> std::vector<counts_res_cov> {
   return get_bins_impl<counts_res_cov>(bin_size, index, cpgs);
-  // // ADS TODO: reserve n_bins
-  // vector<counts_res_cov> results;
-
-  // const auto zipped =
-  //   vs::zip(index.positions, index.chrom_size, index.chrom_offset);
-  // for (const auto [positions, chrom_size, offset] : zipped) {
-  //   auto posn_itr = cbegin(positions);
-  //   const auto posn_end = cend(positions);
-  //   auto cpg_itr = cbegin(cpgs) + offset;
-  //   for (uint32_t i = 0; i < chrom_size; i += bin_size) {
-  //     const auto bin_end = std::min(i + bin_size, chrom_size);
-  //     results.emplace_back(
-  //       bin_counts_impl<counts_res_cov>(posn_itr, posn_end, bin_end,
-  //       cpg_itr));
-  //   }
-  // }
-  // return results;
 }

@@ -76,13 +76,13 @@ private:
   boost::asio::ip::tcp::socket socket;
   boost::asio::steady_timer deadline;
 
-  request_buffer req_buf;
+  request_header_buffer req_hdr_buf;
   request_header req_hdr;
   request req;
 
-  response_buffer resp_buf;
+  response_header_buffer resp_hdr_buf;
   response_header resp_hdr;
-  response<counts_type> resp;
+  response resp;
 
   std::error_code status;
   logger &lgr;
@@ -141,15 +141,16 @@ mxe_client<counts_type>::handle_connect(const std::error_code &err) {
   if (!err) {
     lgr.debug("Connected to server: {}",
               boost::lexical_cast<std::string>(socket.remote_endpoint()));
-    if (const auto req_hdr_compose{compose(req_buf, req_hdr)};
+    if (const auto req_hdr_compose{compose(req_hdr_buf, req_hdr)};
         !req_hdr_compose.error) {
-      if (const auto req_body_compose = to_chars(
-            req_hdr_compose.ptr, req_buf.data() + request_buf_size, req);
+      if (const auto req_body_compose =
+            to_chars(req_hdr_compose.ptr,
+                     req_hdr_buf.data() + request_header_buf_size, req);
           !req_body_compose.error) {
         boost::asio::async_write(
           socket,
           std::vector<boost::asio::const_buffer>{
-            boost::asio::buffer(req_buf),
+            boost::asio::buffer(req_hdr_buf),
             boost::asio::buffer(req.offsets),
           },
           [this](auto error, auto) { this->handle_write_request(error); });
@@ -177,7 +178,7 @@ mxe_client<counts_type>::handle_write_request(const std::error_code &err) {
   deadline.expires_at(boost::asio::steady_timer::time_point::max());
   if (!err) {
     boost::asio::async_read(
-      socket, boost::asio::buffer(resp_buf),
+      socket, boost::asio::buffer(resp_hdr_buf),
       boost::asio::transfer_exactly(response_buf_size),
       [this](auto error, auto) { this->handle_read_response_header(error); });
     deadline.expires_after(read_timeout_seconds);
@@ -187,7 +188,7 @@ mxe_client<counts_type>::handle_write_request(const std::error_code &err) {
     deadline.expires_after(read_timeout_seconds);
     // wait for an explanation of the problem
     boost::asio::async_read(
-      socket, boost::asio::buffer(resp_buf),
+      socket, boost::asio::buffer(resp_hdr_buf),
       boost::asio::transfer_exactly(response_buf_size),
       [this](auto error, auto) { this->handle_failure_explanation(error); });
   }
@@ -200,7 +201,7 @@ mxe_client<counts_type>::handle_read_response_header(
   // ADS: does this go here?
   deadline.expires_at(boost::asio::steady_timer::time_point::max());
   if (!err) {
-    if (const auto resp_hdr_parse{parse(resp_buf, resp_hdr)};
+    if (const auto resp_hdr_parse{parse(resp_hdr_buf, resp_hdr)};
         !resp_hdr_parse.error) {
       lgr.debug("Response header: {}", resp_hdr.summary());
       do_read_counts();
@@ -222,7 +223,7 @@ mxe_client<counts_type>::handle_failure_explanation(
   const std::error_code &err) {
   deadline.expires_at(boost::asio::steady_timer::time_point::max());
   if (!err) {
-    if (const auto resp_hdr_parse{parse(resp_buf, resp_hdr)};
+    if (const auto resp_hdr_parse{parse(resp_hdr_buf, resp_hdr)};
         !resp_hdr_parse.error) {
       lgr.debug("Response header: {}", resp_hdr.summary());
       do_finish(resp_hdr.status);

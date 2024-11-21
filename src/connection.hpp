@@ -77,12 +77,12 @@ struct connection : public std::enable_shared_from_this<connection> {
   boost::asio::ip::tcp::socket socket;  // this connection's socket
   boost::asio::steady_timer deadline;
   request_handler &handler;  // handles incoming requests
-  request_buffer req_buf{};
+  request_header_buffer req_hdr_buf{};
   request_header req_hdr;  // this connection's request header
   request req;             // this connection's request
-  response_buffer resp_buf{};
-  response_header resp_hdr;       // header of the response
-  response<counts_res_cov> resp;  // response to send back
+  response_header_buffer resp_hdr_buf{};
+  response_header resp_hdr;  // header of the response
+  response resp;             // response to send back
   logger &lgr;
   std::uint32_t connection_id{};
   std::uint32_t read_timeout_seconds{10};
@@ -92,7 +92,5 @@ struct connection : public std::enable_shared_from_this<connection> {
   std::size_t offset_byte{};
   std::size_t offset_remaining{};
 };
-
-using connection_ptr = std::shared_ptr<connection>;
 
 #endif  // SRC_CONNECTION_HPP_

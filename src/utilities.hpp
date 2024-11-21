@@ -62,7 +62,6 @@ struct mxe_from_chars_result {
 };
 typedef mxe_from_chars_result parse_result;
 
-template <typename T>
 auto
 write_intervals(std::ostream &out, const cpg_index &index,
                 const std::vector<genomic_interval> &gis,
@@ -73,7 +72,9 @@ write_intervals(std::ostream &out, const cpg_index &index,
   std::array<char, buf_size> buf{};
   const auto buf_end = buf.data() + buf_size;
 
-  using gis_res = std::pair<const genomic_interval &, const counts_res_cov &>;
+  using counts_res_type =
+    typename std::remove_cvref_t<decltype(results)>::value_type;
+  using gis_res = std::pair<const genomic_interval &, counts_res_type>;
   const auto same_chrom = [](const gis_res &a, const gis_res &b) {
     return a.first.ch_id == b.first.ch_id;
   };
@@ -97,7 +98,7 @@ write_intervals(std::ostream &out, const cpg_index &index,
       tcr = std::to_chars(tcr.ptr, buf_end, res.n_meth);
       *tcr.ptr++ = delim;
       tcr = std::to_chars(tcr.ptr, buf_end, res.n_unmeth);
-      if constexpr (std::is_same<T, counts_res_cov>::value) {
+      if constexpr (std::is_same<counts_res_type, counts_res_cov>::value) {
         *tcr.ptr++ = delim;
         tcr = std::to_chars(tcr.ptr, buf_end, res.n_covered);
       }
