@@ -82,7 +82,7 @@ struct connection : public std::enable_shared_from_this<connection> {
   request req;             // this connection's request
   response_header_buffer resp_hdr_buf{};
   response_header resp_hdr;  // header of the response
-  response resp;             // response to send back
+  response_payload resp;     // response to send back
   logger &lgr;
   std::uint32_t connection_id{};
   std::uint32_t read_timeout_seconds{10};
