@@ -112,10 +112,10 @@ request_handler::handle_header(const request_header &req_hdr,
 }
 
 auto
-request_handler::handle_get_counts_cov(const request_header &req_hdr,
-                                       const request &req,
-                                       response_header &resp_hdr,
-                                       response<counts_res_cov> &resp) -> void {
+request_handler::handle_get_counts(const request_header &req_hdr,
+                                   const request &req,
+                                   response_header &resp_hdr,
+                                   response &resp) -> void {
   // ADS TODO: can this matter? Will it get cleared somewhere
   // automatically?
   resp.counts.clear();
