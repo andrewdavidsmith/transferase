@@ -34,8 +34,8 @@
 #include <utility>  // pair<>
 #include <vector>
 
-static constexpr std::uint32_t request_buf_size = 256;  // full request
-typedef std::array<char, request_buf_size> request_buffer;
+static constexpr std::uint32_t request_header_buf_size = 256;  // full request
+typedef std::array<char, request_header_buf_size> request_header_buffer;
 
 struct request_header {
   enum class request_type : std::uint32_t {
@@ -82,10 +82,11 @@ from_chars(const char *first, const char *last,
            request_header &header) -> mxe_from_chars_result;
 
 auto
-compose(request_buffer &buf, const request_header &header) -> compose_result;
+compose(request_header_buffer &buf,
+        const request_header &header) -> compose_result;
 
 auto
-parse(const request_buffer &buf, request_header &header) -> parse_result;
+parse(const request_header_buffer &buf, request_header &header) -> parse_result;
 
 struct request {
   typedef std::pair<std::uint32_t, std::uint32_t> offset_type;
