@@ -97,6 +97,7 @@ write_pid_to_file(std::error_code &ec) -> void {
 
 server::server(const string &address, const string &port,
                const uint32_t n_threads, const string &methylome_dir,
+               const string &cpg_index_file_dir,
                const uint32_t max_live_methylomes, logger &lgr) :
   n_threads{n_threads},
 #if defined(SIGQUIT)
@@ -104,7 +105,8 @@ server::server(const string &address, const string &port,
 #else
   signals(ioc, SIGINT, SIGTERM),
 #endif
-  acceptor(ioc), handler(methylome_dir, max_live_methylomes), lgr{lgr} {
+  acceptor(ioc),
+  handler(methylome_dir, cpg_index_file_dir, max_live_methylomes), lgr{lgr} {
   // io_context ios uses default constructor
 
   do_await_stop();  // start waiting for signals
@@ -160,6 +162,7 @@ server::server(const string &address, const string &port,
 
 server::server(const string &address, const string &port,
                const uint32_t n_threads, const string &methylome_dir,
+               const string &cpg_index_file_dir,
                const uint32_t max_live_methylomes, logger &lgr,
                std::error_code &ec) :
   n_threads{n_threads},
@@ -169,7 +172,8 @@ server::server(const string &address, const string &port,
 #else
   signals(ioc, SIGINT, SIGTERM),
 #endif
-  acceptor(ioc), handler(methylome_dir, max_live_methylomes), lgr{lgr} {
+  acceptor(ioc),
+  handler(methylome_dir, cpg_index_file_dir, max_live_methylomes), lgr{lgr} {
   // io_context ioc uses default constructor
 
   do_daemon_await_stop();  // signals setup; start waiting for them
