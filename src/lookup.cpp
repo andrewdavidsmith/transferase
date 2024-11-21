@@ -151,7 +151,7 @@ auto
 lookup_main(int argc, char *argv[]) -> int {
   static constexpr auto usage_format =
     "Usage: mxe lookup {} [options]\n\nOption groups";
-  static constexpr mxe_log_level default_log_level = mxe_log_level::warning;
+  static constexpr mxe_log_level default_log_level = mxe_log_level::info;
   static constexpr auto default_port = "5000";
   static const auto command = "lookup";
 
