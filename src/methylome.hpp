@@ -81,8 +81,8 @@ struct methylome {
 
   [[nodiscard]] auto
   get_counts_cov(const cpg_index::vec &positions, const std::uint32_t offset,
-                 const std::uint32_t start,
-                 const std::uint32_t stop) const -> counts_res_cov;
+                 const std::uint32_t start, const std::uint32_t stop) const
+    -> counts_res_cov;
   [[nodiscard]] auto get_counts(const cpg_index::vec &positions,
                                 const std::uint32_t offset,
                                 const std::uint32_t start,
@@ -90,9 +90,9 @@ struct methylome {
 
   // takes only the pair of positions within the methylome::vec
   // and accumulates between those
-  [[nodiscard]] auto
-  get_counts_cov(const std::uint32_t start,
-                 const std::uint32_t stop) const -> counts_res_cov;
+  [[nodiscard]] auto get_counts_cov(const std::uint32_t start,
+                                    const std::uint32_t stop) const
+    -> counts_res_cov;
   [[nodiscard]] auto get_counts(const std::uint32_t start,
                                 const std::uint32_t stop) const -> counts_res;
 
@@ -110,12 +110,12 @@ struct methylome {
 
   // takes a bins size and a cpg_index and calculates the counts in
   // each bin along all chromosomes
-  // [[nodiscard]] auto
-  // get_bins(const std::uint32_t bin_size,
-  //          const cpg_index &index) const -> std::vector<counts_res>;
-  [[nodiscard]] auto
-  get_bins_cov(const std::uint32_t bin_size,
-               const cpg_index &index) const -> std::vector<counts_res_cov>;
+  [[nodiscard]] auto get_bins(const std::uint32_t bin_size,
+                              const cpg_index &index) const
+    -> std::vector<counts_res>;
+  [[nodiscard]] auto get_bins_cov(const std::uint32_t bin_size,
+                                  const cpg_index &index) const
+    -> std::vector<counts_res_cov>;
 
   methylome::vec cpgs{};
   static constexpr auto record_size = sizeof(m_elem);
