@@ -247,16 +247,16 @@ methylome::total_counts_cov() const -> counts_res_cov {
   return {n_meth, n_unmeth, n_covered};
 }
 
-[[nodiscard]] auto
-methylome::total_counts() const -> counts_res {
-  std::uint32_t n_meth{};
-  std::uint32_t n_unmeth{};
-  for (const auto &cpg : cpgs) {
-    n_meth += cpg.first;
-    n_unmeth += cpg.second;
-  }
-  return {n_meth, n_unmeth};
-}
+// [[nodiscard]] auto
+// methylome::total_counts() const -> counts_res {
+//   std::uint32_t n_meth{};
+//   std::uint32_t n_unmeth{};
+//   for (const auto &cpg : cpgs) {
+//     n_meth += cpg.first;
+//     n_unmeth += cpg.second;
+//   }
+//   return {n_meth, n_unmeth};
+// }
 
 template <typename T>
 static auto
@@ -298,11 +298,12 @@ get_bins_impl(const std::uint32_t bin_size, const cpg_index &index,
   return results;
 }
 
-[[nodiscard]] auto
-methylome::get_bins(const std::uint32_t bin_size,
-                    const cpg_index &index) const -> std::vector<counts_res> {
-  return get_bins_impl<counts_res>(bin_size, index, cpgs);
-}
+// [[nodiscard]] auto
+// methylome::get_bins(const std::uint32_t bin_size,
+//                     const cpg_index &index) const -> std::vector<counts_res>
+//                     {
+//   return get_bins_impl<counts_res>(bin_size, index, cpgs);
+// }
 
 [[nodiscard]] auto
 methylome::get_bins_cov(const std::uint32_t bin_size, const cpg_index &index)
