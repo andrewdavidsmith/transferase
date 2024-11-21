@@ -38,7 +38,7 @@
 #include <utility>  // std::swap std::move
 #include <vector>
 
-template <typename counts_type = counts_res_cov> class mxe_client {
+template <typename counts_type> class mxe_client {
 public:
   mxe_client(const std::string &server, const std::string &port,
              request_header &req_hdr, request &req, logger &lgr);
@@ -82,7 +82,7 @@ private:
 
   response_header_buffer resp_hdr_buf;
   response_header resp_hdr;
-  response resp;
+  response<counts_type> resp;
 
   std::error_code status;
   logger &lgr;
