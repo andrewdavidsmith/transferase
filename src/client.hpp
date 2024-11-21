@@ -26,7 +26,6 @@
 
 #include "logger.hpp"
 #include "request.hpp"
-#include "request_handler.hpp"
 #include "response.hpp"
 
 #include <boost/asio.hpp>
@@ -94,8 +93,9 @@ mxe_client<counts_type>::mxe_client(const std::string &server,
                                     const std::string &port,
                                     request_header &req_hdr, request &req,
                                     logger &lgr) :
-  resolver(io_context), socket(io_context), deadline{socket.get_executor()},
-  req_hdr{req_hdr}, req{std::move(req)},  // move b/c req can be big
+  resolver(io_context),
+  socket(io_context), deadline{socket.get_executor()}, req_hdr{req_hdr},
+  req{std::move(req)},  // move b/c req can be big
   lgr{lgr} {
   // (1) call async, (2) set deadline, (3) register check_deadline
   const auto handle_resolve_token = [this](const auto &error, auto results) {
