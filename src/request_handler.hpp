@@ -45,7 +45,8 @@ struct request_handler {
                      response_header &resp_hdr) -> void;
 
   auto handle_get_counts(const request_header &req_hdr, const request &req,
-                         response_header &resp_hdr, response &resp) -> void;
+                         response_header &resp_hdr,
+                         response_payload &resp) -> void;
 
   std::string methylome_dir;   // dir of available methylomes
   std::string cpg_index_file;  // file with cpg_index

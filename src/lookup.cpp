@@ -53,15 +53,23 @@ using std::string;
 using std::tuple;
 using std::vector;
 
-template <typename T>
+template <typename counts_res_type>
 [[nodiscard]] static inline auto
 do_remote_lookup(const string &accession, const cpg_index &index,
                  vector<methylome::offset_pair> offsets, const string &hostname,
-                 const string &port) -> tuple<vector<T>, std::error_code> {
-  request_header hdr{accession, index.n_cpgs_total,
-                     request_header::request_type::counts_cov};
+                 const string &port)
+  -> tuple<vector<counts_res_type>, std::error_code> {
+  request_header hdr{accession, index.n_cpgs_total, {}};
+
+  if constexpr (std::is_same<counts_res_type, counts_res>::value)
+    hdr.rq_type = request_header::request_type::counts;
+  else
+    hdr.rq_type = request_header::request_type::counts_cov;
+
+  // request_header::request_type::counts_cov};
   request req{static_cast<std::uint32_t>(size(offsets)), offsets};
-  mxe_client mxec(hostname, port, hdr, req, logger::instance());
+  mxe_client<counts_res_type> mxec(hostname, port, hdr, req,
+                                   logger::instance());
   const auto status = mxec.run();
   if (status) {
     logger::instance().error("Transaction status: {}", status);
@@ -117,17 +125,10 @@ do_lookup(const string &accession, const cpg_index &index,
 
   const auto lookup_start{hr_clock::now()};
 
-  vector<counts_res_type> results;
-  std::error_code lookup_err;
-  if constexpr (std::is_same<counts_res_type, counts_res_cov>::value) {
-    std::tie(results, lookup_err) =
-      remote_mode ? do_remote_lookup<counts_res_type>(accession, index, offsets,
-                                                      hostname, port)
-                  : do_local_lookup<counts_res_type>(meth_file, index, offsets);
-  }
-  else
-    std::tie(results, lookup_err) =
-      do_local_lookup<counts_res_type>(meth_file, index, offsets);
+  const auto [results, lookup_err] =
+    remote_mode ? do_remote_lookup<counts_res_type>(accession, index, offsets,
+                                                    hostname, port)
+                : do_local_lookup<counts_res_type>(meth_file, index, offsets);
 
   const auto lookup_stop{hr_clock::now()};
   logger::instance().debug("Elapsed time for query: {:.3}s",

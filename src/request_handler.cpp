@@ -111,15 +111,23 @@ request_handler::handle_header(const request_header &req_hdr,
   resp_hdr.methylome_size = req_hdr.methylome_size;
 }
 
+static inline auto
+counts_to_payload(const auto &counts, const request_header &req_hdr,
+                  const request &req) -> response_payload {
+  using counts_res_type =
+    typename std::remove_cvref_t<decltype(counts)>::value_type;
+  const auto counts_n_bytes = sizeof(counts_res_type) * size(counts);
+  response_payload r;
+  r.payload.resize(counts_n_bytes);
+  std::memcpy(r.payload.data(), counts.data(), counts_n_bytes);
+  return r;
+}
+
 auto
 request_handler::handle_get_counts(const request_header &req_hdr,
                                    const request &req,
                                    response_header &resp_hdr,
-                                   response &resp) -> void {
-  // ADS TODO: can this matter? Will it get cleared somewhere
-  // automatically?
-  resp.counts.clear();
-
+                                   response_payload &resp_data) -> void {
   logger &lgr = logger::instance();
 
   // assume methylome availability has been determined
@@ -133,6 +141,13 @@ request_handler::handle_get_counts(const request_header &req_hdr,
 
   lgr.debug("Computing counts for methylome: {}", req_hdr.accession);
 
-  // generate the counts
-  resp.counts = meth->get_counts_cov(req.offsets);
+  switch (req_hdr.rq_type) {
+  case request_header::request_type::counts:
+    resp_data = counts_to_payload(meth->get_counts(req.offsets), req_hdr, req);
+    return;
+  case request_header::request_type::counts_cov:
+    resp_data =
+      counts_to_payload(meth->get_counts_cov(req.offsets), req_hdr, req);
+    return;
+  }
 }

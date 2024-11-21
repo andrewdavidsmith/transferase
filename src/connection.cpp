@@ -207,7 +207,7 @@ auto
 connection::respond_with_counts() -> void {
   auto self(shared_from_this());
   boost::asio::async_write(
-    socket, boost::asio::buffer(resp.counts),
+    socket, boost::asio::buffer(resp.payload),
     [this, self](const boost::system::error_code ec,
                  const std::size_t bytes_transferred) {
       deadline.expires_at(boost::asio::steady_timer::time_point::max());
