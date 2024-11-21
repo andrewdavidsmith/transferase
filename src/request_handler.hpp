@@ -24,9 +24,8 @@
 #ifndef SRC_REQUEST_HANDLER_HPP_
 #define SRC_REQUEST_HANDLER_HPP_
 
+#include "cpg_index_set.hpp"
 #include "methylome_set.hpp"
-
-#include "logger.hpp"
 #include "request.hpp"
 #include "response.hpp"
 
@@ -38,21 +37,23 @@ struct request_handler {
   request_handler &operator=(const request_handler &) = delete;
 
   explicit request_handler(const std::string &methylome_dir,
+                           const std::string &index_file_dir,
                            const std::uint32_t max_live_methylomes) :
-    methylome_dir{methylome_dir}, ms(max_live_methylomes, methylome_dir) {}
+    methylome_dir{methylome_dir},
+    index_file_dir{index_file_dir}, ms(max_live_methylomes, methylome_dir),
+    indexes(index_file_dir) {}
 
-  auto handle_header(const request_header &req_hdr,
-                     response_header &resp_hdr) -> void;
+  auto handle_header(const request_header &req_hdr, response_header &resp_hdr)
+    -> void;
 
   auto handle_get_counts(const request_header &req_hdr, const request &req,
-                         response_header &resp_hdr,
-                         response_payload &resp) -> void;
+                         response_header &resp_hdr, response_payload &resp)
+    -> void;
 
   std::string methylome_dir;   // dir of available methylomes
-  std::string cpg_index_file;  // file with cpg_index
+  std::string index_file_dir;  // dir of cpg index files
   methylome_set ms;
-  cpg_index index;
-  bool verbose{};
+  cpg_index_set indexes;
 };
 
 #endif  // SRC_REQUEST_HANDLER_HPP_
