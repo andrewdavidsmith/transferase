@@ -65,13 +65,16 @@ auto
 parse(const std::array<char, response_buf_size> &buf,
       response_header &hdr) -> parse_result;
 
-template <typename counts_type> struct response_tplt {
+struct response_payload {
+  std::vector<std::byte> payload;
+  auto n_bytes() const -> std::uint32_t { return std::size(payload); }
+};
+
+template <typename counts_type> struct response {
   std::vector<counts_type> counts;  // counts_type is from methylome.hpp
   auto get_counts_n_bytes() const -> std::uint32_t {
     return sizeof(counts_type) * size(counts);
   }
 };
-
-typedef response_tplt<counts_res_cov> response;
 
 #endif  // SRC_RESPONSE_HPP_
