@@ -49,8 +49,7 @@ struct counts_res_cov {
 
 template <>
 struct std::formatter<counts_res_cov> : std::formatter<std::string> {
-  auto
-  format(const counts_res_cov &cr, std::format_context &ctx) const {
+  auto format(const counts_res_cov &cr, std::format_context &ctx) const {
     return std::formatter<std::string>::format(
       std::format(R"({{"n_meth": {}, "n_unmeth": {}, "n_covered": {}}})",
                   cr.n_meth, cr.n_unmeth, cr.n_covered),
@@ -70,16 +69,13 @@ struct methylome {
 
   // ADS: use of n_cpgs to validate might be confusing and at least
   // need to be documented
-  [[nodiscard]] auto
-  read(const std::string &filename,
-       const std::uint32_t n_cpgs = 0) -> std::error_code;
+  [[nodiscard]] auto read(const std::string &filename,
+                          const std::uint32_t n_cpgs = 0) -> std::error_code;
 
-  [[nodiscard]] auto
-  write(const std::string &filename,
-        const bool zip = false) const -> std::error_code;
+  [[nodiscard]] auto write(const std::string &filename,
+                           const bool zip = false) const -> std::error_code;
 
-  auto
-  add(const methylome &rhs) -> methylome &;
+  auto add(const methylome &rhs) -> methylome &;
 
   typedef std::pair<std::uint32_t, std::uint32_t> offset_pair;
 
@@ -87,40 +83,36 @@ struct methylome {
   get_counts_cov(const cpg_index::vec &positions, const std::uint32_t offset,
                  const std::uint32_t start,
                  const std::uint32_t stop) const -> counts_res_cov;
-  [[nodiscard]] auto
-  get_counts(const cpg_index::vec &positions, const std::uint32_t offset,
-             const std::uint32_t start,
-             const std::uint32_t stop) const -> counts_res;
+  [[nodiscard]] auto get_counts(const cpg_index::vec &positions,
+                                const std::uint32_t offset,
+                                const std::uint32_t start,
+                                const std::uint32_t stop) const -> counts_res;
 
   // takes only the pair of positions within the methylome::vec
   // and accumulates between those
   [[nodiscard]] auto
   get_counts_cov(const std::uint32_t start,
                  const std::uint32_t stop) const -> counts_res_cov;
-  [[nodiscard]] auto
-  get_counts(const std::uint32_t start,
-             const std::uint32_t stop) const -> counts_res;
+  [[nodiscard]] auto get_counts(const std::uint32_t start,
+                                const std::uint32_t stop) const -> counts_res;
 
   // takes a vector of pairs of positions (endpoints; eps) within the
   // methylome::vec and accumulates between each of those pairs of
   // enpoints
-  [[nodiscard]] auto
-  get_counts_cov(const std::vector<offset_pair> &eps) const
+  [[nodiscard]] auto get_counts_cov(const std::vector<offset_pair> &eps) const
     -> std::vector<counts_res_cov>;
-  [[nodiscard]] auto
-  get_counts(const std::vector<offset_pair> &eps) const
+  [[nodiscard]] auto get_counts(const std::vector<offset_pair> &eps) const
     -> std::vector<counts_res>;
 
-  [[nodiscard]] auto
-  total_counts_cov() const -> counts_res_cov;
-  [[nodiscard]] auto
-  total_counts() const -> counts_res;
+  // [[nodiscard]] auto
+  // total_counts() const -> counts_res;
+  [[nodiscard]] auto total_counts_cov() const -> counts_res_cov;
 
   // takes a bins size and a cpg_index and calculates the counts in
   // each bin along all chromosomes
-  [[nodiscard]] auto
-  get_bins(const std::uint32_t bin_size,
-           const cpg_index &index) const -> std::vector<counts_res>;
+  // [[nodiscard]] auto
+  // get_bins(const std::uint32_t bin_size,
+  //          const cpg_index &index) const -> std::vector<counts_res>;
   [[nodiscard]] auto
   get_bins_cov(const std::uint32_t bin_size,
                const cpg_index &index) const -> std::vector<counts_res_cov>;

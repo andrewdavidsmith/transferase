@@ -305,5 +305,5 @@ lookup_main(int argc, char *argv[]) -> int {
       : do_lookup<counts_res>(accession, index, offsets, hostname, port,
                               meth_file, out, gis, write_scores, remote_mode);
 
-  return lookup_err == std::errc{} ? EXIT_SUCCESS : EXIT_FAILURE;
+  return lookup_err == std::errc() ? EXIT_SUCCESS : EXIT_FAILURE;
 }
