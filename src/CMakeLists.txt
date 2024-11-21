@@ -90,6 +90,10 @@ add_library(cpg_index OBJECT
   cpg_index.hpp
   cpg_index.cpp)
 
+add_library(cpg_index_set OBJECT
+  cpg_index_set.hpp
+  cpg_index_set.cpp)
+
 add_library(genomic_interval OBJECT
   genomic_interval.hpp
   genomic_interval.cpp)
@@ -126,6 +130,7 @@ target_link_libraries(
   bins
   genomic_interval
   cpg_index
+  cpg_index_set
   methylome
   methylome_set
   server
