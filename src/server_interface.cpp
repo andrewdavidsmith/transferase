@@ -96,6 +96,7 @@ struct server_interface_argset : argset_base<server_interface_argset> {
   string hostname{};
   string port{};
   string methylome_dir{};
+  string index_dir{};
   string log_filename{};
   mxe_log_level log_level{};
   uint32_t n_threads{};
@@ -108,6 +109,7 @@ struct server_interface_argset : argset_base<server_interface_argset> {
         {"hostname", format("{}", hostname)},
         {"port", format("{}", port)},
         {"methylome_dir", format("{}", methylome_dir)},
+        {"index_dir", format("{}", index_dir)},
         {"log_filename", format("{}", log_filename)},
         {"log_level", format("{}", log_level)},
         {"n_threads", format("{}", n_threads)},
@@ -117,8 +119,8 @@ struct server_interface_argset : argset_base<server_interface_argset> {
     });
   }
 
-  [[nodiscard]] auto
-  set_common_opts_impl() -> boost::program_options::options_description {
+  [[nodiscard]] auto set_common_opts_impl()
+    -> boost::program_options::options_description {
     namespace po = boost::program_options;
     using po::value;
     po::options_description opts("Command line or config file");
@@ -129,6 +131,7 @@ struct server_interface_argset : argset_base<server_interface_argset> {
       ("port,p", value(&port)->default_value(port_default), "server port")
       ("daemonize,d", po::bool_switch(&daemonize), "daemonize the server")
       ("methylome-dir,m", value(&methylome_dir)->required(), "methylome directory")
+      ("index-dir,x", value(&index_dir)->required(), "cpg index file directory")
       ("max-resident,r",
        value(&max_resident)->default_value(max_resident_default),
        "max resident methylomes")
@@ -175,8 +178,9 @@ server_interface_main(int argc, char *argv[]) -> int {
     return EXIT_FAILURE;
 
   if (args.daemonize) {
-    server s(args.hostname, args.port, args.n_threads, args.methylome_dir,
-             args.max_resident, lgr, ec);
+    auto s =
+      server(args.hostname, args.port, args.n_threads, args.methylome_dir,
+             args.index_dir, args.max_resident, lgr, ec);
     if (ec) {
       lgr.error("Failure daemonizing server: {}.", ec);
       return EXIT_FAILURE;
@@ -184,8 +188,8 @@ server_interface_main(int argc, char *argv[]) -> int {
     s.run();
   }
   else {
-    server s(args.hostname, args.port, args.n_threads, args.methylome_dir,
-             args.max_resident, lgr);
+    auto s = server(args.hostname, args.port, args.n_threads,
+                    args.methylome_dir, args.index_dir, args.max_resident, lgr);
     s.run();
   }
 
