@@ -22,13 +22,13 @@
  */
 
 #include "request_handler.hpp"
+
+#include "logger.hpp"
 #include "methylome.hpp"
+#include "mxe_error.hpp"
 #include "request.hpp"
 #include "response.hpp"
 #include "utilities.hpp"
-
-#include "logger.hpp"
-#include "mxe_error.hpp"
 
 #include <chrono>
 #include <cstdint>
@@ -149,5 +149,9 @@ request_handler::handle_get_counts(const request_header &req_hdr,
     resp_data =
       counts_to_payload(meth->get_counts_cov(req.offsets), req_hdr, req);
     return;
+    // case request_header::request_type::bin_counts:
+    //   resp_data =
+    //     counts_to_payload(meth->get_bins(req.offsets, index), req_hdr, req);
+    //   return;
   }
 }
