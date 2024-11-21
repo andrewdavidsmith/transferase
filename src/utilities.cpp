@@ -50,52 +50,6 @@ namespace rg = std::ranges;
 namespace vs = std::views;
 
 auto
-write_bins(std::ostream &out, const uint32_t bin_size, const cpg_index &index,
-           const vector<counts_res_cov> &results) -> std::error_code {
-  static constexpr auto buf_size{512};
-  static constexpr auto delim{'\t'};
-
-  array<char, buf_size> buf{};
-  const auto buf_beg = buf.data();
-  const auto buf_end = buf.data() + buf_size;
-
-  vector<counts_res_cov>::const_iterator res{cbegin(results)};
-
-  const auto zipped = vs::zip(index.chrom_size, index.chrom_order);
-  for (const auto [chrom_size, chrom_name] : zipped) {
-    rg::copy(chrom_name, buf_beg);
-    buf[size(chrom_name)] = delim;
-    for (uint32_t bin_beg = 0; bin_beg < chrom_size; bin_beg += bin_size) {
-      const auto bin_end = std::min(bin_beg + bin_size, chrom_size);
-      std::to_chars_result tcr{buf_beg + size(chrom_name) + 1, std::errc()};
-#if defined(__GNUG__) and not defined(__clang__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic error "-Wstringop-overflow=0"
-#endif
-      tcr = to_chars(tcr.ptr, buf_end, bin_beg);
-      *tcr.ptr++ = delim;
-      tcr = to_chars(tcr.ptr, buf_end, bin_end);
-      *tcr.ptr++ = delim;
-      tcr = to_chars(tcr.ptr, buf_end, res->n_meth);
-      *tcr.ptr++ = delim;
-      tcr = to_chars(tcr.ptr, buf_end, res->n_unmeth);
-      *tcr.ptr++ = delim;
-      tcr = to_chars(tcr.ptr, buf_end, res->n_covered);
-      *tcr.ptr++ = '\n';
-#if defined(__GNUG__) and not defined(__clang__)
-#pragma GCC diagnostic pop
-#endif
-      out.write(buf_beg, rg::distance(buf_beg, tcr.ptr));
-      if (!out)
-        return std::make_error_code(std::errc(errno));
-      ++res;
-    }
-  }
-  assert(res == cend(results));
-  return {};
-}
-
-auto
 get_mxe_config_dir_default(std::error_code &ec) -> std::string {
   static const auto config_dir_rhs = std::filesystem::path(".config/mxe");
   static const auto env_home = std::getenv("HOME");
