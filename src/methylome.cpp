@@ -45,8 +45,8 @@ using hr_clock = std::chrono::high_resolution_clock;
 #endif
 
 [[nodiscard]] auto
-methylome::read(const std::string &filename,
-                const std::uint32_t n_cpgs) -> std::error_code {
+methylome::read(const std::string &filename, const std::uint32_t n_cpgs)
+  -> std::error_code {
   std::error_code ec;
   const auto filesize = std::filesystem::file_size(filename, ec);
   if (ec)
@@ -105,8 +105,8 @@ methylome::read(const std::string &filename,
 }
 
 [[nodiscard]] auto
-methylome::write(const std::string &filename,
-                 const bool zip) const -> std::error_code {
+methylome::write(const std::string &filename, const bool zip) const
+  -> std::error_code {
   std::vector<std::uint8_t> buf;
   if (zip) {
 #ifdef BENCHMARK
@@ -207,8 +207,8 @@ methylome::get_counts_cov(const std::uint32_t start,
 }
 
 [[nodiscard]] auto
-methylome::get_counts(const std::uint32_t start,
-                      const std::uint32_t stop) const -> counts_res {
+methylome::get_counts(const std::uint32_t start, const std::uint32_t stop) const
+  -> counts_res {
   return get_counts_impl<counts_res>(std::cbegin(cpgs) + start,
                                      std::cbegin(cpgs) + stop);
 }
@@ -225,8 +225,9 @@ methylome::get_counts_cov(
 }
 
 [[nodiscard]] auto
-methylome::get_counts(const std::vector<std::pair<std::uint32_t, std::uint32_t>>
-                        &queries) const -> std::vector<counts_res> {
+methylome::get_counts(
+  const std::vector<std::pair<std::uint32_t, std::uint32_t>> &queries) const
+  -> std::vector<counts_res> {
   std::vector<counts_res> res(std::size(queries));
   const auto beg = std::cbegin(cpgs);
   for (const auto [i, q] : std::views::enumerate(queries))
@@ -277,8 +278,7 @@ bin_counts_impl(cpg_index::vec::const_iterator &posn_itr,
 }
 
 template <typename T>
-[[nodiscard]]
-static auto
+[[nodiscard]] static auto
 get_bins_impl(const std::uint32_t bin_size, const cpg_index &index,
               const methylome::vec &cpgs) -> std::vector<T> {
   std::vector<T> results;  // ADS TODO: reserve n_bins
@@ -298,15 +298,15 @@ get_bins_impl(const std::uint32_t bin_size, const cpg_index &index,
   return results;
 }
 
-// [[nodiscard]] auto
-// methylome::get_bins(const std::uint32_t bin_size,
-//                     const cpg_index &index) const -> std::vector<counts_res>
-//                     {
-//   return get_bins_impl<counts_res>(bin_size, index, cpgs);
-// }
+[[nodiscard]] auto
+methylome::get_bins(const std::uint32_t bin_size, const cpg_index &index) const
+  -> std::vector<counts_res> {
+  return get_bins_impl<counts_res>(bin_size, index, cpgs);
+}
 
 [[nodiscard]] auto
-methylome::get_bins_cov(const std::uint32_t bin_size, const cpg_index &index)
-  const -> std::vector<counts_res_cov> {
+methylome::get_bins_cov(const std::uint32_t bin_size,
+                        const cpg_index &index) const
+  -> std::vector<counts_res_cov> {
   return get_bins_impl<counts_res_cov>(bin_size, index, cpgs);
 }
