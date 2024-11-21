@@ -27,65 +27,49 @@
 #include "mxe_error.hpp"
 
 #include <algorithm>
-#include <cstdint>
 #include <filesystem>
 #include <format>
-#include <iostream>
 #include <memory>  // std::make_shared
 #include <mutex>
-#include <print>
-#include <ranges>
 #include <regex>
 #include <string>
 #include <tuple>
 #include <unordered_map>
 #include <utility>  // std::move
-#include <vector>
-
-using std::make_shared;
-using std::mutex;
-using std::println;
-using std::size_t;
-using std::string;
-using std::tuple;
-using std::unordered_map;
-using std::vector;
-
-namespace rg = std::ranges;
-namespace fs = std::filesystem;
 
 [[nodiscard]] static auto
-is_valid_accession(const string &accession) -> bool {
+is_valid_accession(const std::string &accession) -> bool {
   static constexpr auto experiment_ptrn = R"(^(D|E|S)RX\d+$)";
   std::regex experiment_re(experiment_ptrn);
   return std::regex_search(accession, experiment_re);
 }
 
 [[nodiscard]] auto
-methylome_set::get_methylome(const string &accession)
-  -> tuple<std::shared_ptr<methylome>, std::error_code> {
+methylome_set::get_methylome(const std::string &accession)
+  -> std::tuple<std::shared_ptr<methylome>, std::error_code> {
   static constexpr auto methylome_filename_format = "{}/{}.{}";
 
   if (!is_valid_accession(accession))
     return {nullptr, methylome_set_code::invalid_accession};
 
-  unordered_map<string, std::shared_ptr<methylome>>::const_iterator meth{};
+  std::unordered_map<std::string, std::shared_ptr<methylome>>::const_iterator
+    meth{};
 
   std::scoped_lock lock{mtx};
 
   // check if methylome is loaded
   const auto acc_meth_itr = accession_to_methylome.find(accession);
-  if (acc_meth_itr == cend(accession_to_methylome)) {
+  if (acc_meth_itr == std::cend(accession_to_methylome)) {
     const auto filename =
       std::format(methylome_filename_format, methylome_directory, accession,
                   methylome_extension);
-    if (!fs::exists(filename))
+    if (!std::filesystem::exists(filename))
       return {nullptr, methylome_set_code::methylome_file_not_found};
 
-    const string to_eject = accessions.push(accession);
+    const std::string to_eject = accessions.push(accession);
     if (!to_eject.empty()) {
       const auto to_eject_itr = accession_to_methylome.find(to_eject);
-      if (to_eject_itr == cend(accession_to_methylome))
+      if (to_eject_itr == std::cend(accession_to_methylome))
         return {nullptr, methylome_set_code::error_updating_live_methylomes};
 
       accession_to_methylome.erase(to_eject_itr);
@@ -98,7 +82,7 @@ methylome_set::get_methylome(const string &accession)
 
     bool insertion_happened{false};
     std::tie(meth, insertion_happened) = accession_to_methylome.emplace(
-      accession, make_shared<methylome>(std::move(m)));
+      accession, std::make_shared<methylome>(std::move(m)));
     if (!insertion_happened)
       return {nullptr, methylome_set_code::methylome_already_live};
   }
@@ -106,7 +90,7 @@ methylome_set::get_methylome(const string &accession)
     meth = acc_meth_itr;  // already loaded
 
   // ADS TODO: use this as error condition
-  n_total_cpgs = size(meth->second->cpgs);
+  n_total_cpgs = std::size(meth->second->cpgs);
 
   return {meth->second, methylome_set_code::ok};
 }
