@@ -24,6 +24,8 @@
 #include "cpg_index_set.hpp"
 
 #include "cpg_index.hpp"
+#include "logger.hpp"
+#include "mxe_error.hpp"
 
 #include <algorithm>
 #include <filesystem>
@@ -56,8 +58,14 @@ cpg_index_set::cpg_index_set(const std::string &cpg_index_directory) :
       std::smatch base_match;
       if (std::regex_search(name, base_match, assembly_re)) {
         const auto assembly = base_match[0].str();
-        cpg_index index;
-        index.construct(dir_entry.path().string());
+        cpg_index index{};
+        const std::string filename = dir_entry.path().string();
+        if (const auto ec = index.read(filename); ec) {
+          logger::instance().debug("Failed to read cpg index: {} ({})",
+                                   filename, ec);
+          assembly_to_cpg_index.clear();
+          return;
+        }
         assembly_to_cpg_index.emplace(assembly, index);
       }
     }
