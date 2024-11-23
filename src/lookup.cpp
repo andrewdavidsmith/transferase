@@ -68,8 +68,8 @@ do_remote_lookup(const string &accession, const cpg_index &index,
 
   // request_header::request_type::counts_cov};
   request req{static_cast<std::uint32_t>(size(offsets)), offsets};
-  mxe_client<counts_res_type> mxec(hostname, port, hdr, req,
-                                   logger::instance());
+  mxe_client<counts_res_type, request> mxec(hostname, port, hdr, req,
+                                            logger::instance());
   const auto status = mxec.run();
   if (status) {
     logger::instance().error("Transaction status: {}", status);
@@ -80,11 +80,17 @@ do_remote_lookup(const string &accession, const cpg_index &index,
 
 template <typename counts_res_type>
 [[nodiscard]] static inline auto
-do_local_lookup(const string &meth_file, const cpg_index &index,
-                vector<methylome::offset_pair> offsets)
+do_local_lookup(const string &meth_file, const string &meth_meta_file,
+                const cpg_index &index, vector<methylome::offset_pair> offsets)
   -> tuple<vector<counts_res_type>, std::error_code> {
+  const auto [meta, meta_err] = methylome_metadata::read(meth_meta_file);
+  if (meta_err) {
+    logger::instance().error("Error: {} ({})", meta_err, meth_meta_file);
+    return {{}, meta_err};
+  }
+
   methylome meth{};
-  if (const auto meth_read_err = meth.read(meth_file, index.n_cpgs_total)) {
+  if (const auto meth_read_err = meth.read(meth_file, meta)) {
     logger::instance().error("Error: {} ({})", meth_read_err, meth_file);
     return {{}, meth_read_err};
   }
@@ -118,7 +124,8 @@ template <typename counts_res_type>
 static auto
 do_lookup(const string &accession, const cpg_index &index,
           const vector<methylome::offset_pair> &offsets, const string &hostname,
-          const string &port, const string &meth_file, std::ostream &out,
+          const string &port, const string &meth_file,
+          const string &meth_meta_file, std::ostream &out,
           const vector<genomic_interval> &gis, const bool write_scores,
           const bool remote_mode) -> std::error_code {
   using hr_clock = std::chrono::high_resolution_clock;
@@ -128,7 +135,8 @@ do_lookup(const string &accession, const cpg_index &index,
   const auto [results, lookup_err] =
     remote_mode ? do_remote_lookup<counts_res_type>(accession, index, offsets,
                                                     hostname, port)
-                : do_local_lookup<counts_res_type>(meth_file, index, offsets);
+                : do_local_lookup<counts_res_type>(meth_file, meth_meta_file,
+                                                   index, offsets);
 
   const auto lookup_stop{hr_clock::now()};
   logger::instance().debug("Elapsed time for query: {:.3}s",
@@ -161,6 +169,7 @@ lookup_main(int argc, char *argv[]) -> int {
   string accession{};
   string index_file{};
   string meth_file{};
+  string meth_meta_file{};
   string intervals_file{};
   string hostname{};
   string output_file{};
@@ -220,6 +229,7 @@ lookup_main(int argc, char *argv[]) -> int {
   po::options_description local("Local");
   local.add_options()
     ("methylome,m", po::value(&meth_file)->required(), "local methylome file")
+    ("metadata", po::value(&meth_meta_file)->required(), "methylome metadata file")
     ;
   // clang-format on
 
@@ -263,6 +273,7 @@ lookup_main(int argc, char *argv[]) -> int {
   };
   vector<tuple<string, string>> local_args{
     {"Methylome", meth_file},
+    {"Metadata", meth_meta_file},
   };
   log_args<mxe_log_level::info>(args_to_log);
   log_args<mxe_log_level::info>(remote_mode ? remote_args : local_args);
@@ -301,10 +312,11 @@ lookup_main(int argc, char *argv[]) -> int {
   const auto lookup_err =
     count_covered
       ? do_lookup<counts_res_cov>(accession, index, offsets, hostname, port,
-                                  meth_file, out, gis, write_scores,
-                                  remote_mode)
+                                  meth_file, meth_meta_file, out, gis,
+                                  write_scores, remote_mode)
       : do_lookup<counts_res>(accession, index, offsets, hostname, port,
-                              meth_file, out, gis, write_scores, remote_mode);
+                              meth_file, meth_meta_file, out, gis, write_scores,
+                              remote_mode);
 
   return lookup_err == std::errc() ? EXIT_SUCCESS : EXIT_FAILURE;
 }
