@@ -25,6 +25,7 @@
 #define SRC_METHYLOME_SET_HPP_
 
 #include "methylome.hpp"
+#include "methylome_metadata.hpp"
 
 #include <algorithm>
 #include <cstdint>
@@ -73,21 +74,16 @@ struct methylome_set {
 
   methylome_set(const std::uint32_t max_live_methylomes,
                 const std::string &methylome_directory) :
-    n_total_cpgs{}, max_live_methylomes{max_live_methylomes},
+    max_live_methylomes{max_live_methylomes},
     methylome_directory{methylome_directory}, accessions{max_live_methylomes} {}
 
   [[nodiscard]] auto get_methylome(const std::string &accession)
-    -> std::tuple<std::shared_ptr<methylome>, std::error_code>;
-
-  [[nodiscard]] auto get_n_total_cpgs() const -> std::uint32_t {
-    return n_total_cpgs;
-  }
+    -> std::tuple<std::shared_ptr<methylome>,
+                  std::shared_ptr<methylome_metadata>, std::error_code>;
 
   static constexpr std::uint32_t default_max_live_methylomes{128};
-  static constexpr auto methylome_extension{"mc16"};
 
   std::mutex mtx;
-  std::uint32_t n_total_cpgs{};
   std::uint32_t max_live_methylomes{};
   std::string methylome_directory;
 
@@ -95,6 +91,8 @@ struct methylome_set {
 
   std::unordered_map<std::string, std::shared_ptr<methylome>>
     accession_to_methylome;
+  std::unordered_map<std::string, std::shared_ptr<methylome_metadata>>
+    accession_to_methylome_metadata;
 };
 
 #endif  // SRC_METHYLOME_SET_HPP_
