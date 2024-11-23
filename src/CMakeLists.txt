@@ -44,11 +44,14 @@ add_library(zip OBJECT
   zip.hpp
   zip.cpp)
 
+add_library(methylome_metadata OBJECT
+  methylome_metadata.hpp
+  methylome_metadata.cpp)
+target_include_directories(methylome_metadata PRIVATE "${PROJECT_BINARY_DIR}")
+
 add_library(compress OBJECT
   compress.hpp
   compress.cpp)
-
-target_include_directories(compress PRIVATE "${PROJECT_BINARY_DIR}")
 
 add_library(check OBJECT
   check.hpp
@@ -132,6 +135,7 @@ target_link_libraries(
   cpg_index
   cpg_index_set
   methylome
+  methylome_metadata
   methylome_set
   server
   connection
