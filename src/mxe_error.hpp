@@ -41,9 +41,11 @@ enum class request_error : std::uint32_t {
   lookup_parse_error_n_intervals = 4,
   lookup_error_reading_offsets = 5,
   lookup_error_offsets = 6,
+  bins_error_assembly = 7,
+  bins_error_bin_size = 8,
 };
 
-static constexpr std::uint32_t request_error_n = 7;
+static constexpr std::uint32_t request_error_n = 9;
 
 // register request_error as error code enum
 template <>
@@ -69,6 +71,10 @@ struct request_error_category : std::error_category {
       return "lookup error reading offsets"s;
     case 6:
       return "lookup error offsets"s;
+    case 7:
+      return "bins error assembly"s;
+    case 8:
+      return "bins error bin size"s;
     }
     std::unreachable();  // hopefully this is unreacheable
   }
@@ -139,9 +145,11 @@ enum class methylome_set_code : std::uint32_t {
   error_updating_live_methylomes = 3,
   error_reading_methylome_file = 4,
   methylome_already_live = 5,
+  methylome_metadata_file_not_found = 6,
+  error_reading_metadata_file = 7,
 };
 
-static constexpr std::uint32_t methylome_set_code_n = 6;
+static constexpr std::uint32_t methylome_set_code_n = 8;
 
 // register methylome_set_code as error code enum
 template <>
@@ -165,6 +173,10 @@ struct methylome_set_category : std::error_category {
       return "error reading methylome file"s;
     case 5:
       return "methylome already live"s;
+    case 6:
+      return "methylome metadata file not found"s;
+    case 7:
+      return "error reading methylome metadata file"s;
     }
     std::unreachable();  // hopefully
   }
@@ -294,20 +306,16 @@ struct cpg_index_category : std::error_category {
   const char *name() const noexcept override { return "cpg_index"; }
   std::string message(int code) const override {
     using std::string_literals::operator""s;
+    // clang-format off
     switch (code) {
-    case 0:
-      return "ok"s;
-    case 1:
-      return "wrong identifier in header"s;
-    case 2:
-      return "error parsing index header line"s;
-    case 3:
-      return "failure reading index header"s;
-    case 4:
-      return "failure reading index body"s;
-    case 5:
-      return "inconsistent chromosome sizes"s;
+    case 0: return "ok"s;
+    case 1: return "wrong identifier in header"s;
+    case 2: return "error parsing index header line"s;
+    case 3: return "failure reading index header"s;
+    case 4: return "failure reading index body"s;
+    case 5: return "inconsistent chromosome sizes"s;
     }
+    // clang-format on
     std::unreachable();  // hopefully
   }
 };
