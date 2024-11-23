@@ -34,6 +34,7 @@
 #include <functional>
 #include <numeric>  // std::exclusive_scan
 #include <ranges>
+#include <regex>
 #include <string>
 #include <tuple>
 #include <utility>
@@ -457,4 +458,25 @@ cpg_index::get_offsets(const vector<genomic_interval> &gis) const
     rg::copy(get_offsets(ch_id, tmp), back_inserter(offsets));
   }
   return offsets;
+}
+
+auto
+get_assembly_from_filename(const std::string &filename,
+                           std::error_code &ec) -> std::string {
+  // ADS: this regular expression might better be in a header
+  static constexpr auto assembly_ptrn = R"(^[_[:alnum:]]+)";
+  static const auto filename_ptrn =
+    std::format(R"({}.{}$)", assembly_ptrn, cpg_index::filename_extension);
+
+  const std::string name = std::filesystem::path(filename).filename();
+
+  std::regex filename_re(filename_ptrn);
+  if (std::regex_search(name, filename_re)) {
+    std::smatch base_match;
+    std::regex assembly_re(assembly_ptrn);
+    if (std::regex_search(name, base_match, assembly_re))
+      return base_match[0].str();
+  }
+  ec = std::make_error_code(std::errc::invalid_argument);
+  return {};
 }

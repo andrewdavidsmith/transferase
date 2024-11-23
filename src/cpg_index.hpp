@@ -39,6 +39,8 @@
 struct genomic_interval;
 
 struct cpg_index {
+  static constexpr auto filename_extension{"cpg_idx"};
+
   typedef std::uint32_t cpg_pos_t;
 #if not defined(__APPLE__) && not defined(__MACH__)
   typedef std::vector<cpg_pos_t, aligned_allocator<cpg_pos_t>> vec;
@@ -85,5 +87,9 @@ template <> struct std::formatter<cpg_index> : std::formatter<std::string> {
     return std::formatter<std::string>::format(ci.tostring(), ctx);
   }
 };
+
+auto
+get_assembly_from_filename(const std::string &filename,
+                           std::error_code &ec) -> std::string;
 
 #endif  // SRC_CPG_INDEX_HPP_
