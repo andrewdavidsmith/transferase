@@ -156,3 +156,41 @@ from_chars(const char *first, const char *last,
 
   return {cursor, request_error::ok};
 }
+
+// bins_request
+
+auto
+bins_request::summary() const -> string {
+  return format(R"({{"bin_size": {}}})", bin_size);
+}
+
+auto
+to_chars(char *first, [[maybe_unused]] char *last,
+         const bins_request &req) -> mxe_to_chars_result {
+  static constexpr auto term = '\n';
+  // ADS: use to_chars here
+  const string s = format("{}{}", req.bin_size, term);
+  assert(static_cast<std::iterator_traits<char *>::difference_type>(size(s)) <
+         std::distance(first, last));
+  const auto data_end = rg::copy(s, first);  // rg::in_out_result
+  return {data_end.out, request_error::ok};
+}
+
+auto
+from_chars(const char *first, const char *last,
+           bins_request &req) -> mxe_from_chars_result {
+  static constexpr auto term = '\n';
+
+  auto cursor = first;
+  const auto [ptr, ec] = from_chars(cursor, last, req.bin_size);
+  if (ec != std::errc{})
+    return {ptr, request_error::bins_error_bin_size};
+  cursor = ptr;
+
+  // check terminator
+  if (*cursor != term)
+    return {cursor, request_error::bins_error_bin_size};
+  ++cursor;
+
+  return {cursor, request_error::ok};
+}

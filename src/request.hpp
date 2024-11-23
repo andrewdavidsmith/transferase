@@ -52,6 +52,14 @@ struct request_header {
   auto is_valid_type() const -> bool {
     return rq_type < request_type::n_request_types;
   }
+  auto is_intervals_request() const -> bool {
+    return rq_type == request_type::counts ||
+           rq_type == request_type::counts_cov;
+  }
+  auto is_bins_request() const -> bool {
+    return rq_type == request_type::bin_counts ||
+           rq_type == request_type::bin_counts_cov;
+  }
 };
 
 template <>
@@ -110,5 +118,18 @@ to_chars(char *first, char *last, const request &req) -> mxe_to_chars_result;
 auto
 from_chars(const char *first, const char *last,
            request &req) -> mxe_from_chars_result;
+
+struct bins_request {
+  std::uint32_t bin_size{};
+  auto summary() const -> std::string;
+};
+
+auto
+to_chars(char *first, char *last,
+         const bins_request &req) -> mxe_to_chars_result;
+
+auto
+from_chars(const char *first, const char *last,
+           bins_request &req) -> mxe_from_chars_result;
 
 #endif  // SRC_REQUEST_HPP_
