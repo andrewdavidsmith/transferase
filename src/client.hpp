@@ -37,10 +37,10 @@
 #include <utility>  // std::swap std::move
 #include <vector>
 
-template <typename counts_type> class mxe_client {
+template <typename counts_type, typename req_type> class mxe_client {
 public:
   mxe_client(const std::string &server, const std::string &port,
-             request_header &req_hdr, request &req, logger &lgr);
+             request_header &req_hdr, req_type &req, logger &lgr);
 
   auto run() -> std::error_code {
     io_context.run();
@@ -77,7 +77,7 @@ private:
 
   request_header_buffer req_hdr_buf;
   request_header req_hdr;
-  request req;
+  req_type req;
 
   response_header_buffer resp_hdr_buf;
   response_header resp_hdr;
@@ -88,14 +88,13 @@ private:
   std::chrono::seconds read_timeout_seconds{3};
 };  // class mxe_client
 
-template <typename counts_type>
-mxe_client<counts_type>::mxe_client(const std::string &server,
-                                    const std::string &port,
-                                    request_header &req_hdr, request &req,
-                                    logger &lgr) :
-  resolver(io_context),
-  socket(io_context), deadline{socket.get_executor()}, req_hdr{req_hdr},
-  req{std::move(req)},  // move b/c req can be big
+template <typename counts_type, typename req_type>
+mxe_client<counts_type, req_type>::mxe_client(const std::string &server,
+                                              const std::string &port,
+                                              request_header &req_hdr,
+                                              req_type &req, logger &lgr) :
+  resolver(io_context), socket(io_context), deadline{socket.get_executor()},
+  req_hdr{req_hdr}, req{std::move(req)},  // move b/c req can be big
   lgr{lgr} {
   // (1) call async, (2) set deadline, (3) register check_deadline
   const auto handle_resolve_token = [this](const auto &error, auto results) {
@@ -117,9 +116,9 @@ mxe_client<counts_type>::mxe_client(const std::string &server,
   deadline.async_wait([this](auto) { this->check_deadline(); });
 }
 
-template <typename counts_type>
+template <typename counts_type, typename req_type>
 auto
-mxe_client<counts_type>::handle_resolve(
+mxe_client<counts_type, req_type>::handle_resolve(
   const std::error_code &err,
   const boost::asio::ip::tcp::resolver::results_type &endpoints) {
   if (!err) {
@@ -134,9 +133,9 @@ mxe_client<counts_type>::handle_resolve(
   }
 }
 
-template <typename counts_type>
+template <typename counts_type, typename req_type>
 auto
-mxe_client<counts_type>::handle_connect(const std::error_code &err) {
+mxe_client<counts_type, req_type>::handle_connect(const std::error_code &err) {
   deadline.expires_at(boost::asio::steady_timer::time_point::max());
   if (!err) {
     lgr.debug("Connected to server: {}",
@@ -147,13 +146,24 @@ mxe_client<counts_type>::handle_connect(const std::error_code &err) {
             to_chars(req_hdr_compose.ptr,
                      req_hdr_buf.data() + request_header_buf_size, req);
           !req_body_compose.error) {
-        boost::asio::async_write(
-          socket,
-          std::vector<boost::asio::const_buffer>{
-            boost::asio::buffer(req_hdr_buf),
-            boost::asio::buffer(req.offsets),
-          },
-          [this](auto error, auto) { this->handle_write_request(error); });
+        if constexpr (std::is_same<req_type, request>::value) {
+          boost::asio::async_write(
+            socket,
+            std::vector<boost::asio::const_buffer>{
+              boost::asio::buffer(req_hdr_buf),
+              boost::asio::buffer(req.offsets),
+            },
+            [this](auto error, auto) { this->handle_write_request(error); });
+        }
+        else {
+          boost::asio::async_write(
+            socket,
+            std::vector<boost::asio::const_buffer>{
+              boost::asio::buffer(req_hdr_buf),
+              boost::asio::buffer(&req.bin_size, sizeof(req.bin_size)),
+            },
+            [this](auto error, auto) { this->handle_write_request(error); });
+        }
         deadline.expires_after(read_timeout_seconds);
       }
       else {
@@ -172,9 +182,10 @@ mxe_client<counts_type>::handle_connect(const std::error_code &err) {
   }
 }
 
-template <typename counts_type>
+template <typename counts_type, typename req_type>
 auto
-mxe_client<counts_type>::handle_write_request(const std::error_code &err) {
+mxe_client<counts_type, req_type>::handle_write_request(
+  const std::error_code &err) {
   deadline.expires_at(boost::asio::steady_timer::time_point::max());
   if (!err) {
     boost::asio::async_read(
@@ -194,9 +205,9 @@ mxe_client<counts_type>::handle_write_request(const std::error_code &err) {
   }
 }
 
-template <typename counts_type>
+template <typename counts_type, typename req_type>
 auto
-mxe_client<counts_type>::handle_read_response_header(
+mxe_client<counts_type, req_type>::handle_read_response_header(
   const std::error_code &err) {
   // ADS: does this go here?
   deadline.expires_at(boost::asio::steady_timer::time_point::max());
@@ -217,9 +228,9 @@ mxe_client<counts_type>::handle_read_response_header(
   }
 }
 
-template <typename counts_type>
+template <typename counts_type, typename req_type>
 auto
-mxe_client<counts_type>::handle_failure_explanation(
+mxe_client<counts_type, req_type>::handle_failure_explanation(
   const std::error_code &err) {
   deadline.expires_at(boost::asio::steady_timer::time_point::max());
   if (!err) {
@@ -239,21 +250,23 @@ mxe_client<counts_type>::handle_failure_explanation(
   }
 }
 
-template <typename counts_type>
+template <typename counts_type, typename req_type>
 auto
-mxe_client<counts_type>::do_read_counts() {
+mxe_client<counts_type, req_type>::do_read_counts() {
   // ADS: this 'resize' seems to belong with the response class
-  resp.counts.resize(req.n_intervals);
-  boost::asio::async_read(
-    socket, boost::asio::buffer(resp.counts),
-    boost::asio::transfer_exactly(resp.get_counts_n_bytes()),
-    [this](const auto &error, auto) { this->do_finish(error); });
-  deadline.expires_after(read_timeout_seconds);
+  if constexpr (std::is_same<req_type, request>::value) {
+    resp.counts.resize(req.n_intervals);
+    boost::asio::async_read(
+      socket, boost::asio::buffer(resp.counts),
+      boost::asio::transfer_exactly(resp.get_counts_n_bytes()),
+      [this](const auto &error, auto) { this->do_finish(error); });
+    deadline.expires_after(read_timeout_seconds);
+  }
 }
 
-template <typename counts_type>
+template <typename counts_type, typename req_type>
 auto
-mxe_client<counts_type>::do_finish(const std::error_code &err) {
+mxe_client<counts_type, req_type>::do_finish(const std::error_code &err) {
   // same consequence as canceling
   deadline.expires_at(boost::asio::steady_timer::time_point::max());
   status = err;
@@ -263,9 +276,9 @@ mxe_client<counts_type>::do_finish(const std::error_code &err) {
   socket.close(socket_close_ec);
 }
 
-template <typename counts_type>
+template <typename counts_type, typename req_type>
 auto
-mxe_client<counts_type>::check_deadline() {
+mxe_client<counts_type, req_type>::check_deadline() {
   if (!socket.is_open())  // ADS: when can this happen?
     return;
 
