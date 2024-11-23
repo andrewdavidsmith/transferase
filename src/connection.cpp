@@ -57,17 +57,32 @@ connection::read_request() -> void {
                     req_hdr.summary());
           handler.handle_header(req_hdr, resp_hdr);
           if (!resp_hdr.error()) {
-            if (const auto req_body_parse =
-                  from_chars(req_hdr_parse.ptr, cend(req_hdr_buf), req);
-                !req_body_parse.error) {
-              prepare_to_read_offsets();
-              read_offsets();
+            if (req_hdr.is_intervals_request()) {
+              if (const auto req_parse =
+                    from_chars(req_hdr_parse.ptr, cend(req_hdr_buf), req);
+                  !req_parse.error) {
+                prepare_to_read_offsets();
+                read_offsets();
+              }
+              else {
+                lgr.warning("{} Request parse error: {}", connection_id,
+                            req_parse.error);
+                resp_hdr = {req_parse.error, 0};
+                respond_with_error();
+              }
             }
-            else {
-              lgr.warning("{} Request body parse error: {}", connection_id,
-                          req_body_parse.error);
-              resp_hdr = {req_body_parse.error, 0};
-              respond_with_error();
+            else {  // only possibility is req_hdr.is_counts_request()
+              if (const auto req_parse =
+                    from_chars(req_hdr_parse.ptr, cend(req_hdr_buf), bins_req);
+                  !req_parse.error) {
+                compute_bins();
+              }
+              else {
+                lgr.warning("{} Bins request parse error: {}", connection_id,
+                            req_parse.error);
+                resp_hdr = {req_parse.error, 0};
+                respond_with_error();
+              }
             }
           }
           else {
@@ -108,9 +123,7 @@ connection::read_offsets() -> void {
         if (offset_remaining == 0) {
           lgr.debug("{} Finished reading offsets ({} Bytes)", connection_id,
                     offset_byte);
-          // if (req_hdr.rq_type == request_header::request_type::counts_cov) {
           handler.handle_get_counts(req_hdr, req, resp_hdr, resp);
-          // }
           lgr.debug(
             "{} Finished methylation counts. Responding with header: {}",
             connection_id, resp_hdr.summary());
@@ -128,6 +141,15 @@ connection::read_offsets() -> void {
       }
     });
   deadline.expires_after(std::chrono::seconds(read_timeout_seconds));
+}
+
+auto
+connection::compute_bins() -> void {
+  deadline.expires_at(boost::asio::steady_timer::time_point::max());
+  handler.handle_get_bins(req_hdr, bins_req, resp_hdr, resp);
+  lgr.debug("{} Finished methylation bin counts. Responding with header: {}",
+            connection_id, resp_hdr.summary());
+  respond_with_header();
 }
 
 auto
