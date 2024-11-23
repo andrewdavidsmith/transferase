@@ -86,7 +86,7 @@ write_intervals(std::ostream &out, const cpg_index &index,
     const std::string chrom{index.chrom_order[ch_id]};
     std::ranges::copy(chrom, buf.data());
     buf[size(chrom)] = delim;
-    for (const auto &[gi, res] : chunk) {
+    for (const auto &[gi, single_result] : chunk) {
       std::to_chars_result tcr{buf.data() + size(chrom) + 1, std::errc()};
 #if defined(__GNUG__) and not defined(__clang__)
 #pragma GCC diagnostic push
@@ -96,12 +96,12 @@ write_intervals(std::ostream &out, const cpg_index &index,
       *tcr.ptr++ = delim;
       tcr = std::to_chars(tcr.ptr, buf_end, gi.stop);
       *tcr.ptr++ = delim;
-      tcr = std::to_chars(tcr.ptr, buf_end, res.n_meth);
+      tcr = std::to_chars(tcr.ptr, buf_end, single_result.n_meth);
       *tcr.ptr++ = delim;
-      tcr = std::to_chars(tcr.ptr, buf_end, res.n_unmeth);
+      tcr = std::to_chars(tcr.ptr, buf_end, single_result.n_unmeth);
       if constexpr (std::is_same<counts_res_type, counts_res_cov>::value) {
         *tcr.ptr++ = delim;
-        tcr = std::to_chars(tcr.ptr, buf_end, res.n_covered);
+        tcr = std::to_chars(tcr.ptr, buf_end, single_result.n_covered);
       }
       *tcr.ptr++ = '\n';
 #if defined(__GNUG__) and not defined(__clang__)
@@ -137,7 +137,7 @@ write_bedgraph(std::ostream &out, const cpg_index &index,
     const std::string chrom{index.chrom_order[ch_id]};
     std::ranges::copy(chrom, buf.data());
     buf[size(chrom)] = delim;
-    for (const auto &[gi, score] : chunk) {
+    for (const auto &[gi, single_score] : chunk) {
       std::to_chars_result tcr{buf.data() + size(chrom) + 1, std::errc()};
 #if defined(__GNUG__) and not defined(__clang__)
 #pragma GCC diagnostic push
@@ -148,8 +148,8 @@ write_bedgraph(std::ostream &out, const cpg_index &index,
       tcr = std::to_chars(tcr.ptr, buf_end, gi.stop);
       *tcr.ptr++ = delim;
       // ADS: below the format is intended to mimick default for cout
-      tcr = std::to_chars(tcr.ptr, buf_end, score, std::chars_format::general,
-                          score_precision);
+      tcr = std::to_chars(tcr.ptr, buf_end, single_score,
+                          std::chars_format::general, score_precision);
       *tcr.ptr++ = '\n';
 #if defined(__GNUG__) and not defined(__clang__)
 #pragma GCC diagnostic pop
@@ -174,7 +174,7 @@ write_bins(std::ostream &out, const std::uint32_t bin_size,
   std::array<char, buf_size> buf{};
   const auto buf_end = buf.data() + buf_size;
 
-  auto res = std::cbegin(results);
+  auto results_itr = std::cbegin(results);
 
   const auto zipped = std::views::zip(index.chrom_size, index.chrom_order);
   for (const auto [chrom_size, chrom_name] : zipped) {
@@ -192,12 +192,12 @@ write_bins(std::ostream &out, const std::uint32_t bin_size,
       *tcr.ptr++ = delim;
       tcr = std::to_chars(tcr.ptr, buf_end, bin_end);
       *tcr.ptr++ = delim;
-      tcr = std::to_chars(tcr.ptr, buf_end, res->n_meth);
+      tcr = std::to_chars(tcr.ptr, buf_end, results_itr->n_meth);
       *tcr.ptr++ = delim;
-      tcr = std::to_chars(tcr.ptr, buf_end, res->n_unmeth);
+      tcr = std::to_chars(tcr.ptr, buf_end, results_itr->n_unmeth);
       if constexpr (std::is_same<counts_res_type, counts_res_cov>::value) {
         *tcr.ptr++ = delim;
-        tcr = std::to_chars(tcr.ptr, buf_end, res->n_covered);
+        tcr = std::to_chars(tcr.ptr, buf_end, results_itr->n_covered);
       }
       *tcr.ptr++ = '\n';
 #if defined(__GNUG__) and not defined(__clang__)
@@ -206,10 +206,10 @@ write_bins(std::ostream &out, const std::uint32_t bin_size,
       out.write(buf.data(), std::ranges::distance(buf.data(), tcr.ptr));
       if (!out)
         return std::make_error_code(std::errc(errno));
-      ++res;
+      ++results_itr;
     }
   }
-  assert(res == std::cend(results));
+  assert(results_itr == std::cend(results));
   return {};
 }
 
