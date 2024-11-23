@@ -46,8 +46,9 @@ cpg_index_set::get_cpg_index(const std::string &assembly_name)
 
 cpg_index_set::cpg_index_set(const std::string &cpg_index_directory) :
   cpg_index_directory{cpg_index_directory} {
-  static constexpr auto cpg_index_filename_ptrn = R"(^[_[:alnum:]]+.cpg_idx$)";
   static constexpr auto assembly_ptrn = R"(^[_[:alnum:]]+)";
+  static const auto cpg_index_filename_ptrn =
+    std::format(R"({}.{}$)", assembly_ptrn, cpg_index::filename_extension);
   std::regex cpg_index_filename_re(cpg_index_filename_ptrn);
   std::regex assembly_re(assembly_ptrn);
 
