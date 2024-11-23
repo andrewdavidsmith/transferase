@@ -28,6 +28,7 @@
 #include "aligned_allocator.hpp"
 #endif
 #include "cpg_index.hpp"
+#include "methylome_metadata.hpp"
 
 #include <cstddef>
 #include <cstdint>
@@ -47,6 +48,15 @@ struct counts_res_cov {
   std::uint32_t n_covered{};
 };
 
+template <> struct std::formatter<counts_res> : std::formatter<std::string> {
+  auto format(const counts_res &cr, std::format_context &ctx) const {
+    return std::formatter<std::string>::format(
+      std::format(R"({{"n_meth": {}, "n_unmeth": {}}})", cr.n_meth,
+                  cr.n_unmeth),
+      ctx);
+  }
+};
+
 template <>
 struct std::formatter<counts_res_cov> : std::formatter<std::string> {
   auto format(const counts_res_cov &cr, std::format_context &ctx) const {
@@ -59,6 +69,8 @@ struct std::formatter<counts_res_cov> : std::formatter<std::string> {
 
 // ADS TODO: n_cpgs in header
 struct methylome {
+  static constexpr auto filename_extension{"m16"};
+
   typedef std::uint16_t m_count_t;
   typedef std::pair<m_count_t, m_count_t> m_elem;
 #if not defined(__APPLE__) && not defined(__MACH__)
@@ -70,10 +82,16 @@ struct methylome {
   // ADS: use of n_cpgs to validate might be confusing and at least
   // need to be documented
   [[nodiscard]] auto read(const std::string &filename,
-                          const std::uint32_t n_cpgs = 0) -> std::error_code;
+                          const methylome_metadata &meta) -> std::error_code;
 
   [[nodiscard]] auto write(const std::string &filename,
                            const bool zip = false) const -> std::error_code;
+
+  [[nodiscard]] static auto
+  get_n_cpgs_from_file(const std::string &filename) -> std::uint32_t;
+  [[nodiscard]] static auto
+  get_n_cpgs_from_file(const std::string &filename,
+                       std::error_code &ec) -> std::uint32_t;
 
   auto add(const methylome &rhs) -> methylome &;
 
@@ -81,8 +99,8 @@ struct methylome {
 
   [[nodiscard]] auto
   get_counts_cov(const cpg_index::vec &positions, const std::uint32_t offset,
-                 const std::uint32_t start, const std::uint32_t stop) const
-    -> counts_res_cov;
+                 const std::uint32_t start,
+                 const std::uint32_t stop) const -> counts_res_cov;
   [[nodiscard]] auto get_counts(const cpg_index::vec &positions,
                                 const std::uint32_t offset,
                                 const std::uint32_t start,
@@ -90,9 +108,9 @@ struct methylome {
 
   // takes only the pair of positions within the methylome::vec
   // and accumulates between those
-  [[nodiscard]] auto get_counts_cov(const std::uint32_t start,
-                                    const std::uint32_t stop) const
-    -> counts_res_cov;
+  [[nodiscard]] auto
+  get_counts_cov(const std::uint32_t start,
+                 const std::uint32_t stop) const -> counts_res_cov;
   [[nodiscard]] auto get_counts(const std::uint32_t start,
                                 const std::uint32_t stop) const -> counts_res;
 
@@ -110,12 +128,12 @@ struct methylome {
 
   // takes a bins size and a cpg_index and calculates the counts in
   // each bin along all chromosomes
-  [[nodiscard]] auto get_bins(const std::uint32_t bin_size,
-                              const cpg_index &index) const
-    -> std::vector<counts_res>;
-  [[nodiscard]] auto get_bins_cov(const std::uint32_t bin_size,
-                                  const cpg_index &index) const
-    -> std::vector<counts_res_cov>;
+  [[nodiscard]] auto
+  get_bins(const std::uint32_t bin_size,
+           const cpg_index &index) const -> std::vector<counts_res>;
+  [[nodiscard]] auto
+  get_bins_cov(const std::uint32_t bin_size,
+               const cpg_index &index) const -> std::vector<counts_res_cov>;
 
   methylome::vec cpgs{};
   static constexpr auto record_size = sizeof(m_elem);

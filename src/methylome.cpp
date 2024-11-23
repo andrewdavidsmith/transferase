@@ -23,6 +23,7 @@
 
 #include "methylome.hpp"
 
+#include "methylome_metadata.hpp"
 #include "mxe_error.hpp"
 #include "utilities.hpp"
 #include "zlib_adapter.hpp"
@@ -45,8 +46,23 @@ using hr_clock = std::chrono::high_resolution_clock;
 #endif
 
 [[nodiscard]] auto
-methylome::read(const std::string &filename, const std::uint32_t n_cpgs)
-  -> std::error_code {
+methylome::get_n_cpgs_from_file(const std::string &filename,
+                                std::error_code &ec) -> std::uint32_t {
+  const auto filesize = std::filesystem::file_size(filename, ec);
+  if (ec)
+    return 0;
+  return filesize / sizeof(std::pair<m_count_t, m_count_t>);
+}
+
+[[nodiscard]] auto
+methylome::get_n_cpgs_from_file(const std::string &filename) -> std::uint32_t {
+  std::error_code ec;
+  return get_n_cpgs_from_file(filename, ec);
+}
+
+[[nodiscard]] auto
+methylome::read(const std::string &filename,
+                const methylome_metadata &metadata) -> std::error_code {
   std::error_code ec;
   const auto filesize = std::filesystem::file_size(filename, ec);
   if (ec)
@@ -55,58 +71,37 @@ methylome::read(const std::string &filename, const std::uint32_t n_cpgs)
   if (!in)
     return std::make_error_code(std::errc(errno));
 
-  uint64_t flags{};
-  {
-    in.read(reinterpret_cast<char *>(&flags), sizeof(flags));
-    const auto read_ok = static_cast<bool>(in);
+  if (metadata.is_compressed) {
+    std::vector<std::uint8_t> buf(filesize);
+    const bool read_ok =
+      in.read(reinterpret_cast<char *>(buf.data()), filesize);
     const auto n_bytes = in.gcount();
-    if (!read_ok || n_bytes != static_cast<std::streamsize>(sizeof(flags)))
-      return methylome_code::error_reading_methylome_header;
-  }
-  if (flags != 0 && flags != 1)
-    return methylome_code::invalid_methylome_header;
-
-  if (flags == 1 && n_cpgs == 0)  // can't know how much to inflate
-    return methylome_code::invalid_methylome_header;
-
-  const auto datasize = filesize - sizeof(flags);
-  // ADS: blow, not unzipping, have n_cpgs, but size not consistent
-  if (flags == 0 && n_cpgs != 0 && (n_cpgs * record_size != datasize))
-    return methylome_code::incorrect_methylome_size;
-
-  if (flags == 1) {
-    std::vector<std::uint8_t> buf(datasize);
-    in.read(reinterpret_cast<char *>(buf.data()), datasize);
-    const auto read_ok = static_cast<bool>(in);
-    const auto n_bytes = in.gcount();
-    if (!read_ok || n_bytes != static_cast<std::streamsize>(datasize))
+    if (!read_ok || n_bytes != static_cast<std::streamsize>(filesize))
       return methylome_code::error_reading_methylome;
-    assert(n_cpgs != 0);
-    cpgs.resize(n_cpgs);
+    cpgs.resize(metadata.n_cpgs);
 #ifdef BENCHMARK
     const auto decompress_start{hr_clock::now()};
 #endif
     const auto decompress_err = decompress(buf, cpgs);
 #ifdef BENCHMARK
     const auto decompress_stop{hr_clock::now()};
-    std::println(std::cerr, "decompress(buf, cpgs) time: {}s",
+    std::println("decompress(buf, cpgs) time: {}s",
                  duration(decompress_start, decompress_stop));
 #endif
     return decompress_err;
   }
-  cpgs.resize(datasize / record_size);
-  in.read(reinterpret_cast<char *>(cpgs.data()), datasize);
-  const auto read_ok = static_cast<bool>(in);
+  cpgs.resize(metadata.n_cpgs);
+  const bool read_ok = in.read(reinterpret_cast<char *>(cpgs.data()), filesize);
   const auto n_bytes = in.gcount();
-  if (!read_ok || n_bytes != static_cast<std::streamsize>(datasize))
+  if (!read_ok || n_bytes != static_cast<std::streamsize>(filesize))
     return methylome_code::error_reading_methylome;
 
   return std::error_code{};
 }
 
 [[nodiscard]] auto
-methylome::write(const std::string &filename, const bool zip) const
-  -> std::error_code {
+methylome::write(const std::string &filename,
+                 const bool zip) const -> std::error_code {
   std::vector<std::uint8_t> buf;
   if (zip) {
 #ifdef BENCHMARK
@@ -125,10 +120,6 @@ methylome::write(const std::string &filename, const bool zip) const
   std::ofstream out(filename);
   if (!out)
     return std::make_error_code(std::errc(errno));
-
-  const uint64_t flags = zip;
-  if (!out.write(reinterpret_cast<const char *>(&flags), sizeof(flags)))
-    return methylome_code::error_writing_methylome_header;
 
   if (zip) {
     if (!out.write(reinterpret_cast<const char *>(buf.data()), std::size(buf)))
@@ -207,8 +198,8 @@ methylome::get_counts_cov(const std::uint32_t start,
 }
 
 [[nodiscard]] auto
-methylome::get_counts(const std::uint32_t start, const std::uint32_t stop) const
-  -> counts_res {
+methylome::get_counts(const std::uint32_t start,
+                      const std::uint32_t stop) const -> counts_res {
   return get_counts_impl<counts_res>(std::cbegin(cpgs) + start,
                                      std::cbegin(cpgs) + stop);
 }
@@ -225,9 +216,8 @@ methylome::get_counts_cov(
 }
 
 [[nodiscard]] auto
-methylome::get_counts(
-  const std::vector<std::pair<std::uint32_t, std::uint32_t>> &queries) const
-  -> std::vector<counts_res> {
+methylome::get_counts(const std::vector<std::pair<std::uint32_t, std::uint32_t>>
+                        &queries) const -> std::vector<counts_res> {
   std::vector<counts_res> res(std::size(queries));
   const auto beg = std::cbegin(cpgs);
   for (const auto [i, q] : std::views::enumerate(queries))
@@ -299,14 +289,13 @@ get_bins_impl(const std::uint32_t bin_size, const cpg_index &index,
 }
 
 [[nodiscard]] auto
-methylome::get_bins(const std::uint32_t bin_size, const cpg_index &index) const
-  -> std::vector<counts_res> {
+methylome::get_bins(const std::uint32_t bin_size,
+                    const cpg_index &index) const -> std::vector<counts_res> {
   return get_bins_impl<counts_res>(bin_size, index, cpgs);
 }
 
 [[nodiscard]] auto
-methylome::get_bins_cov(const std::uint32_t bin_size,
-                        const cpg_index &index) const
-  -> std::vector<counts_res_cov> {
+methylome::get_bins_cov(const std::uint32_t bin_size, const cpg_index &index)
+  const -> std::vector<counts_res_cov> {
   return get_bins_impl<counts_res_cov>(bin_size, index, cpgs);
 }
