@@ -40,8 +40,6 @@ struct cpg_index_set {
   [[nodiscard]] auto get_cpg_index(const std::string &assembly_name)
     -> std::tuple<const cpg_index &, std::error_code>;
 
-  static constexpr auto cpg_index_extension{"cpg_index"};
-
   std::string cpg_index_directory;
   std::unordered_map<std::string, cpg_index> assembly_to_cpg_index;
 };
