@@ -67,6 +67,7 @@ struct connection : public std::enable_shared_from_this<connection> {
 
   auto read_request() -> void;  // read request
   auto read_offsets() -> void;  // read offsets part of request
+  auto compute_bins() -> void;  // do the computation for bins
 
   auto respond_with_header() -> void;  // write good header
   auto respond_with_error() -> void;   // write error header
@@ -80,6 +81,7 @@ struct connection : public std::enable_shared_from_this<connection> {
   request_header_buffer req_hdr_buf{};
   request_header req_hdr;  // this connection's request header
   request req;             // this connection's request
+  bins_request bins_req;   // this connection's bins request
   response_header_buffer resp_hdr_buf{};
   response_header resp_hdr;  // header of the response
   response_payload resp;     // response to send back
