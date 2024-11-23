@@ -172,18 +172,17 @@ write_bins(std::ostream &out, const std::uint32_t bin_size,
     typename std::remove_cvref_t<decltype(results)>::value_type;
 
   std::array<char, buf_size> buf{};
-  const auto buf_beg = buf.data();
   const auto buf_end = buf.data() + buf_size;
 
   auto res = std::cbegin(results);
 
   const auto zipped = std::views::zip(index.chrom_size, index.chrom_order);
   for (const auto [chrom_size, chrom_name] : zipped) {
-    std::ranges::copy(chrom_name, buf_beg);
+    std::ranges::copy(chrom_name, buf.data());
     buf[size(chrom_name)] = delim;
     for (std::uint32_t bin_beg = 0; bin_beg < chrom_size; bin_beg += bin_size) {
       const auto bin_end = std::min(bin_beg + bin_size, chrom_size);
-      std::to_chars_result tcr{buf_beg + std::size(chrom_name) + 1,
+      std::to_chars_result tcr{buf.data() + std::size(chrom_name) + 1,
                                std::errc()};
 #if defined(__GNUG__) and not defined(__clang__)
 #pragma GCC diagnostic push
@@ -204,7 +203,7 @@ write_bins(std::ostream &out, const std::uint32_t bin_size,
 #if defined(__GNUG__) and not defined(__clang__)
 #pragma GCC diagnostic pop
 #endif
-      out.write(buf_beg, std::ranges::distance(buf_beg, tcr.ptr));
+      out.write(buf.data(), std::ranges::distance(buf.data(), tcr.ptr));
       if (!out)
         return std::make_error_code(std::errc(errno));
       ++res;
