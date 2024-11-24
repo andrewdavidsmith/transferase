@@ -27,8 +27,10 @@
 #if not defined(__APPLE__) && not defined(__MACH__)
 #include "aligned_allocator.hpp"
 #endif
+
 #include "cpg_index.hpp"
 #include "methylome_metadata.hpp"
+#include "methylome_results_types.hpp"
 
 #include <cstddef>
 #include <cstdint>
@@ -36,36 +38,6 @@
 #include <system_error>
 #include <utility>  // pair<>
 #include <vector>
-
-struct counts_res {
-  std::uint32_t n_meth{};
-  std::uint32_t n_unmeth{};
-};
-
-struct counts_res_cov {
-  std::uint32_t n_meth{};
-  std::uint32_t n_unmeth{};
-  std::uint32_t n_covered{};
-};
-
-template <> struct std::formatter<counts_res> : std::formatter<std::string> {
-  auto format(const counts_res &cr, std::format_context &ctx) const {
-    return std::formatter<std::string>::format(
-      std::format(R"({{"n_meth": {}, "n_unmeth": {}}})", cr.n_meth,
-                  cr.n_unmeth),
-      ctx);
-  }
-};
-
-template <>
-struct std::formatter<counts_res_cov> : std::formatter<std::string> {
-  auto format(const counts_res_cov &cr, std::format_context &ctx) const {
-    return std::formatter<std::string>::format(
-      std::format(R"({{"n_meth": {}, "n_unmeth": {}, "n_covered": {}}})",
-                  cr.n_meth, cr.n_unmeth, cr.n_covered),
-      ctx);
-  }
-};
 
 // ADS TODO: n_cpgs in header
 struct methylome {
