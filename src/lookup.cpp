@@ -40,7 +40,6 @@
 #include <format>
 #include <fstream>
 #include <iostream>
-#include <memory>  // std::make_shared
 #include <print>
 #include <ranges>
 #include <string>
@@ -252,8 +251,7 @@ lookup_main(int argc, char *argv[]) -> int {
     return EXIT_FAILURE;
   }
 
-  logger &lgr = logger::instance(
-    std::make_shared<std::ostream>(std::cout.rdbuf()), command, log_level);
+  logger &lgr = logger::instance(shared_from_cout(), command, log_level);
   if (!lgr) {
     std::println("Failure initializing logging: {}.", lgr.get_status());
     return EXIT_FAILURE;
