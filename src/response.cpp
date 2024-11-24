@@ -42,7 +42,7 @@ auto
 to_chars(char *first, [[maybe_unused]] char *last,
          const response_header &hdr) -> mxe_to_chars_result {
   // ADS: use to_chars here
-  const string s = format("{}\t{}\n", hdr.status.value(), hdr.methylome_size);
+  const string s = format("{}\t{}\n", hdr.status.value(), hdr.response_size);
   assert(ssize(s) < std::distance(first, last));
   auto data_end = rg::copy(s, first);  // in_out_result
   return {data_end.out, request_error::ok};
@@ -72,7 +72,7 @@ from_chars(const char *first, const char *last,
 
   // methylome size
   {
-    const auto [ptr, ec] = std::from_chars(cursor, last, hdr.methylome_size);
+    const auto [ptr, ec] = std::from_chars(cursor, last, hdr.response_size);
     if (ec != std::errc{})
       return {ptr, server_response_code::server_failure};
     cursor = ptr;
@@ -100,6 +100,6 @@ parse(const array<char, response_buf_size> &buf,
 
 auto
 response_header::summary() const -> string {
-  static constexpr auto fmt = R"({{"{}": "{}", "methylome_size": {}}})";
-  return std::format(fmt, status.category().name(), status, methylome_size);
+  static constexpr auto fmt = R"({{"{}": "{}", "response_size": {}}})";
+  return std::format(fmt, status.category().name(), status, response_size);
 }

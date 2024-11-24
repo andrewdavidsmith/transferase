@@ -41,7 +41,7 @@ typedef std::array<char, response_buf_size> response_header_buffer;
 
 struct response_header {
   std::error_code status{make_error_code(server_response_code::ok)};
-  std::uint32_t methylome_size{};
+  std::uint32_t response_size{};
 
   // ADS: doing the strange stuff below for cpplint...
   auto error() const -> bool { return (status) ? true : false; }
