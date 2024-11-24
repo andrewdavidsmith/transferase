@@ -24,6 +24,7 @@
 #include "methylome_set.hpp"
 
 #include "methylome.hpp"
+#include "methylome_metadata.hpp"
 #include "mxe_error.hpp"
 
 #include <algorithm>
@@ -97,14 +98,14 @@ methylome_set::get_methylome(const std::string &accession)
       accession_to_methylome_metadata.erase(to_eject_meta_itr);
     }
 
-    // ADS: get an error code from methylome::read and use it
-    methylome m{};
-    if ([[maybe_unused]] const auto ec = m.read(methylome_filename))
+    const auto [mm, meta_ec] = methylome_metadata::read(metadata_filename);
+    if (meta_ec)
       return {nullptr, nullptr,
               methylome_set_code::error_reading_methylome_file};
 
-    const auto [m_meta, ec] = methylome_metadata::read(metadata_filename);
-    if (ec)
+    // ADS: get an error code from methylome::read and use it
+    methylome m{};
+    if ([[maybe_unused]] const auto ec = m.read(methylome_filename, mm))
       return {nullptr, nullptr,
               methylome_set_code::error_reading_methylome_file};
 
@@ -116,7 +117,7 @@ methylome_set::get_methylome(const std::string &accession)
 
     std::tie(meta, insertion_happened) =
       accession_to_methylome_metadata.emplace(
-        accession, std::make_shared<methylome_metadata>(std::move(m_meta)));
+        accession, std::make_shared<methylome_metadata>(std::move(mm)));
     if (!insertion_happened)
       return {nullptr, nullptr, methylome_set_code::methylome_already_live};
   }
