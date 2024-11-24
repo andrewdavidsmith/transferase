@@ -22,11 +22,14 @@
  */
 
 #include "bins.hpp"
+
+#include "client.hpp"
 #include "cpg_index.hpp"
 #include "genomic_interval.hpp"
 #include "logger.hpp"
 #include "methylome.hpp"
 #include "mxe_error.hpp"
+#include "request.hpp"
 #include "utilities.hpp"
 
 #include <boost/program_options.hpp>
@@ -36,10 +39,10 @@
 #include <format>
 #include <fstream>
 #include <iostream>
-#include <memory>
 #include <print>
 #include <string>
 #include <tuple>
+#include <utility>  // std::move
 #include <vector>
 
 using std::ofstream;
@@ -49,11 +52,43 @@ using std::vector;
 
 template <typename counts_res_type>
 [[nodiscard]] static inline auto
-do_local_bins(const string &meth_file, const cpg_index &index,
-              const std::uint32_t bin_size)
+do_remote_bins(const string &accession, const cpg_index &index,
+               const std::uint32_t bin_size, const string &hostname,
+               const string &port)
   -> tuple<vector<counts_res_type>, std::error_code> {
+  request_header hdr{accession, index.n_cpgs_total, {}};
+
+  if constexpr (std::is_same<counts_res_type, counts_res>::value)
+    hdr.rq_type = request_header::request_type::bin_counts;
+  else
+    hdr.rq_type = request_header::request_type::bin_counts_cov;
+
+  bins_request req{bin_size};
+  mxe_client<counts_res_type, bins_request> mxec(hostname, port, hdr, req,
+                                                 logger::instance());
+  const auto status = mxec.run();
+  if (status) {
+    logger::instance().error("Transaction status: {}", status);
+    return {{}, status};
+  }
+
+  return {std::move(mxec.take_counts()), {}};
+}
+
+template <typename counts_res_type>
+[[nodiscard]] static inline auto
+do_local_bins(const string &meth_file, const string &meta_file,
+              const cpg_index &index, const std::uint32_t bin_size)
+  -> tuple<vector<counts_res_type>, std::error_code> {
+  const auto [meta, meta_err] = methylome_metadata::read(meta_file);
+  if (meta_err) {
+    logger::instance().error("Error: {} ({})", meta_err, meta_file);
+    return {{}, meta_err};
+  }
+
   methylome meth{};
-  if (const auto meth_read_err = meth.read(meth_file, index.n_cpgs_total)) {
+  const auto meth_read_err = meth.read(meth_file, meta);
+  if (meth_read_err) {
     logger::instance().error("Error: {} ({})", meth_read_err, meth_file);
     return {{}, meth_read_err};
   }
@@ -67,15 +102,18 @@ template <typename counts_res_type>
 static auto
 do_bins(const string &accession, const cpg_index &index,
         const std::uint32_t bin_size, const string &hostname,
-        const string &port, const string &meth_file, std::ostream &out,
-        const bool write_scores, [[maybe_unused]] const bool remote_mode)
-  -> std::error_code {
-
+        const string &port, const string &meth_file, const string &meta_file,
+        std::ostream &out, const bool write_scores,
+        const bool remote_mode) -> std::error_code {
   using hr_clock = std::chrono::high_resolution_clock;
 
   const auto bins_start{hr_clock::now()};
   const auto [results, bins_err] =
-    do_local_bins<counts_res_type>(meth_file, index, bin_size);
+    remote_mode
+      ? do_remote_bins<counts_res_type>(accession, index, bin_size, hostname,
+                                        port)
+      : do_local_bins<counts_res_type>(meth_file, meta_file, index, bin_size);
+
   const auto bins_stop{hr_clock::now()};
   logger::instance().debug("Elapsed time for bins query: {:.3}s",
                            duration(bins_start, bins_stop));
@@ -94,25 +132,24 @@ do_bins(const string &accession, const cpg_index &index,
 
 auto
 bins_main(int argc, char *argv[]) -> int {
+  static constexpr mxe_log_level default_log_level = mxe_log_level::info;
   static constexpr auto usage_format =
     "Usage: mxe lookup {} [options]\n\nOption groups";
-  static constexpr mxe_log_level default_log_level = mxe_log_level::info;
   static constexpr auto default_port = "5000";
-  static const auto command = "bins";
+  static constexpr auto command = "bins";
 
-  bool count_covered{};
-  bool write_scores{};
-
+  string accession{};
+  string hostname{};
   string index_file{};
+  string meta_file{};
   string meth_file{};
   string outfile{};
-  std::uint32_t bin_size{};
-  mxe_log_level log_level{};
-  string hostname{};
   string port{};
-  string accession{};
-
   string subcmd;
+  bool count_covered{};
+  bool write_scores{};
+  mxe_log_level log_level{};
+  std::uint32_t bin_size{};
 
   namespace po = boost::program_options;
 
@@ -166,6 +203,7 @@ bins_main(int argc, char *argv[]) -> int {
   po::options_description local("Local");
   local.add_options()
     ("methylome,m", po::value(&meth_file)->required(), "local methylome file")
+    ("meta", po::value(&meta_file), "methylome metadata file")
     ;
   // clang-format on
 
@@ -176,7 +214,7 @@ bins_main(int argc, char *argv[]) -> int {
   try {
     po::variables_map vm;
     po::store(po::parse_command_line(argc - 1, argv + 1, all), vm);
-    if (vm.count("help")) {
+    if (vm.count("help") || argc <= 2) {
       all.print(std::cout);
       return EXIT_SUCCESS;
     }
@@ -188,8 +226,10 @@ bins_main(int argc, char *argv[]) -> int {
     return EXIT_FAILURE;
   }
 
-  logger &lgr = logger::instance(
-    std::make_shared<std::ostream>(std::cout.rdbuf()), command, log_level);
+  if (meta_file.empty())
+    meta_file = get_default_methylome_metadata_filename(meth_file);
+
+  logger &lgr = logger::instance(shared_from_cout(), command, log_level);
   if (!lgr) {
     std::println("Failure initializing logging: {}.", lgr.get_status());
     return EXIT_FAILURE;
@@ -209,6 +249,7 @@ bins_main(int argc, char *argv[]) -> int {
   };
   vector<tuple<string, string>> local_args{
     {"Methylome", meth_file},
+    {"Metadata", meta_file},
   };
   log_args<mxe_log_level::info>(args_to_log);
   log_args<mxe_log_level::info>(remote_mode ? remote_args : local_args);
@@ -222,13 +263,6 @@ bins_main(int argc, char *argv[]) -> int {
   if (log_level == mxe_log_level::debug)
     lgr.debug("Number of CpGs in index: {}", index.n_cpgs_total);
 
-  methylome meth{};
-  const auto meth_read_err = meth.read(meth_file, index.n_cpgs_total);
-  if (meth_read_err) {
-    lgr.error("Failed to read methylome: {}", meth_read_err);
-    return EXIT_FAILURE;
-  }
-
   ofstream out(outfile);
   if (!out) {
     lgr.error("Failed to open output file: {}", outfile);
@@ -238,9 +272,11 @@ bins_main(int argc, char *argv[]) -> int {
   const auto bins_err =
     count_covered
       ? do_bins<counts_res_cov>(accession, index, bin_size, hostname, port,
-                                meth_file, out, write_scores, remote_mode)
+                                meth_file, meta_file, out, write_scores,
+                                remote_mode)
       : do_bins<counts_res>(accession, index, bin_size, hostname, port,
-                            meth_file, out, write_scores, remote_mode);
+                            meth_file, meta_file, out, write_scores,
+                            remote_mode);
 
   return bins_err == std::errc() ? EXIT_SUCCESS : EXIT_FAILURE;
 }
