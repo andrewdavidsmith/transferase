@@ -26,6 +26,7 @@
 
 #include "cpg_index.hpp"
 
+#include <cstdint>  // for std::uint64_t
 #include <string>
 #include <tuple>
 #include <unordered_map>
@@ -33,12 +34,17 @@
 
 struct cpg_index_set {
   cpg_index_set(const cpg_index_set &) = delete;
-  cpg_index_set &operator=(const cpg_index_set &) = delete;
+  cpg_index_set &
+  operator=(const cpg_index_set &) = delete;
 
   explicit cpg_index_set(const std::string &cpg_index_directory);
 
-  [[nodiscard]] auto get_cpg_index(const std::string &assembly_name)
+  [[nodiscard]] auto
+  get_cpg_index(const std::string &assembly_name)
     -> std::tuple<const cpg_index &, std::error_code>;
+
+  [[nodiscard]] auto
+  get_genome_sizes() -> std::unordered_map<std::string, std::uint64_t>;
 
   std::string cpg_index_directory;
   std::unordered_map<std::string, cpg_index> assembly_to_cpg_index;

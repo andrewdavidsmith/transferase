@@ -36,6 +36,16 @@
 #include <unordered_map>
 
 [[nodiscard]] auto
+cpg_index_set::get_genome_sizes()
+  -> std::unordered_map<std::string, std::uint64_t> {
+  std::unordered_map<std::string, std::uint64_t> r;
+  for (const auto [assembly, idx] : assembly_to_cpg_index)
+    r.emplace(assembly, std::reduce(std::cbegin(idx.chrom_size),
+                                    std::cend(idx.chrom_size)));
+  return r;
+}
+
+[[nodiscard]] auto
 cpg_index_set::get_cpg_index(const std::string &assembly_name)
   -> std::tuple<const cpg_index &, std::error_code> {
   const auto itr = assembly_to_cpg_index.find(assembly_name);
