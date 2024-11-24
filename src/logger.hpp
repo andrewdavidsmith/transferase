@@ -38,6 +38,8 @@
 #include <chrono>
 #include <cstdint>  // std::uint32_t
 #include <cstring>  // std::memcpy
+#include <format>
+#include <iostream>
 #include <memory>
 #include <mutex>
 #include <ostream>
@@ -87,9 +89,6 @@ static constexpr auto level_name_sz{[]() constexpr {
   return tmp;
 }()};
 
-/*
-  print std::filesystem::path
- */
 template <> struct std::formatter<mxe_log_level> : std::formatter<std::string> {
   auto format(const mxe_log_level &l, std::format_context &ctx) const {
     return std::formatter<std::string>::format(
@@ -114,6 +113,11 @@ operator>>(std::istream &in, mxe_log_level &l) {
     }
   in.setstate(std::ios::failbit);
   return in;
+}
+
+[[nodiscard]] inline auto
+shared_from_cout() -> std::shared_ptr<std::ostream> {
+  return std::make_shared<std::ostream>(std::cout.rdbuf());
 }
 
 class logger {
