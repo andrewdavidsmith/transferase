@@ -150,3 +150,9 @@ methylome_metadata::tostring() const -> std::string {
                      version, host, user, creation_time, methylome_hash,
                      index_hash, assembly, n_cpgs);
 }
+
+auto
+get_default_methylome_metadata_filename(const std::string &methfile)
+  -> std::string {
+  return std::format("{}.json", methfile);
+}
