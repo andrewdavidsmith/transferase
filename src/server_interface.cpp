@@ -119,8 +119,8 @@ struct server_interface_argset : argset_base<server_interface_argset> {
     });
   }
 
-  [[nodiscard]] auto set_common_opts_impl()
-    -> boost::program_options::options_description {
+  [[nodiscard]] auto
+  set_common_opts_impl() -> boost::program_options::options_description {
     namespace po = boost::program_options;
     using po::value;
     po::options_description opts("Command line or config file");
