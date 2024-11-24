@@ -25,6 +25,7 @@
 
 #include "automatic_json.hpp"
 #include "cpg_index.hpp"  // get_assembly_from_filename
+#include "methylome.hpp"
 
 #include <config.h>
 
@@ -43,14 +44,15 @@
 #include <print>
 #include <string>
 #include <system_error>
+#include <tuple>
 
 [[nodiscard]] static auto
 get_username() -> std::tuple<std::string, std::error_code> {
   static constexpr auto username_maxsize = 128;
-  char buf[username_maxsize];
-  if (getlogin_r(buf, username_maxsize))
+  std::array<char, username_maxsize> buf;
+  if (getlogin_r(buf.data(), username_maxsize))
     return {std::string(), std::make_error_code(std::errc(errno))};
-  return {std::string(buf), {}};
+  return {std::string(buf.data()), {}};
 }
 
 [[nodiscard]] static auto
@@ -65,9 +67,11 @@ get_time_as_string() -> std::string {
 }
 
 [[nodiscard]] auto
-methylome_metadata::init(const std::string &index_filename,
-                         const std::string &methylome_filename)
-  -> std::tuple<methylome_metadata, std::error_code> {
+methylome_metadata::init(
+  const std::string &index_filename, const std::string &methylome_filename,
+  const bool is_compressed) -> std::tuple<methylome_metadata, std::error_code> {
+  // ADS: (todo) should there be a better way to get the "compression"
+  // status?
   std::error_code err;
   const auto index_hash = get_adler(index_filename, err);
   if (err)
@@ -92,14 +96,13 @@ methylome_metadata::init(const std::string &index_filename,
 
   return {methylome_metadata{VERSION, host, username, get_time_as_string(),
                              methylome_hash, index_hash, assembly,
-                             n_cpgs_from_file},
+                             n_cpgs_from_file, is_compressed},
           err};
 }
 
 [[nodiscard]] auto
 methylome_metadata::read(const std::string &json_filename)
   -> std::tuple<methylome_metadata, std::error_code> {
-
   std::ifstream in(json_filename);
   if (!in)
     return {methylome_metadata{}, std::make_error_code(std::errc(errno))};
@@ -122,7 +125,7 @@ methylome_metadata::read(const std::string &json_filename)
   return {mm, methylome_metadata_error::ok};
 }
 
-auto
+[[nodiscard]] auto
 methylome_metadata::write(const methylome_metadata &mm,
                           const std::string &json_filename) -> std::error_code {
   std::ofstream out(json_filename);
@@ -133,7 +136,7 @@ methylome_metadata::write(const methylome_metadata &mm,
   return {};
 }
 
-auto
+[[nodiscard]] auto
 methylome_metadata::tostring() const -> std::string {
   return std::format("version: {}\n"
                      "host: {}\n"

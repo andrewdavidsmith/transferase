@@ -24,12 +24,15 @@
 #ifndef SRC_METHYLOME_METADATA_HPP_
 #define SRC_METHYLOME_METADATA_HPP_
 
-#include "utilities.hpp"
+#include "utilities.hpp"  // get_adler
 
 #include <boost/describe.hpp>  // for BOOST_DESCRIBE_STRUCT
 
+#include <cstdint>
 #include <format>
+#include <string>
 #include <system_error>
+#include <tuple>
 
 enum class methylome_metadata_error : std::uint32_t {
   ok = 0,
@@ -81,23 +84,27 @@ make_error_code(methylome_metadata_error e) {
 }
 
 struct methylome_metadata {
-  static constexpr auto filename_extension{"m16.yaml"};
-  std::string version{};
-  std::string host{};
-  std::string user{};
-  std::string creation_time{};
+  static constexpr auto filename_extension{"m16.json"};
+  std::string version;
+  std::string host;
+  std::string user;
+  std::string creation_time;
   std::uint64_t methylome_hash{};
   std::uint64_t index_hash{};
-  std::string assembly{};
+  std::string assembly;
   std::uint32_t n_cpgs{};
-  static auto init(const std::string &index_filename,
-                   const std::string &methylome_filename)
+  bool is_compressed{};
+  // ADS: (todo) think of a better way to get "compression" status
+  [[nodiscard]] static auto init(const std::string &index_filename,
+                                 const std::string &methylome_filename,
+                                 const bool is_compressed)
     -> std::tuple<methylome_metadata, std::error_code>;
-  static auto read(const std::string &json_filename)
+  [[nodiscard]] static auto read(const std::string &json_filename)
     -> std::tuple<methylome_metadata, std::error_code>;
-  static auto write(const methylome_metadata &mm,
-                    const std::string &json_filename) -> std::error_code;
-  auto tostring() const -> std::string;
+  [[nodiscard]] static auto
+  write(const methylome_metadata &mm,
+        const std::string &json_filename) -> std::error_code;
+  [[nodiscard]] auto tostring() const -> std::string;
 };
 
 // clang-format off
@@ -110,7 +117,8 @@ BOOST_DESCRIBE_STRUCT(methylome_metadata, (),
  methylome_hash,
  index_hash,
  assembly,
- n_cpgs
+ n_cpgs,
+ is_compressed
 ))
 // clang-format on
 
@@ -121,5 +129,9 @@ struct std::formatter<methylome_metadata> : std::formatter<std::string> {
                                                ctx);
   }
 };
+
+auto
+get_default_methylome_metadata_filename(const std::string &methfile)
+  -> std::string;
 
 #endif  // SRC_METHYLOME_METADATA_HPP_
