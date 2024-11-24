@@ -55,13 +55,35 @@ is_valid_accession(const string &accession) -> bool {
   return std::regex_search(accession, experiment_re);
 }
 
+auto
+request_handler::add_response_size_for_bins(const request_header &req_hdr,
+                                            const bins_request &req,
+                                            response_header &resp_hdr) -> void {
+  // assume methylome availability has been determined
+  const auto [meth, meta, get_meth_err] = ms.get_methylome(req_hdr.accession);
+  if (get_meth_err) {
+    logger::instance().error("Failed to load methylome: {}", get_meth_err);
+    resp_hdr.status = server_response_code::server_failure;
+    return;
+  }
+
+  const auto [index, get_index_err] = indexes.get_cpg_index(meta->assembly);
+  if (get_index_err) {
+    logger::instance().error("Failed to load cpg index for {}: {}",
+                             meta->assembly, get_index_err);
+    resp_hdr.status = server_response_code::index_not_found;
+    return;
+  }
+  resp_hdr.response_size = index.get_n_bins(req.bin_size);
+}
+
 // ADS: This function needs a complete request *except* it does not
 // need the offsets to have been allocated or have any values read
 // into them.
 auto
 request_handler::handle_header(const request_header &req_hdr,
                                response_header &resp_hdr) -> void {
-  resp_hdr.methylome_size = 0;
+  resp_hdr.response_size = 0;
 
   logger &lgr = logger::instance();
 
@@ -82,13 +104,12 @@ request_handler::handle_header(const request_header &req_hdr,
   // ADS TODO: move more of this into methylome_set?
 
   const auto get_methylome_start{hr_clock::now()};
-
-  // std::error_code get_meth_err;
   const auto [meth, meth_meta, get_meth_err] =
     ms.get_methylome(req_hdr.accession);
   const auto get_methylome_stop{hr_clock::now()};
   lgr.debug("Elapsed time for get methylome: {:.3}s",
             duration(get_methylome_start, get_methylome_stop));
+
   if (get_meth_err) {
     lgr.warning("Error loading methylome: {}", req_hdr.accession);
     lgr.warning("Error: {}", get_meth_err);
@@ -104,15 +125,15 @@ request_handler::handle_header(const request_header &req_hdr,
     return;
   }
 
-  // ADS: check for errors related to bins here also for early exit if an error
-  // is found
+  // ADS: check for errors related to bins here also for early exit if an
+  // error is found
 
   // ADS TODO: set up the methylome for loading here?
   /* This would involve the methylome_set */
 
   // ADS TODO: allocate the space to start reading offsets? Can't do
   // that if the number of intervals is not yet known
-  resp_hdr.methylome_size = req_hdr.methylome_size;
+  resp_hdr.response_size = req_hdr.methylome_size;
 }
 
 static inline auto

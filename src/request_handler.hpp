@@ -29,6 +29,7 @@
 #include "request.hpp"
 #include "response.hpp"
 
+#include <cstdint>
 #include <string>
 
 // handles all incoming requests
@@ -52,6 +53,10 @@ struct request_handler {
   auto handle_get_bins(const request_header &req_hdr, const bins_request &req,
                        response_header &resp_hdr,
                        response_payload &resp) -> void;
+
+  auto add_response_size_for_bins(const request_header &req_hdr,
+                                  const bins_request &req,
+                                  response_header &resp_hdr) -> void;
 
   std::string methylome_dir;   // dir of available methylomes
   std::string index_file_dir;  // dir of cpg index files
