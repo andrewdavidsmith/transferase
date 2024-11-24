@@ -42,7 +42,6 @@
 #include <fstream>
 #include <iostream>
 #include <print>
-#include <ranges>
 #include <string>
 #include <system_error>
 #include <tuple>
@@ -50,7 +49,6 @@
 #include <vector>
 
 using std::string;
-using std::tuple;
 using std::vector;
 
 template <typename counts_res_type>
@@ -58,7 +56,7 @@ template <typename counts_res_type>
 do_remote_lookup(const string &accession, const cpg_index &index,
                  vector<methylome::offset_pair> offsets, const string &hostname,
                  const string &port)
-  -> tuple<vector<counts_res_type>, std::error_code> {
+  -> std::tuple<vector<counts_res_type>, std::error_code> {
   request_header hdr{accession, index.n_cpgs_total, {}};
 
   if constexpr (std::is_same<counts_res_type, counts_res>::value)
@@ -82,7 +80,7 @@ template <typename counts_res_type>
 [[nodiscard]] static inline auto
 do_local_lookup(const string &meth_file, const string &meth_meta_file,
                 const cpg_index &index, vector<methylome::offset_pair> offsets)
-  -> tuple<vector<counts_res_type>, std::error_code> {
+  -> std::tuple<vector<counts_res_type>, std::error_code> {
   const auto [meta, meta_err] = methylome_metadata::read(meth_meta_file);
   if (meta_err) {
     logger::instance().error("Error: {} ({})", meta_err, meth_meta_file);
@@ -262,18 +260,18 @@ lookup_main(int argc, char *argv[]) -> int {
   }
 
   // ADS: log the command line arguments (assuming right log level)
-  vector<tuple<string, string>> args_to_log{
+  vector<std::tuple<string, string>> args_to_log{
     {"Index", index_file},
     {"Intervals", intervals_file},
     {"Output", output_file},
     {"Covered", std::format("{}", count_covered)},
     {"Bedgraph", std::format("{}", write_scores)},
   };
-  vector<tuple<string, string>> remote_args{
+  vector<std::tuple<string, string>> remote_args{
     {"Hostname:port", std::format("{}:{}", hostname, port)},
     {"Accession", accession},
   };
-  vector<tuple<string, string>> local_args{
+  vector<std::tuple<string, string>> local_args{
     {"Methylome", meth_file},
     {"Metadata", meth_meta_file},
   };
