@@ -22,21 +22,21 @@
  */
 
 #include "cpg_index.hpp"
+
 #include "genomic_interval.hpp"
 #include "mxe_error.hpp"
 
 #include <algorithm>
 #include <cassert>
-#include <cstdio>
+#include <cstdint>
 #include <filesystem>
 #include <format>
 #include <fstream>
 #include <functional>
 #include <numeric>  // std::exclusive_scan
 #include <ranges>
-#include <regex>
+#include <regex>  // used in parsing filenames
 #include <string>
-#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -50,38 +50,20 @@
 #include <sys/mman.h>
 #include <unistd.h>
 
-using std::exclusive_scan;
-using std::format;
-using std::formatter;
-using std::ifstream;
-using std::make_tuple;
-using std::pair;
-using std::size;
-using std::size_t;
-using std::string;
-using std::string_view;
-using std::tuple;
-using std::uint32_t;
-using std::uint64_t;
-using std::vector;
-
-namespace rg = std::ranges;
-namespace vs = std::views;
-
 struct genome_file {
   std::error_code ec{};
   char *data{};
-  size_t sz{};
+  std::size_t sz{};
 };
 
 [[nodiscard]] auto
-mmap_genome(const string &filename) -> genome_file {
+mmap_genome(const std::string &filename) -> genome_file {
   const int fd = open(filename.data(), O_RDONLY, 0);
   if (fd < 0)
     return {std::make_error_code(std::errc(errno)), nullptr, 0};
 
   std::error_code err;
-  const size_t filesize = std::filesystem::file_size(filename, err);
+  const std::uint64_t filesize = std::filesystem::file_size(filename, err);
   if (err)
     return {std::make_error_code(std::errc(errno)), nullptr, 0};
   char *data =
@@ -103,14 +85,14 @@ cleanup_mmap_genome(genome_file &gf) -> std::error_code {
 }
 
 [[nodiscard]] static auto
-get_cpgs(const string_view &chrom) -> cpg_index::vec {
+get_cpgs(const std::string_view &chrom) -> cpg_index::vec {
   static constexpr auto expeced_max_cpg_density = 50;
 
   bool prev_is_c = false, curr_is_g = false;
   cpg_index::vec cpgs;
-  cpgs.reserve(rg::size(chrom) / expeced_max_cpg_density);
+  cpgs.reserve(std::ranges::size(chrom) / expeced_max_cpg_density);
 
-  uint32_t pos = 0;
+  std::uint32_t pos = 0;
   for (const auto &nuc : chrom) {
     curr_is_g = (nuc == 'g' || nuc == 'G');
     if (prev_is_c && curr_is_g)
@@ -122,44 +104,48 @@ get_cpgs(const string_view &chrom) -> cpg_index::vec {
 }
 
 [[nodiscard]] static auto
-get_chrom_name_starts(const char *data, const size_t sz) -> vector<size_t> {
+get_chrom_name_starts(const char *data,
+                      const std::size_t sz) -> std::vector<std::size_t> {
   const auto g_end = data + sz;
   const char *g_itr = data;
-  vector<size_t> starts;
+  std::vector<std::size_t> starts;
   while ((g_itr = std::find(g_itr, g_end, '>')) != g_end)
     starts.push_back(std::distance(data, g_itr++));
   return starts;
 }
 
 [[nodiscard]] static auto
-get_chrom_name_stops(vector<size_t> starts, const char *data,
-                     const size_t sz) -> vector<size_t> {
-  const auto next_stop = [&](const size_t start) -> size_t {
+get_chrom_name_stops(std::vector<std::size_t> starts, const char *data,
+                     const std::size_t sz) -> std::vector<std::size_t> {
+  const auto next_stop = [&](const std::size_t start) -> std::size_t {
     return std::distance(data, std::find(data + start, data + sz, '\n'));
   };  // finds the stop position following each start position
-  rg::transform(starts, begin(starts), next_stop);
+  std::ranges::transform(starts, begin(starts), next_stop);
   return starts;
 }
 
 [[nodiscard]] static auto
-get_chroms(const char *data, const size_t sz, const vector<size_t> &name_starts,
-           const vector<size_t> &name_stops) -> vector<string_view> {
-  vector<size_t> seq_stops(size(name_starts));
+get_chroms(const char *data, const std::size_t sz,
+           const std::vector<std::size_t> &name_starts,
+           const std::vector<std::size_t> &name_stops)
+  -> std::vector<std::string_view> {
+  std::vector<std::size_t> seq_stops(std::size(name_starts));
   seq_stops.back() = sz;
 
-  rg::copy(cbegin(name_starts) + 1, cend(name_starts), begin(seq_stops));
-  vector<size_t> seq_starts(name_stops);
+  std::ranges::copy(cbegin(name_starts) + 1, cend(name_starts),
+                    begin(seq_stops));
+  std::vector<std::size_t> seq_starts(name_stops);
 
-  rg::for_each(seq_starts, [](auto &x) { ++x; });
-  vector<string_view> chroms;
-  for (const auto [sta, sto] : vs::zip(seq_starts, seq_stops))
+  std::ranges::for_each(seq_starts, [](auto &x) { ++x; });
+  std::vector<std::string_view> chroms;
+  for (const auto [sta, sto] : std::views::zip(seq_starts, seq_stops))
     chroms.emplace_back(data + sta, sto - sta);
 
   return chroms;
 }
 
 [[nodiscard]] auto
-cpg_index::construct(const string &genome_file) -> std::error_code {
+cpg_index::construct(const std::string &genome_file) -> std::error_code {
   auto gf = mmap_genome(genome_file);  // memory map the genome file
   if (gf.ec)
     return gf.ec;
@@ -170,8 +156,9 @@ cpg_index::construct(const string &genome_file) -> std::error_code {
 
   // initialize the chromosome order
   chrom_order.clear();
-  for (const auto [start, stop] : vs::zip(name_starts, name_stops))
-    chrom_order.emplace_back(string_view(gf.data + start + 1, gf.data + stop));
+  for (const auto [start, stop] : std::views::zip(name_starts, name_stops))
+    chrom_order.emplace_back(
+      std::string_view(gf.data + start + 1, gf.data + stop));
 
   const auto n_chroms = std::size(chrom_order);
 
@@ -180,12 +167,12 @@ cpg_index::construct(const string &genome_file) -> std::error_code {
 
   // collect cpgs for each chrom; order must match chrom name order
   positions.resize(n_chroms);
-  rg::transform(chroms, begin(positions), get_cpgs);
+  std::ranges::transform(chroms, begin(positions), get_cpgs);
 
   // get size of each chrom to cross-check data files using this index
   chrom_size.resize(n_chroms);
-  rg::transform(chroms, begin(chrom_size), [](const auto &chrom) {
-    return size(chrom) - rg::count(chrom, '\n');
+  std::ranges::transform(chroms, begin(chrom_size), [](const auto &chrom) {
+    return std::ranges::size(chrom) - std::ranges::count(chrom, '\n');
   });
 
   // finished with any views that look into 'data' so cleanup
@@ -194,47 +181,52 @@ cpg_index::construct(const string &genome_file) -> std::error_code {
 
   // initialize chrom offsets within the compressed files
   chrom_offset.resize(n_chroms);
-  rg::transform(positions, begin(chrom_offset), std::size<cpg_index::vec>);
+  std::ranges::transform(positions, begin(chrom_offset),
+                         std::size<cpg_index::vec>);
 
   n_cpgs_total = std::reduce(cbegin(chrom_offset), cend(chrom_offset));
-  exclusive_scan(cbegin(chrom_offset), cend(chrom_offset), begin(chrom_offset),
-                 0);
+
+  std::exclusive_scan(cbegin(chrom_offset), cend(chrom_offset),
+                      begin(chrom_offset), 0);
 
   // init the index that maps chrom names to their rank in the order
   chrom_index.clear();
-  for (const auto [i, chrom_name] : vs::enumerate(chrom_order))
+  for (const auto [i, chrom_name] : std::views::enumerate(chrom_order))
     chrom_index.emplace(chrom_name, i);
 
   return std::error_code{};
 }
 
 [[nodiscard]] auto
-cpg_index::read(const string &index_file) -> std::error_code {
+cpg_index::read(const std::string &index_file) -> std::error_code {
   // identifier is always 64 bytes
-  static const auto expected_file_identifier = format("{:64}", "cpg_index");
+  static const auto expected_file_identifier =
+    std::format("{:64}", "cpg_index");
 
-  ifstream in(index_file);
+  std::ifstream in(index_file, std::ios::binary);
   if (!in)
     return std::make_error_code(std::errc(errno));
 
   // read the identifier so we can check it
-  string file_identifier_in_file(size(expected_file_identifier), '\0');
-  in.read(file_identifier_in_file.data(), size(expected_file_identifier));
+  auto file_identifier_in_file =
+    std::string(std::size(expected_file_identifier), '\0');
+  in.read(file_identifier_in_file.data(), std::size(expected_file_identifier));
 
   if (file_identifier_in_file != expected_file_identifier) {
 #ifdef DEBUG
-    std::println(std::cerr, R"(Bad identifier: found "{}" expected "{}")",
+    std::println(R"(Bad identifier: found "{}" expected "{}")",
                  file_identifier_in_file, expected_file_identifier);
 #endif
     return cpg_index_code::wrong_identifier_in_header;
   }
 
-  uint32_t n_header_lines{};
+  std::uint32_t n_header_lines{};
   {
-    in.read(reinterpret_cast<char *>(&n_header_lines), sizeof(uint32_t));
+    in.read(reinterpret_cast<char *>(&n_header_lines), sizeof(std::uint32_t));
     const auto read_ok = static_cast<bool>(in);
     const auto n_bytes = in.gcount();
-    if (!read_ok || n_bytes != static_cast<std::streamsize>(sizeof(uint32_t)))
+    if (!read_ok ||
+        n_bytes != static_cast<std::streamsize>(sizeof(std::uint32_t)))
       return std::make_error_code(std::errc(errno));
   }
 
@@ -243,19 +235,19 @@ cpg_index::read(const string &index_file) -> std::error_code {
   chrom_size.clear();
   chrom_offset.clear();
   chrom_index.clear();
-  vector<uint32_t> chrom_n_cpgs;  // for convenience
+  std::vector<std::uint32_t> chrom_n_cpgs;  // for convenience
 
-  uint32_t n_lines{};
-  string line;
+  std::uint32_t n_lines{};
+  std::string line;
   while (n_lines < n_header_lines && getline(in, line)) {
     std::istringstream iss(line);
-    string chrom_name{};
-    uint32_t chrom_sz{};
-    uint32_t n_cpgs{};
-    uint32_t n_preceding_cpgs{};
+    std::string chrom_name{};
+    std::uint32_t chrom_sz{};
+    std::uint32_t n_cpgs{};
+    std::uint32_t n_preceding_cpgs{};
     if (!(iss >> chrom_name >> chrom_sz >> n_cpgs >> n_preceding_cpgs)) {
 #ifdef DEBUG
-      std::println(std::cerr, "Failed to parse header line:\n{}", line);
+      std::println("Failed to parse header line:\n{}", line);
 #endif
       return cpg_index_code::error_parsing_index_header_line;
     }
@@ -270,17 +262,18 @@ cpg_index::read(const string &index_file) -> std::error_code {
 
   if (n_lines != n_header_lines) {
 #ifdef DEBUG
-    std::println(std::cerr, "Failed to parse header: {}", index_file);
+    std::println("Failed to parse header: {}", index_file);
 #endif
     return cpg_index_code::failure_reading_index_header;
   }
+
   n_cpgs_total = std::reduce(cbegin(chrom_n_cpgs), cend(chrom_n_cpgs));
 
   positions.clear();
   for (const auto n_cpgs : chrom_n_cpgs) {
     positions.push_back(vec(n_cpgs));
     {
-      const std::streamsize n_bytes_expected = n_cpgs * sizeof(uint32_t);
+      const std::streamsize n_bytes_expected = n_cpgs * sizeof(std::uint32_t);
       in.read(reinterpret_cast<char *>(positions.back().data()),
               n_bytes_expected);
       const auto read_ok = static_cast<bool>(in);
@@ -293,32 +286,32 @@ cpg_index::read(const string &index_file) -> std::error_code {
 }
 
 [[nodiscard]] auto
-cpg_index::write(const string &index_file) const -> std::error_code {
+cpg_index::write(const std::string &index_file) const -> std::error_code {
   // identifier is always 64 bytes
-  static const auto file_identifier = format("{:64}", "cpg_index");
+  static const auto file_identifier = std::format("{:64}", "cpg_index");
 
-  string header;
+  std::string header;
   // write the chrom offsets and number of cpgs in chrom name order
   // the chrom_index will be implicit in the header
-  for (const auto [i, chrom_name] : vs::enumerate(chrom_order)) {
-    const auto n_cpgs = size(positions[i]);
+  for (const auto [i, chrom_name] : std::views::enumerate(chrom_order)) {
+    const auto n_cpgs = std::size(positions[i]);
     const auto n_preceding_cpgs = chrom_offset[i];
     const auto chrom_sz = chrom_size[i];
-    header += format("{}\t{}\t{}\t{}\n", chrom_name, chrom_sz, n_cpgs,
-                     n_preceding_cpgs);
+    header += std::format("{}\t{}\t{}\t{}\n", chrom_name, chrom_sz, n_cpgs,
+                          n_preceding_cpgs);
   }
 
-  std::ofstream out(index_file.data());
+  std::ofstream out(index_file);
   if (!out) {
 #ifdef DEBUG
-    std::println(std::cerr, "Failed to open index file: {}", index_file);
+    std::println("Failed to open index file: {}", index_file);
 #endif
     return std::make_error_code(std::errc(errno));
   }
 
   {
     // write the identifier so we can check it
-    out.write(file_identifier.data(), size(file_identifier));
+    out.write(file_identifier.data(), std::size(file_identifier));
     const auto write_ok = static_cast<bool>(out);
     if (!write_ok)
       return std::make_error_code(std::errc(errno));
@@ -326,9 +319,10 @@ cpg_index::write(const string &index_file) const -> std::error_code {
 
   {
     // write the number of header lines so we know how much to read
-    const uint32_t n_header_lines = size(chrom_order);
+    // (must be 4-byte value)
+    const std::uint32_t n_header_lines = std::size(chrom_order);
     out.write(reinterpret_cast<const char *>(&n_header_lines),
-              sizeof(uint32_t));
+              sizeof(std::uint32_t));
     const auto write_ok = static_cast<bool>(out);
     if (!write_ok)
       return std::make_error_code(std::errc(errno));
@@ -336,7 +330,7 @@ cpg_index::write(const string &index_file) const -> std::error_code {
 
   {
     // write the header itself
-    out.write(header.data(), size(header));
+    out.write(header.data(), std::size(header));
     const auto write_ok = static_cast<bool>(out);
     if (!write_ok)
       return std::make_error_code(std::errc(errno));
@@ -344,7 +338,7 @@ cpg_index::write(const string &index_file) const -> std::error_code {
 
   for (const auto &cpgs : positions) {
     out.write(reinterpret_cast<const char *>(cpgs.data()),
-              sizeof(uint32_t) * size(cpgs));
+              sizeof(std::uint32_t) * std::size(cpgs));
     const auto write_ok = static_cast<bool>(out);
     if (!write_ok)
       return std::make_error_code(std::errc(errno));
@@ -354,7 +348,7 @@ cpg_index::write(const string &index_file) const -> std::error_code {
 }
 
 [[nodiscard]] auto
-cpg_index::tostring() const -> string {
+cpg_index::tostring() const -> std::string {
   // clang-format off
   static constexpr auto fmt_tmplt = "{}\t{}\t{}\t{}\t{}\n";
   static constexpr auto header =
@@ -370,46 +364,49 @@ cpg_index::tostring() const -> string {
     "\n"
     ;
   // clang-format on
-  string res{header};
+  std::string res{header};
   int32_t chrom_counter = 0;
-  const auto zipped = vs::zip(chrom_order, positions, chrom_size, chrom_offset);
+  const auto zipped =
+    std::views::zip(chrom_order, positions, chrom_size, chrom_offset);
   for (const auto [nm, ps, sz, of] : zipped) {
     const auto idx_itr = chrom_index.find(nm);
     if (idx_itr == cend(chrom_index))
-      res += format("{} missing\n", nm);
+      res += std::format("{} missing\n", nm);
     else
-      res += format(fmt_tmplt, idx_itr->second, nm, sz, size(ps), of);
+      res += std::format(fmt_tmplt, idx_itr->second, nm, sz, std::size(ps), of);
     if (chrom_counter != idx_itr->second)
-      res += format("{} wrong order: {}\n", nm, idx_itr->second);
+      res += std::format("{} wrong order: {}\n", nm, idx_itr->second);
     ++chrom_counter;
   }
-  res += format("n_cpgs_total: {}", n_cpgs_total);
+  res += std::format("n_cpgs_total: {}", n_cpgs_total);
   return res;
 }
 
 // given the chromosome id (from chrom_index) and a position within
 // the chrom, get the offset of the CpG site from std::lower_bound
 auto
-cpg_index::get_offset_within_chrom(const int32_t ch_id,
-                                   const uint32_t pos) const -> uint32_t {
-  assert(ch_id >= 0 && ch_id < ssize(positions));
-  return rg::distance(cbegin(positions[ch_id]),
-                      rg::lower_bound(positions[ch_id], pos));
+cpg_index::get_offset_within_chrom(
+  const int32_t ch_id, const std::uint32_t pos) const -> std::uint32_t {
+  assert(ch_id >= 0 && ch_id < std::ssize(positions));
+  return std::ranges::distance(cbegin(positions[ch_id]),
+                               std::ranges::lower_bound(positions[ch_id], pos));
 }
 
 // given the chromosome id (from chrom_index) and a position within
 // the chrom, get the offset of the CpG site from std::lower_bound
 [[nodiscard]] static inline auto
-get_offsets_within_chrom(const cpg_index::vec &positions,
-                         const vector<pair<uint32_t, uint32_t>> &queries)
-  -> vector<pair<uint32_t, uint32_t>> {
-  vector<pair<uint32_t, uint32_t>> res(size(queries));
+get_offsets_within_chrom(
+  const cpg_index::vec &positions,
+  const std::vector<std::pair<std::uint32_t, std::uint32_t>> &queries)
+  -> std::vector<std::pair<std::uint32_t, std::uint32_t>> {
+  std::vector<std::pair<std::uint32_t, std::uint32_t>> res(std::size(queries));
   auto cursor = cbegin(positions);
-  for (const auto [i, q] : vs::enumerate(queries)) {
-    cursor = rg::lower_bound(cursor, cend(positions), q.first);
-    const auto cursor_stop = rg::lower_bound(cursor, cend(positions), q.second);
-    res[i] = {rg::distance(cbegin(positions), cursor),
-              rg::distance(cbegin(positions), cursor_stop)};
+  for (const auto [i, q] : std::views::enumerate(queries)) {
+    cursor = std::ranges::lower_bound(cursor, cend(positions), q.first);
+    const auto cursor_stop =
+      std::ranges::lower_bound(cursor, cend(positions), q.second);
+    res[i] = {std::ranges::distance(cbegin(positions), cursor),
+              std::ranges::distance(cbegin(positions), cursor_stop)};
   }
   return res;
 }
@@ -418,44 +415,49 @@ get_offsets_within_chrom(const cpg_index::vec &positions,
 // the chrom, get the offset of the CpG site from std::lower_bound
 [[nodiscard]] auto
 cpg_index::get_offsets_within_chrom(
-  const int32_t ch_id, const vector<pair<uint32_t, uint32_t>> &queries) const
-  -> vector<pair<uint32_t, uint32_t>> {
-  assert(rg::is_sorted(queries) && ch_id >= 0 && ch_id < ssize(positions));
+  const int32_t ch_id,
+  const std::vector<std::pair<std::uint32_t, std::uint32_t>> &queries) const
+  -> std::vector<std::pair<std::uint32_t, std::uint32_t>> {
+  assert(std::ranges::is_sorted(queries) && ch_id >= 0 &&
+         ch_id < std::ssize(positions));
   return ::get_offsets_within_chrom(positions[ch_id], queries);
 }
 
 [[nodiscard]] auto
-cpg_index::get_offsets(const int32_t ch_id,
-                       const vector<pair<uint32_t, uint32_t>> &queries) const
-  -> vector<pair<uint32_t, uint32_t>> {
-  assert(rg::is_sorted(queries) && ch_id >= 0 && ch_id < ssize(positions));
+cpg_index::get_offsets(
+  const int32_t ch_id,
+  const std::vector<std::pair<std::uint32_t, std::uint32_t>> &queries) const
+  -> std::vector<std::pair<std::uint32_t, std::uint32_t>> {
+  assert(std::ranges::is_sorted(queries) && ch_id >= 0 &&
+         ch_id < std::ssize(positions));
 
   const auto offset = chrom_offset[ch_id];
   return ::get_offsets_within_chrom(positions[ch_id], queries) |
-         vs::transform([&](const auto &x) -> pair<uint32_t, uint32_t> {
-           return {offset + x.first, offset + x.second};
-         }) |
-         rg::to<vector>();
+         std::views::transform(
+           [&](const auto &x) -> std::pair<std::uint32_t, std::uint32_t> {
+             return {offset + x.first, offset + x.second};
+           }) |
+         std::ranges::to<std::vector>();
 }
 
 [[nodiscard]] auto
-cpg_index::get_offsets(const vector<genomic_interval> &gis) const
-  -> vector<pair<uint32_t, uint32_t>> {
-  assert(rg::is_sorted(gis));
+cpg_index::get_offsets(const std::vector<genomic_interval> &gis) const
+  -> std::vector<std::pair<std::uint32_t, std::uint32_t>> {
+  assert(std::ranges::is_sorted(gis));
 
   const auto same_chrom = [](const genomic_interval &a,
                              const genomic_interval &b) {
     return a.ch_id == b.ch_id;
   };
-  vector<pair<uint32_t, uint32_t>> offsets;
-  offsets.reserve(size(gis));
-  for (const auto &gis_for_chrom : gis | vs::chunk_by(same_chrom)) {
-    vector<pair<uint32_t, uint32_t>> tmp;
-    tmp.reserve(size(gis_for_chrom));
+  std::vector<std::pair<std::uint32_t, std::uint32_t>> offsets;
+  offsets.reserve(std::size(gis));
+  for (const auto &gis_for_chrom : gis | std::views::chunk_by(same_chrom)) {
+    std::vector<std::pair<std::uint32_t, std::uint32_t>> tmp;
+    tmp.reserve(std::size(gis_for_chrom));
     for (const auto &gi : gis_for_chrom)
       tmp.emplace_back(gi.start, gi.stop);
     const auto ch_id = gis_for_chrom.front().ch_id;
-    rg::copy(get_offsets(ch_id, tmp), back_inserter(offsets));
+    std::ranges::copy(get_offsets(ch_id, tmp), back_inserter(offsets));
   }
   return offsets;
 }
