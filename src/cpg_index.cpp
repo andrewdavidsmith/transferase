@@ -157,6 +157,7 @@ cpg_index::construct(const std::string &genome_file) -> std::error_code {
   // initialize the chromosome order
   chrom_order.clear();
   for (const auto [start, stop] : std::views::zip(name_starts, name_stops))
+    // ADS: "+1" below to skip the ">" character
     chrom_order.emplace_back(
       std::string_view(gf.data + start + 1, gf.data + stop));
 
@@ -365,7 +366,7 @@ cpg_index::tostring() const -> std::string {
     ;
   // clang-format on
   std::string res{header};
-  int32_t chrom_counter = 0;
+  std::int32_t chrom_counter = 0;
   const auto zipped =
     std::views::zip(chrom_order, positions, chrom_size, chrom_offset);
   for (const auto [nm, ps, sz, of] : zipped) {
@@ -384,13 +385,16 @@ cpg_index::tostring() const -> std::string {
 
 // given the chromosome id (from chrom_index) and a position within
 // the chrom, get the offset of the CpG site from std::lower_bound
-auto
-cpg_index::get_offset_within_chrom(
-  const int32_t ch_id, const std::uint32_t pos) const -> std::uint32_t {
-  assert(ch_id >= 0 && ch_id < std::ssize(positions));
-  return std::ranges::distance(cbegin(positions[ch_id]),
-                               std::ranges::lower_bound(positions[ch_id], pos));
-}
+/* ADS: currently unused; its original use was unable to take advantage of using
+ * a narrower range of search   */
+// [[nodiscard]] auto
+// cpg_index::get_offset_within_chrom(
+//   const std::int32_t ch_id, const std::uint32_t pos) const -> std::uint32_t {
+//   assert(ch_id >= 0 && ch_id < std::ranges::ssize(positions));
+//   return std::ranges::distance(cbegin(positions[ch_id]),
+//                                std::ranges::lower_bound(positions[ch_id],
+//                                pos));
+// }
 
 // given the chromosome id (from chrom_index) and a position within
 // the chrom, get the offset of the CpG site from std::lower_bound
@@ -415,21 +419,21 @@ get_offsets_within_chrom(
 // the chrom, get the offset of the CpG site from std::lower_bound
 [[nodiscard]] auto
 cpg_index::get_offsets_within_chrom(
-  const int32_t ch_id,
+  const std::int32_t ch_id,
   const std::vector<std::pair<std::uint32_t, std::uint32_t>> &queries) const
   -> std::vector<std::pair<std::uint32_t, std::uint32_t>> {
   assert(std::ranges::is_sorted(queries) && ch_id >= 0 &&
-         ch_id < std::ssize(positions));
+         ch_id < std::ranges::ssize(positions));
   return ::get_offsets_within_chrom(positions[ch_id], queries);
 }
 
 [[nodiscard]] auto
 cpg_index::get_offsets(
-  const int32_t ch_id,
+  const std::int32_t ch_id,
   const std::vector<std::pair<std::uint32_t, std::uint32_t>> &queries) const
   -> std::vector<std::pair<std::uint32_t, std::uint32_t>> {
   assert(std::ranges::is_sorted(queries) && ch_id >= 0 &&
-         ch_id < std::ssize(positions));
+         ch_id < std::ranges::ssize(positions));
 
   const auto offset = chrom_offset[ch_id];
   return ::get_offsets_within_chrom(positions[ch_id], queries) |
@@ -449,15 +453,19 @@ cpg_index::get_offsets(const std::vector<genomic_interval> &gis) const
                              const genomic_interval &b) {
     return a.ch_id == b.ch_id;
   };
+
+  const auto start_stop = [](const genomic_interval &x) {
+    return std::pair<std::uint32_t, std::uint32_t>{x.start, x.stop};
+  };
+
   std::vector<std::pair<std::uint32_t, std::uint32_t>> offsets;
   offsets.reserve(std::size(gis));
   for (const auto &gis_for_chrom : gis | std::views::chunk_by(same_chrom)) {
     std::vector<std::pair<std::uint32_t, std::uint32_t>> tmp;
-    tmp.reserve(std::size(gis_for_chrom));
-    for (const auto &gi : gis_for_chrom)
-      tmp.emplace_back(gi.start, gi.stop);
+    tmp.resize(std::size(gis_for_chrom));
+    std::ranges::transform(gis_for_chrom, std::begin(tmp), start_stop);
     const auto ch_id = gis_for_chrom.front().ch_id;
-    std::ranges::copy(get_offsets(ch_id, tmp), back_inserter(offsets));
+    std::ranges::copy(get_offsets(ch_id, tmp), std::back_inserter(offsets));
   }
   return offsets;
 }
@@ -472,7 +480,7 @@ cpg_index::get_n_bins(const std::uint32_t bin_size) const -> std::uint32_t {
                                get_n_bins_for_chrom);
 }
 
-auto
+[[nodiscard]] auto
 get_assembly_from_filename(const std::string &filename,
                            std::error_code &ec) -> std::string {
   // ADS: this regular expression might better be in a header
