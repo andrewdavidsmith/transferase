@@ -90,7 +90,7 @@ check_main(int argc, char *argv[]) -> int {
   }
 
   if (metadata_input.empty())
-    metadata_input = std::format("{}.json", methylome_input);
+    metadata_input = get_default_methylome_metadata_filename(methylome_input);
 
   std::vector<std::tuple<std::string, std::string>> args_to_log{
     // clang-format off
