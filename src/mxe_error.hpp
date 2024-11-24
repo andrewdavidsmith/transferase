@@ -56,25 +56,17 @@ struct request_error_category : std::error_category {
   const char *name() const noexcept override { return "request_error"; }
   std::string message(int code) const override {
     using std::string_literals::operator""s;
+    // clang-format off
     switch (code) {
-    case 0:
-      return "ok"s;
-    case 1:
-      return "header parse error accession"s;
-    case 2:
-      return "header parse error methylome size"s;
-    case 3:
-      return "header parse error request type"s;
-    case 4:
-      return "lookup parse error n_intervals"s;
-    case 5:
-      return "lookup error reading offsets"s;
-    case 6:
-      return "lookup error offsets"s;
-    case 7:
-      return "bins error assembly"s;
-    case 8:
-      return "bins error bin size"s;
+    case 0: return "ok"s;
+    case 1: return "header parse error accession"s;
+    case 2: return "header parse error methylome size"s;
+    case 3: return "header parse error request type"s;
+    case 4: return "lookup parse error n_intervals"s;
+    case 5: return "lookup error reading offsets"s;
+    case 6: return "lookup error offsets"s;
+    case 7: return "bins error assembly"s;
+    case 8: return "bins error bin size"s;
     }
     std::unreachable();  // hopefully this is unreacheable
   }
@@ -108,24 +100,18 @@ struct server_response_category : std::error_category {
   const char *name() const noexcept override { return "server_response"; }
   std::string message(int code) const override {
     using std::string_literals::operator""s;
+    // clang-format off
     switch (code) {
-    case 0:
-      return "ok"s;
-    case 1:
-      return "invalid accession"s;
-    case 2:
-      return "invalid request type"s;
-    case 3:
-      return "invalid methylome size"s;
-    case 4:
-      return "methylome not found"s;
-    case 5:
-      return "index not found"s;
-    case 6:
-      return "server failure"s;
-    case 7:
-      return "bad request"s;
+    case 0: return "ok"s;
+    case 1: return "invalid accession"s;
+    case 2: return "invalid request type"s;
+    case 3: return "invalid methylome size"s;
+    case 4: return "methylome not found"s;
+    case 5: return "index not found"s;
+    case 6: return "server failure"s;
+    case 7: return "bad request"s;
     }
+    // clang-format on
     std::unreachable();  // hopefully
   }
 };
@@ -160,24 +146,18 @@ struct methylome_set_category : std::error_category {
   const char *name() const noexcept override { return "methylome_set"; }
   std::string message(int code) const override {
     using std::string_literals::operator""s;
+    // clang-format off
     switch (code) {
-    case 0:
-      return "ok"s;
-    case 1:
-      return "invalid accession"s;
-    case 2:
-      return "methylome file not found"s;
-    case 3:
-      return "error updating live methylomes"s;
-    case 4:
-      return "error reading methylome file"s;
-    case 5:
-      return "methylome already live"s;
-    case 6:
-      return "methylome metadata file not found"s;
-    case 7:
-      return "error reading methylome metadata file"s;
+    case 0: return "ok"s;
+    case 1: return "invalid accession"s;
+    case 2: return "methylome file not found"s;
+    case 3: return "error updating live methylomes"s;
+    case 4: return "error reading methylome file"s;
+    case 5: return "methylome already live"s;
+    case 6: return "methylome metadata file not found"s;
+    case 7: return "error reading methylome metadata file"s;
     }
+    // clang-format on
     std::unreachable();  // hopefully
   }
 };
@@ -213,26 +193,19 @@ struct methylome_category : std::error_category {
   const char *name() const noexcept override { return "methylome"; }
   std::string message(int code) const override {
     using std::string_literals::operator""s;
+    // clang-format off
     switch (code) {
-    case 0:
-      return "ok"s;
-    case 1:
-      return "error reading methylome header"s;
-    case 2:
-      return "invalid methylome header"s;
-    case 3:
-      return "error reading methylome"s;
-    case 4:
-      return "error decompressing methylome"s;
-    case 5:
-      return "error compressing methylome"s;
-    case 6:
-      return "error writing methylome header"s;
-    case 7:
-      return "error writing methylome"s;
-    case 8:
-      return "incorrect methylome size"s;
+    case 0: return "ok"s;
+    case 1: return "error reading methylome header"s;
+    case 2: return "invalid methylome header"s;
+    case 3: return "error reading methylome"s;
+    case 4: return "error decompressing methylome"s;
+    case 5: return "error compressing methylome"s;
+    case 6: return "error writing methylome header"s;
+    case 7: return "error writing methylome"s;
+    case 8: return "incorrect methylome size"s;
     }
+    // clang-format on
     std::unreachable();  // hopefully
   }
 };
@@ -264,16 +237,14 @@ struct genomic_interval_category : std::error_category {
   const char *name() const noexcept override { return "genomic_interval"; }
   std::string message(int code) const override {
     using std::string_literals::operator""s;
+    // clang-format off
     switch (code) {
-    case 0:
-      return "ok"s;
-    case 1:
-      return "error parsing BED line"s;
-    case 2:
-      return "chrom name not found in index"s;
-    case 3:
-      return "interval past chrom end in index"s;
+    case 0: return "ok"s;
+    case 1: return "error parsing BED line"s;
+    case 2: return "chrom name not found in index"s;
+    case 3: return "interval past chrom end in index"s;
     }
+    // clang-format on
     std::unreachable();  // hopefully
   }
 };
@@ -326,20 +297,15 @@ make_error_code(cpg_index_code e) {
   return std::error_code(std::to_underlying(e), category);
 }
 
-/*
-  print std::error_code messages
- */
+// print std::error_code messages
 template <>
 struct std::formatter<std::error_code> : std::formatter<std::string> {
   auto format(const std::error_code &e, std::format_context &ctx) const {
-    return std::formatter<std::string>::format(std::format("{}", e.message()),
-                                               ctx);
+    return std::formatter<std::string>::format(e.message(), ctx);
   }
 };
 
-/*
-  print boost::system::error_code messages
- */
+// print boost::system::error_code messages
 template <>
 struct std::formatter<boost::system::error_code> : std::formatter<std::string> {
   auto format(const boost::system::error_code &e,
