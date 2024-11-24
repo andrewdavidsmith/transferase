@@ -22,7 +22,9 @@
  */
 
 #include "index.hpp"
+
 #include "cpg_index.hpp"
+#include "logger.hpp"
 #include "mxe_error.hpp"
 #include "utilities.hpp"
 
@@ -33,65 +35,67 @@
 #include <iostream>
 #include <print>
 #include <string>
-
-using std::println;
-using std::string;
-
-namespace chrono = std::chrono;
-using hr_clock = chrono::high_resolution_clock;
-
-namespace po = boost::program_options;
-using po::value;
+#include <vector>
 
 auto
 index_main(int argc, char *argv[]) -> int {
-  static const auto description = "index";
+  static constexpr mxe_log_level default_log_level = mxe_log_level::info;
+  static constexpr auto command = "index";
 
-  bool verbose{};
+  std::string genome_file{};
+  std::string index_file{};
+  mxe_log_level log_level{};
 
-  string genome_file{};
-  string index_file{};
+  namespace po = boost::program_options;
 
-  po::options_description desc(description);
-  // clang-format off
+  po::options_description desc(std::format("Usage: mxe {} [options]", command));
   desc.add_options()
+    // clang-format off
     ("help,h", "produce help message")
-    ("genome,g", value(&genome_file)->required(), "genome_file")
-    ("index,x", value(&index_file)->required(), "output file")
-    ("verbose,v", po::bool_switch(&verbose), "print more run info")
+    ("genome,g", po::value(&genome_file)->required(), "genome_file")
+    ("index,x", po::value(&index_file)->required(), "output file")
+    ("log-level,v", po::value(&log_level)->default_value(default_log_level),
+     "log level {debug,info,warning,error,critical}")
+    // clang-format on
     ;
-  // clang-format on
   try {
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
-    if (vm.count("help")) {
+    if (vm.count("help") || argc == 1) {
       desc.print(std::cout);
       return EXIT_SUCCESS;
     }
     po::notify(vm);
   }
   catch (po::error &e) {
-    println(std::cerr, "{}", e.what());
+    std::println(std::cerr, "{}", e.what());
     desc.print(std::cerr);
     return EXIT_FAILURE;
   }
 
-  if (verbose)
-    print("genome: {}\n"
-          "index: {}\n",
-          genome_file, index_file);
+  auto &lgr = logger::instance(shared_from_cout(), command, log_level);
+  if (!lgr) {
+    lgr.error("Failure initializing logging: {}.", lgr.get_status());
+    return EXIT_FAILURE;
+  }
 
+  std::vector<std::tuple<std::string, std::string>> args_to_log{
+    // clang-format off
+    {"Genome", genome_file},
+    {"Index", index_file},
+    // clang-format on
+  };
+  log_args<mxe_log_level::info>(args_to_log);
+
+  const auto constr_start = std::chrono::high_resolution_clock::now();
   cpg_index index;
-  const auto constr_start{hr_clock::now()};
   index.construct(genome_file);
-  const auto constr_stop{hr_clock::now()};
-  if (verbose)
-    println("construction_time: {:.3}s\n"
-            "{}",
-            duration(constr_start, constr_stop), index);
+  const auto constr_stop = std::chrono::high_resolution_clock::now();
+  lgr.debug("Index construction time: {:.3}s",
+            duration(constr_start, constr_stop));
 
   if (const auto index_write_err = index.write(index_file); index_write_err) {
-    println("Error: {} ({})", index_write_err, index_file);
+    lgr.error("Error writing cpg index {}: {}", index_file, index_write_err);
     return EXIT_FAILURE;
   }
 
