@@ -118,7 +118,7 @@ methylome::write(const std::string &filename,
       return compress_err;
   }
 
-  std::ofstream out(filename);
+  std::ofstream out(filename, std::ios::binary);
   if (!out)
     return std::make_error_code(std::errc(errno));
 
