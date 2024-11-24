@@ -24,30 +24,50 @@
 # $ cmake --version
 cmake_minimum_required(VERSION 3.30)
 
-add_library(utilities OBJECT
-  utilities.hpp
-  utilities.cpp)
-
-add_library(lookup OBJECT
-  lookup.hpp
-  lookup.cpp)
-
-add_library(logger OBJECT
-  logger.hpp
-  logger.cpp)
-
-add_library(bins OBJECT
-  bins.hpp
-  bins.cpp)
-
-add_library(zip OBJECT
-  zip.hpp
-  zip.cpp)
+add_library(methylome OBJECT
+  methylome.hpp
+  methylome.cpp)
 
 add_library(methylome_metadata OBJECT
   methylome_metadata.hpp
   methylome_metadata.cpp)
 target_include_directories(methylome_metadata PRIVATE "${PROJECT_BINARY_DIR}")
+
+add_library(methylome_set OBJECT
+  methylome_set.hpp
+  methylome_set.cpp)
+
+add_library(cpg_index OBJECT
+  cpg_index.hpp
+  cpg_index.cpp)
+
+add_library(cpg_index_set OBJECT
+  cpg_index_set.hpp
+  cpg_index_set.cpp)
+
+add_library(genomic_interval OBJECT
+  genomic_interval.hpp
+  genomic_interval.cpp)
+
+add_library(logger OBJECT
+  logger.hpp
+  logger.cpp)
+
+add_library(utilities OBJECT
+  utilities.hpp
+  utilities.cpp)
+
+add_library(zip OBJECT
+  zip.hpp
+  zip.cpp)
+
+add_library(lookup OBJECT
+  lookup.hpp
+  lookup.cpp)
+
+add_library(bins OBJECT
+  bins.hpp
+  bins.cpp)
 
 add_library(compress OBJECT
   compress.hpp
@@ -80,26 +100,6 @@ add_library(connection OBJECT
 add_library(request_handler OBJECT
   request_handler.hpp
   request_handler.cpp)
-
-add_library(methylome OBJECT
-  methylome.hpp
-  methylome.cpp)
-
-add_library(methylome_set OBJECT
-  methylome_set.hpp
-  methylome_set.cpp)
-
-add_library(cpg_index OBJECT
-  cpg_index.hpp
-  cpg_index.cpp)
-
-add_library(cpg_index_set OBJECT
-  cpg_index_set.hpp
-  cpg_index_set.cpp)
-
-add_library(genomic_interval OBJECT
-  genomic_interval.hpp
-  genomic_interval.cpp)
 
 add_library(response OBJECT
   response.hpp
