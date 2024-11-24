@@ -64,7 +64,6 @@ do_remote_lookup(const string &accession, const cpg_index &index,
   else
     hdr.rq_type = request_header::request_type::counts_cov;
 
-  // request_header::request_type::counts_cov};
   request req{static_cast<std::uint32_t>(size(offsets)), offsets};
   mxe_client<counts_res_type, request> mxec(hostname, port, hdr, req,
                                             logger::instance());
