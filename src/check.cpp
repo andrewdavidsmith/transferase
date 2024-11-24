@@ -22,12 +22,15 @@
  */
 
 #include "check.hpp"
+
 #include "cpg_index.hpp"
+#include "logger.hpp"
 #include "methylome.hpp"
 #include "mxe_error.hpp"
 
 #include <boost/program_options.hpp>
 
+#include <cerrno>
 #include <chrono>
 #include <filesystem>
 #include <fstream>
@@ -40,82 +43,78 @@
 #include <utility>
 #include <vector>
 
-using std::cout;
-using std::error_code;
-using std::make_pair;
-using std::ofstream;
-using std::ostream;
-using std::pair;
-using std::print;
-using std::println;
-using std::string;
-using std::string_view;
-using std::tuple;
-using std::uint32_t;
-using std::vector;
-
-namespace vs = std::views;
-namespace fs = std::filesystem;
-
-namespace po = boost::program_options;
-using po::value;
-
-using hr_clock = std::chrono::high_resolution_clock;
-
 auto
 check_main(int argc, char *argv[]) -> int {
-  static const auto description = "check";
+  static constexpr mxe_log_level default_log_level = mxe_log_level::info;
+  static constexpr auto command = "check";
 
-  bool verbose{};
+  std::string index_file{};
+  std::string meth_file{};
+  std::string meth_meta_file{};
+  std::string output_file{};
+  mxe_log_level log_level{};
 
-  string index_file{};
-  string meth_file{};
-  string output_file{};
+  namespace po = boost::program_options;
 
-  po::options_description desc(description);
-  // clang-format off
+  po::options_description desc(std::format("Usage: mxe {} [options]", command));
   desc.add_options()
+    // clang-format off
     ("help,h", "produce help message")
-    ("index,x", value(&index_file)->required(), "index file")
-    ("methylome,m", value(&meth_file)->required(), "methylome file")
-    ("output,o", value(&output_file)->required(), "output file")
-    ("verbose,v", po::bool_switch(&verbose), "print more run info")
+    ("index,x", po::value(&index_file)->required(), "index file")
+    ("methylome,m", po::value(&meth_file)->required(), "methylome file")
+    ("meta", po::value(&meth_meta_file), "methylome metadata file")
+    ("output,o", po::value(&output_file)->required(), "output file")
+    ("log-level,v", po::value(&log_level)->default_value(default_log_level),
+     "log level {debug,info,warning,error,critical}")
+    // clang-format on
     ;
-  // clang-format on
   try {
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
-    if (vm.count("help")) {
+    if (vm.count("help") || argc == 1) {
       desc.print(std::cout);
       return EXIT_SUCCESS;
     }
     po::notify(vm);
   }
   catch (po::error &e) {
-    println(cout, "{}", e.what());
-    desc.print(cout);
+    std::println("{}", e.what());
+    desc.print(std::cout);
     return EXIT_FAILURE;
   }
 
-  if (verbose)
-    print("index: {}\n"
-          "methylome: {}\n"
-          "output: {}\n",
-          index_file, meth_file, output_file);
+  logger &lgr = logger::instance(shared_from_cout(), command, log_level);
+  if (!lgr) {
+    std::println("Failure initializing logging: {}.", lgr.get_status());
+    return EXIT_FAILURE;
+  }
+
+  std::vector<std::tuple<std::string, std::string>> args_to_log{
+    // clang-format off
+    {"Index", index_file},
+    {"Methylome", meth_file},
+    {"Metadata", meth_meta_file},
+    {"Output", output_file},
+    // clang-format on
+  };
+  log_args<mxe_log_level::info>(args_to_log);
 
   cpg_index index{};
   if (const auto cpg_index_err = index.read(index_file); cpg_index_err) {
-    println("Error: {} ({})", cpg_index_err, index_file);
+    lgr.error("Error reading cpg index {}: {}", index_file, cpg_index_err);
     return EXIT_FAILURE;
   }
 
-  if (verbose)
-    println("index:\n{}", index);
+  const auto [meta, meta_read_err] = methylome_metadata::read(meth_meta_file);
+  if (meta_read_err) {
+    lgr.error("Error reading metadata {}: {}", meth_meta_file, meta_read_err);
+    return EXIT_FAILURE;
+  }
 
   methylome meth{};
-  const auto meth_read_err = meth.read(meth_file, index.n_cpgs_total);
+  const auto meth_read_err = meth.read(meth_file, meta);
   if (meth_read_err) {
-    println(cout, "Error: {} ({})", meth_read_err, meth_file);
+    lgr.error("Error reading methylome {}: {}", meth_file, meth_read_err);
     return EXIT_FAILURE;
   }
 
@@ -125,12 +124,10 @@ check_main(int argc, char *argv[]) -> int {
 
   const auto total_counts = meth.total_counts_cov();
 
-  std::ofstream of;
-  if (!output_file.empty())
-    of.open(output_file);
-  ostream out(output_file.empty() ? cout.rdbuf() : of.rdbuf());
+  std::ofstream out(output_file);
   if (!out) {
-    println(cout, "failed to open output file: {}", output_file);
+    lgr.error("Error opening output file: {} ({})", output_file,
+              std::make_error_code(std::errc(errno)));
     return EXIT_FAILURE;
   }
 
@@ -139,15 +136,15 @@ check_main(int argc, char *argv[]) -> int {
   const auto sites_covered_fraction =
     static_cast<double>(total_counts.n_covered) / methylome_size;
 
-  print(out,
-        "check: {}\n"
-        "methylome_size: {}\n"
-        "index_size: {}\n"
-        "total_counts: {}\n"
-        "sites_covered_fraction: {}\n"
-        "mean_meth_weighted: {}\n",
-        check_outcome, methylome_size, index.n_cpgs_total, total_counts,
-        sites_covered_fraction, mean_meth_weighted);
+  std::print(out,
+             "check: {}\n"
+             "methylome_size: {}\n"
+             "index_size: {}\n"
+             "total_counts: {}\n"
+             "sites_covered_fraction: {}\n"
+             "mean_meth_weighted: {}\n",
+             check_outcome, methylome_size, index.n_cpgs_total, total_counts,
+             sites_covered_fraction, mean_meth_weighted);
 
   return EXIT_SUCCESS;
 }
