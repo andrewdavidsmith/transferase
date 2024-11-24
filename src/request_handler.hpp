@@ -49,6 +49,10 @@ struct request_handler {
                          response_header &resp_hdr,
                          response_payload &resp) -> void;
 
+  auto handle_get_bins(const request_header &req_hdr, const bins_request &req,
+                       response_header &resp_hdr,
+                       response_payload &resp) -> void;
+
   std::string methylome_dir;   // dir of available methylomes
   std::string index_file_dir;  // dir of cpg index files
   methylome_set ms;
