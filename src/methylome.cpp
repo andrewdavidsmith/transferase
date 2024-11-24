@@ -73,8 +73,8 @@ methylome::read(const std::string &filename,
 
   if (metadata.is_compressed) {
     std::vector<std::uint8_t> buf(filesize);
-    const bool read_ok =
-      in.read(reinterpret_cast<char *>(buf.data()), filesize);
+    const bool read_ok = static_cast<bool>(
+      in.read(reinterpret_cast<char *>(buf.data()), filesize));
     const auto n_bytes = in.gcount();
     if (!read_ok || n_bytes != static_cast<std::streamsize>(filesize))
       return methylome_code::error_reading_methylome;
@@ -91,7 +91,8 @@ methylome::read(const std::string &filename,
     return decompress_err;
   }
   cpgs.resize(metadata.n_cpgs);
-  const bool read_ok = in.read(reinterpret_cast<char *>(cpgs.data()), filesize);
+  const bool read_ok =
+    static_cast<bool>(in.read(reinterpret_cast<char *>(cpgs.data()), filesize));
   const auto n_bytes = in.gcount();
   if (!read_ok || n_bytes != static_cast<std::streamsize>(filesize))
     return methylome_code::error_reading_methylome;
