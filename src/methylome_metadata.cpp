@@ -89,7 +89,8 @@ methylome_metadata::init(
   const std::string assembly = get_assembly_from_filename(index_filename, err);
   if (err)
     return {{}, err};
-  const auto n_cpgs_from_file = methylome::get_n_cpgs_from_file(index_filename);
+  const auto n_cpgs_from_file =
+    methylome::get_n_cpgs_from_file(methylome_filename);
 
   std::string username;
   std::tie(username, err) = get_username();
