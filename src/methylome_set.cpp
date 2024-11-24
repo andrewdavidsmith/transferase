@@ -79,7 +79,6 @@ methylome_set::get_methylome(const std::string &accession)
     const auto metadata_filename =
       std::format(filename_format, methylome_directory, accession,
                   methylome_metadata::filename_extension);
-    std::println(std::cerr, "{}", metadata_filename);
     if (!std::filesystem::exists(metadata_filename))
       return {nullptr, nullptr,
               methylome_set_code::methylome_metadata_file_not_found};
