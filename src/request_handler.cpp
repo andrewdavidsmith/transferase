@@ -83,8 +83,9 @@ request_handler::handle_header(const request_header &req_hdr,
 
   const auto get_methylome_start{hr_clock::now()};
 
-  std::error_code get_meth_err;
-  std::tie(std::ignore, get_meth_err) = ms.get_methylome(req_hdr.accession);
+  // std::error_code get_meth_err;
+  const auto [meth, meth_meta, get_meth_err] =
+    ms.get_methylome(req_hdr.accession);
   const auto get_methylome_stop{hr_clock::now()};
   lgr.debug("Elapsed time for get methylome: {:.3}s",
             duration(get_methylome_start, get_methylome_stop));
@@ -96,12 +97,15 @@ request_handler::handle_header(const request_header &req_hdr,
   }
 
   // confirm that the methylome size is as expected
-  if (req_hdr.methylome_size != ms.n_total_cpgs) {
+  if (req_hdr.methylome_size != meth_meta->n_cpgs) {
     lgr.warning("Incorrect methylome size (provided={}, expected={})",
-                req_hdr.methylome_size, ms.n_total_cpgs);
+                req_hdr.methylome_size, meth_meta->n_cpgs);
     resp_hdr.status = server_response_code::invalid_methylome_size;
     return;
   }
+
+  // ADS: check for errors related to bins here also for early exit if an error
+  // is found
 
   // ADS TODO: set up the methylome for loading here?
   /* This would involve the methylome_set */
@@ -112,8 +116,7 @@ request_handler::handle_header(const request_header &req_hdr,
 }
 
 static inline auto
-counts_to_payload(const auto &counts, const request_header &req_hdr,
-                  const request &req) -> response_payload {
+counts_to_payload(const auto &counts) -> response_payload {
   using counts_res_type =
     typename std::remove_cvref_t<decltype(counts)>::value_type;
   const auto counts_n_bytes = sizeof(counts_res_type) * size(counts);
@@ -131,7 +134,7 @@ request_handler::handle_get_counts(const request_header &req_hdr,
   logger &lgr = logger::instance();
 
   // assume methylome availability has been determined
-  const auto [meth, get_meth_err] = ms.get_methylome(req_hdr.accession);
+  const auto [meth, meta, get_meth_err] = ms.get_methylome(req_hdr.accession);
   if (get_meth_err) {
     lgr.error("Failed to load methylome: {}", get_meth_err);
     // keep methylome size in response header
@@ -141,17 +144,56 @@ request_handler::handle_get_counts(const request_header &req_hdr,
 
   lgr.debug("Computing counts for methylome: {}", req_hdr.accession);
 
-  switch (req_hdr.rq_type) {
-  case request_header::request_type::counts:
-    resp_data = counts_to_payload(meth->get_counts(req.offsets), req_hdr, req);
+  if (req_hdr.rq_type == request_header::request_type::counts) {
+    resp_data = counts_to_payload(meth->get_counts(req.offsets));
     return;
-  case request_header::request_type::counts_cov:
-    resp_data =
-      counts_to_payload(meth->get_counts_cov(req.offsets), req_hdr, req);
-    return;
-    // case request_header::request_type::bin_counts:
-    //   resp_data =
-    //     counts_to_payload(meth->get_bins(req.offsets, index), req_hdr, req);
-    //   return;
   }
+  if (req_hdr.rq_type == request_header::request_type::counts_cov) {
+    resp_data = counts_to_payload(meth->get_counts_cov(req.offsets));
+    return;
+  }
+
+  // ADS: if we arrive here, the request was bad
+  resp_hdr.status = server_response_code::bad_request;
+}
+
+auto
+request_handler::handle_get_bins(const request_header &req_hdr,
+                                 const bins_request &req,
+                                 response_header &resp_hdr,
+                                 response_payload &resp_data) -> void {
+  logger &lgr = logger::instance();
+
+  // assume methylome availability has been determined
+  const auto [meth, meta, get_meth_err] = ms.get_methylome(req_hdr.accession);
+  if (get_meth_err) {
+    lgr.error("Failed to load methylome: {}", get_meth_err);
+    // keep methylome size in response header
+    resp_hdr.status = server_response_code::server_failure;
+    return;
+  }
+
+  lgr.debug("Computing bins for methylome: {}", req_hdr.accession);
+
+  // need cpg index to know what is in each bin
+  const auto [index, get_index_err] = indexes.get_cpg_index(meta->assembly);
+  if (get_index_err) {
+    lgr.error("Failed to load cpg index for {}: {}", meta->assembly,
+              get_index_err);
+    resp_hdr.status = server_response_code::index_not_found;
+    return;
+  }
+
+  if (req_hdr.rq_type == request_header::request_type::bin_counts) {
+    resp_data = counts_to_payload(meth->get_bins(req.bin_size, index));
+    return;
+  }
+
+  if (req_hdr.rq_type == request_header::request_type::bin_counts_cov) {
+    resp_data = counts_to_payload(meth->get_bins_cov(req.bin_size, index));
+    return;
+  }
+
+  // ADS: if we arrive here, the request was bad
+  resp_hdr.status = server_response_code::bad_request;
 }
