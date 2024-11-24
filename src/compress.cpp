@@ -273,7 +273,9 @@ process_cpg_sites(const std::string &infile, const std::string &outfile,
   cpg_idx_out += add_all_cpgs(prev_ch_id, size(index.positions), index);
 
   if (cpg_idx_out != index.n_cpgs_total) {
-    std::println("Failed to generate mxe methylome");
+    logger::instance().error(
+      "Inconsistent numbers of cpgs (index={}, processed={})",
+      index.n_cpgs_total, cpg_idx_out);
     return compress_err::methylome_compression_failure;
   }
 
@@ -281,7 +283,8 @@ process_cpg_sites(const std::string &infile, const std::string &outfile,
   m.cpgs = std::move(cpgs);
   const auto meth_write_err = m.write(outfile, zip);
   if (meth_write_err) {
-    std::println("Error: {} ({})", meth_write_err, outfile);
+    logger::instance().error("Error writing methylome {}: {}", outfile,
+                             meth_write_err);
     return compress_err::methylome_file_write_failure;
   }
 
