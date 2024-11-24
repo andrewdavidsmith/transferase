@@ -30,7 +30,7 @@
 
 #include "cpg_index.hpp"
 #include "genomic_interval.hpp"
-#include "methylome.hpp"
+#include "methylome_results_types.hpp"  // counts_res and counts_res_cov
 
 #include <algorithm>
 #include <cassert>
@@ -39,6 +39,7 @@
 #include <cmath>
 #include <cstdint>
 #include <filesystem>
+#include <format>
 #include <fstream>
 #include <iostream>
 #include <limits>
@@ -272,9 +273,6 @@ get_adler(const std::string &filename, std::error_code &ec) -> std::uint64_t {
   return adler32_z(0, reinterpret_cast<std::uint8_t *>(buf.data()), filesize);
 }
 
-/*
-  print std::filesystem::path
- */
 template <>
 struct std::formatter<std::filesystem::path> : std::formatter<std::string> {
   auto format(const std::filesystem::path &p, std::format_context &ctx) const {
