@@ -71,10 +71,11 @@ connection::read_request() -> void {
                 respond_with_error();
               }
             }
-            else {  // only possibility is req_hdr.is_counts_request()
+            else {  // only possibility is req_hdr.is_bins_request()
               if (const auto req_parse =
                     from_chars(req_hdr_parse.ptr, cend(req_hdr_buf), bins_req);
                   !req_parse.error) {
+                handler.add_response_size_for_bins(req_hdr, bins_req, resp_hdr);
                 compute_bins();
               }
               else {
