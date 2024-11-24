@@ -86,7 +86,7 @@ zip_main(int argc, char *argv[]) -> int {
     return EXIT_FAILURE;
   }
 
-  if (metadata_output.empty())
+  if (metadata_input.empty())
     metadata_input = std::format("{}.json", methylome_input);
 
   if (metadata_output.empty())
