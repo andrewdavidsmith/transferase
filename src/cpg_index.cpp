@@ -462,6 +462,16 @@ cpg_index::get_offsets(const std::vector<genomic_interval> &gis) const
   return offsets;
 }
 
+[[nodiscard]] auto
+cpg_index::get_n_bins(const std::uint32_t bin_size) const -> std::uint32_t {
+  const auto get_n_bins_for_chrom = [&](const auto chrom_size) {
+    return (chrom_size + bin_size) / bin_size;
+  };
+  return std::transform_reduce(std::cbegin(chrom_size), std::cend(chrom_size),
+                               static_cast<std::uint32_t>(0), std::plus{},
+                               get_n_bins_for_chrom);
+}
+
 auto
 get_assembly_from_filename(const std::string &filename,
                            std::error_code &ec) -> std::string {
