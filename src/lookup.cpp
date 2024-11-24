@@ -28,6 +28,7 @@
 #include "genomic_interval.hpp"
 #include "logger.hpp"
 #include "methylome.hpp"
+#include "methylome_metadata.hpp"
 #include "mxe_error.hpp"
 #include "request.hpp"
 #include "response.hpp"
@@ -228,7 +229,7 @@ lookup_main(int argc, char *argv[]) -> int {
   po::options_description local("Local");
   local.add_options()
     ("methylome,m", po::value(&meth_file)->required(), "local methylome file")
-    ("metadata", po::value(&meth_meta_file)->required(), "methylome metadata file")
+    ("metadata", po::value(&meth_meta_file), "methylome metadata file")
     ;
   // clang-format on
 
@@ -239,7 +240,7 @@ lookup_main(int argc, char *argv[]) -> int {
   try {
     po::variables_map vm;
     po::store(po::parse_command_line(argc - 1, argv + 1, all), vm);
-    if (vm.count("help")) {
+    if (vm.count("help") || argc == 1) {
       all.print(std::cout);
       return EXIT_SUCCESS;
     }
@@ -250,6 +251,9 @@ lookup_main(int argc, char *argv[]) -> int {
     all.print(std::cout);
     return EXIT_FAILURE;
   }
+
+  if (meth_meta_file.empty())
+    meth_meta_file = get_default_methylome_metadata_filename(meth_file);
 
   logger &lgr = logger::instance(shared_from_cout(), command, log_level);
   if (!lgr) {
