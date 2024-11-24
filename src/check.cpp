@@ -49,8 +49,8 @@ check_main(int argc, char *argv[]) -> int {
   static constexpr auto command = "check";
 
   std::string index_file{};
-  std::string meth_file{};
-  std::string meth_meta_file{};
+  std::string methylome_input{};
+  std::string metadata_input{};
   std::string output_file{};
   mxe_log_level log_level{};
 
@@ -61,8 +61,8 @@ check_main(int argc, char *argv[]) -> int {
     // clang-format off
     ("help,h", "produce help message")
     ("index,x", po::value(&index_file)->required(), "index file")
-    ("methylome,m", po::value(&meth_file)->required(), "methylome file")
-    ("meta", po::value(&meth_meta_file), "methylome metadata file")
+    ("methylome,m", po::value(&methylome_input)->required(), "methylome file")
+    ("meta", po::value(&metadata_input), "methylome metadata file")
     ("output,o", po::value(&output_file)->required(), "output file")
     ("log-level,v", po::value(&log_level)->default_value(default_log_level),
      "log level {debug,info,warning,error,critical}")
@@ -89,11 +89,14 @@ check_main(int argc, char *argv[]) -> int {
     return EXIT_FAILURE;
   }
 
+  if (metadata_input.empty())
+    metadata_input = std::format("{}.json", methylome_input);
+
   std::vector<std::tuple<std::string, std::string>> args_to_log{
     // clang-format off
     {"Index", index_file},
-    {"Methylome", meth_file},
-    {"Metadata", meth_meta_file},
+    {"Methylome", methylome_input},
+    {"Metadata", metadata_input},
     {"Output", output_file},
     // clang-format on
   };
@@ -105,16 +108,16 @@ check_main(int argc, char *argv[]) -> int {
     return EXIT_FAILURE;
   }
 
-  const auto [meta, meta_read_err] = methylome_metadata::read(meth_meta_file);
+  const auto [meta, meta_read_err] = methylome_metadata::read(metadata_input);
   if (meta_read_err) {
-    lgr.error("Error reading metadata {}: {}", meth_meta_file, meta_read_err);
+    lgr.error("Error reading metadata {}: {}", metadata_input, meta_read_err);
     return EXIT_FAILURE;
   }
 
   methylome meth{};
-  const auto meth_read_err = meth.read(meth_file, meta);
+  const auto meth_read_err = meth.read(methylome_input, meta);
   if (meth_read_err) {
-    lgr.error("Error reading methylome {}: {}", meth_file, meth_read_err);
+    lgr.error("Error reading methylome {}: {}", methylome_input, meth_read_err);
     return EXIT_FAILURE;
   }
 
