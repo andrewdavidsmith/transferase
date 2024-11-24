@@ -23,6 +23,7 @@
 
 #include "merge.hpp"
 
+#include "logger.hpp"
 #include "methylome.hpp"
 #include "mxe_error.hpp"
 #include "utilities.hpp"
@@ -41,117 +42,130 @@
 #include <utility>
 #include <vector>
 
-using std::cout;
-using std::error_code;
-using std::make_pair;
-using std::ofstream;
-using std::ostream;
-using std::pair;
-using std::print;
-using std::println;
-using std::size;
-using std::string;
-using std::tuple;
-using std::uint32_t;
-using std::vector;
-
-namespace fs = std::filesystem;
-namespace vs = std::views;
-
-namespace chrono = std::chrono;
-namespace po = boost::program_options;
-using po::value;
-
-using hr_clock = chrono::high_resolution_clock;
-
 auto
 merge_main(int argc, char *argv[]) -> int {
-  static const auto description = "merge";
+  static constexpr mxe_log_level default_log_level = mxe_log_level::info;
+  static constexpr auto command = "merge";
 
-  bool verbose{};
+  mxe_log_level log_level{};
+  std::string output_file{};
 
-  string output_file{};
+  namespace po = boost::program_options;
 
-  po::options_description desc(description);
-  // clang-format off
+  po::options_description desc(std::format("Usage: mxe {} [options]", command));
   desc.add_options()
+    // clang-format off
     ("help,h", "produce help message")
-    ("output,o", value(&output_file)->required(), "output file")
-    ("input,i", po::value<vector<string>>()->multitoken(), "input files")
-    ("verbose,v", po::bool_switch(&verbose), "print more run info")
+    ("output,o", po::value(&output_file)->required(), "output file")
+    ("input,i", po::value<std::vector<std::string>>()->multitoken(), "input files")
+    ("log-level,v", po::value(&log_level)->default_value(default_log_level),
+     "log level {debug,info,warning,error,critical}")
+    // clang-format on
     ;
-  // clang-format on
   po::variables_map vm;
   try {
     po::store(po::parse_command_line(argc, argv, desc), vm);
-    if (vm.count("help")) {
+    if (vm.count("help") || argc == 1) {
       desc.print(std::cout);
       return EXIT_SUCCESS;
     }
     po::notify(vm);
   }
   catch (po::error &e) {
-    println(cout, "{}", e.what());
-    desc.print(cout);
+    std::println("{}", e.what());
+    desc.print(std::cout);
     return EXIT_FAILURE;
   }
 
-  const auto input_files = vm["input"].as<vector<string>>();
-  const auto n_inputs = size(input_files);
-
-  if (verbose) {
-    print("output: {}\n"
-          "input files: {}\n",
-          output_file, n_inputs);
-    for (const auto &i : input_files)
-      println("{}", i);
+  logger &lgr = logger::instance(shared_from_cout(), command, log_level);
+  if (!lgr) {
+    std::println("Failure initializing logging: {}.", lgr.get_status());
+    return EXIT_FAILURE;
   }
+
+  const auto input_files = vm["input"].as<std::vector<std::string>>();
+  const auto n_inputs = std::size(input_files);
+
+  std::vector<std::tuple<std::string, std::string>> args_to_log{
+    // clang-format off
+    {"Output", output_file},
+    {"Number of inputs", std::format("{}", n_inputs)},
+    // clang-format on
+  };
+  for (const auto [i, filename] : std::views::enumerate(input_files))
+    args_to_log.emplace_back(std::format("Methylome{}", i), filename);
+  log_args<mxe_log_level::info>(args_to_log);
 
   const auto last_file = input_files.back();
-  auto methylome_read_start{hr_clock::now()};
-  methylome meth{};
-  auto meth_read_err = meth.read(last_file);
-  if (meth_read_err) {
-    println(cout, "Error: {} ({})", meth_read_err, last_file);
+  const auto last_file_meta =
+    std::format("{}.{}", std::filesystem::path(last_file).stem(),
+                methylome_metadata::filename_extension);
+
+  auto [meta, meta_read_err] = methylome_metadata::read(last_file_meta);
+  if (meta_read_err) {
+    lgr.error("Error reading metadata {}: {}", last_file_meta, meta_read_err);
     return EXIT_FAILURE;
   }
-  double total_read_time = duration(methylome_read_start, hr_clock::now());
+
+  methylome meth{};
+  auto read_start = std::chrono::high_resolution_clock::now();
+  auto meth_read_err = meth.read(last_file, meta);
+  auto read_stop = std::chrono::high_resolution_clock::now();
+  double read_time = duration(read_start, read_stop);
+  if (meth_read_err) {
+    lgr.error("Error reading methylome {}: {}", last_file, meth_read_err);
+    return EXIT_FAILURE;
+  }
 
   const auto n_cpgs = size(meth);
 
-  double total_merge_time{};
+  double merge_time{};
 
-  for (const auto &filename : input_files | vs::take(n_inputs - 1)) {
+  for (const auto &filename : input_files | std::views::take(n_inputs - 1)) {
+    const auto meta_file =
+      std::format("{}.{}", std::filesystem::path(filename).stem(),
+                  methylome_metadata::filename_extension);
+    std::tie(meta, meta_read_err) = methylome_metadata::read(meta_file);
+    if (meta_read_err) {
+      lgr.error("Error reading metadata {}: {}", meta_file, meta_read_err);
+      return EXIT_FAILURE;
+    }
     methylome tmp{};
-    methylome_read_start = hr_clock::now();
-    meth_read_err = tmp.read(filename);
-    total_read_time += duration(methylome_read_start, hr_clock::now());
+    read_start = std::chrono::high_resolution_clock::now();
+    meth_read_err = tmp.read(filename, meta);
+    read_stop = std::chrono::high_resolution_clock::now();
+    read_time += duration(read_start, read_stop);
     if (meth_read_err) {
-      println(cout, "Error: {} ({})", meth_read_err, filename);
+      lgr.error("Error reading methylome {}: {}", filename, meth_read_err);
       return EXIT_FAILURE;
     }
     if (size(tmp) != n_cpgs) {
-      println("wrong methylome size: {} (expected: {})", size(tmp), n_cpgs);
+      lgr.error("Error: wrong methylome size: {} (expected: {})", size(tmp),
+                n_cpgs);
       return EXIT_FAILURE;
     }
-    const auto methylome_merge_start{hr_clock::now()};
+    const auto merge_start = std::chrono::high_resolution_clock::now();
     meth.add(tmp);
-    total_merge_time += duration(methylome_merge_start, hr_clock::now());
+    const auto merge_stop = std::chrono::high_resolution_clock::now();
+    merge_time += duration(merge_start, merge_stop);
   }
 
-  const auto methylome_write_start{hr_clock::now()};
+  const auto write_start = std::chrono::high_resolution_clock::now();
   if (const auto meth_write_error = meth.write(output_file); meth_write_error) {
-    println(cout, "Error: {} ({})", meth_write_error, output_file);
+    lgr.error("Error writing methylome {}: {}", output_file, meth_write_error);
     return EXIT_FAILURE;
   }
-  const auto total_write_time =
-    duration(methylome_write_start, hr_clock::now());
+  const auto write_stop = std::chrono::high_resolution_clock::now();
+  const auto write_time = duration(write_start, write_stop);
 
-  if (verbose)
-    println("total read time: {:.3}s\n"
-            "total merge time: {:.3}s\n"
-            "total write time: {:.3}s",
-            total_read_time, total_merge_time, total_write_time);
+  std::vector<std::tuple<std::string, std::string>> timing_to_log{
+    // clang-format off
+    {"read time", std::format("{:.3}s", read_time)},
+    {"merge time", std::format("{:.3}s", merge_time)},
+    {"write time", std::format("{:.3}s", write_time)},
+    // clang-format on
+  };
+  log_args<mxe_log_level::debug>(timing_to_log);
 
   return EXIT_SUCCESS;
 }
