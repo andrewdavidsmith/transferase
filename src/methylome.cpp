@@ -136,6 +136,7 @@ methylome::write(const std::string &filename,
 
 auto
 methylome::add(const methylome &rhs) -> methylome & {
+  // this follows the operator+= pattern
   assert(std::size(cpgs) == std::size(rhs.cpgs));
   std::ranges::transform(cpgs, rhs.cpgs, std::begin(cpgs),
                          [](const auto &l, const auto &r) -> m_elem {
