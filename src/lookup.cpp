@@ -152,9 +152,8 @@ auto
 lookup_main(int argc, char *argv[]) -> int {
   static constexpr auto usage_format =
     "Usage: mxe lookup {} [options]\n\nOption groups";
-  static constexpr mxe_log_level default_log_level = mxe_log_level::info;
   static constexpr auto default_port = "5000";
-  static const auto command = "lookup";
+  static constexpr auto command = "lookup";
 
   bool write_scores{};
   bool count_covered{};
@@ -204,7 +203,7 @@ lookup_main(int argc, char *argv[]) -> int {
     ("help,h", "produce help message")
     ("index,x", po::value(&index_file)->required(), "index file")
     ("intervals,i", po::value(&intervals_file)->required(), "intervals file")
-    ("log-level,v", po::value(&log_level)->default_value(default_log_level),
+    ("log-level,v", po::value(&log_level)->default_value(logger::default_level),
      "log level {debug,info,warning,error,critical}")
     ;
   po::options_description output("Output");

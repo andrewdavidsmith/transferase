@@ -145,6 +145,8 @@ private:
   }()};
 
 public:
+  static constexpr mxe_log_level default_level{mxe_log_level::info};
+
   static logger &instance(std::shared_ptr<std::ostream> log_file_ptr = nullptr,
                           const std::string &appname = "",
                           mxe_log_level min_log_level = mxe_log_level::debug) {

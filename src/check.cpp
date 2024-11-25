@@ -45,7 +45,6 @@
 
 auto
 check_main(int argc, char *argv[]) -> int {
-  static constexpr mxe_log_level default_log_level = mxe_log_level::info;
   static constexpr auto command = "check";
 
   std::string index_file{};
@@ -64,7 +63,7 @@ check_main(int argc, char *argv[]) -> int {
     ("methylome,m", po::value(&methylome_input)->required(), "methylome file")
     ("meta", po::value(&metadata_input), "methylome metadata file")
     ("output,o", po::value(&output_file)->required(), "output file")
-    ("log-level,v", po::value(&log_level)->default_value(default_log_level),
+    ("log-level,v", po::value(&log_level)->default_value(logger::default_level),
      "log level {debug,info,warning,error,critical}")
     // clang-format on
     ;

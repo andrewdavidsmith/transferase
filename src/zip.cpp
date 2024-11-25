@@ -38,7 +38,6 @@
 
 auto
 zip_main(int argc, char *argv[]) -> int {
-  static constexpr mxe_log_level default_log_level = mxe_log_level::info;
   static constexpr auto command = "zip";
 
   std::string methylome_input{};
@@ -61,7 +60,7 @@ zip_main(int argc, char *argv[]) -> int {
     ("meta", po::value(&metadata_input), "metadata input (defaults to input.json)")
     ("meta-out", po::value(&metadata_output),
      "metadata output (defaults to output.json)")
-    ("log-level,v", po::value(&log_level)->default_value(default_log_level),
+    ("log-level,v", po::value(&log_level)->default_value(logger::default_level),
      "log level {debug,info,warning,error,critical}")
     ;
   // clang-format on

@@ -128,7 +128,6 @@ do_bins(const string &accession, const cpg_index &index,
 
 auto
 bins_main(int argc, char *argv[]) -> int {
-  static constexpr mxe_log_level default_log_level = mxe_log_level::info;
   static constexpr auto usage_format =
     "Usage: mxe lookup {} [options]\n\nOption groups";
   static constexpr auto default_port = "5000";
@@ -181,7 +180,7 @@ bins_main(int argc, char *argv[]) -> int {
     ("help,h", "produce help message")
     ("index,x", po::value(&index_file)->required(), "index file")
     ("bin-size,b", po::value(&bin_size)->required(), "size of bins")
-    ("log-level,v", po::value(&log_level)->default_value(default_log_level),
+    ("log-level,v", po::value(&log_level)->default_value(logger::default_level),
      "log level {debug,info,warning,error,critical}")
     ;
   po::options_description output("Output");
