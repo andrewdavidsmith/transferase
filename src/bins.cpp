@@ -34,6 +34,7 @@
 
 #include <boost/program_options.hpp>
 
+#include <cerrno>
 #include <chrono>
 #include <cstdint>
 #include <format>
@@ -45,9 +46,7 @@
 #include <utility>  // std::move
 #include <vector>
 
-using std::ofstream;
 using std::string;
-using std::tuple;
 using std::vector;
 
 template <typename counts_res_type>
@@ -55,7 +54,7 @@ template <typename counts_res_type>
 do_remote_bins(const string &accession, const cpg_index &index,
                const std::uint32_t bin_size, const string &hostname,
                const string &port)
-  -> tuple<vector<counts_res_type>, std::error_code> {
+  -> std::tuple<vector<counts_res_type>, std::error_code> {
   request_header hdr{accession, index.n_cpgs_total, {}};
 
   if constexpr (std::is_same<counts_res_type, counts_res>::value)
@@ -71,7 +70,6 @@ do_remote_bins(const string &accession, const cpg_index &index,
     mxe_log_error("Transaction status: {}", status);
     return {{}, status};
   }
-
   return {std::move(mxec.take_counts()), {}};
 }
 
@@ -79,7 +77,7 @@ template <typename counts_res_type>
 [[nodiscard]] static inline auto
 do_local_bins(const string &meth_file, const string &meta_file,
               const cpg_index &index, const std::uint32_t bin_size)
-  -> tuple<vector<counts_res_type>, std::error_code> {
+  -> std::tuple<vector<counts_res_type>, std::error_code> {
   const auto [meta, meta_err] = methylome_metadata::read(meta_file);
   if (meta_err) {
     mxe_log_error("Error: {} ({})", meta_err, meta_file);
@@ -106,14 +104,12 @@ do_bins(const string &accession, const cpg_index &index,
         std::ostream &out, const bool write_scores,
         const bool remote_mode) -> std::error_code {
   using hr_clock = std::chrono::high_resolution_clock;
-
   const auto bins_start{hr_clock::now()};
   const auto [results, bins_err] =
     remote_mode
       ? do_remote_bins<counts_res_type>(accession, index, bin_size, hostname,
                                         port)
       : do_local_bins<counts_res_type>(meth_file, meta_file, index, bin_size);
-
   const auto bins_stop{hr_clock::now()};
   mxe_log_debug("Elapsed time for bins query: {:.3}s",
                 duration(bins_start, bins_stop));
@@ -236,18 +232,18 @@ bins_main(int argc, char *argv[]) -> int {
   }
 
   // ADS: log the command line arguments (assuming right log level)
-  vector<tuple<string, string>> args_to_log{
+  vector<std::tuple<string, string>> args_to_log{
     {"Index", index_file},
     {"Binsize", std::format("{}", bin_size)},
     {"Output", outfile},
     {"Covered", std::format("{}", count_covered)},
     {"Bedgraph", std::format("{}", write_scores)},
   };
-  vector<tuple<string, string>> remote_args{
+  vector<std::tuple<string, string>> remote_args{
     {"Hostname:port", std::format("{}:{}", hostname, port)},
     {"Accession", accession},
   };
-  vector<tuple<string, string>> local_args{
+  vector<std::tuple<string, string>> local_args{
     {"Methylome", meth_file},
     {"Metadata", meta_file},
   };
@@ -256,16 +252,16 @@ bins_main(int argc, char *argv[]) -> int {
 
   cpg_index index{};
   if (const auto index_read_err = index.read(index_file); index_read_err) {
-    lgr.error("Failed to read cpg index: {} ({})", index_file, index_read_err);
+    lgr.error("Failed to read cpg index {}: {}", index_file, index_read_err);
     return EXIT_FAILURE;
   }
 
-  if (log_level == mxe_log_level::debug)
-    lgr.debug("Number of CpGs in index: {}", index.n_cpgs_total);
+  lgr.debug("Number of CpGs in index: {}", index.n_cpgs_total);
 
-  ofstream out(outfile);
+  std::ofstream out(outfile);
   if (!out) {
-    lgr.error("Failed to open output file: {}", outfile);
+    lgr.error("Failed to open output file {}: {}", outfile,
+              std::make_error_code(std::errc(errno)));
     return EXIT_FAILURE;
   }
 
