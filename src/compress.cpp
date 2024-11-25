@@ -295,7 +295,6 @@ process_cpg_sites(const std::string &infile, const std::string &outfile,
 
 auto
 compress_main(int argc, char *argv[]) -> int {
-  static constexpr mxe_log_level default_log_level = mxe_log_level::info;
   static constexpr auto command = "compress";
 
   std::string methylation_input{};
@@ -319,7 +318,7 @@ compress_main(int argc, char *argv[]) -> int {
     ("meta-out", po::value(&metadata_output),
      "metadata output (defaults to output.json)")
     ("zip,z", po::bool_switch(&zip), "zip the output")
-    ("log-level,v", po::value(&log_level)->default_value(default_log_level),
+    ("log-level,v", po::value(&log_level)->default_value(logger::default_level),
      "log level {debug,info,warning,error,critical}")
     // clang-format on
     ;
