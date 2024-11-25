@@ -284,6 +284,61 @@ private:
   }
 };  // struct logger
 
+inline auto
+mxe_log_debug(std::string_view message) {
+  logger::instance().debug(message);
+}
+
+inline auto
+mxe_log_info(std::string_view message) {
+  logger::instance().info(message);
+}
+
+inline auto
+mxe_log_warning(std::string_view message) {
+  logger::instance().warning(message);
+}
+
+inline auto
+mxe_log_error(std::string_view message) {
+  logger::instance().error(message);
+}
+
+inline auto
+mxe_log_critical(std::string_view message) {
+  logger::instance().critical(message);
+}
+
+template <typename... Args>
+auto
+mxe_log_debug(std::string_view fmt_str, Args &&...args) {
+  logger::instance().debug(fmt_str, args...);
+}
+
+template <typename... Args>
+auto
+mxe_log_info(std::string_view fmt_str, Args &&...args) {
+  logger::instance().info(fmt_str, args...);
+}
+
+template <typename... Args>
+auto
+mxe_log_warning(std::string_view fmt_str, Args &&...args) {
+  logger::instance().warning(fmt_str, args...);
+}
+
+template <typename... Args>
+auto
+mxe_log_error(std::string_view fmt_str, Args &&...args) {
+  logger::instance().error(fmt_str, args...);
+}
+
+template <typename... Args>
+auto
+mxe_log_critical(std::string_view fmt_str, Args &&...args) {
+  logger::instance().critical(fmt_str, args...);
+}
+
 template <mxe_log_level lvl, typename... Args>
 auto
 log_args(std::ranges::input_range auto &&key_value_pairs) {
