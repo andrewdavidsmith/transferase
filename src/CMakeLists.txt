@@ -24,6 +24,26 @@
 # $ cmake --version
 cmake_minimum_required(VERSION 3.30)
 
+add_library(logger OBJECT
+  logger.hpp
+  logger.cpp)
+
+add_library(utilities OBJECT
+  utilities.hpp
+  utilities.cpp)
+
+add_library(genomic_interval OBJECT
+  genomic_interval.hpp
+  genomic_interval.cpp)
+
+add_library(cpg_index OBJECT
+  cpg_index.hpp
+  cpg_index.cpp)
+
+add_library(cpg_index_set OBJECT
+  cpg_index_set.hpp
+  cpg_index_set.cpp)
+
 add_library(methylome OBJECT
   methylome.hpp
   methylome.cpp)
@@ -37,58 +57,7 @@ add_library(methylome_set OBJECT
   methylome_set.hpp
   methylome_set.cpp)
 
-add_library(cpg_index OBJECT
-  cpg_index.hpp
-  cpg_index.cpp)
-
-add_library(cpg_index_set OBJECT
-  cpg_index_set.hpp
-  cpg_index_set.cpp)
-
-add_library(genomic_interval OBJECT
-  genomic_interval.hpp
-  genomic_interval.cpp)
-
-add_library(logger OBJECT
-  logger.hpp
-  logger.cpp)
-
-add_library(utilities OBJECT
-  utilities.hpp
-  utilities.cpp)
-
-add_library(zip OBJECT
-  zip.hpp
-  zip.cpp)
-
-add_library(lookup OBJECT
-  lookup.hpp
-  lookup.cpp)
-
-add_library(bins OBJECT
-  bins.hpp
-  bins.cpp)
-
-add_library(compress OBJECT
-  compress.hpp
-  compress.cpp)
-
-add_library(check OBJECT
-  check.hpp
-  check.cpp)
-
-add_library(merge OBJECT
-  merge.hpp
-  merge.cpp)
-
-add_library(index OBJECT
-  index.hpp
-  index.cpp)
-
-add_library(server_interface OBJECT
-  server_interface.hpp
-  server_interface.cpp)
-
+# sources for network
 add_library(server OBJECT
   server.hpp
   server.cpp)
@@ -97,10 +66,6 @@ add_library(connection OBJECT
   connection.hpp
   connection.cpp)
 
-add_library(request_handler OBJECT
-  request_handler.hpp
-  request_handler.cpp)
-
 add_library(response OBJECT
   response.hpp
   response.cpp)
@@ -108,6 +73,43 @@ add_library(response OBJECT
 add_library(request OBJECT
   request.hpp
   request.cpp)
+
+add_library(request_handler OBJECT
+  request_handler.hpp
+  request_handler.cpp)
+
+# sources with commands
+add_library(command_zip OBJECT
+  command_zip.hpp
+  command_zip.cpp)
+
+add_library(command_lookup OBJECT
+  command_lookup.hpp
+  command_lookup.cpp)
+
+add_library(command_bins OBJECT
+  command_bins.hpp
+  command_bins.cpp)
+
+add_library(command_format OBJECT
+  command_format.hpp
+  command_format.cpp)
+
+add_library(command_check OBJECT
+  command_check.hpp
+  command_check.cpp)
+
+add_library(command_merge OBJECT
+  command_merge.hpp
+  command_merge.cpp)
+
+add_library(command_index OBJECT
+  command_index.hpp
+  command_index.cpp)
+
+add_library(command_server OBJECT
+  command_server.hpp
+  command_server.cpp)
 
 add_compile_options(-Wall -Wextra -Wpedantic -Werror -Wfatal-errors)
 
@@ -123,14 +125,6 @@ target_link_libraries(
   mxe PRIVATE
   utilities
   logger
-  index
-  compress
-  check
-  zip
-  merge
-  lookup
-  server_interface
-  bins
   genomic_interval
   cpg_index
   cpg_index_set
@@ -142,6 +136,14 @@ target_link_libraries(
   request_handler
   request
   response
+  command_index
+  command_format
+  command_check
+  command_zip
+  command_merge
+  command_lookup
+  command_server
+  command_bins
   ZLIB::ZLIB
   Boost::program_options
   Threads::Threads
