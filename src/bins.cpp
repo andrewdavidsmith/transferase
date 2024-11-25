@@ -67,7 +67,7 @@ do_remote_bins(const string &accession, const cpg_index &index,
                                                  logger::instance());
   const auto status = mxec.run();
   if (status) {
-    mxe_log_error("Transaction status: {}", status);
+    logger::instance().error("Transaction status: {}", status);
     return {{}, status};
   }
   return {std::move(mxec.take_counts()), {}};
@@ -80,14 +80,14 @@ do_local_bins(const string &meth_file, const string &meta_file,
   -> std::tuple<vector<counts_res_type>, std::error_code> {
   const auto [meta, meta_err] = methylome_metadata::read(meta_file);
   if (meta_err) {
-    mxe_log_error("Error: {} ({})", meta_err, meta_file);
+    logger::instance().error("Error: {} ({})", meta_err, meta_file);
     return {{}, meta_err};
   }
 
   methylome meth{};
   const auto meth_read_err = meth.read(meth_file, meta);
   if (meth_read_err) {
-    mxe_log_error("Error: {} ({})", meth_read_err, meth_file);
+    logger::instance().error("Error: {} ({})", meth_read_err, meth_file);
     return {{}, meth_read_err};
   }
   if constexpr (std::is_same<counts_res_type, counts_res_cov>::value)
@@ -111,8 +111,8 @@ do_bins(const string &accession, const cpg_index &index,
                                         port)
       : do_local_bins<counts_res_type>(meth_file, meta_file, index, bin_size);
   const auto bins_stop{hr_clock::now()};
-  mxe_log_debug("Elapsed time for bins query: {:.3}s",
-                duration(bins_start, bins_stop));
+  logger::instance().debug("Elapsed time for bins query: {:.3}s",
+                           duration(bins_start, bins_stop));
 
   if (bins_err)  // ADS: error messages already logged
     return std::make_error_code(std::errc::invalid_argument);
@@ -121,8 +121,8 @@ do_bins(const string &accession, const cpg_index &index,
   write_bins(out, bin_size, index, results);
   const auto output_stop{hr_clock::now()};
   // ADS: elapsed time for output will include conversion to scores
-  mxe_log_debug("Elapsed time for output: {:.3}s",
-                duration(output_start, output_stop));
+  logger::instance().debug("Elapsed time for output: {:.3}s",
+                           duration(output_start, output_stop));
   return {};
 }
 
