@@ -45,6 +45,7 @@ enum class methylome_metadata_error : std::uint32_t {
   assembly_not_found = 7,
   n_cpgs_not_found = 8,
   failure_parsing_json = 9,
+  inconsistent = 10,
 };
 
 // register methylome_metadata_error as error code enum
@@ -71,8 +72,9 @@ struct methylome_metadata_error_category : std::error_category {
     case 7: return "assembly not found"s;
     case 8: return "n_cpgs not found"s;
     case 9: return "failure parsing methylome metadata json"s;
-      // clang-format on
+    case 10: return "inconsistent metadata"s;
     }
+    // clang-format on
     std::unreachable();  // hopefully this is unreacheable
   }
 };
@@ -105,6 +107,8 @@ struct methylome_metadata {
   write(const methylome_metadata &mm,
         const std::string &json_filename) -> std::error_code;
   [[nodiscard]] auto tostring() const -> std::string;
+  [[nodiscard]] auto
+  update(const std::string &methylome_filename) -> std::error_code;
 };
 
 // clang-format off
