@@ -62,36 +62,36 @@ static auto
 write_pid_to_file(std::error_code &ec) -> void {
   static const auto pid_file_rhs = fs::path(".config") / "mxe" / "MXE_PID_FILE";
 
+  auto &lgr = logger::instance();
+
   // write the pid of the daemon to a file
   const auto env_home = std::getenv("HOME");
   if (!env_home) {
     ec = std::make_error_code(std::errc(errno));
-    logger::instance().error("Error forming config dir: {}", ec);
+    lgr.error("Error forming config dir: {}", ec);
     return;
   }
   const fs::path pid_file = fs::path(env_home) / pid_file_rhs;
   if (fs::exists(pid_file)) {
     ec = std::make_error_code(std::errc::file_exists);
-    logger::instance().error("Error: {}", ec);
+    lgr.error("Error: {}", ec);
     return;
   }
-  {
-    const auto pid = getpid();
-    logger::instance().info("mxe daemon pid: {}", pid);
-    std::ofstream out(pid_file);
-    if (!out) {
-      ec = std::make_error_code(std::errc{errno});
-      logger::instance().error("Error writing pid file: {} ({})", ec, pid_file);
-      return;
-    }
-    logger::instance().info("mxe daemon pid file: {}", pid_file);
-    const auto pid_str = format("{}", pid);
-    out.write(pid_str.data(), size(pid_str));
-    if (!out) {
-      ec = std::make_error_code(std::errc{errno});
-      logger::instance().error("Error writing pid file: {} ({})", ec, pid_file);
-      return;
-    }
+  const auto pid = getpid();
+  lgr.info("mxe daemon pid: {}", pid);
+  std::ofstream out(pid_file);
+  if (!out) {
+    ec = std::make_error_code(std::errc{errno});
+    lgr.error("Error writing pid file: {} ({})", ec, pid_file);
+    return;
+  }
+  lgr.info("mxe daemon pid file: {}", pid_file);
+  const auto pid_str = format("{}", pid);
+  out.write(pid_str.data(), size(pid_str));
+  if (!out) {
+    ec = std::make_error_code(std::errc{errno});
+    lgr.error("Error writing pid file: {} ({})", ec, pid_file);
+    return;
   }
 }
 
