@@ -102,6 +102,23 @@ methylome_metadata::init(
 }
 
 [[nodiscard]] auto
+methylome_metadata::update(const std::string &methylome_filename)
+  -> std::error_code {
+  version = VERSION;
+  boost::system::error_code boost_err;
+  host = boost::asio::ip::host_name(boost_err);
+  if (boost_err)
+    return boost_err;
+  std::error_code err;
+  std::tie(user, err) = get_username();
+  if (err)
+    return err;
+  creation_time = get_time_as_string();
+  methylome_hash = get_adler(methylome_filename);
+  return {};
+}
+
+[[nodiscard]] auto
 methylome_metadata::read(const std::string &json_filename)
   -> std::tuple<methylome_metadata, std::error_code> {
   std::ifstream in(json_filename);
