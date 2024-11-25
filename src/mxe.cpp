@@ -21,17 +21,17 @@
  * SOFTWARE.
  */
 
-/* mxe: work with the mxe methylome format
+/* mxe: methylome transfer engine
  */
 
-#include "bins.hpp"
-#include "check.hpp"
-#include "compress.hpp"
-#include "index.hpp"
-#include "lookup.hpp"
-#include "merge.hpp"
-#include "server_interface.hpp"
-#include "zip.hpp"
+#include "command_bins.hpp"
+#include "command_check.hpp"
+#include "command_format.hpp"
+#include "command_index.hpp"
+#include "command_lookup.hpp"
+#include "command_merge.hpp"
+#include "command_server.hpp"
+#include "command_zip.hpp"
 
 #include <config.h>
 
@@ -48,10 +48,9 @@
 #include <utility>
 #include <vector>
 
+using std::cbegin;
 using std::cend;
-using std::cerr;
 using std::format;
-using std::println;
 using std::string;
 using std::string_view;
 using std::vector;
@@ -65,14 +64,14 @@ using po::value;
 typedef std::function<int(int, char **)> main_fun;
 const std::tuple<string_view, main_fun, string_view> commands[] = {
   // clang-format off
-  {"index", index_main, "make an index for a reference genome"},
-  {"compress", compress_main, "convert a methylome from xsym to mxe"},
-  {"check", check_main, "check that an mxe file is valid for a reference"},
-  {"lookup", lookup_main, "get methylation levels in each interval"},
-  {"merge", merge_main, "merge a set of mxe format methylomes"},
-  {"zip", zip_main, "make an mxe format methylome smaller"},
-  {"bins", bins_main, "get methylation levels in each bin"},
-  {"server", server_interface_main, "run a server to respond to lookup queries"},
+  {"index", command_index_main, "make an index for a reference genome"},
+  {"format", command_format_main, "format a methylome file"},
+  {"check", command_check_main, "perform checks on methylome and index files"},
+  {"lookup", command_lookup_main, "get methylation levels in each interval"},
+  {"merge", command_merge_main, "merge a set of mxe format methylomes"},
+  {"zip", command_zip_main, "make an mxe format methylome smaller"},
+  {"bins", command_bins_main, "get methylation levels in each bin"},
+  {"server", command_server_main, "run a server to respond to lookup queries"},
   // clang-format on
 };
 
@@ -81,16 +80,16 @@ format_help(const string &description, rg::input_range auto &&cmds) {
   static constexpr auto sep_width = 4;
   const auto cmds_comma = cmds | vs::elements<0> | vs::join_with(',');
   const auto cmds_line = string(cbegin(cmds_comma), cend(cmds_comma));
-  println("usage: {} {{{}}}\n\n"
-          "version: {}\n",
-          description, cmds_line, VERSION);
-  println("commands:\n"
-          "  {{{}}}",
-          cmds_line);
+  std::println("usage: {} {{{}}}\n\n"
+               "version: {}\n",
+               description, cmds_line, VERSION);
+  std::println("commands:\n"
+               "  {{{}}}",
+               cmds_line);
   const auto sz =
     rg::max(vs::transform(cmds | vs::elements<0>, &string_view::size));
   rg::for_each(cmds, [sz, w = sep_width](const auto &cmd) {
-    println("    {:{}}{}", get<0>(cmd), sz + w, get<2>(cmd));
+    std::println("    {:{}}{}", get<0>(cmd), sz + w, get<2>(cmd));
   });
 }
 
