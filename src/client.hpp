@@ -157,10 +157,7 @@ mxe_client<counts_type, req_type>::handle_connect(const std::error_code &err) {
         }
         else {
           boost::asio::async_write(
-            socket,
-            std::vector<boost::asio::const_buffer>{
-              boost::asio::buffer(req_hdr_buf),
-            },
+            socket, boost::asio::buffer(req_hdr_buf),
             [this](auto error, auto) { this->handle_write_request(error); });
         }
         deadline.expires_after(read_timeout_seconds);
