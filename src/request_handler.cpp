@@ -59,18 +59,19 @@ auto
 request_handler::add_response_size_for_bins(const request_header &req_hdr,
                                             const bins_request &req,
                                             response_header &resp_hdr) -> void {
+  auto &lgr = logger::instance();
   // assume methylome availability has been determined
   const auto [meth, meta, get_meth_err] = ms.get_methylome(req_hdr.accession);
   if (get_meth_err) {
-    logger::instance().error("Failed to load methylome: {}", get_meth_err);
+    lgr.error("Failed to load methylome: {}", get_meth_err);
     resp_hdr.status = server_response_code::server_failure;
     return;
   }
 
   const auto [index, get_index_err] = indexes.get_cpg_index(meta->assembly);
   if (get_index_err) {
-    logger::instance().error("Failed to load cpg index for {}: {}",
-                             meta->assembly, get_index_err);
+    lgr.error("Failed to load cpg index for {}: {}", meta->assembly,
+              get_index_err);
     resp_hdr.status = server_response_code::index_not_found;
     return;
   }
