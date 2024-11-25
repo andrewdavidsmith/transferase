@@ -160,7 +160,6 @@ mxe_client<counts_type, req_type>::handle_connect(const std::error_code &err) {
             socket,
             std::vector<boost::asio::const_buffer>{
               boost::asio::buffer(req_hdr_buf),
-              boost::asio::buffer(&req.bin_size, sizeof(req.bin_size)),
             },
             [this](auto error, auto) { this->handle_write_request(error); });
         }
