@@ -126,15 +126,12 @@ do_lookup(const string &accession, const cpg_index &index,
           const vector<genomic_interval> &gis, const bool write_scores,
           const bool remote_mode) -> std::error_code {
   using hr_clock = std::chrono::high_resolution_clock;
-
   const auto lookup_start{hr_clock::now()};
-
   const auto [results, lookup_err] =
     remote_mode ? do_remote_lookup<counts_res_type>(accession, index, offsets,
                                                     hostname, port)
                 : do_local_lookup<counts_res_type>(meth_file, meth_meta_file,
                                                    index, offsets);
-
   const auto lookup_stop{hr_clock::now()};
   logger::instance().debug("Elapsed time for query: {:.3}s",
                            duration(lookup_start, lookup_stop));
@@ -148,7 +145,6 @@ do_lookup(const string &accession, const cpg_index &index,
   // ADS: elapsed time for output will include conversion to scores
   logger::instance().debug("Elapsed time for output: {:.3}s",
                            duration(output_start, output_stop));
-
   return {};
 }
 
@@ -283,8 +279,7 @@ lookup_main(int argc, char *argv[]) -> int {
     return EXIT_FAILURE;
   }
 
-  if (log_level == mxe_log_level::debug)
-    lgr.debug("Number of CpGs in index: {}", index.n_cpgs_total);
+  lgr.debug("Number of CpGs in index: {}", index.n_cpgs_total);
 
   const auto [gis, ec] = genomic_interval::load(index, intervals_file);
   if (ec) {
