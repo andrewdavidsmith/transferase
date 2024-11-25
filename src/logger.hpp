@@ -284,4 +284,12 @@ private:
   }
 };  // struct logger
 
+template <mxe_log_level lvl, typename... Args>
+auto
+log_args(std::ranges::input_range auto &&key_value_pairs) {
+  logger &lgr = logger::instance();
+  for (auto &&[k, v] : key_value_pairs)
+    lgr.log<lvl>("{}: {}", k, v);
+}
+
 #endif  // SRC_LOGGER_HPP_
