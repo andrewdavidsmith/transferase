@@ -104,8 +104,8 @@ get_cpgs(const std::string_view &chrom) -> cpg_index::vec {
 }
 
 [[nodiscard]] static auto
-get_chrom_name_starts(const char *data,
-                      const std::size_t sz) -> std::vector<std::size_t> {
+get_chrom_name_starts(const char *data, const std::size_t sz)
+  -> std::vector<std::size_t> {
   const auto g_end = data + sz;
   const char *g_itr = data;
   std::vector<std::size_t> starts;
@@ -120,7 +120,7 @@ get_chrom_name_stops(std::vector<std::size_t> starts, const char *data,
   const auto next_stop = [&](const std::size_t start) -> std::size_t {
     return std::distance(data, std::find(data + start, data + sz, '\n'));
   };  // finds the stop position following each start position
-  std::ranges::transform(starts, begin(starts), next_stop);
+  std::ranges::transform(starts, std::begin(starts), next_stop);
   return starts;
 }
 
@@ -132,8 +132,8 @@ get_chroms(const char *data, const std::size_t sz,
   std::vector<std::size_t> seq_stops(std::size(name_starts));
   seq_stops.back() = sz;
 
-  std::ranges::copy(cbegin(name_starts) + 1, cend(name_starts),
-                    begin(seq_stops));
+  std::ranges::copy(std::cbegin(name_starts) + 1, std::cend(name_starts),
+                    std::begin(seq_stops));
   std::vector<std::size_t> seq_starts(name_stops);
 
   std::ranges::for_each(seq_starts, [](auto &x) { ++x; });
@@ -168,11 +168,11 @@ cpg_index::construct(const std::string &genome_file) -> std::error_code {
 
   // collect cpgs for each chrom; order must match chrom name order
   positions.resize(n_chroms);
-  std::ranges::transform(chroms, begin(positions), get_cpgs);
+  std::ranges::transform(chroms, std::begin(positions), get_cpgs);
 
   // get size of each chrom to cross-check data files using this index
   chrom_size.resize(n_chroms);
-  std::ranges::transform(chroms, begin(chrom_size), [](const auto &chrom) {
+  std::ranges::transform(chroms, std::begin(chrom_size), [](const auto &chrom) {
     return std::ranges::size(chrom) - std::ranges::count(chrom, '\n');
   });
 
@@ -182,13 +182,14 @@ cpg_index::construct(const std::string &genome_file) -> std::error_code {
 
   // initialize chrom offsets within the compressed files
   chrom_offset.resize(n_chroms);
-  std::ranges::transform(positions, begin(chrom_offset),
+  std::ranges::transform(positions, std::begin(chrom_offset),
                          std::size<cpg_index::vec>);
 
-  n_cpgs_total = std::reduce(cbegin(chrom_offset), cend(chrom_offset));
+  n_cpgs_total =
+    std::reduce(std::cbegin(chrom_offset), std::cend(chrom_offset));
 
-  std::exclusive_scan(cbegin(chrom_offset), cend(chrom_offset),
-                      begin(chrom_offset), 0);
+  std::exclusive_scan(std::cbegin(chrom_offset), std::cend(chrom_offset),
+                      std::begin(chrom_offset), 0);
 
   // init the index that maps chrom names to their rank in the order
   chrom_index.clear();
@@ -268,7 +269,8 @@ cpg_index::read(const std::string &index_file) -> std::error_code {
     return cpg_index_code::failure_reading_index_header;
   }
 
-  n_cpgs_total = std::reduce(cbegin(chrom_n_cpgs), cend(chrom_n_cpgs));
+  n_cpgs_total =
+    std::reduce(std::cbegin(chrom_n_cpgs), std::cend(chrom_n_cpgs));
 
   positions.clear();
   for (const auto n_cpgs : chrom_n_cpgs) {
@@ -371,7 +373,7 @@ cpg_index::tostring() const -> std::string {
     std::views::zip(chrom_order, positions, chrom_size, chrom_offset);
   for (const auto [nm, ps, sz, of] : zipped) {
     const auto idx_itr = chrom_index.find(nm);
-    if (idx_itr == cend(chrom_index))
+    if (idx_itr == std::cend(chrom_index))
       res += std::format("{} missing\n", nm);
     else
       res += std::format(fmt_tmplt, idx_itr->second, nm, sz, std::size(ps), of);
@@ -391,7 +393,7 @@ cpg_index::tostring() const -> std::string {
 // cpg_index::get_offset_within_chrom(
 //   const std::int32_t ch_id, const std::uint32_t pos) const -> std::uint32_t {
 //   assert(ch_id >= 0 && ch_id < std::ranges::ssize(positions));
-//   return std::ranges::distance(cbegin(positions[ch_id]),
+//   return std::ranges::distance(std::cbegin(positions[ch_id]),
 //                                std::ranges::lower_bound(positions[ch_id],
 //                                pos));
 // }
@@ -404,13 +406,13 @@ get_offsets_within_chrom(
   const std::vector<std::pair<std::uint32_t, std::uint32_t>> &queries)
   -> std::vector<std::pair<std::uint32_t, std::uint32_t>> {
   std::vector<std::pair<std::uint32_t, std::uint32_t>> res(std::size(queries));
-  auto cursor = cbegin(positions);
+  auto cursor = std::cbegin(positions);
   for (const auto [i, q] : std::views::enumerate(queries)) {
-    cursor = std::ranges::lower_bound(cursor, cend(positions), q.first);
+    cursor = std::ranges::lower_bound(cursor, std::cend(positions), q.first);
     const auto cursor_stop =
-      std::ranges::lower_bound(cursor, cend(positions), q.second);
-    res[i] = {std::ranges::distance(cbegin(positions), cursor),
-              std::ranges::distance(cbegin(positions), cursor_stop)};
+      std::ranges::lower_bound(cursor, std::cend(positions), q.second);
+    res[i] = {std::ranges::distance(std::cbegin(positions), cursor),
+              std::ranges::distance(std::cbegin(positions), cursor_stop)};
   }
   return res;
 }
@@ -481,8 +483,8 @@ cpg_index::get_n_bins(const std::uint32_t bin_size) const -> std::uint32_t {
 }
 
 [[nodiscard]] auto
-get_assembly_from_filename(const std::string &filename,
-                           std::error_code &ec) -> std::string {
+get_assembly_from_filename(const std::string &filename, std::error_code &ec)
+  -> std::string {
   // ADS: this regular expression might better be in a header
   static constexpr auto assembly_ptrn = R"(^[_[:alnum:]]+)";
   static const auto filename_ptrn =
