@@ -47,10 +47,11 @@ struct cpg_index {
 #else
   typedef std::vector<cpg_pos_t> vec;
 #endif
-  auto construct(const std::string &genome_file) -> std::error_code;
+
   auto read(const std::string &index_file) -> std::error_code;
   auto write(const std::string &index_file) const -> std::error_code;
   auto tostring() const -> std::string;
+  auto construct(const std::string &genome_file) -> std::error_code;
   [[nodiscard]] auto hash() const -> std::size_t;
 
   // given the chromosome id (from chrom_index) and a position within
@@ -65,18 +66,18 @@ struct cpg_index {
     -> std::vector<std::pair<std::uint32_t, std::uint32_t>>;
 
   // get the offset from the start of the data structure
-  [[nodiscard]] auto
-  get_offsets(const std::int32_t ch_id,
-              const std::vector<std::pair<std::uint32_t, std::uint32_t>> &pos)
-    const -> std::vector<std::pair<std::uint32_t, std::uint32_t>>;
+  [[nodiscard]] auto get_offsets(
+    const std::int32_t ch_id,
+    const std::vector<std::pair<std::uint32_t, std::uint32_t>> &pos) const
+    -> std::vector<std::pair<std::uint32_t, std::uint32_t>>;
 
   // get the offset from the start of the data structure given genomic
   // intervals
   [[nodiscard]] auto get_offsets(const std::vector<genomic_interval> &gis) const
     -> std::vector<std::pair<std::uint32_t, std::uint32_t>>;
 
-  [[nodiscard]] auto
-  get_n_bins(const std::uint32_t bin_size) const -> std::uint32_t;
+  [[nodiscard]] auto get_n_bins(const std::uint32_t bin_size) const
+    -> std::uint32_t;
 
   std::vector<std::string> chrom_order;
   std::vector<std::uint32_t> chrom_size;
@@ -93,7 +94,7 @@ template <> struct std::formatter<cpg_index> : std::formatter<std::string> {
 };
 
 auto
-get_assembly_from_filename(const std::string &filename,
-                           std::error_code &ec) -> std::string;
+get_assembly_from_filename(const std::string &filename, std::error_code &ec)
+  -> std::string;
 
 #endif  // SRC_CPG_INDEX_HPP_
