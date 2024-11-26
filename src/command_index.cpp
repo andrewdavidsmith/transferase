@@ -36,6 +36,7 @@
 #include <iostream>
 #include <print>
 #include <string>
+#include <tuple>
 #include <vector>
 
 auto
@@ -82,10 +83,14 @@ command_index_main(int argc, char *argv[]) -> int {
     return EXIT_FAILURE;
   }
 
+  if (metadata_output.empty())
+    metadata_output = get_default_cpg_index_meta_filename(index_file);
+
   std::vector<std::tuple<std::string, std::string>> args_to_log{
     // clang-format off
     {"Genome", genome_file},
     {"Index", index_file},
+    {"Index metadata", metadata_output},
     // clang-format on
   };
   log_args<mxe_log_level::info>(args_to_log);
@@ -102,16 +107,13 @@ command_index_main(int argc, char *argv[]) -> int {
     return EXIT_FAILURE;
   }
 
+  // ADS: need to change this so the metadata is obtained at the same
+  // time as the index is created
   const auto [index_meta, meta_err] = cpg_index_meta::init(index_file);
   if (meta_err) {
     lgr.error("Error initializing cpg_index metadata {}", meta_err);
     return EXIT_FAILURE;
   }
-
-  // ADS: need to change this so the metadata is obtained at the same
-  // time as the index is created
-  if (metadata_output.empty())
-    metadata_output = get_default_cpg_index_meta_filename(index_file);
 
   std::ofstream out(metadata_output);
   if (!out) {
