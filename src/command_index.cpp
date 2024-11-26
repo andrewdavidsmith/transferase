@@ -24,6 +24,7 @@
 #include "command_index.hpp"
 
 #include "cpg_index.hpp"
+#include "cpg_index_meta.hpp"
 #include "logger.hpp"
 #include "mxe_error.hpp"
 #include "utilities.hpp"
@@ -43,6 +44,7 @@ command_index_main(int argc, char *argv[]) -> int {
 
   std::string genome_file{};
   std::string index_file{};
+  std::string metadata_output{};
   mxe_log_level log_level{};
 
   namespace po = boost::program_options;
@@ -53,6 +55,8 @@ command_index_main(int argc, char *argv[]) -> int {
     ("help,h", "produce help message")
     ("genome,g", po::value(&genome_file)->required(), "genome_file")
     ("index,x", po::value(&index_file)->required(), "output file")
+    ("meta", po::value(&metadata_output),
+     "metadata output (defaults to output.json)")
     ("log-level,v", po::value(&log_level)->default_value(logger::default_level),
      "log level {debug,info,warning,error,critical}")
     // clang-format on
@@ -95,6 +99,30 @@ command_index_main(int argc, char *argv[]) -> int {
 
   if (const auto index_write_err = index.write(index_file); index_write_err) {
     lgr.error("Error writing cpg index {}: {}", index_file, index_write_err);
+    return EXIT_FAILURE;
+  }
+
+  const auto [index_meta, meta_err] = cpg_index_meta::init(index_file);
+  if (meta_err) {
+    lgr.error("Error initializing cpg_index metadata {}", meta_err);
+    return EXIT_FAILURE;
+  }
+
+  // ADS: need to change this so the metadata is obtained at the same
+  // time as the index is created
+  if (metadata_output.empty())
+    metadata_output = get_default_cpg_index_meta_filename(index_file);
+
+  std::ofstream out(metadata_output);
+  if (!out) {
+    lgr.error("Error opening cpg_index metadata output file {}: {}",
+              metadata_output, std::make_error_code(std::errc(errno)));
+    return EXIT_FAILURE;
+  }
+
+  const auto meta_ec = cpg_index_meta::write(index_meta, metadata_output);
+  if (meta_ec) {
+    lgr.error("Error writing cpg_index metadata: {}", meta_ec);
     return EXIT_FAILURE;
   }
 
