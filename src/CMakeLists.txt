@@ -40,6 +40,11 @@ add_library(cpg_index OBJECT
   cpg_index.hpp
   cpg_index.cpp)
 
+add_library(cpg_index_meta OBJECT
+  cpg_index_meta.hpp
+  cpg_index_meta.cpp)
+target_include_directories(cpg_index_meta PRIVATE "${PROJECT_BINARY_DIR}")
+
 add_library(cpg_index_set OBJECT
   cpg_index_set.hpp
   cpg_index_set.cpp)
@@ -128,6 +133,7 @@ target_link_libraries(
   genomic_interval
   cpg_index
   cpg_index_set
+  cpg_index_meta
   methylome
   methylome_metadata
   methylome_set
