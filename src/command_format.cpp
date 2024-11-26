@@ -342,7 +342,7 @@ command_format_main(int argc, char *argv[]) -> int {
   }
 
   if (metadata_output.empty())
-    metadata_output = std::format("{}.json", methylome_output);
+    metadata_output = get_default_methylome_metadata_filename(methylome_output);
 
   std::vector<std::tuple<std::string, std::string>> args_to_log{
     // clang-format off
