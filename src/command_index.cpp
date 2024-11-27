@@ -97,10 +97,14 @@ command_index_main(int argc, char *argv[]) -> int {
 
   const auto constr_start = std::chrono::high_resolution_clock::now();
   cpg_index index;
-  index.construct(genome_file);
+  const auto index_err = index.construct(genome_file);
   const auto constr_stop = std::chrono::high_resolution_clock::now();
   lgr.debug("Index construction time: {:.3}s",
             duration(constr_start, constr_stop));
+  if (index_err) {
+    lgr.error("Error constructing index: {}", index_err);
+    return EXIT_FAILURE;
+  }
 
   if (const auto index_write_err = index.write(index_file); index_write_err) {
     lgr.error("Error writing cpg index {}: {}", index_file, index_write_err);
