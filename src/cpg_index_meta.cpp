@@ -41,12 +41,13 @@
 #include <tuple>
 
 [[nodiscard]] auto
-cpg_index_meta::write(const cpg_index_meta &cm,
-                      const std::string &json_filename) -> std::error_code {
+cpg_index_meta::write(const std::string &json_filename) const
+  -> std::error_code {
   std::ofstream out(json_filename);
   if (!out)
     return std::make_error_code(std::errc(errno));
-  if (!(out << boost::json::value_from(cm)))
+  out << boost::json::value_from(*this);
+  if (!out)
     return std::make_error_code(std::errc(errno));
   return {};
 }
@@ -72,48 +73,22 @@ get_time_as_string() -> std::string {
 }
 
 [[nodiscard]] auto
+cpg_index_meta::get_n_bins(const std::uint32_t bin_size) const
+  -> std::uint32_t {
+  const auto get_n_bins_for_chrom = [&](const auto chrom_size) {
+    return (chrom_size + bin_size) / bin_size;
+  };
+  return std::transform_reduce(std::cbegin(chrom_size), std::cend(chrom_size),
+                               static_cast<std::uint32_t>(0), std::plus{},
+                               get_n_bins_for_chrom);
+}
+
+[[nodiscard]] auto
 cpg_index_meta::tostring() const -> std::string {
   std::ostringstream o;
   if (!(o << boost::json::value_from(*this)))
     o.clear();
   return o.str();
-}
-
-[[nodiscard]] auto
-cpg_index_meta::init(const std::string &index_filename)
-  -> std::tuple<cpg_index_meta, std::error_code> {
-  // ADS: (todo) should there be a better way to get the "compression"
-  // status?
-  cpg_index_meta cm;
-  std::error_code err;
-  cm.index_hash = get_adler(index_filename, err);
-  if (err)
-    return {{}, err};
-
-  boost::system::error_code boost_err;
-  cm.host = boost::asio::ip::host_name(boost_err);
-  if (boost_err)
-    return {{}, err};
-
-  cm.assembly = get_assembly_from_filename(index_filename, err);
-  if (err)
-    return {{}, err};
-
-  std::tie(cm.user, err) = get_username();
-
-  cm.version = VERSION;
-  cm.creation_time = get_time_as_string();
-
-  cpg_index ci;
-  err = ci.read(index_filename);
-
-  cm.n_cpgs = ci.n_cpgs_total;
-  cm.chrom_order = ci.chrom_order;
-  cm.chrom_index = ci.chrom_index;
-  cm.chrom_size = ci.chrom_size;
-  cm.chrom_offset = ci.chrom_offset;
-
-  return {cm, err};
 }
 
 [[nodiscard]] auto

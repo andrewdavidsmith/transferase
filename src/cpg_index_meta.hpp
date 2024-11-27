@@ -102,13 +102,8 @@ struct cpg_index_meta {
   std::vector<std::uint32_t> chrom_size;
   std::vector<std::uint32_t> chrom_offset;
 
-  [[nodiscard]] static auto
-  write(const cpg_index_meta &cm,
-        const std::string &json_filename) -> std::error_code;
-
-  [[nodiscard]] static auto
-  init(const std::string &index_filename)
-    -> std::tuple<cpg_index_meta, std::error_code>;
+  [[nodiscard]] auto
+  write(const std::string &json_filename) const -> std::error_code;
 
   [[nodiscard]] static auto
   read(const std::string &json_filename)
@@ -116,6 +111,9 @@ struct cpg_index_meta {
 
   [[nodiscard]] auto
   tostring() const -> std::string;
+
+  [[nodiscard]] auto
+  get_n_bins(const std::uint32_t bin_size) const -> std::uint32_t;
 };
 
 // clang-format off
