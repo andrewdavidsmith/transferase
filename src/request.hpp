@@ -48,15 +48,19 @@ struct request_header {
   std::string accession;
   std::uint32_t methylome_size{};
   request_type rq_type{};
-  auto summary() const -> std::string;
-  auto is_valid_type() const -> bool {
+  auto
+  summary() const -> std::string;
+  auto
+  is_valid_type() const -> bool {
     return rq_type < request_type::n_request_types;
   }
-  auto is_intervals_request() const -> bool {
+  auto
+  is_intervals_request() const -> bool {
     return rq_type == request_type::counts ||
            rq_type == request_type::counts_cov;
   }
-  auto is_bins_request() const -> bool {
+  auto
+  is_bins_request() const -> bool {
     return rq_type == request_type::bin_counts ||
            rq_type == request_type::bin_counts_cov;
   }
@@ -65,8 +69,9 @@ struct request_header {
 template <>
 struct std::formatter<request_header::request_type>
   : std::formatter<std::string> {
-  auto format(const request_header::request_type &rt,
-              std::format_context &ctx) const {
+  auto
+  format(const request_header::request_type &rt,
+         std::format_context &ctx) const {
     return std::formatter<std::string>::format(
       std::format("{}", std::to_underlying(rt)), ctx);
   }
@@ -74,7 +79,8 @@ struct std::formatter<request_header::request_type>
 
 template <>
 struct std::formatter<request_header> : std::formatter<std::string> {
-  auto format(const request_header &rh, std::format_context &ctx) const {
+  auto
+  format(const request_header &rh, std::format_context &ctx) const {
     return std::formatter<std::string>::format(
       std::format("{}\t{}\t{}", rh.accession, rh.methylome_size, rh.rq_type),
       ctx);
@@ -102,12 +108,15 @@ struct request {
   std::uint32_t n_intervals{};
   std::vector<offset_type> offsets;
 
-  auto summary() const -> std::string;
+  auto
+  summary() const -> std::string;
 
-  auto get_offsets_n_bytes() const -> uint32_t {
+  auto
+  get_offsets_n_bytes() const -> uint32_t {
     return sizeof(offset_type) * size(offsets);
   }
-  auto get_offsets_data() -> char * {
+  auto
+  get_offsets_data() -> char * {
     return reinterpret_cast<char *>(offsets.data());
   }
 };
@@ -121,7 +130,8 @@ from_chars(const char *first, const char *last,
 
 struct bins_request {
   std::uint32_t bin_size{};
-  auto summary() const -> std::string;
+  auto
+  summary() const -> std::string;
 };
 
 auto

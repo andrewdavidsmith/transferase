@@ -53,8 +53,12 @@ struct std::is_error_code_enum<request_error> : public std::true_type {};
 
 // category to provide text descriptions
 struct request_error_category : std::error_category {
-  const char *name() const noexcept override { return "request_error"; }
-  std::string message(int code) const override {
+  const char *
+  name() const noexcept override {
+    return "request_error";
+  }
+  std::string
+  message(int code) const override {
     using std::string_literals::operator""s;
     // clang-format off
     switch (code) {
@@ -143,8 +147,12 @@ struct std::is_error_code_enum<methylome_set_code> : public std::true_type {};
 
 // category to provide text descriptions
 struct methylome_set_category : std::error_category {
-  const char *name() const noexcept override { return "methylome_set"; }
-  std::string message(int code) const override {
+  const char *
+  name() const noexcept override {
+    return "methylome_set";
+  }
+  std::string
+  message(int code) const override {
     using std::string_literals::operator""s;
     // clang-format off
     switch (code) {
@@ -190,8 +198,12 @@ struct std::is_error_code_enum<methylome_code> : public std::true_type {};
 
 // category to provide text descriptions
 struct methylome_category : std::error_category {
-  const char *name() const noexcept override { return "methylome"; }
-  std::string message(int code) const override {
+  const char *
+  name() const noexcept override {
+    return "methylome";
+  }
+  std::string
+  message(int code) const override {
     using std::string_literals::operator""s;
     // clang-format off
     switch (code) {
@@ -234,8 +246,12 @@ struct std::is_error_code_enum<genomic_interval_code> : public std::true_type {
 
 // category to provide text descriptions
 struct genomic_interval_category : std::error_category {
-  const char *name() const noexcept override { return "genomic_interval"; }
-  std::string message(int code) const override {
+  const char *
+  name() const noexcept override {
+    return "genomic_interval";
+  }
+  std::string
+  message(int code) const override {
     using std::string_literals::operator""s;
     // clang-format off
     switch (code) {
@@ -274,8 +290,12 @@ struct std::is_error_code_enum<cpg_index_code> : public std::true_type {};
 
 // category to provide text descriptions
 struct cpg_index_category : std::error_category {
-  const char *name() const noexcept override { return "cpg_index"; }
-  std::string message(int code) const override {
+  const char *
+  name() const noexcept override {
+    return "cpg_index";
+  }
+  std::string
+  message(int code) const override {
     using std::string_literals::operator""s;
     // clang-format off
     switch (code) {
@@ -300,7 +320,8 @@ make_error_code(cpg_index_code e) {
 // print std::error_code messages
 template <>
 struct std::formatter<std::error_code> : std::formatter<std::string> {
-  auto format(const std::error_code &e, std::format_context &ctx) const {
+  auto
+  format(const std::error_code &e, std::format_context &ctx) const {
     return std::formatter<std::string>::format(e.message(), ctx);
   }
 };
@@ -308,8 +329,8 @@ struct std::formatter<std::error_code> : std::formatter<std::string> {
 // print boost::system::error_code messages
 template <>
 struct std::formatter<boost::system::error_code> : std::formatter<std::string> {
-  auto format(const boost::system::error_code &e,
-              std::format_context &ctx) const {
+  auto
+  format(const boost::system::error_code &e, std::format_context &ctx) const {
     return std::formatter<std::string>::format(std::format("{}", e.message()),
                                                ctx);
   }

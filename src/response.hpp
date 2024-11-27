@@ -44,9 +44,13 @@ struct response_header {
   std::uint32_t response_size{};
 
   // ADS: doing the strange stuff below for cpplint...
-  auto error() const -> bool { return (status) ? true : false; }
+  auto
+  error() const -> bool {
+    return (status) ? true : false;
+  }
 
-  auto summary() const -> std::string;
+  auto
+  summary() const -> std::string;
 };
 
 auto
@@ -67,12 +71,16 @@ parse(const std::array<char, response_buf_size> &buf,
 
 struct response_payload {
   std::vector<std::byte> payload;
-  auto n_bytes() const -> std::uint32_t { return std::size(payload); }
+  auto
+  n_bytes() const -> std::uint32_t {
+    return std::size(payload);
+  }
 };
 
 template <typename counts_type> struct response {
   std::vector<counts_type> counts;  // counts_type is from methylome.hpp
-  auto get_counts_n_bytes() const -> std::uint32_t {
+  auto
+  get_counts_n_bytes() const -> std::uint32_t {
     return sizeof(counts_type) * size(counts);
   }
 };

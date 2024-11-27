@@ -55,8 +55,12 @@ struct std::is_error_code_enum<cpg_index_meta_error> : public std::true_type {};
 
 // category to provide text descriptions
 struct cpg_index_meta_error_category : std::error_category {
-  const char *name() const noexcept override { return "cpg_index_meta_error"; }
-  std::string message(int code) const override {
+  const char *
+  name() const noexcept override {
+    return "cpg_index_meta_error";
+  }
+  std::string
+  message(int code) const override {
     using std::string_literals::operator""s;
     // clang-format off
     switch (code) {
@@ -102,13 +106,16 @@ struct cpg_index_meta {
   write(const cpg_index_meta &cm,
         const std::string &json_filename) -> std::error_code;
 
-  [[nodiscard]] static auto init(const std::string &index_filename)
+  [[nodiscard]] static auto
+  init(const std::string &index_filename)
     -> std::tuple<cpg_index_meta, std::error_code>;
 
-  [[nodiscard]] static auto read(const std::string &json_filename)
+  [[nodiscard]] static auto
+  read(const std::string &json_filename)
     -> std::tuple<cpg_index_meta, std::error_code>;
 
-  [[nodiscard]] auto tostring() const -> std::string;
+  [[nodiscard]] auto
+  tostring() const -> std::string;
 };
 
 // clang-format off
@@ -130,7 +137,8 @@ BOOST_DESCRIBE_STRUCT(cpg_index_meta, (),
 
 template <>
 struct std::formatter<cpg_index_meta> : std::formatter<std::string> {
-  auto format(const cpg_index_meta &cm, std::format_context &ctx) const {
+  auto
+  format(const cpg_index_meta &cm, std::format_context &ctx) const {
     return std::formatter<std::string>::format(cm.tostring(), ctx);
   }
 };

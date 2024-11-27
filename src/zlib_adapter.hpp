@@ -65,8 +65,12 @@ struct std::is_error_code_enum<zlib_adapter_error> : public std::true_type {};
 
 // category to provide text descriptions
 struct zlib_adapter_error_category : std::error_category {
-  const char *name() const noexcept override { return "zlib_adapter_error"; }
-  std::string message(int code) const override {
+  const char *
+  name() const noexcept override {
+    return "zlib_adapter_error";
+  }
+  std::string
+  message(int code) const override {
     using std::string_literals::operator""s;
     // clang-format off
     switch (code) {

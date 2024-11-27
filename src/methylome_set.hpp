@@ -42,22 +42,33 @@ template <typename T> struct ring_buffer {
   // support queue ops and be iterable
   explicit ring_buffer(const std::size_t capacity) :
     capacity{capacity}, counter{0}, buf{capacity} {}
-  auto push(T t) -> T {
+  auto
+  push(T t) -> T {
     std::swap(buf[counter++ % capacity], t);
     return t;
   }
-  [[nodiscard]] auto size() const {
+  [[nodiscard]] auto
+  size() const {
     return counter < capacity ? counter : capacity;
   }
-  [[nodiscard]] auto front() const {
+  [[nodiscard]] auto
+  front() const {
     return buf[counter < capacity ? 0 : (counter + 1) % capacity];
   }
-  [[nodiscard]] auto begin() { return std::begin(buf); }
-  [[nodiscard]] auto begin() const { return std::cbegin(buf); }
-  [[nodiscard]] auto end() {
+  [[nodiscard]] auto
+  begin() {
+    return std::begin(buf);
+  }
+  [[nodiscard]] auto
+  begin() const {
+    return std::cbegin(buf);
+  }
+  [[nodiscard]] auto
+  end() {
     return std::begin(buf) + std::min(counter, capacity);
   }
-  [[nodiscard]] auto end() const {
+  [[nodiscard]] auto
+  end() const {
     return std::cbegin(buf) + std::min(counter, capacity);
   }
 
@@ -70,14 +81,16 @@ template <typename T> struct ring_buffer {
 
 struct methylome_set {
   methylome_set(const methylome_set &) = delete;
-  methylome_set &operator=(const methylome_set &) = delete;
+  methylome_set &
+  operator=(const methylome_set &) = delete;
 
   methylome_set(const std::uint32_t max_live_methylomes,
                 const std::string &methylome_directory) :
     max_live_methylomes{max_live_methylomes},
     methylome_directory{methylome_directory}, accessions{max_live_methylomes} {}
 
-  [[nodiscard]] auto get_methylome(const std::string &accession)
+  [[nodiscard]] auto
+  get_methylome(const std::string &accession)
     -> std::tuple<std::shared_ptr<methylome>,
                   std::shared_ptr<methylome_metadata>, std::error_code>;
 

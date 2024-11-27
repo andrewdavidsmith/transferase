@@ -42,16 +42,19 @@ public:
   mxe_client(const std::string &server, const std::string &port,
              request_header &req_hdr, req_type &req, logger &lgr);
 
-  auto run() -> std::error_code {
+  auto
+  run() -> std::error_code {
     io_context.run();
     return status;
   }
 
-  auto get_counts() const -> const std::vector<counts_type> & {
+  auto
+  get_counts() const -> const std::vector<counts_type> & {
     return resp.counts;
   }
 
-  auto take_counts() -> std::vector<counts_type> {
+  auto
+  take_counts() -> std::vector<counts_type> {
     // ADS: this function resets resp.counts and avoids copy
     std::vector<counts_type> moved_out;
     std::swap(moved_out, resp.counts);
@@ -62,13 +65,20 @@ private:
   auto
   handle_resolve(const std::error_code &err,
                  const boost::asio::ip::tcp::resolver::results_type &endpoints);
-  auto handle_connect(const std::error_code &err);
-  auto handle_write_request(const std::error_code &err);
-  auto handle_read_response_header(const std::error_code &err);
-  auto do_read_counts();
-  auto handle_failure_explanation(const std::error_code &err);
-  auto do_finish(const std::error_code &err);
-  auto check_deadline();
+  auto
+  handle_connect(const std::error_code &err);
+  auto
+  handle_write_request(const std::error_code &err);
+  auto
+  handle_read_response_header(const std::error_code &err);
+  auto
+  do_read_counts();
+  auto
+  handle_failure_explanation(const std::error_code &err);
+  auto
+  do_finish(const std::error_code &err);
+  auto
+  check_deadline();
 
   boost::asio::io_context io_context;
   boost::asio::ip::tcp::resolver resolver;

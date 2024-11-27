@@ -42,7 +42,8 @@ struct request_handler;
 
 struct connection : public std::enable_shared_from_this<connection> {
   connection(const connection &) = delete;
-  connection &operator=(const connection &) = delete;
+  connection &
+  operator=(const connection &) = delete;
 
   explicit connection(boost::asio::ip::tcp::socket socket_,
                       request_handler &handler, logger &lgr,
@@ -54,7 +55,8 @@ struct connection : public std::enable_shared_from_this<connection> {
              boost::lexical_cast<std::string>(socket.remote_endpoint()));
   }
 
-  auto start() -> void {
+  auto
+  start() -> void {
     read_request();  // start first async op; sets deadline
 
     // this might best be done at the end of read_request, then
@@ -63,17 +65,25 @@ struct connection : public std::enable_shared_from_this<connection> {
     deadline.async_wait(std::bind(&connection::check_deadline, this));
   }
 
-  auto prepare_to_read_offsets() -> void;
+  auto
+  prepare_to_read_offsets() -> void;
 
-  auto read_request() -> void;  // read request
-  auto read_offsets() -> void;  // read offsets part of request
-  auto compute_bins() -> void;  // do the computation for bins
+  auto
+  read_request() -> void;  // read request
+  auto
+  read_offsets() -> void;  // read offsets part of request
+  auto
+  compute_bins() -> void;  // do the computation for bins
 
-  auto respond_with_header() -> void;  // write good header
-  auto respond_with_error() -> void;   // write error header
-  auto respond_with_counts() -> void;  // write counts
+  auto
+  respond_with_header() -> void;  // write good header
+  auto
+  respond_with_error() -> void;  // write error header
+  auto
+  respond_with_counts() -> void;  // write counts
 
-  auto check_deadline() -> void;
+  auto
+  check_deadline() -> void;
 
   boost::asio::ip::tcp::socket socket;  // this connection's socket
   boost::asio::steady_timer deadline;
