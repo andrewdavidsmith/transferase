@@ -53,11 +53,11 @@ using std::vector;
 
 template <typename counts_res_type>
 [[nodiscard]] static inline auto
-do_remote_lookup(const string &accession, const cpg_index &index,
+do_remote_lookup(const string &accession, const cpg_index_meta &cim,
                  vector<methylome::offset_pair> offsets, const string &hostname,
                  const string &port)
   -> std::tuple<vector<counts_res_type>, std::error_code> {
-  request_header hdr{accession, index.n_cpgs_total, {}};
+  request_header hdr{accession, cim.n_cpgs, {}};
 
   if constexpr (std::is_same<counts_res_type, counts_res>::value)
     hdr.rq_type = request_header::request_type::counts;
@@ -80,16 +80,15 @@ template <typename counts_res_type>
 do_local_lookup(const string &meth_file, const string &meth_meta_file,
                 const cpg_index &index, vector<methylome::offset_pair> offsets)
   -> std::tuple<vector<counts_res_type>, std::error_code> {
-  const auto [meta, meta_err] = methylome_metadata::read(meth_meta_file);
+  const auto [mm, meta_err] = methylome_metadata::read(meth_meta_file);
   if (meta_err) {
     logger::instance().error("Error: {} ({})", meta_err, meth_meta_file);
     return {{}, meta_err};
   }
-
   methylome meth{};
-  if (const auto meth_read_err = meth.read(meth_file, meta)) {
-    logger::instance().error("Error: {} ({})", meth_read_err, meth_file);
-    return {{}, meth_read_err};
+  if (const auto meth_err = meth.read(meth_file, mm)) {
+    logger::instance().error("Error: {} ({})", meth_err, meth_file);
+    return {{}, meth_err};
   }
   if constexpr (std::is_same<counts_res_type, counts_res_cov>::value)
     return {std::move(meth.get_counts_cov(offsets)), {}};
@@ -99,7 +98,7 @@ do_local_lookup(const string &meth_file, const string &meth_meta_file,
 
 static inline auto
 write_output(std::ostream &out, const vector<genomic_interval> &gis,
-             const cpg_index &index, const auto &results,
+             const cpg_index_meta &cim, const auto &results,
              const bool write_scores) {
   if (write_scores) {
     // ADS: counting intervals that have no reads
@@ -109,17 +108,18 @@ write_output(std::ostream &out, const vector<genomic_interval> &gis,
       return x.n_meth /
              std::max(1.0, static_cast<double>(x.n_meth + x.n_unmeth));
     };
-    write_bedgraph(out, index, gis, std::views::transform(results, to_score));
+    write_bedgraph(out, cim, gis, std::views::transform(results, to_score));
     logger::instance().debug("Number of intervals without reads: {}",
                              zero_coverage);
   }
   else
-    write_intervals(out, index, gis, results);
+    write_intervals(out, cim, gis, results);
 }
 
 template <typename counts_res_type>
 static auto
 do_lookup(const string &accession, const cpg_index &index,
+          const cpg_index_meta &cim,
           const vector<methylome::offset_pair> &offsets, const string &hostname,
           const string &port, const string &meth_file,
           const string &meth_meta_file, std::ostream &out,
@@ -128,7 +128,7 @@ do_lookup(const string &accession, const cpg_index &index,
   using hr_clock = std::chrono::high_resolution_clock;
   const auto lookup_start{hr_clock::now()};
   const auto [results, lookup_err] =
-    remote_mode ? do_remote_lookup<counts_res_type>(accession, index, offsets,
+    remote_mode ? do_remote_lookup<counts_res_type>(accession, cim, offsets,
                                                     hostname, port)
                 : do_local_lookup<counts_res_type>(meth_file, meth_meta_file,
                                                    index, offsets);
@@ -140,7 +140,7 @@ do_lookup(const string &accession, const cpg_index &index,
     return std::make_error_code(std::errc::invalid_argument);
 
   const auto output_start{hr_clock::now()};
-  write_output(out, gis, index, results, write_scores);
+  write_output(out, gis, cim, results, write_scores);
   const auto output_stop{hr_clock::now()};
   // ADS: elapsed time for output will include conversion to scores
   logger::instance().debug("Elapsed time for output: {:.3}s",
@@ -272,15 +272,15 @@ command_lookup_main(int argc, char *argv[]) -> int {
   log_args<mxe_log_level::info>(args_to_log);
   log_args<mxe_log_level::info>(remote_mode ? remote_args : local_args);
 
-  cpg_index index{};
-  if (const auto index_read_err = index.read(index_file); index_read_err) {
+  const auto [index, cim, index_read_err] = read_cpg_index(index_file);
+  if (index_read_err) {
     lgr.error("Failed to read cpg index: {} ({})", index_file, index_read_err);
     return EXIT_FAILURE;
   }
 
-  lgr.debug("Number of CpGs in index: {}", index.n_cpgs_total);
+  lgr.debug("Number of CpGs in index: {}", cim.n_cpgs);
 
-  const auto [gis, ec] = genomic_interval::load(index, intervals_file);
+  const auto [gis, ec] = genomic_interval::load(cim, intervals_file);
   if (ec) {
     lgr.error("Error reading intervals file: {} ({})", intervals_file, ec);
     return EXIT_FAILURE;
@@ -290,7 +290,7 @@ command_lookup_main(int argc, char *argv[]) -> int {
   using hr_clock = std::chrono::high_resolution_clock;
 
   const auto get_offsets_start{hr_clock::now()};
-  const vector<methylome::offset_pair> offsets = index.get_offsets(gis);
+  const auto offsets = index.get_offsets(cim, gis);
   const auto get_offsets_stop{hr_clock::now()};
   lgr.debug("Elapsed time to get offsets: {:.3}s",
             duration(get_offsets_start, get_offsets_stop));
@@ -304,10 +304,10 @@ command_lookup_main(int argc, char *argv[]) -> int {
 
   const auto lookup_err =
     count_covered
-      ? do_lookup<counts_res_cov>(accession, index, offsets, hostname, port,
-                                  meth_file, meth_meta_file, out, gis,
+      ? do_lookup<counts_res_cov>(accession, index, cim, offsets, hostname,
+                                  port, meth_file, meth_meta_file, out, gis,
                                   write_scores, remote_mode)
-      : do_lookup<counts_res>(accession, index, offsets, hostname, port,
+      : do_lookup<counts_res>(accession, index, cim, offsets, hostname, port,
                               meth_file, meth_meta_file, out, gis, write_scores,
                               remote_mode);
 
