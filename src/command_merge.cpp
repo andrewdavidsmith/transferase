@@ -44,7 +44,7 @@
 #include <vector>
 
 [[nodiscard]] static auto
-verify_consistent_metadata(const std::vector<std::string> &meth_files)
+verify_consistent_metadata_files(const std::vector<std::string> &meth_files)
   -> std::error_code {
   std::vector<methylome_metadata> mms;
   for (const auto &mf : meth_files) {
@@ -196,17 +196,16 @@ command_merge_main(int argc, char *argv[]) -> int {
   };
   log_args<mxe_log_level::debug>(timing_to_log);
 
-  auto err = verify_consistent_metadata(input_files);
-  if (err) {
+  if (const auto err = verify_consistent_metadata_files(input_files); err) {
     lgr.error("Inconsistent metadata: {}", err);
     return EXIT_FAILURE;
   }
 
   const auto meta_file =
     get_default_methylome_metadata_filename(input_files[0]);
-  auto [meta, meta_err] = methylome_metadata::read(meta_file);
-  if (meta_err) {
-    lgr.error("Error reading metadata {}: {}", meta_file, meta_err);
+  auto [meta, err] = methylome_metadata::read(meta_file);
+  if (err) {
+    lgr.error("Error reading metadata {}: {}", meta_file, err);
     return EXIT_FAILURE;
   }
 
