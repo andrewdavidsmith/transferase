@@ -272,11 +272,12 @@ bin_counts_impl(cpg_index::vec::const_iterator &posn_itr,
 template <typename T>
 [[nodiscard]] static auto
 get_bins_impl(const std::uint32_t bin_size, const cpg_index &index,
+              const cpg_index_meta &meta,
               const methylome::vec &cpgs) -> std::vector<T> {
   std::vector<T> results;  // ADS TODO: reserve n_bins
 
   const auto zipped =
-    std::views::zip(index.positions, index.chrom_size, index.chrom_offset);
+    std::views::zip(index.positions, meta.chrom_size, meta.chrom_offset);
   for (const auto [positions, chrom_size, offset] : zipped) {
     auto posn_itr = std::cbegin(positions);
     const auto posn_end = std::cend(positions);
@@ -291,13 +292,15 @@ get_bins_impl(const std::uint32_t bin_size, const cpg_index &index,
 }
 
 [[nodiscard]] auto
-methylome::get_bins(const std::uint32_t bin_size,
-                    const cpg_index &index) const -> std::vector<counts_res> {
-  return get_bins_impl<counts_res>(bin_size, index, cpgs);
+methylome::get_bins(const std::uint32_t bin_size, const cpg_index &index,
+                    const cpg_index_meta &meta) const
+  -> std::vector<counts_res> {
+  return get_bins_impl<counts_res>(bin_size, index, meta, cpgs);
 }
 
 [[nodiscard]] auto
-methylome::get_bins_cov(const std::uint32_t bin_size, const cpg_index &index)
-  const -> std::vector<counts_res_cov> {
-  return get_bins_impl<counts_res_cov>(bin_size, index, cpgs);
+methylome::get_bins_cov(const std::uint32_t bin_size, const cpg_index &index,
+                        const cpg_index_meta &meta) const
+  -> std::vector<counts_res_cov> {
+  return get_bins_impl<counts_res_cov>(bin_size, index, meta, cpgs);
 }

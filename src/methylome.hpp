@@ -29,6 +29,7 @@
 #endif
 
 #include "cpg_index.hpp"
+#include "cpg_index_meta.hpp"
 #include "methylome_metadata.hpp"
 #include "methylome_results_types.hpp"
 
@@ -108,11 +109,11 @@ struct methylome {
   // takes a bins size and a cpg_index and calculates the counts in
   // each bin along all chromosomes
   [[nodiscard]] auto
-  get_bins(const std::uint32_t bin_size,
-           const cpg_index &index) const -> std::vector<counts_res>;
+  get_bins(const std::uint32_t bin_size, const cpg_index &index,
+           const cpg_index_meta &meta) const -> std::vector<counts_res>;
   [[nodiscard]] auto
-  get_bins_cov(const std::uint32_t bin_size,
-               const cpg_index &index) const -> std::vector<counts_res_cov>;
+  get_bins_cov(const std::uint32_t bin_size, const cpg_index &index,
+               const cpg_index_meta &meta) const -> std::vector<counts_res_cov>;
 
   methylome::vec cpgs{};
   static constexpr auto record_size = sizeof(m_elem);
