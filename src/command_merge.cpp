@@ -25,6 +25,7 @@
 
 #include "logger.hpp"
 #include "methylome.hpp"
+#include "methylome_metadata.hpp"
 #include "mxe_error.hpp"
 #include "utilities.hpp"
 
@@ -54,18 +55,14 @@ verify_consistent_metadata(const std::vector<std::string> &meth_files)
     mms.emplace_back(mm);
   }
 
-  const methylome_metadata &last = mms.back();
-  for (const auto &mm : mms | std::views::take(std::size(mms) - 1)) {
-    // clang-format off
-    if (mm.version != last.version ||
-        mm.index_hash != last.index_hash ||
-        mm.assembly != last.assembly ||
-        mm.n_cpgs != last.n_cpgs)
-      return methylome_metadata_error::inconsistent;
-    // clang-format on
-  }
+  const auto consistent = [&a = mms.back()](const auto &b) -> bool {
+    return methylome_metadata_consistent(a, b);
+  };
 
-  return methylome_metadata_error::ok;
+  // ADS: this does an extra comparison of the final element to itself
+  return std::ranges::all_of(mms, consistent)
+           ? methylome_metadata_error::ok
+           : methylome_metadata_error::inconsistent;
 }
 
 auto
