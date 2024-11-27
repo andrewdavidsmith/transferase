@@ -55,10 +55,12 @@ struct std::is_error_code_enum<methylome_metadata_error>
 
 // category to provide text descriptions
 struct methylome_metadata_error_category : std::error_category {
-  const char *name() const noexcept override {
+  const char *
+  name() const noexcept override {
     return "methylome_metadata_error";
   }
-  std::string message(int code) const override {
+  std::string
+  message(int code) const override {
     using std::string_literals::operator""s;
     // clang-format off
     switch (code) {
@@ -97,16 +99,18 @@ struct methylome_metadata {
   std::uint32_t n_cpgs{};
   bool is_compressed{};
   // ADS: (todo) think of a better way to get "compression" status
-  [[nodiscard]] static auto init(const std::string &index_filename,
-                                 const std::string &methylome_filename,
-                                 const bool is_compressed)
+  [[nodiscard]] static auto
+  init(const std::string &index_filename, const std::string &methylome_filename,
+       const bool is_compressed)
     -> std::tuple<methylome_metadata, std::error_code>;
-  [[nodiscard]] static auto read(const std::string &json_filename)
+  [[nodiscard]] static auto
+  read(const std::string &json_filename)
     -> std::tuple<methylome_metadata, std::error_code>;
   [[nodiscard]] static auto
   write(const methylome_metadata &mm,
         const std::string &json_filename) -> std::error_code;
-  [[nodiscard]] auto tostring() const -> std::string;
+  [[nodiscard]] auto
+  tostring() const -> std::string;
   [[nodiscard]] auto
   update(const std::string &methylome_filename) -> std::error_code;
 };
@@ -139,7 +143,8 @@ BOOST_DESCRIBE_STRUCT(methylome_metadata, (),
 
 template <>
 struct std::formatter<methylome_metadata> : std::formatter<std::string> {
-  auto format(const methylome_metadata &mm, std::format_context &ctx) const {
+  auto
+  format(const methylome_metadata &mm, std::format_context &ctx) const {
     return std::formatter<std::string>::format(std::format("{}", mm.tostring()),
                                                ctx);
   }

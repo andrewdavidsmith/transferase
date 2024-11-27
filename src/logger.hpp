@@ -90,7 +90,8 @@ static constexpr auto level_name_sz{[]() constexpr {
 }()};
 
 template <> struct std::formatter<mxe_log_level> : std::formatter<std::string> {
-  auto format(const mxe_log_level &l, std::format_context &ctx) const {
+  auto
+  format(const mxe_log_level &l, std::format_context &ctx) const {
     return std::formatter<std::string>::format(
       level_name[std::to_underlying(l)], ctx);
   }
@@ -147,9 +148,10 @@ private:
 public:
   static constexpr mxe_log_level default_level{mxe_log_level::info};
 
-  static logger &instance(std::shared_ptr<std::ostream> log_file_ptr = nullptr,
-                          const std::string &appname = "",
-                          mxe_log_level min_log_level = mxe_log_level::debug) {
+  static logger &
+  instance(std::shared_ptr<std::ostream> log_file_ptr = nullptr,
+           const std::string &appname = "",
+           mxe_log_level min_log_level = mxe_log_level::debug) {
     static logger fl(log_file_ptr, appname, min_log_level);
     return fl;
   }
@@ -164,12 +166,16 @@ public:
       status = ec;
   }
 
-  [[nodiscard]] auto get_status() const -> std::error_code { return status; }
+  [[nodiscard]] auto
+  get_status() const -> std::error_code {
+    return status;
+  }
 
   operator bool() const { return status ? false : true; }
 
   template <mxe_log_level the_level>
-  auto log(std::string_view message) -> void {
+  auto
+  log(std::string_view message) -> void {
     static constexpr auto idx = std::to_underlying(the_level);
     static constexpr auto sz = level_name_sz[idx];
     static constexpr auto lvl = level_name[idx];
@@ -189,7 +195,8 @@ public:
   }
 
   template <mxe_log_level the_level, typename... Args>
-  auto log(std::string_view fmt_str, Args &&...args) -> void {
+  auto
+  log(std::string_view fmt_str, Args &&...args) -> void {
     static constexpr auto idx = std::to_underlying(the_level);
     static constexpr auto sz = level_name_sz[idx];
     static constexpr auto lvl = level_name[idx];
@@ -209,40 +216,50 @@ public:
     }
   }
 
-  auto debug(std::string_view message) -> void {
+  auto
+  debug(std::string_view message) -> void {
     log<mxe_log_level::debug>(message);
   }
-  auto info(std::string_view message) -> void {
+  auto
+  info(std::string_view message) -> void {
     log<mxe_log_level::info>(message);
   }
-  auto warning(std::string_view message) -> void {
+  auto
+  warning(std::string_view message) -> void {
     log<mxe_log_level::warning>(message);
   }
-  auto error(std::string_view message) -> void {
+  auto
+  error(std::string_view message) -> void {
     log<mxe_log_level::error>(message);
   }
-  auto critical(std::string_view message) -> void {
+  auto
+  critical(std::string_view message) -> void {
     log<mxe_log_level::critical>(message);
   }
 
   template <typename... Args>
-  auto debug(std::string_view fmt_str, Args &&...args) -> void {
+  auto
+  debug(std::string_view fmt_str, Args &&...args) -> void {
     log<mxe_log_level::debug>(fmt_str, args...);
   }
   template <typename... Args>
-  auto info(std::string_view fmt_str, Args &&...args) -> void {
+  auto
+  info(std::string_view fmt_str, Args &&...args) -> void {
     log<mxe_log_level::info>(fmt_str, args...);
   }
   template <typename... Args>
-  auto warning(std::string_view fmt_str, Args &&...args) -> void {
+  auto
+  warning(std::string_view fmt_str, Args &&...args) -> void {
     log<mxe_log_level::warning>(fmt_str, args...);
   }
   template <typename... Args>
-  auto error(std::string_view fmt_str, Args &&...args) -> void {
+  auto
+  error(std::string_view fmt_str, Args &&...args) -> void {
     log<mxe_log_level::error>(fmt_str, args...);
   }
   template <typename... Args>
-  auto critical(std::string_view fmt_str, Args &&...args) -> void {
+  auto
+  critical(std::string_view fmt_str, Args &&...args) -> void {
     log<mxe_log_level::critical>(fmt_str, args...);
   }
 
@@ -259,14 +276,16 @@ private:
   std::error_code status{};
 
   logger(const logger &) = delete;
-  logger &operator=(const logger &) = delete;
+  logger &
+  operator=(const logger &) = delete;
 
   logger() {}
   ~logger() {}
 
   [[nodiscard]]
-  auto fill_buffer(std::uint32_t thread_id, const char *const lvl,
-                   const std::uint32_t sz, std::string_view message) -> char * {
+  auto
+  fill_buffer(std::uint32_t thread_id, const char *const lvl,
+              const std::uint32_t sz, std::string_view message) -> char * {
     auto [buf_data_end, ec] = std::to_chars(cursor, buf_end, thread_id);
     *buf_data_end++ = delim;
     std::memcpy(buf_data_end, lvl, sz);
@@ -275,7 +294,8 @@ private:
     return std::format_to(buf_data_end, "{}\n", message);
   }
 
-  auto format_time() -> void {
+  auto
+  format_time() -> void {
     const auto now{std::chrono::system_clock::now()};
     const std::chrono::year_month_day ymd{
       std::chrono::floor<std::chrono::days>(now)};

@@ -40,7 +40,8 @@ struct counts_res_cov {
 };
 
 template <> struct std::formatter<counts_res> : std::formatter<std::string> {
-  auto format(const counts_res &cr, std::format_context &ctx) const {
+  auto
+  format(const counts_res &cr, std::format_context &ctx) const {
     return std::formatter<std::string>::format(
       std::format(R"({{"n_meth": {}, "n_unmeth": {}}})", cr.n_meth,
                   cr.n_unmeth),
@@ -50,7 +51,8 @@ template <> struct std::formatter<counts_res> : std::formatter<std::string> {
 
 template <>
 struct std::formatter<counts_res_cov> : std::formatter<std::string> {
-  auto format(const counts_res_cov &cr, std::format_context &ctx) const {
+  auto
+  format(const counts_res_cov &cr, std::format_context &ctx) const {
     return std::formatter<std::string>::format(
       std::format(R"({{"n_meth": {}, "n_unmeth": {}, "n_covered": {}}})",
                   cr.n_meth, cr.n_unmeth, cr.n_covered),

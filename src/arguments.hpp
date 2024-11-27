@@ -45,8 +45,12 @@ struct std::is_error_code_enum<argument_error> : public std::true_type {};
 
 // category to provide text descriptions
 struct argument_error_category : std::error_category {
-  const char *name() const noexcept override { return "argument_error"; }
-  std::string message(int code) const override {
+  const char *
+  name() const noexcept override {
+    return "argument_error";
+  }
+  std::string
+  message(int code) const override {
     using std::string_literals::operator""s;
     switch (code) {
     case 0:
@@ -69,15 +73,22 @@ make_error_code(argument_error e) {
 template <typename T> struct argset_base {
   std::string config_file{};
 
-  T &self() { return static_cast<T &>(*this); }
-  const T &self() const { return static_cast<const T &>(*this); }
+  T &
+  self() {
+    return static_cast<T &>(*this);
+  }
+  const T &
+  self() const {
+    return static_cast<const T &>(*this);
+  }
 
-  static auto get_default_config_file() -> std::string {
+  static auto
+  get_default_config_file() -> std::string {
     return T::get_default_config_file_impl();
   }
 
-  [[nodiscard]] auto parse(int argc, char *argv[],
-                           const std::string &usage) -> argument_error {
+  [[nodiscard]] auto
+  parse(int argc, char *argv[], const std::string &usage) -> argument_error {
     boost::program_options::options_description cli_only_opts =
       set_cli_only_opts();
     boost::program_options::options_description common_opts = set_common_opts();
@@ -122,7 +133,10 @@ template <typename T> struct argset_base {
     return argument_error::ok;
   }
 
-  auto log_options() const { self().log_options_impl(); }
+  auto
+  log_options() const {
+    self().log_options_impl();
+  }
 
   [[nodiscard]] auto
   set_cli_only_opts() -> boost::program_options::options_description {

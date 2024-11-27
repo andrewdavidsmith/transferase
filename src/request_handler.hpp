@@ -35,7 +35,8 @@
 // handles all incoming requests
 struct request_handler {
   request_handler(const request_handler &) = delete;
-  request_handler &operator=(const request_handler &) = delete;
+  request_handler &
+  operator=(const request_handler &) = delete;
 
   explicit request_handler(const std::string &methylome_dir,
                            const std::string &index_file_dir,
@@ -43,20 +44,22 @@ struct request_handler {
     methylome_dir{methylome_dir}, index_file_dir{index_file_dir},
     ms(max_live_methylomes, methylome_dir), indexes(index_file_dir) {}
 
-  auto handle_header(const request_header &req_hdr,
-                     response_header &resp_hdr) -> void;
+  auto
+  handle_header(const request_header &req_hdr,
+                response_header &resp_hdr) -> void;
 
-  auto handle_get_counts(const request_header &req_hdr, const request &req,
-                         response_header &resp_hdr,
-                         response_payload &resp) -> void;
+  auto
+  handle_get_counts(const request_header &req_hdr, const request &req,
+                    response_header &resp_hdr, response_payload &resp) -> void;
 
-  auto handle_get_bins(const request_header &req_hdr, const bins_request &req,
-                       response_header &resp_hdr,
-                       response_payload &resp) -> void;
+  auto
+  handle_get_bins(const request_header &req_hdr, const bins_request &req,
+                  response_header &resp_hdr, response_payload &resp) -> void;
 
-  auto add_response_size_for_bins(const request_header &req_hdr,
-                                  const bins_request &req,
-                                  response_header &resp_hdr) -> void;
+  auto
+  add_response_size_for_bins(const request_header &req_hdr,
+                             const bins_request &req,
+                             response_header &resp_hdr) -> void;
 
   std::string methylome_dir;   // dir of available methylomes
   std::string index_file_dir;  // dir of cpg index files

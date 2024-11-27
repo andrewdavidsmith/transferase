@@ -68,8 +68,12 @@ enum class format_err {
 };
 
 struct format_err_cat : std::error_category {
-  auto name() const noexcept -> const char * override { return "format error"; }
-  auto message(const int condition) const -> std::string override {
+  auto
+  name() const noexcept -> const char * override {
+    return "format error";
+  }
+  auto
+  message(const int condition) const -> std::string override {
     using std::string_literals::operator""s;
     // clang-format off
     switch (condition) {
@@ -97,20 +101,23 @@ make_error_code(format_err e) {
 }
 
 struct meth_file {
-  [[nodiscard]] auto open(const std::string &filename) -> std::error_code {
+  [[nodiscard]] auto
+  open(const std::string &filename) -> std::error_code {
     in = gzopen(filename.data(), "rb");
     if (in == nullptr)
       return format_err::xcounts_file_open_failure;
     return format_err::ok;
   }
 
-  [[nodiscard]] auto read() -> int {
+  [[nodiscard]] auto
+  read() -> int {
     len = gzread(in, buf.data(), buf_size);
     pos = 0;
     return len;
   }
 
-  [[nodiscard]] auto getline(std::string &line) -> bool {
+  [[nodiscard]] auto
+  getline(std::string &line) -> bool {
     line.clear();
     if (pos == len && !read())
       return false;

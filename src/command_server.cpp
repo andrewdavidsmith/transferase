@@ -80,7 +80,8 @@ get_canonical_dir(const string &methylome_dir) -> string {
 struct server_argset : argset_base<server_argset> {
   static constexpr auto default_config_filename = "mxe_server_config.toml";
 
-  static auto get_default_config_file_impl() -> string {
+  static auto
+  get_default_config_file_impl() -> string {
     std::error_code ec;
     const auto config_dir = get_mxe_config_dir_default(ec);
     if (ec)
@@ -103,7 +104,8 @@ struct server_argset : argset_base<server_argset> {
   uint32_t max_resident{};
   bool daemonize{};
 
-  auto log_options_impl() const {
+  auto
+  log_options_impl() const {
     log_args<mxe_log_level::info>(vector<tuple<string, string>>{
       // clang-format off
         {"hostname", format("{}", hostname)},
