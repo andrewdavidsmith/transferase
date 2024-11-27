@@ -140,7 +140,7 @@ cpg_index_meta::read(const std::string &json_filename)
   return {cim, cpg_index_meta_error::ok};
 }
 
-auto
+[[nodiscard]] auto
 get_default_cpg_index_meta_filename(const std::string &indexfile)
   -> std::string {
   return std::format("{}.json", indexfile);

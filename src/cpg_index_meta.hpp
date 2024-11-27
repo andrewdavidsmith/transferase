@@ -135,7 +135,7 @@ struct std::formatter<cpg_index_meta> : std::formatter<std::string> {
   }
 };
 
-auto
+[[nodiscard]] auto
 get_default_cpg_index_meta_filename(const std::string &indexfile)
   -> std::string;
 
