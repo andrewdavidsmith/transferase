@@ -15,8 +15,10 @@ reference file name is `hg38.fa`, then do this:
 ```console
 mxe index -v -g hg38.fa -x hg38.cpg_idx
 ```
-If `hg38.fa` is roughly 3.0G in size, then you should expect
-`hg38.cpg_idx` to be about 113M in size.
+If `hg38.fa` is roughly 3.0G in size, then you should expect the index
+file `hg38.cpg_idx` to be about 113M in size. This command will also
+create an "index metadata" file `hg38.cpg_idx.json`, which is named by
+just adding the `.json` extension to the provided output file.
 
 ## Make a methylome file
 
@@ -36,7 +38,9 @@ mxe compress -v -x hg38.cpg_idx -m SRX012345.xsym.gz -o SRX012345.m16
 ```
 
 If the chromosomes appear out-of-order in `hg38.cpg_idx` and
-`SRX012345.xsym.gz` an error will be reported.
+`SRX012345.xsym.gz` an error will be reported. As with the `hg38.cpg_idx`
+index file, the methylome file `SRX012345.m16` will be accompanied by
+a metadata file with an additional json extension: `SRX012345.m16.json`.
 
 If you begin with a counts format file, for example `SRX012345.sym`,
 created using the `dnmtools counts` and then `dnmtools sym` commands,
@@ -45,9 +49,9 @@ this as follows:
 ```console
 dnmtools xcounts -z -o SRX012345.xsym.gz -c hg38.fa -v SRX012345.sym
 ```
-Once again, be sure to always use the same `hg38.fa` file.  Strictly,
-what matters for the `hg38.fa`, or any other reference genome, is that
-the order and lengths or chromosomes are identical.
+Once again, be sure to always use the same `hg38.fa` file.  A hash
+function will be used internally to `mxe` to ensure that the index
+and methylome files correspond to the same reference genome file.
 
 ## Run the `lookup` command locally
 
@@ -56,7 +60,7 @@ of genomic intervals of interest. In this example these will be named
 `intervals.bed`. You also need the index file and the methylome file
 explained in the above steps.
 ```console
-mxe lookup local --log-level debug -x hg38.cpg_idx -m SRX012345.m16 -o intervals.bed.info -i intervals.bed
+mxe lookup local --log-level debug -x hg38.cpg_idx -m SRX012345.m16 -o intervals_local_output.bed -i intervals.bed
 ```
 The index file `hg38.cpg_idx` and the methylome file `SRX012345.m16`
 are the same as explained above. At the time of writing, the
@@ -66,22 +70,48 @@ are the same as explained above. At the time of writing, the
 awk -v OFS="\t" '{print $1,$2,$3,"X",0,"+"}' intervals.bed3 > intervals.bed
 ```
 
-The output in the `intervals.bed.info` file should be consistent with
-the information in the command:
+The output in the `intervals_local_output.bed` file should be
+consistent with the information in the command:
+
 ```console
 dnmtools roi -o intervals.roi intervals.bed SRX012345.xsym.gz
 ```
 The format of the output might be different, but the methylation
 levels on each line (i.e., for each interval) should be identical.
 
+## Run the `server` command
+
+The `server` command can be tested first locally by using two terminal
+windows. We require the index file `hg38.cpg_index` and the methylome
+file `SRX012345.m16` along with the corresponding `.json` metadata
+files. These should be in directories named for methylomes and
+indexes. The methylomes directory will contain all files with `.m16`
+and `.m16.json` extensions; these are the methylomes that can be
+served. The indexes directory will contain the files ending with
+`.cpg_idx` and `.cpg_idx.json`; these are index files for each
+relevant genome assembly. For now, using the above examples, we
+would have a single index and a single methylome. I will assume these
+are in subdirectories, named `indexes` and `methylomes` respectively,
+of the current directory. Here is a command that will start the server:
+
+```console
+mxe server -v debug -s localhost -p 5000 -m methylomes -x indexes
+```
+Not that this will fail with an appropriate error message if port 5000
+is already be in use, and you can just try 5001, etc., until one is
+free. The `-v debug` will ensure you see info beyond just the errors. This
+informtion is logged to the terminal by default.
+
 ## Run the `lookup` command remotely
 
-We will assume for now that the hostname of the remote `mxe` server is
-example.com, and the port is 5000 (the default). The following command should give
-identical output to the above command:
+We will assume for now that "remote" server is running on the local
+machine (localhost) and using port is 5000 (the default). The
+following command should give identical earlier `lookup` command:
+
 ```console
-mxe lookup remote -s example.com -v debug -x hg38.cpg_idx -o intervals.bed.info -a SRX012345 -i intervals.bed
+mxe lookup remote -v debug  -s localhost -x indexes/hg38.cpg_idx -o intervals_remote_outout.bed -a SRX012345 -i intervals.bed
 ```
-Note that now `SRX012345` is not a file, but rather a methylome name,
-or accession, that is available on the server. If it is not, the
-server will respond that the accession is not available.
+Note that now `SRX012345` is not a file this time. Rather, it is a
+methylome name or accession, and should be available on the server. If
+the server can't find the named methylome, it will respond indicating
+that methylome is not available.
