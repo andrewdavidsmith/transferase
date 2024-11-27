@@ -51,11 +51,11 @@ using std::vector;
 
 template <typename counts_res_type>
 [[nodiscard]] static inline auto
-do_remote_bins(const string &accession, const cpg_index &index,
+do_remote_bins(const string &accession, const cpg_index_meta &cim,
                const std::uint32_t bin_size, const string &hostname,
                const string &port)
   -> std::tuple<vector<counts_res_type>, std::error_code> {
-  request_header hdr{accession, index.n_cpgs_total, {}};
+  request_header hdr{accession, cim.n_cpgs, {}};
 
   if constexpr (std::is_same<counts_res_type, counts_res>::value)
     hdr.rq_type = request_header::request_type::bin_counts;
@@ -76,7 +76,8 @@ do_remote_bins(const string &accession, const cpg_index &index,
 template <typename counts_res_type>
 [[nodiscard]] static inline auto
 do_local_bins(const string &meth_file, const string &meta_file,
-              const cpg_index &index, const std::uint32_t bin_size)
+              const cpg_index &index, const cpg_index_meta &cim,
+              const std::uint32_t bin_size)
   -> std::tuple<vector<counts_res_type>, std::error_code> {
   const auto [meta, meta_err] = methylome_metadata::read(meta_file);
   if (meta_err) {
@@ -91,25 +92,25 @@ do_local_bins(const string &meth_file, const string &meta_file,
     return {{}, meth_read_err};
   }
   if constexpr (std::is_same<counts_res_type, counts_res_cov>::value)
-    return {std::move(meth.get_bins_cov(bin_size, index)), {}};
+    return {std::move(meth.get_bins_cov(bin_size, index, cim)), {}};
   else
-    return {std::move(meth.get_bins(bin_size, index)), {}};
+    return {std::move(meth.get_bins(bin_size, index, cim)), {}};
 }
 
 template <typename counts_res_type>
 static auto
 do_bins(const string &accession, const cpg_index &index,
-        const std::uint32_t bin_size, const string &hostname,
-        const string &port, const string &meth_file, const string &meta_file,
-        std::ostream &out, const bool write_scores,
+        const cpg_index_meta &cim, const std::uint32_t bin_size,
+        const string &hostname, const string &port, const string &meth_file,
+        const string &meta_file, std::ostream &out, const bool write_scores,
         const bool remote_mode) -> std::error_code {
   using hr_clock = std::chrono::high_resolution_clock;
   const auto bins_start{hr_clock::now()};
   const auto [results, bins_err] =
-    remote_mode
-      ? do_remote_bins<counts_res_type>(accession, index, bin_size, hostname,
-                                        port)
-      : do_local_bins<counts_res_type>(meth_file, meta_file, index, bin_size);
+    remote_mode ? do_remote_bins<counts_res_type>(accession, cim, bin_size,
+                                                  hostname, port)
+                : do_local_bins<counts_res_type>(meth_file, meta_file, index,
+                                                 cim, bin_size);
   const auto bins_stop{hr_clock::now()};
   logger::instance().debug("Elapsed time for bins query: {:.3}s",
                            duration(bins_start, bins_stop));
@@ -118,7 +119,7 @@ do_bins(const string &accession, const cpg_index &index,
     return std::make_error_code(std::errc::invalid_argument);
 
   const auto output_start{hr_clock::now()};
-  write_bins(out, bin_size, index, results);
+  write_bins(out, bin_size, cim, results);
   const auto output_stop{hr_clock::now()};
   // ADS: elapsed time for output will include conversion to scores
   logger::instance().debug("Elapsed time for output: {:.3}s",
@@ -249,13 +250,13 @@ command_bins_main(int argc, char *argv[]) -> int {
   log_args<mxe_log_level::info>(args_to_log);
   log_args<mxe_log_level::info>(remote_mode ? remote_args : local_args);
 
-  cpg_index index{};
-  if (const auto index_read_err = index.read(index_file); index_read_err) {
-    lgr.error("Failed to read cpg index {}: {}", index_file, index_read_err);
+  const auto [index, cim, index_read_err] = read_cpg_index(index_file);
+  if (index_read_err) {
+    lgr.error("Failed to read cpg index: {} ({})", index_file, index_read_err);
     return EXIT_FAILURE;
   }
 
-  lgr.debug("Number of CpGs in index: {}", index.n_cpgs_total);
+  lgr.debug("Number of CpGs in index: {}", cim.n_cpgs);
 
   std::ofstream out(outfile);
   if (!out) {
@@ -266,10 +267,10 @@ command_bins_main(int argc, char *argv[]) -> int {
 
   const auto bins_err =
     count_covered
-      ? do_bins<counts_res_cov>(accession, index, bin_size, hostname, port,
+      ? do_bins<counts_res_cov>(accession, index, cim, bin_size, hostname, port,
                                 meth_file, meta_file, out, write_scores,
                                 remote_mode)
-      : do_bins<counts_res>(accession, index, bin_size, hostname, port,
+      : do_bins<counts_res>(accession, index, cim, bin_size, hostname, port,
                             meth_file, meta_file, out, write_scores,
                             remote_mode);
 
