@@ -54,6 +54,27 @@ cpg_index_set::get_cpg_index(const std::string &assembly_name)
   return {itr->second, {}};
 }
 
+[[nodiscard]] auto
+cpg_index_set::get_cpg_index_meta(const std::string &assembly_name)
+  -> std::tuple<const cpg_index_meta &, std::error_code> {
+  const auto itr = assembly_to_cpg_index_meta.find(assembly_name);
+  if (itr == std::cend(assembly_to_cpg_index_meta))
+    return {{}, std::make_error_code(std::errc::invalid_argument)};
+  return {itr->second, {}};
+}
+
+[[nodiscard]] auto
+cpg_index_set::get_cpg_index_with_meta(const std::string &assembly_name)
+  -> std::tuple<const cpg_index &, const cpg_index_meta &, std::error_code> {
+  const auto itr_index = assembly_to_cpg_index.find(assembly_name);
+  if (itr_index == std::cend(assembly_to_cpg_index))
+    return {{}, {}, std::make_error_code(std::errc::invalid_argument)};
+  const auto itr_meta = assembly_to_cpg_index_meta.find(assembly_name);
+  if (itr_meta == std::cend(assembly_to_cpg_index_meta))
+    return {{}, {}, std::make_error_code(std::errc::invalid_argument)};
+  return {itr_index->second, itr_meta->second, {}};
+}
+
 cpg_index_set::cpg_index_set(const std::string &cpg_index_directory) :
   cpg_index_directory{cpg_index_directory} {
   static constexpr auto assembly_ptrn = R"(^[_[:alnum:]]+)";
