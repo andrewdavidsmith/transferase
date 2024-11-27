@@ -40,9 +40,10 @@ struct cpg_index_set {
 
   explicit cpg_index_set(const std::string &cpg_index_directory);
 
-  [[nodiscard]] auto
-  get_cpg_index(const std::string &assembly_name)
-    -> std::tuple<const cpg_index &, std::error_code>;
+  /* ADS: currently unused */
+  // [[nodiscard]] auto
+  // get_cpg_index(const std::string &assembly_name)
+  // -> std::tuple<const cpg_index &, std::error_code>;
 
   [[nodiscard]] auto
   get_cpg_index_meta(const std::string &assembly_name)
