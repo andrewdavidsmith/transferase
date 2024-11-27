@@ -111,6 +111,17 @@ struct methylome_metadata {
   update(const std::string &methylome_filename) -> std::error_code;
 };
 
+[[nodiscard]] inline auto
+methylome_metadata_consistent(const methylome_metadata &a,
+                              const methylome_metadata &b) -> bool {
+  // clang-format off
+  return (a.version != b.version ||
+          a.index_hash != b.index_hash ||
+          a.assembly != b.assembly ||
+          a.n_cpgs != b.n_cpgs);
+  // clang-format on
+}
+
 // clang-format off
 BOOST_DESCRIBE_STRUCT(methylome_metadata, (),
 (
