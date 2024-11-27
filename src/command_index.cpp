@@ -43,7 +43,7 @@ auto
 command_index_main(int argc, char *argv[]) -> int {
   static constexpr auto command = "index";
 
-  std::string genome_file{};
+  std::string genome_filename{};
   std::string index_file{};
   std::string metadata_output{};
   mxe_log_level log_level{};
@@ -54,7 +54,7 @@ command_index_main(int argc, char *argv[]) -> int {
   desc.add_options()
     // clang-format off
     ("help,h", "produce help message")
-    ("genome,g", po::value(&genome_file)->required(), "genome_file")
+    ("genome,g", po::value(&genome_filename)->required(), "genome_file")
     ("index,x", po::value(&index_file)->required(), "output file")
     ("meta", po::value(&metadata_output),
      "metadata output (defaults to output.json)")
@@ -88,7 +88,7 @@ command_index_main(int argc, char *argv[]) -> int {
 
   std::vector<std::tuple<std::string, std::string>> args_to_log{
     // clang-format off
-    {"Genome", genome_file},
+    {"Genome", genome_filename},
     {"Index", index_file},
     {"Index metadata", metadata_output},
     // clang-format on
@@ -96,39 +96,22 @@ command_index_main(int argc, char *argv[]) -> int {
   log_args<mxe_log_level::info>(args_to_log);
 
   const auto constr_start = std::chrono::high_resolution_clock::now();
-  cpg_index index;
-  const auto index_err = index.construct(genome_file);
+  const auto [index, cim, err] = initialize_cpg_index(genome_filename);
   const auto constr_stop = std::chrono::high_resolution_clock::now();
   lgr.debug("Index construction time: {:.3}s",
             duration(constr_start, constr_stop));
-  if (index_err) {
-    lgr.error("Error constructing index: {}", index_err);
+  if (err) {
+    lgr.error("Error constructing index: {}", err);
     return EXIT_FAILURE;
   }
 
-  if (const auto index_write_err = index.write(index_file); index_write_err) {
-    lgr.error("Error writing cpg index {}: {}", index_file, index_write_err);
+  if (const auto write_err = index.write(index_file); write_err) {
+    lgr.error("Error writing cpg index {}: {}", index_file, write_err);
     return EXIT_FAILURE;
   }
 
-  // ADS: need to change this so the metadata is obtained at the same
-  // time as the index is created
-  const auto [index_meta, meta_err] = cpg_index_meta::init(index_file);
-  if (meta_err) {
-    lgr.error("Error initializing cpg_index metadata {}", meta_err);
-    return EXIT_FAILURE;
-  }
-
-  std::ofstream out(metadata_output);
-  if (!out) {
-    lgr.error("Error opening cpg_index metadata output file {}: {}",
-              metadata_output, std::make_error_code(std::errc(errno)));
-    return EXIT_FAILURE;
-  }
-
-  const auto meta_ec = cpg_index_meta::write(index_meta, metadata_output);
-  if (meta_ec) {
-    lgr.error("Error writing cpg_index metadata: {}", meta_ec);
+  if (const auto write_err = cim.write(metadata_output); write_err) {
+    lgr.error("Error writing cpg index metadata: {}", write_err);
     return EXIT_FAILURE;
   }
 
