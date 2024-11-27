@@ -61,21 +61,21 @@ request_handler::add_response_size_for_bins(const request_header &req_hdr,
                                             response_header &resp_hdr) -> void {
   auto &lgr = logger::instance();
   // assume methylome availability has been determined
-  const auto [meth, meta, get_meth_err] = ms.get_methylome(req_hdr.accession);
-  if (get_meth_err) {
-    lgr.error("Failed to load methylome: {}", get_meth_err);
+  const auto [meth, meth_meta, meth_err] = ms.get_methylome(req_hdr.accession);
+  if (meth_err) {
+    lgr.error("Failed to load methylome: {}", meth_err);
     resp_hdr.status = server_response_code::server_failure;
     return;
   }
 
-  const auto [index, get_index_err] = indexes.get_cpg_index(meta->assembly);
-  if (get_index_err) {
-    lgr.error("Failed to load cpg index for {}: {}", meta->assembly,
-              get_index_err);
+  const auto [cim, meta_err] = indexes.get_cpg_cim(meth_meta->assembly);
+  if (meta_err) {
+    lgr.error("Failed to load cpg index metadata for {}: {}",
+              meth_meta->assembly, meta_err);
     resp_hdr.status = server_response_code::index_not_found;
     return;
   }
-  resp_hdr.response_size = index.get_n_bins(req.bin_size);
+  resp_hdr.response_size = cim.get_n_bins(req.bin_size);
 }
 
 // ADS: This function needs a complete request *except* it does not
@@ -187,9 +187,9 @@ request_handler::handle_get_bins(const request_header &req_hdr,
   logger &lgr = logger::instance();
 
   // assume methylome availability has been determined
-  const auto [meth, meta, get_meth_err] = ms.get_methylome(req_hdr.accession);
-  if (get_meth_err) {
-    lgr.error("Failed to load methylome: {}", get_meth_err);
+  const auto [meth, mm, meth_err] = ms.get_methylome(req_hdr.accession);
+  if (meth_err) {
+    lgr.error("Failed to load methylome: {}", meth_err);
     // keep methylome size in response header
     resp_hdr.status = server_response_code::server_failure;
     return;
@@ -198,21 +198,21 @@ request_handler::handle_get_bins(const request_header &req_hdr,
   lgr.debug("Computing bins for methylome: {}", req_hdr.accession);
 
   // need cpg index to know what is in each bin
-  const auto [index, get_index_err] = indexes.get_cpg_index(meta->assembly);
-  if (get_index_err) {
-    lgr.error("Failed to load cpg index for {}: {}", meta->assembly,
-              get_index_err);
+  const auto [index, cim, index_err] =
+    indexes.get_cpg_index_with_meta(mm->assembly);
+  if (index_err) {
+    lgr.error("Failed to load cpg index for {}: {}", mm->assembly, index_err);
     resp_hdr.status = server_response_code::index_not_found;
     return;
   }
 
   if (req_hdr.rq_type == request_header::request_type::bin_counts) {
-    resp_data = counts_to_payload(meth->get_bins(req.bin_size, index));
+    resp_data = counts_to_payload(meth->get_bins(req.bin_size, index, cim));
     return;
   }
 
   if (req_hdr.rq_type == request_header::request_type::bin_counts_cov) {
-    resp_data = counts_to_payload(meth->get_bins_cov(req.bin_size, index));
+    resp_data = counts_to_payload(meth->get_bins_cov(req.bin_size, index, cim));
     return;
   }
 
