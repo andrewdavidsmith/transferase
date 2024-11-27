@@ -23,7 +23,7 @@
 
 #include "genomic_interval.hpp"
 
-#include "cpg_index.hpp"
+#include "cpg_index_meta.hpp"
 #include "mxe_error.hpp"
 
 #include <format>
@@ -41,7 +41,7 @@ using std::uint32_t;
 using std::vector;
 
 [[nodiscard]] static auto
-parse(const cpg_index &index, const string &s,
+parse(const cpg_index_meta &cim, const string &s,
       std::error_code &ec) -> genomic_interval {
   std::istringstream iss(s);
   genomic_interval gi;
@@ -50,21 +50,21 @@ parse(const cpg_index &index, const string &s,
     ec = genomic_interval_code::error_parsing_bed_line;
     return gi;
   }
-  const auto ch_id_itr = index.chrom_index.find(tmp);
-  if (ch_id_itr == cend(index.chrom_index)) {
+  const auto ch_id_itr = cim.chrom_index.find(tmp);
+  if (ch_id_itr == cend(cim.chrom_index)) {
     ec = genomic_interval_code::chrom_name_not_found_in_index;
     return gi;
   }
   gi.ch_id = ch_id_itr->second;
 
-  if (gi.stop > index.chrom_size[gi.ch_id])
+  if (gi.stop > cim.chrom_size[gi.ch_id])
     ec = genomic_interval_code::interval_past_chrom_end_in_index;
 
   return gi;
 }
 
 [[nodiscard]] auto
-genomic_interval::load(const cpg_index &index,
+genomic_interval::load(const cpg_index_meta &cim,
                        const string &filename) -> genomic_interval_load_ret {
   std::ifstream in{filename};
   if (!in)
@@ -73,7 +73,7 @@ genomic_interval::load(const cpg_index &index,
   string line;
   std::error_code ec;
   while (getline(in, line)) {
-    const auto gi = parse(index, line, ec);
+    const auto gi = parse(cim, line, ec);
     if (ec)
       return {{}, ec};
     v.push_back(std::move(gi));
