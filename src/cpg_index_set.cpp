@@ -90,15 +90,31 @@ cpg_index_set::cpg_index_set(const std::string &cpg_index_directory) :
       std::smatch base_match;
       if (std::regex_search(name, base_match, assembly_re)) {
         const auto assembly = base_match[0].str();
+
+        // read the cpg index
         cpg_index index{};
-        const std::string filename = dir_entry.path().string();
-        if (const auto ec = index.read(filename); ec) {
+        const std::string index_filename = dir_entry.path().string();
+        if (const auto index_ec = index.read(index_filename); index_ec) {
           logger::instance().debug("Failed to read cpg index: {} ({})",
-                                   filename, ec);
+                                   index_filename, index_ec);
           assembly_to_cpg_index.clear();
+          assembly_to_cpg_index_meta.clear();
           return;
         }
         assembly_to_cpg_index.emplace(assembly, index);
+
+        // read the cpg index metadata
+        const std::string index_filename_meta =
+          get_default_cpg_index_meta_filename(index_filename);
+        const auto [cim, meta_ec] = cpg_index_meta::read(index_filename_meta);
+        if (meta_ec) {
+          logger::instance().debug("Failed to read cpg index metadata: {} ({})",
+                                   index_filename_meta, meta_ec);
+          assembly_to_cpg_index.clear();
+          assembly_to_cpg_index_meta.clear();
+          return;
+        }
+        assembly_to_cpg_index_meta.emplace(assembly, cim);
       }
     }
   }
