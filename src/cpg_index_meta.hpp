@@ -98,9 +98,9 @@ struct cpg_index_meta {
   std::vector<std::uint32_t> chrom_size;
   std::vector<std::uint32_t> chrom_offset;
 
-  [[nodiscard]] static auto write(const cpg_index_meta &cm,
-                                  const std::string &json_filename)
-    -> std::error_code;
+  [[nodiscard]] static auto
+  write(const cpg_index_meta &cm,
+        const std::string &json_filename) -> std::error_code;
 
   [[nodiscard]] static auto init(const std::string &index_filename)
     -> std::tuple<cpg_index_meta, std::error_code>;
@@ -108,18 +108,7 @@ struct cpg_index_meta {
   [[nodiscard]] static auto read(const std::string &json_filename)
     -> std::tuple<cpg_index_meta, std::error_code>;
 
-  // [[nodiscard]] static auto write(const cpg_index_meta &cm,
-  //                                 const std::string &json_filename)
-  //   -> std::error_code;
-
   [[nodiscard]] auto tostring() const -> std::string;
-};
-
-template <>
-struct std::formatter<cpg_index_meta> : std::formatter<std::string> {
-  auto format(const cpg_index_meta &cm, std::format_context &ctx) const {
-    return std::formatter<std::string>::format(cm.tostring(), ctx);
-  }
 };
 
 // clang-format off
@@ -138,6 +127,13 @@ BOOST_DESCRIBE_STRUCT(cpg_index_meta, (),
  chrom_offset
 ))
 // clang-format on
+
+template <>
+struct std::formatter<cpg_index_meta> : std::formatter<std::string> {
+  auto format(const cpg_index_meta &cm, std::format_context &ctx) const {
+    return std::formatter<std::string>::format(cm.tostring(), ctx);
+  }
+};
 
 auto
 get_default_cpg_index_meta_filename(const std::string &indexfile)
