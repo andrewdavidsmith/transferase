@@ -31,7 +31,7 @@
 #include <tuple>
 #include <vector>
 
-struct cpg_index;
+struct cpg_index_meta;
 struct genomic_interval_load_ret;
 
 struct genomic_interval {
@@ -43,7 +43,7 @@ struct genomic_interval {
   operator<=>(const genomic_interval &) const = default;
 
   [[nodiscard]] static auto
-  load(const cpg_index &index,
+  load(const cpg_index_meta &index,
        const std::string &filename) -> genomic_interval_load_ret;
 };
 
