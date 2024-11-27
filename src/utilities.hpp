@@ -28,7 +28,7 @@
   Functions declared here are used by multiple source files
  */
 
-#include "cpg_index.hpp"
+#include "cpg_index_meta.hpp"
 #include "genomic_interval.hpp"
 #include "methylome_results_types.hpp"  // counts_res and counts_res_cov
 
@@ -65,7 +65,7 @@ struct mxe_from_chars_result {
 typedef mxe_from_chars_result parse_result;
 
 auto
-write_intervals(std::ostream &out, const cpg_index &index,
+write_intervals(std::ostream &out, const cpg_index_meta &cim,
                 const std::vector<genomic_interval> &gis,
                 std::ranges::input_range auto &&results) -> std::error_code {
   static constexpr auto buf_size{512};
@@ -84,7 +84,7 @@ write_intervals(std::ostream &out, const cpg_index &index,
   for (const auto &chunk :
        std::views::zip(gis, results) | std::views::chunk_by(same_chrom)) {
     const auto ch_id = get<0>(chunk.front()).ch_id;
-    const std::string chrom{index.chrom_order[ch_id]};
+    const std::string chrom{cim.chrom_order[ch_id]};
     std::ranges::copy(chrom, buf.data());
     buf[size(chrom)] = delim;
     for (const auto &[gi, single_result] : chunk) {
@@ -117,7 +117,7 @@ write_intervals(std::ostream &out, const cpg_index &index,
 }
 
 auto
-write_bedgraph(std::ostream &out, const cpg_index &index,
+write_bedgraph(std::ostream &out, const cpg_index_meta &cim,
                const std::vector<genomic_interval> &gis,
                std::ranges::input_range auto &&scores) -> std::error_code {
   static constexpr auto score_precision{6};
@@ -135,7 +135,7 @@ write_bedgraph(std::ostream &out, const cpg_index &index,
   for (const auto &chunk :
        std::views::zip(gis, scores) | std::views::chunk_by(same_chrom)) {
     const auto ch_id = get<0>(chunk.front()).ch_id;
-    const std::string chrom{index.chrom_order[ch_id]};
+    const std::string chrom{cim.chrom_order[ch_id]};
     std::ranges::copy(chrom, buf.data());
     buf[size(chrom)] = delim;
     for (const auto &[gi, single_score] : chunk) {
@@ -165,7 +165,7 @@ write_bedgraph(std::ostream &out, const cpg_index &index,
 
 auto
 write_bins(std::ostream &out, const std::uint32_t bin_size,
-           const cpg_index &index, const auto &results) -> std::error_code {
+           const cpg_index_meta &cim, const auto &results) -> std::error_code {
   static constexpr auto buf_size{512};
   static constexpr auto delim{'\t'};
 
@@ -177,7 +177,7 @@ write_bins(std::ostream &out, const std::uint32_t bin_size,
 
   auto results_itr = std::cbegin(results);
 
-  const auto zipped = std::views::zip(index.chrom_size, index.chrom_order);
+  const auto zipped = std::views::zip(cim.chrom_size, cim.chrom_order);
   for (const auto [chrom_size, chrom_name] : zipped) {
     std::ranges::copy(chrom_name, buf.data());
     buf[size(chrom_name)] = delim;
