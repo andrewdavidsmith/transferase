@@ -101,9 +101,9 @@ command_check_main(int argc, char *argv[]) -> int {
   };
   log_args<mxe_log_level::info>(args_to_log);
 
-  cpg_index index{};
-  if (const auto cpg_index_err = index.read(index_file); cpg_index_err) {
-    lgr.error("Error reading cpg index {}: {}", index_file, cpg_index_err);
+  const auto [index, cim, index_read_err] = read_cpg_index(index_file);
+  if (index_read_err) {
+    lgr.error("Failed to read cpg index: {} ({})", index_file, index_read_err);
     return EXIT_FAILURE;
   }
 
@@ -121,8 +121,7 @@ command_check_main(int argc, char *argv[]) -> int {
   }
 
   const auto methylome_size = std::size(meth.cpgs);
-  const auto check_outcome =
-    (methylome_size == index.n_cpgs_total) ? "pass" : "fail";
+  const auto check_outcome = (methylome_size == cim.n_cpgs) ? "pass" : "fail";
 
   const auto total_counts = meth.total_counts_cov();
 
@@ -145,7 +144,7 @@ command_check_main(int argc, char *argv[]) -> int {
              "total_counts: {}\n"
              "sites_covered_fraction: {}\n"
              "mean_meth_weighted: {}\n",
-             check_outcome, methylome_size, index.n_cpgs_total, total_counts,
+             check_outcome, methylome_size, cim.n_cpgs, total_counts,
              sites_covered_fraction, mean_meth_weighted);
 
   return EXIT_SUCCESS;
