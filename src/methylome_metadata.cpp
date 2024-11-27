@@ -67,10 +67,9 @@ get_time_as_string() -> std::string {
 }
 
 [[nodiscard]] auto
-methylome_metadata::init(const std::string &index_filename,
-                         const std::string &methylome_filename,
-                         const bool is_compressed)
-  -> std::tuple<methylome_metadata, std::error_code> {
+methylome_metadata::init(
+  const std::string &index_filename, const std::string &methylome_filename,
+  const bool is_compressed) -> std::tuple<methylome_metadata, std::error_code> {
   // ADS: (todo) should there be a better way to get the "compression"
   // status?
   std::error_code err;
