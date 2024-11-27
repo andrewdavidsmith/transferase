@@ -119,10 +119,10 @@ struct methylome_metadata {
 methylome_metadata_consistent(const methylome_metadata &a,
                               const methylome_metadata &b) -> bool {
   // clang-format off
-  return (a.version != b.version ||
-          a.index_hash != b.index_hash ||
-          a.assembly != b.assembly ||
-          a.n_cpgs != b.n_cpgs);
+  return (a.index_hash == b.index_hash ||
+          a.n_cpgs == b.n_cpgs ||
+          a.assembly == b.assembly ||
+          a.version == b.version);
   // clang-format on
 }
 
