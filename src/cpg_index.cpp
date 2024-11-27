@@ -104,8 +104,8 @@ get_cpgs(const std::string_view &chrom) -> cpg_index::vec {
 }
 
 [[nodiscard]] static auto
-get_chrom_name_starts(const char *data, const std::size_t sz)
-  -> std::vector<std::size_t> {
+get_chrom_name_starts(const char *data,
+                      const std::size_t sz) -> std::vector<std::size_t> {
   const auto g_end = data + sz;
   const char *g_itr = data;
   std::vector<std::size_t> starts;
@@ -483,8 +483,8 @@ cpg_index::get_n_bins(const std::uint32_t bin_size) const -> std::uint32_t {
 }
 
 [[nodiscard]] auto
-get_assembly_from_filename(const std::string &filename, std::error_code &ec)
-  -> std::string {
+get_assembly_from_filename(const std::string &filename,
+                           std::error_code &ec) -> std::string {
   // ADS: this regular expression might better be in a header
   static constexpr auto assembly_ptrn = R"(^[_[:alnum:]]+)";
   static const auto filename_ptrn =
