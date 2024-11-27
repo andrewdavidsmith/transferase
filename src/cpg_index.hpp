@@ -31,9 +31,9 @@
 #include "cpg_index_meta.hpp"
 
 #include <cstdint>
-// #include <format>
 #include <string>
 #include <system_error>
+#include <tuple>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -54,15 +54,7 @@ struct cpg_index {
   read(const std::string &index_file) -> std::error_code;
   auto
   write(const std::string &index_file) const -> std::error_code;
-  // auto
-  // tostring() const -> std::string;
-  // [[nodiscard]] auto
-  // construct(const std::string &genome_file) -> std::error_code;
-  [[nodiscard]] auto
-  hash() const -> std::size_t;
 
-  // given the chromosome id (from chrom_index) and a position within
-  // the chrom, get the offset of the CpG site from std::lower_bound
   /* ADS: currently unused */
   // [[nodiscard]] auto
   // get_offset_within_chrom(const std::int32_t ch_id,
@@ -73,16 +65,13 @@ struct cpg_index {
     const std::vector<std::pair<std::uint32_t, std::uint32_t>> &pos) const
     -> std::vector<std::pair<std::uint32_t, std::uint32_t>>;
 
-  // get the offset from the start of the data structure
   [[nodiscard]] auto
-  get_offsets(const std::int32_t ch_id, const cpg_index_meta &meta,
+  get_offsets(const std::int32_t ch_id, const cpg_index_meta &cim,
               const std::vector<std::pair<std::uint32_t, std::uint32_t>> &pos)
     const -> std::vector<std::pair<std::uint32_t, std::uint32_t>>;
 
-  // get the offset from the start of the data structure given genomic
-  // intervals
   [[nodiscard]] auto
-  get_offsets(const cpg_index_meta &meta,
+  get_offsets(const cpg_index_meta &cim,
               const std::vector<genomic_interval> &gis) const
     -> std::vector<std::pair<std::uint32_t, std::uint32_t>>;
 
