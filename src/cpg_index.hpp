@@ -28,8 +28,10 @@
 #include "aligned_allocator.hpp"
 #endif
 
+#include "cpg_index_meta.hpp"
+
 #include <cstdint>
-#include <format>
+// #include <format>
 #include <string>
 #include <system_error>
 #include <unordered_map>
@@ -52,10 +54,10 @@ struct cpg_index {
   read(const std::string &index_file) -> std::error_code;
   auto
   write(const std::string &index_file) const -> std::error_code;
-  auto
-  tostring() const -> std::string;
-  [[nodiscard]] auto
-  construct(const std::string &genome_file) -> std::error_code;
+  // auto
+  // tostring() const -> std::string;
+  // [[nodiscard]] auto
+  // construct(const std::string &genome_file) -> std::error_code;
   [[nodiscard]] auto
   hash() const -> std::size_t;
 
@@ -73,36 +75,30 @@ struct cpg_index {
 
   // get the offset from the start of the data structure
   [[nodiscard]] auto
-  get_offsets(const std::int32_t ch_id,
+  get_offsets(const std::int32_t ch_id, const cpg_index_meta &meta,
               const std::vector<std::pair<std::uint32_t, std::uint32_t>> &pos)
     const -> std::vector<std::pair<std::uint32_t, std::uint32_t>>;
 
   // get the offset from the start of the data structure given genomic
   // intervals
   [[nodiscard]] auto
-  get_offsets(const std::vector<genomic_interval> &gis) const
+  get_offsets(const cpg_index_meta &meta,
+              const std::vector<genomic_interval> &gis) const
     -> std::vector<std::pair<std::uint32_t, std::uint32_t>>;
 
-  [[nodiscard]] auto
-  get_n_bins(const std::uint32_t bin_size) const -> std::uint32_t;
-
-  std::vector<std::string> chrom_order;
-  std::vector<std::uint32_t> chrom_size;
   std::vector<cpg_index::vec> positions;
-  std::vector<std::uint32_t> chrom_offset;
-  std::unordered_map<std::string, std::int32_t> chrom_index;
-  std::uint32_t n_cpgs_total{};
 };
 
-template <> struct std::formatter<cpg_index> : std::formatter<std::string> {
-  auto
-  format(const cpg_index &ci, std::format_context &ctx) const {
-    return std::formatter<std::string>::format(ci.tostring(), ctx);
-  }
-};
-
-auto
+[[nodiscard]] auto
 get_assembly_from_filename(const std::string &filename,
                            std::error_code &ec) -> std::string;
+
+[[nodiscard]] auto
+initialize_cpg_index(const std::string &genome_file)
+  -> std::tuple<cpg_index, cpg_index_meta, std::error_code>;
+
+[[nodiscard]] auto
+read_cpg_index(const std::string &index_file)
+  -> std::tuple<cpg_index, cpg_index_meta, std::error_code>;
 
 #endif  // SRC_CPG_INDEX_HPP_
