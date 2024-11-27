@@ -23,6 +23,9 @@
 
 #include "cpg_index.hpp"
 
+#include "logger.hpp"
+
+#include "cpg_index_meta.hpp"
 #include "genomic_interval.hpp"
 #include "mxe_error.hpp"
 
@@ -145,138 +148,90 @@ get_chroms(const char *data, const std::size_t sz,
 }
 
 [[nodiscard]] auto
-cpg_index::construct(const std::string &genome_file) -> std::error_code {
-  auto gf = mmap_genome(genome_file);  // memory map the genome file
+initialize_cpg_index(const std::string &genome_filename)
+  -> std::tuple<cpg_index, cpg_index_meta, std::error_code> {
+  genome_file gf = mmap_genome(genome_filename);  // memory map the genome file
   if (gf.ec)
-    return gf.ec;
+    return {{}, {}, gf.ec};
 
   // get start and stop positions of chrom names in the file
   const auto name_starts = get_chrom_name_starts(gf.data, gf.sz);
   const auto name_stops = get_chrom_name_stops(name_starts, gf.data, gf.sz);
 
   // initialize the chromosome order
-  chrom_order.clear();
+  cpg_index_meta meta;
+  meta.chrom_order.clear();
   for (const auto [start, stop] : std::views::zip(name_starts, name_stops))
     // ADS: "+1" below to skip the ">" character
-    chrom_order.emplace_back(
+    meta.chrom_order.emplace_back(
       std::string_view(gf.data + start + 1, gf.data + stop));
 
-  const auto n_chroms = std::size(chrom_order);
+  const auto n_chroms = std::size(meta.chrom_order);
 
   // chroms is a view into 'gf.data' so don't free gf.data too early
   const auto chroms = get_chroms(gf.data, gf.sz, name_starts, name_stops);
 
   // collect cpgs for each chrom; order must match chrom name order
-  positions.resize(n_chroms);
-  std::ranges::transform(chroms, std::begin(positions), get_cpgs);
+  cpg_index index;
+  index.positions.resize(n_chroms);
+  std::ranges::transform(chroms, std::begin(index.positions), get_cpgs);
 
   // get size of each chrom to cross-check data files using this index
-  chrom_size.resize(n_chroms);
-  std::ranges::transform(chroms, std::begin(chrom_size), [](const auto &chrom) {
-    return std::ranges::size(chrom) - std::ranges::count(chrom, '\n');
-  });
+  meta.chrom_size.resize(n_chroms);
+  std::ranges::transform(
+    chroms, std::begin(meta.chrom_size), [](const auto &chrom) {
+      return std::ranges::size(chrom) - std::ranges::count(chrom, '\n');
+    });
 
   // finished with any views that look into 'data' so cleanup
   if (const auto munmap_err = cleanup_mmap_genome(gf); munmap_err)
-    return munmap_err;
+    return {{}, {}, munmap_err};
 
   // initialize chrom offsets within the compressed files
-  chrom_offset.resize(n_chroms);
-  std::ranges::transform(positions, std::begin(chrom_offset),
+  meta.chrom_offset.resize(n_chroms);
+  std::ranges::transform(index.positions, std::begin(meta.chrom_offset),
                          std::size<cpg_index::vec>);
 
-  n_cpgs_total =
-    std::reduce(std::cbegin(chrom_offset), std::cend(chrom_offset));
+  meta.n_cpgs =
+    std::reduce(std::cbegin(meta.chrom_offset), std::cend(meta.chrom_offset));
 
-  std::exclusive_scan(std::cbegin(chrom_offset), std::cend(chrom_offset),
-                      std::begin(chrom_offset), 0);
+  std::exclusive_scan(std::cbegin(meta.chrom_offset),
+                      std::cend(meta.chrom_offset),
+                      std::begin(meta.chrom_offset), 0);
 
   // init the index that maps chrom names to their rank in the order
-  chrom_index.clear();
-  for (const auto [i, chrom_name] : std::views::enumerate(chrom_order))
-    chrom_index.emplace(chrom_name, i);
+  meta.chrom_index.clear();
+  for (const auto [i, chrom_name] : std::views::enumerate(meta.chrom_order))
+    meta.chrom_index.emplace(chrom_name, i);
 
-  return std::error_code{};
+  return {std::move(index), std::move(meta), std::error_code{}};
 }
 
 [[nodiscard]] auto
 cpg_index::read(const std::string &index_file) -> std::error_code {
-  // identifier is always 64 bytes
-  static const auto expected_file_identifier =
-    std::format("{:64}", "cpg_index");
+  const auto meta_file = get_default_cpg_index_meta_filename(index_file);
+  const auto [meta, meta_err] = cpg_index_meta::read(meta_file);
+  if (meta_err)
+    return meta_err;
 
   std::ifstream in(index_file, std::ios::binary);
   if (!in)
     return std::make_error_code(std::errc(errno));
 
-  // read the identifier so we can check it
-  auto file_identifier_in_file =
-    std::string(std::size(expected_file_identifier), '\0');
-  in.read(file_identifier_in_file.data(), std::size(expected_file_identifier));
-
-  if (file_identifier_in_file != expected_file_identifier) {
-#ifdef DEBUG
-    std::println(R"(Bad identifier: found "{}" expected "{}")",
-                 file_identifier_in_file, expected_file_identifier);
-#endif
-    return cpg_index_code::wrong_identifier_in_header;
-  }
-
-  std::uint32_t n_header_lines{};
+  std::vector<std::uint32_t> n_cpgs(meta.chrom_offset);
   {
-    in.read(reinterpret_cast<char *>(&n_header_lines), sizeof(std::uint32_t));
-    const auto read_ok = static_cast<bool>(in);
-    const auto n_bytes = in.gcount();
-    if (!read_ok ||
-        n_bytes != static_cast<std::streamsize>(sizeof(std::uint32_t)))
-      return std::make_error_code(std::errc(errno));
+    n_cpgs.front() = meta.n_cpgs;
+    std::ranges::rotate(n_cpgs, std::begin(n_cpgs) + 1);
+    std::adjacent_difference(std::cbegin(n_cpgs), std::cend(n_cpgs),
+                             std::begin(n_cpgs));
   }
-
-  // clear all instance variables
-  chrom_order.clear();
-  chrom_size.clear();
-  chrom_offset.clear();
-  chrom_index.clear();
-  std::vector<std::uint32_t> chrom_n_cpgs;  // for convenience
-
-  std::uint32_t n_lines{};
-  std::string line;
-  while (n_lines < n_header_lines && getline(in, line)) {
-    std::istringstream iss(line);
-    std::string chrom_name{};
-    std::uint32_t chrom_sz{};
-    std::uint32_t n_cpgs{};
-    std::uint32_t n_preceding_cpgs{};
-    if (!(iss >> chrom_name >> chrom_sz >> n_cpgs >> n_preceding_cpgs)) {
-#ifdef DEBUG
-      std::println("Failed to parse header line:\n{}", line);
-#endif
-      return cpg_index_code::error_parsing_index_header_line;
-    }
-
-    chrom_order.emplace_back(chrom_name);
-    chrom_size.push_back(chrom_sz);
-    chrom_offset.push_back(n_preceding_cpgs);
-    chrom_n_cpgs.push_back(n_cpgs);
-    chrom_index.emplace(chrom_name, n_lines);
-    ++n_lines;
-  }
-
-  if (n_lines != n_header_lines) {
-#ifdef DEBUG
-    std::println("Failed to parse header: {}", index_file);
-#endif
-    return cpg_index_code::failure_reading_index_header;
-  }
-
-  n_cpgs_total =
-    std::reduce(std::cbegin(chrom_n_cpgs), std::cend(chrom_n_cpgs));
 
   positions.clear();
-  for (const auto n_cpgs : chrom_n_cpgs) {
-    positions.push_back(vec(n_cpgs));
+  for (const auto n_cpgs_chrom : n_cpgs) {
+    positions.push_back(vec(n_cpgs_chrom));
     {
-      const std::streamsize n_bytes_expected = n_cpgs * sizeof(std::uint32_t);
+      const std::streamsize n_bytes_expected =
+        n_cpgs_chrom * sizeof(std::uint32_t);
       in.read(reinterpret_cast<char *>(positions.back().data()),
               n_bytes_expected);
       const auto read_ok = static_cast<bool>(in);
@@ -290,55 +245,9 @@ cpg_index::read(const std::string &index_file) -> std::error_code {
 
 [[nodiscard]] auto
 cpg_index::write(const std::string &index_file) const -> std::error_code {
-  // identifier is always 64 bytes
-  static const auto file_identifier = std::format("{:64}", "cpg_index");
-
-  std::string header;
-  // write the chrom offsets and number of cpgs in chrom name order
-  // the chrom_index will be implicit in the header
-  for (const auto [i, chrom_name] : std::views::enumerate(chrom_order)) {
-    const auto n_cpgs = std::size(positions[i]);
-    const auto n_preceding_cpgs = chrom_offset[i];
-    const auto chrom_sz = chrom_size[i];
-    header += std::format("{}\t{}\t{}\t{}\n", chrom_name, chrom_sz, n_cpgs,
-                          n_preceding_cpgs);
-  }
-
   std::ofstream out(index_file);
-  if (!out) {
-#ifdef DEBUG
-    std::println("Failed to open index file: {}", index_file);
-#endif
+  if (!out)
     return std::make_error_code(std::errc(errno));
-  }
-
-  {
-    // write the identifier so we can check it
-    out.write(file_identifier.data(), std::size(file_identifier));
-    const auto write_ok = static_cast<bool>(out);
-    if (!write_ok)
-      return std::make_error_code(std::errc(errno));
-  }
-
-  {
-    // write the number of header lines so we know how much to read
-    // (must be 4-byte value)
-    const std::uint32_t n_header_lines = std::size(chrom_order);
-    out.write(reinterpret_cast<const char *>(&n_header_lines),
-              sizeof(std::uint32_t));
-    const auto write_ok = static_cast<bool>(out);
-    if (!write_ok)
-      return std::make_error_code(std::errc(errno));
-  }
-
-  {
-    // write the header itself
-    out.write(header.data(), std::size(header));
-    const auto write_ok = static_cast<bool>(out);
-    if (!write_ok)
-      return std::make_error_code(std::errc(errno));
-  }
-
   for (const auto &cpgs : positions) {
     out.write(reinterpret_cast<const char *>(cpgs.data()),
               sizeof(std::uint32_t) * std::size(cpgs));
@@ -346,54 +255,19 @@ cpg_index::write(const std::string &index_file) const -> std::error_code {
     if (!write_ok)
       return std::make_error_code(std::errc(errno));
   }
-
   return std::error_code{};
-}
-
-[[nodiscard]] auto
-cpg_index::tostring() const -> std::string {
-  // clang-format off
-  static constexpr auto fmt_tmplt = "{}\t{}\t{}\t{}\t{}\n";
-  static constexpr auto header =
-    "idx"
-    "\t"
-    "chrom"
-    "\t"
-    "size "
-    "\t"
-    "cpgs"
-    "\t"
-    "offset"
-    "\n"
-    ;
-  // clang-format on
-  std::string res{header};
-  std::int32_t chrom_counter = 0;
-  const auto zipped =
-    std::views::zip(chrom_order, positions, chrom_size, chrom_offset);
-  for (const auto [nm, ps, sz, of] : zipped) {
-    const auto idx_itr = chrom_index.find(nm);
-    if (idx_itr == std::cend(chrom_index))
-      res += std::format("{} missing\n", nm);
-    else
-      res += std::format(fmt_tmplt, idx_itr->second, nm, sz, std::size(ps), of);
-    if (chrom_counter != idx_itr->second)
-      res += std::format("{} wrong order: {}\n", nm, idx_itr->second);
-    ++chrom_counter;
-  }
-  res += std::format("n_cpgs_total: {}", n_cpgs_total);
-  return res;
 }
 
 // given the chromosome id (from chrom_index) and a position within
 // the chrom, get the offset of the CpG site from std::lower_bound
-/* ADS: currently unused; its original use was unable to take advantage of using
- * a narrower range of search   */
+/* ADS: currently unused; its original use was unable to take advantage of
+ * using a narrower range of search   */
 // [[nodiscard]] auto
 // cpg_index::get_offset_within_chrom(
-//   const std::int32_t ch_id, const std::uint32_t pos) const -> std::uint32_t {
-//   assert(ch_id >= 0 && ch_id < std::ranges::ssize(positions));
-//   return std::ranges::distance(std::cbegin(positions[ch_id]),
+//   const std::int32_t ch_id, const std::uint32_t pos) const ->
+//   std::uint32_t { assert(ch_id >= 0 && ch_id <
+//   std::ranges::ssize(positions)); return
+//   std::ranges::distance(std::cbegin(positions[ch_id]),
 //                                std::ranges::lower_bound(positions[ch_id],
 //                                pos));
 // }
@@ -431,13 +305,13 @@ cpg_index::get_offsets_within_chrom(
 
 [[nodiscard]] auto
 cpg_index::get_offsets(
-  const std::int32_t ch_id,
+  const std::int32_t ch_id, const cpg_index_meta &meta,
   const std::vector<std::pair<std::uint32_t, std::uint32_t>> &queries) const
   -> std::vector<std::pair<std::uint32_t, std::uint32_t>> {
   assert(std::ranges::is_sorted(queries) && ch_id >= 0 &&
          ch_id < std::ranges::ssize(positions));
 
-  const auto offset = chrom_offset[ch_id];
+  const auto offset = meta.chrom_offset[ch_id];
   return ::get_offsets_within_chrom(positions[ch_id], queries) |
          std::views::transform(
            [&](const auto &x) -> std::pair<std::uint32_t, std::uint32_t> {
@@ -447,7 +321,8 @@ cpg_index::get_offsets(
 }
 
 [[nodiscard]] auto
-cpg_index::get_offsets(const std::vector<genomic_interval> &gis) const
+cpg_index::get_offsets(const cpg_index_meta &meta,
+                       const std::vector<genomic_interval> &gis) const
   -> std::vector<std::pair<std::uint32_t, std::uint32_t>> {
   assert(std::ranges::is_sorted(gis));
 
@@ -467,19 +342,26 @@ cpg_index::get_offsets(const std::vector<genomic_interval> &gis) const
     tmp.resize(std::size(gis_for_chrom));
     std::ranges::transform(gis_for_chrom, std::begin(tmp), start_stop);
     const auto ch_id = gis_for_chrom.front().ch_id;
-    std::ranges::copy(get_offsets(ch_id, tmp), std::back_inserter(offsets));
+    std::ranges::copy(get_offsets(ch_id, meta, tmp),
+                      std::back_inserter(offsets));
   }
   return offsets;
 }
 
 [[nodiscard]] auto
-cpg_index::get_n_bins(const std::uint32_t bin_size) const -> std::uint32_t {
-  const auto get_n_bins_for_chrom = [&](const auto chrom_size) {
-    return (chrom_size + bin_size) / bin_size;
-  };
-  return std::transform_reduce(std::cbegin(chrom_size), std::cend(chrom_size),
-                               static_cast<std::uint32_t>(0), std::plus{},
-                               get_n_bins_for_chrom);
+read_cpg_index(const std::string &index_file)
+  -> std::tuple<cpg_index, cpg_index_meta, std::error_code> {
+  cpg_index ci;
+  const auto index_err = ci.read(index_file);
+  if (index_err)
+    return {cpg_index{}, cpg_index_meta{}, index_err};
+
+  const auto [cim, meta_err] =
+    cpg_index_meta::read(get_default_cpg_index_meta_filename(index_file));
+  if (meta_err)
+    return {cpg_index{}, cpg_index_meta{}, meta_err};
+
+  return {ci, cim, {}};
 }
 
 [[nodiscard]] auto
