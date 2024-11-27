@@ -120,9 +120,12 @@ command_merge_main(int argc, char *argv[]) -> int {
     {"Number of inputs", std::format("{}", n_inputs)},
     // clang-format on
   };
-  for (const auto [i, filename] : std::views::enumerate(input_files))
-    args_to_log.emplace_back(std::format("Methylome{}", i), filename);
   log_args<mxe_log_level::info>(args_to_log);
+
+  std::vector<std::tuple<std::string, std::string>> filenames_to_log;
+  for (const auto [i, filename] : std::views::enumerate(input_files))
+    filenames_to_log.emplace_back(std::format("Methylome{}", i), filename);
+  log_args<mxe_log_level::debug>(filenames_to_log);
 
   // ADS: first read the last methylome in the input files list as we only
   // do n-1 merges so we need one to start with; we can't merge an
