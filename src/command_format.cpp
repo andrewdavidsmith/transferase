@@ -157,9 +157,10 @@ add_all_cpgs(const std::uint32_t prev_ch_id, const std::uint32_t ch_id,
 }
 
 static inline auto
-get_ch_id(const cpg_index &ci, const std::string &chrom_name) -> std::int32_t {
-  const auto ch_id = ci.chrom_index.find(chrom_name);
-  if (ch_id == cend(ci.chrom_index))
+get_ch_id(const cpg_index_meta &cim,
+          const std::string &chrom_name) -> std::int32_t {
+  const auto ch_id = cim.chrom_index.find(chrom_name);
+  if (ch_id == cend(cim.chrom_index))
     return -1;
   return ch_id->second;
 }
@@ -167,7 +168,7 @@ get_ch_id(const cpg_index &ci, const std::string &chrom_name) -> std::int32_t {
 // ADS: this function is tied to the specifics of dnmtools::xcounts
 // code, and likely needs a review
 static auto
-verify_header_line(const cpg_index &idx, std::int32_t &n_chroms_seen,
+verify_header_line(const cpg_index_meta &cim, std::int32_t &n_chroms_seen,
                    const std::string &line) -> std::error_code {
   // ignore the version line and the header end line
   if (line.substr(0, 9) == "#DNMTOOLS" || size(line) == 1)
@@ -184,8 +185,8 @@ verify_header_line(const cpg_index &idx, std::int32_t &n_chroms_seen,
 
   // validate the chromosome order is consistent between the index and
   // methylome mxe file
-  const auto order_itr = idx.chrom_index.find(chrom);
-  if (order_itr == cend(idx.chrom_index))
+  const auto order_itr = cim.chrom_index.find(chrom);
+  if (order_itr == cend(cim.chrom_index))
     return format_err::xcounts_file_chromosome_not_found;
 
   if (n_chroms_seen != order_itr->second)
@@ -193,7 +194,7 @@ verify_header_line(const cpg_index &idx, std::int32_t &n_chroms_seen,
 
   // validate that the chromosome size is the same between the index
   // and the methylome mxe file
-  const auto size_itr = idx.chrom_size[order_itr->second];
+  const auto size_itr = cim.chrom_size[order_itr->second];
   if (chrom_size != size_itr)
     return format_err::xcounts_file_incorrect_chromosome_size;
 
@@ -205,7 +206,8 @@ verify_header_line(const cpg_index &idx, std::int32_t &n_chroms_seen,
 
 static auto
 process_cpg_sites(const std::string &infile, const std::string &outfile,
-                  const cpg_index &index, const bool zip) -> std::error_code {
+                  const cpg_index &index, const cpg_index_meta &cim,
+                  const bool zip) -> std::error_code {
   meth_file mf{};
   std::error_code err = mf.open(infile);
   if (err != format_err::ok) {
@@ -213,7 +215,7 @@ process_cpg_sites(const std::string &infile, const std::string &outfile,
     return err;
   }
 
-  methylome::vec cpgs(index.n_cpgs_total, {0, 0});
+  methylome::vec cpgs(cim.n_cpgs, {0, 0});
 
   std::uint32_t cpg_idx_out{};  // index of current output cpg position
   std::uint32_t cpg_idx_in{};   // index of current input cpg position
@@ -228,7 +230,7 @@ process_cpg_sites(const std::string &infile, const std::string &outfile,
     if (line[0] == '#') {
       // consistency check between reference used for the index and
       // reference used for the methylome
-      if (err = verify_header_line(index, n_chroms_seen, line); err) {
+      if (err = verify_header_line(cim, n_chroms_seen, line); err) {
         std::println("Error parsing xcounts header line: {} ({})", line, err);
         return err;
       }
@@ -240,7 +242,7 @@ process_cpg_sites(const std::string &infile, const std::string &outfile,
         // add cpgs before those in the input
         cpg_idx_out += (size(*positions) - cpg_idx_in);
 
-      const std::int32_t ch_id = get_ch_id(index, line);
+      const std::int32_t ch_id = get_ch_id(cim, line);
       if (ch_id < 0) {
         std::println("Failed to find chromosome in index: {}", line);
         return format_err::xcounts_file_chromosome_not_found;
@@ -248,7 +250,7 @@ process_cpg_sites(const std::string &infile, const std::string &outfile,
 
       cpg_idx_out += add_all_cpgs(prev_ch_id, ch_id, index);
 
-      positions = cbegin(index.positions) + ch_id;
+      positions = std::cbegin(index.positions) + ch_id;
       pos = 0;         // position in genome
       cpg_idx_in = 0;  // index of current cpg site
       prev_ch_id = ch_id;
@@ -275,12 +277,12 @@ process_cpg_sites(const std::string &infile, const std::string &outfile,
     }
   }
   cpg_idx_out += size(*positions) - cpg_idx_in;
-  cpg_idx_out += add_all_cpgs(prev_ch_id, size(index.positions), index);
+  cpg_idx_out += add_all_cpgs(prev_ch_id, std::size(index.positions), index);
 
-  if (cpg_idx_out != index.n_cpgs_total) {
+  if (cpg_idx_out != cim.n_cpgs) {
     logger::instance().error(
-      "Inconsistent numbers of cpgs (index={}, processed={})",
-      index.n_cpgs_total, cpg_idx_out);
+      "Inconsistent numbers of cpgs (index={}, processed={})", cim.n_cpgs,
+      cpg_idx_out);
     return format_err::methylome_format_failure;
   }
 
@@ -362,14 +364,14 @@ command_format_main(int argc, char *argv[]) -> int {
   };
   log_args<mxe_log_level::info>(args_to_log);
 
-  cpg_index index{};
-  if (const auto index_read_err = index.read(index_file); index_read_err) {
-    lgr.error("Error reading cpg index {}: {}", index_read_err, index_file);
+  const auto [index, cim, index_read_err] = read_cpg_index(index_file);
+  if (index_read_err) {
+    lgr.error("Failed to read cpg index: {} ({})", index_file, index_read_err);
     return EXIT_FAILURE;
   }
 
   std::error_code err =
-    process_cpg_sites(methylation_input, methylome_output, index, zip);
+    process_cpg_sites(methylation_input, methylome_output, index, cim, zip);
   if (err) {
     lgr.error("Error generating methylome: {}", err);
     return EXIT_FAILURE;
