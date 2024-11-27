@@ -45,14 +45,14 @@
 //   return r;
 // }
 
-[[nodiscard]] auto
-cpg_index_set::get_cpg_index(const std::string &assembly_name)
-  -> std::tuple<const cpg_index &, std::error_code> {
-  const auto itr = assembly_to_cpg_index.find(assembly_name);
-  if (itr == std::cend(assembly_to_cpg_index))
-    return {{}, std::make_error_code(std::errc::invalid_argument)};
-  return {itr->second, {}};
-}
+// [[nodiscard]] auto
+// cpg_index_set::get_cpg_index(const std::string &assembly_name)
+//   -> std::tuple<const cpg_index &, std::error_code> {
+//   const auto itr = assembly_to_cpg_index.find(assembly_name);
+//   if (itr == std::cend(assembly_to_cpg_index))
+//     return {{}, std::make_error_code(std::errc::invalid_argument)};
+//   return {itr->second, {}};
+// }
 
 [[nodiscard]] auto
 cpg_index_set::get_cpg_index_meta(const std::string &assembly_name)
