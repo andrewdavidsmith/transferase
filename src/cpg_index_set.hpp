@@ -25,6 +25,7 @@
 #define SRC_CPG_INDEX_SET_HPP_
 
 #include "cpg_index.hpp"
+#include "cpg_index_meta.hpp"
 
 #include <cstdint>  // for std::uint64_t
 #include <string>
@@ -43,12 +44,21 @@ struct cpg_index_set {
   get_cpg_index(const std::string &assembly_name)
     -> std::tuple<const cpg_index &, std::error_code>;
 
+  [[nodiscard]] auto
+  get_cpg_index_meta(const std::string &assembly_name)
+    -> std::tuple<const cpg_index_meta &, std::error_code>;
+
+  [[nodiscard]] auto
+  get_cpg_index_with_meta(const std::string &assembly_name)
+    -> std::tuple<const cpg_index &, const cpg_index_meta &, std::error_code>;
+
   /* ADS: currently unused */
   // [[nodiscard]] auto
   // get_genome_sizes() -> std::unordered_map<std::string, std::uint64_t>;
 
   std::string cpg_index_directory;
   std::unordered_map<std::string, cpg_index> assembly_to_cpg_index;
+  std::unordered_map<std::string, cpg_index_meta> assembly_to_cpg_index_meta;
 };
 
 #endif  // SRC_CPG_INDEX_SET_HPP_
