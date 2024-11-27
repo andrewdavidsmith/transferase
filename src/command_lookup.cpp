@@ -125,23 +125,22 @@ do_lookup(const string &accession, const cpg_index &index,
           const string &meth_meta_file, std::ostream &out,
           const vector<genomic_interval> &gis, const bool write_scores,
           const bool remote_mode) -> std::error_code {
-  using hr_clock = std::chrono::high_resolution_clock;
-  const auto lookup_start{hr_clock::now()};
+  const auto lookup_start{std::chrono::high_resolution_clock::now()};
   const auto [results, lookup_err] =
     remote_mode ? do_remote_lookup<counts_res_type>(accession, cim, offsets,
                                                     hostname, port)
                 : do_local_lookup<counts_res_type>(meth_file, meth_meta_file,
                                                    index, offsets);
-  const auto lookup_stop{hr_clock::now()};
+  const auto lookup_stop{std::chrono::high_resolution_clock::now()};
   logger::instance().debug("Elapsed time for query: {:.3}s",
                            duration(lookup_start, lookup_stop));
 
   if (lookup_err)  // ADS: error messages already logged
     return std::make_error_code(std::errc::invalid_argument);
 
-  const auto output_start{hr_clock::now()};
+  const auto output_start{std::chrono::high_resolution_clock::now()};
   write_output(out, gis, cim, results, write_scores);
-  const auto output_stop{hr_clock::now()};
+  const auto output_stop{std::chrono::high_resolution_clock::now()};
   // ADS: elapsed time for output will include conversion to scores
   logger::instance().debug("Elapsed time for output: {:.3}s",
                            duration(output_start, output_stop));
@@ -287,11 +286,9 @@ command_lookup_main(int argc, char *argv[]) -> int {
   }
   lgr.info("Number of intervals: {}", size(gis));
 
-  using hr_clock = std::chrono::high_resolution_clock;
-
-  const auto get_offsets_start{hr_clock::now()};
+  const auto get_offsets_start{std::chrono::high_resolution_clock::now()};
   const auto offsets = index.get_offsets(cim, gis);
-  const auto get_offsets_stop{hr_clock::now()};
+  const auto get_offsets_stop{std::chrono::high_resolution_clock::now()};
   lgr.debug("Elapsed time to get offsets: {:.3}s",
             duration(get_offsets_start, get_offsets_stop));
 
