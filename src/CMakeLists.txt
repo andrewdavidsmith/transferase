@@ -122,9 +122,10 @@ add_executable(mxe)
 target_include_directories(mxe PRIVATE "${PROJECT_BINARY_DIR}")
 target_sources(mxe PRIVATE mxe.cpp)
 
-if(MXE_BUILD_STATIC)
-  target_link_libraries(mxe PRIVATE -static)
-endif()
+# ADS: this maybe shouldn't be used because of asio and dns stuff
+# if(MXE_BUILD_STATIC)
+#   target_link_libraries(mxe PRIVATE -static)
+# endif()
 
 target_link_libraries(
   mxe PRIVATE
@@ -151,7 +152,9 @@ target_link_libraries(
   command_server
   command_bins
   ZLIB::ZLIB
+  Boost::boost
   Boost::program_options
+  Boost::json
   Threads::Threads
 )
 install(TARGETS mxe DESTINATION bin)
