@@ -36,6 +36,25 @@ set(CMAKE_CXX_STANDARD_REQUIRED yes)
 set(CMAKE_CXX_EXTENSIONS off)  # prevents std=gnu++23
 set(CMAKE_EXPORT_COMPILE_COMMANDS on)
 
+if(MXE_STATIC_ANALYSIS)
+  # cpplint: all options are in the config file
+  set(CMAKE_CXX_CPPLINT cpplint --quiet)
+  # cppcheck: options on the command line as there is no config file
+  set(CMAKE_CXX_CPPCHECK
+    cppcheck
+    --quiet
+    --enable=all
+    --check-level=exhaustive
+    --suppressions-list=${PROJECT_SOURCE_DIR}/.cppcheck_suppress
+  )
+  # clang-tidy: currently needs at least v20.0
+  # set(CMAKE_CXX_CLANG_TIDY
+  #   clang-tidy
+  #   --quiet
+  #   -p Build
+  # )
+endif()
+
 include(CheckIncludeFileCXX)
 include(CheckFunctionExists)
 
