@@ -39,7 +39,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS on)
 include(CheckIncludeFileCXX)
 include(CheckFunctionExists)
 
-if(MXE_BUILD_STATIC)
+if(MXE_USE_STATIC_LIBS)
   set(Boost_USE_STATIC_LIBS on)
   set(ZLIB_USE_STATIC_LIBS on)
 endif()
@@ -49,7 +49,7 @@ find_package(
   Boost
   1.85.0 REQUIRED
   COMPONENTS
-  program_options)
+  program_options json)
 find_package(ZLIB REQUIRED)
 
 add_subdirectory(src)
