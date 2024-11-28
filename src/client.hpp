@@ -221,7 +221,10 @@ mxe_client<counts_type, req_type>::handle_read_response_header(
     if (const auto resp_hdr_parse{parse(resp_hdr_buf, resp_hdr)};
         !resp_hdr_parse.error) {
       lgr.debug("Response header: {}", resp_hdr.summary());
-      do_read_counts();
+      if (resp_hdr.status)
+        do_finish(resp_hdr.status);
+      else
+        do_read_counts();
     }
     else {
       lgr.debug("Error: {}", resp_hdr_parse.error);
