@@ -88,9 +88,9 @@ add_library(command_zip OBJECT
   command_zip.hpp
   command_zip.cpp)
 
-add_library(command_lookup OBJECT
-  command_lookup.hpp
-  command_lookup.cpp)
+add_library(command_intervals OBJECT
+  command_intervals.hpp
+  command_intervals.cpp)
 
 add_library(command_bins OBJECT
   command_bins.hpp
@@ -148,7 +148,7 @@ target_link_libraries(
   command_check
   command_zip
   command_merge
-  command_lookup
+  command_intervals
   command_server
   command_bins
   ZLIB::ZLIB
