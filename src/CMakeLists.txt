@@ -84,9 +84,9 @@ add_library(request_handler OBJECT
   request_handler.cpp)
 
 # sources with commands
-add_library(command_zip OBJECT
-  command_zip.hpp
-  command_zip.cpp)
+add_library(command_compress OBJECT
+  command_compress.hpp
+  command_compress.cpp)
 
 add_library(command_intervals OBJECT
   command_intervals.hpp
@@ -122,10 +122,10 @@ add_executable(mxe)
 target_include_directories(mxe PRIVATE "${PROJECT_BINARY_DIR}")
 target_sources(mxe PRIVATE mxe.cpp)
 
-# ADS: this maybe shouldn't be used because of asio and dns stuff
-# if(MXE_BUILD_STATIC)
-#   target_link_libraries(mxe PRIVATE -static)
-# endif()
+if(MXE_USE_STATIC_LIBS)
+  # ADS: this avoids the static linkage that aiso warns against
+  target_link_options(mxe PRIVATE -static-libgcc -static-libstdc++)
+endif()
 
 target_link_libraries(
   mxe PRIVATE
@@ -146,7 +146,7 @@ target_link_libraries(
   command_index
   command_format
   command_check
-  command_zip
+  command_compress
   command_merge
   command_intervals
   command_server
