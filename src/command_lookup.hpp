@@ -21,10 +21,10 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_COMMAND_LOOKUP_HPP_
-#define SRC_COMMAND_LOOKUP_HPP_
+#ifndef SRC_COMMAND_INTERVALS_HPP_
+#define SRC_COMMAND_INTERVALS_HPP_
 
 auto
-command_lookup_main(int argc, char *argv[]) -> int;
+command_intervals_main(int argc, char *argv[]) -> int;
 
-#endif  // SRC_COMMAND_LOOKUP_HPP_
+#endif  // SRC_COMMAND_INTERVALS_HPP_
