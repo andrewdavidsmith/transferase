@@ -21,7 +21,7 @@
  * SOFTWARE.
  */
 
-#include "command_lookup.hpp"
+#include "command_intervals.hpp"
 
 #include "client.hpp"
 #include "cpg_index.hpp"
@@ -53,9 +53,9 @@ using std::vector;
 
 template <typename counts_res_type>
 [[nodiscard]] static inline auto
-do_remote_lookup(const string &accession, const cpg_index_meta &cim,
-                 vector<methylome::offset_pair> offsets, const string &hostname,
-                 const string &port)
+do_remote_intervals(const string &accession, const cpg_index_meta &cim,
+                    vector<methylome::offset_pair> offsets,
+                    const string &hostname, const string &port)
   -> std::tuple<vector<counts_res_type>, std::error_code> {
   request_header hdr{accession, cim.n_cpgs, {}};
 
@@ -77,8 +77,9 @@ do_remote_lookup(const string &accession, const cpg_index_meta &cim,
 
 template <typename counts_res_type>
 [[nodiscard]] static inline auto
-do_local_lookup(const string &meth_file, const string &meth_meta_file,
-                const cpg_index &index, vector<methylome::offset_pair> offsets)
+do_local_intervals(const string &meth_file, const string &meth_meta_file,
+                   const cpg_index &index,
+                   vector<methylome::offset_pair> offsets)
   -> std::tuple<vector<counts_res_type>, std::error_code> {
   const auto [mm, meta_err] = methylome_metadata::read(meth_meta_file);
   if (meta_err) {
@@ -118,24 +119,25 @@ write_output(std::ostream &out, const vector<genomic_interval> &gis,
 
 template <typename counts_res_type>
 static auto
-do_lookup(const string &accession, const cpg_index &index,
-          const cpg_index_meta &cim,
-          const vector<methylome::offset_pair> &offsets, const string &hostname,
-          const string &port, const string &meth_file,
-          const string &meth_meta_file, std::ostream &out,
-          const vector<genomic_interval> &gis, const bool write_scores,
-          const bool remote_mode) -> std::error_code {
-  const auto lookup_start{std::chrono::high_resolution_clock::now()};
-  const auto [results, lookup_err] =
-    remote_mode ? do_remote_lookup<counts_res_type>(accession, cim, offsets,
-                                                    hostname, port)
-                : do_local_lookup<counts_res_type>(meth_file, meth_meta_file,
-                                                   index, offsets);
-  const auto lookup_stop{std::chrono::high_resolution_clock::now()};
+do_intervals(const string &accession, const cpg_index &index,
+             const cpg_index_meta &cim,
+             const vector<methylome::offset_pair> &offsets,
+             const string &hostname, const string &port,
+             const string &meth_file, const string &meth_meta_file,
+             std::ostream &out, const vector<genomic_interval> &gis,
+             const bool write_scores,
+             const bool remote_mode) -> std::error_code {
+  const auto intervals_start{std::chrono::high_resolution_clock::now()};
+  const auto [results, intervals_err] =
+    remote_mode ? do_remote_intervals<counts_res_type>(accession, cim, offsets,
+                                                       hostname, port)
+                : do_local_intervals<counts_res_type>(meth_file, meth_meta_file,
+                                                      index, offsets);
+  const auto intervals_stop{std::chrono::high_resolution_clock::now()};
   logger::instance().debug("Elapsed time for query: {:.3}s",
-                           duration(lookup_start, lookup_stop));
+                           duration(intervals_start, intervals_stop));
 
-  if (lookup_err)  // ADS: error messages already logged
+  if (intervals_err)  // ADS: error messages already logged
     return std::make_error_code(std::errc::invalid_argument);
 
   const auto output_start{std::chrono::high_resolution_clock::now()};
@@ -148,11 +150,11 @@ do_lookup(const string &accession, const cpg_index &index,
 }
 
 auto
-command_lookup_main(int argc, char *argv[]) -> int {
+command_intervals_main(int argc, char *argv[]) -> int {
   static constexpr auto usage_format =
-    "Usage: mxe lookup {} [options]\n\nOption groups";
+    "Usage: mxe intervals {} [options]\n\nOption groups";
   static constexpr auto default_port = "5000";
-  static constexpr auto command = "lookup";
+  static constexpr auto command = "intervals";
 
   bool write_scores{};
   bool count_covered{};
@@ -191,7 +193,7 @@ command_lookup_main(int argc, char *argv[]) -> int {
   po::notify(vm_subcmd);
 
   if (subcmd != "local" && subcmd != "remote") {
-    std::println("Usage: mxe lookup [local|remote] [options]");
+    std::println("Usage: mxe intervals [local|remote] [options]");
     return EXIT_FAILURE;
   }
   const bool remote_mode = subcmd == "remote";
@@ -299,14 +301,14 @@ command_lookup_main(int argc, char *argv[]) -> int {
     return EXIT_FAILURE;
   }
 
-  const auto lookup_err =
+  const auto intervals_err =
     count_covered
-      ? do_lookup<counts_res_cov>(accession, index, cim, offsets, hostname,
-                                  port, meth_file, meth_meta_file, out, gis,
-                                  write_scores, remote_mode)
-      : do_lookup<counts_res>(accession, index, cim, offsets, hostname, port,
-                              meth_file, meth_meta_file, out, gis, write_scores,
-                              remote_mode);
+      ? do_intervals<counts_res_cov>(accession, index, cim, offsets, hostname,
+                                     port, meth_file, meth_meta_file, out, gis,
+                                     write_scores, remote_mode)
+      : do_intervals<counts_res>(accession, index, cim, offsets, hostname, port,
+                                 meth_file, meth_meta_file, out, gis,
+                                 write_scores, remote_mode);
 
-  return lookup_err == std::errc() ? EXIT_SUCCESS : EXIT_FAILURE;
+  return intervals_err == std::errc() ? EXIT_SUCCESS : EXIT_FAILURE;
 }
