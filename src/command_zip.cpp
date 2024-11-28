@@ -21,7 +21,7 @@
  * SOFTWARE.
  */
 
-#include "command_zip.hpp"
+#include "command_compress.hpp"
 
 #include "logger.hpp"
 #include "methylome.hpp"
@@ -37,15 +37,15 @@
 #include <vector>
 
 auto
-command_zip_main(int argc, char *argv[]) -> int {
-  static constexpr auto command = "zip";
+command_compress_main(int argc, char *argv[]) -> int {
+  static constexpr auto command = "compress";
 
   std::string methylome_input{};
   std::string metadata_input{};
   std::string methylome_output{};
   std::string metadata_output{};
   mxe_log_level log_level{};
-  bool unzip{false};
+  bool uncompress{false};
 
   namespace po = boost::program_options;
 
@@ -56,7 +56,7 @@ command_zip_main(int argc, char *argv[]) -> int {
     ("input,i", po::value(&methylome_input)->required(), "input file")
     ("output,o", po::value(&methylome_output)->required(),
      "output file")
-    ("unzip,u", po::bool_switch(&unzip), "unzip the file")
+    ("uncompress,u", po::bool_switch(&uncompress), "uncompress the file")
     ("meta", po::value(&metadata_input), "metadata input (defaults to input.json)")
     ("meta-out", po::value(&metadata_output),
      "metadata output (defaults to output.json)")
@@ -97,7 +97,7 @@ command_zip_main(int argc, char *argv[]) -> int {
     {"Metadata input", metadata_input},
     {"Output", methylome_output},
     {"Metadata output", metadata_output},
-    {"Unzip", std::format("{}", unzip)},
+    {"Uncompress", std::format("{}", uncompress)},
     // clang-format on
   };
   log_args<mxe_log_level::info>(args_to_log);
@@ -108,13 +108,13 @@ command_zip_main(int argc, char *argv[]) -> int {
     return EXIT_FAILURE;
   }
 
-  if (unzip && !meta.is_compressed) {
-    lgr.warning("Attempting to unzip but methylome is not zipped");
+  if (uncompress && !meta.is_compressed) {
+    lgr.warning("Attempting to uncompress but methylome is not compressed");
     return EXIT_FAILURE;
   }
 
-  if (!unzip && meta.is_compressed) {
-    lgr.warning("Attempting to zip but methylome is zipped");
+  if (!uncompress && meta.is_compressed) {
+    lgr.warning("Attempting to compress but methylome is compressed");
     return EXIT_FAILURE;
   }
 
@@ -131,7 +131,7 @@ command_zip_main(int argc, char *argv[]) -> int {
             duration(meth_read_start, meth_read_stop));
 
   const auto meth_write_start = std::chrono::high_resolution_clock::now();
-  const auto meth_write_err = meth.write(methylome_output, !unzip);
+  const auto meth_write_err = meth.write(methylome_output, !uncompress);
   const auto meth_write_stop = std::chrono::high_resolution_clock::now();
   if (meth_write_err) {
     lgr.error("Error writing output: {} ({})", methylome_output,

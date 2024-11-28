@@ -21,10 +21,10 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_COMMAND_ZIP_HPP_
-#define SRC_COMMAND_ZIP_HPP_
+#ifndef SRC_COMMAND_COMPRESS_HPP_
+#define SRC_COMMAND_COMPRESS_HPP_
 
 auto
-command_zip_main(int argc, char *argv[]) -> int;
+command_compress_main(int argc, char *argv[]) -> int;
 
-#endif  // SRC_COMMAND_ZIP_HPP_
+#endif  // SRC_COMMAND_COMPRESS_HPP_
