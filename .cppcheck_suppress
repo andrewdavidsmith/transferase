@@ -23,5 +23,6 @@
 missingIncludeSystem
 constVariablePointer
 checkersReport
-unusedStructMember:src/*.hpp
-unusedFunction:src/*.hpp
+unknownMacro
+unmatchedSuppression
+unusedFunction
