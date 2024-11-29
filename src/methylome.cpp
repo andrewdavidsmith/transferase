@@ -23,9 +23,9 @@
 
 #include "methylome.hpp"
 
+#include "hash.hpp"  // get_adler
 #include "methylome_metadata.hpp"
 #include "mxe_error.hpp"
-#include "utilities.hpp"
 #include "zlib_adapter.hpp"
 
 #include <algorithm>
@@ -35,6 +35,8 @@
 #include <fstream>
 #include <ranges>
 #include <string>
+#include <system_error>
+#include <tuple>
 #include <type_traits>
 #include <utility>  // std::move
 #include <vector>
@@ -61,43 +63,43 @@ methylome::get_n_cpgs_from_file(const std::string &filename) -> std::uint32_t {
 }
 
 [[nodiscard]] auto
-methylome::read(const std::string &filename,
-                const methylome_metadata &metadata) -> std::error_code {
+methylome::read(const std::string &filename, const methylome_metadata &metadata)
+  -> std::tuple<methylome, std::error_code> {
   std::error_code ec;
   const auto filesize = std::filesystem::file_size(filename, ec);
   if (ec)
-    return ec;
+    return {{}, ec};
   std::ifstream in(filename);
   if (!in)
-    return std::make_error_code(std::errc(errno));
-
+    return {{}, std::make_error_code(std::errc(errno))};
+  methylome meth;
   if (metadata.is_compressed) {
     std::vector<std::uint8_t> buf(filesize);
     const bool read_ok = static_cast<bool>(
       in.read(reinterpret_cast<char *>(buf.data()), filesize));
     const auto n_bytes = in.gcount();
     if (!read_ok || n_bytes != static_cast<std::streamsize>(filesize))
-      return methylome_code::error_reading_methylome;
-    cpgs.resize(metadata.n_cpgs);
+      return {{}, std::error_code{methylome_code::error_reading_methylome}};
+    meth.cpgs.resize(metadata.n_cpgs);
 #ifdef BENCHMARK
     const auto decompress_start{hr_clock::now()};
 #endif
-    const auto decompress_err = decompress(buf, cpgs);
+    const auto decompress_err = decompress(buf, meth.cpgs);
 #ifdef BENCHMARK
     const auto decompress_stop{hr_clock::now()};
     std::println("decompress(buf, cpgs) time: {}s",
                  duration(decompress_start, decompress_stop));
 #endif
-    return decompress_err;
+    return {std::move(meth), decompress_err};
   }
-  cpgs.resize(metadata.n_cpgs);
-  const bool read_ok =
-    static_cast<bool>(in.read(reinterpret_cast<char *>(cpgs.data()), filesize));
+  meth.cpgs.resize(metadata.n_cpgs);
+  const bool read_ok = static_cast<bool>(
+    in.read(reinterpret_cast<char *>(meth.cpgs.data()), filesize));
   const auto n_bytes = in.gcount();
   if (!read_ok || n_bytes != static_cast<std::streamsize>(filesize))
-    return methylome_code::error_reading_methylome;
+    return {{}, std::error_code{methylome_code::error_reading_methylome}};
 
-  return std::error_code{};
+  return {std::move(meth), std::error_code{}};
 }
 
 [[nodiscard]] auto
@@ -303,4 +305,9 @@ methylome::get_bins_cov(const std::uint32_t bin_size, const cpg_index &index,
                         const cpg_index_meta &meta) const
   -> std::vector<counts_res_cov> {
   return get_bins_impl<counts_res_cov>(bin_size, index, meta, cpgs);
+}
+
+[[nodiscard]] auto
+methylome::hash() const -> std::uint64_t {
+  return get_adler(cpgs.data(), std::size(cpgs) * record_size);
 }

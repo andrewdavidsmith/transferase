@@ -30,17 +30,19 @@
 
 #include "cpg_index.hpp"
 #include "cpg_index_meta.hpp"
-#include "methylome_metadata.hpp"
 #include "methylome_results_types.hpp"
 
+#include <cmath>  // std::round
 #include <cstddef>
 #include <cstdint>
 #include <string>
 #include <system_error>
+#include <tuple>
 #include <utility>  // pair<>
 #include <vector>
 
-// ADS TODO: n_cpgs in header
+struct methylome_metadata;
+
 struct methylome {
   static constexpr auto filename_extension{"m16"};
 
@@ -54,9 +56,9 @@ struct methylome {
 
   // ADS: use of n_cpgs to validate might be confusing and at least
   // need to be documented
-  [[nodiscard]] auto
-  read(const std::string &filename,
-       const methylome_metadata &meta) -> std::error_code;
+  [[nodiscard]] static auto
+  read(const std::string &filename, const methylome_metadata &meta)
+    -> std::tuple<methylome, std::error_code>;
 
   [[nodiscard]] auto
   write(const std::string &filename,
@@ -70,6 +72,9 @@ struct methylome {
 
   auto
   add(const methylome &rhs) -> methylome &;
+
+  auto
+  hash() const -> std::uint64_t;
 
   typedef std::pair<std::uint32_t, std::uint32_t> offset_pair;
 
@@ -122,6 +127,28 @@ struct methylome {
 [[nodiscard]] inline auto
 size(const methylome &m) -> std::size_t {
   return std::size(m.cpgs);
+}
+
+template <typename T, typename U>
+inline auto
+round_to_fit(U &a, U &b) -> void {
+  // ADS: assign the max of a and b to be the max possible value; the
+  // other one gets a fractional value then multiplied by max possible
+  const U c = std::max(a, b);
+  a = (a == c) ? std::numeric_limits<T>::max()
+               : std::round((a / static_cast<double>(c)) *
+                            std::numeric_limits<T>::max());
+  b = (b == c) ? std::numeric_limits<T>::max()
+               : std::round((b / static_cast<double>(c)) *
+                            std::numeric_limits<T>::max());
+}
+
+template <typename T, typename U>
+inline auto
+conditional_round_to_fit(U &a, U &b) -> void {
+  // ADS: optimization possible here?
+  if (std::max(a, b) > std::numeric_limits<T>::max())
+    round_to_fit<T>(a, b);
 }
 
 #endif  // SRC_METHYLOME_HPP_
