@@ -25,7 +25,9 @@
 
 #include "logger.hpp"
 #include "methylome.hpp"
+#include "methylome_metadata.hpp"
 #include "mxe_error.hpp"
+#include "utilities.hpp"  // duration()
 
 #include <boost/program_options.hpp>
 
@@ -118,9 +120,8 @@ command_compress_main(int argc, char *argv[]) -> int {
     return EXIT_FAILURE;
   }
 
-  methylome meth;
   const auto meth_read_start = std::chrono::high_resolution_clock::now();
-  const auto meth_read_err = meth.read(methylome_input, meta);
+  const auto [meth, meth_read_err] = methylome::read(methylome_input, meta);
   const auto meth_read_stop = std::chrono::high_resolution_clock::now();
   if (meth_read_err) {
     lgr.error("Error reading methylome: {} ({})", methylome_input,
@@ -131,20 +132,19 @@ command_compress_main(int argc, char *argv[]) -> int {
             duration(meth_read_start, meth_read_stop));
 
   const auto meth_write_start = std::chrono::high_resolution_clock::now();
-  const auto meth_write_err = meth.write(methylome_output, !uncompress);
-  const auto meth_write_stop = std::chrono::high_resolution_clock::now();
-  if (meth_write_err) {
-    lgr.error("Error writing output: {} ({})", methylome_output,
-              meth_write_err);
+  if (const auto meth_write_err = meth.write(methylome_output, !uncompress);
+      meth_write_err) {
+    lgr.error("Error writing output {}: {}", methylome_output, meth_write_err);
     return EXIT_FAILURE;
   }
+  const auto meth_write_stop = std::chrono::high_resolution_clock::now();
   lgr.debug("Methylome write time: {}s",
             duration(meth_write_start, meth_write_stop));
 
   meta.is_compressed = !meta.is_compressed;
 
-  if (const auto err = methylome_metadata::write(meta, metadata_output); err) {
-    lgr.error("Error writing metadata: {} ({})", err, metadata_output);
+  if (const auto meta_write_err = meta.write(metadata_output); meta_write_err) {
+    lgr.error("Error writing metadata {}: {}", metadata_output, meta_write_err);
     return EXIT_FAILURE;
   }
 
