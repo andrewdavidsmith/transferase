@@ -143,10 +143,10 @@ get_default_cpg_index_meta_filename(const std::string &indexfile)
 [[nodiscard]] auto
 get_assembly_from_filename(const std::string &filename,
                            std::error_code &ec) -> std::string {
-  using namespace std::literals;
+  using std::string_literals::operator""s;
+  using std::literals::string_view_literals::operator""sv;
   // clang-format off
-  const auto fasta_suff =
-    std::vector{
+  const auto fasta_suff = std::vector {
     "fa"sv,
     "fa.gz"sv,
     "faa"sv,
