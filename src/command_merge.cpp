@@ -130,24 +130,21 @@ command_merge_main(int argc, char *argv[]) -> int {
   // ADS: first read the last methylome in the input files list as we only
   // do n-1 merges so we need one to start with; we can't merge an
   // empty methylome, so we need a real one outside the loop
-  methylome meth;
   double read_time{};
-  {
-    const auto filename = input_files.back();
-    const auto meta_file = get_default_methylome_metadata_filename(filename);
-    const auto [meta, meta_err] = methylome_metadata::read(meta_file);
-    if (meta_err) {
-      lgr.error("Error reading metadata {}: {}", meta_file, meta_err);
-      return EXIT_FAILURE;
-    }
-    const auto read_start = std::chrono::high_resolution_clock::now();
-    const auto meth_err = meth.read(filename, meta);
-    const auto read_stop = std::chrono::high_resolution_clock::now();
-    read_time += duration(read_start, read_stop);
-    if (meth_err) {
-      lgr.error("Error reading methylome {}: {}", filename, meth_err);
-      return EXIT_FAILURE;
-    }
+  const auto last_meta_file =
+    get_default_methylome_metadata_filename(input_files.back());
+  auto [last_meta, last_meta_err] = methylome_metadata::read(last_meta_file);
+  if (last_meta_err) {
+    lgr.error("Error reading metadata {}: {}", last_meta_file, last_meta_err);
+    return EXIT_FAILURE;
+  }
+  auto read_start = std::chrono::high_resolution_clock::now();
+  auto [meth, meth_err] = methylome::read(input_files.back(), last_meta);
+  auto read_stop = std::chrono::high_resolution_clock::now();
+  read_time += duration(read_start, read_stop);
+  if (meth_err) {
+    lgr.error("Error reading methylome {}: {}", input_files.back(), meth_err);
+    return EXIT_FAILURE;
   }
 
   const auto n_cpgs = size(meth);  // quick consistency check
@@ -163,21 +160,21 @@ command_merge_main(int argc, char *argv[]) -> int {
       lgr.error("Error reading metadata {}: {}", meta_file, meta_err);
       return EXIT_FAILURE;
     }
-    methylome tmp{};
     const auto read_start = std::chrono::high_resolution_clock::now();
-    const auto meth_err = tmp.read(filename, meta);
+    const auto [tmp_meth, meth_err] = methylome::read(filename, meta);
     const auto read_stop = std::chrono::high_resolution_clock::now();
     read_time += duration(read_start, read_stop);
     if (meth_err) {
       lgr.error("Error reading methylome {}: {}", filename, meth_err);
       return EXIT_FAILURE;
     }
-    if (size(tmp) != n_cpgs) {
-      lgr.error("Wrong methylome size {} (expected {})", size(tmp), n_cpgs);
+    if (size(tmp_meth) != n_cpgs) {
+      lgr.error("Wrong methylome size {} (expected {})", size(tmp_meth),
+                n_cpgs);
       return EXIT_FAILURE;
     }
     const auto merge_start = std::chrono::high_resolution_clock::now();
-    meth.add(tmp);
+    meth.add(tmp_meth);
     const auto merge_stop = std::chrono::high_resolution_clock::now();
     merge_time += duration(merge_start, merge_stop);
   }
@@ -204,23 +201,17 @@ command_merge_main(int argc, char *argv[]) -> int {
     return EXIT_FAILURE;
   }
 
-  const auto meta_file =
-    get_default_methylome_metadata_filename(input_files[0]);
-  auto [meta, err] = methylome_metadata::read(meta_file);
-  if (err) {
-    lgr.error("Error reading metadata {}: {}", meta_file, err);
-    return EXIT_FAILURE;
-  }
-
-  if (err = meta.update(output_file); err) {
-    lgr.error("Error updating metadata {}: {}", metadata_output, err);
+  if (const auto update_err = last_meta.update(meth); update_err) {
+    lgr.error("Error updating metadata: {}", update_err);
     return EXIT_FAILURE;
   }
 
   const auto meta_outfile =
     get_default_methylome_metadata_filename(output_file);
-  if (err = methylome_metadata::write(meta, meta_outfile); err) {
-    lgr.error("Error updating metadata {}: {}", metadata_output, err);
+  if (const auto meta_write_err = last_meta.write(meta_outfile);
+      meta_write_err) {
+    lgr.error("Error updating metadata {}: {}", metadata_output,
+              meta_write_err);
     return EXIT_FAILURE;
   }
 
