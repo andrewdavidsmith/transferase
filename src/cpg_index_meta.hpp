@@ -102,12 +102,15 @@ struct cpg_index_meta {
   std::vector<std::uint32_t> chrom_size;
   std::vector<std::uint32_t> chrom_offset;
 
-  [[nodiscard]] auto
-  write(const std::string &json_filename) const -> std::error_code;
-
   [[nodiscard]] static auto
   read(const std::string &json_filename)
     -> std::tuple<cpg_index_meta, std::error_code>;
+
+  [[nodiscard]] auto
+  write(const std::string &json_filename) const -> std::error_code;
+
+  [[nodiscard]] auto
+  init_env() -> std::error_code;
 
   [[nodiscard]] auto
   tostring() const -> std::string;
@@ -144,5 +147,9 @@ struct std::formatter<cpg_index_meta> : std::formatter<std::string> {
 [[nodiscard]] auto
 get_default_cpg_index_meta_filename(const std::string &indexfile)
   -> std::string;
+
+[[nodiscard]] auto
+get_assembly_from_filename(const std::string &filename,
+                           std::error_code &ec) -> std::string;
 
 #endif  // SRC_CPG_INDEX_META_HPP_
