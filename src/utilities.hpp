@@ -32,25 +32,23 @@
 #include "genomic_interval.hpp"
 #include "methylome_results_types.hpp"  // counts_res and counts_res_cov
 
+#include <zlib.h>
+
 #include <algorithm>
 #include <cassert>
 #include <cerrno>
 #include <chrono>
-#include <cmath>
 #include <cstdint>
 #include <filesystem>
 #include <format>
 #include <fstream>
 #include <iostream>
 #include <limits>
-#include <numeric>
 #include <ranges>
 #include <string>
 #include <system_error>
 #include <utility>
 #include <vector>
-
-#include <zlib.h>
 
 struct mxe_to_chars_result {
   char *ptr{};
@@ -218,59 +216,6 @@ write_bins(std::ostream &out, const std::uint32_t bin_size,
 duration(const auto start, const auto stop) {
   const auto d = stop - start;
   return std::chrono::duration_cast<std::chrono::duration<double>>(d).count();
-}
-
-template <typename T, typename U>
-inline auto
-round_to_fit(U &a, U &b) -> void {
-  // ADS: assign the max of a and b to be the max possible value; the
-  // other one gets a fractional value then multiplied by max possible
-  const U c = std::max(a, b);
-  a = (a == c) ? std::numeric_limits<T>::max()
-               : std::round((a / static_cast<double>(c)) *
-                            std::numeric_limits<T>::max());
-  b = (b == c) ? std::numeric_limits<T>::max()
-               : std::round((b / static_cast<double>(c)) *
-                            std::numeric_limits<T>::max());
-}
-
-template <typename T, typename U>
-inline auto
-conditional_round_to_fit(U &a, U &b) -> void {
-  // ADS: optimization possible here?
-  if (std::max(a, b) > std::numeric_limits<T>::max())
-    round_to_fit<T>(a, b);
-}
-
-// ADS: this function should be replaced by one that can operate on a
-// the data as though it were serealized but without reading the file
-[[nodiscard]] inline auto
-get_adler(const std::string &filename) -> std::uint64_t {
-  const auto filesize = std::filesystem::file_size(filename);
-  std::vector<char> buf(filesize);
-  std::ifstream in(filename);
-  in.read(buf.data(), filesize);
-  return adler32_z(0, reinterpret_cast<std::uint8_t *>(buf.data()), filesize);
-}
-
-// ADS: this function should be replaced by one that can operate on a
-// the data as though it were serealized but without reading the file
-[[nodiscard]] inline auto
-get_adler(const std::string &filename, std::error_code &ec) -> std::uint64_t {
-  const auto filesize = std::filesystem::file_size(filename, ec);
-  if (ec)
-    return 0;
-  std::vector<char> buf(filesize);
-  std::ifstream in(filename);
-  if (!in) {
-    ec = std::make_error_code(std::errc(errno));
-    return 0;
-  }
-  if (!in.read(buf.data(), filesize)) {
-    ec = std::make_error_code(std::errc(errno));
-    return 0;
-  }
-  return adler32_z(0, reinterpret_cast<std::uint8_t *>(buf.data()), filesize);
 }
 
 template <>

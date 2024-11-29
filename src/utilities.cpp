@@ -27,29 +27,15 @@
   Functions defined here are used by multiple source files
  */
 
-#include "cpg_index.hpp"
-#include "genomic_interval.hpp"
-#include "methylome.hpp"
+#include <zlib.h>
 
 #include <algorithm>
-#include <array>
 #include <cassert>
-#include <ostream>
-#include <ranges>
 #include <string>
 #include <utility>
 #include <vector>
 
-using std::array;
-using std::pair;
-using std::string;
-using std::to_chars;
-using std::vector;
-
-namespace rg = std::ranges;
-namespace vs = std::views;
-
-auto
+[[nodiscard]] auto
 get_mxe_config_dir_default(std::error_code &ec) -> std::string {
   static const auto config_dir_rhs = std::filesystem::path(".config/mxe");
   static const auto env_home = std::getenv("HOME");
@@ -59,6 +45,37 @@ get_mxe_config_dir_default(std::error_code &ec) -> std::string {
   }
   const std::filesystem::path config_dir = env_home / config_dir_rhs;
   return config_dir;
+}
+
+// ADS: this function should be replaced by one that can operate on a
+// the data as though it were serealized but without reading the file
+[[nodiscard]] auto
+get_adler(const std::string &filename) -> std::uint64_t {
+  const auto filesize = std::filesystem::file_size(filename);
+  std::vector<char> buf(filesize);
+  std::ifstream in(filename);
+  in.read(buf.data(), filesize);
+  return adler32_z(0, reinterpret_cast<std::uint8_t *>(buf.data()), filesize);
+}
+
+// ADS: this function should be replaced by one that can operate on a
+// the data as though it were serealized but without reading the file
+[[nodiscard]] auto
+get_adler(const std::string &filename, std::error_code &ec) -> std::uint64_t {
+  const auto filesize = std::filesystem::file_size(filename, ec);
+  if (ec)
+    return 0;
+  std::vector<char> buf(filesize);
+  std::ifstream in(filename);
+  if (!in) {
+    ec = std::make_error_code(std::errc(errno));
+    return 0;
+  }
+  if (!in.read(buf.data(), filesize)) {
+    ec = std::make_error_code(std::errc(errno));
+    return 0;
+  }
+  return adler32_z(0, reinterpret_cast<std::uint8_t *>(buf.data()), filesize);
 }
 
 /*
