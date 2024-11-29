@@ -75,8 +75,7 @@ cpg_index_set::get_cpg_index_with_meta(const std::string &assembly_name)
   return {itr_index->second, itr_meta->second, {}};
 }
 
-cpg_index_set::cpg_index_set(const std::string &cpg_index_directory) :
-  cpg_index_directory{cpg_index_directory} {
+cpg_index_set::cpg_index_set(const std::string &cpg_index_directory) {
   static constexpr auto assembly_ptrn = R"(^[_[:alnum:]]+)";
   static const auto cpg_index_filename_ptrn =
     std::format(R"({}.{}$)", assembly_ptrn, cpg_index::filename_extension);
@@ -92,9 +91,9 @@ cpg_index_set::cpg_index_set(const std::string &cpg_index_directory) :
         const auto assembly = base_match[0].str();
 
         // read the cpg index
-        cpg_index index{};
         const std::string index_filename = dir_entry.path().string();
-        if (const auto index_ec = index.read(index_filename); index_ec) {
+        const auto [index, index_ec] = cpg_index::read(index_filename);
+        if (index_ec) {
           logger::instance().debug("Failed to read cpg index: {} ({})",
                                    index_filename, index_ec);
           assembly_to_cpg_index.clear();
@@ -104,12 +103,12 @@ cpg_index_set::cpg_index_set(const std::string &cpg_index_directory) :
         assembly_to_cpg_index.emplace(assembly, index);
 
         // read the cpg index metadata
-        const std::string index_filename_meta =
+        const auto meta_file =
           get_default_cpg_index_meta_filename(index_filename);
-        const auto [cim, meta_ec] = cpg_index_meta::read(index_filename_meta);
+        const auto [cim, meta_ec] = cpg_index_meta::read(meta_file);
         if (meta_ec) {
-          logger::instance().debug("Failed to read cpg index metadata: {} ({})",
-                                   index_filename_meta, meta_ec);
+          logger::instance().debug(
+            "Failed to read cpg index metadata: {} ({}) ", meta_file, meta_ec);
           assembly_to_cpg_index.clear();
           assembly_to_cpg_index_meta.clear();
           return;
