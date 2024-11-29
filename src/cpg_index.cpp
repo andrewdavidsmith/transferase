@@ -38,7 +38,6 @@
 #include <functional>
 #include <numeric>  // std::exclusive_scan
 #include <ranges>
-#include <regex>  // used in parsing filenames
 #include <string>
 #include <tuple>
 #include <utility>
@@ -156,7 +155,6 @@ initialize_cpg_index(const std::string &genome_filename)
 
   // initialize the chromosome order
   cpg_index_meta meta;
-  meta.chrom_order.clear();
   for (const auto [start, stop] : std::views::zip(name_starts, name_stops))
     // ADS: "+1" below to skip the ">" character
     meta.chrom_order.emplace_back(
@@ -204,15 +202,16 @@ initialize_cpg_index(const std::string &genome_filename)
 }
 
 [[nodiscard]] auto
-cpg_index::read(const std::string &index_file) -> std::error_code {
+cpg_index::read(const std::string &index_file)
+  -> std::tuple<cpg_index, std::error_code> {
   const auto meta_file = get_default_cpg_index_meta_filename(index_file);
   const auto [meta, meta_err] = cpg_index_meta::read(meta_file);
   if (meta_err)
-    return meta_err;
+    return {{}, meta_err};
 
   std::ifstream in(index_file, std::ios::binary);
   if (!in)
-    return std::make_error_code(std::errc(errno));
+    return {{}, std::make_error_code(std::errc(errno))};
 
   std::vector<std::uint32_t> n_cpgs(meta.chrom_offset);
   {
@@ -222,21 +221,22 @@ cpg_index::read(const std::string &index_file) -> std::error_code {
                              std::begin(n_cpgs));
   }
 
-  positions.clear();
+  cpg_index ci;
   for (const auto n_cpgs_chrom : n_cpgs) {
-    positions.push_back(vec(n_cpgs_chrom));
+    ci.positions.push_back(vec(n_cpgs_chrom));
     {
       const std::streamsize n_bytes_expected =
         n_cpgs_chrom * sizeof(std::uint32_t);
-      in.read(reinterpret_cast<char *>(positions.back().data()),
+      in.read(reinterpret_cast<char *>(ci.positions.back().data()),
               n_bytes_expected);
       const auto read_ok = static_cast<bool>(in);
       const auto n_bytes = in.gcount();
       if (!read_ok || n_bytes != n_bytes_expected)
-        return cpg_index_code::failure_reading_index_body;
+        return {{},
+                std::error_code(cpg_index_code::failure_reading_index_body)};
     }
   }
-  return std::error_code{};
+  return {ci, std::error_code{}};
 }
 
 [[nodiscard]] auto
@@ -347,36 +347,15 @@ cpg_index::get_offsets(const cpg_index_meta &meta,
 [[nodiscard]] auto
 read_cpg_index(const std::string &index_file)
   -> std::tuple<cpg_index, cpg_index_meta, std::error_code> {
-  cpg_index ci;
-  const auto index_err = ci.read(index_file);
+
+  const auto [ci, index_err] = cpg_index::read(index_file);
   if (index_err)
     return {cpg_index{}, cpg_index_meta{}, index_err};
 
-  const auto [cim, meta_err] =
-    cpg_index_meta::read(get_default_cpg_index_meta_filename(index_file));
+  const auto meta_file = get_default_cpg_index_meta_filename(index_file);
+  const auto [cim, meta_err] = cpg_index_meta::read(meta_file);
   if (meta_err)
     return {cpg_index{}, cpg_index_meta{}, meta_err};
 
   return {ci, cim, {}};
-}
-
-[[nodiscard]] auto
-get_assembly_from_filename(const std::string &filename,
-                           std::error_code &ec) -> std::string {
-  // ADS: this regular expression might better be in a header
-  static constexpr auto assembly_ptrn = R"(^[_[:alnum:]]+)";
-  static const auto filename_ptrn =
-    std::format(R"({}.{}$)", assembly_ptrn, cpg_index::filename_extension);
-
-  const std::string name = std::filesystem::path(filename).filename();
-
-  std::regex filename_re(filename_ptrn);
-  if (std::regex_search(name, filename_re)) {
-    std::smatch base_match;
-    std::regex assembly_re(assembly_ptrn);
-    if (std::regex_search(name, base_match, assembly_re))
-      return base_match[0].str();
-  }
-  ec = std::make_error_code(std::errc::invalid_argument);
-  return {};
 }
