@@ -81,13 +81,13 @@ do_local_intervals(const string &meth_file, const string &meth_meta_file,
                    const cpg_index &index,
                    vector<methylome::offset_pair> offsets)
   -> std::tuple<vector<counts_res_type>, std::error_code> {
-  const auto [mm, meta_err] = methylome_metadata::read(meth_meta_file);
+  const auto [meta, meta_err] = methylome_metadata::read(meth_meta_file);
   if (meta_err) {
     logger::instance().error("Error: {} ({})", meta_err, meth_meta_file);
     return {{}, meta_err};
   }
-  methylome meth{};
-  if (const auto meth_err = meth.read(meth_file, mm)) {
+  const auto [meth, meth_err] = methylome::read(meth_file, meta);
+  if (meth_err) {
     logger::instance().error("Error: {} ({})", meth_err, meth_file);
     return {{}, meth_err};
   }
