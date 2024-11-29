@@ -50,8 +50,8 @@ struct cpg_index {
   typedef std::vector<cpg_pos_t> vec;
 #endif
 
-  auto
-  read(const std::string &index_file) -> std::error_code;
+  static auto
+  read(const std::string &index_file) -> std::tuple<cpg_index, std::error_code>;
   auto
   write(const std::string &index_file) const -> std::error_code;
 
@@ -78,9 +78,9 @@ struct cpg_index {
   std::vector<cpg_index::vec> positions;
 };
 
-[[nodiscard]] auto
-get_assembly_from_filename(const std::string &filename,
-                           std::error_code &ec) -> std::string;
+// [[nodiscard]] auto
+// get_assembly_from_filename(const std::string &filename,
+//                            std::error_code &ec) -> std::string;
 
 [[nodiscard]] auto
 initialize_cpg_index(const std::string &genome_file)
