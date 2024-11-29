@@ -35,6 +35,7 @@
 #include <cstdint>
 #include <fstream>
 #include <iostream>
+#include <regex>
 #include <sstream>
 #include <string>
 #include <system_error>
@@ -119,4 +120,30 @@ cpg_index_meta::read(const std::string &json_filename)
 get_default_cpg_index_meta_filename(const std::string &indexfile)
   -> std::string {
   return std::format("{}.json", indexfile);
+}
+
+[[nodiscard]] auto
+get_assembly_from_filename(const std::string &filename,
+                           std::error_code &ec) -> std::string {
+  using namespace std::literals;
+  // clang-format off
+  const auto fasta_suff =
+    std::vector{
+    "fa"sv,
+    "fa.gz"sv,
+    "faa"sv,
+    "faa.gz"sv,
+    "fasta"sv,
+    "fasta.gz"sv,
+  } | std::views::join_with('|');
+  // clang-format on
+  const auto reference_genome_pattern =
+    "("s + std::string(std::cbegin(fasta_suff), std::cend(fasta_suff)) + ")$"s;
+  const std::regex suffix_re{reference_genome_pattern};
+  std::smatch base_match;
+  const std::string name = std::filesystem::path(filename).filename();
+  if (std::regex_search(name, base_match, suffix_re))
+    return base_match[0].str();
+  ec = std::make_error_code(std::errc::invalid_argument);
+  return {};
 }
