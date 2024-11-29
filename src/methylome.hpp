@@ -32,9 +32,11 @@
 #include "cpg_index_meta.hpp"
 #include "methylome_results_types.hpp"
 
-#include <cmath>  // std::round
+#include <algorithm>  // std::max
+#include <cmath>      // std::round
 #include <cstddef>
 #include <cstdint>
+#include <limits>  // std::numeric_limits<>
 #include <string>
 #include <system_error>
 #include <tuple>
