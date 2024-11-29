@@ -41,18 +41,6 @@
 #include <system_error>
 #include <tuple>
 
-[[nodiscard]] auto
-cpg_index_meta::write(const std::string &json_filename) const
-  -> std::error_code {
-  std::ofstream out(json_filename);
-  if (!out)
-    return std::make_error_code(std::errc(errno));
-  out << boost::json::value_from(*this);
-  if (!out)
-    return std::make_error_code(std::errc(errno));
-  return {};
-}
-
 [[nodiscard]] static auto
 get_username() -> std::tuple<std::string, std::error_code> {
   static constexpr auto username_maxsize = 128;
@@ -71,6 +59,36 @@ get_time_as_string() -> std::string {
     std::chrono::floor<std::chrono::seconds>(now) -
     std::chrono::floor<std::chrono::days>(now)};
   return std::format("{:%F} {:%T}", ymd, hms);
+}
+
+[[nodiscard]] auto
+cpg_index_meta::init_env() -> std::error_code {
+  boost::system::error_code boost_err;
+  host = boost::asio::ip::host_name(boost_err);
+  if (boost_err)
+    return std::error_code{boost_err};
+
+  const auto [username, err] = get_username();
+  if (err)
+    return err;
+
+  version = VERSION;
+  user = username;
+  creation_time = get_time_as_string();
+
+  return {};
+}
+
+[[nodiscard]] auto
+cpg_index_meta::write(const std::string &json_filename) const
+  -> std::error_code {
+  std::ofstream out(json_filename);
+  if (!out)
+    return std::make_error_code(std::errc(errno));
+  out << boost::json::value_from(*this);
+  if (!out)
+    return std::make_error_code(std::errc(errno));
+  return {};
 }
 
 [[nodiscard]] auto
@@ -143,7 +161,7 @@ get_assembly_from_filename(const std::string &filename,
   std::smatch base_match;
   const std::string name = std::filesystem::path(filename).filename();
   if (std::regex_search(name, base_match, suffix_re))
-    return base_match[0].str();
+    return std::filesystem::path{name}.replace_extension().string();
   ec = std::make_error_code(std::errc::invalid_argument);
   return {};
 }
