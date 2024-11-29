@@ -24,7 +24,8 @@
 #ifndef SRC_METHYLOME_METADATA_HPP_
 #define SRC_METHYLOME_METADATA_HPP_
 
-#include "utilities.hpp"  // get_adler
+#include "cpg_index_meta.hpp"
+#include "methylome.hpp"
 
 #include <boost/describe.hpp>  // for BOOST_DESCRIBE_STRUCT
 
@@ -87,6 +88,8 @@ make_error_code(methylome_metadata_error e) {
   return std::error_code(std::to_underlying(e), category);
 }
 
+struct methylome;
+
 struct methylome_metadata {
   static constexpr auto filename_extension{"m16.json"};
   std::string version;
@@ -100,19 +103,18 @@ struct methylome_metadata {
   bool is_compressed{};
   // ADS: (todo) think of a better way to get "compression" status
   [[nodiscard]] static auto
-  init(const std::string &index_filename, const std::string &methylome_filename,
+  init(const cpg_index_meta &cim, const methylome &meth,
        const bool is_compressed)
     -> std::tuple<methylome_metadata, std::error_code>;
   [[nodiscard]] static auto
   read(const std::string &json_filename)
     -> std::tuple<methylome_metadata, std::error_code>;
-  [[nodiscard]] static auto
-  write(const methylome_metadata &mm,
-        const std::string &json_filename) -> std::error_code;
+  [[nodiscard]] auto
+  write(const std::string &json_filename) const -> std::error_code;
   [[nodiscard]] auto
   tostring() const -> std::string;
   [[nodiscard]] auto
-  update(const std::string &methylome_filename) -> std::error_code;
+  update(const methylome &meth) -> std::error_code;
 };
 
 // clang-format off
