@@ -207,12 +207,14 @@ verify_header_line(const cpg_index_meta &cim, std::int32_t &n_chroms_seen,
 static auto
 process_cpg_sites(const std::string &infile, const std::string &outfile,
                   const cpg_index &index, const cpg_index_meta &cim,
-                  const bool zip) -> std::error_code {
+                  const bool zip) -> std::tuple<methylome, std::error_code> {
+  auto &lgr = logger::instance();
+
   meth_file mf{};
   std::error_code err = mf.open(infile);
   if (err != format_err::ok) {
-    std::println("Error reading xcounts file: {}", infile);
-    return err;
+    lgr.error("Error reading xcounts file: {}", infile);
+    return {{}, err};
   }
 
   methylome::vec cpgs(cim.n_cpgs, {0, 0});
@@ -232,7 +234,7 @@ process_cpg_sites(const std::string &infile, const std::string &outfile,
       // reference used for the methylome
       if (err = verify_header_line(cim, n_chroms_seen, line); err) {
         std::println("Error parsing xcounts header line: {} ({})", line, err);
-        return err;
+        return {{}, err};
       }
       continue;  // ADS: early loop exit
     }
@@ -245,7 +247,7 @@ process_cpg_sites(const std::string &infile, const std::string &outfile,
       const std::int32_t ch_id = get_ch_id(cim, line);
       if (ch_id < 0) {
         std::println("Failed to find chromosome in index: {}", line);
-        return format_err::xcounts_file_chromosome_not_found;
+        return {methylome{}, format_err::xcounts_file_chromosome_not_found};
       }
 
       cpg_idx_out += add_all_cpgs(prev_ch_id, ch_id, index);
@@ -280,24 +282,12 @@ process_cpg_sites(const std::string &infile, const std::string &outfile,
   cpg_idx_out += add_all_cpgs(prev_ch_id, std::size(index.positions), index);
 
   if (cpg_idx_out != cim.n_cpgs) {
-    logger::instance().error(
-      "Inconsistent numbers of cpgs (index={}, processed={})", cim.n_cpgs,
-      cpg_idx_out);
-    return format_err::methylome_format_failure;
+    lgr.error("Inconsistent numbers of cpgs (index={}, processed={})",
+              cim.n_cpgs, cpg_idx_out);
+    return {methylome{}, format_err::methylome_format_failure};
   }
 
-  methylome m;
-  m.cpgs = std::move(cpgs);
-  const auto meth_write_err = m.write(outfile, zip);
-  if (meth_write_err) {
-    logger::instance().error("Error writing methylome {}: {}", outfile,
-                             meth_write_err);
-    return format_err::methylome_file_write_failure;
-  }
-
-  assert(err == format_err::ok);
-
-  return err;
+  return {methylome{std::move(cpgs)}, std::error_code{}};
 }
 
 auto
@@ -370,23 +360,26 @@ command_format_main(int argc, char *argv[]) -> int {
     return EXIT_FAILURE;
   }
 
-  std::error_code err =
+  const auto [meth, meth_err] =
     process_cpg_sites(methylation_input, methylome_output, index, cim, zip);
-  if (err) {
-    lgr.error("Error generating methylome: {}", err);
+  if (meth_err) {
+    lgr.error("Error generating methylome: {}", meth_err);
     return EXIT_FAILURE;
   }
 
-  const auto [metadata, metadata_err] =
-    methylome_metadata::init(index_file, methylome_output, zip);
-  if (metadata_err) {
-    lgr.error("Error initializing metadata: {}", metadata_err);
+  const auto [meta, meta_err] = methylome_metadata::init(cim, meth, zip);
+  if (meta_err) {
+    lgr.error("Error initializing metadata: {}", meta_err);
     return EXIT_FAILURE;
   }
 
-  err = methylome_metadata::write(metadata, metadata_output);
-  if (err) {
-    lgr.error("Error writing metadata: {} ({})", err, metadata_output);
+  if (const auto write_err = meth.write(methylome_output, zip); write_err) {
+    lgr.error("Error writing methylome {}: {}", methylome_output, write_err);
+    return EXIT_FAILURE;
+  }
+
+  if (const auto write_err = meta.write(metadata_output); write_err) {
+    lgr.error("Error writing metadata: {} ({})", write_err, metadata_output);
     return EXIT_FAILURE;
   }
 
