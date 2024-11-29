@@ -103,8 +103,8 @@ methylome_set::get_methylome(const std::string &accession)
               methylome_set_code::error_reading_methylome_file};
 
     // ADS: get an error code from methylome::read and use it
-    methylome m{};
-    if ([[maybe_unused]] const auto ec = m.read(methylome_filename, mm))
+    const auto [m, ec] = methylome::read(methylome_filename, mm);
+    if (ec)
       return {nullptr, nullptr,
               methylome_set_code::error_reading_methylome_file};
 
