@@ -40,6 +40,10 @@ struct cpg_index_set {
 
   explicit cpg_index_set(const std::string &cpg_index_directory);
 
+  // [[nodiscard]] static auto
+  // read(const std::string &filename)
+  //   -> std::tuple<cpg_index_set, std::error_code>;
+
   /* ADS: currently unused */
   // [[nodiscard]] auto
   // get_cpg_index(const std::string &assembly_name)
@@ -57,7 +61,6 @@ struct cpg_index_set {
   // [[nodiscard]] auto
   // get_genome_sizes() -> std::unordered_map<std::string, std::uint64_t>;
 
-  std::string cpg_index_directory;
   std::unordered_map<std::string, cpg_index> assembly_to_cpg_index;
   std::unordered_map<std::string, cpg_index_meta> assembly_to_cpg_index_meta;
 };
