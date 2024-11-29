@@ -28,6 +28,10 @@ add_library(logger OBJECT
   logger.hpp
   logger.cpp)
 
+add_library(hash OBJECT
+  hash.hpp
+  hash.cpp)
+
 add_library(utilities OBJECT
   utilities.hpp
   utilities.cpp)
