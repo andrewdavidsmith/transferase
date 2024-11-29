@@ -364,7 +364,6 @@ cpg_index::hash() const -> std::uint64_t {
 [[nodiscard]] auto
 read_cpg_index(const std::string &index_file)
   -> std::tuple<cpg_index, cpg_index_meta, std::error_code> {
-
   const auto [ci, index_err] = cpg_index::read(index_file);
   if (index_err)
     return {cpg_index{}, cpg_index_meta{}, index_err};
