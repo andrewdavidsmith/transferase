@@ -28,6 +28,7 @@
 #include "genomic_interval.hpp"
 #include "logger.hpp"
 #include "methylome.hpp"
+#include "methylome_metadata.hpp"
 #include "mxe_error.hpp"
 #include "request.hpp"
 #include "utilities.hpp"
@@ -85,8 +86,7 @@ do_local_bins(const string &meth_file, const string &meta_file,
     return {{}, meta_err};
   }
 
-  methylome meth{};
-  const auto meth_read_err = meth.read(meth_file, meta);
+  const auto [meth, meth_read_err] = methylome::read(meth_file, meta);
   if (meth_read_err) {
     logger::instance().error("Error: {} ({})", meth_read_err, meth_file);
     return {{}, meth_read_err};
