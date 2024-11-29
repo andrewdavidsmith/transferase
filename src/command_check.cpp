@@ -26,6 +26,7 @@
 #include "cpg_index.hpp"
 #include "logger.hpp"
 #include "methylome.hpp"
+#include "methylome_metadata.hpp"
 #include "mxe_error.hpp"
 
 #include <boost/program_options.hpp>
@@ -113,8 +114,7 @@ command_check_main(int argc, char *argv[]) -> int {
     return EXIT_FAILURE;
   }
 
-  methylome meth{};
-  const auto meth_read_err = meth.read(methylome_input, meta);
+  const auto [meth, meth_read_err] = methylome::read(methylome_input, meta);
   if (meth_read_err) {
     lgr.error("Error reading methylome {}: {}", methylome_input, meth_read_err);
     return EXIT_FAILURE;
