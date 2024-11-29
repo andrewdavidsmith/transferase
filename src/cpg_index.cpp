@@ -23,11 +23,12 @@
 
 #include "cpg_index.hpp"
 
-#include "logger.hpp"
-
 #include "cpg_index_meta.hpp"
 #include "genomic_interval.hpp"
+#include "hash.hpp"
+#include "logger.hpp"
 #include "mxe_error.hpp"
+#include "utilities.hpp"
 
 #include <algorithm>
 #include <cassert>
@@ -198,6 +199,17 @@ initialize_cpg_index(const std::string &genome_filename)
   for (const auto [i, chrom_name] : std::views::enumerate(meta.chrom_order))
     meta.chrom_index.emplace(chrom_name, i);
 
+  const auto meta_init_err = meta.init_env();
+  if (meta_init_err)
+    return {{}, {}, meta_init_err};
+
+  meta.index_hash = index.hash();
+
+  std::error_code asm_err;
+  meta.assembly = get_assembly_from_filename(genome_filename, asm_err);
+  if (asm_err)
+    return {{}, {}, asm_err};
+
   return {std::move(index), std::move(meta), std::error_code{}};
 }
 
@@ -342,6 +354,11 @@ cpg_index::get_offsets(const cpg_index_meta &meta,
                       std::back_inserter(offsets));
   }
   return offsets;
+}
+
+[[nodiscard]] auto
+cpg_index::hash() const -> std::uint64_t {
+  return get_adler(positions.data(), std::size(positions) * sizeof(cpg_pos_t));
 }
 
 [[nodiscard]] auto

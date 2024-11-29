@@ -55,6 +55,9 @@ struct cpg_index {
   auto
   write(const std::string &index_file) const -> std::error_code;
 
+  auto
+  hash() const -> std::uint64_t;
+
   /* ADS: currently unused */
   // [[nodiscard]] auto
   // get_offset_within_chrom(const std::int32_t ch_id,
