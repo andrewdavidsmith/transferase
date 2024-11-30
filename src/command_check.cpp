@@ -32,16 +32,12 @@
 #include <boost/program_options.hpp>
 
 #include <cerrno>
-#include <chrono>
-#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <print>
-#include <ranges>
 #include <string>
 #include <system_error>
 #include <tuple>
-#include <utility>
 #include <vector>
 
 auto
@@ -127,7 +123,7 @@ command_check_main(int argc, char *argv[]) -> int {
 
   std::ofstream out(output_file);
   if (!out) {
-    lgr.error("Error opening output file: {} ({})", output_file,
+    lgr.error("Error opening output file {}: {}", output_file,
               std::make_error_code(std::errc(errno)));
     return EXIT_FAILURE;
   }
