@@ -371,5 +371,5 @@ read_cpg_index(const std::string &index_file)
   if (index_err)
     return {cpg_index{}, cpg_index_meta{}, index_err};
 
-  return {ci, cim, {}};
+  return {std::move(ci), std::move(cim), {}};
 }
