@@ -13,7 +13,7 @@ jobs:
       - name: Install dependencies
         run: |
           apt-get update
-          apt-get install -y zlib1g-dev
+          apt-get install -y zlib1g-dev libgtest-dev
 
       - name: Generate build system that uses GCC
         run: |
