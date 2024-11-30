@@ -38,7 +38,8 @@ struct cpg_index_set {
   cpg_index_set &
   operator=(const cpg_index_set &) = delete;
 
-  explicit cpg_index_set(const std::string &cpg_index_directory);
+  explicit cpg_index_set(const std::string &cpg_index_directory,
+                         std::error_code &ec);
 
   // [[nodiscard]] static auto
   // read(const std::string &filename)
