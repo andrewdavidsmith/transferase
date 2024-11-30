@@ -71,7 +71,10 @@ find_package(
   program_options json)
 find_package(ZLIB REQUIRED)
 
+enable_testing()
+
 add_subdirectory(src)
+add_subdirectory(tests)
 
 configure_file(config.h.in config.h)
 
@@ -82,5 +85,5 @@ configure_file(config.h.in config.h)
 # Get ready for packaging
 set(CPACK_PACKAGE_VENDOR "Andrew D Smith")
 set(CPACK_GENERATOR "TGZ;STGZ")
-set(CPACK_RESOURCE_FILE_LICENSE LICENSE)
+set(CPACK_RESOURCE_FILE_LICENSE ${PROJECT_SOURCE_DIR}/LICENSE)
 include(CPack)
