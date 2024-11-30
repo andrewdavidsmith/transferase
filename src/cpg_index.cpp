@@ -214,20 +214,15 @@ initialize_cpg_index(const std::string &genome_filename)
 }
 
 [[nodiscard]] auto
-cpg_index::read(const std::string &index_file)
+cpg_index::read(const cpg_index_meta &cim, const std::string &index_file)
   -> std::tuple<cpg_index, std::error_code> {
-  const auto meta_file = get_default_cpg_index_meta_filename(index_file);
-  const auto [meta, meta_err] = cpg_index_meta::read(meta_file);
-  if (meta_err)
-    return {{}, meta_err};
-
   std::ifstream in(index_file, std::ios::binary);
   if (!in)
     return {{}, std::make_error_code(std::errc(errno))};
 
-  std::vector<std::uint32_t> n_cpgs(meta.chrom_offset);
+  std::vector<std::uint32_t> n_cpgs(cim.chrom_offset);
   {
-    n_cpgs.front() = meta.n_cpgs;
+    n_cpgs.front() = cim.n_cpgs;
     std::ranges::rotate(n_cpgs, std::begin(n_cpgs) + 1);
     std::adjacent_difference(std::cbegin(n_cpgs), std::cend(n_cpgs),
                              std::begin(n_cpgs));
@@ -364,14 +359,17 @@ cpg_index::hash() const -> std::uint64_t {
 [[nodiscard]] auto
 read_cpg_index(const std::string &index_file)
   -> std::tuple<cpg_index, cpg_index_meta, std::error_code> {
-  const auto [ci, index_err] = cpg_index::read(index_file);
-  if (index_err)
-    return {cpg_index{}, cpg_index_meta{}, index_err};
-
   const auto meta_file = get_default_cpg_index_meta_filename(index_file);
+
+  // read the cpg_index metadata first
   const auto [cim, meta_err] = cpg_index_meta::read(meta_file);
   if (meta_err)
     return {cpg_index{}, cpg_index_meta{}, meta_err};
+
+  // read the cpg_index using its metadata
+  const auto [ci, index_err] = cpg_index::read(cim, index_file);
+  if (index_err)
+    return {cpg_index{}, cpg_index_meta{}, index_err};
 
   return {ci, cim, {}};
 }

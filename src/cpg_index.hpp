@@ -50,12 +50,13 @@ struct cpg_index {
   typedef std::vector<cpg_pos_t> vec;
 #endif
 
-  static auto
-  read(const std::string &index_file) -> std::tuple<cpg_index, std::error_code>;
-  auto
+  [[nodiscard]] static auto
+  read(const cpg_index_meta &cim,
+       const std::string &index_file) -> std::tuple<cpg_index, std::error_code>;
+  [[nodiscard]] auto
   write(const std::string &index_file) const -> std::error_code;
 
-  auto
+  [[nodiscard]] auto
   hash() const -> std::uint64_t;
 
   /* ADS: currently unused */
