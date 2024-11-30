@@ -182,7 +182,7 @@ command_server_main(int argc, char *argv[]) -> int {
   if (args.daemonize) {
     auto s =
       server(args.hostname, args.port, args.n_threads, args.methylome_dir,
-             args.index_dir, args.max_resident, lgr, ec);
+             args.index_dir, args.max_resident, lgr, ec, args.daemonize);
     if (ec) {
       lgr.error("Failure daemonizing server: {}.", ec);
       return EXIT_FAILURE;
@@ -190,8 +190,9 @@ command_server_main(int argc, char *argv[]) -> int {
     s.run();
   }
   else {
-    auto s = server(args.hostname, args.port, args.n_threads,
-                    args.methylome_dir, args.index_dir, args.max_resident, lgr);
+    auto s =
+      server(args.hostname, args.port, args.n_threads, args.methylome_dir,
+             args.index_dir, args.max_resident, lgr, ec);
     s.run();
   }
 
