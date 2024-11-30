@@ -51,16 +51,10 @@ using std::string;
 using std::uint32_t;
 using std::vector;
 
-namespace asio = boost::asio;
-namespace bs = boost::system;
-namespace ip = asio::ip;
-namespace fs = std::filesystem;
-
-using tcp = ip::tcp;
-
 static auto
 write_pid_to_file(std::error_code &ec) -> void {
-  static const auto pid_file_rhs = fs::path(".config") / "mxe" / "MXE_PID_FILE";
+  static const auto pid_file_rhs =
+    std::filesystem::path(".config") / "mxe" / "MXE_PID_FILE";
 
   auto &lgr = logger::instance();
 
@@ -71,8 +65,9 @@ write_pid_to_file(std::error_code &ec) -> void {
     lgr.error("Error forming config dir: {}", ec);
     return;
   }
-  const fs::path pid_file = fs::path(env_home) / pid_file_rhs;
-  if (fs::exists(pid_file)) {
+  const std::filesystem::path pid_file =
+    std::filesystem::path(env_home) / pid_file_rhs;
+  if (std::filesystem::exists(pid_file)) {
     ec = std::make_error_code(std::errc::file_exists);
     lgr.error("Error: {}", ec);
     return;
@@ -110,14 +105,14 @@ server::server(const string &address, const string &port,
   acceptor(ioc),
   handler(methylome_dir, cpg_index_file_dir, max_live_methylomes, ec),
   lgr{lgr} {
-
+  // first check for errors in initializing members
   if (ec)
     return;
 
   // ADS: after this line we need to raise signal
   do_await_stop();  // start waiting for signals
 
-  tcp::resolver resolver(ioc);
+  boost::asio::ip::tcp::resolver resolver(ioc);
   boost::system::error_code resolver_ec;
   const auto resolved = resolver.resolve(address, port, resolver_ec);
   if (resolver_ec) {
@@ -127,7 +122,7 @@ server::server(const string &address, const string &port,
   }
 
   assert(!resolved.empty());
-  const tcp::endpoint endpoint = *resolved.begin();
+  const boost::asio::ip::tcp::endpoint endpoint = *resolved.begin();
   lgr.info("Resolved endpoint {}", boost::lexical_cast<string>(endpoint));
 
   // open acceptor...
@@ -141,7 +136,8 @@ server::server(const string &address, const string &port,
   }
 
   // ...with option to reuse the address (SO_REUSEADDR)
-  acceptor.set_option(tcp::acceptor::reuse_address(true), acceptor_ec);
+  acceptor.set_option(boost::asio::ip::tcp::acceptor::reuse_address(true),
+                      acceptor_ec);
   if (acceptor_ec) {
     lgr.error("Error setting SO_REUSEADDR: {}", acceptor_ec);
     std::raise(SIGTERM);
@@ -156,7 +152,8 @@ server::server(const string &address, const string &port,
     return;  // don't wait for signal handler
   }
 
-  acceptor.listen(asio::socket_base::max_listen_connections, acceptor_ec);
+  acceptor.listen(boost::asio::socket_base::max_listen_connections,
+                  acceptor_ec);
   if (acceptor_ec) {
     lgr.error("Error listening  on endpoint {}: {}",
               boost::lexical_cast<string>(endpoint), acceptor_ec);
@@ -182,7 +179,7 @@ server::server(const string &address, const string &port,
   acceptor(ioc),
   handler(methylome_dir, cpg_index_file_dir, max_live_methylomes, ec),
   lgr{lgr} {
-
+  // first check for errors in initializing members
   if (ec)
     return;
 
@@ -207,15 +204,14 @@ server::server(const string &address, const string &port,
     }
   }
 
-  // Make the process a new session leader, detaching it from the
-  // terminal
+  // make the process a new session leader, detaching it from terminal
   setsid();
 
   // Process inherits working dir from parent. Could be on a mounted
   // filesystem, which means that the daemon would prevent filesystem
   // from being unmounted. Changing to root dir avoids this problem.
   // chdir("/");
-  chdir(fs::current_path().root_path().string().data());
+  chdir(std::filesystem::current_path().root_path().string().data());
 
   // File mode creation mask is inherited from parent process. We
   // don't want to restrict perms on new files, so umask is cleared.
@@ -280,7 +276,7 @@ server::server(const string &address, const string &port,
   syslog(LOG_INFO | LOG_USER, "Daemon started.");
   lgr.info("Daemon started (pid: {})", getpid());
 
-  tcp::resolver resolver(ioc);
+  boost::asio::ip::tcp::resolver resolver(ioc);
   boost::system::error_code resolver_ec;
   const auto resolved = resolver.resolve(address, port, resolver_ec);
   if (resolver_ec) {
@@ -290,7 +286,7 @@ server::server(const string &address, const string &port,
   }
 
   assert(!resolved.empty());
-  const tcp::endpoint endpoint = *resolved.begin();
+  const boost::asio::ip::tcp::endpoint endpoint = *resolved.begin();
   lgr.info("Resolved endpoint {}", boost::lexical_cast<string>(endpoint));
 
   // open acceptor...
@@ -304,7 +300,8 @@ server::server(const string &address, const string &port,
   }
 
   // ...with option to reuse the address (SO_REUSEADDR)
-  acceptor.set_option(tcp::acceptor::reuse_address(true), acceptor_ec);
+  acceptor.set_option(boost::asio::ip::tcp::acceptor::reuse_address(true),
+                      acceptor_ec);
   if (acceptor_ec) {
     lgr.error("Error setting SO_REUSEADDR: {}", acceptor_ec);
     std::raise(SIGTERM);
@@ -319,7 +316,8 @@ server::server(const string &address, const string &port,
     return;  // don't wait for signal handler
   }
 
-  acceptor.listen(asio::socket_base::max_listen_connections, acceptor_ec);
+  acceptor.listen(boost::asio::socket_base::max_listen_connections,
+                  acceptor_ec);
   if (acceptor_ec) {
     lgr.error("Error listening  on endpoint {}: {}",
               boost::lexical_cast<string>(endpoint), acceptor_ec);
@@ -345,8 +343,9 @@ server::run() -> void {
 auto
 server::do_accept() -> void {
   acceptor.async_accept(
-    asio::make_strand(ioc),  // ADS: make a strand with the io_context
-    [this](const boost::system::error_code ec, tcp::socket socket) {
+    boost::asio::make_strand(ioc),  // ADS: make a strand with the io_context
+    [this](const boost::system::error_code ec,
+           boost::asio::ip::tcp::socket socket) {
       // quit if server already stopped by signal
       if (!acceptor.is_open())
         return;
