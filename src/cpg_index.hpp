@@ -24,11 +24,11 @@
 #ifndef SRC_CPG_INDEX_HPP_
 #define SRC_CPG_INDEX_HPP_
 
+#include "cpg_index_meta.hpp"
+
 #if not defined(__APPLE__) && not defined(__MACH__)
 #include "aligned_allocator.hpp"
 #endif
-
-#include "cpg_index_meta.hpp"
 
 #include <cstdint>
 #include <string>
@@ -81,10 +81,6 @@ struct cpg_index {
 
   std::vector<cpg_index::vec> positions;
 };
-
-// [[nodiscard]] auto
-// get_assembly_from_filename(const std::string &filename,
-//                            std::error_code &ec) -> std::string;
 
 [[nodiscard]] auto
 initialize_cpg_index(const std::string &genome_file)
