@@ -98,7 +98,9 @@ write_pid_to_file(std::error_code &ec) -> void {
 server::server(const string &address, const string &port,
                const uint32_t n_threads, const string &methylome_dir,
                const string &cpg_index_file_dir,
-               const uint32_t max_live_methylomes, logger &lgr) :
+               const uint32_t max_live_methylomes, logger &lgr,
+               std::error_code &ec) :
+  // io_context ios uses default constructor
   n_threads{n_threads},
 #if defined(SIGQUIT)
   signals(ioc, SIGINT, SIGTERM, SIGQUIT),
@@ -106,9 +108,13 @@ server::server(const string &address, const string &port,
   signals(ioc, SIGINT, SIGTERM),
 #endif
   acceptor(ioc),
-  handler(methylome_dir, cpg_index_file_dir, max_live_methylomes), lgr{lgr} {
-  // io_context ios uses default constructor
+  handler(methylome_dir, cpg_index_file_dir, max_live_methylomes, ec),
+  lgr{lgr} {
 
+  if (ec)
+    return;
+
+  // ADS: after this line we need to raise signal
   do_await_stop();  // start waiting for signals
 
   tcp::resolver resolver(ioc);
@@ -164,7 +170,8 @@ server::server(const string &address, const string &port,
                const uint32_t n_threads, const string &methylome_dir,
                const string &cpg_index_file_dir,
                const uint32_t max_live_methylomes, logger &lgr,
-               std::error_code &ec) :
+               std::error_code &ec, const bool daemonize) :
+  // io_context ioc uses default constructor
   n_threads{n_threads},
 #if defined(SIGQUIT)
   // ADS: (todo) SIGHUP should re-read config file
@@ -173,9 +180,13 @@ server::server(const string &address, const string &port,
   signals(ioc, SIGINT, SIGTERM),
 #endif
   acceptor(ioc),
-  handler(methylome_dir, cpg_index_file_dir, max_live_methylomes), lgr{lgr} {
-  // io_context ioc uses default constructor
+  handler(methylome_dir, cpg_index_file_dir, max_live_methylomes, ec),
+  lgr{lgr} {
 
+  if (ec)
+    return;
+
+  // ADS: after this line we need to raise signal
   do_daemon_await_stop();  // signals setup; start waiting for them
 
   // ADS: we are about to fork; clean up threads (what else?)

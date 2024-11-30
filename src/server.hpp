@@ -43,14 +43,15 @@ struct server {
                   const std::uint32_t n_threads,
                   const std::string &methylome_dir,
                   const std::string &index_file_dir,
-                  const std::uint32_t max_live_methylomes, logger &lgr);
+                  const std::uint32_t max_live_methylomes, logger &lgr,
+                  std::error_code &ec);
 
   explicit server(const std::string &address, const std::string &port,
                   const std::uint32_t n_threads,
                   const std::string &methylome_dir,
                   const std::string &index_file_dir,
                   const std::uint32_t max_live_methylomes, logger &lgr,
-                  std::error_code &ec);
+                  std::error_code &ec, const bool daemonize);
 
   auto
   run() -> void;
