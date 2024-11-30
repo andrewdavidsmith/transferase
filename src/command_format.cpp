@@ -37,9 +37,8 @@
 
 #include <boost/program_options.hpp>
 
-#include <algorithm>
+// #include <algorithm>
 #include <array>
-#include <cassert>
 #include <charconv>
 #include <iostream>
 #include <limits>
@@ -139,21 +138,11 @@ struct meth_file {
 
 static inline auto
 skip_absent_cpgs(const std::uint64_t end_pos, const cpg_index::vec &idx,
-                 std::uint32_t &cpg_idx_in) -> std::uint32_t {
+                 std::uint32_t cpg_idx_in) -> std::uint32_t {
   const std::uint32_t first_idx = cpg_idx_in;
   while (cpg_idx_in < size(idx) && idx[cpg_idx_in] < end_pos)
     ++cpg_idx_in;
   return cpg_idx_in - first_idx;
-}
-
-// add all cpg sites for chroms in the given range
-static inline auto
-add_all_cpgs(const std::uint32_t prev_ch_id, const std::uint32_t ch_id,
-             const cpg_index &idx) -> std::uint32_t {
-  auto n_cpgs_total = 0;
-  for (auto i = prev_ch_id + 1; i < ch_id; ++i)
-    n_cpgs_total += size(idx.positions[i]);
-  return n_cpgs_total;
 }
 
 static inline auto
@@ -206,8 +195,8 @@ verify_header_line(const cpg_index_meta &cim, std::int32_t &n_chroms_seen,
 
 static auto
 process_cpg_sites(const std::string &infile, const std::string &outfile,
-                  const cpg_index &index, const cpg_index_meta &cim,
-                  const bool zip) -> std::tuple<methylome, std::error_code> {
+                  const cpg_index &index, const cpg_index_meta &cim)
+  -> std::tuple<methylome, std::error_code> {
   auto &lgr = logger::instance();
 
   meth_file mf{};
@@ -217,14 +206,19 @@ process_cpg_sites(const std::string &infile, const std::string &outfile,
     return {{}, err};
   }
 
-  methylome::vec cpgs(cim.n_cpgs, {0, 0});
-
-  std::uint32_t cpg_idx_out{};  // index of current output cpg position
-  std::uint32_t cpg_idx_in{};   // index of current input cpg position
-  std::int32_t prev_ch_id = -1;
+  std::uint32_t cpg_idx_in{};  // index of current input cpg position
   std::uint64_t pos = std::numeric_limits<std::uint64_t>::max();
 
   std::vector<cpg_index::vec>::const_iterator positions{};
+
+  // ADS: if optimization is needed, this can be flattened here to
+  // avoid a copy later
+  std::vector<methylome::vec> cpgs;
+  for (const auto n_cpgs_chrom : cim.get_n_cpgs_chrom())
+    cpgs.push_back(methylome::vec(n_cpgs_chrom));
+  std::uint32_t cpg_idx_out{};
+
+  methylome::vec::iterator cpgs_itr;
 
   std::string line;
   std::int32_t n_chroms_seen{};
@@ -233,29 +227,25 @@ process_cpg_sites(const std::string &infile, const std::string &outfile,
       // consistency check between reference used for the index and
       // reference used for the methylome
       if (err = verify_header_line(cim, n_chroms_seen, line); err) {
-        std::println("Error parsing xcounts header line: {} ({})", line, err);
+        lgr.error("Error parsing xcounts header line: {} ({})", line, err);
         return {{}, err};
       }
       continue;  // ADS: early loop exit
     }
     if (!std::isdigit(line[0])) {  // check for new chromosome
-      // check not first iteration
-      if (pos != std::numeric_limits<std::uint64_t>::max())
-        // add cpgs before those in the input
-        cpg_idx_out += (size(*positions) - cpg_idx_in);
-
-      const std::int32_t ch_id = get_ch_id(cim, line);
+      const std::uint32_t ch_id = get_ch_id(cim, line);
       if (ch_id < 0) {
-        std::println("Failed to find chromosome in index: {}", line);
+        lgr.error("Failed to find chromosome in index: {}", line);
         return {methylome{}, format_err::xcounts_file_chromosome_not_found};
       }
 
-      cpg_idx_out += add_all_cpgs(prev_ch_id, ch_id, index);
+      cpg_idx_out = 0;  // for testing
 
       positions = std::cbegin(index.positions) + ch_id;
       pos = 0;         // position in genome
       cpg_idx_in = 0;  // index of current cpg site
-      prev_ch_id = ch_id;
+
+      cpgs_itr = std::begin(cpgs[ch_id]);
     }
     else {
       std::uint32_t pos_step = 0, n_meth = 0, n_unmeth = 0;
@@ -266,28 +256,32 @@ process_cpg_sites(const std::string &infile, const std::string &outfile,
       // ADS: check for errors here
 
       const auto curr_pos = pos + pos_step;
-      if (pos + 1 < curr_pos)
-        cpg_idx_out += skip_absent_cpgs(curr_pos, *positions, cpg_idx_in);
+      if (pos + 1 < curr_pos) {
+        const auto n_skips = skip_absent_cpgs(curr_pos, *positions, cpg_idx_in);
+        cpg_idx_out += n_skips;
+        cpg_idx_in += n_skips;
+      }
 
       // ADS: prevent counts from overflowing
       conditional_round_to_fit<methylome::m_count_t>(n_meth, n_unmeth);
 
-      cpgs[cpg_idx_out++] = {static_cast<methylome::m_count_t>(n_meth),
-                             static_cast<methylome::m_count_t>(n_unmeth)};
+      *(cpgs_itr + cpg_idx_out++) = {
+        static_cast<methylome::m_count_t>(n_meth),
+        static_cast<methylome::m_count_t>(n_unmeth),
+      };
+
       pos = curr_pos;
       ++cpg_idx_in;
     }
   }
-  cpg_idx_out += size(*positions) - cpg_idx_in;
-  cpg_idx_out += add_all_cpgs(prev_ch_id, std::size(index.positions), index);
 
-  if (cpg_idx_out != cim.n_cpgs) {
-    lgr.error("Inconsistent numbers of cpgs (index={}, processed={})",
-              cim.n_cpgs, cpg_idx_out);
-    return {methylome{}, format_err::methylome_format_failure};
-  }
+  methylome::vec cpgs_flat;
+  cpgs_flat.reserve(cim.n_cpgs);
+  for (const auto &c : cpgs)
+    cpgs_flat.insert(std::end(cpgs_flat), std::cbegin(c), std::cend(c));
 
-  return {methylome{std::move(cpgs)}, std::error_code{}};
+  // tuple is move-returned, but making the tuple would copy
+  return {std::move(methylome{std::move(cpgs_flat)}), std::error_code{}};
 }
 
 auto
@@ -361,7 +355,7 @@ command_format_main(int argc, char *argv[]) -> int {
   }
 
   const auto [meth, meth_err] =
-    process_cpg_sites(methylation_input, methylome_output, index, cim, zip);
+    process_cpg_sites(methylation_input, methylome_output, index, cim);
   if (meth_err) {
     lgr.error("Error generating methylome: {}", meth_err);
     return EXIT_FAILURE;
