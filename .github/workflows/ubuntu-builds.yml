@@ -31,3 +31,4 @@ jobs:
         run: |
           export LD_LIBRARY_PATH=/usr/local/lib
           ./Release/src/mxe
+          ctest --test-dir Release
