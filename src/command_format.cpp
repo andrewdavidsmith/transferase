@@ -356,7 +356,7 @@ command_format_main(int argc, char *argv[]) -> int {
 
   const auto [index, cim, index_read_err] = read_cpg_index(index_file);
   if (index_read_err) {
-    lgr.error("Failed to read cpg index: {} ({})", index_file, index_read_err);
+    lgr.error("Failed to read cpg index {}: {}", index_file, index_read_err);
     return EXIT_FAILURE;
   }
 
@@ -379,7 +379,7 @@ command_format_main(int argc, char *argv[]) -> int {
   }
 
   if (const auto write_err = meta.write(metadata_output); write_err) {
-    lgr.error("Error writing metadata: {} ({})", write_err, metadata_output);
+    lgr.error("Error writing metadata {}: {}", metadata_output, write_err);
     return EXIT_FAILURE;
   }
 
