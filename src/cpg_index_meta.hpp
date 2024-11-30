@@ -116,6 +116,9 @@ struct cpg_index_meta {
   tostring() const -> std::string;
 
   [[nodiscard]] auto
+  get_n_cpgs_chrom() const -> std::vector<std::uint32_t>;
+
+  [[nodiscard]] auto
   get_n_bins(const std::uint32_t bin_size) const -> std::uint32_t;
 };
 
