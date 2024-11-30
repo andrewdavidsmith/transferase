@@ -31,6 +31,7 @@
 #include <boost/asio.hpp>  // boost::asio::ip::host_name();
 #include <boost/json.hpp>
 
+#include <algorithm>  // std::shift_left
 #include <chrono>
 #include <cstdint>
 #include <fstream>
@@ -40,6 +41,7 @@
 #include <string>
 #include <system_error>
 #include <tuple>
+#include <vector>
 
 [[nodiscard]] static auto
 get_username() -> std::tuple<std::string, std::error_code> {
@@ -108,6 +110,17 @@ cpg_index_meta::tostring() const -> std::string {
   if (!(o << boost::json::value_from(*this)))
     o.clear();
   return o.str();
+}
+
+[[nodiscard]] auto
+cpg_index_meta::get_n_cpgs_chrom() const -> std::vector<std::uint32_t> {
+  std::vector<std::uint32_t> n_cpgs_chrom(chrom_offset);
+  n_cpgs_chrom.push_back(n_cpgs);
+  std::adjacent_difference(std::cbegin(n_cpgs_chrom), std::cend(n_cpgs_chrom),
+                           std::begin(n_cpgs_chrom));
+  std::shift_left(std::begin(n_cpgs_chrom), std::end(n_cpgs_chrom), 1);
+  n_cpgs_chrom.resize(std::size(n_cpgs_chrom) - 1);
+  return n_cpgs_chrom;
 }
 
 [[nodiscard]] auto
