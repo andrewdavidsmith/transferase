@@ -62,6 +62,7 @@ connection::read_request() -> void {
                     from_chars(req_hdr_parse.ptr, cend(req_hdr_buf), req);
                   !req_parse.error) {
                 prepare_to_read_offsets();
+                handler.add_response_size_for_intervals(req_hdr, req, resp_hdr);
                 read_offsets();
               }
               else {
