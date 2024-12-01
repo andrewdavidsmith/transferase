@@ -78,5 +78,5 @@ genomic_interval::load(const cpg_index_meta &cim,
       return {{}, ec};
     v.push_back(std::move(gi));
   }
-  return {v, genomic_interval_code::ok};
+  return {std::move(v), genomic_interval_code::ok};
 }
