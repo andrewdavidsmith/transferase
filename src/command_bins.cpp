@@ -64,8 +64,7 @@ do_remote_bins(const string &accession, const cpg_index_meta &cim,
     hdr.rq_type = request_header::request_type::bin_counts_cov;
 
   bins_request req{bin_size};
-  mxe_client<counts_res_type, bins_request> mxec(hostname, port, hdr, req,
-                                                 logger::instance());
+  mxe_client<counts_res_type, bins_request> mxec(hostname, port, hdr, req);
   const auto status = mxec.run();
   if (status) {
     logger::instance().error("Transaction status: {}", status);
