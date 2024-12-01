@@ -26,26 +26,19 @@
 #include "mxe_error.hpp"
 
 #include <algorithm>
-#include <charconv>
 #include <format>
 #include <ranges>
 #include <string>
-
-namespace rg = std::ranges;
-using std::format;
-using std::from_chars;
-using std::size;
-using std::string;
 
 auto
 to_chars(char *first, [[maybe_unused]] char *last,
          const request_header &header) -> mxe_to_chars_result {
   // ADS: use to_chars here
-  const string s = format("{}\n", header);
-  assert(static_cast<std::iterator_traits<char *>::difference_type>(size(s)) <
-         std::distance(first, last));
-  auto data_end = rg::copy(s, first);  // rg::in_out_result
-  return {data_end.out, request_error::ok};
+  const std::string s = std::format("{}\n", header);
+  assert(static_cast<std::iterator_traits<char *>::difference_type>(
+           std::size(s)) < std::distance(first, last));
+  // std::ranges::in_out_result::out
+  return {std::ranges::copy(s, first).out, request_error::ok};
 }
 
 auto
@@ -63,14 +56,14 @@ from_chars(const char *first, const char *last,
 
   if (cursor == last)
     return {cursor, request_error::header_parse_error_accession};
-  header.accession = string(first, std::distance(first, cursor));
+  header.accession = std::string(first, std::distance(first, cursor));
 
   // methylome size
   if (*cursor != delim)
     return {cursor, request_error::header_parse_error_methylome_size};
   ++cursor;
   {
-    const auto [ptr, ec] = from_chars(cursor, last, header.methylome_size);
+    const auto [ptr, ec] = std::from_chars(cursor, last, header.methylome_size);
     if (ec != std::errc{})
       return {ptr, request_error::header_parse_error_methylome_size};
     cursor = ptr;
@@ -82,7 +75,7 @@ from_chars(const char *first, const char *last,
   ++cursor;
   {
     std::underlying_type_t<request_header::request_type> tmp{};
-    const auto [ptr, ec] = from_chars(cursor, last, tmp);
+    const auto [ptr, ec] = std::from_chars(cursor, last, tmp);
     if (ec != std::errc{})
       return {ptr, request_error::header_parse_error_request_type};
     header.rq_type = static_cast<request_header::request_type>(tmp);
@@ -99,38 +92,38 @@ from_chars(const char *first, const char *last,
 auto
 compose(request_header_buffer &buf,
         const request_header &hdr) -> compose_result {
-  return to_chars(buf.data(), buf.data() + size(buf), hdr);
+  return to_chars(buf.data(), buf.data() + std::size(buf), hdr);
 }
 
 auto
 parse(const request_header_buffer &buf, request_header &hdr) -> parse_result {
-  return from_chars(buf.data(), buf.data() + size(buf), hdr);
+  return from_chars(buf.data(), buf.data() + std::size(buf), hdr);
 }
 
 auto
-request_header::summary() const -> string {
-  return format(R"({{"accession": "{}", )"
-                R"("methylome_size": {}, )"
-                R"("request_type": {}}})",
-                accession, methylome_size, rq_type);
+request_header::summary() const -> std::string {
+  return std::format(R"({{"accession": "{}", )"
+                     R"("methylome_size": {}, )"
+                     R"("request_type": {}}})",
+                     accession, methylome_size, rq_type);
 }
 
 // request
 
 auto
-request::summary() const -> string {
-  return format(R"({{"n_intervals": {}}})", n_intervals);
+request::summary() const -> std::string {
+  return std::format(R"({{"n_intervals": {}}})", n_intervals);
 }
 
 auto
 to_chars(char *first, [[maybe_unused]] char *last,
          const request &req) -> mxe_to_chars_result {
   // ADS: use to_chars here
-  const string s = format("{}\n", req.n_intervals);
-  assert(static_cast<std::iterator_traits<char *>::difference_type>(size(s)) <
-         std::distance(first, last));
-  auto data_end = rg::copy(s, first);  // rg::in_out_result
-  return {data_end.out, request_error::ok};
+  const std::string s = std::format("{}\n", req.n_intervals);
+  assert(static_cast<std::iterator_traits<char *>::difference_type>(
+           std::size(s)) < std::distance(first, last));
+  // std::ranges::in_out_result::out
+  return {std::ranges::copy(s, first).out, request_error::ok};
 }
 
 auto
@@ -142,12 +135,10 @@ from_chars(const char *first, const char *last,
   auto cursor = first;
 
   // number of intervals
-  {
-    const auto [ptr, ec] = from_chars(cursor, last, req.n_intervals);
-    if (ec != std::errc{})
-      return {ptr, request_error::lookup_parse_error_n_intervals};
-    cursor = ptr;
-  }
+  const auto [ptr, ec] = std::from_chars(cursor, last, req.n_intervals);
+  if (ec != std::errc{})
+    return {ptr, request_error::lookup_parse_error_n_intervals};
+  cursor = ptr;
 
   // terminator
   if (*cursor != term)
@@ -160,8 +151,8 @@ from_chars(const char *first, const char *last,
 // bins_request
 
 auto
-bins_request::summary() const -> string {
-  return format(R"({{"bin_size": {}}})", bin_size);
+bins_request::summary() const -> std::string {
+  return std::format(R"({{"bin_size": {}}})", bin_size);
 }
 
 auto
@@ -169,11 +160,11 @@ to_chars(char *first, [[maybe_unused]] char *last,
          const bins_request &req) -> mxe_to_chars_result {
   static constexpr auto term = '\n';
   // ADS: use to_chars here
-  const string s = format("{}{}", req.bin_size, term);
-  assert(static_cast<std::iterator_traits<char *>::difference_type>(size(s)) <
-         std::distance(first, last));
-  const auto data_end = rg::copy(s, first);  // rg::in_out_result
-  return {data_end.out, request_error::ok};
+  const std::string s = std::format("{}{}", req.bin_size, term);
+  assert(static_cast<std::iterator_traits<char *>::difference_type>(
+           std::size(s)) < std::distance(first, last));
+  // std::ranges::in_out_result::out
+  return {std::ranges::copy(s, first).out, request_error::ok};
 }
 
 auto
@@ -182,7 +173,7 @@ from_chars(const char *first, const char *last,
   static constexpr auto term = '\n';
 
   auto cursor = first;
-  const auto [ptr, ec] = from_chars(cursor, last, req.bin_size);
+  const auto [ptr, ec] = std::from_chars(cursor, last, req.bin_size);
   if (ec != std::errc{})
     return {ptr, request_error::bins_error_bin_size};
   cursor = ptr;
