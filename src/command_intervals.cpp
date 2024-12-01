@@ -65,8 +65,7 @@ do_remote_intervals(const string &accession, const cpg_index_meta &cim,
     hdr.rq_type = request_header::request_type::counts_cov;
 
   request req{static_cast<std::uint32_t>(size(offsets)), offsets};
-  mxe_client<counts_res_type, request> mxec(hostname, port, hdr, req,
-                                            logger::instance());
+  mxe_client<counts_res_type, request> mxec(hostname, port, hdr, req);
   const auto status = mxec.run();
   if (status) {
     logger::instance().error("Transaction status: {}", status);
