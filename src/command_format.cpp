@@ -37,7 +37,6 @@
 
 #include <boost/program_options.hpp>
 
-// #include <algorithm>
 #include <array>
 #include <charconv>
 #include <iostream>
@@ -59,10 +58,9 @@ enum class format_err {
   xcounts_file_open_failure                  = 1,
   xcounts_file_header_failure                = 2,
   xcounts_file_chromosome_not_found          = 3,
-  xcounts_file_inconsistent_chromosome_order = 4,
-  xcounts_file_incorrect_chromosome_size     = 5,
-  methylome_format_failure                   = 6,
-  methylome_file_write_failure               = 7,
+  xcounts_file_incorrect_chromosome_size     = 4,
+  methylome_format_failure                   = 5,
+  methylome_file_write_failure               = 6,
   // clang-format on
 };
 
@@ -80,10 +78,9 @@ struct format_err_cat : std::error_category {
     case 1: return "failed to open methylome file"s;
     case 2: return "failed to parse xcounts header"s;
     case 3: return "failed to find chromosome in xcounts header"s;
-    case 4: return "inconsistent chromosome order"s;
-    case 5: return "incorrect chromosome size"s;
-    case 6: return "failed to generate methylome file"s;
-    case 7: return "failed to write methylome file"s;
+    case 4: return "incorrect chromosome size"s;
+    case 5: return "failed to generate methylome file"s;
+    case 6: return "failed to write methylome file"s;
     }
     // clang-format on
     std::abort();  // unreacheable
@@ -157,7 +154,7 @@ get_ch_id(const cpg_index_meta &cim,
 // ADS: this function is tied to the specifics of dnmtools::xcounts
 // code, and likely needs a review
 static auto
-verify_header_line(const cpg_index_meta &cim, std::int32_t &n_chroms_seen,
+verify_header_line(const cpg_index_meta &cim,
                    const std::string &line) -> std::error_code {
   // ignore the version line and the header end line
   if (line.substr(0, 9) == "#DNMTOOLS" || size(line) == 1)
@@ -178,17 +175,11 @@ verify_header_line(const cpg_index_meta &cim, std::int32_t &n_chroms_seen,
   if (order_itr == cend(cim.chrom_index))
     return format_err::xcounts_file_chromosome_not_found;
 
-  if (n_chroms_seen != order_itr->second)
-    return format_err::xcounts_file_inconsistent_chromosome_order;
-
   // validate that the chromosome size is the same between the index
   // and the methylome mxe file
   const auto size_itr = cim.chrom_size[order_itr->second];
   if (chrom_size != size_itr)
     return format_err::xcounts_file_incorrect_chromosome_size;
-
-  ++n_chroms_seen;  // increment the number of chroms seen in the
-                    // methylome file header
 
   return format_err::ok;
 }
@@ -221,12 +212,11 @@ process_cpg_sites(const std::string &infile, const std::string &outfile,
   methylome::vec::iterator cpgs_itr;
 
   std::string line;
-  std::int32_t n_chroms_seen{};
   while (mf.getline(line)) {
     if (line[0] == '#') {
       // consistency check between reference used for the index and
       // reference used for the methylome
-      if (err = verify_header_line(cim, n_chroms_seen, line); err) {
+      if (err = verify_header_line(cim, line); err) {
         lgr.error("Error parsing xcounts header line: {} ({})", line, err);
         return {{}, err};
       }
@@ -238,7 +228,6 @@ process_cpg_sites(const std::string &infile, const std::string &outfile,
         lgr.error("Failed to find chromosome in index: {}", line);
         return {methylome{}, format_err::xcounts_file_chromosome_not_found};
       }
-
       cpg_idx_out = 0;  // for testing
 
       positions = std::cbegin(index.positions) + ch_id;
