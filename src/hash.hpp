@@ -35,6 +35,14 @@ get_adler(const auto &data, const auto data_size) -> std::uint64_t {
   return adler32_z(0, reinterpret_cast<const std::uint8_t *>(data), data_size);
 }
 
+[[nodiscard]] inline auto
+update_adler(const auto previous, const auto &data,
+             const auto data_size) -> std::uint64_t {
+  // ADS: hopefull this function won't be needed after some refactoring
+  const auto adler = get_adler(data, data_size);
+  return adler32_combine(previous, adler, data_size);
+}
+
 // ADS: this function should be replaced by one that can operate on a
 // the data as though it were serealized but without reading the file
 [[nodiscard]] auto
