@@ -62,6 +62,11 @@ struct request_handler {
                              const bins_request &req,
                              response_header &resp_hdr) -> void;
 
+  auto
+  add_response_size_for_intervals(
+    [[maybe_unused]] const request_header &req_hdr, const request &req,
+    response_header &resp_hdr) -> void;
+
   std::string methylome_dir;   // dir of available methylomes
   std::string index_file_dir;  // dir of cpg index files
   methylome_set ms;

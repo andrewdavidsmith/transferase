@@ -78,6 +78,13 @@ request_handler::add_response_size_for_bins(const request_header &req_hdr,
   resp_hdr.response_size = cim.get_n_bins(req.bin_size);
 }
 
+auto
+request_handler::add_response_size_for_intervals(
+  [[maybe_unused]] const request_header &req_hdr, const request &req,
+  response_header &resp_hdr) -> void {
+  resp_hdr.response_size = req.n_intervals;
+}
+
 // ADS: This function needs a complete request *except* it does not
 // need the offsets to have been allocated or have any values read
 // into them.
