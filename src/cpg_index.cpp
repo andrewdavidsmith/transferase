@@ -155,26 +155,37 @@ initialize_cpg_index(const std::string &genome_filename)
   const auto name_stops = get_chrom_name_stops(name_starts, gf.data, gf.sz);
 
   // initialize the chromosome order
-  cpg_index_meta meta;
-  for (const auto [start, stop] : std::views::zip(name_starts, name_stops))
-    // ADS: "+1" below to skip the ">" character
-    meta.chrom_order.emplace_back(
-      std::string_view(gf.data + start + 1, gf.data + stop));
+  std::vector<std::pair<std::uint32_t, std::string>> chrom_sorter;
+  {
+    std::uint32_t idx = 0;
+    for (const auto [start, stop] : std::views::zip(name_starts, name_stops))
+      // ADS: "+1" below to skip the ">" character
+      chrom_sorter.emplace_back(
+        idx++, std::string(gf.data + start + 1, gf.data + stop));
+  }
 
-  const auto n_chroms = std::size(meta.chrom_order);
+  std::ranges::sort(chrom_sorter, [](const auto &a, const auto &b) {
+    return a.second < b.second;
+  });
+
+  cpg_index_meta meta;
+  meta.chrom_order =
+    chrom_sorter | std::views::elements<1> | std::ranges::to<std::vector>();
 
   // chroms is a view into 'gf.data' so don't free gf.data too early
-  const auto chroms = get_chroms(gf.data, gf.sz, name_starts, name_stops);
+  const auto chroms_orig = get_chroms(gf.data, gf.sz, name_starts, name_stops);
+  std::vector<std::string_view> chroms;
+  for (const auto idx : chrom_sorter | std::views::elements<0>)
+    chroms.push_back(chroms_orig[idx]);
+
+  cpg_index index;
 
   // collect cpgs for each chrom; order must match chrom name order
-  cpg_index index;
-  index.positions.resize(n_chroms);
-  std::ranges::transform(chroms, std::begin(index.positions), get_cpgs);
+  std::ranges::transform(chroms, std::back_inserter(index.positions), get_cpgs);
 
   // get size of each chrom to cross-check data files using this index
-  meta.chrom_size.resize(n_chroms);
   std::ranges::transform(
-    chroms, std::begin(meta.chrom_size), [](const auto &chrom) {
+    chroms, std::back_inserter(meta.chrom_size), [](const auto &chrom) {
       return std::ranges::size(chrom) - std::ranges::count(chrom, '\n');
     });
 
@@ -183,8 +194,7 @@ initialize_cpg_index(const std::string &genome_filename)
     return {{}, {}, munmap_err};
 
   // initialize chrom offsets within the compressed files
-  meta.chrom_offset.resize(n_chroms);
-  std::ranges::transform(index.positions, std::begin(meta.chrom_offset),
+  std::ranges::transform(index.positions, std::back_inserter(meta.chrom_offset),
                          std::size<cpg_index::vec>);
 
   meta.n_cpgs =
