@@ -40,7 +40,7 @@
 template <typename counts_type, typename req_type> class mxe_client {
 public:
   mxe_client(const std::string &server, const std::string &port,
-             request_header &req_hdr, req_type &req, logger &lgr);
+             request_header &req_hdr, req_type &req);
 
   auto
   run() -> std::error_code {
@@ -72,13 +72,22 @@ private:
   auto
   handle_read_response_header(const std::error_code &err);
   auto
-  do_read_counts();
+  do_read_counts() -> void;
   auto
   handle_failure_explanation(const std::error_code &err);
   auto
   do_finish(const std::error_code &err);
   auto
   check_deadline();
+
+  auto
+  prepare_to_read_counts() -> void;
+  auto
+  get_counts_n_bytes() const -> std::uint32_t;
+  auto
+  resp_get_counts_data() -> char * {
+    return reinterpret_cast<char *>(resp.counts.data());
+  }
 
   boost::asio::io_context io_context;
   boost::asio::ip::tcp::resolver resolver;
@@ -96,34 +105,39 @@ private:
   std::error_code status;
   logger &lgr;
   std::chrono::seconds read_timeout_seconds{3};
+
+  // These help keep track of where we are in the incoming counts;
+  // they might best be associated with the response.
+  std::size_t counts_byte{};
+  std::size_t counts_remaining{};
 };  // class mxe_client
 
 template <typename counts_type, typename req_type>
 mxe_client<counts_type, req_type>::mxe_client(const std::string &server,
                                               const std::string &port,
                                               request_header &req_hdr,
-                                              req_type &req, logger &lgr) :
+                                              req_type &req) :
   resolver(io_context), socket(io_context), deadline{socket.get_executor()},
   req_hdr{req_hdr}, req{std::move(req)},  // move b/c req can be big
-  lgr{lgr} {
+  lgr{logger::instance()} {
   // (1) call async, (2) set deadline, (3) register check_deadline
-  const auto handle_resolve_token = [this](const auto &error, auto results) {
-    this->handle_resolve(error, results);
+  const auto token = [this](const auto &error, const auto &results) {
+    handle_resolve(error, results);
   };
   boost::system::error_code ec;
   boost::asio::ip::address addr{};
   addr.from_string(server, ec);
   if (ec) {  // server not an IP address
     lgr.debug("Resolving address for hostname: {}", server);
-    resolver.async_resolve(server, port, handle_resolve_token);
+    resolver.async_resolve(server, port, token);
   }
   else {  // server given as IP address
     lgr.debug("Avoiding address resolution (ip: {})", server);
     const auto ns = boost::asio::ip::resolver_query_base::numeric_service;
-    resolver.async_resolve(server, port, ns, handle_resolve_token);
+    resolver.async_resolve(server, port, ns, token);
   }
   deadline.expires_after(read_timeout_seconds);
-  deadline.async_wait([this](auto) { this->check_deadline(); });
+  deadline.async_wait([this](auto) { check_deadline(); });
 }
 
 template <typename counts_type, typename req_type>
@@ -213,6 +227,22 @@ mxe_client<counts_type, req_type>::handle_write_request(
 
 template <typename counts_type, typename req_type>
 auto
+mxe_client<counts_type, req_type>::get_counts_n_bytes() const -> std::uint32_t {
+  return sizeof(counts_type) * resp_hdr.response_size;
+}
+
+template <typename counts_type, typename req_type>
+auto
+mxe_client<counts_type, req_type>::prepare_to_read_counts() -> void {
+  // This function is needed because this can't be done in the
+  // read_offsets() function as it is recursive
+  resp.counts.resize(resp_hdr.response_size);  // get space for offsets
+  counts_remaining = get_counts_n_bytes();     // init counters
+  counts_byte = 0;                             // should be init to this
+}
+
+template <typename counts_type, typename req_type>
+auto
 mxe_client<counts_type, req_type>::handle_read_response_header(
   const std::error_code &err) {
   // ADS: does this go here?
@@ -223,8 +253,10 @@ mxe_client<counts_type, req_type>::handle_read_response_header(
       lgr.debug("Response header: {}", resp_hdr.summary());
       if (resp_hdr.status)
         do_finish(resp_hdr.status);
-      else
+      else {
+        prepare_to_read_counts();
         do_read_counts();
+      }
     }
     else {
       lgr.debug("Error: {}", resp_hdr_parse.error);
@@ -235,6 +267,33 @@ mxe_client<counts_type, req_type>::handle_read_response_header(
     lgr.debug("Error reading response header: {}", err);
     do_finish(err);
   }
+}
+
+template <typename counts_type, typename req_type>
+auto
+mxe_client<counts_type, req_type>::do_read_counts() -> void {
+  socket.async_read_some(
+    boost::asio::buffer(resp_get_counts_data() + counts_byte, counts_remaining),
+    [this](const boost::system::error_code ec,
+           const std::size_t bytes_transferred) {
+      deadline.expires_at(boost::asio::steady_timer::time_point::max());
+      if (!ec) {
+        counts_remaining -= bytes_transferred;
+        counts_byte += bytes_transferred;
+        if (counts_remaining == 0) {
+          do_finish(ec);
+        }
+        else {
+          do_read_counts();
+        }
+      }
+      else {
+        lgr.error("Error reading counts: {}", ec);
+        // exiting the read loop -- no deadline for now
+        do_finish(ec);
+      }
+    });
+  deadline.expires_after(read_timeout_seconds);
 }
 
 template <typename counts_type, typename req_type>
@@ -256,28 +315,6 @@ mxe_client<counts_type, req_type>::handle_failure_explanation(
   else {
     lgr.debug("Error reading response header: {}", err);
     do_finish(err);
-  }
-}
-
-template <typename counts_type, typename req_type>
-auto
-mxe_client<counts_type, req_type>::do_read_counts() {
-  if constexpr (std::is_same<req_type, request>::value) {
-    // ADS: this 'resize' seems to belong with the response class
-    resp.counts.resize(req.n_intervals);
-    boost::asio::async_read(
-      socket, boost::asio::buffer(resp.counts),
-      boost::asio::transfer_exactly(resp.get_counts_n_bytes()),
-      [this](const auto &error, auto) { this->do_finish(error); });
-    deadline.expires_after(read_timeout_seconds);
-  }
-  else {
-    resp.counts.resize(resp_hdr.response_size);
-    boost::asio::async_read(
-      socket, boost::asio::buffer(resp.counts),
-      boost::asio::transfer_exactly(resp.get_counts_n_bytes()),
-      [this](const auto &error, auto) { this->do_finish(error); });
-    deadline.expires_after(read_timeout_seconds);
   }
 }
 
