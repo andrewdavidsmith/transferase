@@ -112,7 +112,7 @@ struct request {
   summary() const -> std::string;
 
   auto
-  get_offsets_n_bytes() const -> uint32_t {
+  get_offsets_n_bytes() const -> std::uint32_t {
     return sizeof(offset_type) * size(offsets);
   }
   auto
