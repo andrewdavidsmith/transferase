@@ -45,6 +45,7 @@
 #include <string>
 #include <system_error>
 #include <tuple>
+#include <utility>  // std::move
 
 [[nodiscard]] static auto
 get_username() -> std::tuple<std::string, std::error_code> {
@@ -131,7 +132,7 @@ methylome_metadata::read(const std::string &json_filename)
     return {methylome_metadata{},
             methylome_metadata_error::failure_parsing_json};
 
-  return {mm, methylome_metadata_error::ok};
+  return {std::move(mm), methylome_metadata_error::ok};
 }
 
 [[nodiscard]] auto
