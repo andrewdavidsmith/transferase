@@ -41,6 +41,7 @@
 #include <string>
 #include <system_error>
 #include <tuple>
+#include <utility>  // std::move
 #include <vector>
 
 [[nodiscard]] static auto
@@ -144,7 +145,7 @@ cpg_index_meta::read(const std::string &json_filename)
   if (ec)
     return {cpg_index_meta{}, cpg_index_meta_error::failure_parsing_json};
 
-  return {cim, cpg_index_meta_error::ok};
+  return {std::move(cim), cpg_index_meta_error::ok};
 }
 
 [[nodiscard]] auto
