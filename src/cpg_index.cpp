@@ -363,7 +363,12 @@ cpg_index::get_offsets(const cpg_index_meta &meta,
 
 [[nodiscard]] auto
 cpg_index::hash() const -> std::uint64_t {
-  return get_adler(positions.data(), std::size(positions) * sizeof(cpg_pos_t));
+  // ADS: plan to change this after positions is refactored into a single vec
+  std::uint64_t combined = 1;  // from the zlib docs to init
+  for (const auto &p : positions)
+    combined =
+      update_adler(combined, p.data(), std::size(p) * sizeof(cpg_pos_t));
+  return combined;
 }
 
 [[nodiscard]] auto
