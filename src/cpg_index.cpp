@@ -156,13 +156,11 @@ initialize_cpg_index(const std::string &genome_filename)
 
   // initialize the chromosome order
   std::vector<std::pair<std::uint32_t, std::string>> chrom_sorter;
-  {
-    std::uint32_t idx = 0;
-    for (const auto [start, stop] : std::views::zip(name_starts, name_stops))
-      // ADS: "+1" below to skip the ">" character
-      chrom_sorter.emplace_back(
-        idx++, std::string(gf.data + start + 1, gf.data + stop));
-  }
+  for (auto idx = 0;
+       const auto [start, stop] : std::views::zip(name_starts, name_stops))
+    // ADS: "+1" below to skip the ">" character
+    chrom_sorter.emplace_back(idx++,
+                              std::string(gf.data + start + 1, gf.data + stop));
 
   std::ranges::sort(chrom_sorter, [](const auto &a, const auto &b) {
     return a.second < b.second;
@@ -173,10 +171,12 @@ initialize_cpg_index(const std::string &genome_filename)
     chrom_sorter | std::views::elements<1> | std::ranges::to<std::vector>();
 
   // chroms is a view into 'gf.data' so don't free gf.data too early
-  const auto chroms_orig = get_chroms(gf.data, gf.sz, name_starts, name_stops);
-  std::vector<std::string_view> chroms;
-  for (const auto idx : chrom_sorter | std::views::elements<0>)
-    chroms.push_back(chroms_orig[idx]);
+  auto chroms = get_chroms(gf.data, gf.sz, name_starts, name_stops);
+
+  // order chrom sequences by the sorted order of their names
+  chroms = std::views::transform(chrom_sorter | std::views::elements<0>,
+                                 [&](const auto i) { return chroms[i]; }) |
+           std::ranges::to<std::vector>();
 
   cpg_index index;
 
@@ -253,7 +253,7 @@ cpg_index::read(const cpg_index_meta &cim, const std::string &index_file)
                 std::error_code(cpg_index_code::failure_reading_index_body)};
     }
   }
-  return {ci, std::error_code{}};
+  return {std::move(ci), std::error_code{}};
 }
 
 [[nodiscard]] auto
