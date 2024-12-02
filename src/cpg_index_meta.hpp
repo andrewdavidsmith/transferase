@@ -88,7 +88,7 @@ make_error_code(cpg_index_meta_error e) {
 }
 
 struct cpg_index_meta {
-  static constexpr auto filename_extension{"cpg_idx.json"};
+  static constexpr auto filename_extension{".cpg_idx.json"};
 
   std::string version;
   std::string host;

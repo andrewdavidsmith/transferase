@@ -44,26 +44,6 @@
 #include <utility>  // std::move
 #include <vector>
 
-[[nodiscard]] static auto
-get_username() -> std::tuple<std::string, std::error_code> {
-  static constexpr auto username_maxsize = 128;
-  std::array<char, username_maxsize> buf;
-  if (getlogin_r(buf.data(), username_maxsize))
-    return {std::string(), std::make_error_code(std::errc(errno))};
-  return {std::string(buf.data()), {}};
-}
-
-[[nodiscard]] static auto
-get_time_as_string() -> std::string {
-  const auto now{std::chrono::system_clock::now()};
-  const std::chrono::year_month_day ymd{
-    std::chrono::floor<std::chrono::days>(now)};
-  const std::chrono::hh_mm_ss hms{
-    std::chrono::floor<std::chrono::seconds>(now) -
-    std::chrono::floor<std::chrono::days>(now)};
-  return std::format("{:%F} {:%T}", ymd, hms);
-}
-
 [[nodiscard]] auto
 cpg_index_meta::init_env() -> std::error_code {
   boost::system::error_code boost_err;
@@ -79,18 +59,6 @@ cpg_index_meta::init_env() -> std::error_code {
   user = username;
   creation_time = get_time_as_string();
 
-  return {};
-}
-
-[[nodiscard]] auto
-cpg_index_meta::write(const std::string &json_filename) const
-  -> std::error_code {
-  std::ofstream out(json_filename);
-  if (!out)
-    return std::make_error_code(std::errc(errno));
-  out << boost::json::value_from(*this);
-  if (!out)
-    return std::make_error_code(std::errc(errno));
   return {};
 }
 
@@ -146,6 +114,17 @@ cpg_index_meta::read(const std::string &json_filename)
     return {cpg_index_meta{}, cpg_index_meta_error::failure_parsing_json};
 
   return {std::move(cim), cpg_index_meta_error::ok};
+}
+
+[[nodiscard]] auto
+cpg_index_meta::write(const std::string &json_filename) const
+  -> std::error_code {
+  std::ofstream out(json_filename);
+  if (!out)
+    return std::make_error_code(std::errc(errno));
+  if (!(out << boost::json::value_from(*this)))
+    return std::make_error_code(std::errc(errno));
+  return {};
 }
 
 [[nodiscard]] auto
