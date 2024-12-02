@@ -23,11 +23,35 @@
 
 #include "command_check.hpp"
 
+static constexpr auto about = R"(
+check the given files for correctness and consistency
+)";
+
+static constexpr auto description = R"(
+Perform 3 kinds of checks. First, the index is checked internally to
+verify that the index data and the index metadata are consistent.
+Second, the methylomes are each checked internally to verify that the
+methylome data and methylome metadata is consistent for each given
+methylome. Finally, each given methylome is checked for consistency
+with the given index. Not output is written except that logged to the
+console. The exit code of the app will be non-zero if any of the
+consistency checks fails. At a log-level of 'debug' the outcome of
+each check will be logged so the cause of any failure can be
+determined.
+)";
+
+static constexpr auto examples = R"(
+Examples:
+
+mxe check -x indexes/hg38.cpg_idx -m SRX012345.m16 SRX612345.m16
+)";
+
 #include "cpg_index.hpp"
 #include "logger.hpp"
 #include "methylome.hpp"
 #include "methylome_metadata.hpp"
 #include "mxe_error.hpp"
+#include "utilities.hpp"
 
 #include <boost/program_options.hpp>
 
@@ -40,42 +64,102 @@
 #include <tuple>
 #include <vector>
 
+[[nodiscard]] static auto
+check_cpg_index_consistency(const cpg_index_meta &cim,
+                            const cpg_index &index) -> bool {
+  auto &lgr = logger::instance();
+
+  const auto n_cpgs_match = (cim.n_cpgs == index.get_n_cpgs());
+  lgr.debug("cpg_index number of cpgs match: {}", n_cpgs_match);
+
+  const auto hashes_match = (cim.index_hash == index.hash());
+  lgr.debug("cpg_index hashes match: {}", hashes_match);
+
+  return n_cpgs_match and hashes_match;
+}
+
+[[nodiscard]] static auto
+check_methylome_consistency(const methylome_metadata &meta,
+                            const methylome &meth) -> bool {
+  auto &lgr = logger::instance();
+
+  lgr.debug("methylome metadata indicates compressed: {}", meta.is_compressed);
+  const auto n_cpgs_match = (meta.n_cpgs == meth.get_n_cpgs());
+  lgr.debug("methylome number of cpgs match: {}", n_cpgs_match);
+  const auto n_cpgs_match_ret = ((meta.is_compressed && !n_cpgs_match) ||
+                                 (!meta.is_compressed && n_cpgs_match));
+
+  const auto hashes_match = (meta.methylome_hash == meth.hash());
+  lgr.debug("methylome hashes match: {}", hashes_match);
+  const auto hashes_match_ret = ((meta.is_compressed && !hashes_match) ||
+                                 (!meta.is_compressed && hashes_match));
+
+  return n_cpgs_match_ret and hashes_match_ret;
+}
+
+[[nodiscard]] static auto
+check_metadata_consistency(const methylome_metadata &meta,
+                           const cpg_index_meta &cim) -> bool {
+  auto &lgr = logger::instance();
+
+  const auto versions_match = (cim.version == meta.version);
+  lgr.debug("metadata versions match: {}", versions_match);
+
+  const auto index_hashes_match = (cim.index_hash == meta.index_hash);
+  lgr.debug("metadata index hashes match: {}", index_hashes_match);
+
+  const auto assemblies_match = (cim.assembly == meta.assembly);
+  lgr.debug("metadata assemblies match: {}", assemblies_match);
+
+  const auto n_cpgs_match = (cim.n_cpgs == meta.n_cpgs);
+  lgr.debug("metadata assemblies match: {}", assemblies_match);
+
+  return versions_match and index_hashes_match and assemblies_match and
+         n_cpgs_match;
+}
+
 auto
 command_check_main(int argc, char *argv[]) -> int {
   static constexpr auto command = "check";
+  static const auto usage =
+    std::format("Usage: mxe {} [options]\n", strip(command));
+  static const auto about_msg =
+    std::format("mxe {}: {}", strip(command), strip(about));
+  static const auto description_msg =
+    std::format("{}\n{}", strip(description), strip(examples));
 
   std::string index_file{};
-  std::string methylome_input{};
-  std::string metadata_input{};
-  std::string output_file{};
   mxe_log_level log_level{};
 
   namespace po = boost::program_options;
 
-  po::options_description desc(std::format("Usage: mxe {} [options]", command));
+  po::options_description desc("Options");
   desc.add_options()
     // clang-format off
     ("help,h", "produce help message")
     ("index,x", po::value(&index_file)->required(), "index file")
-    ("methylome,m", po::value(&methylome_input)->required(), "methylome file")
-    ("meta", po::value(&metadata_input), "methylome metadata file")
-    ("output,o", po::value(&output_file)->required(), "output file")
+    ("methylomes,m", po::value<std::vector<std::string>>()->multitoken()->required(),
+     "methylome files")
     ("log-level,v", po::value(&log_level)->default_value(logger::default_level),
      "log level {debug,info,warning,error,critical}")
     // clang-format on
     ;
+  po::variables_map vm;
   try {
-    po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
     if (vm.count("help") || argc == 1) {
+      std::println("{}\n{}", about_msg, usage);
       desc.print(std::cout);
+      std::println("\n{}", description_msg);
       return EXIT_SUCCESS;
     }
     po::notify(vm);
   }
   catch (po::error &e) {
     std::println("{}", e.what());
+    std::println("{}\n{}", about_msg, usage);
     desc.print(std::cout);
+    std::println("\n{}", description_msg);
     return EXIT_FAILURE;
   }
 
@@ -85,63 +169,60 @@ command_check_main(int argc, char *argv[]) -> int {
     return EXIT_FAILURE;
   }
 
-  if (metadata_input.empty())
-    metadata_input = get_default_methylome_metadata_filename(methylome_input);
+  const auto methylome_files = vm["methylomes"].as<std::vector<std::string>>();
+  const auto n_methylomes = std::size(methylome_files);
+  const auto index_meta_file = get_default_cpg_index_meta_filename(index_file);
 
+  const auto joined = methylome_files | std::views::join_with(',');
   std::vector<std::tuple<std::string, std::string>> args_to_log{
     // clang-format off
     {"Index", index_file},
-    {"Methylome", methylome_input},
-    {"Metadata", metadata_input},
-    {"Output", output_file},
+    {"Methylomes", std::string(std::cbegin(joined), std::cend(joined))},
     // clang-format on
   };
   log_args<mxe_log_level::info>(args_to_log);
 
-  const auto [index, cim, index_read_err] = read_cpg_index(index_file);
+  const auto [index, cim, index_read_err] =
+    read_cpg_index(index_file, index_meta_file);
   if (index_read_err) {
-    lgr.error("Failed to read cpg index: {} ({})", index_file, index_read_err);
+    lgr.error("Failed to read cpg index {} ({})", index_file, index_read_err);
     return EXIT_FAILURE;
   }
+  const auto cpg_index_consitency = check_cpg_index_consistency(cim, index);
+  lgr.info("Index data and metadata consistent: {}", cpg_index_consitency);
 
-  const auto [meta, meta_read_err] = methylome_metadata::read(metadata_input);
-  if (meta_read_err) {
-    lgr.error("Error reading metadata {}: {}", metadata_input, meta_read_err);
-    return EXIT_FAILURE;
+  bool all_methylomes_consitent = true;
+  bool all_methylomes_metadata_consitent = true;
+  for (const auto methylome_file : methylome_files) {
+    const auto methylome_meta_file =
+      get_default_methylome_metadata_filename(methylome_file);
+    const auto [meth, meta, meth_read_err] =
+      read_methylome(methylome_file, methylome_meta_file);
+    if (meth_read_err) {
+      lgr.error("Failed to read methylome {} ({})", methylome_file,
+                meth_read_err);
+      return EXIT_FAILURE;
+    }
+
+    lgr.info("Methylome total counts: {}", meth.total_counts());
+    lgr.info("Methylome total counts covered: {}", meth.total_counts_cov());
+
+    const auto methylome_consitency = check_methylome_consistency(meta, meth);
+    lgr.info("Methylome data and metadata consistent: {}",
+             methylome_consitency);
+    all_methylomes_consitent = all_methylomes_consitent && methylome_consitency;
+
+    const auto metadata_consitency = check_metadata_consistency(meta, cim);
+    lgr.info("Methylome and index metadata consistent: {}",
+             metadata_consitency);
+    all_methylomes_metadata_consitent =
+      all_methylomes_metadata_consitent && metadata_consitency;
   }
 
-  const auto [meth, meth_read_err] = methylome::read(methylome_input, meta);
-  if (meth_read_err) {
-    lgr.error("Error reading methylome {}: {}", methylome_input, meth_read_err);
-    return EXIT_FAILURE;
-  }
+  lgr.info("all methylomes consistent: {}", all_methylomes_consitent);
+  lgr.info("all methylome metadata consistent: {}",
+           all_methylomes_metadata_consitent);
 
-  const auto methylome_size = std::size(meth.cpgs);
-  const auto check_outcome = (methylome_size == cim.n_cpgs) ? "pass" : "fail";
-
-  const auto total_counts = meth.total_counts_cov();
-
-  std::ofstream out(output_file);
-  if (!out) {
-    lgr.error("Error opening output file {}: {}", output_file,
-              std::make_error_code(std::errc(errno)));
-    return EXIT_FAILURE;
-  }
-
-  const double n_reads = total_counts.n_meth + total_counts.n_unmeth;
-  const auto mean_meth_weighted = total_counts.n_meth / n_reads;
-  const auto sites_covered_fraction =
-    static_cast<double>(total_counts.n_covered) / methylome_size;
-
-  std::print(out,
-             "check: {}\n"
-             "methylome_size: {}\n"
-             "index_size: {}\n"
-             "total_counts: {}\n"
-             "sites_covered_fraction: {}\n"
-             "mean_meth_weighted: {}\n",
-             check_outcome, methylome_size, cim.n_cpgs, total_counts,
-             sites_covered_fraction, mean_meth_weighted);
-
-  return EXIT_SUCCESS;
+  return cpg_index_consitency && all_methylomes_consitent &&
+         all_methylomes_metadata_consitent;
 }
