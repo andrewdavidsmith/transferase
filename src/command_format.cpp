@@ -23,6 +23,31 @@
 
 #include "command_format.hpp"
 
+static constexpr auto about = R"(
+convert single-CpG methylation levels into methylome format
+)";
+
+static constexpr auto description = R"(
+The methylome format is a small representation of single-CpG
+methylation levels that allows for summary statistics to be quickly
+computed for genomic intervals. The methylome format involves two
+files.  The methylome data is a binary file with size just over 100MB
+for the human genome and it should have the extension '.m16'. The
+methylome metadata is a small JSON format file (on a single line) that
+can easily be examined with any JSON formatter (e.g., jq or
+json_pp). These two files should reside in the same directory and
+typically only the methylome data file is specified when it is used.
+If mxe is used remotely, the methylome will reside on the server.  If
+you are analyzing your own DNA methylation data, you will need to
+format your methylomes with this command.
+)";
+
+static constexpr auto examples = R"(
+Examples:
+
+mxe format -x hg38.cpg_idx -m SRX012345.xsym.gz -o SRX012345.m16
+)";
+
 #include "cpg_index.hpp"
 #include "genomic_interval.hpp"
 #include "logger.hpp"
@@ -276,10 +301,15 @@ process_cpg_sites(const std::string &infile, const std::string &outfile,
 auto
 command_format_main(int argc, char *argv[]) -> int {
   static constexpr auto command = "format";
+  static const auto usage =
+    std::format("Usage: mxe {} [options]\n", strip(command));
+  static const auto about_msg =
+    std::format("mxe {}: {}", strip(command), strip(about));
+  static const auto description_msg =
+    std::format("{}\n{}", strip(description), strip(examples));
 
   std::string methylation_input{};
   std::string methylome_output{};
-  std::string metadata_output{};
   std::string index_file{};
   mxe_log_level log_level{};
   bool zip{false};
@@ -294,9 +324,7 @@ command_format_main(int argc, char *argv[]) -> int {
      "methylation input file")
     ("index,x", po::value(&index_file)->required(), "index file")
     ("output,o", po::value(&methylome_output)->required(),
-     "methylome output file")
-    ("meta-out", po::value(&metadata_output),
-     "metadata output (defaults to output.json)")
+     std::format("output file (must end in {})", methylome::filename_extension).data())
     ("zip,z", po::bool_switch(&zip), "zip the output")
     ("log-level,v", po::value(&log_level)->default_value(logger::default_level),
      "log level {debug,info,warning,error,critical}")
@@ -306,14 +334,18 @@ command_format_main(int argc, char *argv[]) -> int {
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
     if (vm.count("help") || argc == 1) {
+      std::println("{}\n{}", about_msg, usage);
       desc.print(std::cout);
+      std::println("\n{}", description_msg);
       return EXIT_SUCCESS;
     }
     po::notify(vm);
   }
   catch (po::error &e) {
     std::println("{}", e.what());
+    std::println("{}\n{}", about_msg, usage);
     desc.print(std::cout);
+    std::println("\n{}", description_msg);
     return EXIT_FAILURE;
   }
 
@@ -323,8 +355,16 @@ command_format_main(int argc, char *argv[]) -> int {
     return EXIT_FAILURE;
   }
 
-  if (metadata_output.empty())
-    metadata_output = get_default_methylome_metadata_filename(methylome_output);
+  const auto extension_found =
+    std::filesystem::path(methylome_output).extension();
+  if (extension_found != methylome::filename_extension) {
+    lgr.error("Required filename extension {} (given: {})",
+              methylome::filename_extension, extension_found);
+    return EXIT_FAILURE;
+  }
+
+  const auto metadata_output =
+    get_default_methylome_metadata_filename(methylome_output);
 
   std::vector<std::tuple<std::string, std::string>> args_to_log{
     // clang-format off
