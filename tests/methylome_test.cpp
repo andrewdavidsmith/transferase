@@ -26,7 +26,7 @@
 #include <gtest/gtest.h>
 
 #include <cstdint>
-#include <vector>
+#include <utility>
 
 // Demonstrate some basic assertions.
 TEST(CpgIndexTest, BasicAssertions) {

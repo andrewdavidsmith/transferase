@@ -30,20 +30,31 @@
 #include <zlib.h>
 
 #include <algorithm>
+#include <array>
 #include <cassert>
 #include <string>
+#include <tuple>
 #include <utility>
 #include <vector>
 
-// getpwuid
+// getpwuid_r
 #include <pwd.h>
 #include <sys/types.h>
 
 [[nodiscard]] auto
 get_username() -> std::tuple<std::string, std::error_code> {
-  if (const auto pw = getpwuid(getuid()); pw != nullptr)
-    return {std::move(std::string(pw->pw_name)), {}};
-  return {{}, std::make_error_code(std::errc(errno))};
+  // ADS: long code here; static needs it for threadsafe
+  constexpr auto bufsize{1024};
+  struct passwd pwd;
+  struct passwd *result;
+  std::array<char, bufsize> buf;
+  const auto s = getpwuid_r(getuid(), &pwd, buf.data(), bufsize, &result);
+  if (result == nullptr)
+    return {{},
+            std::make_error_code(s == 0 ? std::errc::invalid_argument
+                                        : std::errc(errno))};
+  // ADS: pw_name below might be better as pw_gecos
+  return {std::move(std::string(pwd.pw_name)), {}};
 }
 
 [[nodiscard]] auto
@@ -71,10 +82,9 @@ get_mxe_config_dir_default(std::error_code &ec) -> std::string {
 
 /*
 auto
-check_mxe_config_dir(const std::string &dirname, std::error_code &ec) -> bool {
-  const bool exists = std::filesystem::exists(dirname, ec);
-  if (ec)
-    return false;
+check_mxe_config_dir(const std::string &dirname, std::error_code &ec) -> bool
+{ const bool exists = std::filesystem::exists(dirname, ec); if (ec) return
+false;
 
   if (!exists) {
     ec = std::make_error_code(std::errc::no_such_file_or_directory);

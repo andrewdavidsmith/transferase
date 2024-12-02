@@ -381,7 +381,6 @@ cpg_index::get_n_cpgs() const -> std::uint32_t {
 read_cpg_index(const std::string &index_file,
                const std::string &index_meta_file)
   -> std::tuple<cpg_index, cpg_index_meta, std::error_code> {
-
   // read the cpg_index metadata first
   const auto [cim, meta_err] = cpg_index_meta::read(index_meta_file);
   if (meta_err)

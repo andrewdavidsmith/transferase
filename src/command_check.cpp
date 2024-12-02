@@ -75,7 +75,7 @@ check_cpg_index_consistency(const cpg_index_meta &cim,
   const auto hashes_match = (cim.index_hash == index.hash());
   lgr.debug("cpg_index hashes match: {}", hashes_match);
 
-  return n_cpgs_match and hashes_match;
+  return n_cpgs_match && hashes_match;
 }
 
 [[nodiscard]] static auto
@@ -94,7 +94,7 @@ check_methylome_consistency(const methylome_metadata &meta,
   const auto hashes_match_ret = ((meta.is_compressed && !hashes_match) ||
                                  (!meta.is_compressed && hashes_match));
 
-  return n_cpgs_match_ret and hashes_match_ret;
+  return n_cpgs_match_ret && hashes_match_ret;
 }
 
 [[nodiscard]] static auto
@@ -114,7 +114,7 @@ check_metadata_consistency(const methylome_metadata &meta,
   const auto n_cpgs_match = (cim.n_cpgs == meta.n_cpgs);
   lgr.debug("metadata assemblies match: {}", assemblies_match);
 
-  return versions_match and index_hashes_match and assemblies_match and
+  return versions_match && index_hashes_match && assemblies_match &&
          n_cpgs_match;
 }
 
