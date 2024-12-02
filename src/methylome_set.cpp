@@ -53,7 +53,7 @@ is_valid_accession(const std::string &accession) -> bool {
 methylome_set::get_methylome(const std::string &accession)
   -> std::tuple<std::shared_ptr<methylome>, std::shared_ptr<methylome_metadata>,
                 std::error_code> {
-  static constexpr auto filename_format = "{}/{}.{}";
+  static constexpr auto filename_format = "{}/{}{}";
 
   if (!is_valid_accession(accession))
     return {nullptr, nullptr, methylome_set_code::invalid_accession};
