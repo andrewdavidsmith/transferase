@@ -1,5 +1,5 @@
 # mxe
-Methylome transfer system
+Methylome transfer engine
 
 There are several commands within `mxe` and the best way to start is
 to understand the `dnmtools roi` command, as the information
