@@ -22,19 +22,42 @@
 
 cmake_minimum_required(VERSION 3.30)
 
+include_directories(${PROJECT_SOURCE_DIR}/src)
+
+include(GoogleTest)
 add_library(GTest::GTest INTERFACE IMPORTED)
 target_link_libraries(GTest::GTest INTERFACE gtest gtest_main)
 
 add_executable(cpg_index_meta_test cpg_index_meta_test.cpp)
-
 target_link_libraries(cpg_index_meta_test
  PRIVATE
  GTest::GTest
  Boost::json
- cpg_index_meta)
-
-target_include_directories(cpg_index_meta_test PRIVATE ${PROJECT_SOURCE_DIR}/src)
-
-add_test(cpg_index_meta_gtests cpg_index_meta_test)
-include(GoogleTest)
+ utilities
+ cpg_index_meta
+)
 gtest_discover_tests(cpg_index_meta_test)
+
+add_executable(cpg_index_test cpg_index_test.cpp)
+target_link_libraries(cpg_index_test
+ PRIVATE
+ GTest::GTest
+ Boost::json
+ ZLIB::ZLIB
+ Threads::Threads
+ utilities
+ cpg_index_meta
+ cpg_index
+)
+gtest_discover_tests(cpg_index_test)
+
+add_executable(methylome_test methylome_test.cpp)
+target_link_libraries(methylome_test
+ PRIVATE
+ GTest::GTest
+ ZLIB::ZLIB
+ methylome_metadata
+ methylome
+ utilities
+)
+gtest_discover_tests(methylome_test)
