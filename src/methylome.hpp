@@ -46,7 +46,7 @@
 struct methylome_metadata;
 
 struct methylome {
-  static constexpr auto filename_extension{"m16"};
+  static constexpr auto filename_extension{".m16"};
 
   typedef std::uint16_t m_count_t;
   typedef std::pair<m_count_t, m_count_t> m_elem;
@@ -72,10 +72,13 @@ struct methylome {
   get_n_cpgs_from_file(const std::string &filename,
                        std::error_code &ec) -> std::uint32_t;
 
+  [[nodiscard]] auto
+  get_n_cpgs() const -> std::uint32_t;
+
   auto
   add(const methylome &rhs) -> methylome &;
 
-  auto
+  [[nodiscard]] auto
   hash() const -> std::uint64_t;
 
   typedef std::pair<std::uint32_t, std::uint32_t> offset_pair;
@@ -108,8 +111,8 @@ struct methylome {
   get_counts(const std::vector<offset_pair> &eps) const
     -> std::vector<counts_res>;
 
-  // [[nodiscard]] auto
-  // total_counts() const -> counts_res;
+  [[nodiscard]] auto
+  total_counts() const -> counts_res;
   [[nodiscard]] auto
   total_counts_cov() const -> counts_res_cov;
 
@@ -130,6 +133,15 @@ struct methylome {
 size(const methylome &m) -> std::size_t {
   return std::size(m.cpgs);
 }
+
+[[nodiscard]] auto
+read_methylome(const std::string &methylome_file)
+  -> std::tuple<methylome, methylome_metadata, std::error_code>;
+
+[[nodiscard]] auto
+read_methylome(const std::string &methylome_file,
+               const std::string &methylome_meta_file)
+  -> std::tuple<methylome, methylome_metadata, std::error_code>;
 
 template <typename T, typename U>
 inline auto

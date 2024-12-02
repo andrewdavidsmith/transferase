@@ -242,16 +242,16 @@ methylome::total_counts_cov() const -> counts_res_cov {
   return {n_meth, n_unmeth, n_covered};
 }
 
-// [[nodiscard]] auto
-// methylome::total_counts() const -> counts_res {
-//   std::uint32_t n_meth{};
-//   std::uint32_t n_unmeth{};
-//   for (const auto &cpg : cpgs) {
-//     n_meth += cpg.first;
-//     n_unmeth += cpg.second;
-//   }
-//   return {n_meth, n_unmeth};
-// }
+[[nodiscard]] auto
+methylome::total_counts() const -> counts_res {
+  std::uint32_t n_meth{};
+  std::uint32_t n_unmeth{};
+  for (const auto &cpg : cpgs) {
+    n_meth += cpg.first;
+    n_unmeth += cpg.second;
+  }
+  return {n_meth, n_unmeth};
+}
 
 template <typename T>
 static auto
@@ -310,4 +310,34 @@ methylome::get_bins_cov(const std::uint32_t bin_size, const cpg_index &index,
 [[nodiscard]] auto
 methylome::hash() const -> std::uint64_t {
   return get_adler(cpgs.data(), std::size(cpgs) * record_size);
+}
+
+[[nodiscard]] auto
+methylome::get_n_cpgs() const -> std::uint32_t {
+  return std::size(cpgs);
+}
+
+[[nodiscard]] auto
+read_methylome(const std::string &methylome_file,
+               const std::string &methylome_meta_file)
+  -> std::tuple<methylome, methylome_metadata, std::error_code> {
+  // read the methylome metadata first
+  const auto [meta, meta_err] = methylome_metadata::read(methylome_meta_file);
+  if (meta_err)
+    return {methylome{}, methylome_metadata{}, meta_err};
+
+  // read the methylome using its metadata
+  const auto [meth, meth_err] = methylome::read(methylome_file, meta);
+  if (meth_err)
+    return {methylome{}, methylome_metadata{}, meta_err};
+
+  return {std::move(meth), std::move(meta), {}};
+}
+
+[[nodiscard]] auto
+read_methylome(const std::string &methylome_file)
+  -> std::tuple<methylome, methylome_metadata, std::error_code> {
+  const auto methylome_meta_file =
+    get_default_methylome_metadata_filename(methylome_file);
+  return read_methylome(methylome_file, methylome_meta_file);
 }
