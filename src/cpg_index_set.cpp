@@ -61,7 +61,7 @@ cpg_index_set::cpg_index_set(const std::string &cpg_index_directory,
                              std::error_code &ec) {
   static constexpr auto assembly_ptrn = R"(^[_[:alnum:]]+)";
   static const auto cpg_index_filename_ptrn =
-    std::format(R"({}.{}$)", assembly_ptrn, cpg_index::filename_extension);
+    std::format(R"({}{}$)", assembly_ptrn, cpg_index::filename_extension);
   std::regex cpg_index_filename_re(cpg_index_filename_ptrn);
   std::regex assembly_re(assembly_ptrn);
 
