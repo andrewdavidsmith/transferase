@@ -46,6 +46,7 @@
 #include <limits>
 #include <ranges>
 #include <string>
+#include <string_view>
 #include <system_error>
 #include <utility>
 #include <vector>
@@ -226,12 +227,25 @@ struct std::formatter<std::filesystem::path> : std::formatter<std::string> {
   }
 };
 
-auto
+[[nodiscard]] auto
 get_mxe_config_dir_default(std::error_code &ec) -> std::string;
 
 /*
   auto
   check_mxe_config_dir(const std::string &dirname, std::error_code &ec) -> bool;
 */
+
+[[nodiscard]] inline auto
+strip(char const *const x) -> const std::string_view {
+  const std::string s{x};
+  const auto start = s.find_first_not_of("\n\r");
+  return std::string_view(x + start, x + std::size(s));
+}
+
+[[nodiscard]] auto
+get_username() -> std::tuple<std::string, std::error_code>;
+
+[[nodiscard]] auto
+get_time_as_string() -> std::string;
 
 #endif  // SRC_UTILITIES_HPP_

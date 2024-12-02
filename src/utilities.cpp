@@ -35,6 +35,28 @@
 #include <utility>
 #include <vector>
 
+// getpwuid
+#include <pwd.h>
+#include <sys/types.h>
+
+[[nodiscard]] auto
+get_username() -> std::tuple<std::string, std::error_code> {
+  if (const auto pw = getpwuid(getuid()); pw != nullptr)
+    return {std::move(std::string(pw->pw_name)), {}};
+  return {{}, std::make_error_code(std::errc(errno))};
+}
+
+[[nodiscard]] auto
+get_time_as_string() -> std::string {
+  const auto now{std::chrono::system_clock::now()};
+  const std::chrono::year_month_day ymd{
+    std::chrono::floor<std::chrono::days>(now)};
+  const std::chrono::hh_mm_ss hms{
+    std::chrono::floor<std::chrono::seconds>(now) -
+    std::chrono::floor<std::chrono::days>(now)};
+  return std::format("{:%F} {:%T}", ymd, hms);
+}
+
 [[nodiscard]] auto
 get_mxe_config_dir_default(std::error_code &ec) -> std::string {
   static const auto config_dir_rhs = std::filesystem::path(".config/mxe");
@@ -45,37 +67,6 @@ get_mxe_config_dir_default(std::error_code &ec) -> std::string {
   }
   const std::filesystem::path config_dir = env_home / config_dir_rhs;
   return config_dir;
-}
-
-// ADS: this function should be replaced by one that can operate on a
-// the data as though it were serealized but without reading the file
-[[nodiscard]] auto
-get_adler(const std::string &filename) -> std::uint64_t {
-  const auto filesize = std::filesystem::file_size(filename);
-  std::vector<char> buf(filesize);
-  std::ifstream in(filename);
-  in.read(buf.data(), filesize);
-  return adler32_z(0, reinterpret_cast<std::uint8_t *>(buf.data()), filesize);
-}
-
-// ADS: this function should be replaced by one that can operate on a
-// the data as though it were serealized but without reading the file
-[[nodiscard]] auto
-get_adler(const std::string &filename, std::error_code &ec) -> std::uint64_t {
-  const auto filesize = std::filesystem::file_size(filename, ec);
-  if (ec)
-    return 0;
-  std::vector<char> buf(filesize);
-  std::ifstream in(filename);
-  if (!in) {
-    ec = std::make_error_code(std::errc(errno));
-    return 0;
-  }
-  if (!in.read(buf.data(), filesize)) {
-    ec = std::make_error_code(std::errc(errno));
-    return 0;
-  }
-  return adler32_z(0, reinterpret_cast<std::uint8_t *>(buf.data()), filesize);
 }
 
 /*
