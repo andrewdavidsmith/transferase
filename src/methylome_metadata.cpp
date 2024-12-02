@@ -26,6 +26,7 @@
 #include "automatic_json.hpp"
 #include "cpg_index_meta.hpp"  // get_assembly_from_filename
 #include "methylome.hpp"
+#include "utilities.hpp"
 
 #include <config.h>
 
@@ -47,24 +48,23 @@
 #include <tuple>
 #include <utility>  // std::move
 
-[[nodiscard]] static auto
-get_username() -> std::tuple<std::string, std::error_code> {
-  static constexpr auto username_maxsize = 128;
-  std::array<char, username_maxsize> buf;
-  if (getlogin_r(buf.data(), username_maxsize))
-    return {std::string(), std::make_error_code(std::errc(errno))};
-  return {std::string(buf.data()), {}};
-}
+[[nodiscard]] auto
+methylome_metadata::init_env() -> std::error_code {
+  // ADS: where are we getting comression status?
+  boost::system::error_code boost_err;
+  host = boost::asio::ip::host_name(boost_err);
+  if (boost_err)
+    return std::error_code{boost_err};
 
-[[nodiscard]] static auto
-get_time_as_string() -> std::string {
-  const auto now{std::chrono::system_clock::now()};
-  const std::chrono::year_month_day ymd{
-    std::chrono::floor<std::chrono::days>(now)};
-  const std::chrono::hh_mm_ss hms{
-    std::chrono::floor<std::chrono::seconds>(now) -
-    std::chrono::floor<std::chrono::days>(now)};
-  return std::format("{:%F} {:%T}", ymd, hms);
+  const auto [username, err] = get_username();
+  if (err)
+    return err;
+
+  version = VERSION;
+  user = username;
+  creation_time = get_time_as_string();
+
+  return {};
 }
 
 [[nodiscard]] auto
@@ -73,7 +73,6 @@ methylome_metadata::init(const cpg_index_meta &cim, const methylome &meth,
   -> std::tuple<methylome_metadata, std::error_code> {
   // ADS: (todo) should there be a better way to get the "compression"
   // status?
-
   boost::system::error_code boost_err;
   const auto host = boost::asio::ip::host_name(boost_err);
   if (boost_err)
@@ -96,16 +95,9 @@ methylome_metadata::init(const cpg_index_meta &cim, const methylome &meth,
 
 [[nodiscard]] auto
 methylome_metadata::update(const methylome &meth) -> std::error_code {
-  version = VERSION;
-  boost::system::error_code boost_err;
-  host = boost::asio::ip::host_name(boost_err);
-  if (boost_err)
-    return boost_err;
-  std::error_code err;
-  std::tie(user, err) = get_username();
+  const auto err = init_env();
   if (err)
     return err;
-  creation_time = get_time_as_string();
   methylome_hash = meth.hash();
   return {};
 }
@@ -148,19 +140,13 @@ methylome_metadata::write(const std::string &json_filename) const
 
 [[nodiscard]] auto
 methylome_metadata::tostring() const -> std::string {
-  return std::format("version: {}\n"
-                     "host: {}\n"
-                     "user: {}\n"
-                     "creation_time: \"{}\"\n"
-                     "methylome_hash: {}\n"
-                     "index_hash: {}\n"
-                     "assembly: {}\n"
-                     "n_cpgs: {}",
-                     version, host, user, creation_time, methylome_hash,
-                     index_hash, assembly, n_cpgs);
+  std::ostringstream o;
+  if (!(o << boost::json::value_from(*this)))
+    o.clear();
+  return o.str();
 }
 
-auto
+[[nodiscard]] auto
 get_default_methylome_metadata_filename(const std::string &methfile)
   -> std::string {
   return std::format("{}.json", methfile);
