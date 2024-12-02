@@ -26,7 +26,6 @@
 #include "cpg_index_meta.hpp"
 #include "genomic_interval.hpp"
 #include "hash.hpp"
-#include "logger.hpp"
 #include "mxe_error.hpp"
 #include "utilities.hpp"
 
@@ -372,12 +371,19 @@ cpg_index::hash() const -> std::uint64_t {
 }
 
 [[nodiscard]] auto
-read_cpg_index(const std::string &index_file)
+cpg_index::get_n_cpgs() const -> std::uint32_t {
+  return std::transform_reduce(std::cbegin(positions), std::cend(positions),
+                               static_cast<std::uint32_t>(0), std::plus{},
+                               std::size<cpg_index::vec>);
+}
+
+[[nodiscard]] auto
+read_cpg_index(const std::string &index_file,
+               const std::string &index_meta_file)
   -> std::tuple<cpg_index, cpg_index_meta, std::error_code> {
-  const auto meta_file = get_default_cpg_index_meta_filename(index_file);
 
   // read the cpg_index metadata first
-  const auto [cim, meta_err] = cpg_index_meta::read(meta_file);
+  const auto [cim, meta_err] = cpg_index_meta::read(index_meta_file);
   if (meta_err)
     return {cpg_index{}, cpg_index_meta{}, meta_err};
 
@@ -387,4 +393,11 @@ read_cpg_index(const std::string &index_file)
     return {cpg_index{}, cpg_index_meta{}, index_err};
 
   return {std::move(ci), std::move(cim), {}};
+}
+
+[[nodiscard]] auto
+read_cpg_index(const std::string &index_file)
+  -> std::tuple<cpg_index, cpg_index_meta, std::error_code> {
+  const auto index_meta_file = get_default_cpg_index_meta_filename(index_file);
+  return read_cpg_index(index_file, index_meta_file);
 }

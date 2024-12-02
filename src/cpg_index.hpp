@@ -41,7 +41,8 @@
 struct genomic_interval;
 
 struct cpg_index {
-  static constexpr auto filename_extension{"cpg_idx"};
+  // includes the dot because that's how std::filesystem::path works
+  static constexpr auto filename_extension{".cpg_idx"};
 
   typedef std::uint32_t cpg_pos_t;
 #if not defined(__APPLE__) && not defined(__MACH__)
@@ -58,6 +59,9 @@ struct cpg_index {
 
   [[nodiscard]] auto
   hash() const -> std::uint64_t;
+
+  [[nodiscard]] auto
+  get_n_cpgs() const -> std::uint32_t;
 
   /* ADS: currently unused */
   // [[nodiscard]] auto
@@ -88,6 +92,11 @@ initialize_cpg_index(const std::string &genome_file)
 
 [[nodiscard]] auto
 read_cpg_index(const std::string &index_file)
+  -> std::tuple<cpg_index, cpg_index_meta, std::error_code>;
+
+[[nodiscard]] auto
+read_cpg_index(const std::string &index_file,
+               const std::string &index_meta_file)
   -> std::tuple<cpg_index, cpg_index_meta, std::error_code>;
 
 #endif  // SRC_CPG_INDEX_HPP_
