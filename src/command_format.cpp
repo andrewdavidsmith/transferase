@@ -316,10 +316,10 @@ command_format_main(int argc, char *argv[]) -> int {
 
   namespace po = boost::program_options;
 
-  po::options_description desc(std::format("Usage: mxe {} [options]", command));
+  po::options_description desc("Options");
   desc.add_options()
     // clang-format off
-    ("help,h", "produce help message")
+    ("help,h", "print this message and exit")
     ("meth,m", po::value(&methylation_input)->required(),
      "methylation input file")
     ("index,x", po::value(&index_file)->required(), "index file")

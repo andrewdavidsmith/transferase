@@ -83,7 +83,7 @@ command_index_main(int argc, char *argv[]) -> int {
   po::options_description desc("Options");
   desc.add_options()
     // clang-format off
-    ("help,h", "produce help message")
+    ("help,h", "print this message and exit")
     ("genome,g", po::value(&genome_filename)->required(), "genome_file")
     ("index,x", po::value(&index_file)->required(),
      std::format("output file (must end in {})", cpg_index::filename_extension).data())

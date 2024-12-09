@@ -23,6 +23,27 @@
 
 #include "command_bins.hpp"
 
+static constexpr auto about = R"(
+summarize methylation levels in non-overlapping genomic bins
+)";
+
+static constexpr auto description = R"(
+The 'bins' command accepts a bin size and a methylome, and it
+generates a summary of the methylation levels in each non-overlapping
+bin of the given size. This command runs in two modes, local and
+remote. The local mode is for analyzing data on your local storage:
+either your own data or data that you downloaded. The remote mode is
+for analyzing methylomes in a remote database on a server. Depending
+on the mode you select, the options you must specify will differ.
+)";
+
+static constexpr auto examples = R"(
+Examples:
+
+mxe bins local -x hg38.cpg_idx -o output.bed -m methylome.m16 -b 1000
+mxe bins remote -x hg38.cpg_idx -o output.bed -s example.com -a SRX012345 -b 1000
+)";
+
 #include "client.hpp"
 #include "cpg_index.hpp"
 #include "genomic_interval.hpp"
@@ -128,10 +149,15 @@ do_bins(const string &accession, const cpg_index &index,
 
 auto
 command_bins_main(int argc, char *argv[]) -> int {
-  static constexpr auto usage_format =
-    "Usage: mxe lookup {} [options]\n\nOption groups";
-  static constexpr auto default_port = "5000";
   static constexpr auto command = "bins";
+  static const auto usage =
+    std::format("Usage: mxe {} [options]\n", strip(command));
+  static const auto about_msg =
+    std::format("mxe {}: {}", strip(command), strip(about));
+  static const auto description_msg =
+    std::format("{}\n{}", strip(description), strip(examples));
+
+  static constexpr auto default_port = "5000";
 
   string accession{};
   string hostname{};
@@ -159,25 +185,10 @@ command_bins_main(int argc, char *argv[]) -> int {
   po::positional_options_description p;
   p.add("subcmd", 1).add("subargs", -1);
 
-  po::variables_map vm_subcmd;
-  po::store(po::command_line_parser(argc, argv)
-              .options(subcmds)
-              .positional(p)
-              .allow_unregistered()
-              .run(),
-            vm_subcmd);
-  po::notify(vm_subcmd);
-
-  if (subcmd != "local" && subcmd != "remote") {
-    std::println("Usage: mxe lookup [local|remote] [options]");
-    return EXIT_FAILURE;
-  }
-  const bool remote_mode = subcmd == "remote";
-
   po::options_description general("General");
   // clang-format off
   general.add_options()
-    ("help,h", "produce help message")
+    ("help,h", "print this message and exit")
     ("index,x", po::value(&index_file)->required(), "index file")
     ("bin-size,b", po::value(&bin_size)->required(), "size of bins")
     ("log-level,v", po::value(&log_level)->default_value(logger::default_level),
@@ -202,24 +213,43 @@ command_bins_main(int argc, char *argv[]) -> int {
     ;
   // clang-format on
 
-  po::options_description all(std::format(usage_format, subcmd));
-  all.add(general).add(output);
-  all.add(remote_mode ? remote : local);
+  po::variables_map vm_subcmd;
+  po::store(po::command_line_parser(argc, argv)
+              .options(subcmds)
+              .positional(p)
+              .allow_unregistered()
+              .run(),
+            vm_subcmd);
+  po::notify(vm_subcmd);
+
+  po::options_description all("Options");
+  if (subcmd == "local")
+    all.add(general).add(output).add(local);
+  else if (subcmd == "remote")
+    all.add(general).add(output).add(remote);
+  else
+    all.add(general).add(output).add(local).add(remote);
 
   try {
     po::variables_map vm;
     po::store(po::parse_command_line(argc - 1, argv + 1, all), vm);
-    if (vm.count("help") || argc <= 2) {
+    if (vm.count("help") || argc == 1 || argc == 2 && !subcmd.empty()) {
+      std::println("{}\n{}", about_msg, usage);
       all.print(std::cout);
+      std::println("\n{}", description_msg);
       return EXIT_SUCCESS;
     }
     po::notify(vm);
   }
   catch (po::error &e) {
     std::println("{}", e.what());
+    std::println("{}\n{}", about_msg, usage);
     all.print(std::cout);
+    std::println("\n{}", description_msg);
     return EXIT_FAILURE;
   }
+
+  const bool remote_mode = (subcmd == "remote");
 
   if (meta_file.empty())
     meta_file = get_default_methylome_metadata_filename(meth_file);

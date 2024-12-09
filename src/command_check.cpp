@@ -136,7 +136,7 @@ command_check_main(int argc, char *argv[]) -> int {
   po::options_description desc("Options");
   desc.add_options()
     // clang-format off
-    ("help,h", "produce help message")
+    ("help,h", "print this message and exit")
     ("index,x", po::value(&index_file)->required(), "index file")
     ("methylomes,m", po::value<std::vector<std::string>>()->multitoken()->required(),
      "methylome files")
