@@ -88,11 +88,13 @@ template <typename T> struct argset_base {
   }
 
   [[nodiscard]] auto
-  parse(int argc, char *argv[], const std::string &usage) -> argument_error {
+  parse(int argc, char *argv[], const std::string &usage,
+        const std::string &about_msg,
+        const std::string &description_msg) -> argument_error {
     boost::program_options::options_description cli_only_opts =
       set_cli_only_opts();
     boost::program_options::options_description common_opts = set_common_opts();
-    boost::program_options::options_description help_opts;
+    boost::program_options::options_description help_opts("Options");
     help_opts.add(cli_only_opts).add(common_opts);
     // first check if config file or help are specified
     try {
@@ -105,8 +107,9 @@ template <typename T> struct argset_base {
         vm_cli_only);
       if (vm_cli_only.count("help") || argc == 1) {
         // help output is for all options
-        std::println("{}", usage);
+        std::println("{}\n{}", about_msg, usage);
         help_opts.print(std::cout);
+        std::println("\n{}", description_msg);
         return argument_error::help_requested;
       }
       boost::program_options::notify(vm_cli_only);
@@ -127,7 +130,9 @@ template <typename T> struct argset_base {
     }
     catch (boost::program_options::error &e) {
       std::println("{}", e.what());
+      std::println("{}\n{}", about_msg, usage);
       help_opts.print(std::cout);
+      std::println("\n{}", description_msg);
       return argument_error::failure;
     }
     return argument_error::ok;
@@ -143,7 +148,7 @@ template <typename T> struct argset_base {
     boost::program_options::options_description opts("Command line only");
     opts.add_options()
       // clang-format off
-      ("help,h", "produce help message")
+      ("help,h", "print this message and exit")
       ("config-file,c",
        boost::program_options::value(&config_file)
        ->value_name("[arg]")->implicit_value(get_default_config_file(), ""),
