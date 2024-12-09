@@ -23,6 +23,27 @@
 
 #include "command_merge.hpp"
 
+static constexpr auto about = R"(
+merge methylomes
+)";
+
+static constexpr auto description = R"(
+The merge command takes a set of methylomes and produces a merged
+methylome that would be expected if all the data were sequenced
+together. One way to understand this function is to think of technical
+replicates that are low-coverage and in some analyses might best be
+combined as though they were a single methylome. The input methylomes
+to be merged must all have been analyzed using the same reference
+genome. The output is a methylome: a pair of methylome data (.m16) and
+metadata files (.m16.yaml) files.
+)";
+
+static constexpr auto examples = R"(
+Examples:
+
+mxe merge -o merged.m16 -i SRX0123*.m16
+)";
+
 #include "logger.hpp"
 #include "methylome.hpp"
 #include "methylome_metadata.hpp"
@@ -68,6 +89,12 @@ verify_consistent_metadata_files(const std::vector<std::string> &meth_files)
 auto
 command_merge_main(int argc, char *argv[]) -> int {
   static constexpr auto command = "merge";
+  static const auto usage =
+    std::format("Usage: mxe {} [options]\n", strip(command));
+  static const auto about_msg =
+    std::format("mxe {}: {}", strip(command), strip(about));
+  static const auto description_msg =
+    std::format("{}\n{}", strip(description), strip(examples));
 
   mxe_log_level log_level{};
   std::string output_file{};
@@ -75,12 +102,12 @@ command_merge_main(int argc, char *argv[]) -> int {
 
   namespace po = boost::program_options;
 
-  po::options_description desc(std::format("Usage: mxe {} [options]", command));
+  po::options_description desc("Options");
   desc.add_options()
     // clang-format off
-    ("help,h", "produce help message")
-    ("output,o", po::value(&output_file)->required(), "output file")
-    ("meta,e", po::value(&metadata_output), "output metadata file")
+    ("help,h", "print this message and exit")
+    ("output,o", po::value(&output_file)->required(), "methylome output file")
+    ("meta,e", po::value(&metadata_output), "output metadata (default: output.json)")
     ("input,i", po::value<std::vector<std::string>>()->multitoken()->required(), "input files")
     ("log-level,v", po::value(&log_level)->default_value(logger::default_level),
      "log level {debug,info,warning,error,critical}")
@@ -90,14 +117,18 @@ command_merge_main(int argc, char *argv[]) -> int {
   try {
     po::store(po::parse_command_line(argc, argv, desc), vm);
     if (vm.count("help") || argc == 1) {
+      std::println("{}\n{}", about_msg, usage);
       desc.print(std::cout);
+      std::println("\n{}", description_msg);
       return EXIT_SUCCESS;
     }
     po::notify(vm);
   }
   catch (po::error &e) {
     std::println("{}", e.what());
+    std::println("{}\n{}", about_msg, usage);
     desc.print(std::cout);
+    std::println("\n{}", description_msg);
     return EXIT_FAILURE;
   }
 

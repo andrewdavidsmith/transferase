@@ -23,6 +23,32 @@
 
 #include "command_server.hpp"
 
+static constexpr auto about = R"(
+start an mxe server
+)";
+
+static constexpr auto description = R"(
+An mxe server transfers methylation features to clients. The server
+must be provided with one directory for methylomes and one directory
+for cpg indexes. The methylome directory must include pairs of
+methylome data and metadata files as produced by the 'format'
+command. The indexes directory must include pairs of cpg index data
+and metadata files as produced by the 'index' command. For each
+methylome in the methylomes directory, the corresponding index must be
+present in the indexes directory. For example, if a methylome was
+analyzed using human reference hg38, then an index for hg38 must be
+available. Note: the hostname or ip address for the server needs to be
+used exactly by the client. If the server is started using 'localhost'
+as the hostname, it will not be reachable by any remote client. The
+server can run in detached mode.
+)";
+
+static constexpr auto examples = R"(
+Examples:
+
+mxe server -s localhost -m methylomes -x indexes
+)";
+
 #include "arguments.hpp"
 #include "logger.hpp"
 #include "methylome_set.hpp"
@@ -91,7 +117,7 @@ struct server_argset : argset_base<server_argset> {
 
   static constexpr auto hostname_default{"localhost"};
   static constexpr auto port_default{"5000"};
-  static constexpr auto log_level_default{mxe_log_level::warning};
+  static constexpr auto log_level_default{mxe_log_level::info};
   static constexpr auto n_threads_default{1};
   static constexpr auto max_resident_default = 32;
   string hostname{};
@@ -151,11 +177,17 @@ struct server_argset : argset_base<server_argset> {
 
 auto
 command_server_main(int argc, char *argv[]) -> int {
-  static constexpr auto usage = "Usage: mxe server [options]";
-  static const auto description = "server";
+  static constexpr auto command = "server";
+  static const auto usage =
+    std::format("Usage: mxe {} [options]\n", strip(command));
+  static const auto about_msg =
+    std::format("mxe {}: {}", strip(command), strip(about));
+  static const auto description_msg =
+    std::format("{}\n{}", strip(description), strip(examples));
 
   server_argset args;
-  std::error_code ec = args.parse(argc, argv, usage);
+  std::error_code ec =
+    args.parse(argc, argv, usage, about_msg, description_msg);
   if (ec == argument_error::help_requested)
     return EXIT_SUCCESS;
   if (ec)

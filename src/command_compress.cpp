@@ -23,6 +23,29 @@
 
 #include "command_compress.hpp"
 
+static constexpr auto about = R"(
+make the methylome data file smaller
+)";
+
+static constexpr auto description = R"(
+The compress command is primarily used to prepare data for use by the
+server when space is at a premium. The compress command makes a
+methylome data file smaller. The compression format is custome and can
+only be decompressed with this command. Compared to gzip, this command
+is roughly 4-5x faster, with a cost of 1.2x in size, and decompress
+slightly faster. The compression status is not encoded in the
+methylome data files, but in the metadata files, so be careful not to
+confuse the methylome metadata files for original and compressed
+files.
+)";
+
+static constexpr auto examples = R"(
+Examples:
+
+mxe compress -o compressed.m16 -i original.m16
+mxe compress -u -o original.m16 -i compressed.m16
+)";
+
 #include "logger.hpp"
 #include "methylome.hpp"
 #include "methylome_metadata.hpp"
@@ -41,6 +64,12 @@
 auto
 command_compress_main(int argc, char *argv[]) -> int {
   static constexpr auto command = "compress";
+  static const auto usage =
+    std::format("Usage: mxe {} [options]\n", strip(command));
+  static const auto about_msg =
+    std::format("mxe {}: {}", strip(command), strip(about));
+  static const auto description_msg =
+    std::format("{}\n{}", strip(description), strip(examples));
 
   std::string methylome_input{};
   std::string metadata_input{};
@@ -51,17 +80,17 @@ command_compress_main(int argc, char *argv[]) -> int {
 
   namespace po = boost::program_options;
 
-  po::options_description desc(std::format("Usage: mxe {} [options]", command));
+  po::options_description desc("Options");
   // clang-format off
   desc.add_options()
-    ("help,h", "produce help message")
+    ("help,h", "print this message and exit")
     ("input,i", po::value(&methylome_input)->required(), "input file")
     ("output,o", po::value(&methylome_output)->required(),
      "output file")
     ("uncompress,u", po::bool_switch(&uncompress), "uncompress the file")
-    ("meta", po::value(&metadata_input), "metadata input (defaults to input.json)")
+    ("meta", po::value(&metadata_input), "metadata input (default: input.json)")
     ("meta-out", po::value(&metadata_output),
-     "metadata output (defaults to output.json)")
+     "metadata output (default: output.json)")
     ("log-level,v", po::value(&log_level)->default_value(logger::default_level),
      "log level {debug,info,warning,error,critical}")
     ;
@@ -70,14 +99,18 @@ command_compress_main(int argc, char *argv[]) -> int {
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
     if (vm.count("help") || argc == 1) {
+      std::println("{}\n{}", about_msg, usage);
       desc.print(std::cout);
+      std::println("\n{}", description_msg);
       return EXIT_SUCCESS;
     }
     po::notify(vm);
   }
   catch (po::error &e) {
     std::println("{}", e.what());
+    std::println("{}\n{}", about_msg, usage);
     desc.print(std::cout);
+    std::println("\n{}", description_msg);
     return EXIT_FAILURE;
   }
 
@@ -106,7 +139,7 @@ command_compress_main(int argc, char *argv[]) -> int {
 
   auto [meta, meta_read_err] = methylome_metadata::read(metadata_input);
   if (meta_read_err) {
-    lgr.error("Error reading metadata: {} ({})", meta_read_err, metadata_input);
+    lgr.error("Error reading metadata {}: {}", metadata_input, meta_read_err);
     return EXIT_FAILURE;
   }
 
@@ -124,8 +157,7 @@ command_compress_main(int argc, char *argv[]) -> int {
   const auto [meth, meth_read_err] = methylome::read(methylome_input, meta);
   const auto meth_read_stop = std::chrono::high_resolution_clock::now();
   if (meth_read_err) {
-    lgr.error("Error reading methylome: {} ({})", methylome_input,
-              meth_read_err);
+    lgr.error("Error reading methylome {}: {}", methylome_input, meth_read_err);
     return EXIT_FAILURE;
   }
   lgr.debug("Methylome read time: {}s",
