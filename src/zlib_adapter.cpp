@@ -28,8 +28,8 @@
 #include <string>
 #include <system_error>
 
-gzinfile::gzinfile(const std::string &filename, std::error_code &ec) {
-  in = gzopen(filename.data(), "rb");
+gzinfile::gzinfile(const std::string &filename, std::error_code &ec) :
+  in{gzopen(filename.data(), "rb")} {
   // ADS: need to check errnum by gzerror
   ec = (in == nullptr) ? zlib_adapter_error::z_errno : zlib_adapter_error::ok;
 }
