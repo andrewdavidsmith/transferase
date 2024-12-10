@@ -61,3 +61,13 @@ target_link_libraries(methylome_test
  utilities
 )
 gtest_discover_tests(methylome_test)
+
+add_executable(counts_file_formats_test counts_file_formats_test.cpp)
+target_link_libraries(counts_file_formats_test
+ PRIVATE
+ GTest::GTest
+ ZLIB::ZLIB
+ counts_file_formats
+ zlib_adapter
+)
+gtest_discover_tests(counts_file_formats_test)
