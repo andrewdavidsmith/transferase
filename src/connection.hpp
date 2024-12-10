@@ -59,10 +59,13 @@ struct connection : public std::enable_shared_from_this<connection> {
   start() -> void {
     read_request();  // start first async op; sets deadline
 
-    // this might best be done at the end of read_request, then
+    // This might best be done at the end of read_request, then
     // cleared and re-done at the appropriate times in read_offsets
-    // NOTE: deadline already set for this one inside read_request()
-    deadline.async_wait(std::bind(&connection::check_deadline, this));
+    // NOTE: deadline already set for this one inside read_request().
+    // Completion handler must be bound to a shared pointer so the
+    // session remains alive for the timer
+    deadline.async_wait(
+      std::bind(&connection::check_deadline, shared_from_this()));
   }
 
   auto
