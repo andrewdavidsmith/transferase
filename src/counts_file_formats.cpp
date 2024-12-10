@@ -27,10 +27,12 @@
 
 #include <algorithm>
 #include <charconv>
+#include <cmath>
 #include <cstdint>
 #include <fstream>
 #include <sstream>
 #include <string>
+#include <tuple>
 
 [[nodiscard]] auto
 parse_counts_line(const std::string &line, std::uint32_t &pos,
@@ -71,7 +73,7 @@ parse_counts_line(const std::string &line, std::uint32_t &pos,
   res = std::from_chars(field_s, c_end, n_reads);
   failed = failed || (res.ptr == c_end);
 
-  n_meth = meth * n_reads;
+  n_meth = std::round(meth * n_reads);
   n_unmeth = n_reads - n_meth;
 
   return failed;
@@ -79,13 +81,18 @@ parse_counts_line(const std::string &line, std::uint32_t &pos,
 
 [[nodiscard]] static inline auto
 is_counts_format(const std::string &filename) -> bool {
+  static constexpr auto max_lines_to_read = 10000;
   std::ifstream in(filename);
   if (!in)
     return false;
 
   std::string line;
-  if (!getline(in, line))
+  std::uint32_t n_lines{};
+  while (n_lines++ < max_lines_to_read && getline(in, line) && line[0] == '#')
+    ;
+  if (!in)
     return false;
+
   std::istringstream iss(line);
 
   std::string chrom;
@@ -101,7 +108,7 @@ is_counts_format(const std::string &filename) -> bool {
 
 [[nodiscard]] static inline auto
 is_xcounts_format(const std::string &filename) -> bool {
-  static constexpr auto max_lines_to_read = 100;
+  static constexpr auto max_lines_to_read = 10000;
 
   std::error_code unused_error;
   gzinfile in(filename, unused_error);
@@ -114,7 +121,7 @@ is_xcounts_format(const std::string &filename) -> bool {
     if (line[0] == '#')
       continue;
     if (!std::isdigit(line[0])) {  // chrom line
-      if (line.find_first_of(" \t") == std::string::npos)
+      if (line.find_first_of(" \t") != std::string::npos)
         return false;
     }
     else {
@@ -130,7 +137,6 @@ is_xcounts_format(const std::string &filename) -> bool {
 [[nodiscard]] auto
 get_meth_file_format(const std::string &filename)
   -> std::tuple<counts_format, std::error_code> {
-
   // check file first
   {
     std::error_code ec;
