@@ -47,11 +47,11 @@ struct connection : public std::enable_shared_from_this<connection> {
 
   explicit connection(boost::asio::ip::tcp::socket socket_,
                       request_handler &handler, logger &lgr,
-                      std::uint32_t connection_id) :
+                      std::uint32_t conn_id) :
     // socket used below gets confused if arg has exact same name
     socket{std::move(socket_)}, deadline{socket.get_executor()},
-    handler{handler}, lgr{lgr}, connection_id{connection_id} {
-    lgr.info("Connection id: {}. Request endpoint: {}", connection_id,
+    handler{handler}, lgr{lgr}, conn_id{conn_id} {
+    lgr.info("Connection id: {}. Request endpoint: {}", conn_id,
              boost::lexical_cast<std::string>(socket.remote_endpoint()));
   }
 
@@ -69,12 +69,17 @@ struct connection : public std::enable_shared_from_this<connection> {
   }
 
   auto
+  stop() -> void;  // shutdown the socket
+
+  // Allocate space for offsets and initialize the variables that
+  // track where we are in the buffer as data arrives.
+  auto
   prepare_to_read_offsets() -> void;
 
   auto
-  read_request() -> void;  // read request
+  read_request() -> void;  // read 'request'
   auto
-  read_offsets() -> void;  // read offsets part of request
+  read_offsets() -> void;  // read the 'offsets' part of request
   auto
   compute_bins() -> void;  // do the computation for bins
 
@@ -99,7 +104,7 @@ struct connection : public std::enable_shared_from_this<connection> {
   response_header resp_hdr;  // header of the response
   response_payload resp;     // response to send back
   logger &lgr;
-  std::uint32_t connection_id{};
+  std::uint32_t conn_id{};  // identifer for this connection
   std::uint32_t read_timeout_seconds{10};
 
   // These help keep track of where we are in the incoming offsets;
