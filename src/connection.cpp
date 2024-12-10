@@ -279,5 +279,6 @@ connection::check_deadline() -> void {
   }
 
   // ADS: wait again; any issue if the underlying socket is closed?
-  deadline.async_wait(std::bind(&connection::check_deadline, this));
+  deadline.async_wait(
+    std::bind(&connection::check_deadline, shared_from_this()));
 }
