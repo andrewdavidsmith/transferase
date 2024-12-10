@@ -26,6 +26,7 @@
 
 #include <zlib.h>
 
+#include <array>
 #include <cassert>
 #include <cstdint>
 #include <string>
@@ -94,6 +95,38 @@ inline std::error_code
 make_error_code(zlib_adapter_error e) {
   static auto category = zlib_adapter_error_category{};
   return std::error_code(std::to_underlying(e), category);
+}
+
+struct gzinfile {
+  gzinfile(const gzinfile &other) = delete;
+  gzinfile &
+  operator=(const gzinfile &other) = delete;
+
+  gzinfile() = default;
+
+  gzinfile(const std::string &filename, std::error_code &ec);
+  ~gzinfile();
+
+  [[nodiscard]] auto
+  read() -> int;
+
+  [[nodiscard]] auto
+  getline(std::string &line) -> gzinfile &;
+
+  operator bool() const { return in != nullptr; }
+
+  static constexpr std::int32_t buf_size = 4 * 128 * 1024;
+  gzFile in{};
+  std::int32_t pos{};
+  std::int32_t len{};
+  std::array<std::uint8_t, buf_size> buf;
+};
+
+// non-member for symmetry with std::getline(std::istream&, std::string&)
+[[nodiscard]] inline auto
+getline(gzinfile &in, std::string &line) -> bool {
+  // ADS: change the bool to gzinfile& like iostream things
+  return in.getline(line);
 }
 
 template <typename T>
