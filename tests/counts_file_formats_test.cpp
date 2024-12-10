@@ -26,6 +26,7 @@
 #include <gtest/gtest.h>
 
 #include <cstdint>
+#include <string>
 #include <utility>
 
 // Demonstrate some basic assertions.
