@@ -53,12 +53,12 @@ struct std::is_error_code_enum<request_error> : public std::true_type {};
 
 // category to provide text descriptions
 struct request_error_category : std::error_category {
-  const char *
-  name() const noexcept override {
+  auto
+  name() const noexcept -> const char * override {
     return "request_error";
   }
-  std::string
-  message(int code) const override {
+  auto
+  message(int code) const -> std::string override {
     using std::string_literals::operator""s;
     // clang-format off
     switch (code) {
@@ -72,12 +72,13 @@ struct request_error_category : std::error_category {
     case 7: return "bins error assembly"s;
     case 8: return "bins error bin size"s;
     }
+    // clang-format on
     std::unreachable();  // hopefully this is unreacheable
   }
 };
 
-inline std::error_code
-make_error_code(request_error e) {
+inline auto
+make_error_code(request_error e) -> std::error_code {
   static auto category = request_error_category{};
   return std::error_code(std::to_underlying(e), category);
 }
@@ -101,8 +102,12 @@ struct std::is_error_code_enum<server_response_code> : public std::true_type {};
 
 // category to provide text descriptions
 struct server_response_category : std::error_category {
-  const char *name() const noexcept override { return "server_response"; }
-  std::string message(int code) const override {
+  auto
+  name() const noexcept -> const char * override {
+    return "server_response";
+  }
+  auto
+  message(int code) const -> std::string override {
     using std::string_literals::operator""s;
     // clang-format off
     switch (code) {
@@ -120,8 +125,8 @@ struct server_response_category : std::error_category {
   }
 };
 
-inline std::error_code
-make_error_code(server_response_code e) {
+inline auto
+make_error_code(server_response_code e) -> std::error_code {
   static auto category = server_response_category{};
   return std::error_code(std::to_underlying(e), category);
 }
@@ -147,12 +152,12 @@ struct std::is_error_code_enum<methylome_set_code> : public std::true_type {};
 
 // category to provide text descriptions
 struct methylome_set_category : std::error_category {
-  const char *
-  name() const noexcept override {
+  auto
+  name() const noexcept -> const char * override {
     return "methylome_set";
   }
-  std::string
-  message(int code) const override {
+  auto
+  message(int code) const -> std::string override {
     using std::string_literals::operator""s;
     // clang-format off
     switch (code) {
@@ -198,12 +203,12 @@ struct std::is_error_code_enum<methylome_code> : public std::true_type {};
 
 // category to provide text descriptions
 struct methylome_category : std::error_category {
-  const char *
-  name() const noexcept override {
+  auto
+  name() const noexcept -> const char * override {
     return "methylome";
   }
-  std::string
-  message(int code) const override {
+  auto
+  message(int code) const -> std::string override {
     using std::string_literals::operator""s;
     // clang-format off
     switch (code) {
@@ -222,8 +227,8 @@ struct methylome_category : std::error_category {
   }
 };
 
-inline std::error_code
-make_error_code(methylome_code e) {
+inline auto
+make_error_code(methylome_code e) -> std::error_code {
   static auto category = methylome_category{};
   return std::error_code(std::to_underlying(e), category);
 }
@@ -246,12 +251,12 @@ struct std::is_error_code_enum<genomic_interval_code> : public std::true_type {
 
 // category to provide text descriptions
 struct genomic_interval_category : std::error_category {
-  const char *
-  name() const noexcept override {
+  auto
+  name() const noexcept -> const char * override {
     return "genomic_interval";
   }
-  std::string
-  message(int code) const override {
+  auto
+  message(int code) const -> std::string override {
     using std::string_literals::operator""s;
     // clang-format off
     switch (code) {
@@ -265,8 +270,8 @@ struct genomic_interval_category : std::error_category {
   }
 };
 
-inline std::error_code
-make_error_code(genomic_interval_code e) {
+inline auto
+make_error_code(genomic_interval_code e) -> std::error_code {
   static auto category = genomic_interval_category{};
   return std::error_code(std::to_underlying(e), category);
 }
@@ -290,12 +295,12 @@ struct std::is_error_code_enum<cpg_index_code> : public std::true_type {};
 
 // category to provide text descriptions
 struct cpg_index_category : std::error_category {
-  const char *
-  name() const noexcept override {
+  auto
+  name() const noexcept -> const char * override {
     return "cpg_index";
   }
-  std::string
-  message(int code) const override {
+  auto
+  message(int code) const -> std::string override {
     using std::string_literals::operator""s;
     // clang-format off
     switch (code) {
@@ -311,8 +316,8 @@ struct cpg_index_category : std::error_category {
   }
 };
 
-inline std::error_code
-make_error_code(cpg_index_code e) {
+inline auto
+make_error_code(cpg_index_code e) -> std::error_code {
   static auto category = cpg_index_category{};
   return std::error_code(std::to_underlying(e), category);
 }
