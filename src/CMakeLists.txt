@@ -36,6 +36,14 @@ add_library(utilities OBJECT
   utilities.hpp
   utilities.cpp)
 
+add_library(zlib_adapter OBJECT
+  zlib_adapter.hpp
+  zlib_adapter.cpp)
+
+add_library(counts_file_formats OBJECT
+  counts_file_formats.hpp
+  counts_file_formats.cpp)
+
 add_library(genomic_interval OBJECT
   genomic_interval.hpp
   genomic_interval.cpp)
@@ -147,6 +155,8 @@ target_link_libraries(
   request_handler
   request
   response
+  zlib_adapter
+  counts_file_formats
   command_index
   command_format
   command_check
