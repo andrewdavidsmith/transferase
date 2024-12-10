@@ -32,12 +32,26 @@
 #include <string>
 #include <system_error>
 #include <tuple>
+#include <utility>  // std::unreachable
 
 enum class counts_format : std::uint32_t {
   none = 0,
   xcounts = 1,
   counts = 2,
 };
+
+[[nodiscard]] inline auto
+message(const counts_format format_code) -> std::string {
+  using std::string_literals::operator""s;
+  // clang-format off
+  switch (format_code) {
+  case counts_format::none: return "not known"s;
+  case counts_format::xcounts: return "xcounts"s;
+  case counts_format::counts: return "counts"s;
+  }
+  // clang-format on
+  std::unreachable();  // hopefully this is unreacheable
+}
 
 [[nodiscard]] auto
 parse_counts_line(const std::string &line, std::uint32_t &pos,
