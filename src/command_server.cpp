@@ -198,7 +198,7 @@ command_server_main(int argc, char *argv[]) -> int {
       ? make_shared<ostream>(cout.rdbuf())
       : make_shared<ofstream>(args.log_filename, std::ios::app);
 
-  logger &lgr = logger::instance(log_file, description, args.log_level);
+  logger &lgr = logger::instance(log_file, command, args.log_level);
   if (!lgr) {
     println("Failure initializing logging: {}.", lgr.get_status());
     return EXIT_FAILURE;
