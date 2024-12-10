@@ -36,7 +36,6 @@ target_link_libraries(cpg_index_meta_test
  utilities
  cpg_index_meta
 )
-gtest_discover_tests(cpg_index_meta_test)
 
 add_executable(cpg_index_test cpg_index_test.cpp)
 target_link_libraries(cpg_index_test
@@ -49,7 +48,6 @@ target_link_libraries(cpg_index_test
  cpg_index_meta
  cpg_index
 )
-gtest_discover_tests(cpg_index_test)
 
 add_executable(methylome_test methylome_test.cpp)
 target_link_libraries(methylome_test
@@ -60,7 +58,6 @@ target_link_libraries(methylome_test
  methylome
  utilities
 )
-gtest_discover_tests(methylome_test)
 
 add_executable(counts_file_formats_test counts_file_formats_test.cpp)
 target_link_libraries(counts_file_formats_test
@@ -70,4 +67,17 @@ target_link_libraries(counts_file_formats_test
  counts_file_formats
  zlib_adapter
 )
+
+if(MXE_USE_STATIC_LIBS)
+  add_library(static_target INTERFACE)
+  target_link_options(static_target INTERFACE -static-libgcc -static-libstdc++)
+  target_link_libraries(cpg_index_meta_test PRIVATE static_target)
+  target_link_libraries(counts_file_formats_test PRIVATE static_target)
+  target_link_libraries(cpg_index_test PRIVATE static_target)
+  target_link_libraries(methylome_test PRIVATE static_target)
+endif()
+
+gtest_discover_tests(cpg_index_meta_test)
+gtest_discover_tests(cpg_index_test)
+gtest_discover_tests(methylome_test)
 gtest_discover_tests(counts_file_formats_test)
