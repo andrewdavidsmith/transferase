@@ -21,14 +21,18 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_FORMAT_CONFIG_FILE_HPP_
-#define SRC_FORMAT_CONFIG_FILE_HPP_
+#ifndef SRC_CONFIG_FILE_UTILS_HPP_
+#define SRC_CONFIG_FILE_UTILS_HPP_
 
 #include <boost/describe.hpp>
 #include <boost/mp11.hpp>
 
 #include <format>
+#include <fstream>
+#include <print>
+#include <ranges>
 #include <string>
+#include <system_error>
 
 [[nodiscard]] inline auto
 format_as_config(const auto &t) -> std::string {
@@ -37,9 +41,31 @@ format_as_config(const auto &t) -> std::string {
     boost::describe::describe_members<T, boost::describe::mod_any_access>;
   std::string r;
   boost::mp11::mp_for_each<members>([&](const auto &member) {
-    r += std::format("{} = {}\n", member.name, t.*member.pointer);
+    std::string name(member.name);
+    std::ranges::replace(name, '_', '-');
+    r += std::format("{} = {}\n", name, t.*member.pointer);
   });
   return r;
 }
 
-#endif  // SRC_FORMAT_CONFIG_FILE_HPP_
+[[nodiscard]] inline auto
+write_config_file(const auto &args, [[maybe_unused]] const std::string &header =
+                                      "") -> std::error_code {
+  [[maybe_unused]] static constexpr auto header_width = 78;
+  std::ofstream out(args.config_out);
+  if (!out) {
+    const auto ec = std::make_error_code(std::errc(errno));
+    std::println("Failed to open config file {}: {}", args.config_out, ec);
+    return ec;
+  }
+
+  std::print(out, "{}", format_as_config(args));
+  if (!out) {
+    const auto ec = std::make_error_code(std::errc(errno));
+    std::println("Failed to write config file {}: {}", args.config_file, ec);
+    return ec;
+  }
+  return {};
+}
+
+#endif  // SRC_CONFIG_FILE_UTILS_HPP_
