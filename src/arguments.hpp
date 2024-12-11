@@ -90,7 +90,7 @@ template <typename T> struct argset_base {
   [[nodiscard]] auto
   parse(int argc, char *argv[], const std::string &usage,
         const std::string &about_msg,
-        const std::string &description_msg) -> argument_error {
+        const std::string &description_msg) -> std::error_code {
     boost::program_options::options_description cli_only_opts =
       set_cli_only_opts();
     boost::program_options::options_description common_opts = set_common_opts();
@@ -145,17 +145,7 @@ template <typename T> struct argset_base {
 
   [[nodiscard]] auto
   set_cli_only_opts() -> boost::program_options::options_description {
-    boost::program_options::options_description opts("Command line only");
-    opts.add_options()
-      // clang-format off
-      ("help,h", "print this message and exit")
-      ("config-file,c",
-       boost::program_options::value(&config_file)
-       ->value_name("[arg]")->implicit_value(get_default_config_file(), ""),
-       "use this config file")
-      // clang-format on
-      ;
-    return opts;
+    return self().set_cli_only_opts_impl();
   }
 
   [[nodiscard]] auto
