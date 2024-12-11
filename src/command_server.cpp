@@ -50,6 +50,7 @@ mxe server -s localhost -m methylomes -x indexes
 )";
 
 #include "arguments.hpp"
+#include "config_file_utils.hpp"
 #include "logger.hpp"
 #include "methylome_set.hpp"
 #include "server.hpp"
@@ -129,6 +130,7 @@ struct server_argset : argset_base<server_argset> {
   uint32_t n_threads{};
   uint32_t max_resident{};
   bool daemonize{};
+  string config_out{};
 
   auto
   log_options_impl() const {
@@ -173,7 +175,40 @@ struct server_argset : argset_base<server_argset> {
       ;
     return opts;
   }
+
+  [[nodiscard]] auto
+  set_cli_only_opts_impl() -> boost::program_options::options_description {
+    boost::program_options::options_description opts("Command line only");
+    // clang-format off
+    opts.add_options()
+      ("help,h", "print this message and exit")
+      ("config-file,c",
+       boost::program_options::value(&config_file)
+       ->value_name("[arg]")->implicit_value(get_default_config_file(), ""),
+       "use this config file")
+      ("make-config",
+       boost::program_options::value(&config_out),
+       "write specified configuration to this file and exit")
+      ;
+    // clang-format on
+    return opts;
+  }
 };
+
+// clang-format off
+BOOST_DESCRIBE_STRUCT(server_argset, (), (
+  hostname,
+  port,
+  methylome_dir,
+  index_dir,
+  log_filename,
+  log_level,
+  n_threads,
+  max_resident,
+  daemonize
+)
+)
+// clang-format on
 
 auto
 command_server_main(int argc, char *argv[]) -> int {
@@ -186,12 +221,14 @@ command_server_main(int argc, char *argv[]) -> int {
     std::format("{}\n{}", strip(description), strip(examples));
 
   server_argset args;
-  std::error_code ec =
-    args.parse(argc, argv, usage, about_msg, description_msg);
+  auto ec = args.parse(argc, argv, usage, about_msg, description_msg);
   if (ec == argument_error::help_requested)
     return EXIT_SUCCESS;
   if (ec)
     return EXIT_FAILURE;
+
+  if (!args.config_out.empty())
+    return write_config_file(args) ? EXIT_FAILURE : EXIT_SUCCESS;
 
   shared_ptr<ostream> log_file =
     args.log_filename.empty()
