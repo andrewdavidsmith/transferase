@@ -33,56 +33,6 @@
 #include <type_traits>
 #include <utility>
 
-enum class request_error : std::uint32_t {
-  ok = 0,
-  header_parse_error_accession = 1,
-  header_parse_error_methylome_size = 2,
-  header_parse_error_request_type = 3,
-  lookup_parse_error_n_intervals = 4,
-  lookup_error_reading_offsets = 5,
-  lookup_error_offsets = 6,
-  bins_error_assembly = 7,
-  bins_error_bin_size = 8,
-};
-
-static constexpr std::uint32_t request_error_n = 9;
-
-// register request_error as error code enum
-template <>
-struct std::is_error_code_enum<request_error> : public std::true_type {};
-
-// category to provide text descriptions
-struct request_error_category : std::error_category {
-  auto
-  name() const noexcept -> const char * override {
-    return "request_error";
-  }
-  auto
-  message(int code) const -> std::string override {
-    using std::string_literals::operator""s;
-    // clang-format off
-    switch (code) {
-    case 0: return "ok"s;
-    case 1: return "header parse error accession"s;
-    case 2: return "header parse error methylome size"s;
-    case 3: return "header parse error request type"s;
-    case 4: return "lookup parse error n_intervals"s;
-    case 5: return "lookup error reading offsets"s;
-    case 6: return "lookup error offsets"s;
-    case 7: return "bins error assembly"s;
-    case 8: return "bins error bin size"s;
-    }
-    // clang-format on
-    std::unreachable();  // hopefully this is unreacheable
-  }
-};
-
-inline auto
-make_error_code(request_error e) -> std::error_code {
-  static auto category = request_error_category{};
-  return std::error_code(std::to_underlying(e), category);
-}
-
 enum class server_response_code : std::uint32_t {
   ok = 0,
   invalid_accession = 1,
@@ -285,9 +235,8 @@ enum class cpg_index_code : std::uint32_t {
   failure_reading_index_header = 3,
   failure_reading_index_body = 4,
   inconsistent_chromosome_sizes = 5,
+  failure_processing_genome_file = 6,
 };
-
-static constexpr std::uint32_t cpg_index_code_n = 6;
 
 // register cpg_index_code as error code enum
 template <>
@@ -310,6 +259,7 @@ struct cpg_index_category : std::error_category {
     case 3: return "failure reading index header"s;
     case 4: return "failure reading index body"s;
     case 5: return "inconsistent chromosome sizes"s;
+    case 6: return "failure processing genome file"s;
     }
     // clang-format on
     std::unreachable();  // hopefully
