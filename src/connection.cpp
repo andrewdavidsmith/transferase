@@ -32,12 +32,10 @@
 auto
 connection::stop() -> void {
   lgr.debug("{} Initiating connection shutdown.", conn_id);
-  // deadline.expires_at(boost::asio::steady_timer::clock_type::now());
   boost::system::error_code shutdown_ec;  // for non-throwing
   socket.shutdown(boost::asio::ip::tcp::socket::shutdown_both, shutdown_ec);
   if (shutdown_ec)
     lgr.warning("{} Shutdown error: {}", conn_id, shutdown_ec);
-  // deadline.expires_at(boost::asio::steady_timer::clock_type::now());
 }
 
 auto
@@ -83,7 +81,7 @@ connection::read_request() -> void {
                 respond_with_error();
               }
             }
-            else {  // only possibility is req_hdr.is_bins_request()
+            else {  // is_bins_request
               if (const auto req_parse =
                     from_chars(req_hdr_parse.ptr, cend(req_hdr_buf), bins_req);
                   !req_parse.error) {
