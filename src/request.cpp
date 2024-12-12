@@ -30,7 +30,7 @@
 #include <ranges>
 #include <string>
 
-auto
+[[nodiscard]] auto
 to_chars(char *first, [[maybe_unused]] char *last,
          const request_header &header) -> mxe_to_chars_result {
   // ADS: use to_chars here
@@ -41,7 +41,7 @@ to_chars(char *first, [[maybe_unused]] char *last,
   return {std::ranges::copy(s, first).out, request_error::ok};
 }
 
-auto
+[[nodiscard]] auto
 from_chars(const char *first, const char *last,
            request_header &header) -> mxe_from_chars_result {
   static constexpr auto delim = '\t';
@@ -89,18 +89,18 @@ from_chars(const char *first, const char *last,
   return {cursor, request_error::ok};
 }
 
-auto
+[[nodiscard]] auto
 compose(request_header_buffer &buf,
         const request_header &hdr) -> compose_result {
   return to_chars(buf.data(), buf.data() + std::size(buf), hdr);
 }
 
-auto
+[[nodiscard]] auto
 parse(const request_header_buffer &buf, request_header &hdr) -> parse_result {
   return from_chars(buf.data(), buf.data() + std::size(buf), hdr);
 }
 
-auto
+[[nodiscard]] auto
 request_header::summary() const -> std::string {
   return std::format(R"({{"accession": "{}", )"
                      R"("methylome_size": {}, )"
@@ -110,12 +110,12 @@ request_header::summary() const -> std::string {
 
 // request
 
-auto
+[[nodiscard]] auto
 request::summary() const -> std::string {
   return std::format(R"({{"n_intervals": {}}})", n_intervals);
 }
 
-auto
+[[nodiscard]] auto
 to_chars(char *first, [[maybe_unused]] char *last,
          const request &req) -> mxe_to_chars_result {
   // ADS: use to_chars here
@@ -126,7 +126,7 @@ to_chars(char *first, [[maybe_unused]] char *last,
   return {std::ranges::copy(s, first).out, request_error::ok};
 }
 
-auto
+[[nodiscard]] auto
 from_chars(const char *first, const char *last,
            request &req) -> mxe_from_chars_result {
   [[maybe_unused]] static constexpr auto delim = '\t';
@@ -150,12 +150,12 @@ from_chars(const char *first, const char *last,
 
 // bins_request
 
-auto
+[[nodiscard]] auto
 bins_request::summary() const -> std::string {
   return std::format(R"({{"bin_size": {}}})", bin_size);
 }
 
-auto
+[[nodiscard]] auto
 to_chars(char *first, [[maybe_unused]] char *last,
          const bins_request &req) -> mxe_to_chars_result {
   static constexpr auto term = '\n';
@@ -167,7 +167,7 @@ to_chars(char *first, [[maybe_unused]] char *last,
   return {std::ranges::copy(s, first).out, request_error::ok};
 }
 
-auto
+[[nodiscard]] auto
 from_chars(const char *first, const char *last,
            bins_request &req) -> mxe_from_chars_result {
   static constexpr auto term = '\n';
