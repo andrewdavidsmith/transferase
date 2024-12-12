@@ -22,6 +22,7 @@
  */
 
 #include "cpg_index.hpp"
+#include "cpg_index_impl.hpp"
 
 #include "cpg_index_meta.hpp"
 #include "genomic_interval.hpp"
@@ -48,13 +49,7 @@
 #include <sys/mman.h>
 #include <unistd.h>
 
-struct genome_file {
-  std::error_code ec{};
-  char *data{};
-  std::size_t sz{};
-};
-
-[[nodiscard]] auto
+[[nodiscard]] STATIC auto
 mmap_genome(const std::string &filename) -> genome_file {
   const int fd = open(filename.data(), O_RDONLY, 0);
   if (fd < 0)
@@ -75,14 +70,15 @@ mmap_genome(const std::string &filename) -> genome_file {
   return {std::error_code{}, data, filesize};
 }
 
-[[nodiscard]] static auto
+[[nodiscard]] STATIC auto
 cleanup_mmap_genome(genome_file &gf) -> std::error_code {
-  assert(gf.data != nullptr);
+  if (gf.data == nullptr)
+    return std::make_error_code(std::errc::bad_file_descriptor);
   const int rc = munmap(static_cast<void *>(gf.data), gf.sz);
   return rc ? std::make_error_code(std::errc(errno)) : std::error_code{};
 }
 
-[[nodiscard]] static auto
+[[nodiscard]] STATIC auto
 get_cpgs(const std::string_view &chrom) -> cpg_index::vec {
   static constexpr auto expeced_max_cpg_density = 50;
 
@@ -101,7 +97,7 @@ get_cpgs(const std::string_view &chrom) -> cpg_index::vec {
   return cpgs;
 }
 
-[[nodiscard]] static auto
+[[nodiscard]] STATIC auto
 get_chrom_name_starts(const char *data,
                       const std::size_t sz) -> std::vector<std::size_t> {
   const auto g_end = data + sz;
@@ -112,7 +108,7 @@ get_chrom_name_starts(const char *data,
   return starts;
 }
 
-[[nodiscard]] static auto
+[[nodiscard]] STATIC auto
 get_chrom_name_stops(std::vector<std::size_t> starts, const char *data,
                      const std::size_t sz) -> std::vector<std::size_t> {
   const auto next_stop = [&](const std::size_t start) -> std::size_t {
@@ -122,11 +118,12 @@ get_chrom_name_stops(std::vector<std::size_t> starts, const char *data,
   return starts;
 }
 
-[[nodiscard]] static auto
+[[nodiscard]] STATIC auto
 get_chroms(const char *data, const std::size_t sz,
            const std::vector<std::size_t> &name_starts,
            const std::vector<std::size_t> &name_stops)
   -> std::vector<std::string_view> {
+  assert(!name_starts.empty() && !name_stops.empty());
   std::vector<std::size_t> seq_stops(std::size(name_starts));
   seq_stops.back() = sz;
 
@@ -152,6 +149,8 @@ initialize_cpg_index(const std::string &genome_filename)
   // get start and stop positions of chrom names in the file
   const auto name_starts = get_chrom_name_starts(gf.data, gf.sz);
   const auto name_stops = get_chrom_name_stops(name_starts, gf.data, gf.sz);
+  if (name_starts.empty() || name_stops.empty())
+    return {{}, {}, cpg_index_code::failure_processing_genome_file};
 
   // initialize the chromosome order
   std::vector<std::pair<std::uint32_t, std::string>> chrom_sorter;
@@ -286,7 +285,7 @@ cpg_index::write(const std::string &index_file) const -> std::error_code {
 
 // given the chromosome id (from chrom_index) and a position within
 // the chrom, get the offset of the CpG site from std::lower_bound
-[[nodiscard]] static inline auto
+[[nodiscard]] STATIC inline auto
 get_offsets_within_chrom(
   const cpg_index::vec &positions,
   const std::vector<std::pair<std::uint32_t, std::uint32_t>> &queries)
