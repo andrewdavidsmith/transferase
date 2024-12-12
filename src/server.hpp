@@ -51,16 +51,13 @@ struct server {
                   const std::string &methylome_dir,
                   const std::string &index_file_dir,
                   const std::uint32_t max_live_methylomes, logger &lgr,
-                  std::error_code &ec, const bool daemonize);
-
-  auto
-  run() -> void;
-  auto
-  do_accept() -> void;  // do async accept operation
-  auto
-  do_await_stop() -> void;  // wait for request to stop server
-  auto
-  do_daemon_await_stop() -> void;
+                  std::error_code &ec, [[maybe_unused]] const bool daemonize);
+  // clang-format off
+  auto run() -> void;
+  auto do_accept() -> void;  // do async accept operation
+  auto do_await_stop() -> void;  // wait for request to stop server
+  auto do_daemon_await_stop() -> void;  // same but for daemon mode
+  // clang-format on
 
   std::uint32_t n_threads{};
   boost::asio::io_context ioc;              // performs async ops
