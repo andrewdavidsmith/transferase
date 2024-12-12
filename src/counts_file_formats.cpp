@@ -38,7 +38,6 @@
 parse_counts_line(const std::string &line, std::uint32_t &pos,
                   std::uint32_t &n_meth, uint32_t &n_unmeth) -> bool {
   constexpr auto is_sep = [](const char x) { return x == ' ' || x == '\t'; };
-  constexpr auto not_sep = [](const char x) { return x != ' ' && x != '\t'; };
 
   const auto c_end = line.data() + std::size(line);
   auto field_s = line.data();
