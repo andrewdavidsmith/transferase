@@ -47,30 +47,20 @@ template <typename T> struct ring_buffer {
     std::swap(buf[counter++ % capacity], t);
     return t;
   }
+  // clang-format off
   [[nodiscard]] auto
-  size() const {
-    return counter < capacity ? counter : capacity;
-  }
+  size() const {return counter < capacity ? counter : capacity;}
   [[nodiscard]] auto
-  front() const {
-    return buf[counter < capacity ? 0 : (counter + 1) % capacity];
-  }
+  front() const {return buf[counter < capacity ? 0 : (counter + 1) % capacity];}
   [[nodiscard]] auto
-  begin() {
-    return std::begin(buf);
-  }
+  begin() {return std::begin(buf);}
   [[nodiscard]] auto
-  begin() const {
-    return std::cbegin(buf);
-  }
+  begin() const {return std::cbegin(buf);}
   [[nodiscard]] auto
-  end() {
-    return std::begin(buf) + std::min(counter, capacity);
-  }
+  end() {return std::begin(buf) + std::min(counter, capacity);}
   [[nodiscard]] auto
-  end() const {
-    return std::cbegin(buf) + std::min(counter, capacity);
-  }
+  end() const {return std::cbegin(buf) + std::min(counter, capacity);}
+  // clang-format on
 
   // ADS: just use capacity inside the vector?
   // ADS: use boost circular buffer?
