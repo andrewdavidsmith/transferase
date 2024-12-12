@@ -148,7 +148,7 @@ mxe_client<counts_type, req_type>::handle_resolve(
   if (!err) {
     boost::asio::async_connect(
       socket, endpoints,
-      [this](const auto &error, auto) { this->handle_connect(error); });
+      [this](const auto &error, auto) { handle_connect(error); });
     deadline.expires_after(read_timeout_seconds);
   }
   else {
@@ -211,7 +211,7 @@ mxe_client<counts_type, req_type>::handle_write_request(
     boost::asio::async_read(
       socket, boost::asio::buffer(resp_hdr_buf),
       boost::asio::transfer_exactly(response_buf_size),
-      [this](auto error, auto) { this->handle_read_response_header(error); });
+      [this](const auto error, auto) { handle_read_response_header(error); });
     deadline.expires_after(read_timeout_seconds);
   }
   else {
@@ -221,7 +221,7 @@ mxe_client<counts_type, req_type>::handle_write_request(
     boost::asio::async_read(
       socket, boost::asio::buffer(resp_hdr_buf),
       boost::asio::transfer_exactly(response_buf_size),
-      [this](auto error, auto) { this->handle_failure_explanation(error); });
+      [this](const auto error, auto) { handle_failure_explanation(error); });
   }
 }
 
