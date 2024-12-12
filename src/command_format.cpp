@@ -300,7 +300,6 @@ process_cpg_sites_counts(const std::string &infile, const cpg_index &index,
     const auto end_of_chrom = line.find_first_of(" \t");
     const std::string chrom{line.substr(0, end_of_chrom)};
     if (chrom != prev_chrom) {  // check for new chromosome
-      std::println("{}", chrom);
       const std::uint32_t ch_id = get_ch_id(cim, chrom);
       if (ch_id < 0) {
         lgr.error("Failed to find chromosome in index: {}", line);
