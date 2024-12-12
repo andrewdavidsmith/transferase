@@ -23,16 +23,11 @@
 
 #include <request.hpp>
 
-#include <query_interval_set.hpp>
-
 #include <gtest/gtest.h>
 
 #include <string>
 #include <vector>
 
-#include <iostream>
-
-// Demonstrate some basic assertions.
 TEST(request_header, basic_assertions) {
   request_header hdr;
   EXPECT_EQ(hdr, request_header{});
