@@ -45,7 +45,7 @@ to_chars(char *first, [[maybe_unused]] char *last,
   const string s = format("{}\t{}\n", hdr.status.value(), hdr.response_size);
   assert(ssize(s) < std::distance(first, last));
   auto data_end = rg::copy(s, first);  // in_out_result
-  return {data_end.out, request_error::ok};
+  return {data_end.out, std::error_code{}};
 }
 
 auto
