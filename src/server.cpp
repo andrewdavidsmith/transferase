@@ -167,7 +167,7 @@ server::server(const string &address, const string &port,
                const uint32_t n_threads, const string &methylome_dir,
                const string &cpg_index_file_dir,
                const uint32_t max_live_methylomes, logger &lgr,
-               std::error_code &ec, const bool daemonize) :
+               std::error_code &ec, [[maybe_unused]] const bool daemonize) :
   // io_context ioc uses default constructor
   n_threads{n_threads},
 #if defined(SIGQUIT)
