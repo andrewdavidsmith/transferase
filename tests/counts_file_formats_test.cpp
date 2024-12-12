@@ -29,8 +29,7 @@
 #include <string>
 #include <utility>
 
-// Demonstrate some basic assertions.
-TEST(CountsFileFormatsTest, ParseCountsLine) {
+TEST(counts_file_format_test, parse_counts_line) {
   const std::string line{"chr1 202 + CG 0.963302752293578 109"};
   std::uint32_t pos{}, n_meth{}, n_unmeth{};
   bool parse_success = parse_counts_line(line, pos, n_meth, n_unmeth);
