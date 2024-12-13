@@ -1,0 +1,8 @@
+[
+    { "include": ["@<zconf.h>", "private", "<zlib.h>", "public"] },
+    { "include": ["@<boost/program_options/.*>", "private", "<boost/program_options.hpp>", "public"] },
+    { "include": ["@<boost/asio/.*>", "private", "<boost/asio.hpp>", "public"] },
+    { "include": ["@<boost/system/.*>", "private", "<boost/system.hpp>", "public"] },
+    { "include": ["@<boost/describe/.*>", "private", "<boost/describe.hpp>", "public"] },
+    { "include": ["@<boost/json/.*>", "private", "<boost/json.hpp>", "public"] },
+]
