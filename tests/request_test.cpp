@@ -39,7 +39,7 @@ TEST(request_header, basic_assertions) {
   static constexpr auto buf_size{1024};
   std::vector<char> buf(buf_size);
   const auto req = request{2, {{0, 1}, {3, 4}}};
-  const auto res = to_chars(buf.data(), buf.data() + std::size(buf), req);
+  const auto res = compose(buf.data(), buf.data() + std::size(buf), req);
   EXPECT_FALSE(res.error);
   EXPECT_EQ(std::string(buf.data(), res.ptr), "2\n");
 }
