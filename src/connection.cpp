@@ -26,8 +26,16 @@
 #include "request.hpp"
 #include "request_handler.hpp"
 #include "response.hpp"
+#include "utilities.hpp"
 
 #include <boost/asio.hpp>
+#include <boost/system.hpp>
+
+#include <chrono>
+#include <compare>   // for operator<=
+#include <iterator>  // for cend
+#include <system_error>
+#include <vector>
 
 auto
 connection::stop() -> void {
@@ -68,7 +76,7 @@ connection::read_request() -> void {
           if (!resp_hdr.error()) {
             if (req_hdr.is_intervals_request()) {
               if (const auto req_parse =
-                    from_chars(req_hdr_parse.ptr, cend(req_hdr_buf), req);
+                    parse(req_hdr_parse.ptr, cend(req_hdr_buf), req);
                   !req_parse.error) {
                 prepare_to_read_offsets();
                 handler.add_response_size_for_intervals(req_hdr, req, resp_hdr);
@@ -83,7 +91,7 @@ connection::read_request() -> void {
             }
             else {  // is_bins_request
               if (const auto req_parse =
-                    from_chars(req_hdr_parse.ptr, cend(req_hdr_buf), bins_req);
+                    parse(req_hdr_parse.ptr, cend(req_hdr_buf), bins_req);
                   !req_parse.error) {
                 handler.add_response_size_for_bins(req_hdr, bins_req, resp_hdr);
                 compute_bins();
