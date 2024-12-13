@@ -136,7 +136,7 @@ if(NOT ENABLE_UNIT_TESTS)
   target_include_directories(mxe PRIVATE "${PROJECT_BINARY_DIR}")
   target_sources(mxe PRIVATE mxe.cpp)
 
-  if(MXE_USE_STATIC_LIBS)
+  if(USE_STATIC_LIBS)
     # ADS: this avoids the static linkage that aiso warns against
     target_link_options(mxe PRIVATE -static-libgcc -static-libstdc++)
   endif()
