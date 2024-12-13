@@ -23,8 +23,9 @@
 
 #include "hash.hpp"
 
-#include <zlib.h>
+#include <zlib.h>  // for adler32_z
 
+#include <cerrno>
 #include <filesystem>
 #include <fstream>
 #include <string>
