@@ -30,7 +30,9 @@
 #include "utilities.hpp"
 
 #include <array>
+#include <cstddef>  // for std::byte
 #include <cstdint>
+#include <iterator>  // for std::size
 #include <string>
 #include <system_error>
 #include <vector>
@@ -44,34 +46,34 @@ struct response_header {
   std::uint32_t response_size{};
 
   // ADS: doing the strange stuff below for cpplint...
-  auto
+  [[nodiscard]] auto
   error() const -> bool {
     return (status) ? true : false;
   }
 
-  auto
+  [[nodiscard]] auto
   summary() const -> std::string;
 };
 
-auto
-to_chars(char *first, char *last,
-         const response_header &header) -> mxe_to_chars_result;
+[[nodiscard]] auto
+compose(char *first, char *last,
+        const response_header &header) -> compose_result;
 
-auto
-from_chars(const char *first, const char *last,
-           response_header &header) -> mxe_from_chars_result;
+[[nodiscard]] auto
+parse(const char *first, const char *last,
+      response_header &header) -> parse_result;
 
-auto
+[[nodiscard]] auto
 compose(std::array<char, response_buf_size> &buf,
         const response_header &hdr) -> compose_result;
 
-auto
+[[nodiscard]] auto
 parse(const std::array<char, response_buf_size> &buf,
       response_header &hdr) -> parse_result;
 
 struct response_payload {
   std::vector<std::byte> payload;
-  auto
+  [[nodiscard]] auto
   n_bytes() const -> std::uint32_t {
     return std::size(payload);
   }
@@ -79,7 +81,7 @@ struct response_payload {
 
 template <typename counts_type> struct response {
   std::vector<counts_type> counts;  // counts_type is from methylome.hpp
-  auto
+  [[nodiscard]] auto
   get_counts_n_bytes() const -> std::uint32_t {
     return sizeof(counts_type) * size(counts);
   }
