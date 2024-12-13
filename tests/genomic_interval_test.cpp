@@ -24,13 +24,12 @@
 #include <genomic_interval.hpp>
 
 #include <cpg_index.hpp>
-#include <cpg_index_meta.hpp>
+#include <cpg_index_meta.hpp>  // IWYU pragma: keep
 
 #include <gtest/gtest.h>
 
-#include <cstdint>
+#include <iterator>
 #include <string>
-#include <system_error>
 
 TEST(genomic_interval_test, basic_assertions) {
   static constexpr auto index_file{"data/tProrsus1.cpg_idx"};

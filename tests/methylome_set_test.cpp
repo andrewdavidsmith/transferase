@@ -21,17 +21,17 @@
  * SOFTWARE.
  */
 
-#include <methylome.hpp>
-
-#include <methylome_metadata.hpp>
 #include <methylome_set.hpp>
 #include <mxe_error.hpp>
 
 #include <gtest/gtest.h>
 
-#include <cstdint>
-#include <memory>
+#include <cstdint>   // for std::uint32_t
+#include <iterator>  // for std::size
+#include <memory>    // for std::unique_ptr, std::shared_ptr
 #include <string>
+#include <tuple>  // for std::get
+#include <unordered_map>
 
 class methylome_set_test : public ::testing::Test {
 protected:

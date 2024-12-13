@@ -23,7 +23,7 @@
 
 #include <request_handler.hpp>
 
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
 
 TEST(request_handler_test, basic_assertions) {
   std::error_code ec;
