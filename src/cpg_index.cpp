@@ -22,32 +22,35 @@
  */
 
 #include "cpg_index.hpp"
-#include "cpg_index_impl.hpp"
 
+#include "cpg_index_impl.hpp"
 #include "cpg_index_meta.hpp"
 #include "genomic_interval.hpp"
-#include "hash.hpp"
+#include "hash.hpp"  // for update_adler
 #include "mxe_error.hpp"
-#include "utilities.hpp"
+
+#include <fcntl.h>     // for open, O_RDONLY
+#include <sys/mman.h>  // for mmap, munmap, MAP_FAILED, MAP_PRIVATE
+#include <unistd.h>    // for close
 
 #include <algorithm>
 #include <cassert>
-#include <cstdint>
+#include <cerrno>
+#include <compare>  // for operator<
+#include <cstddef>  // for std::size_t
+#include <cstdint>  // for std::uint32_t, std::uint64_t, std::int32_t
 #include <filesystem>
-#include <format>
 #include <fstream>
-#include <functional>
-#include <numeric>  // std::exclusive_scan
+#include <functional>  // for std::plus
+#include <iterator>    // for std::back_insert_iterator, std::cbegin
+#include <numeric>     // for std::adjacent_difference, std::exclusive_scan
 #include <ranges>
 #include <string>
+#include <string_view>
 #include <tuple>
-#include <utility>
+#include <unordered_map>
+#include <utility>  // for std::pair, std::move
 #include <vector>
-
-// for mmap
-#include <fcntl.h>
-#include <sys/mman.h>
-#include <unistd.h>
 
 [[nodiscard]] STATIC auto
 mmap_genome(const std::string &filename) -> genome_file {
@@ -60,7 +63,7 @@ mmap_genome(const std::string &filename) -> genome_file {
   if (err)
     return {std::make_error_code(std::errc(errno)), nullptr, 0};
   char *data =
-    static_cast<char *>(mmap(NULL, filesize, PROT_READ, MAP_PRIVATE, fd, 0));
+    static_cast<char *>(mmap(nullptr, filesize, PROT_READ, MAP_PRIVATE, fd, 0));
 
   if (data == MAP_FAILED)
     return {std::make_error_code(std::errc(errno)), nullptr, 0};

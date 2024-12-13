@@ -24,21 +24,19 @@
 #ifndef SRC_CPG_INDEX_HPP_
 #define SRC_CPG_INDEX_HPP_
 
-#include "cpg_index_meta.hpp"
-
 #if not defined(__APPLE__) && not defined(__MACH__)
-#include "aligned_allocator.hpp"
+#include "aligned_allocator.hpp"  // for aligned_allocator
 #endif
 
-#include <cstdint>
+#include <cstdint>  // for std::uint32_t, std::int32_t, std::uint64_t
 #include <string>
 #include <system_error>
 #include <tuple>
-#include <unordered_map>
-#include <utility>
+#include <utility>  // for std::pair
 #include <vector>
 
 struct genomic_interval;
+struct cpg_index_meta;
 
 struct cpg_index {
   // includes the dot because that's how std::filesystem::path works
@@ -63,10 +61,6 @@ struct cpg_index {
   [[nodiscard]] auto
   get_n_cpgs() const -> std::uint32_t;
 
-  /* ADS: currently unused */
-  // [[nodiscard]] auto
-  // get_offset_within_chrom(const std::int32_t ch_id,
-  //                         const std::uint32_t pos) const -> std::uint32_t;
   [[nodiscard]] auto
   get_offsets_within_chrom(
     const std::int32_t ch_id,
