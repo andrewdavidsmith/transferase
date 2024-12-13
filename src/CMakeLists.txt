@@ -24,6 +24,8 @@
 # $ cmake --version
 cmake_minimum_required(VERSION 3.30)
 
+add_compile_options(-Wall -Wextra -Wpedantic -Werror -Wfatal-errors)
+
 add_library(logger OBJECT
   logger.hpp
   logger.cpp)
@@ -95,80 +97,80 @@ add_library(request_handler OBJECT
   request_handler.hpp
   request_handler.cpp)
 
-# sources with commands
-add_library(command_compress OBJECT
-  command_compress.hpp
-  command_compress.cpp)
+if(NOT ENABLE_UNIT_TESTS)
+  # sources with commands
+  add_library(command_compress OBJECT
+    command_compress.hpp
+    command_compress.cpp)
 
-add_library(command_intervals OBJECT
-  command_intervals.hpp
-  command_intervals.cpp)
+  add_library(command_intervals OBJECT
+    command_intervals.hpp
+    command_intervals.cpp)
 
-add_library(command_bins OBJECT
-  command_bins.hpp
-  command_bins.cpp)
+  add_library(command_bins OBJECT
+    command_bins.hpp
+    command_bins.cpp)
 
-add_library(command_format OBJECT
-  command_format.hpp
-  command_format.cpp)
+  add_library(command_format OBJECT
+    command_format.hpp
+    command_format.cpp)
 
-add_library(command_check OBJECT
-  command_check.hpp
-  command_check.cpp)
+  add_library(command_check OBJECT
+    command_check.hpp
+    command_check.cpp)
 
-add_library(command_merge OBJECT
-  command_merge.hpp
-  command_merge.cpp)
+  add_library(command_merge OBJECT
+    command_merge.hpp
+    command_merge.cpp)
 
-add_library(command_index OBJECT
-  command_index.hpp
-  command_index.cpp)
+  add_library(command_index OBJECT
+    command_index.hpp
+    command_index.cpp)
 
-add_library(command_server OBJECT
-  command_server.hpp
-  command_server.cpp)
+  add_library(command_server OBJECT
+    command_server.hpp
+    command_server.cpp)
 
-add_compile_options(-Wall -Wextra -Wpedantic -Werror -Wfatal-errors)
 
-add_executable(mxe)
-target_include_directories(mxe PRIVATE "${PROJECT_BINARY_DIR}")
-target_sources(mxe PRIVATE mxe.cpp)
+  add_executable(mxe)
+  target_include_directories(mxe PRIVATE "${PROJECT_BINARY_DIR}")
+  target_sources(mxe PRIVATE mxe.cpp)
 
-if(MXE_USE_STATIC_LIBS)
-  # ADS: this avoids the static linkage that aiso warns against
-  target_link_options(mxe PRIVATE -static-libgcc -static-libstdc++)
+  if(MXE_USE_STATIC_LIBS)
+    # ADS: this avoids the static linkage that aiso warns against
+    target_link_options(mxe PRIVATE -static-libgcc -static-libstdc++)
+  endif()
+  target_link_libraries(
+    mxe PRIVATE
+    utilities
+    logger
+    genomic_interval
+    cpg_index
+    cpg_index_set
+    cpg_index_meta
+    methylome
+    methylome_metadata
+    methylome_set
+    server
+    connection
+    request_handler
+    request
+    response
+    zlib_adapter
+    counts_file_formats
+    command_index
+    command_format
+    command_check
+    command_compress
+    command_merge
+    command_intervals
+    command_server
+    command_bins
+    ZLIB::ZLIB
+    Boost::boost
+    Boost::program_options
+    Boost::json
+    Threads::Threads
+  )
+  install(TARGETS mxe DESTINATION bin)
 endif()
-
-target_link_libraries(
-  mxe PRIVATE
-  utilities
-  logger
-  genomic_interval
-  cpg_index
-  cpg_index_set
-  cpg_index_meta
-  methylome
-  methylome_metadata
-  methylome_set
-  server
-  connection
-  request_handler
-  request
-  response
-  zlib_adapter
-  counts_file_formats
-  command_index
-  command_format
-  command_check
-  command_compress
-  command_merge
-  command_intervals
-  command_server
-  command_bins
-  ZLIB::ZLIB
-  Boost::boost
-  Boost::program_options
-  Boost::json
-  Threads::Threads
-)
-install(TARGETS mxe DESTINATION bin)
