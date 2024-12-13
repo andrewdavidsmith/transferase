@@ -37,14 +37,19 @@ set(CMAKE_CXX_EXTENSIONS off)  # prevents std=gnu++23
 set(CMAKE_EXPORT_COMPILE_COMMANDS on)
 
 option(ENABLE_UNIT_TESTS "Enable unit tests" OFF)
+option(ENABLE_STATIC_ANALYSIS "Enable static analysis" OFF)
 
-if(MXE_STATIC_ANALYSIS)
+if(ENABLE_STATIC_ANALYSIS)
+  message(STATUS "Stati analysis enabled")
   # cpplint: all options are in the config file
-  set(CMAKE_CXX_CPPLINT cpplint --quiet)
+  set(CMAKE_CXX_CPPLINT
+    cpplint
+    --quiet
+  )
   set(CMAKE_CXX_INCLUDE_WHAT_YOU_USE
     include-what-you-use
     -Xiwyu
-    --mapping_file=${PROJECT_SOURCE_DIR}/iwyu.imp
+    --mapping_file=${PROJECT_SOURCE_DIR}/iwyu.json
   )
   # cppcheck: options on the command line as there is no config file
   set(CMAKE_CXX_CPPCHECK
@@ -65,7 +70,7 @@ endif()
 include(CheckIncludeFileCXX)
 include(CheckFunctionExists)
 
-if(MXE_USE_STATIC_LIBS)
+if(USE_STATIC_LIBS)
   set(Boost_USE_STATIC_LIBS on)
   set(ZLIB_USE_STATIC_LIBS on)
 endif()
