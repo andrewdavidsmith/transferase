@@ -79,9 +79,6 @@ mxe intervals remote -x hg38.cpg_idx -o output.bed -s example.com -a SRX012345 -
 #include <variant>
 #include <vector>
 
-using std::string;
-using std::vector;
-
 template <typename counts_res_type>
 [[nodiscard]] static inline auto
 do_remote_intervals(const std::string &accession, const cpg_index_meta &cim,
