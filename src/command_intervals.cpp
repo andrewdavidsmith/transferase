@@ -28,7 +28,7 @@ summarize methylation levels in each of a set of genomic intervals
 )";
 
 static constexpr auto description = R"(
-The 'intervals' command accepts a set of genomic intervals and a
+The intervals command accepts a set of genomic intervals and a
 methylome, and it generates a summary of the methylation levels in
 each interval. This command runs in two modes, local and remote. The
 local mode is for analyzing data on your local storage: either your
@@ -84,10 +84,10 @@ using std::vector;
 
 template <typename counts_res_type>
 [[nodiscard]] static inline auto
-do_remote_intervals(const string &accession, const cpg_index_meta &cim,
-                    vector<methylome::offset_pair> offsets,
-                    const string &hostname, const string &port)
-  -> std::tuple<vector<counts_res_type>, std::error_code> {
+do_remote_intervals(const std::string &accession, const cpg_index_meta &cim,
+                    std::vector<methylome::offset_pair> offsets,
+                    const std::string &hostname, const std::string &port)
+  -> std::tuple<std::vector<counts_res_type>, std::error_code> {
   request_header hdr{accession, cim.n_cpgs, {}};
 
   if constexpr (std::is_same<counts_res_type, counts_res>::value)
@@ -107,9 +107,10 @@ do_remote_intervals(const string &accession, const cpg_index_meta &cim,
 
 template <typename counts_res_type>
 [[nodiscard]] static inline auto
-do_local_intervals(const string &meth_file, const string &meth_meta_file,
-                   vector<methylome::offset_pair> offsets)
-  -> std::tuple<vector<counts_res_type>, std::error_code> {
+do_local_intervals(const std::string &meth_file,
+                   const std::string &meth_meta_file,
+                   std::vector<methylome::offset_pair> offsets)
+  -> std::tuple<std::vector<counts_res_type>, std::error_code> {
   logger &lgr = logger::instance();
   const auto [meta, meta_err] = methylome_metadata::read(meth_meta_file);
   if (meta_err) {
@@ -128,7 +129,7 @@ do_local_intervals(const string &meth_file, const string &meth_meta_file,
 }
 
 static inline auto
-write_output(std::ostream &out, const vector<genomic_interval> &gis,
+write_output(std::ostream &out, const std::vector<genomic_interval> &gis,
              const cpg_index_meta &cim, const auto &results,
              const bool write_scores) {
   if (write_scores) {
@@ -153,11 +154,11 @@ write_output(std::ostream &out, const vector<genomic_interval> &gis,
 
 template <typename counts_res_type>
 static auto
-do_intervals(const string &accession, const cpg_index_meta &cim,
-             const vector<methylome::offset_pair> &offsets,
-             const string &hostname, const string &port,
-             const string &meth_file, const string &meth_meta_file,
-             std::ostream &out, const vector<genomic_interval> &gis,
+do_intervals(const std::string &accession, const cpg_index_meta &cim,
+             const std::vector<methylome::offset_pair> &offsets,
+             const std::string &hostname, const std::string &port,
+             const std::string &meth_file, const std::string &meth_meta_file,
+             std::ostream &out, const std::vector<genomic_interval> &gis,
              const bool write_scores,
              const bool remote_mode) -> std::error_code {
   const auto intervals_start{std::chrono::high_resolution_clock::now()};
@@ -186,7 +187,7 @@ auto
 command_intervals_main(int argc, char *argv[]) -> int {
   static constexpr auto command = "intervals";
   static const auto usage =
-    std::format("Usage: mxe {} [options]\n", strip(command));
+    std::format("Usage: mxe intervals [local|remote] [options]\n");
   static const auto about_msg =
     std::format("mxe {}: {}", strip(command), strip(about));
   static const auto description_msg =
@@ -196,17 +197,17 @@ command_intervals_main(int argc, char *argv[]) -> int {
 
   bool write_scores{};
   bool count_covered{};
-  string port{};
-  string accession{};
-  string index_file{};
-  string meth_file{};
-  string meth_meta_file{};
-  string intervals_file{};
-  string hostname{};
-  string output_file{};
+  std::string port{};
+  std::string accession{};
+  std::string index_file{};
+  std::string meth_file{};
+  std::string meth_meta_file{};
+  std::string intervals_file{};
+  std::string hostname{};
+  std::string output_file{};
   mxe_log_level log_level{};
 
-  string subcmd;
+  std::string subcmd;
 
   namespace po = boost::program_options;
 
@@ -214,7 +215,7 @@ command_intervals_main(int argc, char *argv[]) -> int {
   subcmds.add_options()
     // clang-format off
     ("subcmd", po::value(&subcmd))
-    ("subargs", po::value<vector<string>>())
+    ("subargs", po::value<std::vector<std::string>>())
     // clang-format on
     ;
   // positional; one for "subcmd" and the rest else parser throws
@@ -297,18 +298,18 @@ command_intervals_main(int argc, char *argv[]) -> int {
   }
 
   // ADS: log the command line arguments (assuming right log level)
-  vector<std::tuple<string, string>> args_to_log{
+  std::vector<std::tuple<std::string, std::string>> args_to_log{
     {"Index", index_file},
     {"Intervals", intervals_file},
     {"Output", output_file},
     {"Covered", std::format("{}", count_covered)},
     {"Bedgraph", std::format("{}", write_scores)},
   };
-  vector<std::tuple<string, string>> remote_args{
+  std::vector<std::tuple<std::string, std::string>> remote_args{
     {"Hostname:port", std::format("{}:{}", hostname, port)},
     {"Accession", accession},
   };
-  vector<std::tuple<string, string>> local_args{
+  std::vector<std::tuple<std::string, std::string>> local_args{
     {"Methylome", meth_file},
     {"Metadata", meth_meta_file},
   };

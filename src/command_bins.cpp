@@ -28,7 +28,7 @@ summarize methylation levels in non-overlapping genomic bins
 )";
 
 static constexpr auto description = R"(
-The 'bins' command accepts a bin size and a methylome, and it
+The bins command accepts a bin size and a methylome, and it
 generates a summary of the methylation levels in each non-overlapping
 bin of the given size. This command runs in two modes, local and
 remote. The local mode is for analyzing data on your local storage:
@@ -183,7 +183,7 @@ auto
 command_bins_main(int argc, char *argv[]) -> int {
   static constexpr auto command = "bins";
   static const auto usage =
-    std::format("Usage: mxe {} [options]\n", strip(command));
+    std::format("Usage: mxe bins [local|remote] [options]\n");
   static const auto about_msg =
     std::format("mxe {}: {}", strip(command), strip(about));
   static const auto description_msg =
