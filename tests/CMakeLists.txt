@@ -22,16 +22,18 @@
 
 cmake_minimum_required(VERSION 3.30)
 
+add_compile_options(-Wall -Wextra -Wpedantic -Werror -Wfatal-errors)
+
 include_directories(${PROJECT_SOURCE_DIR}/src)
 
+find_package(GTest REQUIRED)
 include(GoogleTest)
-add_library(GTest::GTest INTERFACE IMPORTED)
-target_link_libraries(GTest::GTest INTERFACE gtest gtest_main)
 
 add_executable(cpg_index_meta_test cpg_index_meta_test.cpp)
 target_link_libraries(cpg_index_meta_test
  PRIVATE
  GTest::GTest
+ GTest::Main
  Boost::json
  utilities
  cpg_index_meta
@@ -41,6 +43,7 @@ add_executable(cpg_index_test cpg_index_test.cpp)
 target_link_libraries(cpg_index_test
  PRIVATE
  GTest::GTest
+ GTest::Main
  Boost::json
  ZLIB::ZLIB
  Threads::Threads
@@ -53,6 +56,7 @@ add_executable(methylome_test methylome_test.cpp)
 target_link_libraries(methylome_test
  PRIVATE
  GTest::GTest
+ GTest::Main
  ZLIB::ZLIB
  methylome_metadata
  methylome
@@ -63,21 +67,95 @@ add_executable(counts_file_formats_test counts_file_formats_test.cpp)
 target_link_libraries(counts_file_formats_test
  PRIVATE
  GTest::GTest
+ GTest::Main
  ZLIB::ZLIB
  counts_file_formats
  zlib_adapter
 )
 
+add_executable(genomic_interval_test genomic_interval_test.cpp)
+target_link_libraries(genomic_interval_test
+ PRIVATE
+ GTest::GTest
+ GTest::Main
+ Boost::json
+ ZLIB::ZLIB
+ genomic_interval
+ utilities
+ hash
+ cpg_index
+ cpg_index_meta
+)
+
+add_executable(request_test request_test.cpp)
+target_link_libraries(request_test
+ PRIVATE
+ GTest::GTest
+ GTest::Main
+ request
+)
+
+add_executable(methylome_set_test methylome_set_test.cpp)
+target_link_libraries(methylome_set_test
+ PRIVATE
+ GTest::GTest
+ GTest::Main
+ ZLIB::ZLIB
+ methylome
+ utilities
+ methylome_metadata
+ methylome_set
+)
+
+add_executable(request_handler_test request_handler_test.cpp)
+target_link_libraries(request_handler_test
+ PRIVATE
+ GTest::GTest
+ GTest::Main
+ ZLIB::ZLIB
+ request_handler
+ request
+ logger
+ methylome
+ utilities
+ methylome_metadata
+ methylome_set
+ cpg_index
+ cpg_index_meta
+ cpg_index_set
+)
+
+set(EXECUTABLE_TARGETS
+  cpg_index_meta_test
+  counts_file_formats_test
+  cpg_index_test
+  methylome_test
+  methylome_set_test
+  genomic_interval_test
+  request_test
+  request_handler_test
+)
+
+# Define the UNIT_TEST macro for the test targets
+foreach(target ${EXECUTABLE_TARGETS})
+  target_compile_definitions(${target} PRIVATE UNIT_TEST)
+endforeach()
+
 if(MXE_USE_STATIC_LIBS)
   add_library(static_target INTERFACE)
   target_link_options(static_target INTERFACE -static-libgcc -static-libstdc++)
-  target_link_libraries(cpg_index_meta_test PRIVATE static_target)
-  target_link_libraries(counts_file_formats_test PRIVATE static_target)
-  target_link_libraries(cpg_index_test PRIVATE static_target)
-  target_link_libraries(methylome_test PRIVATE static_target)
+  foreach(target ${EXECUTABLE_TARGETS})
+    target_link_libraries(${target} PRIVATE static_target)
+  endforeach()
 endif()
 
-gtest_discover_tests(cpg_index_meta_test)
-gtest_discover_tests(cpg_index_test)
-gtest_discover_tests(methylome_test)
-gtest_discover_tests(counts_file_formats_test)
+foreach(target ${EXECUTABLE_TARGETS})
+  gtest_discover_tests(${target})
+endforeach()
+
+# Add compile definitions to specific targets
+file(CREATE_LINK
+  ${PROJECT_SOURCE_DIR}/tests/data
+  ${PROJECT_BINARY_DIR}/tests/data
+  SYMBOLIC
+)
