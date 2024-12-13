@@ -24,13 +24,26 @@
 #ifndef SRC_GENOMIC_INTERVAL_OUTPUT_HPP_
 #define SRC_GENOMIC_INTERVAL_OUTPUT_HPP_
 
+#include "cpg_index_meta.hpp"
+#include "genomic_interval.hpp"
+
 #include <algorithm>  // std::min
+#include <array>
 #include <cassert>
 #include <cerrno>
+#include <charconv>
+#include <cstdint>   // for uint32_t
+#include <iterator>  // for size, cbegin, cend, pair
+#include <ostream>
+#include <ranges>
 #include <string>
 #include <system_error>
-#include <utility>  // std::pair
+#include <tuple>
+#include <type_traits>  // for is_same
+#include <utility>      // std::pair
 #include <vector>
+
+struct counts_res_cov;
 
 [[nodiscard]] auto
 write_intervals(std::ostream &out, const cpg_index_meta &cim,
