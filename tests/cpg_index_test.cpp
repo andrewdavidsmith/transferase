@@ -23,11 +23,12 @@
 
 #include <cpg_index.hpp>
 #include <cpg_index_impl.hpp>
-#include <cpg_index_meta.hpp>
+#include <cpg_index_meta.hpp>  // IWYU pragma: keep
 
 #include <gtest/gtest.h>
 
 #include <cstdint>
+#include <cstring>
 #include <filesystem>
 #include <fstream>
 #include <string>
