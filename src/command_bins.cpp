@@ -46,26 +46,35 @@ mxe bins remote -x hg38.cpg_idx -o output.bed -s example.com -a SRX012345 -b 100
 
 #include "client.hpp"
 #include "cpg_index.hpp"
-#include "genomic_interval.hpp"
+#include "cpg_index_meta.hpp"
+#include "genomic_interval_output.hpp"
 #include "logger.hpp"
 #include "methylome.hpp"
 #include "methylome_metadata.hpp"
-#include "mxe_error.hpp"
+#include "methylome_results_types.hpp"
 #include "request.hpp"
 #include "utilities.hpp"
+// #include "mxe_error.hpp"
 
 #include <boost/program_options.hpp>
 
+#include <algorithm>
 #include <cerrno>
 #include <chrono>
 #include <cstdint>
+#include <cstdlib>  // for EXIT_FAILURE, EXIT_SUCCESS
 #include <format>
 #include <fstream>
 #include <iostream>
 #include <print>
+#include <ranges>  // for std::views
 #include <string>
+#include <string_view>
+#include <system_error>
 #include <tuple>
-#include <utility>  // std::move
+#include <type_traits>  // for std::is_same
+#include <utility>      // for std::move
+#include <variant>      // for std::tuple
 #include <vector>
 
 using std::string;
@@ -117,6 +126,26 @@ do_local_bins(const string &meth_file, const string &meta_file,
     return {std::move(meth.get_bins(bin_size, index, cim)), {}};
 }
 
+[[nodiscard]] static inline auto
+write_output(std::ostream &out, const cpg_index_meta &cim,
+             const std::uint32_t bin_size, const auto &results,
+             const bool write_scores) {
+  if (write_scores) {
+    // ADS: counting intervals that have no reads
+    std::uint32_t zero_coverage = 0;
+    const auto to_score = [&zero_coverage](const auto &x) {
+      zero_coverage += (x.n_meth + x.n_unmeth == 0);
+      return x.n_meth /
+             std::max(1.0, static_cast<double>(x.n_meth + x.n_unmeth));
+    };
+    logger::instance().debug("Number of bins without reads: {}", zero_coverage);
+    const auto scores = std::views::transform(results, to_score);
+    return write_bins_bedgraph(out, cim, bin_size, scores);
+  }
+  else
+    return write_bins(out, cim, bin_size, results);
+}
+
 template <typename counts_res_type>
 static auto
 do_bins(const string &accession, const cpg_index &index,
@@ -124,26 +153,29 @@ do_bins(const string &accession, const cpg_index &index,
         const string &hostname, const string &port, const string &meth_file,
         const string &meta_file, std::ostream &out, const bool write_scores,
         const bool remote_mode) -> std::error_code {
-  using hr_clock = std::chrono::high_resolution_clock;
-  const auto bins_start{hr_clock::now()};
+  logger &lgr = logger::instance();
+  const auto bins_start{std::chrono::high_resolution_clock::now()};
   const auto [results, bins_err] =
     remote_mode ? do_remote_bins<counts_res_type>(accession, cim, bin_size,
                                                   hostname, port)
                 : do_local_bins<counts_res_type>(meth_file, meta_file, index,
                                                  cim, bin_size);
-  const auto bins_stop{hr_clock::now()};
-  logger::instance().debug("Elapsed time for bins query: {:.3}s",
-                           duration(bins_start, bins_stop));
+  const auto bins_stop{std::chrono::high_resolution_clock::now()};
+  lgr.debug("Elapsed time for bins query: {:.3}s",
+            duration(bins_start, bins_stop));
 
   if (bins_err)  // ADS: error messages already logged
     return std::make_error_code(std::errc::invalid_argument);
 
-  const auto output_start{hr_clock::now()};
-  write_bins(out, bin_size, cim, results);
-  const auto output_stop{hr_clock::now()};
+  const auto output_start{std::chrono::high_resolution_clock::now()};
+  const auto write_err =
+    write_output(out, cim, bin_size, results, write_scores);
+  if (write_err)
+    return write_err;
+  const auto output_stop{std::chrono::high_resolution_clock::now()};
   // ADS: elapsed time for output will include conversion to scores
-  logger::instance().debug("Elapsed time for output: {:.3}s",
-                           duration(output_start, output_stop));
+  lgr.debug("Elapsed time for output: {:.3}s",
+            duration(output_start, output_stop));
   return {};
 }
 
@@ -233,7 +265,7 @@ command_bins_main(int argc, char *argv[]) -> int {
   try {
     po::variables_map vm;
     po::store(po::parse_command_line(argc - 1, argv + 1, all), vm);
-    if (vm.count("help") || argc == 1 || argc == 2 && !subcmd.empty()) {
+    if (vm.count("help") || argc == 1 || (argc == 2 && !subcmd.empty())) {
       std::println("{}\n{}", about_msg, usage);
       all.print(std::cout);
       std::println("\n{}", description_msg);
