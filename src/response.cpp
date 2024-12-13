@@ -27,30 +27,25 @@
 
 #include <algorithm>
 #include <array>
-#include <cstring>
+#include <cassert>
+#include <charconv>  // for std::from_chars
 #include <format>
-#include <ranges>
+#include <ranges>  // IWYU pragma: keep
 #include <string>
 
-using std::array;
-using std::format;
-using std::string;
-
-namespace rg = std::ranges;
-
-auto
-to_chars(char *first, [[maybe_unused]] char *last,
-         const response_header &hdr) -> mxe_to_chars_result {
+[[nodiscard]] auto
+compose(char *first, [[maybe_unused]] char *last,
+        const response_header &hdr) -> compose_result {
   // ADS: use to_chars here
-  const string s = format("{}\t{}\n", hdr.status.value(), hdr.response_size);
-  assert(ssize(s) < std::distance(first, last));
-  auto data_end = rg::copy(s, first);  // in_out_result
+  const auto s = std::format("{}\t{}\n", hdr.status.value(), hdr.response_size);
+  assert(std::ranges::ssize(s) < std::distance(first, last));
+  const auto data_end = std::ranges::copy(s, first);  // in_out_result
   return {data_end.out, std::error_code{}};
 }
 
-auto
-from_chars(const char *first, const char *last,
-           response_header &hdr) -> mxe_from_chars_result {
+[[nodiscard]] auto
+parse(const char *first, const char *last,
+      response_header &hdr) -> parse_result {
   static constexpr auto delim = '\t';
   static constexpr auto term = '\n';
 
@@ -86,20 +81,20 @@ from_chars(const char *first, const char *last,
   return {cursor, server_response_code::ok};
 }
 
-auto
-compose(array<char, response_buf_size> &buf,
+[[nodiscard]] auto
+compose(std::array<char, response_buf_size> &buf,
         const response_header &hdr) -> compose_result {
-  return to_chars(buf.data(), buf.data() + response_buf_size, hdr);
+  return compose(buf.data(), buf.data() + response_buf_size, hdr);
 }
 
-auto
-parse(const array<char, response_buf_size> &buf,
+[[nodiscard]] auto
+parse(const std::array<char, response_buf_size> &buf,
       response_header &hdr) -> parse_result {
-  return from_chars(buf.data(), buf.data() + response_buf_size, hdr);
+  return parse(buf.data(), buf.data() + response_buf_size, hdr);
 }
 
-auto
-response_header::summary() const -> string {
+[[nodiscard]] auto
+response_header::summary() const -> std::string {
   static constexpr auto fmt = R"({{"{}": "{}", "response_size": {}}})";
   return std::format(fmt, status.category().name(), status, response_size);
 }
