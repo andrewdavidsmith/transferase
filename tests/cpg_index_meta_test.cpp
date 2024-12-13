@@ -28,8 +28,7 @@
 #include <cstdint>
 #include <vector>
 
-// Demonstrate some basic assertions.
-TEST(CpgIndexMetaTest, BasicAssertions) {
+TEST(cpg_index_meta_test, basic_assertions) {
   cpg_index_meta cim;
   EXPECT_EQ(cim.get_n_cpgs_chrom(), std::vector<std::uint32_t>());
   cim.chrom_offset = {0, 1000, 10000};

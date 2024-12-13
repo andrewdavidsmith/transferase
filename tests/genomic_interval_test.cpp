@@ -24,6 +24,7 @@
 #include <genomic_interval.hpp>
 
 #include <cpg_index.hpp>
+#include <cpg_index_meta.hpp>
 
 #include <gtest/gtest.h>
 

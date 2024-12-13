@@ -23,14 +23,7 @@
 
 #include <request_handler.hpp>
 
-#include <methylome.hpp>
-#include <methylome_metadata.hpp>
-
-#include "gmock/gmock.h"
 #include "gtest/gtest.h"
-
-#include <system_error>
-#include <tuple>
 
 TEST(request_handler_test, basic_assertions) {
   std::error_code ec;
