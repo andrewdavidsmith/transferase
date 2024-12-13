@@ -1,4 +1,5 @@
 [
+    { "include": ["@[\"<]gtest/.*[\">]", "private", "<gtest/gtest.h>", "public"] },
     { "include": ["@<zconf.h>", "private", "<zlib.h>", "public"] },
     { "include": ["@<boost/program_options/.*>", "private", "<boost/program_options.hpp>", "public"] },
     { "include": ["@<boost/asio/.*>", "private", "<boost/asio.hpp>", "public"] },
