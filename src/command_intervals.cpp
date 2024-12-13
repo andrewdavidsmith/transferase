@@ -46,27 +46,37 @@ mxe intervals remote -x hg38.cpg_idx -o output.bed -s example.com -a SRX012345 -
 
 #include "client.hpp"
 #include "cpg_index.hpp"
+#include "cpg_index_meta.hpp"
 #include "genomic_interval.hpp"
+#include "genomic_interval_output.hpp"
 #include "logger.hpp"
 #include "methylome.hpp"
 #include "methylome_metadata.hpp"
-#include "mxe_error.hpp"
+#include "methylome_results_types.hpp"
+// #include "mxe_error.hpp"
 #include "request.hpp"
-#include "response.hpp"
 #include "utilities.hpp"
 
 #include <boost/program_options.hpp>
 
 #include <algorithm>
+#include <cerrno>
 #include <chrono>
+#include <cstdint>  // for std::uint32_t
+#include <cstdlib>  // for EXIT_FAILURE, EXIT_SUCCESS
 #include <format>
 #include <fstream>
 #include <iostream>
+#include <iterator>  // for std::size
 #include <print>
+#include <ranges>
 #include <string>
+#include <string_view>
 #include <system_error>
 #include <tuple>
+#include <type_traits>  // for std::is_same
 #include <utility>
+#include <variant>
 #include <vector>
 
 using std::string;
@@ -98,17 +108,17 @@ do_remote_intervals(const string &accession, const cpg_index_meta &cim,
 template <typename counts_res_type>
 [[nodiscard]] static inline auto
 do_local_intervals(const string &meth_file, const string &meth_meta_file,
-                   const cpg_index &index,
                    vector<methylome::offset_pair> offsets)
   -> std::tuple<vector<counts_res_type>, std::error_code> {
+  logger &lgr = logger::instance();
   const auto [meta, meta_err] = methylome_metadata::read(meth_meta_file);
   if (meta_err) {
-    logger::instance().error("Error: {} ({})", meta_err, meth_meta_file);
+    lgr.error("Error reading file {}: {}", meth_meta_file, meta_err);
     return {{}, meta_err};
   }
   const auto [meth, meth_err] = methylome::read(meth_file, meta);
   if (meth_err) {
-    logger::instance().error("Error: {} ({})", meth_err, meth_file);
+    lgr.error("Error reading file {}: {}", meth_file, meth_err);
     return {{}, meth_err};
   }
   if constexpr (std::is_same<counts_res_type, counts_res_cov>::value)
@@ -129,18 +139,21 @@ write_output(std::ostream &out, const vector<genomic_interval> &gis,
       return x.n_meth /
              std::max(1.0, static_cast<double>(x.n_meth + x.n_unmeth));
     };
-    write_bedgraph(out, cim, gis, std::views::transform(results, to_score));
     logger::instance().debug("Number of intervals without reads: {}",
                              zero_coverage);
+    const auto write_ec = write_intervals_bedgraph(
+      out, cim, gis, std::views::transform(results, to_score));
+    if (write_ec)
+      return write_ec;
+    return std::error_code{};
   }
   else
-    write_intervals(out, cim, gis, results);
+    return write_intervals(out, cim, gis, results);
 }
 
 template <typename counts_res_type>
 static auto
-do_intervals(const string &accession, const cpg_index &index,
-             const cpg_index_meta &cim,
+do_intervals(const string &accession, const cpg_index_meta &cim,
              const vector<methylome::offset_pair> &offsets,
              const string &hostname, const string &port,
              const string &meth_file, const string &meth_meta_file,
@@ -149,10 +162,10 @@ do_intervals(const string &accession, const cpg_index &index,
              const bool remote_mode) -> std::error_code {
   const auto intervals_start{std::chrono::high_resolution_clock::now()};
   const auto [results, intervals_err] =
-    remote_mode ? do_remote_intervals<counts_res_type>(accession, cim, offsets,
-                                                       hostname, port)
-                : do_local_intervals<counts_res_type>(meth_file, meth_meta_file,
-                                                      index, offsets);
+    remote_mode
+      ? do_remote_intervals<counts_res_type>(accession, cim, offsets, hostname,
+                                             port)
+      : do_local_intervals<counts_res_type>(meth_file, meth_meta_file, offsets);
   const auto intervals_stop{std::chrono::high_resolution_clock::now()};
   logger::instance().debug("Elapsed time for query: {:.3}s",
                            duration(intervals_start, intervals_stop));
@@ -161,12 +174,12 @@ do_intervals(const string &accession, const cpg_index &index,
     return std::make_error_code(std::errc::invalid_argument);
 
   const auto output_start{std::chrono::high_resolution_clock::now()};
-  write_output(out, gis, cim, results, write_scores);
+  const auto write_err = write_output(out, gis, cim, results, write_scores);
   const auto output_stop{std::chrono::high_resolution_clock::now()};
   // ADS: elapsed time for output will include conversion to scores
   logger::instance().debug("Elapsed time for output: {:.3}s",
                            duration(output_start, output_stop));
-  return {};
+  return write_err;
 }
 
 auto
@@ -256,7 +269,7 @@ command_intervals_main(int argc, char *argv[]) -> int {
   try {
     po::variables_map vm;
     po::store(po::parse_command_line(argc - 1, argv + 1, all), vm);
-    if (vm.count("help") || argc == 1 || argc == 2 && !subcmd.empty()) {
+    if (vm.count("help") || argc == 1 || (argc == 2 && !subcmd.empty())) {
       std::println("{}\n{}", about_msg, usage);
       all.print(std::cout);
       std::println("\n{}", description_msg);
@@ -332,10 +345,10 @@ command_intervals_main(int argc, char *argv[]) -> int {
 
   const auto intervals_err =
     count_covered
-      ? do_intervals<counts_res_cov>(accession, index, cim, offsets, hostname,
-                                     port, meth_file, meth_meta_file, out, gis,
+      ? do_intervals<counts_res_cov>(accession, cim, offsets, hostname, port,
+                                     meth_file, meth_meta_file, out, gis,
                                      write_scores, remote_mode)
-      : do_intervals<counts_res>(accession, index, cim, offsets, hostname, port,
+      : do_intervals<counts_res>(accession, cim, offsets, hostname, port,
                                  meth_file, meth_meta_file, out, gis,
                                  write_scores, remote_mode);
 
