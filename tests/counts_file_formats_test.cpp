@@ -27,7 +27,6 @@
 
 #include <cstdint>
 #include <string>
-#include <utility>
 
 TEST(counts_file_format_test, parse_counts_line) {
   const std::string line{"chr1 202 + CG 0.963302752293578 109"};
