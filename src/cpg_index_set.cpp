@@ -24,17 +24,20 @@
 #include "cpg_index_set.hpp"
 
 #include "cpg_index.hpp"
+#include "cpg_index_meta.hpp"
 #include "logger.hpp"
-#include "mxe_error.hpp"
+#include "mxe_error.hpp"  // IWYU pragma: keep
 
-#include <algorithm>
 #include <filesystem>
 #include <format>
+#include <iterator>  // for std::cend
 #include <regex>
 #include <string>
+#include <system_error>
 #include <tuple>
 #include <unordered_map>
-#include <utility>  // std::move
+#include <utility>  // for std::move, std::pair
+#include <vector>
 
 [[nodiscard]] auto
 cpg_index_set::get_cpg_index_meta(const std::string &assembly_name)
