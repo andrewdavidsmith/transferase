@@ -23,16 +23,18 @@
 
 #include "request.hpp"
 
-#include "mxe_error.hpp"
+#include "mxe_error.hpp"  // IWYU pragma: keep
 
 #include <algorithm>
+#include <cassert>
+#include <charconv>  // std::from_chars
 #include <format>
-#include <ranges>
+#include <ranges>  // IWYU pragma: keep
 #include <string>
 
 [[nodiscard]] auto
-to_chars(char *first, [[maybe_unused]] char *last,
-         const request_header &header) -> mxe_to_chars_result {
+compose(char *first, [[maybe_unused]] char *last,
+        const request_header &header) -> compose_result {
   // ADS: use to_chars here
   const std::string s = std::format("{}\n", header);
   assert(static_cast<std::iterator_traits<char *>::difference_type>(
@@ -42,8 +44,8 @@ to_chars(char *first, [[maybe_unused]] char *last,
 }
 
 [[nodiscard]] auto
-from_chars(const char *first, const char *last,
-           request_header &header) -> mxe_from_chars_result {
+parse(const char *first, const char *last,
+      request_header &header) -> parse_result {
   static constexpr auto delim = '\t';
   static constexpr auto term = '\n';
 
@@ -92,12 +94,12 @@ from_chars(const char *first, const char *last,
 [[nodiscard]] auto
 compose(request_header_buffer &buf,
         const request_header &hdr) -> compose_result {
-  return to_chars(buf.data(), buf.data() + std::size(buf), hdr);
+  return compose(buf.data(), buf.data() + std::size(buf), hdr);
 }
 
 [[nodiscard]] auto
 parse(const request_header_buffer &buf, request_header &hdr) -> parse_result {
-  return from_chars(buf.data(), buf.data() + std::size(buf), hdr);
+  return parse(buf.data(), buf.data() + std::size(buf), hdr);
 }
 
 [[nodiscard]] auto
@@ -116,8 +118,8 @@ request::summary() const -> std::string {
 }
 
 [[nodiscard]] auto
-to_chars(char *first, [[maybe_unused]] char *last,
-         const request &req) -> mxe_to_chars_result {
+compose(char *first, [[maybe_unused]] char *last,
+        const request &req) -> compose_result {
   // ADS: use to_chars here
   const std::string s = std::format("{}\n", req.n_intervals);
   assert(static_cast<std::iterator_traits<char *>::difference_type>(
@@ -127,8 +129,7 @@ to_chars(char *first, [[maybe_unused]] char *last,
 }
 
 [[nodiscard]] auto
-from_chars(const char *first, const char *last,
-           request &req) -> mxe_from_chars_result {
+parse(const char *first, const char *last, request &req) -> parse_result {
   [[maybe_unused]] static constexpr auto delim = '\t';
   static constexpr auto term = '\n';
 
@@ -156,8 +157,8 @@ bins_request::summary() const -> std::string {
 }
 
 [[nodiscard]] auto
-to_chars(char *first, [[maybe_unused]] char *last,
-         const bins_request &req) -> mxe_to_chars_result {
+compose(char *first, [[maybe_unused]] char *last,
+        const bins_request &req) -> compose_result {
   static constexpr auto term = '\n';
   // ADS: use to_chars here
   const std::string s = std::format("{}{}", req.bin_size, term);
@@ -168,8 +169,7 @@ to_chars(char *first, [[maybe_unused]] char *last,
 }
 
 [[nodiscard]] auto
-from_chars(const char *first, const char *last,
-           bins_request &req) -> mxe_from_chars_result {
+parse(const char *first, const char *last, bins_request &req) -> parse_result {
   static constexpr auto term = '\n';
 
   auto cursor = first;
