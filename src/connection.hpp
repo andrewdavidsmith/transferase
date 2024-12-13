@@ -28,15 +28,15 @@
 #include "request.hpp"
 #include "response.hpp"
 
-#include <boost/asio.hpp>
-#include <boost/lexical_cast.hpp>
+#include <boost/asio.hpp>          // for tcp, steady_timer
+#include <boost/lexical_cast.hpp>  // for lexical_cast
 
-#include <array>
 #include <cstddef>
 #include <cstdint>
-#include <memory>  // std::shared_ptr
+#include <functional>  // for std::bind
+#include <memory>
 #include <string>
-#include <utility>  // std::move
+#include <utility>  // for std::move
 
 struct request_handler;
 
