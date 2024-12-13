@@ -47,21 +47,26 @@ mxe check -x indexes/hg38.cpg_idx -m SRX012345.m16 SRX612345.m16
 )";
 
 #include "cpg_index.hpp"
+#include "cpg_index_meta.hpp"
 #include "logger.hpp"
 #include "methylome.hpp"
 #include "methylome_metadata.hpp"
-#include "mxe_error.hpp"
+#include "methylome_results_types.hpp"  // IWYU pragma: keep
+#include "mxe_error.hpp"                // IWYU pragma: keep
 #include "utilities.hpp"
 
 #include <boost/program_options.hpp>
 
-#include <cerrno>
-#include <fstream>
+#include <cstdlib>  // for EXIT_FAILURE, EXIT_SUCCESS
+#include <format>
 #include <iostream>
+#include <iterator>  // for std::cbegin, std::cend
 #include <print>
+#include <ranges>
 #include <string>
-#include <system_error>
+#include <string_view>
 #include <tuple>
+#include <variant>  // IWYU pragma: keep
 #include <vector>
 
 [[nodiscard]] static auto
@@ -170,7 +175,6 @@ command_check_main(int argc, char *argv[]) -> int {
   }
 
   const auto methylome_files = vm["methylomes"].as<std::vector<std::string>>();
-  const auto n_methylomes = std::size(methylome_files);
   const auto index_meta_file = get_default_cpg_index_meta_filename(index_file);
 
   const auto joined = methylome_files | std::views::join_with(',');
@@ -193,7 +197,7 @@ command_check_main(int argc, char *argv[]) -> int {
 
   bool all_methylomes_consitent = true;
   bool all_methylomes_metadata_consitent = true;
-  for (const auto methylome_file : methylome_files) {
+  for (const auto &methylome_file : methylome_files) {
     const auto methylome_meta_file =
       get_default_methylome_metadata_filename(methylome_file);
     const auto [meth, meta, meth_read_err] =

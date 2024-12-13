@@ -23,35 +23,30 @@
 
 #include "genomic_interval.hpp"
 
-#include "cpg_index_meta.hpp"
-#include "mxe_error.hpp"
+#include "cpg_index_meta.hpp"  // for cpg_index_meta
+#include "mxe_error.hpp"       // for genomic_interval_code, make_error_code
 
-#include <format>
+#include <cerrno>
 #include <fstream>
+#include <iterator>  // for std::cend
 #include <sstream>
 #include <string>
-#include <tuple>
-#include <utility>
+#include <unordered_map>
+#include <utility>  // for std::move, std::pair
 #include <vector>
 
-using std::istream;
-using std::string;
-using std::tuple;
-using std::uint32_t;
-using std::vector;
-
 [[nodiscard]] static auto
-parse(const cpg_index_meta &cim, const string &s,
+parse(const cpg_index_meta &cim, const std::string &s,
       std::error_code &ec) -> genomic_interval {
   std::istringstream iss(s);
   genomic_interval gi;
-  string tmp;
+  std::string tmp;
   if (!(iss >> tmp >> gi.start >> gi.stop)) {
     ec = genomic_interval_code::error_parsing_bed_line;
     return gi;
   }
   const auto ch_id_itr = cim.chrom_index.find(tmp);
-  if (ch_id_itr == cend(cim.chrom_index)) {
+  if (ch_id_itr == std::cend(cim.chrom_index)) {
     ec = genomic_interval_code::chrom_name_not_found_in_index;
     return gi;
   }
@@ -64,13 +59,13 @@ parse(const cpg_index_meta &cim, const string &s,
 }
 
 [[nodiscard]] auto
-genomic_interval::load(const cpg_index_meta &cim,
-                       const string &filename) -> genomic_interval_load_ret {
+genomic_interval::load(const cpg_index_meta &cim, const std::string &filename)
+  -> genomic_interval_load_ret {
   std::ifstream in{filename};
   if (!in)
     return {{}, std::make_error_code(std::errc(errno))};
-  vector<genomic_interval> v;
-  string line;
+  std::vector<genomic_interval> v;
+  std::string line;
   std::error_code ec;
   while (getline(in, line)) {
     const auto gi = parse(cim, line, ec);

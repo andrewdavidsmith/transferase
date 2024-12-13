@@ -23,26 +23,24 @@
 
 #include "methylome_metadata.hpp"
 
-#include "automatic_json.hpp"
-#include "cpg_index_meta.hpp"  // get_assembly_from_filename
+#include "automatic_json.hpp"  // for tag_invoke
+#include "cpg_index_meta.hpp"
 #include "methylome.hpp"
-#include "utilities.hpp"
+#include "utilities.hpp"  // for get_time_as_string
 
-#include <config.h>
+#include <config.h>  // for VERSION
 
 #include <boost/asio.hpp>  // boost::asio::ip::host_name();
+// ADS: this one seems not needed
+#include <boost/container_hash/hash.hpp>  // for hash_range
 #include <boost/json.hpp>
-
-#include <sys/types.h>
-#include <unistd.h>
+#include <boost/system.hpp>  // for boost::system::error_code
 
 #include <cerrno>
-#include <chrono>
-#include <cstdint>
 #include <filesystem>
 #include <format>
 #include <fstream>
-#include <print>
+#include <sstream>
 #include <string>
 #include <system_error>
 #include <tuple>

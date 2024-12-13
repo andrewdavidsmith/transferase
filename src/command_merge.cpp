@@ -47,21 +47,24 @@ mxe merge -o merged.m16 -i SRX0123*.m16
 #include "logger.hpp"
 #include "methylome.hpp"
 #include "methylome_metadata.hpp"
-#include "mxe_error.hpp"
+#include "mxe_error.hpp"  // IWYU pragma: keep
 #include "utilities.hpp"
 
 #include <boost/program_options.hpp>
 
+#include <algorithm>
 #include <chrono>
-#include <filesystem>
-#include <fstream>
+#include <cstdlib>  // for EXIT_FAILURE, EXIT_SUCCESS
+#include <format>
 #include <iostream>
+#include <iterator>  // for std::size
 #include <print>
 #include <ranges>
 #include <string>
+#include <string_view>
 #include <system_error>
 #include <tuple>
-#include <utility>
+#include <variant>  // IWYU pragma: keep
 #include <vector>
 
 [[nodiscard]] static auto

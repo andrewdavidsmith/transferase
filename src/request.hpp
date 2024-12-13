@@ -24,14 +24,17 @@
 #ifndef SRC_REQUEST_HPP_
 #define SRC_REQUEST_HPP_
 
-#include "mxe_error.hpp"
-#include "utilities.hpp"
+#include "mxe_error.hpp"  // IWYU pragma: keep
+#include "utilities.hpp"  // for compose_result, parse_result
 
 #include <array>
-#include <cstdint>  // std::uint32_t
+#include <cstdint>  // for uint32_t
+#include <format>
+#include <iterator>  // for size
 #include <string>
 #include <system_error>
-#include <utility>  // pair<>
+#include <type_traits>  // for true_type
+#include <utility>      // for to_underlying, pair, unreachable
 #include <vector>
 
 enum class request_error : std::uint32_t {
@@ -155,12 +158,12 @@ struct std::formatter<request_header> : std::formatter<std::string> {
 };
 
 [[nodiscard]] auto
-to_chars(char *first, char *last,
-         const request_header &header) -> mxe_to_chars_result;
+compose(char *first, char *last,
+        const request_header &header) -> compose_result;
 
 [[nodiscard]] auto
-from_chars(const char *first, const char *last,
-           request_header &header) -> mxe_from_chars_result;
+parse(const char *first, const char *last,
+      request_header &header) -> parse_result;
 
 [[nodiscard]] auto
 compose(request_header_buffer &buf,
@@ -189,13 +192,12 @@ struct request {
   operator<=>(const request &) const = default;
 };
 
-// returns an mxe_to_chars_result which is a pair
+// returns an compose_result which is a pair
 [[nodiscard]] auto
-to_chars(char *first, char *last, const request &req) -> mxe_to_chars_result;
+compose(char *first, char *last, const request &req) -> compose_result;
 
 [[nodiscard]] auto
-from_chars(const char *first, const char *last,
-           request &req) -> mxe_from_chars_result;
+parse(const char *first, const char *last, request &req) -> parse_result;
 
 struct bins_request {
   std::uint32_t bin_size{};
@@ -206,11 +208,9 @@ struct bins_request {
 };
 
 [[nodiscard]] auto
-to_chars(char *first, char *last,
-         const bins_request &req) -> mxe_to_chars_result;
+compose(char *first, char *last, const bins_request &req) -> compose_result;
 
 [[nodiscard]] auto
-from_chars(const char *first, const char *last,
-           bins_request &req) -> mxe_from_chars_result;
+parse(const char *first, const char *last, bins_request &req) -> parse_result;
 
 #endif  // SRC_REQUEST_HPP_

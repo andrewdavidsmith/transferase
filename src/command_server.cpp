@@ -52,13 +52,15 @@ mxe server -s localhost -m methylomes -x indexes
 #include "arguments.hpp"
 #include "config_file_utils.hpp"
 #include "logger.hpp"
-#include "methylome_set.hpp"
+#include "mxe_error.hpp"  // IWYU pragma: keep
 #include "server.hpp"
 #include "utilities.hpp"
 
+#include <boost/describe.hpp>
 #include <boost/program_options.hpp>
 
 #include <cstdint>
+#include <cstdlib>  // for EXIT_FAILURE, EXIT_SUCCESS
 #include <filesystem>
 #include <format>
 #include <fstream>
@@ -66,33 +68,22 @@ mxe server -s localhost -m methylomes -x indexes
 #include <memory>  // std::make_shared
 #include <print>
 #include <string>
+#include <string_view>
+#include <system_error>
 #include <tuple>
+#include <variant>  // IWYU pragma: keep
 #include <vector>
 
-using std::cout;
-using std::format;
-using std::make_shared;
-using std::ofstream;
-using std::ostream;
-using std::print;
-using std::println;
-using std::shared_ptr;
-using std::string;
-using std::tuple;
-using std::uint32_t;
-using std::vector;
-
-namespace fs = std::filesystem;
-
 static auto
-get_canonical_dir(const string &methylome_dir) -> string {
+get_canonical_dir(const std::string &methylome_dir) -> std::string {
   std::error_code ec;
-  const string canonical_dir = fs::canonical(methylome_dir, ec);
+  const std::string canonical_dir =
+    std::filesystem::canonical(methylome_dir, ec);
   if (ec) {
     logger::instance().error("Error: {} ({})", ec, methylome_dir);
     return {};
   }
-  const bool isdir = fs::is_directory(canonical_dir, ec);
+  const bool isdir = std::filesystem::is_directory(canonical_dir, ec);
   if (ec) {
     logger::instance().error("Error: {} ({})", ec, canonical_dir);
     return {};
@@ -108,12 +99,12 @@ struct server_argset : argset_base<server_argset> {
   static constexpr auto default_config_filename = "mxe_server_config.toml";
 
   static auto
-  get_default_config_file_impl() -> string {
+  get_default_config_file_impl() -> std::string {
     std::error_code ec;
     const auto config_dir = get_mxe_config_dir_default(ec);
     if (ec)
       return {};
-    return fs::path(config_dir) / default_config_filename;
+    return std::filesystem::path(config_dir) / default_config_filename;
   }
 
   static constexpr auto hostname_default{"localhost"};
@@ -121,32 +112,33 @@ struct server_argset : argset_base<server_argset> {
   static constexpr auto log_level_default{mxe_log_level::info};
   static constexpr auto n_threads_default{1};
   static constexpr auto max_resident_default = 32;
-  string hostname{};
-  string port{};
-  string methylome_dir{};
-  string index_dir{};
-  string log_filename{};
+  std::string hostname{};
+  std::string port{};
+  std::string methylome_dir{};
+  std::string index_dir{};
+  std::string log_filename{};
   mxe_log_level log_level{};
-  uint32_t n_threads{};
-  uint32_t max_resident{};
+  std::uint32_t n_threads{};
+  std::uint32_t max_resident{};
   bool daemonize{};
-  string config_out{};
+  std::string config_out{};
 
   auto
   log_options_impl() const {
-    log_args<mxe_log_level::info>(vector<tuple<string, string>>{
-      // clang-format off
-        {"hostname", format("{}", hostname)},
-        {"port", format("{}", port)},
-        {"methylome_dir", format("{}", methylome_dir)},
-        {"index_dir", format("{}", index_dir)},
-        {"log_filename", format("{}", log_filename)},
-        {"log_level", format("{}", log_level)},
-        {"n_threads", format("{}", n_threads)},
-        {"max_resident", format("{}", max_resident)},
-        {"daemonize", format("{}", daemonize)},
-      // clang-format on
-    });
+    log_args<mxe_log_level::info>(
+      std::vector<std::tuple<std::string, std::string>>{
+        // clang-format off
+        {"hostname", std::format("{}", hostname)},
+        {"port", std::format("{}", port)},
+        {"methylome_dir", std::format("{}", methylome_dir)},
+        {"index_dir", std::format("{}", index_dir)},
+        {"log_filename", std::format("{}", log_filename)},
+        {"log_level", std::format("{}", log_level)},
+        {"n_threads", std::format("{}", n_threads)},
+        {"max_resident", std::format("{}", max_resident)},
+        {"daemonize", std::format("{}", daemonize)},
+        // clang-format on
+      });
   }
 
   [[nodiscard]] auto
@@ -230,14 +222,14 @@ command_server_main(int argc, char *argv[]) -> int {
   if (!args.config_out.empty())
     return write_config_file(args) ? EXIT_FAILURE : EXIT_SUCCESS;
 
-  shared_ptr<ostream> log_file =
+  std::shared_ptr<std::ostream> log_file =
     args.log_filename.empty()
-      ? make_shared<ostream>(cout.rdbuf())
-      : make_shared<ofstream>(args.log_filename, std::ios::app);
+      ? std::make_shared<std::ostream>(std::cout.rdbuf())
+      : std::make_shared<std::ofstream>(args.log_filename, std::ios::app);
 
   logger &lgr = logger::instance(log_file, command, args.log_level);
   if (!lgr) {
-    println("Failure initializing logging: {}.", lgr.get_status());
+    std::println("Failure initializing logging: {}.", lgr.get_status());
     return EXIT_FAILURE;
   }
 

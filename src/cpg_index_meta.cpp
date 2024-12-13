@@ -23,25 +23,30 @@
 
 #include "cpg_index_meta.hpp"
 
-#include "cpg_index.hpp"
-#include "utilities.hpp"
+#include "utilities.hpp"  // for get_time_as_string
 
-#include <config.h>
+#include <config.h>  // for VERSION
 
 #include <boost/asio.hpp>  // boost::asio::ip::host_name();
 #include <boost/json.hpp>
+#include <boost/system.hpp>  // for boost::system::error_code
 
-#include <algorithm>  // std::shift_left
-#include <chrono>
-#include <cstdint>
+#include <algorithm>
+#include <cerrno>
+#include <cstdint>  // for std::uint32_t
+#include <filesystem>
 #include <fstream>
-#include <iostream>
+#include <functional>  // for std::plus
+#include <iterator>    // for std::cbegin
+#include <numeric>     // for std::adjacent_difference
+#include <ranges>
 #include <regex>
 #include <sstream>
 #include <string>
+#include <string_view>  // for operator""sv
 #include <system_error>
 #include <tuple>
-#include <utility>  // std::move
+#include <utility>  // for std::move
 #include <vector>
 
 [[nodiscard]] auto

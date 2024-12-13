@@ -24,25 +24,28 @@
 #ifndef SRC_METHYLOME_HPP_
 #define SRC_METHYLOME_HPP_
 
+#include "cpg_index.hpp"
 #if not defined(__APPLE__) && not defined(__MACH__)
 #include "aligned_allocator.hpp"
 #endif
 
-#include "cpg_index.hpp"
-#include "cpg_index_meta.hpp"
-#include "methylome_results_types.hpp"
-
-#include <algorithm>  // std::max
-#include <cmath>      // std::round
-#include <cstddef>
-#include <cstdint>
-#include <limits>  // std::numeric_limits<>
+#include <algorithm>
+#include <cmath>    // for std::round
+#include <cstddef>  // for std::size_t
+#include <cstdint>  // for std::uint32_t
+#include <format>
+#include <iterator>  // for std::pair, std::size
+#include <limits>    // for std::numeric_limits
 #include <string>
 #include <system_error>
 #include <tuple>
-#include <utility>  // pair<>
+#include <utility>  // for std::pair
+#include <variant>  // IWYU pragma: keep
 #include <vector>
 
+struct counts_res;
+struct counts_res_cov;
+struct cpg_index_meta;
 struct methylome_metadata;
 
 struct methylome {

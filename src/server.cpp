@@ -23,16 +23,23 @@
 
 #include "server.hpp"
 #include "connection.hpp"
+#include "logger.hpp"  // for logger
 
 #include <boost/asio.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/system.hpp>  // for boost::system::error_code
 
+#include <cassert>
+#include <cerrno>
 #include <csignal>  // std::raise
 #include <cstdint>
-#include <cstring>  // strsignal
+#include <cstdlib>  // for std::exit, std::getenv, EXIT_SUCCESS
+#include <cstring>  // std::strsignal
 #include <filesystem>
 #include <format>
-#include <memory>  // std::make_shared<>
+#include <fstream>
+#include <iterator>  // for std::size
+#include <memory>    // std::make_shared<>
 #include <print>
 #include <string>
 #include <system_error>
@@ -40,6 +47,9 @@
 #include <utility>
 #include <vector>
 
+#include <fcntl.h>      // for open, O_APPEND, O_CREAT, O_RDONLY
+#include <sys/stat.h>   // for umask
+#include <sys/types.h>  // for pid_t, mode_t
 #include <syslog.h>
 #include <unistd.h>
 

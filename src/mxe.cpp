@@ -33,19 +33,21 @@
 #include "command_merge.hpp"
 #include "command_server.hpp"
 
-#include <config.h>
+#include <config.h>  // for VERSION
 
 #include <boost/program_options.hpp>
 
 #include <algorithm>
+#include <cstdlib>  // for EXIT_FAILURE
 #include <format>
 #include <fstream>
-#include <iostream>
+#include <functional>  // for function
+#include <iterator>    // for cend, cbegin
 #include <print>
 #include <ranges>
 #include <string>
+#include <string_view>  // for string_view
 #include <tuple>
-#include <utility>
 #include <vector>
 
 using std::cbegin;

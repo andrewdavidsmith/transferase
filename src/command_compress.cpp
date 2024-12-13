@@ -49,16 +49,21 @@ mxe compress -u -o original.m16 -i compressed.m16
 #include "logger.hpp"
 #include "methylome.hpp"
 #include "methylome_metadata.hpp"
-#include "mxe_error.hpp"
+#include "mxe_error.hpp"  // IWYU pragma: keep
 #include "utilities.hpp"  // duration()
 
 #include <boost/program_options.hpp>
 
 #include <chrono>
+#include <cstdlib>  // for EXIT_FAILURE, EXIT_SUCCESS
+#include <format>
 #include <iostream>
 #include <print>
 #include <string>
+#include <string_view>
+#include <system_error>
 #include <tuple>
+#include <variant>  // IWYU pragma: keep
 #include <vector>
 
 auto

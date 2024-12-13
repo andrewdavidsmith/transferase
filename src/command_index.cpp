@@ -50,18 +50,22 @@ mxe index -v debug -x hg38.cpg_idx -g hg38.fa
 #include "cpg_index.hpp"
 #include "cpg_index_meta.hpp"
 #include "logger.hpp"
-#include "mxe_error.hpp"
+#include "mxe_error.hpp"  // IWYU pragma: keep
 #include "utilities.hpp"
 
 #include <boost/program_options.hpp>
 
 #include <chrono>
 #include <filesystem>
-#include <fstream>
+#include <format>
 #include <iostream>
 #include <print>
+#include <stdlib.h>  // for EXIT_FAILURE, EXIT_SUCCESS
 #include <string>
+#include <string_view>
+#include <system_error>
 #include <tuple>
+#include <variant>  // IWYU pragma: keep
 #include <vector>
 
 auto

@@ -35,14 +35,18 @@
 #include <pthread.h>  // pthread_threadid_np
 #endif
 
+#include <sys/types.h>  // for pid_t
+
+#include <array>     // for array
+#include <charconv>  // for to_chars, to_chars_result
 #include <chrono>
 #include <cstdint>  // std::uint32_t
 #include <cstring>  // std::memcpy
 #include <format>
 #include <iostream>
+#include <iterator>  // for size, distance
 #include <memory>
 #include <mutex>
-#include <ostream>
 #include <ranges>
 #include <string>
 #include <string_view>

@@ -28,14 +28,18 @@
 #include "methylome_metadata.hpp"
 
 #include <algorithm>
-#include <cstdint>
-#include <cstdlib>
-#include <memory>
+#include <cstdint>  // std::uint32_t
+#include <cstdlib>  // std::size_t
+#include <initializer_list>
+#include <iterator>  // std::begin
+#include <memory>    // std::shared_ptr, std::swap
 #include <mutex>
 #include <string>
+#include <system_error>
 #include <tuple>
 #include <unordered_map>
 #include <utility>
+#include <variant>
 #include <vector>
 
 template <typename T> struct ring_buffer {

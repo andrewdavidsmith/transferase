@@ -26,10 +26,13 @@
 #include "zlib_adapter.hpp"
 
 #include <algorithm>
+#include <cctype>  // for std::isdigit
+#include <cerrno>
 #include <charconv>
-#include <cmath>
-#include <cstdint>
+#include <cmath>    // for std::round
+#include <cstdint>  // for std::uint32_t
 #include <fstream>
+#include <iterator>  // for std::size
 #include <sstream>
 #include <string>
 #include <tuple>
@@ -70,12 +73,12 @@ parse_counts_line(const std::string &line, std::uint32_t &pos,
   std::uint32_t n_reads{};
   field_s = res.ptr + 1;
   res = std::from_chars(field_s, c_end, n_reads);
-  failed = failed || (res.ptr == c_end);
+  failed = failed || (res.ec != std::errc{});
 
   n_meth = std::round(meth * n_reads);
   n_unmeth = n_reads - n_meth;
 
-  return failed;
+  return !failed;
 }
 
 [[nodiscard]] static inline auto

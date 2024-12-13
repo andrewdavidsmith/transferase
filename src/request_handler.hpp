@@ -26,11 +26,16 @@
 
 #include "cpg_index_set.hpp"
 #include "methylome_set.hpp"
-#include "request.hpp"
-#include "response.hpp"
 
-#include <cstdint>
+#include <cstdint>  // for std::uint32_t
 #include <string>
+#include <system_error>
+
+struct bins_request;
+struct request;
+struct request_header;
+struct response_header;
+struct response_payload;
 
 // handles all incoming requests
 struct request_handler {

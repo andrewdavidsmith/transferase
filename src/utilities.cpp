@@ -23,23 +23,16 @@
 
 #include "utilities.hpp"
 
-/*
-  Functions defined here are used by multiple source files
- */
-
-#include <zlib.h>
-
-#include <algorithm>
 #include <array>
-#include <cassert>
+#include <cerrno>
+#include <cstdlib>  // for getenv
 #include <string>
 #include <tuple>
-#include <utility>
-#include <vector>
+#include <utility>  // for std::move
 
 // getpwuid_r
 #include <pwd.h>
-#include <sys/types.h>
+#include <unistd.h>  // for getuid
 
 [[nodiscard]] auto
 get_username() -> std::tuple<std::string, std::error_code> {

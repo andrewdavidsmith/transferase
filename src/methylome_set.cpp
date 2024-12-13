@@ -25,22 +25,17 @@
 
 #include "methylome.hpp"
 #include "methylome_metadata.hpp"
-#include "mxe_error.hpp"
+#include "mxe_error.hpp"  // for make_error_code, methylome_set_code
 
-#include <algorithm>
 #include <filesystem>
 #include <format>
-#include <memory>  // std::make_shared
-#include <mutex>
+#include <memory>  // for std::shared_ptr, std::make_shared
+#include <mutex>   // for std::scoped_lock
 #include <regex>
 #include <string>
 #include <tuple>
 #include <unordered_map>
-#include <utility>  // std::move
-
-// DEBUG
-#include <iostream>
-#include <print>
+#include <utility>  // for std::move, std::pair
 
 [[nodiscard]] static auto
 is_valid_accession(const std::string &accession) -> bool {

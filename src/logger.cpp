@@ -23,12 +23,13 @@
 
 #include "logger.hpp"
 
-#include <unistd.h>
+#include <errno.h>   // for errno
+#include <unistd.h>  // for gethostname, getpid
 
-#include <cstring>  // std::memcpy
-#include <string>
-#include <string_view>
-#include <system_error>
+#include <cstring>       // for memcpy
+#include <string>        // for basic_string, string
+#include <string_view>   // for string_view
+#include <system_error>  // for make_error_code, errc, error_code
 
 namespace chrn = std::chrono;
 

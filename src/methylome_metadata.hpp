@@ -24,15 +24,16 @@
 #ifndef SRC_METHYLOME_METADATA_HPP_
 #define SRC_METHYLOME_METADATA_HPP_
 
-#include "methylome.hpp"
-
 #include <boost/describe.hpp>  // for BOOST_DESCRIBE_STRUCT
 
-#include <cstdint>
+#include <cstdint>  // for uint32_t, uint64_t
 #include <format>
 #include <string>
 #include <system_error>
 #include <tuple>
+#include <type_traits>  // for std::true_type
+#include <utility>      // for std::to_underlying, std::unreachable
+#include <variant>      // for std::tuple
 
 enum class methylome_metadata_error : std::uint32_t {
   ok = 0,

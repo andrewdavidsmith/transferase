@@ -23,28 +23,31 @@
 
 #include "methylome.hpp"
 
-#include "hash.hpp"  // get_adler
+#include "cpg_index_meta.hpp"
+#include "hash.hpp"
 #include "methylome_metadata.hpp"
+#include "methylome_results_types.hpp"
 #include "mxe_error.hpp"
 #include "zlib_adapter.hpp"
 
 #include <algorithm>
 #include <cassert>
-#include <cstdint>
+#include <cerrno>
+#include <cstdint>  // for uint32_t, uint16_t, uint8_t, uint64_t
 #include <filesystem>
 #include <fstream>
 #include <ranges>
 #include <string>
 #include <system_error>
 #include <tuple>
-#include <type_traits>
-#include <utility>  // std::move
+#include <type_traits>  // for is_same
+#include <utility>      // for pair, move
 #include <vector>
 
 #ifdef MXE_BENCHMARK
 #include <chrono>
-#include <iostream>
-using hr_clock = std::chrono::high_resolution_clock;
+#include <iostream>  // for std::cerr
+#include <print>
 #endif
 
 [[nodiscard]] auto
@@ -82,11 +85,11 @@ methylome::read(const std::string &filename, const methylome_metadata &metadata)
       return {{}, std::error_code{methylome_code::error_reading_methylome}};
     meth.cpgs.resize(metadata.n_cpgs);
 #ifdef BENCHMARK
-    const auto decompress_start{hr_clock::now()};
+    const auto decompress_start{std::chrono::high_resolution_clock::now()};
 #endif
     const auto decompress_err = decompress(buf, meth.cpgs);
 #ifdef BENCHMARK
-    const auto decompress_stop{hr_clock::now()};
+    const auto decompress_stop{std::chrono::high_resolution_clock::now()};
     std::println("decompress(buf, cpgs) time: {}s",
                  duration(decompress_start, decompress_stop));
 #endif
@@ -108,11 +111,11 @@ methylome::write(const std::string &filename,
   std::vector<std::uint8_t> buf;
   if (zip) {
 #ifdef BENCHMARK
-    const auto compress_start{hr_clock::now()};
+    const auto compress_start{std::chrono::high_resolution_clock::now()};
 #endif
     const auto compress_err = compress(cpgs, buf);
 #ifdef BENCHMARK
-    const auto compress_stop{hr_clock::now()};
+    const auto compress_stop{std::chrono::high_resolution_clock::now()};
     std::println(std::cerr, "compress(cpgs, buf) time: {}s",
                  duration(compress_start, compress_stop));
 #endif

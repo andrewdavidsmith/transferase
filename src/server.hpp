@@ -24,7 +24,6 @@
 #ifndef SRC_SERVER_HPP_
 #define SRC_SERVER_HPP_
 
-#include "logger.hpp"
 #include "request_handler.hpp"
 
 #include <boost/asio.hpp>
@@ -33,6 +32,8 @@
 #include <cstdint>
 #include <string>
 #include <system_error>
+
+class logger;
 
 struct server {
   server(const server &) = delete;

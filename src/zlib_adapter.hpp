@@ -28,11 +28,12 @@
 
 #include <array>
 #include <cassert>
-#include <cstdint>
+#include <cstdint>   // for std::uint8_t
+#include <iterator>  // for std::size
 #include <string>
 #include <system_error>
-#include <type_traits>
-#include <utility>
+#include <type_traits>  // for std::true_type
+#include <utility>      // for std::to_underlying, std::unreachable
 #include <vector>
 
 // clang-format off

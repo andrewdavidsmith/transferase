@@ -25,19 +25,24 @@
 
 #include "logger.hpp"
 #include "methylome.hpp"
+#include "methylome_metadata.hpp"
+#include "methylome_results_types.hpp"  // IWYU pragma: keep
 #include "mxe_error.hpp"
 #include "request.hpp"
 #include "response.hpp"
 #include "utilities.hpp"
 
-#include <chrono>
-#include <cstdint>
-#include <fstream>
+#include <chrono>    // for std::chrono::high_resolution_clock
+#include <cstdint>   // for std::uint32_t
+#include <cstring>   // for std::memcpy
+#include <iterator>  // for std::size, std::pair
+#include <memory>    // for std::shared_ptr
 #include <print>
 #include <regex>
-#include <sstream>
 #include <string>
-#include <tuple>
+#include <type_traits>  // for std::remove_cvref_t
+#include <utility>      // for std::pair
+#include <variant>      // for std::get
 #include <vector>
 
 using std::get;
@@ -45,8 +50,6 @@ using std::pair;
 using std::println;
 using std::string;
 using std::uint32_t;
-
-using hr_clock = std::chrono::high_resolution_clock;
 
 [[nodiscard]] static auto
 is_valid_accession(const string &accession) -> bool {
@@ -111,10 +114,10 @@ request_handler::handle_header(const request_header &req_hdr,
 
   // ADS TODO: move more of this into methylome_set?
 
-  const auto get_methylome_start{hr_clock::now()};
+  const auto get_methylome_start{std::chrono::high_resolution_clock::now()};
   const auto [meth, meth_meta, get_meth_err] =
     ms.get_methylome(req_hdr.accession);
-  const auto get_methylome_stop{hr_clock::now()};
+  const auto get_methylome_stop{std::chrono::high_resolution_clock::now()};
   lgr.debug("Elapsed time for get methylome: {:.3}s",
             duration(get_methylome_start, get_methylome_stop));
 

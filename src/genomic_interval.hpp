@@ -28,7 +28,6 @@
 #include <format>
 #include <string>
 #include <system_error>
-#include <tuple>
 #include <vector>
 
 struct cpg_index_meta;

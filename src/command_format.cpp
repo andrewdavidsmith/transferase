@@ -50,34 +50,36 @@ mxe format -x hg38.cpg_idx -m SRX012345.xsym.gz -o SRX012345.m16
 
 #include "counts_file_formats.hpp"
 #include "cpg_index.hpp"
-#include "genomic_interval.hpp"
+#include "cpg_index_meta.hpp"
 #include "logger.hpp"
 #include "methylome.hpp"
 #include "methylome_metadata.hpp"
-#include "mxe_error.hpp"
+#include "mxe_error.hpp"  // IWYU pragma: keep
 #include "utilities.hpp"
 #include "zlib_adapter.hpp"
 
-#include <sys/types.h>
-#include <unistd.h>
-#include <zlib.h>
-
 #include <boost/program_options.hpp>
 
-#include <array>
+#include <cctype>  // for std::isdigit
 #include <charconv>
+#include <cstdint>  // for std::uint32_t, std::uint64_t, std::int32_t
+#include <cstdlib>  // for EXIT_FAILURE, abort, EXIT_SUCCESS
+#include <filesystem>
+#include <format>
 #include <iostream>
+#include <iterator>  // for std::cbegin, std::size
 #include <limits>
-#include <numeric>
 #include <print>
+#include <sstream>
 #include <string>
+#include <string_view>
+#include <system_error>
 #include <tuple>
+#include <type_traits>  // for std::true_type
+#include <unordered_map>
 #include <utility>
+#include <variant>  // IWYU pragma: keep
 #include <vector>
-
-using std::println;
-using std::size;
-using std::string;
 
 enum class format_err {
   // clang-format off
@@ -213,7 +215,7 @@ process_cpg_sites(const std::string &infile, const cpg_index &index,
       continue;  // ADS: early loop exit
     }
     if (!std::isdigit(line[0])) {  // check for new chromosome
-      const std::uint32_t ch_id = get_ch_id(cim, line);
+      const std::int32_t ch_id = get_ch_id(cim, line);
       if (ch_id < 0) {
         lgr.error("Failed to find chromosome in index: {}", line);
         return {methylome{}, format_err::xcounts_file_chromosome_not_found};
@@ -260,14 +262,13 @@ process_cpg_sites(const std::string &infile, const cpg_index &index,
     cpgs_flat.insert(std::end(cpgs_flat), std::cbegin(c), std::cend(c));
 
   // tuple is move-returned, but making the tuple would copy
-  return {std::move(methylome{std::move(cpgs_flat)}), std::error_code{}};
+  return {methylome{std::move(cpgs_flat)}, std::error_code{}};
 }
 
 static auto
 process_cpg_sites_counts(const std::string &infile, const cpg_index &index,
                          const cpg_index_meta &cim)
   -> std::tuple<methylome, std::error_code> {
-  constexpr auto is_sep = [](const char x) { return x == ' ' || x == '\t'; };
   auto &lgr = logger::instance();
 
   std::error_code err;
@@ -300,7 +301,7 @@ process_cpg_sites_counts(const std::string &infile, const cpg_index &index,
     const auto end_of_chrom = line.find_first_of(" \t");
     const std::string chrom{line.substr(0, end_of_chrom)};
     if (chrom != prev_chrom) {  // check for new chromosome
-      const std::uint32_t ch_id = get_ch_id(cim, chrom);
+      const std::int32_t ch_id = get_ch_id(cim, chrom);
       if (ch_id < 0) {
         lgr.error("Failed to find chromosome in index: {}", line);
         return {methylome{}, /* ADS: fix this */
@@ -342,7 +343,7 @@ process_cpg_sites_counts(const std::string &infile, const cpg_index &index,
     cpgs_flat.insert(std::end(cpgs_flat), std::cbegin(c), std::cend(c));
 
   // tuple is move-returned, but making the tuple would copy
-  return {std::move(methylome{std::move(cpgs_flat)}), std::error_code{}};
+  return {methylome{std::move(cpgs_flat)}, std::error_code{}};
 }
 
 auto
