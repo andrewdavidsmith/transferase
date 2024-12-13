@@ -28,8 +28,14 @@
 #include "request.hpp"
 #include "response.hpp"
 
+#include <chrono>
+#include <compare>      // for operator<=, strong_ordering
+#include <cstddef>      // for size_t
+#include <type_traits>  // for is_same
+
 #include <boost/asio.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/system.hpp>  // for boost::system::error_code
 
 #include <cstdint>  // std::uint32_t
 #include <string>
@@ -167,8 +173,8 @@ mxe_client<counts_type, req_type>::handle_connect(const std::error_code &err) {
     if (const auto req_hdr_compose{compose(req_hdr_buf, req_hdr)};
         !req_hdr_compose.error) {
       if (const auto req_body_compose =
-            to_chars(req_hdr_compose.ptr,
-                     req_hdr_buf.data() + request_header_buf_size, req);
+            compose(req_hdr_compose.ptr,
+                    req_hdr_buf.data() + request_header_buf_size, req);
           !req_body_compose.error) {
         if constexpr (std::is_same<req_type, request>::value) {
           boost::asio::async_write(
