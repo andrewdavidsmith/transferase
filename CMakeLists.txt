@@ -36,9 +36,16 @@ set(CMAKE_CXX_STANDARD_REQUIRED yes)
 set(CMAKE_CXX_EXTENSIONS off)  # prevents std=gnu++23
 set(CMAKE_EXPORT_COMPILE_COMMANDS on)
 
+option(ENABLE_UNIT_TESTS "Enable unit tests" OFF)
+
 if(MXE_STATIC_ANALYSIS)
   # cpplint: all options are in the config file
   set(CMAKE_CXX_CPPLINT cpplint --quiet)
+  set(CMAKE_CXX_INCLUDE_WHAT_YOU_USE
+    include-what-you-use
+    -Xiwyu
+    --mapping_file=${PROJECT_SOURCE_DIR}/iwyu.imp
+  )
   # cppcheck: options on the command line as there is no config file
   set(CMAKE_CXX_CPPCHECK
     cppcheck
@@ -71,10 +78,14 @@ find_package(
   program_options json)
 find_package(ZLIB REQUIRED)
 
-enable_testing()
+if(ENABLE_UNIT_TESTS)
+  message(STATUS "Unit tests enabled")
+  add_compile_definitions(UNIT_TEST)
+  enable_testing()
+  add_subdirectory(tests)
+endif()
 
 add_subdirectory(src)
-add_subdirectory(tests)
 
 configure_file(config.h.in config.h)
 
