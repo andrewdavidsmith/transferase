@@ -125,6 +125,19 @@ target_link_libraries(request_handler_test
  cpg_index_set
 )
 
+add_executable(command_config_test command_config_test.cpp)
+target_link_libraries(command_config_test
+ PRIVATE
+ GTest::GTest
+ GTest::Main
+ Boost::boost
+ Boost::json
+ Boost::program_options
+ utilities
+ logger
+ command_config
+)
+
 set(EXECUTABLE_TARGETS
   cpg_index_meta_test
   counts_file_formats_test
@@ -134,6 +147,7 @@ set(EXECUTABLE_TARGETS
   genomic_interval_test
   request_test
   request_handler_test
+  command_config_test
 )
 
 # Define the UNIT_TEST macro for the test targets
