@@ -25,10 +25,9 @@
 
 #include <gtest/gtest.h>
 
-#include <algorithm>
-#include <cstdint>
 #include <cstdlib>  // for EXIT_FAILURE, EXIT_SUCCESS
 #include <filesystem>
+#include <iterator>  // for std::size
 #include <string>
 #include <vector>
 
