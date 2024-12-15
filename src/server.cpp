@@ -40,7 +40,6 @@
 #include <fstream>
 #include <iterator>  // for std::size
 #include <memory>    // std::make_shared<>
-#include <print>
 #include <string>
 #include <system_error>
 #include <thread>
@@ -52,14 +51,6 @@
 #include <sys/types.h>  // for pid_t, mode_t
 #include <syslog.h>
 #include <unistd.h>
-
-using std::format;
-using std::jthread;
-using std::make_shared;
-using std::println;
-using std::string;
-using std::uint32_t;
-using std::vector;
 
 static auto
 write_pid_to_file(std::error_code &ec) -> void {
@@ -91,7 +82,7 @@ write_pid_to_file(std::error_code &ec) -> void {
     return;
   }
   lgr.info("mxe daemon pid file: {}", pid_file);
-  const auto pid_str = format("{}", pid);
+  const auto pid_str = std::format("{}", pid);
   out.write(pid_str.data(), size(pid_str));
   if (!out) {
     ec = std::make_error_code(std::errc{errno});
@@ -100,10 +91,10 @@ write_pid_to_file(std::error_code &ec) -> void {
   }
 }
 
-server::server(const string &address, const string &port,
-               const uint32_t n_threads, const string &methylome_dir,
-               const string &cpg_index_file_dir,
-               const uint32_t max_live_methylomes, logger &lgr,
+server::server(const std::string &address, const std::string &port,
+               const std::uint32_t n_threads, const std::string &methylome_dir,
+               const std::string &cpg_index_file_dir,
+               const std::uint32_t max_live_methylomes, logger &lgr,
                std::error_code &ec) :
   // io_context ios uses default constructor
   n_threads{n_threads},
@@ -133,14 +124,14 @@ server::server(const string &address, const string &port,
 
   assert(!resolved.empty());
   const boost::asio::ip::tcp::endpoint endpoint = *resolved.begin();
-  lgr.info("Resolved endpoint {}", boost::lexical_cast<string>(endpoint));
+  lgr.info("Resolved endpoint {}", boost::lexical_cast<std::string>(endpoint));
 
   // open acceptor...
   boost::system::error_code acceptor_ec;
   acceptor.open(endpoint.protocol(), acceptor_ec);
   if (acceptor_ec) {
     lgr.error("Error opening endpoint {}: {}",
-              boost::lexical_cast<string>(endpoint), acceptor_ec);
+              boost::lexical_cast<std::string>(endpoint), acceptor_ec);
     std::raise(SIGTERM);
     return;  // don't wait for signal handler
   }
@@ -157,7 +148,7 @@ server::server(const string &address, const string &port,
   acceptor.bind(endpoint, acceptor_ec);
   if (acceptor_ec) {
     lgr.error("Error binding endpoint {}: {}",
-              boost::lexical_cast<string>(endpoint), acceptor_ec);
+              boost::lexical_cast<std::string>(endpoint), acceptor_ec);
     std::raise(SIGTERM);
     return;  // don't wait for signal handler
   }
@@ -166,17 +157,17 @@ server::server(const string &address, const string &port,
                   acceptor_ec);
   if (acceptor_ec) {
     lgr.error("Error listening  on endpoint {}: {}",
-              boost::lexical_cast<string>(endpoint), acceptor_ec);
+              boost::lexical_cast<std::string>(endpoint), acceptor_ec);
     std::raise(SIGTERM);
     return;  // don't wait for signal handler
   }
   do_accept();
 }
 
-server::server(const string &address, const string &port,
-               const uint32_t n_threads, const string &methylome_dir,
-               const string &cpg_index_file_dir,
-               const uint32_t max_live_methylomes, logger &lgr,
+server::server(const std::string &address, const std::string &port,
+               const std::uint32_t n_threads, const std::string &methylome_dir,
+               const std::string &cpg_index_file_dir,
+               const std::uint32_t max_live_methylomes, logger &lgr,
                std::error_code &ec, [[maybe_unused]] const bool daemonize) :
   // io_context ioc uses default constructor
   n_threads{n_threads},
@@ -297,14 +288,14 @@ server::server(const string &address, const string &port,
 
   assert(!resolved.empty());
   const boost::asio::ip::tcp::endpoint endpoint = *resolved.begin();
-  lgr.info("Resolved endpoint {}", boost::lexical_cast<string>(endpoint));
+  lgr.info("Resolved endpoint {}", boost::lexical_cast<std::string>(endpoint));
 
   // open acceptor...
   boost::system::error_code acceptor_ec;
   acceptor.open(endpoint.protocol(), acceptor_ec);
   if (acceptor_ec) {
     lgr.error("Error opening endpoint {}: {}",
-              boost::lexical_cast<string>(endpoint), acceptor_ec);
+              boost::lexical_cast<std::string>(endpoint), acceptor_ec);
     std::raise(SIGTERM);
     return;  // don't wait for signal handler
   }
@@ -321,7 +312,7 @@ server::server(const string &address, const string &port,
   acceptor.bind(endpoint, acceptor_ec);
   if (acceptor_ec) {
     lgr.error("Error binding endpoint {}: {}",
-              boost::lexical_cast<string>(endpoint), acceptor_ec);
+              boost::lexical_cast<std::string>(endpoint), acceptor_ec);
     std::raise(SIGTERM);
     return;  // don't wait for signal handler
   }
@@ -330,7 +321,7 @@ server::server(const string &address, const string &port,
                   acceptor_ec);
   if (acceptor_ec) {
     lgr.error("Error listening  on endpoint {}: {}",
-              boost::lexical_cast<string>(endpoint), acceptor_ec);
+              boost::lexical_cast<std::string>(endpoint), acceptor_ec);
     std::raise(SIGTERM);
     return;  // don't wait for signal handler
   }
@@ -345,8 +336,8 @@ server::run() -> void {
      are equivalent and the io_context may choose any one of them to
      invoke a handler."
   */
-  vector<jthread> threads;
-  for (uint32_t i = 0; i < n_threads; ++i)
+  std::vector<std::jthread> threads;
+  for (std::uint32_t i = 0; i < n_threads; ++i)
     threads.emplace_back([this] { ioc.run(); });
 }
 
@@ -361,8 +352,8 @@ server::do_accept() -> void {
         return;
       if (!ec) {
         // ADS: accepted socket moved into connection which is started
-        make_shared<connection>(std::move(socket), handler, lgr,
-                                connection_id++)
+        std::make_shared<connection>(std::move(socket), handler, lgr,
+                                     connection_id++)
           ->start();
       }
       do_accept();  // keep listening for more connections
@@ -387,7 +378,7 @@ server::do_daemon_await_stop() -> void {
   signals.async_wait(
     [this](const boost::system::error_code ec, const int signo) {
       lgr.warning("Received signal {} ({})", strsignal(signo), ec);
-      const auto message = format("Daemon stopped (pid: {})", getpid());
+      const auto message = std::format("Daemon stopped (pid: {})", getpid());
       syslog(LOG_INFO | LOG_USER, "%s", message.data());
       lgr.info(message);
       // stop server by cancelling all outstanding async ops; when all
