@@ -23,8 +23,6 @@
 
 #include <command_config.hpp>
 
-#include <download.hpp>
-
 #include <gtest/gtest.h>
 
 #include <cstdlib>  // for EXIT_FAILURE, EXIT_SUCCESS
