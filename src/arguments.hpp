@@ -82,7 +82,7 @@ template <typename T> struct argset_base {
     return static_cast<const T &>(*this);
   }
 
-  static auto
+  [[nodiscard]] static auto
   get_default_config_file() -> std::string {
     return T::get_default_config_file_impl();
   }
