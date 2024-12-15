@@ -50,7 +50,7 @@ mxe server -s localhost -m methylomes -x indexes
 )";
 
 #include "arguments.hpp"
-#include "config_file_utils.hpp"
+#include "config_file_utils.hpp"  // write_config_file
 #include "logger.hpp"
 #include "mxe_error.hpp"  // IWYU pragma: keep
 #include "server.hpp"
@@ -73,27 +73,6 @@ mxe server -s localhost -m methylomes -x indexes
 #include <tuple>
 #include <variant>  // IWYU pragma: keep
 #include <vector>
-
-static auto
-get_canonical_dir(const std::string &methylome_dir) -> std::string {
-  std::error_code ec;
-  const std::string canonical_dir =
-    std::filesystem::canonical(methylome_dir, ec);
-  if (ec) {
-    logger::instance().error("Error: {} ({})", ec, methylome_dir);
-    return {};
-  }
-  const bool isdir = std::filesystem::is_directory(canonical_dir, ec);
-  if (ec) {
-    logger::instance().error("Error: {} ({})", ec, canonical_dir);
-    return {};
-  }
-  if (!isdir) {
-    logger::instance().error("Not a directory: {}", canonical_dir);
-    return {};
-  }
-  return canonical_dir;
-}
 
 struct server_argset : argset_base<server_argset> {
   static constexpr auto default_config_filename = "mxe_server_config.toml";
@@ -235,10 +214,11 @@ command_server_main(int argc, char *argv[]) -> int {
 
   args.log_options();
 
-  args.methylome_dir = get_canonical_dir(args.methylome_dir);
-  // error messages done already
-  if (args.methylome_dir.empty())
+  args.methylome_dir = std::filesystem::canonical(args.methylome_dir, ec);
+  if (ec || args.methylome_dir.empty()) {
+    lgr.error("Failed to get canonical dir for {}: {}", args.methylome_dir, ec);
     return EXIT_FAILURE;
+  }
 
   if (args.daemonize) {
     auto s =
