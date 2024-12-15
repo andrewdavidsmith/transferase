@@ -44,15 +44,12 @@ Examples:
 mxe config -c my_config_file.toml -s example.com -p 5009 --assemblies hg38,mm39
 )";
 
+#include "arguments.hpp"
 #include "command_config_argset.hpp"
 #include "config_file_utils.hpp"  // write_client_config_file
 #include "download.hpp"
-#include "logger.hpp"
 #include "mxe_error.hpp"  // IWYU pragma: keep
 #include "utilities.hpp"
-
-#include <boost/describe.hpp>
-#include <boost/program_options.hpp>
 
 #include <algorithm>
 #include <cstdlib>  // for EXIT_FAILURE, EXIT_SUCCESS
@@ -60,12 +57,15 @@ mxe config -c my_config_file.toml -s example.com -p 5009 --assemblies hg38,mm39
 #include <format>
 #include <fstream>
 #include <iostream>
-#include <memory>  // std::make_shared
+#include <iterator>  // for std::cbegin
+#include <memory>    // std::make_shared
 #include <print>
+#include <ranges>
 #include <string>
 #include <string_view>
 #include <system_error>
 #include <tuple>
+#include <unordered_map>
 #include <variant>  // IWYU pragma: keep
 #include <vector>
 
