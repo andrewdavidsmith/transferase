@@ -23,6 +23,9 @@
 
 #include "utilities.hpp"
 
+#include "logger.hpp"
+#include "mxe_error.hpp"  // IWYU pragma: keep
+
 #include <array>
 #include <cerrno>
 #include <cstdlib>  // for getenv
@@ -72,26 +75,3 @@ get_mxe_config_dir_default(std::error_code &ec) -> std::string {
   const std::filesystem::path config_dir = env_home / config_dir_rhs;
   return config_dir;
 }
-
-/*
-auto
-check_mxe_config_dir(const std::string &dirname, std::error_code &ec) -> bool
-{ const bool exists = std::filesystem::exists(dirname, ec); if (ec) return
-false;
-
-  if (!exists) {
-    ec = std::make_error_code(std::errc::no_such_file_or_directory);
-    return false;
-  }
-
-  const bool is_dir = std::filesystem::is_directory(dirname, ec);
-  if (ec)
-    return false;
-  if (!is_dir) {
-    ec = std::make_error_code(std::errc::not_a_directory);
-    return false;
-  }
-
-  return true;
-}
-*/

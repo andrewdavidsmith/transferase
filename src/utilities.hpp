@@ -65,11 +65,6 @@ struct std::formatter<std::filesystem::path> : std::formatter<std::string> {
 [[nodiscard]] auto
 get_mxe_config_dir_default(std::error_code &ec) -> std::string;
 
-/*
-  auto
-  check_mxe_config_dir(const std::string &dirname, std::error_code &ec) -> bool;
-*/
-
 [[nodiscard]] inline auto
 strip(char const *const x) -> const std::string_view {
   const std::string s{x};
