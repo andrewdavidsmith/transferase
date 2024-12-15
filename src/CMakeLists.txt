@@ -34,6 +34,10 @@ add_library(hash OBJECT
   hash.hpp
   hash.cpp)
 
+add_library(download OBJECT
+  download.hpp
+  download.cpp)
+
 add_library(utilities OBJECT
   utilities.hpp
   utilities.cpp)
@@ -135,7 +139,6 @@ add_library(command_server OBJECT
   command_server.cpp)
 
 if(NOT ENABLE_UNIT_TESTS)
-
   add_executable(mxe)
   target_include_directories(mxe PRIVATE "${PROJECT_BINARY_DIR}")
   target_sources(mxe PRIVATE mxe.cpp)
@@ -147,6 +150,7 @@ if(NOT ENABLE_UNIT_TESTS)
   target_link_libraries(
     mxe PRIVATE
     utilities
+    download
     logger
     genomic_interval
     cpg_index
@@ -175,6 +179,7 @@ if(NOT ENABLE_UNIT_TESTS)
     Boost::boost
     Boost::program_options
     Boost::json
+    Boost::context
     Threads::Threads
   )
   install(TARGETS mxe DESTINATION bin)
