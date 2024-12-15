@@ -23,7 +23,6 @@
 
 #include "utilities.hpp"
 
-#include "logger.hpp"
 #include "mxe_error.hpp"  // IWYU pragma: keep
 
 #include <array>

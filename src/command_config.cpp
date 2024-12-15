@@ -53,7 +53,7 @@ mxe config -s example.com -p 5009 --assemblies hg38 mm39
 #include <boost/describe.hpp>
 #include <boost/program_options.hpp>
 
-#include <cstdint>
+#include <algorithm>
 #include <cstdlib>  // for EXIT_FAILURE, EXIT_SUCCESS
 #include <filesystem>
 #include <format>
