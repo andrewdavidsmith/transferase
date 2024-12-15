@@ -23,13 +23,28 @@
 
 #include "download.hpp"
 
+// Can't silence IWYU on these
+#include <boost/core/detail/string_view.hpp>
+#include <boost/intrusive/detail/list_iterator.hpp>
+#include <boost/move/utility_core.hpp>
+#include <boost/optional/optional.hpp>
+#include <boost/system.hpp>
+
 #include <boost/asio.hpp>
-#include <boost/asio/spawn.hpp>
+#include <boost/asio/spawn.hpp>  // IWYU pragma: keep
 #include <boost/beast.hpp>
 
+#include <cerrno>
+#include <chrono>
+#include <cstdint>    // for std::uint64_t
+#include <exception>  // for std::exception_ptr
 #include <filesystem>
 #include <fstream>
+#include <functional>  // for std::ref
+#include <iterator>    // for std::cbegin
+#include <limits>      // for std::numeric_limits
 #include <print>
+#include <sstream>
 #include <string>
 #include <system_error>
 #include <tuple>
