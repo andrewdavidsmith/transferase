@@ -125,8 +125,8 @@ target_link_libraries(request_handler_test
  cpg_index_set
 )
 
-add_executable(command_config_test command_config_test.cpp)
-target_link_libraries(command_config_test
+add_executable(command_config_argset_test command_config_argset_test.cpp)
+target_link_libraries(command_config_argset_test
  PRIVATE
  GTest::GTest
  GTest::Main
@@ -134,7 +134,20 @@ target_link_libraries(command_config_test
  Boost::json
  Boost::program_options
  utilities
+)
+
+add_executable(command_config_test command_config_test.cpp)
+target_link_libraries(command_config_test
+ PRIVATE
+ GTest::GTest
+ GTest::Main
+ Boost::boost
+ Boost::json
+ Boost::context
+ Boost::program_options
+ utilities
  logger
+ download
  command_config
 )
 
@@ -147,6 +160,7 @@ set(EXECUTABLE_TARGETS
   genomic_interval_test
   request_test
   request_handler_test
+  command_config_argset_test
   command_config_test
 )
 
