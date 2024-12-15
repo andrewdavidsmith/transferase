@@ -27,6 +27,7 @@
 #include "command_bins.hpp"
 #include "command_check.hpp"
 #include "command_compress.hpp"
+#include "command_config.hpp"
 #include "command_format.hpp"
 #include "command_index.hpp"
 #include "command_intervals.hpp"
@@ -66,6 +67,7 @@ using po::value;
 typedef std::function<int(int, char **)> main_fun;
 const std::tuple<std::string_view, main_fun, std::string_view> commands[] = {
   // clang-format off
+  {"config", command_config_main, "configure a client for remote queries"},
   {"index", command_index_main, "make an index for a reference genome"},
   {"format", command_format_main, "format a methylome file"},
   {"check", command_check_main, "perform checks on methylome and index files"},
