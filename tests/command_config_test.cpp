@@ -23,6 +23,8 @@
 
 #include <command_config.hpp>
 
+#include <download.hpp>
+
 #include <gtest/gtest.h>
 
 #include <cstdlib>  // for EXIT_FAILURE, EXIT_SUCCESS
@@ -42,10 +44,8 @@ TEST(command_config_test, run_success) {
     "example.com",
     "-p",
     "5000",
-    "--assemblies",
-    "hg38",
   };
-  EXPECT_EQ(std::size(argv), 11);
+  EXPECT_EQ(std::size(argv), 9);
   EXPECT_EQ(argv[0], "config");
   const int ret =
     command_config_main(std::size(argv), const_cast<char **>(argv.data()));
