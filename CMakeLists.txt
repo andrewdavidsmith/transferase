@@ -80,7 +80,7 @@ find_package(
   Boost
   1.85.0 REQUIRED
   COMPONENTS
-  program_options json)
+  program_options json context)
 find_package(ZLIB REQUIRED)
 
 if(ENABLE_UNIT_TESTS)
