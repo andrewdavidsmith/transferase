@@ -38,9 +38,10 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS on)
 
 option(ENABLE_UNIT_TESTS "Enable unit tests" OFF)
 option(ENABLE_STATIC_ANALYSIS "Enable static analysis" OFF)
+option(USE_STATIC_LIBS "Use static linkage for 3rd party libs" OFF)
 
 if(ENABLE_STATIC_ANALYSIS)
-  message(STATUS "Stati analysis enabled")
+  message(STATUS "Static analysis enabled")
   # cpplint: all options are in the config file
   set(CMAKE_CXX_CPPLINT
     cpplint
@@ -49,7 +50,7 @@ if(ENABLE_STATIC_ANALYSIS)
   set(CMAKE_CXX_INCLUDE_WHAT_YOU_USE
     include-what-you-use
     -Xiwyu
-    --mapping_file=${PROJECT_SOURCE_DIR}/iwyu.json
+    --mapping_file=${PROJECT_SOURCE_DIR}/.iwyu/iwyu.json
   )
   # cppcheck: options on the command line as there is no config file
   set(CMAKE_CXX_CPPCHECK
@@ -71,6 +72,7 @@ include(CheckIncludeFileCXX)
 include(CheckFunctionExists)
 
 if(USE_STATIC_LIBS)
+  message(STATUS "Static linkage of 3rd party libs enabled")
   set(Boost_USE_STATIC_LIBS on)
   set(ZLIB_USE_STATIC_LIBS on)
 endif()
