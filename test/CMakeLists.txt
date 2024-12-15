@@ -183,7 +183,7 @@ endforeach()
 
 # Add compile definitions to specific targets
 file(CREATE_LINK
-  ${PROJECT_SOURCE_DIR}/tests/data
-  ${PROJECT_BINARY_DIR}/tests/data
+  ${PROJECT_SOURCE_DIR}/test/data
+  ${PROJECT_BINARY_DIR}/test/data
   SYMBOLIC
 )

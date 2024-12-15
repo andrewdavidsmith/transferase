@@ -89,7 +89,7 @@ if(ENABLE_UNIT_TESTS)
   message(STATUS "Unit tests enabled")
   add_compile_definitions(UNIT_TEST)
   enable_testing()
-  add_subdirectory(tests)
+  add_subdirectory(test)
 endif()
 
 add_subdirectory(src)
