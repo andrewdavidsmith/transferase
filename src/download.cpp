@@ -34,6 +34,7 @@
 #include <system_error>
 #include <tuple>
 #include <unordered_map>
+#include <utility>  // for std::move
 
 auto
 do_download(const std::string &host, const std::string &port,
@@ -136,7 +137,6 @@ auto
 download(const std::string &host, const std::string &port,
          const std::string &target, const std::string &outdir_arg)
   -> std::tuple<std::unordered_map<std::string, std::string>, std::error_code> {
-
   const auto outdir = std::filesystem::path(outdir_arg);
   const auto outfile = outdir / std::filesystem::path(target).filename();
 
