@@ -25,8 +25,8 @@
 
 #include <gtest/gtest.h>
 
-#include <cstdlib>  // for EXIT_FAILURE, EXIT_SUCCESS
 #include <filesystem>
+#include <format>
 #include <iterator>  // for std::size
 #include <string>
 #include <vector>
