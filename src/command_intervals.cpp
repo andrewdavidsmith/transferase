@@ -327,13 +327,23 @@ command_intervals_main(int argc, char *argv[]) -> int {
 
   lgr.debug("Number of CpGs in index: {}", cim.n_cpgs);
 
+  // Read query intervals and validate them
   const auto [gis, ec] = genomic_interval::load(cim, intervals_file);
   if (ec) {
     lgr.error("Error reading intervals file: {} ({})", intervals_file, ec);
     return EXIT_FAILURE;
   }
+  if (!intervals_sorted(cim, gis)) {
+    lgr.error("Intervals not sorted: {}", intervals_file);
+    return EXIT_FAILURE;
+  }
+  if (!intervals_valid(gis)) {
+    lgr.error("Intervals not valid: {} (negative size found)", intervals_file);
+    return EXIT_FAILURE;
+  }
   lgr.info("Number of intervals: {}", size(gis));
 
+  // Convert intervals into offsets
   const auto get_offsets_start{std::chrono::high_resolution_clock::now()};
   const auto offsets = index.get_offsets(cim, gis);
   const auto get_offsets_stop{std::chrono::high_resolution_clock::now()};
