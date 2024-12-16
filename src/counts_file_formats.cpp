@@ -22,6 +22,7 @@
  */
 
 #include "counts_file_formats.hpp"
+#include "counts_file_formats_impl.hpp"
 
 #include "zlib_adapter.hpp"
 
@@ -81,7 +82,7 @@ parse_counts_line(const std::string &line, std::uint32_t &pos,
   return !failed;
 }
 
-[[nodiscard]] static inline auto
+[[nodiscard]] STATIC auto
 is_counts_format(const std::string &filename) -> bool {
   static constexpr auto max_lines_to_read = 10000;
   std::ifstream in(filename);
@@ -108,7 +109,7 @@ is_counts_format(const std::string &filename) -> bool {
   return true;
 }
 
-[[nodiscard]] static inline auto
+[[nodiscard]] STATIC auto
 is_xcounts_format(const std::string &filename) -> bool {
   static constexpr auto max_lines_to_read = 10000;
 
@@ -119,21 +120,26 @@ is_xcounts_format(const std::string &filename) -> bool {
 
   std::string line;
   std::uint32_t n_lines{};
+  bool found_chrom{false};
+  bool found_coords{false};
   while (n_lines++ < max_lines_to_read && getline(in, line)) {
     if (line[0] == '#')
       continue;
     if (!std::isdigit(line[0])) {  // chrom line
-      if (line.find_first_of(" \t") != std::string::npos)
+      if (line.find_first_of(" \t") != std::string::npos) {
         return false;
+      }
+      found_chrom = true;
     }
     else {
       std::istringstream iss(line);
       std::uint32_t pos{}, n_meth{}, n_unmeth{};
       if (!(iss >> pos >> n_meth >> n_unmeth))
         return false;
+      found_coords = true;
     }
   }
-  return true;
+  return found_chrom && found_coords;
 }
 
 [[nodiscard]] auto
