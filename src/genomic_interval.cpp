@@ -24,7 +24,7 @@
 #include "genomic_interval.hpp"
 
 #include "cpg_index_meta.hpp"  // for cpg_index_meta
-#include "xfrase_error.hpp"       // for genomic_interval_code, make_error_code
+#include "xfrase_error.hpp"    // for genomic_interval_code, make_error_code
 
 #include <cerrno>
 #include <fstream>
