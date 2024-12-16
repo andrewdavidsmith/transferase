@@ -180,7 +180,7 @@ public:
 
   template <xfrase_log_level the_level>
   auto
-  log(std::string_view message) -> void {
+  log(const std::string_view message) -> void {
     static constexpr auto idx = std::to_underlying(the_level);
     static constexpr auto sz = level_name_sz[idx];
     static constexpr auto lvl = level_name[idx];
@@ -201,7 +201,7 @@ public:
 
   template <xfrase_log_level the_level, typename... Args>
   auto
-  log(std::string_view fmt_str, Args &&...args) -> void {
+  log(const std::string_view fmt_str, Args &&...args) -> void {
     static constexpr auto idx = std::to_underlying(the_level);
     static constexpr auto sz = level_name_sz[idx];
     static constexpr auto lvl = level_name[idx];
@@ -222,54 +222,55 @@ public:
   }
 
   auto
-  debug(std::string_view message) -> void {
+  debug(const std::string_view message) -> void {
     log<xfrase_log_level::debug>(message);
   }
   auto
-  info(std::string_view message) -> void {
+  info(const std::string_view message) -> void {
     log<xfrase_log_level::info>(message);
   }
   auto
-  warning(std::string_view message) -> void {
+  warning(const std::string_view message) -> void {
     log<xfrase_log_level::warning>(message);
   }
   auto
-  error(std::string_view message) -> void {
+  error(const std::string_view message) -> void {
     log<xfrase_log_level::error>(message);
   }
   auto
-  critical(std::string_view message) -> void {
+  critical(const std::string_view message) -> void {
     log<xfrase_log_level::critical>(message);
   }
 
   template <typename... Args>
   auto
-  debug(std::string_view fmt_str, Args &&...args) -> void {
+  debug(const std::string_view fmt_str, Args &&...args) -> void {
     log<xfrase_log_level::debug>(fmt_str, args...);
   }
   template <typename... Args>
   auto
-  info(std::string_view fmt_str, Args &&...args) -> void {
+  info(const std::string_view fmt_str, Args &&...args) -> void {
     log<xfrase_log_level::info>(fmt_str, args...);
   }
   template <typename... Args>
   auto
-  warning(std::string_view fmt_str, Args &&...args) -> void {
+  warning(const std::string_view fmt_str, Args &&...args) -> void {
     log<xfrase_log_level::warning>(fmt_str, args...);
   }
   template <typename... Args>
   auto
-  error(std::string_view fmt_str, Args &&...args) -> void {
+  error(const std::string_view fmt_str, Args &&...args) -> void {
     log<xfrase_log_level::error>(fmt_str, args...);
   }
   template <typename... Args>
   auto
-  critical(std::string_view fmt_str, Args &&...args) -> void {
+  critical(const std::string_view fmt_str, Args &&...args) -> void {
     log<xfrase_log_level::critical>(fmt_str, args...);
   }
 
 private:
-  auto set_attributes(std::string_view) -> std::error_code;
+  auto
+  set_attributes(const std::string_view) -> std::error_code;
 
   static constexpr std::uint32_t buf_size{1024};  // max log line
   std::array<char, buf_size> buf{};
@@ -290,7 +291,8 @@ private:
   [[nodiscard]]
   auto
   fill_buffer(std::uint32_t thread_id, const char *const lvl,
-              const std::uint32_t sz, std::string_view message) -> char * {
+              const std::uint32_t sz,
+              const std::string_view message) -> char * {
     auto [buf_data_end, ec] = std::to_chars(cursor, buf_end, thread_id);
     *buf_data_end++ = delim;
     std::memcpy(buf_data_end, lvl, sz);
