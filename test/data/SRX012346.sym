@@ -1,0 +1,7 @@
+#ignore this header line
+chr1 10 + CG 0.9 10
+chr1 20 + CG 0.5 12
+chr2 5 + CG 0.1 10
+chr2 15 + CG 0.9 20
+chr10 3 + CG 0.8 5
+chr10 17 + CG 0.3 15
