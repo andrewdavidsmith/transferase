@@ -38,7 +38,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS on)
 
 option(ENABLE_UNIT_TESTS "Enable unit tests" OFF)
 option(ENABLE_STATIC_ANALYSIS "Enable static analysis" OFF)
-option(USE_STATIC_LIBS "Use static linkage for 3rd party libs" OFF)
+option(USE_STATIC_LIBS "Use static linkage for non-system libs" OFF)
 
 if(ENABLE_STATIC_ANALYSIS)
   message(STATUS "Static analysis enabled")
@@ -72,7 +72,7 @@ include(CheckIncludeFileCXX)
 include(CheckFunctionExists)
 
 if(USE_STATIC_LIBS)
-  message(STATUS "Static linkage of 3rd party libs enabled")
+  message(STATUS "Static linkage for non-system libs")
   set(Boost_USE_STATIC_LIBS on)
   set(ZLIB_USE_STATIC_LIBS on)
 endif()
