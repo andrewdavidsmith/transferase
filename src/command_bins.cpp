@@ -40,8 +40,8 @@ on the mode you select, the options you must specify will differ.
 static constexpr auto examples = R"(
 Examples:
 
-mxe bins local -x hg38.cpg_idx -o output.bed -m methylome.m16 -b 1000
-mxe bins remote -x hg38.cpg_idx -o output.bed -s example.com -a SRX012345 -b 1000
+xfrase bins local -x hg38.cpg_idx -o output.bed -m methylome.m16 -b 1000
+xfrase bins remote -x hg38.cpg_idx -o output.bed -s example.com -a SRX012345 -b 1000
 )";
 
 #include "client.hpp"
@@ -54,7 +54,7 @@ mxe bins remote -x hg38.cpg_idx -o output.bed -s example.com -a SRX012345 -b 100
 #include "methylome_results_types.hpp"
 #include "request.hpp"
 #include "utilities.hpp"
-// #include "mxe_error.hpp"
+// #include "xfrase_error.hpp"
 
 #include <boost/program_options.hpp>
 
@@ -94,13 +94,13 @@ do_remote_bins(const string &accession, const cpg_index_meta &cim,
     hdr.rq_type = request_header::request_type::bin_counts_cov;
 
   bins_request req{bin_size};
-  mxe_client<counts_res_type, bins_request> mxec(hostname, port, hdr, req);
-  const auto status = mxec.run();
+  xfrase::client<counts_res_type, bins_request> cl(hostname, port, hdr, req);
+  const auto status = cl.run();
   if (status) {
     logger::instance().error("Transaction status: {}", status);
     return {{}, status};
   }
-  return {std::move(mxec.take_counts()), {}};
+  return {std::move(cl.take_counts()), {}};
 }
 
 template <typename counts_res_type>
@@ -183,9 +183,9 @@ auto
 command_bins_main(int argc, char *argv[]) -> int {
   static constexpr auto command = "bins";
   static const auto usage =
-    std::format("Usage: mxe bins [local|remote] [options]\n");
+    std::format("Usage: xfrase bins [local|remote] [options]\n");
   static const auto about_msg =
-    std::format("mxe {}: {}", strip(command), strip(about));
+    std::format("xfrase {}: {}", strip(command), strip(about));
   static const auto description_msg =
     std::format("{}\n{}", strip(description), strip(examples));
 
@@ -201,7 +201,7 @@ command_bins_main(int argc, char *argv[]) -> int {
   string subcmd;
   bool count_covered{};
   bool write_scores{};
-  mxe_log_level log_level{};
+  xfrase_log_level log_level{};
   std::uint32_t bin_size{};
 
   namespace po = boost::program_options;
@@ -314,8 +314,8 @@ command_bins_main(int argc, char *argv[]) -> int {
     {"Methylome", meth_file},
     {"Metadata", meta_file},
   };
-  log_args<mxe_log_level::info>(args_to_log);
-  log_args<mxe_log_level::info>(remote_mode ? remote_args : local_args);
+  log_args<xfrase_log_level::info>(args_to_log);
+  log_args<xfrase_log_level::info>(remote_mode ? remote_args : local_args);
 
   const auto [index, cim, index_read_err] = read_cpg_index(index_file);
   if (index_read_err) {
