@@ -70,20 +70,20 @@ public:
 
 private:
   auto
-  handle_resolve(const std::error_code &err,
+  handle_resolve(const std::error_code err,
                  const boost::asio::ip::tcp::resolver::results_type &endpoints);
   auto
-  handle_connect(const std::error_code &err);
+  handle_connect(const std::error_code err);
   auto
-  handle_write_request(const std::error_code &err);
+  handle_write_request(const std::error_code err);
   auto
-  handle_read_response_header(const std::error_code &err);
+  handle_read_response_header(const std::error_code err);
   auto
   do_read_counts() -> void;
   auto
-  handle_failure_explanation(const std::error_code &err);
+  handle_failure_explanation(const std::error_code err);
   auto
-  do_finish(const std::error_code &err);
+  do_finish(const std::error_code err);
   auto
   check_deadline();
 
@@ -149,7 +149,7 @@ client<counts_type, req_type>::client(const std::string &server,
 template <typename counts_type, typename req_type>
 auto
 client<counts_type, req_type>::handle_resolve(
-  const std::error_code &err,
+  const std::error_code err,
   const boost::asio::ip::tcp::resolver::results_type &endpoints) {
   if (!err) {
     boost::asio::async_connect(
@@ -165,7 +165,7 @@ client<counts_type, req_type>::handle_resolve(
 
 template <typename counts_type, typename req_type>
 auto
-client<counts_type, req_type>::handle_connect(const std::error_code &err) {
+client<counts_type, req_type>::handle_connect(const std::error_code err) {
   deadline.expires_at(boost::asio::steady_timer::time_point::max());
   if (!err) {
     lgr.debug("Connected to server: {}",
@@ -210,8 +210,7 @@ client<counts_type, req_type>::handle_connect(const std::error_code &err) {
 
 template <typename counts_type, typename req_type>
 auto
-client<counts_type, req_type>::handle_write_request(
-  const std::error_code &err) {
+client<counts_type, req_type>::handle_write_request(const std::error_code err) {
   deadline.expires_at(boost::asio::steady_timer::time_point::max());
   if (!err) {
     boost::asio::async_read(
@@ -250,7 +249,7 @@ client<counts_type, req_type>::prepare_to_read_counts() -> void {
 template <typename counts_type, typename req_type>
 auto
 client<counts_type, req_type>::handle_read_response_header(
-  const std::error_code &err) {
+  const std::error_code err) {
   // ADS: does this go here?
   deadline.expires_at(boost::asio::steady_timer::time_point::max());
   if (!err) {
@@ -305,7 +304,7 @@ client<counts_type, req_type>::do_read_counts() -> void {
 template <typename counts_type, typename req_type>
 auto
 client<counts_type, req_type>::handle_failure_explanation(
-  const std::error_code &err) {
+  const std::error_code err) {
   deadline.expires_at(boost::asio::steady_timer::time_point::max());
   if (!err) {
     if (const auto resp_hdr_parse{parse(resp_hdr_buf, resp_hdr)};
@@ -326,7 +325,7 @@ client<counts_type, req_type>::handle_failure_explanation(
 
 template <typename counts_type, typename req_type>
 auto
-client<counts_type, req_type>::do_finish(const std::error_code &err) {
+client<counts_type, req_type>::do_finish(const std::error_code err) {
   // same consequence as canceling
   deadline.expires_at(boost::asio::steady_timer::time_point::max());
   status = err;
