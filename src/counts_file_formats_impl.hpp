@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_COUNTS_FILE_FORMAT_IMPL_HPP_
-#define SRC_COUNTS_FILE_FORMAT_IMPL_HPP_
+#ifndef SRC_COUNTS_FILE_FORMATS_IMPL_HPP_
+#define SRC_COUNTS_FILE_FORMATS_IMPL_HPP_
 
 #ifdef UNIT_TEST
 #define STATIC
@@ -38,4 +38,4 @@ is_counts_format(const std::string &filename) -> bool;
 [[nodiscard]] STATIC auto
 is_xcounts_format(const std::string &filename) -> bool;
 
-#endif  // SRC_COUNTS_FILE_FORMAT_IMPL_HPP_
+#endif  // SRC_COUNTS_FILE_FORMATS_IMPL_HPP_
