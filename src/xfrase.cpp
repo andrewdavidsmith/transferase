@@ -40,7 +40,6 @@
 
 #include <algorithm>
 #include <cstdlib>  // for EXIT_FAILURE
-#include <format>
 #include <fstream>
 #include <functional>  // for function
 #include <iterator>    // for cend, cbegin
@@ -50,19 +49,6 @@
 #include <string_view>  // for string_view
 #include <tuple>
 #include <vector>
-
-using std::cbegin;
-using std::cend;
-using std::format;
-using std::string;
-using std::string_view;
-using std::vector;
-
-namespace rg = std::ranges;
-namespace vs = std::views;
-
-namespace po = boost::program_options;
-using po::value;
 
 typedef std::function<int(int, char **)> main_fun;
 const std::tuple<std::string_view, main_fun, std::string_view> commands[] = {
@@ -104,11 +90,13 @@ main(int argc, char *argv[]) {
   static constexpr auto program = "xfrase";
 
   std::string command;
+  namespace po = boost::program_options;
+
   po::options_description arguments;
   arguments.add_options()
     // clang-format off
-    ("command", value(&command))
-    ("subargs", value<vector<std::string>>())
+    ("command", po::value(&command))
+    ("subargs", po::value<std::vector<std::string>>())
     // clang-format on
     ;
   // positional; one for "command" and the rest in "subargs"
@@ -131,7 +119,7 @@ main(int argc, char *argv[]) {
   const auto cmd_itr = std::ranges::find_if(
     commands, [&command](const auto c) { return get<0>(c) == command; });
 
-  if (cmd_itr == cend(commands)) {
+  if (cmd_itr == std::cend(commands)) {
     format_help(program, commands);
     return EXIT_FAILURE;
   }
