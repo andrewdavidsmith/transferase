@@ -36,7 +36,9 @@ template <class T> struct aligned_allocator {
   allocate(const std::size_t n) {
     if (n > std::numeric_limits<std::size_t>::max() / sizeof(T))
       throw std::bad_array_new_length();
-    if (auto p = static_cast<T *>(std::aligned_alloc(align_at, n * sizeof(T))))
+    const auto requested = n * sizeof(T);
+    const auto to_allocate = ((requested + align_at - 1) / align_at) * align_at;
+    if (auto p = static_cast<T *>(std::aligned_alloc(align_at, to_allocate)))
       return p;
     throw std::bad_alloc();
   }
