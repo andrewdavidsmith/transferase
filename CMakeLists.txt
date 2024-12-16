@@ -25,8 +25,8 @@
 cmake_minimum_required(VERSION 3.30)
 project(
   transferase
-  VERSION 0.1.0
-  DESCRIPTION "Methylome transfer engine"
+  VERSION 0.2.0
+  DESCRIPTION "The transferase system for retrieving methylomes"
   HOMEPAGE_URL https://github.com/andrewdavidsmith/transferase
   LANGUAGES CXX)
 
@@ -36,46 +36,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED yes)
 set(CMAKE_CXX_EXTENSIONS off)  # prevents std=gnu++23
 set(CMAKE_EXPORT_COMPILE_COMMANDS on)
 
-option(ENABLE_UNIT_TESTS "Enable unit tests" OFF)
-option(ENABLE_STATIC_ANALYSIS "Enable static analysis" OFF)
-option(USE_STATIC_LIBS "Use static linkage for non-system libs" OFF)
-
-if(ENABLE_STATIC_ANALYSIS)
-  message(STATUS "Static analysis enabled")
-  # cpplint: all options are in the config file
-  set(CMAKE_CXX_CPPLINT
-    cpplint
-    --quiet
-  )
-  set(CMAKE_CXX_INCLUDE_WHAT_YOU_USE
-    include-what-you-use
-    -Xiwyu
-    --mapping_file=${PROJECT_SOURCE_DIR}/.iwyu/iwyu.json
-  )
-  # cppcheck: options on the command line as there is no config file
-  set(CMAKE_CXX_CPPCHECK
-    cppcheck
-    --quiet
-    --enable=all
-    --check-level=exhaustive
-    --suppressions-list=${PROJECT_SOURCE_DIR}/.cppcheck_suppress
-  )
-  # clang-tidy: currently needs at least v20.0
-  # set(CMAKE_CXX_CLANG_TIDY
-  #   clang-tidy
-  #   --quiet
-  #   -p Build
-  # )
-endif()
-
 include(CheckIncludeFileCXX)
 include(CheckFunctionExists)
-
-if(USE_STATIC_LIBS)
-  message(STATUS "Static linkage for non-system libs")
-  set(Boost_USE_STATIC_LIBS on)
-  set(ZLIB_USE_STATIC_LIBS on)
-endif()
 
 find_package(Threads REQUIRED)
 find_package(
@@ -84,6 +46,59 @@ find_package(
   COMPONENTS
   program_options json context)
 find_package(ZLIB REQUIRED)
+
+option(ENABLE_UNIT_TESTS "Enable unit tests" OFF)
+option(ENABLE_STATIC_ANALYSIS "Enable static analysis" OFF)
+option(USE_STATIC_LIBS "Use static linkage for non-system libs" OFF)
+
+if(ENABLE_STATIC_ANALYSIS)
+  message(STATUS "Static analysis enabled")
+
+  # cpplint: all options are in the config file
+  find_program(FOUND_CPPLINT cpplint)
+  if(FOUND_CPPLINT)
+    message(STATUS "Enabling cpplint analysis")
+    set(CMAKE_CXX_CPPLINT
+      cpplint
+      --quiet
+    )
+  endif()
+
+  find_program(FOUND_IWYU include-what-you-use)
+  if(FOUND_IWYU)
+    message(STATUS "Enabling include-what-you-use analysis")
+    set(CMAKE_CXX_INCLUDE_WHAT_YOU_USE
+      include-what-you-use
+      -Xiwyu
+      --mapping_file=${PROJECT_SOURCE_DIR}/.iwyu/iwyu.json
+    )
+  endif()
+
+  # cppcheck: options on the command line as there is no config file
+  find_program(FOUND_CPPCHECK cppcheck)
+  if(FOUND_CPPCHECK)
+    message(STATUS "Enabling cppcheck analysis")
+    set(CMAKE_CXX_CPPCHECK
+      cppcheck
+      --quiet
+      --enable=all
+      --check-level=exhaustive
+      --suppressions-list=${PROJECT_SOURCE_DIR}/.cppcheck_suppress
+    )
+  endif()
+  # clang-tidy: currently needs at least v20.0
+  # set(CMAKE_CXX_CLANG_TIDY
+  #   clang-tidy
+  #   --quiet
+  #   -p Build
+  # )
+endif()
+
+if(USE_STATIC_LIBS)
+  message(STATUS "Static linkage for non-system libs")
+  set(Boost_USE_STATIC_LIBS on)
+  set(ZLIB_USE_STATIC_LIBS on)
+endif()
 
 if(ENABLE_UNIT_TESTS)
   message(STATUS "Unit tests enabled")
@@ -96,12 +111,23 @@ add_subdirectory(src)
 
 configure_file(config.h.in config.h)
 
-# for installation:
-#
-# $ cmake --install . --prefix /path/to/install/root
+# install programs:
+# cmake --install build_dir --prefix /path/to/install/root
+include(GNUInstallDirs)
+install(TARGETS xfrase
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+# Install an alias with the full name 'transferase'
+install(PROGRAMS $<TARGET_FILE:xfrase>
+  DESTINATION ${CMAKE_INSTALL_BINDIR}
+  RENAME transferase
+)
 
 # Get ready for packaging
 set(CPACK_PACKAGE_VENDOR "Andrew D Smith")
-set(CPACK_GENERATOR "TGZ;STGZ")
+set(CPACK_PACKAGE_CONTACT "Andrew D Smith")
+set(CPACK_SOURCE_IGNORE_FILES build .git .github)
+set(CPACK_GENERATOR "TGZ;STGZ;DEB")
+set(CPACK_SOURCE_GENERATOR "TGZ")
 set(CPACK_RESOURCE_FILE_LICENSE ${PROJECT_SOURCE_DIR}/LICENSE)
 include(CPack)
