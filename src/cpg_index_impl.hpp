@@ -49,7 +49,7 @@ mmap_genome(const std::string &filename) -> genome_file;
 cleanup_mmap_genome(genome_file &gf) -> std::error_code;
 
 [[nodiscard]] STATIC auto
-get_cpgs(const std::string_view &chrom) -> cpg_index::vec;
+get_cpgs(const std::string_view chrom) -> cpg_index::vec;
 
 [[nodiscard]] STATIC auto
 get_chrom_name_starts(const char *data,
