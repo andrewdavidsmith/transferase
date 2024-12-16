@@ -50,7 +50,32 @@ find_package(ZLIB REQUIRED)
 option(ENABLE_UNIT_TESTS "Enable unit tests" OFF)
 option(ENABLE_STATIC_ANALYSIS "Enable static analysis" OFF)
 option(USE_STATIC_LIBS "Use static linkage for non-system libs" OFF)
+option(ENABLE_SANITIZER "Enable sanitizer" OFF)
+option(SANITIZER_TYPE
+  "Choose the sanitizer type (address, thread, memory, undefined)" "address")
 
+# Check if we should enable a sanitizer
+if(ENABLE_SANITIZER)
+  if(SANITIZER_TYPE STREQUAL "address")
+    set(SANITIZER_FLAGS "-fsanitize=address -fno-omit-frame-pointer")
+  elseif(SANITIZER_TYPE STREQUAL "thread")
+    set(SANITIZER_FLAGS "-fsanitize=thread -fno-omit-frame-pointer")
+  elseif(SANITIZER_TYPE STREQUAL "memory")
+    set(SANITIZER_FLAGS "-fsanitize=memory -fno-omit-frame-pointer")
+  elseif(SANITIZER_TYPE STREQUAL "undefined")
+    set(SANITIZER_FLAGS "-fsanitize=undefined -fno-omit-frame-pointer")
+  else()
+    message(FATAL_ERROR "Unsupported sanitizer type: ${SANITIZER_TYPE}")
+  endif()
+
+  # Set flags for the compiler and linker
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SANITIZER_FLAGS}")
+  set(CMAKE_LINKER_FLAGS "${CMAKE_LINKER_FLAGS} ${SANITIZER_FLAGS}")
+
+  message(STATUS "Sanitizer enabled: ${SANITIZER_TYPE}")
+endif()
+
+# Static analysis
 if(ENABLE_STATIC_ANALYSIS)
   message(STATUS "Static analysis enabled")
 
@@ -107,27 +132,31 @@ if(ENABLE_UNIT_TESTS)
   add_subdirectory(test)
 endif()
 
+cmake_minimum_required(VERSION 3.10)
+
 add_subdirectory(src)
 
 configure_file(config.h.in config.h)
 
-# install programs:
-# cmake --install build_dir --prefix /path/to/install/root
-include(GNUInstallDirs)
-install(TARGETS xfrase
-  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-)
-# Install an alias with the full name 'transferase'
-install(PROGRAMS $<TARGET_FILE:xfrase>
-  DESTINATION ${CMAKE_INSTALL_BINDIR}
-  RENAME transferase
-)
+if (NOT ENABLE_UNIT_TESTS)
+  # Installation
+  # cmake --install build_dir --prefix /path/to/install/root
+  include(GNUInstallDirs)
+  install(TARGETS xfrase
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+  )
+  # Install an alias with the full name 'transferase'
+  install(PROGRAMS $<TARGET_FILE:xfrase>
+    DESTINATION ${CMAKE_INSTALL_BINDIR}
+    RENAME transferase
+  )
 
-# Get ready for packaging
-set(CPACK_PACKAGE_VENDOR "Andrew D Smith")
-set(CPACK_PACKAGE_CONTACT "Andrew D Smith")
-set(CPACK_SOURCE_IGNORE_FILES build .git .github)
-set(CPACK_GENERATOR "TGZ;STGZ;DEB")
-set(CPACK_SOURCE_GENERATOR "TGZ")
-set(CPACK_RESOURCE_FILE_LICENSE ${PROJECT_SOURCE_DIR}/LICENSE)
-include(CPack)
+  # Packaging
+  set(CPACK_PACKAGE_VENDOR "Andrew D Smith")
+  set(CPACK_PACKAGE_CONTACT "Andrew D Smith")
+  set(CPACK_SOURCE_IGNORE_FILES build .git .github)
+  set(CPACK_GENERATOR "TGZ;STGZ;DEB")
+  set(CPACK_SOURCE_GENERATOR "TGZ")
+  set(CPACK_RESOURCE_FILE_LICENSE ${PROJECT_SOURCE_DIR}/LICENSE)
+  include(CPack)
+endif()
