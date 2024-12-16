@@ -44,7 +44,7 @@
 #include <utility>      // for pair, move
 #include <vector>
 
-#ifdef MXE_BENCHMARK
+#ifdef XFRASE_BENCHMARK
 #include <chrono>
 #include <iostream>  // for std::cerr
 #include <print>
