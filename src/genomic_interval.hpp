@@ -27,11 +27,13 @@
 #include <algorithm>
 #include <cstdint>
 #include <format>
-#include <ranges>
+#include <ranges>  // IWYU pragma: keep
 #include <string>
 #include <system_error>
 #include <tuple>
+#include <type_traits>
 #include <utility>  // std::unreachable
+#include <variant>
 #include <vector>
 
 struct cpg_index_meta;
