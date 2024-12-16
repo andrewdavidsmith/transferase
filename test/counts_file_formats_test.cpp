@@ -67,7 +67,7 @@ TEST(counts_file_format_test, parse_counts_line) {
 }
 
 TEST(parse_counts_line_tests, valid_line_test) {
-  std::string line = "chr1 100 + CG 0.5 10";
+  static constexpr auto line = "chr1 100 + CG 0.5 10";
   std::uint32_t pos, n_meth, n_unmeth;
   bool result = parse_counts_line(line, pos, n_meth, n_unmeth);
   EXPECT_TRUE(result);
@@ -77,9 +77,9 @@ TEST(parse_counts_line_tests, valid_line_test) {
 }
 
 TEST(parse_counts_line_tests, invalid_line_test) {
-  std::string line = "chr1 100 + CG 0.5";
+  static constexpr auto line = "chr1 100 + CG 0.5";
   std::uint32_t pos, n_meth, n_unmeth;
-  bool result = parse_counts_line(line, pos, n_meth, n_unmeth);
+  const bool result = parse_counts_line(line, pos, n_meth, n_unmeth);
   EXPECT_FALSE(result);
 }
 
