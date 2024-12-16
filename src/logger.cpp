@@ -23,18 +23,16 @@
 
 #include "logger.hpp"
 
-#include <errno.h>   // for errno
+#include <errno.h>
 #include <unistd.h>  // for gethostname, getpid
 
-#include <cstring>       // for memcpy
-#include <string>        // for basic_string, string
-#include <string_view>   // for string_view
-#include <system_error>  // for make_error_code, errc, error_code
-
-namespace chrn = std::chrono;
+#include <cstring>  // for std::memcpy
+#include <string>
+#include <string_view>
+#include <system_error>
 
 [[nodiscard]] auto
-logger::set_attributes(std::string_view appname) -> std::error_code {
+logger::set_attributes(const std::string_view appname) -> std::error_code {
   // get the hostname
   static constexpr std::uint32_t max_hostname_size{256};
   std::string hostname;
@@ -50,13 +48,13 @@ logger::set_attributes(std::string_view appname) -> std::error_code {
   *cursor++ = delim;
 
   // hostname in buffer
-  std::memcpy(cursor, hostname.data(), size(hostname));
-  cursor += size(hostname);
+  std::memcpy(cursor, hostname.data(), std::size(hostname));
+  cursor += std::size(hostname);
   *cursor++ = delim;
 
   // appname in buffer
-  std::memcpy(cursor, appname.data(), size(appname));
-  cursor += size(appname);
+  std::memcpy(cursor, appname.data(), std::size(appname));
+  cursor += std::size(appname);
   *cursor++ = delim;
 
   // process id in buffer
