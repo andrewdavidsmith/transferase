@@ -142,8 +142,7 @@ struct std::formatter<request_header::request_type>
   auto
   format(const request_header::request_type &rt,
          std::format_context &ctx) const {
-    return std::formatter<std::string>::format(
-      std::format("{}", std::to_underlying(rt)), ctx);
+    return std::format_to(ctx.out(), "{}", std::to_underlying(rt));
   }
 };
 
@@ -151,9 +150,8 @@ template <>
 struct std::formatter<request_header> : std::formatter<std::string> {
   auto
   format(const request_header &rh, std::format_context &ctx) const {
-    return std::formatter<std::string>::format(
-      std::format("{}\t{}\t{}", rh.accession, rh.methylome_size, rh.rq_type),
-      ctx);
+    return std::format_to(ctx.out(), "{}\t{}\t{}", rh.accession,
+                          rh.methylome_size, rh.rq_type);
   }
 };
 

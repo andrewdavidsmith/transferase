@@ -156,8 +156,7 @@ template <>
 struct std::formatter<methylome_metadata> : std::formatter<std::string> {
   auto
   format(const methylome_metadata &mm, std::format_context &ctx) const {
-    return std::formatter<std::string>::format(std::format("{}", mm.tostring()),
-                                               ctx);
+    return std::format_to(ctx.out(), "{}", mm.tostring());
   }
 };
 
