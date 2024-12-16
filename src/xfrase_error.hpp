@@ -183,49 +183,6 @@ make_error_code(methylome_code e) -> std::error_code {
   return std::error_code(std::to_underlying(e), category);
 }
 
-// genomic_interval errors
-
-enum class genomic_interval_code : std::uint32_t {
-  ok = 0,
-  error_parsing_bed_line = 1,
-  chrom_name_not_found_in_index = 2,
-  interval_past_chrom_end_in_index = 3,
-};
-
-static constexpr std::uint32_t genomic_interval_code_n = 4;
-
-// register genomic_interval_code as error code enum
-template <>
-struct std::is_error_code_enum<genomic_interval_code> : public std::true_type {
-};
-
-// category to provide text descriptions
-struct genomic_interval_category : std::error_category {
-  auto
-  name() const noexcept -> const char * override {
-    return "genomic_interval";
-  }
-  auto
-  message(int code) const -> std::string override {
-    using std::string_literals::operator""s;
-    // clang-format off
-    switch (code) {
-    case 0: return "ok"s;
-    case 1: return "error parsing BED line"s;
-    case 2: return "chrom name not found in index"s;
-    case 3: return "interval past chrom end in index"s;
-    }
-    // clang-format on
-    std::unreachable();  // hopefully
-  }
-};
-
-inline auto
-make_error_code(genomic_interval_code e) -> std::error_code {
-  static auto category = genomic_interval_category{};
-  return std::error_code(std::to_underlying(e), category);
-}
-
 // cpg_index errors
 
 enum class cpg_index_code : std::uint32_t {
