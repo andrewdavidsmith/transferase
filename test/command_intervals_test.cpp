@@ -46,7 +46,7 @@ are_files_identical(const std::filesystem::path &file1,
                     std::istreambuf_iterator<char>(f2.rdbuf()));
 }
 
-TEST(CommandIntervalsMainTest, GeneratesAndDeletesFiles) {
+TEST(command_intervals_test, basic_local_test) {
   // Input files for test
   static constexpr auto index_file = "data/pAntiquusx.cpg_idx";
   static constexpr auto meth_file = "data/SRX012346.m16";
