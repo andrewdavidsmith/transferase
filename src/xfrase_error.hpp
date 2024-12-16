@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_MXE_ERROR_HPP_
-#define SRC_MXE_ERROR_HPP_
+#ifndef SRC_XFRASE_ERROR_HPP_
+#define SRC_XFRASE_ERROR_HPP_
 
 #include <boost/system.hpp>
 
@@ -291,4 +291,4 @@ struct std::formatter<boost::system::error_code> : std::formatter<std::string> {
   }
 };
 
-#endif  // SRC_MXE_ERROR_HPP_
+#endif  // SRC_XFRASE_ERROR_HPP_
