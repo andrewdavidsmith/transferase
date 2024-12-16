@@ -52,16 +52,12 @@ option(ENABLE_STATIC_ANALYSIS "Enable static analysis" OFF)
 option(USE_STATIC_LIBS "Use static linkage for non-system libs" OFF)
 option(ENABLE_SANITIZER "Enable sanitizer" OFF)
 option(SANITIZER_TYPE
-  "Choose the sanitizer type (address, thread, memory, undefined)" "address")
+  "Choose the sanitizer type (address, undefined)" "address")
 
 # Check if we should enable a sanitizer
 if(ENABLE_SANITIZER)
   if(SANITIZER_TYPE STREQUAL "address")
     set(SANITIZER_FLAGS "-fsanitize=address -fno-omit-frame-pointer")
-  elseif(SANITIZER_TYPE STREQUAL "thread")
-    set(SANITIZER_FLAGS "-fsanitize=thread -fno-omit-frame-pointer")
-  elseif(SANITIZER_TYPE STREQUAL "memory")
-    set(SANITIZER_FLAGS "-fsanitize=memory -fno-omit-frame-pointer")
   elseif(SANITIZER_TYPE STREQUAL "undefined")
     set(SANITIZER_FLAGS "-fsanitize=undefined -fno-omit-frame-pointer")
   else()
