@@ -338,8 +338,6 @@ cpg_index::get_offsets(
 cpg_index::get_offsets(const cpg_index_meta &meta,
                        const std::vector<genomic_interval> &gis) const
   -> std::vector<std::pair<std::uint32_t, std::uint32_t>> {
-  assert(std::ranges::is_sorted(gis));
-
   const auto same_chrom = [](const genomic_interval &a,
                              const genomic_interval &b) {
     return a.ch_id == b.ch_id;
