@@ -43,10 +43,11 @@
 #include <utility>  // std::swap std::move
 #include <vector>
 
-template <typename counts_type, typename req_type> class mxe_client {
+namespace xfrase {
+template <typename counts_type, typename req_type> class client {
 public:
-  mxe_client(const std::string &server, const std::string &port,
-             request_header &req_hdr, req_type &req);
+  client(const std::string &server, const std::string &port,
+         request_header &req_hdr, req_type &req);
 
   auto
   run() -> std::error_code {
@@ -116,13 +117,12 @@ private:
   // they might best be associated with the response.
   std::size_t counts_byte{};
   std::size_t counts_remaining{};
-};  // class mxe_client
+};  // class client
 
 template <typename counts_type, typename req_type>
-mxe_client<counts_type, req_type>::mxe_client(const std::string &server,
-                                              const std::string &port,
-                                              request_header &req_hdr,
-                                              req_type &req) :
+client<counts_type, req_type>::client(const std::string &server,
+                                      const std::string &port,
+                                      request_header &req_hdr, req_type &req) :
   resolver(io_context), socket(io_context), deadline{socket.get_executor()},
   req_hdr{req_hdr}, req{std::move(req)},  // move b/c req can be big
   lgr{logger::instance()} {
@@ -148,7 +148,7 @@ mxe_client<counts_type, req_type>::mxe_client(const std::string &server,
 
 template <typename counts_type, typename req_type>
 auto
-mxe_client<counts_type, req_type>::handle_resolve(
+client<counts_type, req_type>::handle_resolve(
   const std::error_code &err,
   const boost::asio::ip::tcp::resolver::results_type &endpoints) {
   if (!err) {
@@ -165,7 +165,7 @@ mxe_client<counts_type, req_type>::handle_resolve(
 
 template <typename counts_type, typename req_type>
 auto
-mxe_client<counts_type, req_type>::handle_connect(const std::error_code &err) {
+client<counts_type, req_type>::handle_connect(const std::error_code &err) {
   deadline.expires_at(boost::asio::steady_timer::time_point::max());
   if (!err) {
     lgr.debug("Connected to server: {}",
@@ -210,7 +210,7 @@ mxe_client<counts_type, req_type>::handle_connect(const std::error_code &err) {
 
 template <typename counts_type, typename req_type>
 auto
-mxe_client<counts_type, req_type>::handle_write_request(
+client<counts_type, req_type>::handle_write_request(
   const std::error_code &err) {
   deadline.expires_at(boost::asio::steady_timer::time_point::max());
   if (!err) {
@@ -233,13 +233,13 @@ mxe_client<counts_type, req_type>::handle_write_request(
 
 template <typename counts_type, typename req_type>
 auto
-mxe_client<counts_type, req_type>::get_counts_n_bytes() const -> std::uint32_t {
+client<counts_type, req_type>::get_counts_n_bytes() const -> std::uint32_t {
   return sizeof(counts_type) * resp_hdr.response_size;
 }
 
 template <typename counts_type, typename req_type>
 auto
-mxe_client<counts_type, req_type>::prepare_to_read_counts() -> void {
+client<counts_type, req_type>::prepare_to_read_counts() -> void {
   // This function is needed because this can't be done in the
   // read_offsets() function as it is recursive
   resp.counts.resize(resp_hdr.response_size);  // get space for offsets
@@ -249,7 +249,7 @@ mxe_client<counts_type, req_type>::prepare_to_read_counts() -> void {
 
 template <typename counts_type, typename req_type>
 auto
-mxe_client<counts_type, req_type>::handle_read_response_header(
+client<counts_type, req_type>::handle_read_response_header(
   const std::error_code &err) {
   // ADS: does this go here?
   deadline.expires_at(boost::asio::steady_timer::time_point::max());
@@ -277,7 +277,7 @@ mxe_client<counts_type, req_type>::handle_read_response_header(
 
 template <typename counts_type, typename req_type>
 auto
-mxe_client<counts_type, req_type>::do_read_counts() -> void {
+client<counts_type, req_type>::do_read_counts() -> void {
   socket.async_read_some(
     boost::asio::buffer(resp_get_counts_data() + counts_byte, counts_remaining),
     [this](const boost::system::error_code ec,
@@ -304,7 +304,7 @@ mxe_client<counts_type, req_type>::do_read_counts() -> void {
 
 template <typename counts_type, typename req_type>
 auto
-mxe_client<counts_type, req_type>::handle_failure_explanation(
+client<counts_type, req_type>::handle_failure_explanation(
   const std::error_code &err) {
   deadline.expires_at(boost::asio::steady_timer::time_point::max());
   if (!err) {
@@ -326,7 +326,7 @@ mxe_client<counts_type, req_type>::handle_failure_explanation(
 
 template <typename counts_type, typename req_type>
 auto
-mxe_client<counts_type, req_type>::do_finish(const std::error_code &err) {
+client<counts_type, req_type>::do_finish(const std::error_code &err) {
   // same consequence as canceling
   deadline.expires_at(boost::asio::steady_timer::time_point::max());
   status = err;
@@ -338,7 +338,7 @@ mxe_client<counts_type, req_type>::do_finish(const std::error_code &err) {
 
 template <typename counts_type, typename req_type>
 auto
-mxe_client<counts_type, req_type>::check_deadline() {
+client<counts_type, req_type>::check_deadline() {
   if (!socket.is_open())  // ADS: when can this happen?
     return;
 
@@ -362,5 +362,6 @@ mxe_client<counts_type, req_type>::check_deadline() {
   // wait again
   deadline.async_wait([this](auto) { this->check_deadline(); });
 }
+}  // namespace xfrase
 
 #endif  // SRC_CLIENT_HPP_
