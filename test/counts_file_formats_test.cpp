@@ -22,10 +22,13 @@
  */
 
 #include <counts_file_formats.hpp>
+#include <counts_file_formats_impl.hpp>
 
 #include <gtest/gtest.h>
 
 #include <cstdint>
+#include <filesystem>
+#include <fstream>
 #include <string>
 
 TEST(counts_file_format_test, parse_counts_line) {
@@ -61,4 +64,94 @@ TEST(counts_file_format_test, parse_counts_line) {
   EXPECT_EQ(pos, 10576) << "failed pos for: \"" << line4 << "\"\n";
   EXPECT_EQ(n_meth, 1) << "failed n_meth for: \"" << line4 << "\"\n";
   EXPECT_EQ(n_unmeth, 2) << "failed n_unmeth for: \"" << line4 << "\"\n";
+}
+
+TEST(parse_counts_line_tests, valid_line_test) {
+  std::string line = "chr1 100 + CG 0.5 10";
+  std::uint32_t pos, n_meth, n_unmeth;
+  bool result = parse_counts_line(line, pos, n_meth, n_unmeth);
+  EXPECT_TRUE(result);
+  EXPECT_EQ(pos, 100);
+  EXPECT_EQ(n_meth, 5);
+  EXPECT_EQ(n_unmeth, 5);
+}
+
+TEST(parse_counts_line_tests, invalid_line_test) {
+  std::string line = "chr1 100 + CG 0.5";
+  std::uint32_t pos, n_meth, n_unmeth;
+  bool result = parse_counts_line(line, pos, n_meth, n_unmeth);
+  EXPECT_FALSE(result);
+}
+
+TEST(is_counts_format_tests, valid_counts_format_test) {
+  static constexpr auto filename = "valid_counts_file.txt";
+  std::ofstream outfile(filename);
+  outfile << "#comment\nchr1 100 + CG 0.5 10\n";
+  outfile.close();
+  const bool result = is_counts_format(filename);
+  EXPECT_TRUE(result);
+  std::filesystem::remove(filename);
+}
+
+TEST(is_counts_format_tests, invalid_counts_format_test) {
+  static constexpr auto filename = "invalid_counts_file.txt";
+  std::ofstream outfile(filename);
+  outfile << "#comment\ninvalid_line\n";
+  outfile.close();
+  const bool result = is_counts_format(filename);
+  EXPECT_FALSE(result);
+  std::filesystem::remove(filename);
+}
+
+TEST(is_xcounts_format_tests, valid_xcounts_format_test) {
+  static constexpr auto filename = "valid_xcounts_file.txt";
+  std::ofstream outfile(filename);
+  outfile << "#comment\nasdf\n1 5 5\n";
+  outfile.close();
+  const bool result = is_xcounts_format(filename);
+  EXPECT_TRUE(result);
+  std::filesystem::remove(filename);
+}
+
+TEST(is_xcounts_format_tests, invalid_xcounts_format_test) {
+  static constexpr auto filename = "invalid_xcounts_file.txt";
+  std::ofstream outfile(filename);
+  outfile << "#comment\ninvalid_line\n";
+  outfile.close();
+  const bool result = is_xcounts_format(filename);
+  EXPECT_FALSE(result);
+  std::filesystem::remove(filename);
+}
+
+TEST(get_meth_file_format_tests, counts_format_test) {
+  static constexpr auto filename = "counts_format_file.txt";
+  std::ofstream outfile(filename);
+  outfile << "#comment\nchr1 100 + CG 0.5 10\n";
+  outfile.close();
+  const auto [format, ec] = get_meth_file_format(filename);
+  EXPECT_EQ(format, counts_format::counts);
+  EXPECT_FALSE(ec);
+  std::filesystem::remove(filename);
+}
+
+TEST(get_meth_file_format_tests, xcounts_format_test) {
+  static constexpr auto filename = "xcounts_format_file.txt";
+  std::ofstream outfile(filename);
+  outfile << "#comment\nchr\n1 5 5\n";
+  outfile.close();
+  const auto [format, ec] = get_meth_file_format(filename);
+  EXPECT_EQ(format, counts_format::xcounts);
+  EXPECT_FALSE(ec);
+  std::filesystem::remove(filename);
+}
+
+TEST(get_meth_file_format_tests, none_format_test) {
+  static constexpr auto filename = "none_format_file.txt";
+  std::ofstream outfile(filename);
+  outfile << "#comment\ninvalid_line\n";
+  outfile.close();
+  const auto [format, ec] = get_meth_file_format(filename);
+  EXPECT_EQ(format, counts_format::none);
+  EXPECT_FALSE(ec);
+  std::filesystem::remove(filename);
 }
