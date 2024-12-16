@@ -1,5 +1,5 @@
 # xfrase
-The transferase system for querying methylomes in methbase.
+The transferase system for retrieving methylomes from methbase.
 
 The transferase system has the alias `xfrase` which is quicker to
 type.  There are several commands within `xfrase` and the best way to
