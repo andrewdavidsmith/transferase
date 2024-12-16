@@ -6,10 +6,10 @@ RUN apt-get update
 RUN apt-get install -y --no-install-recommends \
     zlib1g-dev \
     ca-certificates
-RUN git clone https://github.com/andrewdavidsmith/mxe.git && \
-    cd /build/mxe && \
+RUN git clone https://github.com/andrewdavidsmith/transferase.git && \
+    cd /build/transferase && \
     cmake -B Release \
-    -DMXE_USE_STATIC_LIBS=on \
+    -DUSE_STATIC_LIBS=on \
     -DCMAKE_VERBOSE_MAKEFILE=on \
     -DCMAKE_EXPORT_COMPILE_COMMANDS=on \
     -DCMAKE_CXX_COMPILER=g++ \
@@ -21,4 +21,4 @@ RUN git clone https://github.com/andrewdavidsmith/mxe.git && \
 FROM ubuntu:latest
 COPY --from=build /build/bin /usr/bin
 
-ENTRYPOINT ["mxe"]
+ENTRYPOINT ["xfase"]

@@ -22,7 +22,7 @@
  */
 
 #include <methylome_set.hpp>
-#include <mxe_error.hpp>
+#include <xfrase_error.hpp>
 
 #include <gtest/gtest.h>
 

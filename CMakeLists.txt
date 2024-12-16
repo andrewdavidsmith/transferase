@@ -24,10 +24,10 @@
 # $ cmake --version
 cmake_minimum_required(VERSION 3.30)
 project(
-  mxe
+  transferase
   VERSION 0.1.0
   DESCRIPTION "Methylome transfer engine"
-  HOMEPAGE_URL https://github.com/andrewdavidsmith/mxe
+  HOMEPAGE_URL https://github.com/andrewdavidsmith/transferase
   LANGUAGES CXX)
 
 # Set language version used
