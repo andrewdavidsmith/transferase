@@ -27,7 +27,7 @@
 #include "cpg_index_meta.hpp"
 #include "genomic_interval.hpp"
 #include "hash.hpp"  // for update_adler
-#include "mxe_error.hpp"
+#include "xfrase_error.hpp"
 
 #include <fcntl.h>     // for open, O_RDONLY
 #include <sys/mman.h>  // for mmap, munmap, MAP_FAILED, MAP_PRIVATE

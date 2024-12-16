@@ -24,7 +24,7 @@
 #ifndef SRC_REQUEST_HPP_
 #define SRC_REQUEST_HPP_
 
-#include "mxe_error.hpp"  // IWYU pragma: keep
+#include "xfrase_error.hpp"  // IWYU pragma: keep
 #include "utilities.hpp"  // for compose_result, parse_result
 
 #include <array>

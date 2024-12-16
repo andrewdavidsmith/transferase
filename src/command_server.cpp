@@ -24,11 +24,11 @@
 #include "command_server.hpp"
 
 static constexpr auto about = R"(
-start an mxe server
+start an xfrase server
 )";
 
 static constexpr auto description = R"(
-An mxe server transfers methylation features to clients. The server
+An xfrase server transfers methylation features to clients. The server
 must be provided with one directory for methylomes and one directory
 for cpg indexes. The methylome directory must include pairs of
 methylome data and metadata files as produced by the 'format'
@@ -46,15 +46,15 @@ server can run in detached mode.
 static constexpr auto examples = R"(
 Examples:
 
-mxe server -s localhost -m methylomes -x indexes
+xfrase server -s localhost -m methylomes -x indexes
 )";
 
 #include "arguments.hpp"
 #include "config_file_utils.hpp"  // write_config_file
 #include "logger.hpp"
-#include "mxe_error.hpp"  // IWYU pragma: keep
 #include "server.hpp"
 #include "utilities.hpp"
+#include "xfrase_error.hpp"  // IWYU pragma: keep
 
 #include <boost/describe.hpp>
 #include <boost/program_options.hpp>
@@ -75,12 +75,12 @@ mxe server -s localhost -m methylomes -x indexes
 #include <vector>
 
 struct server_argset : argset_base<server_argset> {
-  static constexpr auto default_config_filename = "mxe_server_config.toml";
+  static constexpr auto default_config_filename = "xfrase_server_config.toml";
 
   static auto
   get_default_config_file_impl() -> std::string {
     std::error_code ec;
-    const auto config_dir = get_mxe_config_dir_default(ec);
+    const auto config_dir = get_xfrase_config_dir_default(ec);
     if (ec)
       return {};
     return std::filesystem::path(config_dir) / default_config_filename;
@@ -88,7 +88,7 @@ struct server_argset : argset_base<server_argset> {
 
   static constexpr auto hostname_default{"localhost"};
   static constexpr auto port_default{"5000"};
-  static constexpr auto log_level_default{mxe_log_level::info};
+  static constexpr auto log_level_default{xfrase_log_level::info};
   static constexpr auto n_threads_default{1};
   static constexpr auto max_resident_default = 32;
   std::string hostname{};
@@ -96,7 +96,7 @@ struct server_argset : argset_base<server_argset> {
   std::string methylome_dir{};
   std::string index_dir{};
   std::string log_filename{};
-  mxe_log_level log_level{};
+  xfrase_log_level log_level{};
   std::uint32_t n_threads{};
   std::uint32_t max_resident{};
   bool daemonize{};
@@ -104,7 +104,7 @@ struct server_argset : argset_base<server_argset> {
 
   auto
   log_options_impl() const {
-    log_args<mxe_log_level::info>(
+    log_args<xfrase_log_level::info>(
       std::vector<std::tuple<std::string, std::string>>{
         // clang-format off
         {"hostname", std::format("{}", hostname)},
@@ -185,9 +185,9 @@ auto
 command_server_main(int argc, char *argv[]) -> int {
   static constexpr auto command = "server";
   static const auto usage =
-    std::format("Usage: mxe {} [options]\n", strip(command));
+    std::format("Usage: xfrase {} [options]\n", strip(command));
   static const auto about_msg =
-    std::format("mxe {}: {}", strip(command), strip(about));
+    std::format("xfrase {}: {}", strip(command), strip(about));
   static const auto description_msg =
     std::format("{}\n{}", strip(description), strip(examples));
 

@@ -63,7 +63,7 @@ struct std::formatter<std::filesystem::path> : std::formatter<std::string> {
 };
 
 [[nodiscard]] auto
-get_mxe_config_dir_default(std::error_code &ec) -> std::string;
+get_xfrase_config_dir_default(std::error_code &ec) -> std::string;
 
 [[nodiscard]] inline auto
 strip(char const *const x) -> const std::string_view {

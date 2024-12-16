@@ -25,7 +25,7 @@
 
 #include "methylome.hpp"
 #include "methylome_metadata.hpp"
-#include "mxe_error.hpp"  // for make_error_code, methylome_set_code
+#include "xfrase_error.hpp"  // for make_error_code, methylome_set_code
 
 #include <filesystem>
 #include <format>

@@ -37,7 +37,7 @@ methylome metadata is a small JSON format file (on a single line) that
 can easily be examined with any JSON formatter (e.g., jq or
 json_pp). These two files should reside in the same directory and
 typically only the methylome data file is specified when it is used.
-If mxe is used remotely, the methylome will reside on the server.  If
+If xfrase is used remotely, the methylome will reside on the server.  If
 you are analyzing your own DNA methylation data, you will need to
 format your methylomes with this command.
 )";
@@ -45,7 +45,7 @@ format your methylomes with this command.
 static constexpr auto examples = R"(
 Examples:
 
-mxe format -x hg38.cpg_idx -m SRX012345.xsym.gz -o SRX012345.m16
+xfrase format -x hg38.cpg_idx -m SRX012345.xsym.gz -o SRX012345.m16
 )";
 
 #include "counts_file_formats.hpp"
@@ -54,8 +54,8 @@ mxe format -x hg38.cpg_idx -m SRX012345.xsym.gz -o SRX012345.m16
 #include "logger.hpp"
 #include "methylome.hpp"
 #include "methylome_metadata.hpp"
-#include "mxe_error.hpp"  // IWYU pragma: keep
 #include "utilities.hpp"
+#include "xfrase_error.hpp"  // IWYU pragma: keep
 #include "zlib_adapter.hpp"
 
 #include <boost/program_options.hpp>
@@ -162,13 +162,13 @@ verify_header_line(const cpg_index_meta &cim,
   chrom = chrom.substr(1);  // remove leading '#'
 
   // validate the chromosome order is consistent between the index and
-  // methylome mxe file
+  // methylome xfrase file
   const auto order_itr = cim.chrom_index.find(chrom);
   if (order_itr == cend(cim.chrom_index))
     return format_err::xcounts_file_chromosome_not_found;
 
   // validate that the chromosome size is the same between the index
-  // and the methylome mxe file
+  // and the methylome xfrase file
   const auto size_itr = cim.chrom_size[order_itr->second];
   if (chrom_size != size_itr)
     return format_err::xcounts_file_incorrect_chromosome_size;
@@ -350,16 +350,16 @@ auto
 command_format_main(int argc, char *argv[]) -> int {
   static constexpr auto command = "format";
   static const auto usage =
-    std::format("Usage: mxe {} [options]\n", strip(command));
+    std::format("Usage: xfrase {} [options]\n", strip(command));
   static const auto about_msg =
-    std::format("mxe {}: {}", strip(command), strip(about));
+    std::format("xfrase {}: {}", strip(command), strip(about));
   static const auto description_msg =
     std::format("{}\n{}", strip(description), strip(examples));
 
   std::string methylation_input{};
   std::string methylome_output{};
   std::string index_file{};
-  mxe_log_level log_level{};
+  xfrase_log_level log_level{};
   bool zip{false};
 
   namespace po = boost::program_options;
@@ -423,7 +423,7 @@ command_format_main(int argc, char *argv[]) -> int {
     {"Zip", std::format("{}", zip)},
     // clang-format on
   };
-  log_args<mxe_log_level::info>(args_to_log);
+  log_args<xfrase_log_level::info>(args_to_log);
 
   const auto [index, cim, index_read_err] = read_cpg_index(index_file);
   if (index_read_err) {

@@ -27,7 +27,7 @@
 #include "hash.hpp"
 #include "methylome_metadata.hpp"
 #include "methylome_results_types.hpp"
-#include "mxe_error.hpp"
+#include "xfrase_error.hpp"
 #include "zlib_adapter.hpp"
 
 #include <algorithm>

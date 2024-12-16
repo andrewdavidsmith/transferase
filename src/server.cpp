@@ -55,7 +55,7 @@
 static auto
 write_pid_to_file(std::error_code &ec) -> void {
   static const auto pid_file_rhs =
-    std::filesystem::path(".config") / "mxe" / "MXE_PID_FILE";
+    std::filesystem::path(".config") / "xfrase" / "XFRASE_PID_FILE";
 
   auto &lgr = logger::instance();
 
@@ -74,14 +74,14 @@ write_pid_to_file(std::error_code &ec) -> void {
     return;
   }
   const auto pid = getpid();
-  lgr.info("mxe daemon pid: {}", pid);
+  lgr.info("xfrase daemon pid: {}", pid);
   std::ofstream out(pid_file);
   if (!out) {
     ec = std::make_error_code(std::errc{errno});
     lgr.error("Error writing pid file: {} ({})", ec, pid_file);
     return;
   }
-  lgr.info("mxe daemon pid file: {}", pid_file);
+  lgr.info("xfrase daemon pid file: {}", pid_file);
   const auto pid_str = std::format("{}", pid);
   out.write(pid_str.data(), size(pid_str));
   if (!out) {
@@ -255,7 +255,7 @@ server::server(const std::string &address, const std::string &port,
   // Send standard output to a log file in case something would be
   // written there.
   // ADS: (todo) fix this hardcoded file below
-  const auto output = "/tmp/mxe_daemon.out";
+  const auto output = "/tmp/xfrase_daemon.out";
   const int flags = O_WRONLY | O_CREAT | O_APPEND;
   const mode_t mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;  // 644
   if (open(output, flags, mode) < 0) {
