@@ -27,10 +27,10 @@
 #include "methylome.hpp"
 #include "methylome_metadata.hpp"
 #include "methylome_results_types.hpp"  // IWYU pragma: keep
-#include "xfrase_error.hpp"
 #include "request.hpp"
 #include "response.hpp"
 #include "utilities.hpp"
+#include "xfrase_error.hpp"
 
 #include <chrono>    // for std::chrono::high_resolution_clock
 #include <cstdint>   // for std::uint32_t

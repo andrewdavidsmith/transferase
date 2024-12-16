@@ -26,8 +26,8 @@
 
 #include "methylome.hpp"  // for counts_res_cov
 
-#include "xfrase_error.hpp"
 #include "utilities.hpp"
+#include "xfrase_error.hpp"
 
 #include <array>
 #include <cstddef>  // for std::byte

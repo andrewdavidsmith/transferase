@@ -22,8 +22,8 @@
  */
 
 #include "response.hpp"
-#include "xfrase_error.hpp"
 #include "utilities.hpp"
+#include "xfrase_error.hpp"
 
 #include <algorithm>
 #include <array>
