@@ -151,6 +151,27 @@ target_link_libraries(command_config_test
  command_config
 )
 
+add_executable(command_intervals_test command_intervals_test.cpp)
+target_link_libraries(command_intervals_test
+ PRIVATE
+ GTest::GTest
+ GTest::Main
+ ZLIB::ZLIB
+ Boost::boost
+ Boost::json
+ Boost::program_options
+ utilities
+ logger
+ methylome
+ request
+ response
+ methylome_metadata
+ cpg_index
+ cpg_index_meta
+ genomic_interval
+ command_intervals
+)
+
 set(EXECUTABLE_TARGETS
   cpg_index_meta_test
   counts_file_formats_test
@@ -162,6 +183,7 @@ set(EXECUTABLE_TARGETS
   request_handler_test
   command_config_argset_test
   command_config_test
+  command_intervals_test
 )
 
 # Define the UNIT_TEST macro for the test targets
