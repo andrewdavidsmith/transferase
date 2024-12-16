@@ -37,7 +37,7 @@ TEST(command_config_test, run_success) {
     "-v",
     "critical",
     "-c",
-    "config/mxe_client_config.toml",
+    "config/xfrase_client_config.toml",
     "-s",
     "example.com",
     "-p",
@@ -49,7 +49,7 @@ TEST(command_config_test, run_success) {
     command_config_main(std::size(argv), const_cast<char **>(argv.data()));
   EXPECT_EQ(ret, EXIT_SUCCESS);
 
-  const std::filesystem::path config_file{"config/mxe_client_config.toml"};
+  const std::filesystem::path config_file{"config/xfrase_client_config.toml"};
   EXPECT_TRUE(std::filesystem::remove(config_file));
   EXPECT_TRUE(std::filesystem::remove_all(config_file.parent_path()));
 }

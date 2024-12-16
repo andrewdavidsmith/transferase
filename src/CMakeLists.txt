@@ -139,16 +139,16 @@ add_library(command_server OBJECT
   command_server.cpp)
 
 if(NOT ENABLE_UNIT_TESTS)
-  add_executable(mxe)
-  target_include_directories(mxe PRIVATE "${PROJECT_BINARY_DIR}")
-  target_sources(mxe PRIVATE mxe.cpp)
+  add_executable(xfrase)
+  target_include_directories(xfrase PRIVATE "${PROJECT_BINARY_DIR}")
+  target_sources(xfrase PRIVATE xfrase.cpp)
 
   if(USE_STATIC_LIBS)
     # ADS: this avoids the static linkage that aiso warns against
-    target_link_options(mxe PRIVATE -static-libgcc -static-libstdc++)
+    target_link_options(xfrase PRIVATE -static-libgcc -static-libstdc++)
   endif()
   target_link_libraries(
-    mxe PRIVATE
+    xfrase PRIVATE
     utilities
     download
     logger
@@ -182,5 +182,5 @@ if(NOT ENABLE_UNIT_TESTS)
     Boost::context
     Threads::Threads
   )
-  install(TARGETS mxe DESTINATION bin)
+  install(TARGETS xfrase DESTINATION bin)
 endif()

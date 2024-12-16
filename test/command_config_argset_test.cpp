@@ -38,7 +38,7 @@ TEST(command_config_argset_test, run_success) {
     "-v",
     "critical",
     "-c",
-    "config/mxe_client_config.toml",
+    "config/xfrase_client_config.toml",
     "-s",
      "example.com",
     "-p",
@@ -56,8 +56,8 @@ TEST(command_config_argset_test, run_success) {
   const auto ec =
     args.parse(argc, const_cast<char **>(argv.data()), std::string("usage"),
                std::string("about"), std::string("description"));
-  const std::filesystem::path config_file{"config/mxe_client_config.toml"};
-  EXPECT_EQ(args.client_config_file, "config/mxe_client_config.toml");
+  const std::filesystem::path config_file{"config/xfrase_client_config.toml"};
+  EXPECT_EQ(args.client_config_file, "config/xfrase_client_config.toml");
   EXPECT_FALSE(ec);
 }
 
@@ -86,7 +86,7 @@ TEST(command_config_argset_test, default_client_config_file) {
                std::string("about"), std::string("description"));
   EXPECT_FALSE(ec);
 
-  const auto default_config_dir = get_mxe_config_dir_default(ec);
+  const auto default_config_dir = get_xfrase_config_dir_default(ec);
   EXPECT_FALSE(ec);
 
   const auto default_config_file_path =
