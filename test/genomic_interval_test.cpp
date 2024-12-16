@@ -22,6 +22,7 @@
  */
 
 #include <genomic_interval.hpp>
+#include <genomic_interval_impl.hpp>
 
 #include <cpg_index.hpp>
 #include <cpg_index_meta.hpp>  // IWYU pragma: keep
@@ -30,15 +31,78 @@
 
 #include <iterator>
 #include <string>
+#include <unordered_map>
 
 TEST(genomic_interval_test, basic_assertions) {
   static constexpr auto index_file{"data/tProrsus1.cpg_idx"};
   static constexpr auto intervals_file{"data/tProrsus1_intervals.bed"};
-  const auto [index, cim, ec] = read_cpg_index(index_file);
-  const auto ret = genomic_interval::load(cim, intervals_file);
+  const auto [index, cim, index_ec] = read_cpg_index(index_file);
+  EXPECT_FALSE(index_ec);
+  const auto [gis, intervals_ec] = genomic_interval::load(cim, intervals_file);
+  EXPECT_FALSE(intervals_ec);
+  EXPECT_EQ(std::size(gis), 20);
+  EXPECT_EQ(gis[0].start, 6595);
+  EXPECT_EQ(gis[0].stop, 6890);
+}
 
-  EXPECT_FALSE(ret.ec);
-  EXPECT_EQ(std::size(ret.gis), 20);
-  EXPECT_EQ(ret.gis[0].start, 6595);
-  EXPECT_EQ(ret.gis[0].stop, 6890);
+// Test cases
+TEST(genomic_interval_test, ValidInput) {
+  cpg_index_meta cim;
+  cim.chrom_index["chr1"] = 0;
+  cim.chrom_size.push_back(100000);
+  std::error_code ec;
+  const auto result = parse(cim, "chr1 100 200", ec);
+  EXPECT_FALSE(ec);
+  EXPECT_EQ(result.ch_id, 0);
+  EXPECT_EQ(result.start, 100);
+  EXPECT_EQ(result.stop, 200);
+}
+
+TEST(genomic_interval_test, valid_input_with_tabs) {
+  cpg_index_meta cim;
+  cim.chrom_index["chr1"] = 0;
+  cim.chrom_size.push_back(100000);
+  std::error_code ec;
+  const auto result = parse(cim, "chr1\t100\t200", ec);
+  EXPECT_FALSE(ec);
+  EXPECT_EQ(result.ch_id, 0);
+  EXPECT_EQ(result.start, 100);
+  EXPECT_EQ(result.stop, 200);
+}
+
+TEST(genomic_interval_test, missing_chromosome_name) {
+  cpg_index_meta cim;
+  std::error_code ec;
+  [[maybe_unused]] const auto result = parse(cim, "100 200", ec);
+  EXPECT_TRUE(ec);
+  EXPECT_EQ(ec, genomic_interval_code::error_parsing_bed_line);
+}
+
+TEST(genomic_interval_test, invalid_start_position) {
+  cpg_index_meta cim;
+  std::error_code ec;
+  [[maybe_unused]] const auto result = parse(cim, "chr1 abc 200", ec);
+  EXPECT_TRUE(ec);
+  EXPECT_EQ(ec, genomic_interval_code::error_parsing_bed_line);
+}
+
+TEST(genomic_interval_test, non_existent_chromosome_name) {
+  cpg_index_meta cim;
+  std::error_code ec;
+  [[maybe_unused]] const auto result = parse(cim, "chr2 100 200", ec);
+  EXPECT_TRUE(ec);
+  EXPECT_EQ(ec, genomic_interval_code::chrom_name_not_found_in_index);
+}
+
+TEST(genomic_interval_test, stop_position_exceeds_chromosome_size) {
+  cpg_index_meta cim;
+  cim.chrom_index["chr1"] = 0;
+  cim.chrom_size.push_back(100000);
+  std::error_code ec;
+  auto result = parse(cim, "chr1 100 200000", ec);
+  EXPECT_TRUE(ec);
+  EXPECT_EQ(ec, genomic_interval_code::interval_past_chrom_end_in_index);
+  EXPECT_EQ(result.ch_id, genomic_interval::not_a_chrom);
+  EXPECT_EQ(result.start, 0);
+  EXPECT_EQ(result.stop, 0);
 }
