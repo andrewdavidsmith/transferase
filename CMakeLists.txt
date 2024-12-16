@@ -95,7 +95,7 @@ if(ENABLE_STATIC_ANALYSIS)
     set(CMAKE_CXX_INCLUDE_WHAT_YOU_USE
       include-what-you-use
       -Xiwyu
-      --mapping_file=${PROJECT_SOURCE_DIR}/.iwyu/iwyu.json
+      --mapping_file=${PROJECT_SOURCE_DIR}/iwyu.json
     )
   endif()
 
