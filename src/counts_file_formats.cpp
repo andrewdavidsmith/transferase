@@ -46,34 +46,34 @@ parse_counts_line(const std::string &line, std::uint32_t &pos,
   const auto c_end = line.data() + std::size(line);
   auto field_s = line.data();
 
-  auto field_e = std::find_if(field_s + 1, c_end, is_sep);
+  auto field_e = std::find_if(std::min(field_s + 1, c_end), c_end, is_sep);
   bool failed = (field_e == c_end);
   // [field_s, field_e] = chrom
 
   // get pos
-  auto res = std::from_chars(field_e + 1, c_end, pos);
+  auto res = std::from_chars(std::min(field_e + 1, c_end), c_end, pos);
   failed = failed || (res.ptr == c_end);
 
   // skip strand
   field_s = res.ptr + 1;
-  field_e = std::find_if(field_s, c_end, is_sep);
+  field_e = std::find_if(std::min(field_s, c_end), c_end, is_sep);
   failed = failed || (field_e == c_end);
 
   // skip context
   field_s = field_e + 1;
-  field_e = std::find_if(field_s, c_end, is_sep);
+  field_e = std::find_if(std::min(field_s, c_end), c_end, is_sep);
   failed = failed || (field_e == c_end);
 
   // get level
   double meth{};
   field_s = field_e + 1;
-  res = std::from_chars(field_s, c_end, meth);
+  res = std::from_chars(std::min(field_s, c_end), c_end, meth);
   failed = failed || (res.ptr == c_end);
 
   // get n reads
   std::uint32_t n_reads{};
   field_s = res.ptr + 1;
-  res = std::from_chars(field_s, c_end, n_reads);
+  res = std::from_chars(std::min(field_s, c_end), c_end, n_reads);
   failed = failed || (res.ec != std::errc{});
 
   n_meth = std::round(meth * n_reads);
