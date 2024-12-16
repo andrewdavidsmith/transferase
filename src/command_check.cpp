@@ -43,7 +43,7 @@ determined.
 static constexpr auto examples = R"(
 Examples:
 
-mxe check -x indexes/hg38.cpg_idx -m SRX012345.m16 SRX612345.m16
+xfrase check -x indexes/hg38.cpg_idx -m SRX012345.m16 SRX612345.m16
 )";
 
 #include "cpg_index.hpp"
@@ -52,8 +52,8 @@ mxe check -x indexes/hg38.cpg_idx -m SRX012345.m16 SRX612345.m16
 #include "methylome.hpp"
 #include "methylome_metadata.hpp"
 #include "methylome_results_types.hpp"  // IWYU pragma: keep
-#include "mxe_error.hpp"                // IWYU pragma: keep
 #include "utilities.hpp"
+#include "xfrase_error.hpp"  // IWYU pragma: keep
 
 #include <boost/program_options.hpp>
 
@@ -127,14 +127,14 @@ auto
 command_check_main(int argc, char *argv[]) -> int {
   static constexpr auto command = "check";
   static const auto usage =
-    std::format("Usage: mxe {} [options]\n", strip(command));
+    std::format("Usage: xfrase {} [options]\n", strip(command));
   static const auto about_msg =
-    std::format("mxe {}: {}", strip(command), strip(about));
+    std::format("xfrase {}: {}", strip(command), strip(about));
   static const auto description_msg =
     std::format("{}\n{}", strip(description), strip(examples));
 
   std::string index_file{};
-  mxe_log_level log_level{};
+  xfrase_log_level log_level{};
 
   namespace po = boost::program_options;
 
@@ -184,7 +184,7 @@ command_check_main(int argc, char *argv[]) -> int {
     {"Methylomes", std::string(std::cbegin(joined), std::cend(joined))},
     // clang-format on
   };
-  log_args<mxe_log_level::info>(args_to_log);
+  log_args<xfrase_log_level::info>(args_to_log);
 
   const auto [index, cim, index_read_err] =
     read_cpg_index(index_file, index_meta_file);

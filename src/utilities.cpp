@@ -23,7 +23,7 @@
 
 #include "utilities.hpp"
 
-#include "mxe_error.hpp"  // IWYU pragma: keep
+#include "xfrase_error.hpp"  // IWYU pragma: keep
 
 #include <array>
 #include <cerrno>
@@ -64,8 +64,8 @@ get_time_as_string() -> std::string {
 }
 
 [[nodiscard]] auto
-get_mxe_config_dir_default(std::error_code &ec) -> std::string {
-  static const auto config_dir_rhs = std::filesystem::path(".config/mxe");
+get_xfrase_config_dir_default(std::error_code &ec) -> std::string {
+  static const auto config_dir_rhs = std::filesystem::path(".config/xfrase");
   static const auto env_home = std::getenv("HOME");
   if (!env_home) {
     ec = std::make_error_code(std::errc{errno});

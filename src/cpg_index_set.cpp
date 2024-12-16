@@ -26,7 +26,7 @@
 #include "cpg_index.hpp"
 #include "cpg_index_meta.hpp"
 #include "logger.hpp"
-#include "mxe_error.hpp"  // IWYU pragma: keep
+#include "xfrase_error.hpp"  // IWYU pragma: keep
 
 #include <filesystem>
 #include <format>

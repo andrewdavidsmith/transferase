@@ -26,7 +26,7 @@
 
 #include "methylome.hpp"  // for counts_res_cov
 
-#include "mxe_error.hpp"
+#include "xfrase_error.hpp"
 #include "utilities.hpp"
 
 #include <array>

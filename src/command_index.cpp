@@ -44,14 +44,14 @@ specified when it is used.
 static constexpr auto examples = R"(
 Examples:
 
-mxe index -v debug -x hg38.cpg_idx -g hg38.fa
+xfrase index -v debug -x hg38.cpg_idx -g hg38.fa
 )";
 
 #include "cpg_index.hpp"
 #include "cpg_index_meta.hpp"
 #include "logger.hpp"
-#include "mxe_error.hpp"  // IWYU pragma: keep
 #include "utilities.hpp"
+#include "xfrase_error.hpp"  // IWYU pragma: keep
 
 #include <boost/program_options.hpp>
 
@@ -72,15 +72,15 @@ auto
 command_index_main(int argc, char *argv[]) -> int {
   static constexpr auto command = "index";
   static const auto usage =
-    std::format("Usage: mxe {} [options]\n", strip(command));
+    std::format("Usage: xfrase {} [options]\n", strip(command));
   static const auto about_msg =
-    std::format("mxe {}: {}", strip(command), strip(about));
+    std::format("xfrase {}: {}", strip(command), strip(about));
   static const auto description_msg =
     std::format("{}\n{}", strip(description), strip(examples));
 
   std::string genome_filename{};
   std::string index_file{};
-  mxe_log_level log_level{};
+  xfrase_log_level log_level{};
 
   namespace po = boost::program_options;
 
@@ -136,7 +136,7 @@ command_index_main(int argc, char *argv[]) -> int {
     {"Index metadata", metadata_output},
     // clang-format on
   };
-  log_args<mxe_log_level::info>(args_to_log);
+  log_args<xfrase_log_level::info>(args_to_log);
 
   const auto constr_start = std::chrono::high_resolution_clock::now();
   const auto [index, cim, err] = initialize_cpg_index(genome_filename);

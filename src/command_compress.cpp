@@ -42,15 +42,15 @@ files.
 static constexpr auto examples = R"(
 Examples:
 
-mxe compress -o compressed.m16 -i original.m16
-mxe compress -u -o original.m16 -i compressed.m16
+xfrase compress -o compressed.m16 -i original.m16
+xfrase compress -u -o original.m16 -i compressed.m16
 )";
 
 #include "logger.hpp"
 #include "methylome.hpp"
 #include "methylome_metadata.hpp"
-#include "mxe_error.hpp"  // IWYU pragma: keep
-#include "utilities.hpp"  // duration()
+#include "utilities.hpp"     // duration()
+#include "xfrase_error.hpp"  // IWYU pragma: keep
 
 #include <boost/program_options.hpp>
 
@@ -70,9 +70,9 @@ auto
 command_compress_main(int argc, char *argv[]) -> int {
   static constexpr auto command = "compress";
   static const auto usage =
-    std::format("Usage: mxe {} [options]\n", strip(command));
+    std::format("Usage: xfrase {} [options]\n", strip(command));
   static const auto about_msg =
-    std::format("mxe {}: {}", strip(command), strip(about));
+    std::format("xfrase {}: {}", strip(command), strip(about));
   static const auto description_msg =
     std::format("{}\n{}", strip(description), strip(examples));
 
@@ -80,7 +80,7 @@ command_compress_main(int argc, char *argv[]) -> int {
   std::string metadata_input{};
   std::string methylome_output{};
   std::string metadata_output{};
-  mxe_log_level log_level{};
+  xfrase_log_level log_level{};
   bool uncompress{false};
 
   namespace po = boost::program_options;
@@ -140,7 +140,7 @@ command_compress_main(int argc, char *argv[]) -> int {
     {"Uncompress", std::format("{}", uncompress)},
     // clang-format on
   };
-  log_args<mxe_log_level::info>(args_to_log);
+  log_args<xfrase_log_level::info>(args_to_log);
 
   auto [meta, meta_read_err] = methylome_metadata::read(metadata_input);
   if (meta_read_err) {

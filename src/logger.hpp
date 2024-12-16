@@ -65,7 +65,7 @@
   - message
 */
 
-enum class mxe_log_level : std::uint32_t {
+enum class xfrase_log_level : std::uint32_t {
   debug,
   info,
   warning,
@@ -73,10 +73,10 @@ enum class mxe_log_level : std::uint32_t {
   critical,
   n_levels,
 };
-static constexpr std::uint32_t mxe_n_log_levels =
-  std::to_underlying(mxe_log_level::n_levels);
+static constexpr std::uint32_t xfrase_n_log_levels =
+  std::to_underlying(xfrase_log_level::n_levels);
 
-static constexpr std::array<const char *, mxe_n_log_levels> level_name = {
+static constexpr std::array<const char *, xfrase_n_log_levels> level_name = {
   // clang-format off
   "debug",
   "info",
@@ -87,33 +87,34 @@ static constexpr std::array<const char *, mxe_n_log_levels> level_name = {
 };
 
 static constexpr auto level_name_sz{[]() constexpr {
-  std::array<std::uint32_t, mxe_n_log_levels> tmp{};
-  for (std::uint32_t i = 0; i < mxe_n_log_levels; ++i)
+  std::array<std::uint32_t, xfrase_n_log_levels> tmp{};
+  for (std::uint32_t i = 0; i < xfrase_n_log_levels; ++i)
     tmp[i] = std::size(std::string_view(level_name[i]));
   return tmp;
 }()};
 
-template <> struct std::formatter<mxe_log_level> : std::formatter<std::string> {
+template <>
+struct std::formatter<xfrase_log_level> : std::formatter<std::string> {
   auto
-  format(const mxe_log_level &l, std::format_context &ctx) const {
+  format(const xfrase_log_level &l, std::format_context &ctx) const {
     return std::formatter<std::string>::format(
       level_name[std::to_underlying(l)], ctx);
   }
 };
 
 inline std::ostream &
-operator<<(std::ostream &o, const mxe_log_level &l) {
+operator<<(std::ostream &o, const xfrase_log_level &l) {
   return o << level_name[std::to_underlying(l)];
 }
 
 inline std::istream &
-operator>>(std::istream &in, mxe_log_level &l) {
+operator>>(std::istream &in, xfrase_log_level &l) {
   std::string tmp;
   if (!(in >> tmp))
     return in;
-  for (std::uint32_t i = 0; i < mxe_n_log_levels; ++i)
+  for (std::uint32_t i = 0; i < xfrase_n_log_levels; ++i)
     if (tmp == std::string_view(level_name[i])) {
-      l = static_cast<mxe_log_level>(i);
+      l = static_cast<xfrase_log_level>(i);
       return in;
     }
   in.setstate(std::ios::failbit);
@@ -133,7 +134,7 @@ private:
     std::size(date_time_fmt_expanded);
   static constexpr auto delim = ' ';
   static constexpr auto date_time_fmt = "{:%F}{}{:%T}";
-  static constexpr std::array<const char *, mxe_n_log_levels> level_name = {
+  static constexpr std::array<const char *, xfrase_n_log_levels> level_name = {
     // clang-format off
     "DEBUG",
     "INFO",
@@ -143,25 +144,25 @@ private:
     // clang-format on
   };
   static constexpr auto level_name_sz{[]() constexpr {
-    std::array<std::uint32_t, mxe_n_log_levels> tmp{};
-    for (std::uint32_t i = 0; i < mxe_n_log_levels; ++i)
+    std::array<std::uint32_t, xfrase_n_log_levels> tmp{};
+    for (std::uint32_t i = 0; i < xfrase_n_log_levels; ++i)
       tmp[i] = std::size(std::string_view(level_name[i]));
     return tmp;
   }()};
 
 public:
-  static constexpr mxe_log_level default_level{mxe_log_level::info};
+  static constexpr xfrase_log_level default_level{xfrase_log_level::info};
 
   static logger &
   instance(std::shared_ptr<std::ostream> log_file_ptr = nullptr,
            const std::string &appname = "",
-           mxe_log_level min_log_level = mxe_log_level::debug) {
+           xfrase_log_level min_log_level = xfrase_log_level::debug) {
     static logger fl(log_file_ptr, appname, min_log_level);
     return fl;
   }
 
   logger(std::shared_ptr<std::ostream> log_file_ptr, const std::string &appname,
-         mxe_log_level min_log_level = mxe_log_level::info) :
+         xfrase_log_level min_log_level = xfrase_log_level::info) :
     log_file{log_file_ptr}, min_log_level{min_log_level} {
     // ADS: check for log file good here?
     // status = std::make_error_code(std::errc(errno));
@@ -177,7 +178,7 @@ public:
 
   operator bool() const { return status ? false : true; }
 
-  template <mxe_log_level the_level>
+  template <xfrase_log_level the_level>
   auto
   log(std::string_view message) -> void {
     static constexpr auto idx = std::to_underlying(the_level);
@@ -198,7 +199,7 @@ public:
     }
   }
 
-  template <mxe_log_level the_level, typename... Args>
+  template <xfrase_log_level the_level, typename... Args>
   auto
   log(std::string_view fmt_str, Args &&...args) -> void {
     static constexpr auto idx = std::to_underlying(the_level);
@@ -222,49 +223,49 @@ public:
 
   auto
   debug(std::string_view message) -> void {
-    log<mxe_log_level::debug>(message);
+    log<xfrase_log_level::debug>(message);
   }
   auto
   info(std::string_view message) -> void {
-    log<mxe_log_level::info>(message);
+    log<xfrase_log_level::info>(message);
   }
   auto
   warning(std::string_view message) -> void {
-    log<mxe_log_level::warning>(message);
+    log<xfrase_log_level::warning>(message);
   }
   auto
   error(std::string_view message) -> void {
-    log<mxe_log_level::error>(message);
+    log<xfrase_log_level::error>(message);
   }
   auto
   critical(std::string_view message) -> void {
-    log<mxe_log_level::critical>(message);
+    log<xfrase_log_level::critical>(message);
   }
 
   template <typename... Args>
   auto
   debug(std::string_view fmt_str, Args &&...args) -> void {
-    log<mxe_log_level::debug>(fmt_str, args...);
+    log<xfrase_log_level::debug>(fmt_str, args...);
   }
   template <typename... Args>
   auto
   info(std::string_view fmt_str, Args &&...args) -> void {
-    log<mxe_log_level::info>(fmt_str, args...);
+    log<xfrase_log_level::info>(fmt_str, args...);
   }
   template <typename... Args>
   auto
   warning(std::string_view fmt_str, Args &&...args) -> void {
-    log<mxe_log_level::warning>(fmt_str, args...);
+    log<xfrase_log_level::warning>(fmt_str, args...);
   }
   template <typename... Args>
   auto
   error(std::string_view fmt_str, Args &&...args) -> void {
-    log<mxe_log_level::error>(fmt_str, args...);
+    log<xfrase_log_level::error>(fmt_str, args...);
   }
   template <typename... Args>
   auto
   critical(std::string_view fmt_str, Args &&...args) -> void {
-    log<mxe_log_level::critical>(fmt_str, args...);
+    log<xfrase_log_level::critical>(fmt_str, args...);
   }
 
 private:
@@ -276,7 +277,7 @@ private:
   std::shared_ptr<std::ostream> log_file;
   std::mutex mtx{};
   char *cursor{};
-  const mxe_log_level min_log_level{};
+  const xfrase_log_level min_log_level{};
   std::error_code status{};
 
   logger(const logger &) = delete;
@@ -310,7 +311,7 @@ private:
   }
 };  // struct logger
 
-template <mxe_log_level lvl, typename... Args>
+template <xfrase_log_level lvl, typename... Args>
 auto
 log_args(std::ranges::input_range auto &&key_value_pairs) {
   logger &lgr = logger::instance();

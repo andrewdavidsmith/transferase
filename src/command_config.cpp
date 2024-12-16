@@ -24,7 +24,7 @@
 #include "command_config.hpp"
 
 static constexpr auto about = R"(
-configure an mxe client
+configure an xfrase client
 )";
 
 static constexpr auto description = R"(
@@ -41,15 +41,15 @@ separately. The default config directory is
 static constexpr auto examples = R"(
 Examples:
 
-mxe config -c my_config_file.toml -s example.com -p 5009 --assemblies hg38,mm39
+xfrase config -c my_config_file.toml -s example.com -p 5009 --assemblies hg38,mm39
 )";
 
 #include "arguments.hpp"
 #include "command_config_argset.hpp"
 #include "config_file_utils.hpp"  // write_client_config_file
 #include "download.hpp"
-#include "mxe_error.hpp"  // IWYU pragma: keep
 #include "utilities.hpp"
+#include "xfrase_error.hpp"  // IWYU pragma: keep
 
 #include <algorithm>
 #include <cstdlib>  // for EXIT_FAILURE, EXIT_SUCCESS
@@ -121,9 +121,9 @@ auto
 command_config_main(int argc, char *argv[]) -> int {
   static constexpr auto command = "config";
   static const auto usage =
-    std::format("Usage: mxe {} [options]\n", strip(command));
+    std::format("Usage: xfrase {} [options]\n", strip(command));
   static const auto about_msg =
-    std::format("mxe {}: {}", strip(command), strip(about));
+    std::format("xfrase {}: {}", strip(command), strip(about));
   static const auto description_msg =
     std::format("{}\n{}", strip(description), strip(examples));
 

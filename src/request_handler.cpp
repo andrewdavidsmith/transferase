@@ -27,7 +27,7 @@
 #include "methylome.hpp"
 #include "methylome_metadata.hpp"
 #include "methylome_results_types.hpp"  // IWYU pragma: keep
-#include "mxe_error.hpp"
+#include "xfrase_error.hpp"
 #include "request.hpp"
 #include "response.hpp"
 #include "utilities.hpp"

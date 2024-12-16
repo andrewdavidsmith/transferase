@@ -41,14 +41,14 @@ metadata files (.m16.yaml) files.
 static constexpr auto examples = R"(
 Examples:
 
-mxe merge -o merged.m16 -i SRX0123*.m16
+xfrase merge -o merged.m16 -i SRX0123*.m16
 )";
 
 #include "logger.hpp"
 #include "methylome.hpp"
 #include "methylome_metadata.hpp"
-#include "mxe_error.hpp"  // IWYU pragma: keep
 #include "utilities.hpp"
+#include "xfrase_error.hpp"  // IWYU pragma: keep
 
 #include <boost/program_options.hpp>
 
@@ -93,13 +93,13 @@ auto
 command_merge_main(int argc, char *argv[]) -> int {
   static constexpr auto command = "merge";
   static const auto usage =
-    std::format("Usage: mxe {} [options]\n", strip(command));
+    std::format("Usage: xfrase {} [options]\n", strip(command));
   static const auto about_msg =
-    std::format("mxe {}: {}", strip(command), strip(about));
+    std::format("xfrase {}: {}", strip(command), strip(about));
   static const auto description_msg =
     std::format("{}\n{}", strip(description), strip(examples));
 
-  mxe_log_level log_level{};
+  xfrase_log_level log_level{};
   std::string output_file{};
   std::string metadata_output{};
 
@@ -154,12 +154,12 @@ command_merge_main(int argc, char *argv[]) -> int {
     {"Number of inputs", std::format("{}", n_inputs)},
     // clang-format on
   };
-  log_args<mxe_log_level::info>(args_to_log);
+  log_args<xfrase_log_level::info>(args_to_log);
 
   std::vector<std::tuple<std::string, std::string>> filenames_to_log;
   for (const auto [i, filename] : std::views::enumerate(input_files))
     filenames_to_log.emplace_back(std::format("Methylome{}", i), filename);
-  log_args<mxe_log_level::debug>(filenames_to_log);
+  log_args<xfrase_log_level::debug>(filenames_to_log);
 
   // ADS: first read the last methylome in the input files list as we only
   // do n-1 merges so we need one to start with; we can't merge an
@@ -228,7 +228,7 @@ command_merge_main(int argc, char *argv[]) -> int {
     {"write time", std::format("{:.3}s", write_time)},
     // clang-format on
   };
-  log_args<mxe_log_level::debug>(timing_to_log);
+  log_args<xfrase_log_level::debug>(timing_to_log);
 
   if (const auto err = verify_consistent_metadata_files(input_files); err) {
     lgr.error("Inconsistent metadata: {}", err);
