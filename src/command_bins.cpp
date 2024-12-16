@@ -254,18 +254,24 @@ command_bins_main(int argc, char *argv[]) -> int {
             vm_subcmd);
   po::notify(vm_subcmd);
 
+  bool force_help_message{};
   po::options_description all("Options");
   if (subcmd == "local")
     all.add(general).add(output).add(local);
   else if (subcmd == "remote")
     all.add(general).add(output).add(remote);
-  else
+  else {
+    force_help_message = true;
     all.add(general).add(output).add(local).add(remote);
+  }
 
   try {
     po::variables_map vm;
     po::store(po::parse_command_line(argc - 1, argv + 1, all), vm);
-    if (vm.count("help") || argc == 1 || (argc == 2 && !subcmd.empty())) {
+    if (force_help_message || vm.count("help") || argc == 1 ||
+        (argc == 2 && !subcmd.empty())) {
+      if (!subcmd.empty() && subcmd != "local" && subcmd != "remote")
+        std::println("One of local or remote must be specified\n");
       std::println("{}\n{}", about_msg, usage);
       all.print(std::cout);
       std::println("\n{}", description_msg);
