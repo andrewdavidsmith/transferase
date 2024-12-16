@@ -82,7 +82,7 @@ cleanup_mmap_genome(genome_file &gf) -> std::error_code {
 }
 
 [[nodiscard]] STATIC auto
-get_cpgs(const std::string_view &chrom) -> cpg_index::vec {
+get_cpgs(const std::string_view chrom) -> cpg_index::vec {
   static constexpr auto expeced_max_cpg_density = 50;
 
   bool prev_is_c = false, curr_is_g = false;
