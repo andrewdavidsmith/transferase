@@ -191,7 +191,7 @@ foreach(target ${EXECUTABLE_TARGETS})
   target_compile_definitions(${target} PRIVATE UNIT_TEST)
 endforeach()
 
-if(MXE_USE_STATIC_LIBS)
+if(USE_STATIC_LIBS)
   add_library(static_target INTERFACE)
   target_link_options(static_target INTERFACE -static-libgcc -static-libstdc++)
   foreach(target ${EXECUTABLE_TARGETS})
