@@ -29,6 +29,7 @@ jobs:
 
       - name: Test the GCC build
         run: |
+          ls -R
           export LD_LIBRARY_PATH=/usr/local/lib
           ./Release/src/fxrase
           ctest --test-dir Release
