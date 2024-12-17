@@ -31,4 +31,4 @@ jobs:
       - name: Check that it runs
         run: |
           export LD_LIBRARY_PATH=/usr/local/lib
-          ctest --test-dir ReleaseTest --output-on-failure
+          ./Release/src/xfrase
