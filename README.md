@@ -1,8 +1,8 @@
-# xfrase
+# Transferase
 The transferase system for retrieving methylomes from methbase.
 
-The transferase system has the alias `xfrase` which is quicker to
-type.  There are several commands within `xfrase` and the best way to
+The transferase program is `xfrase` which is quicker to type and will
+be used below. There are several commands within `xfrase` and the best way to
 start is to understand the `dnmtools roi` command, as the information
 functionality provided by `xfrase` is the same. If you need to learn
 about `dnmtools roi` you can find the docs
