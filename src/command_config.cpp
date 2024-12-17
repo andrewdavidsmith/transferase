@@ -47,11 +47,19 @@ xfrase config -c my_config_file.toml -s example.com -p 5009 --assemblies hg38,mm
 #include "arguments.hpp"
 #include "command_config_argset.hpp"
 #include "config_file_utils.hpp"  // write_client_config_file
+#include "cpg_index.hpp"
+#include "cpg_index_meta.hpp"
 #include "download.hpp"
 #include "utilities.hpp"
 #include "xfrase_error.hpp"  // IWYU pragma: keep
 
+#include <config.h>  // for VERSION, DATADIR, PROJECT_NAME
+
+#include <boost/describe.hpp>  // for BOOST_DESCRIBE_STRUCT
+#include <boost/json.hpp>
+
 #include <algorithm>
+#include <cerrno>   // for errno
 #include <cstdlib>  // for EXIT_FAILURE, EXIT_SUCCESS
 #include <filesystem>
 #include <format>
@@ -64,33 +72,100 @@ xfrase config -c my_config_file.toml -s example.com -p 5009 --assemblies hg38,mm
 #include <string>
 #include <string_view>
 #include <system_error>
+#include <thread>  // for std::formatter according to iwyu
 #include <tuple>
 #include <unordered_map>
+#include <utility>  // for std::move
 #include <variant>  // IWYU pragma: keep
 #include <vector>
 
-[[nodiscard]]
-static auto
-form_target_stem(const auto &assembly) {
-  static constexpr auto base_url = "/lab/public/transferase/indexes";
-  return (std::filesystem::path{base_url} / assembly).string();
+struct remote_indexes_resources {
+  std::string host;
+  std::string port;
+  std::string path;
+
+  [[nodiscard]]
+  auto
+  form_target_stem(const auto &assembly) const {
+    return (std::filesystem::path{path} / assembly).string();
+  }
+  [[nodiscard]]
+  auto
+  form_url(const auto &file) const {
+    return std::format("{}:{}{}", host, port, file);
+  }
+};
+BOOST_DESCRIBE_STRUCT(remote_indexes_resources, (), (host, port, path))
+
+template <>
+struct std::formatter<remote_indexes_resources> : std::formatter<std::string> {
+  auto
+  format(const remote_indexes_resources &r, std::format_context &ctx) const {
+    return std::format_to(ctx.out(), "{}:{}{}", r.host, r.port, r.path);
+  }
+};
+
+[[nodiscard]] static auto
+get_remote_indexes_resources()
+  -> std::tuple<std::vector<remote_indexes_resources>, std::error_code> {
+  // ADS: this function prints error messages itself
+
+  // ADS: linux specific
+  static constexpr auto linux_exe_path = "/proc/self/exe";
+
+  const auto exe_dir_parent =
+    std::filesystem::canonical(linux_exe_path).parent_path().parent_path();
+  if (!std::filesystem::is_directory(exe_dir_parent)) {
+    std::println("Not a directory: {}", exe_dir_parent);
+    return {{}, std::make_error_code(std::errc::not_a_directory)};
+  }
+
+  // ADS: DATADIR comes from config.h which comes from config.h.in and
+  // is set by cmake
+  const auto data_path = std::filesystem::path{DATADIR};
+  const std::filesystem::path data_dir =
+    exe_dir_parent / data_path / std::string(PROJECT_NAME);
+
+  if (!std::filesystem::is_directory(data_dir)) {
+    std::println("Not a directory: {}", exe_dir_parent);
+    return {{}, std::make_error_code(std::errc::not_a_directory)};
+  }
+
+  const std::filesystem::path json_file =
+    data_dir / std::format("{}_data_{}.json", PROJECT_NAME, VERSION);
+
+  std::ifstream in(json_file);
+  if (!in)
+    return {{}, std::make_error_code(std::errc(errno))};
+
+  std::error_code ec;
+  const auto filesize = std::filesystem::file_size(json_file, ec);
+  if (ec) {
+    std::println("Bad system config file: {}", json_file);
+    return {{}, ec};
+  }
+
+  std::string payload(filesize, '\0');
+  if (!in.read(payload.data(), filesize)) {
+    std::println("Failure reading file: {}", json_file);
+    return {{}, std::make_error_code(std::errc(errno))};
+  }
+
+  std::vector<remote_indexes_resources> resources;
+  boost::json::parse_into(resources, payload, ec);
+  if (ec) {
+    std::println("Malformed JSON for remote resources: {}", json_file);
+    return {{}, std::make_error_code(std::errc(errno))};
+  }
+
+  return {std::move(resources), {}};
 }
 
 [[nodiscard]]
 static auto
-form_url(const auto &host, const auto &port, const auto &file) {
-  return std::format("{}:{}{}", host, port, file);
-}
-
-[[nodiscard]]
-static auto
-get_index_files(const std::string &assemblies,
+get_index_files(const bool verbose, const remote_indexes_resources &remote,
+                const std::string &assemblies,
                 const std::string &dirname) -> std::error_code {
-  static constexpr auto cpg_index_data_suff = ".cpg_idx";
-  static constexpr auto cpg_index_meta_suff = ".cpg_idx.json";
-  static constexpr auto host = "smithlab.usc.edu";
-  static constexpr auto port = "80";
-
   const auto dl_err = [&](const auto &hdr, const auto &ec, const auto &url) {
     std::println("Error downloading {}: ", url);
     if (ec)
@@ -104,15 +179,23 @@ get_index_files(const std::string &assemblies,
 
   for (const auto assembly : std::views::split(assemblies, ',')) {
     const auto assem = std::string{std::cbegin(assembly), std::cend(assembly)};
-    const auto stem = form_target_stem(assem);
-    const auto data_file = std::format("{}{}", stem, cpg_index_data_suff);
-    const auto meta_file = std::format("{}{}", stem, cpg_index_meta_suff);
-    const auto [data_hdr, data_err] = download(host, port, data_file, dirname);
+    const auto stem = remote.form_target_stem(assem);
+    const auto data_file =
+      std::format("{}{}", stem, cpg_index::filename_extension);
+    if (verbose)
+      std::println("Download: {}", remote.form_url(data_file));
+    const auto [data_hdr, data_err] =
+      download(remote.host, remote.port, data_file, dirname);
     if (data_err)
-      dl_err(data_hdr, data_err, form_url(host, port, data_file));
-    const auto [meta_hdr, meta_err] = download(host, port, meta_file, dirname);
+      dl_err(data_hdr, data_err, remote.form_url(data_file));
+    const auto meta_file =
+      std::format("{}{}", stem, cpg_index_meta::filename_extension);
+    if (verbose)
+      std::println("Download: {}", remote.form_url(meta_file));
+    const auto [meta_hdr, meta_err] =
+      download(remote.host, remote.port, meta_file, dirname);
     if (meta_err)
-      dl_err(meta_hdr, meta_err, form_url(host, port, meta_file));
+      dl_err(meta_hdr, meta_err, remote.form_url(meta_file));
   }
   return {};
 }
@@ -190,12 +273,23 @@ command_config_main(int argc, char *argv[]) -> int {
     return EXIT_FAILURE;
   }
 
-  // take care of obtaining index files
-  const auto index_err = get_index_files(args.assemblies, config_dir);
-  if (index_err) {
-    std::println("Exit with error obtaining cpg index files: {}", index_err);
+  const auto [remotes, remote_err] = get_remote_indexes_resources();
+  if (remote_err) {
+    std::println("Error identifying remote server: {}", remote_err);
     return EXIT_FAILURE;
   }
 
+  // take care of obtaining index files
+  for (const auto &remote : remotes) {
+    if (args.verbose)
+      std::println("Using host: {}:{}", remote.host, remote.port);
+    const auto index_err =
+      get_index_files(args.verbose, remote, args.assemblies, config_dir);
+    if (index_err) {
+      std::println("Error obtaining cpg index files: {}", index_err);
+      return EXIT_FAILURE;
+    }
+    break;  // quit if we got what we want
+  }
   return EXIT_SUCCESS;
 }
