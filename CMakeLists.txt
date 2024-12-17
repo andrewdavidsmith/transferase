@@ -39,15 +39,6 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS on)
 include(CheckIncludeFileCXX)
 include(CheckFunctionExists)
 
-# Find dependencies
-find_package(Threads REQUIRED)
-find_package(
-  Boost
-  1.85.0 REQUIRED
-  COMPONENTS
-  program_options json context)
-find_package(ZLIB REQUIRED)
-
 # Options
 option(ENABLE_UNIT_TESTS "Enable unit tests" OFF)
 option(ENABLE_STATIC_ANALYSIS "Enable static analysis" OFF)
@@ -115,11 +106,21 @@ if(ENABLE_STATIC_ANALYSIS)
   # )
 endif()
 
+# Set these before looking for the corresponding libraries
 if(USE_STATIC_LIBS)
   message(STATUS "Static linkage for non-system libs")
   set(Boost_USE_STATIC_LIBS on)
   set(ZLIB_USE_STATIC_LIBS on)
 endif()
+
+# Find dependencies
+find_package(Threads REQUIRED)
+find_package(
+  Boost
+  1.85.0 REQUIRED
+  COMPONENTS
+  program_options json context)
+find_package(ZLIB REQUIRED)
 
 if(ENABLE_UNIT_TESTS)
   message(STATUS "Unit tests enabled")
@@ -134,7 +135,7 @@ add_subdirectory(src)
 # Make config.h
 include(GNUInstallDirs)
 set(DATADIR "${CMAKE_INSTALL_DATADIR}")
-message(STATUS "DATADIR is: ${DATADIR}")
+message(STATUS "Relative data directory: ${DATADIR}")
 configure_file(config.h.in config.h)
 
 # Make the needed dir in build path and copy the versioned data there
