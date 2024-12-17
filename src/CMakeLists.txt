@@ -105,6 +105,7 @@ add_library(request_handler OBJECT
 add_library(command_config OBJECT
   command_config.hpp
   command_config.cpp)
+target_include_directories(command_config PRIVATE "${PROJECT_BINARY_DIR}")
 
 add_library(command_compress OBJECT
   command_compress.hpp
