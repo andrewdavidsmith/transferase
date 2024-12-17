@@ -1,0 +1,35 @@
+name: Run GTest unit tests for transferase
+
+on:
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: andrewdavidsmith/gcc-cmake-boost
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          apt-get update
+          apt-get install -y zlib1g-dev libgtest-dev
+
+      - name: Configure for unit tests as Release with GCC
+        run: |
+          cmake -B UnitTests \
+          -DENABLE_UNIT_TESTS=on \
+          -DCMAKE_VERBOSE_MAKEFILE=on \
+          -DCMAKE_CXX_COMPILER=g++ \
+          -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build the system
+        run: |
+          cmake --build UnitTests -j4
+
+      - name: Run the unit tests
+        run: |
+          export LD_LIBRARY_PATH=/usr/local/lib
+          ctest --test-dir UnitTests --output-on-failure
