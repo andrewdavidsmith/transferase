@@ -40,7 +40,5 @@ jobs:
 
       - name: Run unit tests
         run: |
-          ls -R
           export LD_LIBRARY_PATH=/usr/local/lib
-          ./ReleaseTest/src/fxrase
           ctest --test-dir ReleaseTest --output-on-failure
