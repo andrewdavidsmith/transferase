@@ -29,6 +29,15 @@ include_directories(${PROJECT_SOURCE_DIR}/src)
 find_package(GTest REQUIRED)
 include(GoogleTest)
 
+add_executable(zlib_adapter_test zlib_adapter_test.cpp)
+target_link_libraries(zlib_adapter_test
+ PRIVATE
+ GTest::GTest
+ GTest::Main
+ ZLIB::ZLIB
+ zlib_adapter
+)
+
 add_executable(cpg_index_meta_test cpg_index_meta_test.cpp)
 target_link_libraries(cpg_index_meta_test
  PRIVATE
@@ -50,6 +59,7 @@ target_link_libraries(cpg_index_test
  utilities
  cpg_index_meta
  cpg_index
+ zlib_adapter
 )
 
 add_executable(methylome_test methylome_test.cpp)
@@ -85,6 +95,7 @@ target_link_libraries(genomic_interval_test
  hash
  cpg_index
  cpg_index_meta
+ zlib_adapter
 )
 
 add_executable(request_test request_test.cpp)
@@ -123,6 +134,7 @@ target_link_libraries(request_handler_test
  cpg_index
  cpg_index_meta
  cpg_index_set
+ zlib_adapter
 )
 
 add_executable(command_config_argset_test command_config_argset_test.cpp)
@@ -167,12 +179,14 @@ target_link_libraries(command_intervals_test
  response
  methylome_metadata
  cpg_index
+ zlib_adapter
  cpg_index_meta
  genomic_interval
  command_intervals
 )
 
 set(EXECUTABLE_TARGETS
+  zlib_adapter_test
   cpg_index_meta_test
   counts_file_formats_test
   cpg_index_test
