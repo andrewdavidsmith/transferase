@@ -39,6 +39,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS on)
 include(CheckIncludeFileCXX)
 include(CheckFunctionExists)
 
+# Find dependencies
 find_package(Threads REQUIRED)
 find_package(
   Boost
@@ -47,27 +48,26 @@ find_package(
   program_options json context)
 find_package(ZLIB REQUIRED)
 
+# Options
 option(ENABLE_UNIT_TESTS "Enable unit tests" OFF)
 option(ENABLE_STATIC_ANALYSIS "Enable static analysis" OFF)
 option(USE_STATIC_LIBS "Use static linkage for non-system libs" OFF)
 option(ENABLE_SANITIZER "Enable sanitizer" OFF)
-option(SANITIZER_TYPE
-  "Choose the sanitizer type (address, undefined)" "address")
+option(SANITIZER_TYPE "Choose sanitizer type (address, undefined)" "address")
 
-# Check if we should enable a sanitizer
+# Sanitizers
 if(ENABLE_SANITIZER)
   if(SANITIZER_TYPE STREQUAL "address")
     set(SANITIZER_FLAGS "-fsanitize=address -fno-omit-frame-pointer")
   elseif(SANITIZER_TYPE STREQUAL "undefined")
     set(SANITIZER_FLAGS "-fsanitize=undefined -fno-omit-frame-pointer")
   else()
+    # ADS: others don't seem to work...
     message(FATAL_ERROR "Unsupported sanitizer type: ${SANITIZER_TYPE}")
   endif()
-
   # Set flags for the compiler and linker
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SANITIZER_FLAGS}")
   set(CMAKE_LINKER_FLAGS "${CMAKE_LINKER_FLAGS} ${SANITIZER_FLAGS}")
-
   message(STATUS "Sanitizer enabled: ${SANITIZER_TYPE}")
 endif()
 
@@ -128,31 +128,48 @@ if(ENABLE_UNIT_TESTS)
   add_subdirectory(test)
 endif()
 
-cmake_minimum_required(VERSION 3.10)
-
+# Add the main source directory before we add the test subdir below
 add_subdirectory(src)
 
+# Make config.h
+include(GNUInstallDirs)
+set(DATADIR "${CMAKE_INSTALL_DATADIR}")
+message(STATUS "DATADIR is: ${DATADIR}")
 configure_file(config.h.in config.h)
+
+# Make the needed dir in build path and copy the versioned data there
+# ADS: this is way too confusing
+file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/${DATADIR}/transferase)
+configure_file(${CMAKE_SOURCE_DIR}/data/transferase_data.json
+  ${CMAKE_BINARY_DIR}/${DATADIR}/transferase/transferase_data_${PROJECT_VERSION}.json
+  COPYONLY
+)
 
 if (NOT ENABLE_UNIT_TESTS)
   # Installation
   # cmake --install build_dir --prefix /path/to/install/root
-  include(GNUInstallDirs)
   install(TARGETS xfrase
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
   )
-  # Install an alias with the full name 'transferase'
+  # Install an alias with the full project name
   install(PROGRAMS $<TARGET_FILE:xfrase>
     DESTINATION ${CMAKE_INSTALL_BINDIR}
     RENAME transferase
   )
+  # Install the versioned JSON file to the appropriate share directory
+  # (e.g., /usr/local/share/transferase)
+  install(FILES ${CMAKE_BINARY_DIR}/share/transferase/transferase_data_${PROJECT_VERSION}.json
+    DESTINATION ${CMAKE_INSTALL_DATADIR}/transferase
+  )
 
   # Packaging
+  set(CPACK_STGZ_HEADER_FILE "${CMAKE_SOURCE_DIR}/modules/CPack.STGZ_Header.sh.in")
   set(CPACK_PACKAGE_VENDOR "Andrew D Smith")
   set(CPACK_PACKAGE_CONTACT "Andrew D Smith")
-  set(CPACK_SOURCE_IGNORE_FILES build .git .github)
   set(CPACK_GENERATOR "TGZ;STGZ;DEB")
-  set(CPACK_SOURCE_GENERATOR "TGZ")
   set(CPACK_RESOURCE_FILE_LICENSE ${PROJECT_SOURCE_DIR}/LICENSE)
+  # Only package source from a clean clone
+  set(CPACK_SOURCE_IGNORE_FILES build .git .github)
+  set(CPACK_SOURCE_GENERATOR "TGZ")
   include(CPack)
 endif()
