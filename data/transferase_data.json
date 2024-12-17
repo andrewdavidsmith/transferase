@@ -1,0 +1,12 @@
+[
+    {
+        "host" : "smithlab.usc.edu",
+        "port" : "80",
+        "path" : "/lab/public/transferase/indexes"
+    },
+    {
+	"host": "smithlabresearch.org",
+	"port": "80",
+	"path": "/transferase/indexes"
+    }
+]
