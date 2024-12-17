@@ -32,7 +32,6 @@
 #include <boost/program_options.hpp>
 
 #include <filesystem>
-#include <print>
 #include <string>
 #include <system_error>
 
@@ -45,9 +44,6 @@ struct command_config_argset : argset_base<command_config_argset> {
     const auto config_dir = get_xfrase_config_dir_default(ec);
     if (ec)
       return {};
-    std::println(
-      "{}",
-      (std::filesystem::path(config_dir) / default_config_filename).string());
     return std::filesystem::path(config_dir) / default_config_filename;
   }
 
