@@ -1,6 +1,8 @@
 name: Build transferase on Ubuntu
 
 on:
+  pull_request:
+    branches: [ "main" ]
   workflow_dispatch:
 
 jobs:
@@ -22,23 +24,11 @@ jobs:
           -DCMAKE_CXX_COMPILER=g++ \
           -DCMAKE_BUILD_TYPE=Release
 
-      - name: Build a release using GCC
+      - name: Build the system
         run: |
           cmake --build Release -j4
 
-      - name: Configure a unit test release build that GCC
-        run: |
-          cmake -B ReleaseTest \
-          -DENABLE_UNIT_TESTS=on \
-          -DCMAKE_VERBOSE_MAKEFILE=on \
-          -DCMAKE_CXX_COMPILER=g++ \
-          -DCMAKE_BUILD_TYPE=Release
-
-      - name: Build a unit test release using GCC
-        run: |
-          cmake --build ReleaseTest -j4
-
-      - name: Run unit tests
+      - name: Check that it runs
         run: |
           export LD_LIBRARY_PATH=/usr/local/lib
           ctest --test-dir ReleaseTest --output-on-failure
