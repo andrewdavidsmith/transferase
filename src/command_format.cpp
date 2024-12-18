@@ -66,6 +66,7 @@ xfrase format -x hg38.cpg_idx -m SRX012345.xsym.gz -o SRX012345.m16
 #include <cstdlib>  // for EXIT_FAILURE, abort, EXIT_SUCCESS
 #include <filesystem>
 #include <format>
+#include <fstream>
 #include <iostream>
 #include <iterator>  // for std::cbegin, std::size
 #include <limits>
@@ -348,6 +349,8 @@ process_cpg_sites_counts(const std::string &infile, const cpg_index &index,
 
 auto
 command_format_main(int argc, char *argv[]) -> int {
+  const auto command_start = std::chrono::high_resolution_clock::now();
+
   static constexpr auto command = "format";
   static const auto usage =
     std::format("Usage: xfrase {} [options]\n", strip(command));
@@ -400,6 +403,12 @@ command_format_main(int argc, char *argv[]) -> int {
   auto &lgr = logger::instance(shared_from_cout(), command, log_level);
   if (!lgr) {
     std::println("Failure initializing logging: {}.", lgr.get_status());
+    return EXIT_FAILURE;
+  }
+
+  const auto output_check = check_output_file(methylome_output);
+  if (output_check) {
+    lgr.error("Methylome output file {}: {}", methylome_output);
     return EXIT_FAILURE;
   }
 
@@ -463,6 +472,10 @@ command_format_main(int argc, char *argv[]) -> int {
     lgr.error("Error writing metadata {}: {}", metadata_output, write_err);
     return EXIT_FAILURE;
   }
+
+  const auto command_stop = std::chrono::high_resolution_clock::now();
+  lgr.debug("Total methylome format time: {:.3}s",
+            duration(command_start, command_stop));
 
   return EXIT_SUCCESS;
 }
