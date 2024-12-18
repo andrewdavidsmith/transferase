@@ -114,6 +114,8 @@ read_gzfile_into_buffer(const std::string &filename)
   std::int32_t n_bytes{};
   while ((n_bytes = gzread(gz, buf.data(), buf_size)) > 0)
     std::ranges::copy_n(buf.data(), n_bytes, std::back_inserter(buffer));
+  gzclose(gz);
+
   if (n_bytes < 0)
     return {{}, std::error_code{zlib_adapter_error::unexpected_return_code}};
 
