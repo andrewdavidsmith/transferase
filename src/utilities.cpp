@@ -23,11 +23,13 @@
 
 #include "utilities.hpp"
 
+#include "logger.hpp"        // IWYU pragma: keep
 #include "xfrase_error.hpp"  // IWYU pragma: keep
 
 #include <array>
 #include <cerrno>
 #include <cstdlib>  // for getenv
+#include <fstream>
 #include <string>
 #include <tuple>
 #include <utility>  // for std::move
@@ -73,4 +75,40 @@ get_xfrase_config_dir_default(std::error_code &ec) -> std::string {
   }
   const std::filesystem::path config_dir = env_home / config_dir_rhs;
   return config_dir;
+}
+
+[[nodiscard]]
+auto
+check_output_file(const std::string &filename) -> std::error_code {
+  std::error_code ec;
+  // get the full name
+  const auto canonical = std::filesystem::weakly_canonical(filename, ec);
+  if (ec)
+    return ec;
+
+  // check if this is a directory
+  const bool is_dir = std::filesystem::is_directory(canonical, ec);
+  if (ec)
+    return ec;
+
+  if (is_dir)
+    return std::error_code{output_file_error::is_a_directory};
+
+  // if it doesn't already exist, test if it's writable
+  if (!std::filesystem::exists(canonical)) {
+    std::ofstream out_test(canonical);
+    if (!out_test)
+      ec = output_file_error::failed_to_open;
+    [[maybe_unused]] std::error_code unused{};
+    const bool out_test_exits = std::filesystem::exists(canonical, unused);
+    if (out_test_exits) {
+      [[maybe_unused]]
+      const bool removed = std::filesystem::remove(canonical, unused);
+    }
+    return ec;
+  }
+  // ADS: somehow need to check if an existing file can be written
+  // without modifying it??
+
+  return {};
 }

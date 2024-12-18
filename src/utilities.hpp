@@ -29,6 +29,7 @@
  */
 
 #include <chrono>
+#include <cstdint>  // for std::uint32_t
 #include <filesystem>
 #include <format>
 #include <iterator>  // for std::size
@@ -36,6 +37,8 @@
 #include <string_view>
 #include <system_error>
 #include <tuple>
+#include <type_traits>  // for std::true_type
+#include <utility>
 #include <variant>  // IWYU pragma: keep
 
 struct compose_result {
@@ -77,5 +80,45 @@ get_username() -> std::tuple<std::string, std::error_code>;
 
 [[nodiscard]] auto
 get_time_as_string() -> std::string;
+
+[[nodiscard]]
+auto
+check_output_file(const std::string &filename) -> std::error_code;
+
+enum class output_file_error : std::uint32_t {
+  ok = 0,
+  is_a_directory = 1,
+  failed_to_open = 2,
+};
+
+// register output_file_error as error code enum
+template <>
+struct std::is_error_code_enum<output_file_error> : public std::true_type {};
+
+// category to provide text descriptions
+struct output_file_category : std::error_category {
+  auto
+  name() const noexcept -> const char * override {
+    return "output_file_error";
+  }
+  auto
+  message(int code) const -> std::string override {
+    using std::string_literals::operator""s;
+    // clang-format off
+    switch (code) {
+    case 0: return "ok"s;
+    case 1: return "is a directory"s;
+    case 2: return "failed to open"s;
+    }
+    // clang-format on
+    std::unreachable();  // hopefully
+  }
+};
+
+inline auto
+make_error_code(output_file_error e) -> std::error_code {
+  static auto category = output_file_category{};
+  return std::error_code(std::to_underlying(e), category);
+}
 
 #endif  // SRC_UTILITIES_HPP_
