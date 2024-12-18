@@ -170,13 +170,33 @@ if (NOT ENABLE_UNIT_TESTS)
     RENAME xfrase
   )
 
-  # Packaging
-  set(CPACK_STGZ_HEADER_FILE "${CMAKE_SOURCE_DIR}/modules/CPack.STGZ_Header.sh.in")
+  ### Packaging
   set(CPACK_PACKAGE_VENDOR "Andrew D Smith")
-  set(CPACK_PACKAGE_CONTACT "Andrew D Smith")
   set(CPACK_GENERATOR "TGZ;STGZ;DEB")
   set(CPACK_RESOURCE_FILE_LICENSE ${PROJECT_SOURCE_DIR}/LICENSE)
-  # Only package source from a clean clone
+  set(CPACK_PACKAGE_CONTACT "Andrew D Smith")
+
+  ## For STGZ
+  set(CPACK_STGZ_HEADER_FILE "${CMAKE_SOURCE_DIR}/modules/CPack.STGZ_Header.sh.in")
+
+  ## For Debian
+  set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Andrew D Smith <andrewds@usc.edu>")
+  # Run `ldd --version` to get glibc version
+  execute_process(
+    COMMAND sh -c "ldd --version | head -1 | awk '{print \$NF}'"
+    OUTPUT_VARIABLE GLIBC_VERSION
+    ERROR_VARIABLE LDD_ERROR
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+  )
+  if(GLIBC_VERSION AND NOT LDD_ERROR)
+    message(STATUS "Detected glibc version: ${GLIBC_VERSION}")
+  else()
+    message(FATAL_ERROR "Failed to detect glibc version")
+  endif()
+  # Set dependency libc6 with the version constraint
+  set(CPACK_DEBIAN_PACKAGE_DEPENDS "libc6 (>= ${GLIBC_VERSION})")
+
+  ### Only package source from a clean clone
   set(CPACK_SOURCE_IGNORE_FILES build .git .github)
   set(CPACK_SOURCE_GENERATOR "TGZ")
   include(CPack)
