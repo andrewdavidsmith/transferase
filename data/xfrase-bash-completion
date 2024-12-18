@@ -15,3 +15,4 @@ _xfrase()
   return 0
 }
 complete -F _xfrase -o default xfrase
+complete -F _xfrase -o default transferase
