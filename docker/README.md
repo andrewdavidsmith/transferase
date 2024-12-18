@@ -25,6 +25,7 @@ To run the `transferase` server, the following must be provided to the
 container:
 
 - The methylomes directory
+- The indexes directory
 - The network, so the server can be reached
 
 The following are probably desirable to provide to the container:
@@ -34,19 +35,20 @@ The following are probably desirable to provide to the container:
 
 Here is one way to accomplish the above:
 ```console
-# assume transferase_dir has a subdir with methylomes and a config file
+# assume xfrase_dir has a subdir with methylomes, indexes and a config file
 export XFRASE_DIR=/path/to/xfrase_dir
 docker run \
-    -v ${XFRASE_DIR}:/xfrase -w /xfrase --rm -it --net=host \
+    -v ${XFRASE_DIR}:/xfrase -w /xfrase -u $(id -u):$(id -g) --rm -it --net=host \
     xfrase server -s 127.0.0.1 -p 5000 -v debug \
         -m /xfrase/methylomes \
         -l /xfrase/xfrase_server.log \
         -c /xfrase/xfrase_server_config.toml
 ```
 The network is passed to the container with the `--net=host` option to
-`docker run`, and the files will be available within the container
-using the `/xfrase` path. With this setup, the server log can be viewed
-as follows:
+`docker run`. The `id` command is used to set the username and group
+so any files that will be created will have the right permissions.
+The files will be available within the container using the `/xfrase`
+path. With this setup, the server log can be viewed as follows:
 ```console
 tail -f ${XFRASE_DIR}/xfrase_server.log
 ```
