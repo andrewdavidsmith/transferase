@@ -29,7 +29,6 @@
 #include <cerrno>     // for errno
 #include <cstdio>     // std::fread
 #include <filesystem>
-#include <memory>
 #include <ranges>  // IWYU pragma: keep
 #include <string>
 #include <system_error>
@@ -39,15 +38,15 @@
 
 [[nodiscard]] auto
 is_gzip_file(const std::string &filename) -> bool {
-  auto f = std::unique_ptr<FILE, decltype(&std::fclose)>{
-    std::fopen(filename.data(), "rb"), &std::fclose};
+  auto f = std::fopen(filename.data(), "rb");
   if (f == nullptr)
     return false;
 
   // Read the first two bytes of the file
   std::array<std::uint8_t, 2> buf{};
-  if (std::fread(buf.data(), 1, 2, f.get()) != 2)
+  if (std::fread(buf.data(), 1, 2, f) != 2)
     return false;
+  std::fclose(f);
 
   // Check if the first two bytes match the gzip magic number
   return (buf[0] == 0x1F && buf[1] == 0x8B);
