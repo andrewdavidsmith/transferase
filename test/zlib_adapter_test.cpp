@@ -28,10 +28,9 @@
 
 #include <cassert>
 #include <cstdint>
+#include <cstdio>
 #include <string>
 #include <system_error>
-#include <utility>
-#include <vector>
 
 // Helper function to create a temporary gzipped file
 [[nodiscard]]
@@ -41,8 +40,8 @@ create_gzipped_file(const std::string &content) -> std::string {
   static constexpr auto filename = "/tmp/test_file.gz";
   gzFile gz = gzopen(filename, "wb");
   assert(gz != nullptr);
-  assert(gzwrite(gz, content.data(), std::size(content)) ==
-         std::ssize(content));
+  const std::int64_t content_size = std::size(content);
+  assert(gzwrite(gz, content.data(), std::size(content)) == content_size);
   gzclose(gz);
   return filename;
 }
@@ -97,7 +96,7 @@ TEST(zlib_adapter_test, corrupted_gz_file) {
   // Should return an error
   EXPECT_TRUE(ec);
   // Protocol error (invalid gzip format)
-  EXPECT_EQ(ec.value(), static_cast<int>(std::errc::protocol_error));
+  EXPECT_EQ(ec, zlib_adapter_error::unexpected_return_code);
 }
 
 TEST(zlib_adapter_test, larger_file) {
