@@ -62,11 +62,11 @@ xfrase format -x hg38.cpg_idx -m SRX012345.xsym.gz -o SRX012345.m16
 
 #include <cctype>  // for std::isdigit
 #include <charconv>
+#include <chrono>
 #include <cstdint>  // for std::uint32_t, std::uint64_t, std::int32_t
 #include <cstdlib>  // for EXIT_FAILURE, abort, EXIT_SUCCESS
 #include <filesystem>
 #include <format>
-#include <fstream>
 #include <iostream>
 #include <iterator>  // for std::cbegin, std::size
 #include <limits>
