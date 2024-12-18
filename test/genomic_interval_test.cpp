@@ -46,7 +46,7 @@ TEST(genomic_interval_test, basic_assertions) {
 }
 
 // Test cases
-TEST(genomic_interval_test, ValidInput) {
+TEST(genomic_interval_test, valid_input) {
   cpg_index_meta cim;
   cim.chrom_index["chr1"] = 0;
   cim.chrom_size.push_back(100000);
