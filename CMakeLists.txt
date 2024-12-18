@@ -167,6 +167,7 @@ if (NOT ENABLE_UNIT_TESTS)
   # (e.g., /usr/share/bash-completion/completions/)
   install(FILES ${CMAKE_SOURCE_DIR}/data/xfrase-bash-completion
     DESTINATION ${CMAKE_INSTALL_DATADIR}/bash-completion/completions
+    RENAME xfrase
   )
 
   # Packaging
