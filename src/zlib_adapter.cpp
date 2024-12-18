@@ -25,8 +25,33 @@
 
 #include <zlib.h>
 
+#include <algorithm>  // for std::ranges::copy_n
+#include <cerrno>     // for errno
+#include <cstdio>     // std::fread
+#include <filesystem>
+#include <memory>
+#include <ranges>  // IWYU pragma: keep
 #include <string>
 #include <system_error>
+#include <tuple>
+#include <utility>  // std::move
+#include <vector>
+
+[[nodiscard]] auto
+is_gzip_file(const std::string &filename) -> bool {
+  auto f = std::unique_ptr<FILE, decltype(&std::fclose)>{
+    std::fopen(filename.data(), "rb"), &std::fclose};
+  if (f == nullptr)
+    return false;
+
+  // Read the first two bytes of the file
+  std::array<std::uint8_t, 2> buf{};
+  if (std::fread(buf.data(), 1, 2, f.get()) != 2)
+    return false;
+
+  // Check if the first two bytes match the gzip magic number
+  return (buf[0] == 0x1F && buf[1] == 0x8B);
+}
 
 gzinfile::gzinfile(const std::string &filename, std::error_code &ec) :
   in{gzopen(filename.data(), "rb")} {
@@ -71,4 +96,27 @@ gzinfile::getline(std::string &line) -> gzinfile & {
   }
   ++pos;  // if here, then buf[pos] == '\n'
   return *this;
+}
+
+[[nodiscard]]
+auto
+read_gzfile_into_buffer(const std::string &filename)
+  -> std::tuple<std::vector<char>, std::error_code> {
+  static constexpr auto buf_size = 1024 * 1024;
+
+  // Open the gzipped file
+  gzFile gz = gzopen(filename.data(), "rb");
+  if (!gz)
+    return {{}, std::make_error_code(std::errc(errno))};
+
+  std::array<char, buf_size> buf;
+  std::vector<char> buffer;
+  buffer.reserve(std::filesystem::file_size(filename));
+  std::int32_t n_bytes{};
+  while ((n_bytes = gzread(gz, buf.data(), buf_size)) > 0)
+    std::ranges::copy_n(buf.data(), n_bytes, std::back_inserter(buffer));
+  if (n_bytes < 0)
+    return {{}, std::error_code{zlib_adapter_error::unexpected_return_code}};
+
+  return {std::move(buffer), {}};  // Success
 }

@@ -32,6 +32,7 @@
 #include <iterator>  // for std::size
 #include <string>
 #include <system_error>
+#include <tuple>
 #include <type_traits>  // for std::true_type
 #include <utility>      // for std::to_underlying, std::unreachable
 #include <vector>
@@ -239,5 +240,13 @@ decompress(std::vector<std::uint8_t> &in, T &out) -> std::error_code {
 
   return zlib_adapter_error::ok;
 }
+
+[[nodiscard]] auto
+is_gzip_file(const std::string &filename) -> bool;
+
+[[nodiscard]]
+auto
+read_gzfile_into_buffer(const std::string &filename)
+  -> std::tuple<std::vector<char>, std::error_code>;
 
 #endif  // SRC_ZLIB_ADAPTER_HPP_
