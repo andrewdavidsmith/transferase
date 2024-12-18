@@ -138,8 +138,9 @@ set(DATADIR "${CMAKE_INSTALL_DATADIR}")
 message(STATUS "Relative data directory: ${DATADIR}")
 configure_file(config.h.in config.h)
 
-# Make the needed dir in build path and copy the versioned data there
-# ADS: this is way too confusing
+# Make the needed dir in build path and copy the versioned system
+# config data there (ADS: this is way too confusing). This is needed
+# for running unit tests and for running 'xfrase config' generally
 file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/${DATADIR}/transferase)
 configure_file(${CMAKE_SOURCE_DIR}/data/transferase_data.json
   ${CMAKE_BINARY_DIR}/${DATADIR}/transferase/transferase_data_${PROJECT_VERSION}.json
@@ -161,6 +162,11 @@ if (NOT ENABLE_UNIT_TESTS)
   # (e.g., /usr/local/share/transferase)
   install(FILES ${CMAKE_BINARY_DIR}/share/transferase/transferase_data_${PROJECT_VERSION}.json
     DESTINATION ${CMAKE_INSTALL_DATADIR}/transferase
+  )
+  # Install the bash completions script to the appropriate directory
+  # (e.g., /usr/share/bash-completion/completions/)
+  install(FILES ${CMAKE_SOURCE_DIR}/data/xfrase-bash-completion
+    DESTINATION ${CMAKE_INSTALL_DATADIR}/bash-completion/completions
   )
 
   # Packaging
