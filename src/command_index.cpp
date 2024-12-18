@@ -142,7 +142,10 @@ command_index_main(int argc, char *argv[]) -> int {
   const auto [index, cim, err] = initialize_cpg_index(genome_filename);
   const auto constr_stop = std::chrono::high_resolution_clock::now();
   if (err) {
-    lgr.error("Error constructing index: {}", err);
+    if (err == std::errc::no_such_file_or_directory)
+      lgr.error("Genome file not found: {}", genome_filename);
+    else
+      lgr.error("Error constructing index: {}", err);
     return EXIT_FAILURE;
   }
   lgr.debug("Index construction time: {:.3}s",
