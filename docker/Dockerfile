@@ -6,7 +6,7 @@ RUN apt-get update
 RUN apt-get install -y --no-install-recommends \
     zlib1g-dev \
     ca-certificates
-RUN git clone https://github.com/andrewdavidsmith/transferase.git
+RUN git clone https://github.com/andrewdavidsmith/transferase.git \
     && cd /build/transferase \
     && cmake -B Release \
     -DUSE_STATIC_LIBS=on \
