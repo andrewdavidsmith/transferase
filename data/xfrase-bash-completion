@@ -1,0 +1,17 @@
+_xfrase()
+{
+  local cur prev opts
+  COMPREPLY=()
+  cur="${COMP_WORDS[COMP_CWORD]}"
+  prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+  opts=`xfrase | grep "^    " | awk '{print $1}'`
+
+  case $prev in
+      xfrase)
+          COMPREPLY=( $(compgen -f -W "${opts}" -- "$cur") )
+          ;;
+  esac
+  return 0
+}
+complete -F _xfrase -o default xfrase
