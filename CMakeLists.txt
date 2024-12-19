@@ -189,6 +189,19 @@ if (NOT ENABLE_UNIT_TESTS)
   set(CPACK_STGZ_HEADER_FILE "${CMAKE_SOURCE_DIR}/modules/CPack.STGZ_Header.sh.in")
 
   ## For Debian
+  # Get the system processor architecture
+  message(STATUS "System Architecture: ${CMAKE_SYSTEM_PROCESSOR}")
+  # Check if the architecture is x86_64 and set to amd64 for Debian packaging
+  if(CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
+    set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "amd64")
+  elseif(CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64")
+    set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "arm64")
+  else()
+    set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "${CMAKE_SYSTEM_PROCESSOR}")
+  endif()
+
+  # Print the architecture being used for the Debian package
+  message(STATUS "Debian Package Architecture: ${CPACK_DEBIAN_PACKAGE_ARCHITECTURE}")
   set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Andrew D Smith <andrewds@usc.edu>")
   # Run `ldd --version` to get glibc version
   execute_process(
