@@ -23,7 +23,7 @@ wget https://github.com/andrewdavidsmith/transferase/releases/download/v0.2.0/tr
 Then run the downloaded installer (likely you want to first install it
 beneath your home dir):
 ```console
-./transferase-0.2.0-Linux.sh --prefix=${PREFIX}
+sh transferase-0.2.0-Linux.sh --prefix=${PREFIX}
 ```
 
 This will prompt you to accept the license, and then it will install
@@ -31,7 +31,7 @@ the `xfrase` binaries in `${PREFIX}/bin`, along with some config files
 in `${PREFIX}/share`. If you want to install it system-wide, and have
 the admin privs, you can do:
 ```console
-./transferase-0.2.0-Linux.sh --prefix=/usr/local
+sh transferase-0.2.0-Linux.sh --prefix=/usr/local
 ```
 
 If you are on Debian or Ubuntu, and have admin privileges, you can use
