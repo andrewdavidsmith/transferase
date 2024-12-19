@@ -32,7 +32,7 @@ project(
 
 # Set language version used
 set(CMAKE_CXX_STANDARD 23)
-set(CMAKE_CXX_STANDARD_REQUIRED yes)
+set(CMAKE_CXX_STANDARD_REQUIRED on)
 set(CMAKE_CXX_EXTENSIONS off)  # prevents std=gnu++23
 set(CMAKE_EXPORT_COMPILE_COMMANDS on)
 
@@ -40,10 +40,10 @@ include(CheckIncludeFileCXX)
 include(CheckFunctionExists)
 
 # Options
-option(ENABLE_UNIT_TESTS "Enable unit tests" OFF)
-option(ENABLE_STATIC_ANALYSIS "Enable static analysis" OFF)
-option(USE_STATIC_LIBS "Use static linkage for non-system libs" OFF)
-option(ENABLE_SANITIZER "Enable sanitizer" OFF)
+option(ENABLE_UNIT_TESTS "Enable unit tests" off)
+option(ENABLE_STATIC_ANALYSIS "Enable static analysis" off)
+option(USE_STATIC_LIBS "Use static linkage for non-system libs" off)
+option(ENABLE_SANITIZER "Enable sanitizer" off)
 option(SANITIZER_TYPE "Choose sanitizer type (address, undefined)" "address")
 
 # Sanitizers
@@ -111,6 +111,14 @@ if(USE_STATIC_LIBS)
   message(STATUS "Static linkage for non-system libs")
   set(Boost_USE_STATIC_LIBS on)
   set(ZLIB_USE_STATIC_LIBS on)
+  # Replace any home dir prefix in paths
+  set(HOME_DIR $ENV{HOME}) # For Unix-like systems
+  set(PREFIX_MAP "${HOME_DIR}/=/")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ffile-prefix-map=${PREFIX_MAP}")
+  # Boost asserts can leave paths; disable them
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DBOOST_DISABLE_ASSERTS")
+  # Make sure debugging is turned off and strip symbols
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s -g0")
 endif()
 
 # Find dependencies
@@ -171,6 +179,7 @@ if (NOT ENABLE_UNIT_TESTS)
   )
 
   ### Packaging
+  set(CPACK_STRIP_FILES ON)
   set(CPACK_PACKAGE_VENDOR "Andrew D Smith")
   set(CPACK_GENERATOR "TGZ;STGZ;DEB")
   set(CPACK_RESOURCE_FILE_LICENSE ${PROJECT_SOURCE_DIR}/LICENSE)
