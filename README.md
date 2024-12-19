@@ -11,7 +11,7 @@ need to learn about `dnmtools roi` you can find the docs
 
 ## Installing transferase
 
-# Install the pre-compiled binary
+### Install the pre-compiled binary
 
 If you are on a reasonably recent Linux (i.e., no older than 10
 yeads), then you can install the binary distribution. First
@@ -46,7 +46,7 @@ And then install it like this:
 sudo dpkg -i ./transferase-0.2.0-Linux.deb
 ```
 
-# Building the source
+### Building the source
 
 Not recommended unless you know what you are doing. You will need the
 following:
@@ -74,7 +74,9 @@ cmake --build build -j64      # i.e., if you have 64 cores
 cmake --install build --prefix=${HOME}  # or wherever
 ```
 
-## Make an index file
+## Commands
+
+### Make an index file
 
 Before starting, an index file is required. To make the index, you
 need the reference genome in a single fasta format file. If your
@@ -89,7 +91,7 @@ create an "index metadata" file `hg38.cpg_idx.json`, which is named by
 just adding the `.json` extension to the provided output file. You can
 also start with a gzip format file like `hg38.fa.gz`.
 
-## Make a methylome file
+### Make a methylome file
 
 The starting point within `xfrase` is a file in the `xcounts` format that
 involves the symmetric CpG sites. This is called a symmetric xcounts
@@ -123,7 +125,7 @@ Once again, be sure to always use the same `hg38.fa` file.  A hash is
 generated and used internally to `xfrase` to ensure that the index and
 methylome files correspond to the same reference genome file.
 
-## Run the `intervals` command locally
+### Run the `intervals` command locally
 
 This step is to make sure everything is sensible. Or you might just
 want to keep using this tool for your own analysis (it's fast). You
@@ -149,7 +151,7 @@ levels on each line (i.e., for each interval) should be identical.
 Note that `dnmtools roi` can fail if intervals are nested, while
 `xfrase intervals` command will still work.
 
-## Run the `server` command
+### Run the `server` command
 
 The `server` command can be tested first locally by using two terminal
 windows. We require the index file `hg38.cpg_index` and the methylome
@@ -172,7 +174,7 @@ is already be in use, and you can just try 5001, etc., until one is
 free. The `-v debug` will ensure you see info beyond just the
 errors. This informtion is logged to the terminal by default.
 
-## Run the `intervals` command remotely
+### Run the `intervals` command remotely
 
 We will assume for now that "remote" server is running on the local
 machine (localhost) and using port is 5000 (the default). The
