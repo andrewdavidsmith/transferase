@@ -118,7 +118,7 @@ cpg_index_meta::read(const std::string &json_filename)
   if (ec)
     return {cpg_index_meta{}, cpg_index_meta_error::failure_parsing_json};
 
-  return {std::move(cim), cpg_index_meta_error::ok};
+  return {std::move(cim), {}};
 }
 
 [[nodiscard]] auto
@@ -145,12 +145,12 @@ get_assembly_from_filename(const std::string &filename,
   using std::literals::string_view_literals::operator""sv;
   // clang-format off
   const auto fasta_suff = std::vector {
-    "fa"sv,
-    "fa.gz"sv,
-    "faa"sv,
-    "faa.gz"sv,
-    "fasta"sv,
-    "fasta.gz"sv,
+    ".fa"sv,
+    ".fa.gz"sv,
+    ".faa"sv,
+    ".faa.gz"sv,
+    ".fasta"sv,
+    ".fasta.gz"sv,
   } | std::views::join_with('|');
   // clang-format on
   const auto reference_genome_pattern =
@@ -158,8 +158,10 @@ get_assembly_from_filename(const std::string &filename,
   const std::regex suffix_re{reference_genome_pattern};
   std::smatch base_match;
   const std::string name = std::filesystem::path(filename).filename();
-  if (std::regex_search(name, base_match, suffix_re))
-    return std::filesystem::path{name}.replace_extension().string();
+  if (std::regex_search(name, base_match, suffix_re)) {
+    ec = std::error_code{};
+    return base_match.prefix().str();
+  }
   ec = std::make_error_code(std::errc::invalid_argument);
   return {};
 }
