@@ -127,7 +127,7 @@ do_local_bins(const string &meth_file, const string &meta_file,
 }
 
 [[nodiscard]] static inline auto
-write_output(std::ostream &out, const cpg_index_meta &cim,
+write_output(const std::string &outfile, const cpg_index_meta &cim,
              const std::uint32_t bin_size, const auto &results,
              const bool write_scores) {
   if (write_scores) {
@@ -140,10 +140,10 @@ write_output(std::ostream &out, const cpg_index_meta &cim,
     };
     logger::instance().debug("Number of bins without reads: {}", zero_coverage);
     const auto scores = std::views::transform(results, to_score);
-    return write_bins_bedgraph(out, cim, bin_size, scores);
+    return write_bins_bedgraph(outfile, cim, bin_size, scores);
   }
   else
-    return write_bins(out, cim, bin_size, results);
+    return write_bins(outfile, cim, bin_size, results);
 }
 
 template <typename counts_res_type>
@@ -151,8 +151,8 @@ static auto
 do_bins(const string &accession, const cpg_index &index,
         const cpg_index_meta &cim, const std::uint32_t bin_size,
         const string &hostname, const string &port, const string &meth_file,
-        const string &meta_file, std::ostream &out, const bool write_scores,
-        const bool remote_mode) -> std::error_code {
+        const string &meta_file, const std::string &outfile,
+        const bool write_scores, const bool remote_mode) -> std::error_code {
   logger &lgr = logger::instance();
   const auto bins_start{std::chrono::high_resolution_clock::now()};
   const auto [results, bins_err] =
@@ -169,7 +169,7 @@ do_bins(const string &accession, const cpg_index &index,
 
   const auto output_start{std::chrono::high_resolution_clock::now()};
   const auto write_err =
-    write_output(out, cim, bin_size, results, write_scores);
+    write_output(outfile, cim, bin_size, results, write_scores);
   if (write_err)
     return write_err;
   const auto output_stop{std::chrono::high_resolution_clock::now()};
@@ -325,21 +325,17 @@ command_bins_main(int argc, char *argv[]) -> int {
 
   lgr.debug("Number of CpGs in index: {}", cim.n_cpgs);
 
-  std::ofstream out(outfile);
-  if (!out) {
-    lgr.error("Failed to open output file {}: {}", outfile,
-              std::make_error_code(std::errc(errno)));
-    return EXIT_FAILURE;
-  }
-
   const auto bins_err =
     count_covered
       ? do_bins<counts_res_cov>(accession, index, cim, bin_size, hostname, port,
-                                meth_file, meta_file, out, write_scores,
+                                meth_file, meta_file, outfile, write_scores,
                                 remote_mode)
       : do_bins<counts_res>(accession, index, cim, bin_size, hostname, port,
-                            meth_file, meta_file, out, write_scores,
+                            meth_file, meta_file, outfile, write_scores,
                             remote_mode);
-
-  return bins_err == std::errc() ? EXIT_SUCCESS : EXIT_FAILURE;
+  if (bins_err) {
+    lgr.error("Error: {}", bins_err);
+    return EXIT_FAILURE;
+  }
+  return EXIT_SUCCESS;
 }
