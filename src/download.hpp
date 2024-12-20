@@ -24,15 +24,33 @@
 #ifndef SRC_DOWNLOAD_HPP_
 #define SRC_DOWNLOAD_HPP_
 
+#include <cstdint>
 #include <string>
 #include <system_error>
 #include <tuple>
 #include <unordered_map>
 
+struct download_request {
+  std::string host;
+  std::string port;
+  std::string target;
+  std::string outdir;
+  std::uint32_t connect_timeout{10};    // seconds
+  std::uint32_t download_timeout{240};  // seconds
+  download_request(const std::string &host, const std::string &port,
+                   const std::string &target, const std::string &outdir) :
+    host{host}, port{port}, target{target}, outdir{outdir} {}
+  download_request(const std::string &host, const std::string &port,
+                   const std::string &target, const std::string &outdir,
+                   const std::uint32_t connect_timeout,
+                   const std::uint32_t download_timeout) :
+    host{host}, port{port}, target{target}, outdir{outdir},
+    connect_timeout{connect_timeout}, download_timeout{download_timeout} {}
+};
+
 [[nodiscard]]
 auto
-download(const std::string &host, const std::string &port,
-         const std::string &target, const std::string &outdir_arg)
+download(const download_request &dr)
   -> std::tuple<std::unordered_map<std::string, std::string>, std::error_code>;
 
 #endif  // SRC_DOWNLOAD_HPP_
