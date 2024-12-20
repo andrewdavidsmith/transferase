@@ -126,7 +126,8 @@ do_local_intervals(const std::string &meth_file,
 }
 
 static inline auto
-write_output(std::ostream &out, const std::vector<genomic_interval> &gis,
+write_output(const std::string &outfile,
+             const std::vector<genomic_interval> &gis,
              const cpg_index_meta &cim, const auto &results,
              const bool write_scores) {
   if (write_scores) {
@@ -140,13 +141,13 @@ write_output(std::ostream &out, const std::vector<genomic_interval> &gis,
     logger::instance().debug("Number of intervals without reads: {}",
                              zero_coverage);
     const auto write_ec = write_intervals_bedgraph(
-      out, cim, gis, std::views::transform(results, to_score));
+      outfile, cim, gis, std::views::transform(results, to_score));
     if (write_ec)
       return write_ec;
     return std::error_code{};
   }
   else
-    return write_intervals(out, cim, gis, results);
+    return write_intervals(outfile, cim, gis, results);
 }
 
 template <typename counts_res_type>
@@ -155,8 +156,8 @@ do_intervals(const std::string &accession, const cpg_index_meta &cim,
              const std::vector<methylome::offset_pair> &offsets,
              const std::string &hostname, const std::string &port,
              const std::string &meth_file, const std::string &meth_meta_file,
-             std::ostream &out, const std::vector<genomic_interval> &gis,
-             const bool write_scores,
+             const std::string &outfile,
+             const std::vector<genomic_interval> &gis, const bool write_scores,
              const bool remote_mode) -> std::error_code {
   const auto intervals_start{std::chrono::high_resolution_clock::now()};
   const auto [results, intervals_err] =
@@ -172,7 +173,7 @@ do_intervals(const std::string &accession, const cpg_index_meta &cim,
     return std::make_error_code(std::errc::invalid_argument);
 
   const auto output_start{std::chrono::high_resolution_clock::now()};
-  const auto write_err = write_output(out, gis, cim, results, write_scores);
+  const auto write_err = write_output(outfile, gis, cim, results, write_scores);
   const auto output_stop{std::chrono::high_resolution_clock::now()};
   // ADS: elapsed time for output will include conversion to scores
   logger::instance().debug("Elapsed time for output: {:.3}s",
@@ -201,7 +202,7 @@ command_intervals_main(int argc, char *argv[]) -> int {
   std::string meth_meta_file{};
   std::string intervals_file{};
   std::string hostname{};
-  std::string output_file{};
+  std::string outfile{};
   xfrase_log_level log_level{};
 
   std::string subcmd;
@@ -230,7 +231,7 @@ command_intervals_main(int argc, char *argv[]) -> int {
     ;
   po::options_description output("Output");
   output.add_options()
-    ("output,o", po::value(&output_file)->required(), "output file")
+    ("output,o", po::value(&outfile)->required(), "output file")
     ("covered", po::bool_switch(&count_covered), "count covered sites per interval")
     ("score", po::bool_switch(&write_scores), "weighted methylation bedgraph format")
     ;
@@ -304,7 +305,7 @@ command_intervals_main(int argc, char *argv[]) -> int {
   std::vector<std::tuple<std::string, std::string>> args_to_log{
     {"Index", index_file},
     {"Intervals", intervals_file},
-    {"Output", output_file},
+    {"Output", outfile},
     {"Covered", std::format("{}", count_covered)},
     {"Bedgraph", std::format("{}", write_scores)},
   };
@@ -350,21 +351,17 @@ command_intervals_main(int argc, char *argv[]) -> int {
   lgr.debug("Elapsed time to get offsets: {:.3}s",
             duration(get_offsets_start, get_offsets_stop));
 
-  std::ofstream out(output_file);
-  if (!out) {
-    lgr.error("Failed to open output file: {} ({})", output_file,
-              std::make_error_code(std::errc(errno)));
-    return EXIT_FAILURE;
-  }
-
   const auto intervals_err =
     count_covered
       ? do_intervals<counts_res_cov>(accession, cim, offsets, hostname, port,
-                                     meth_file, meth_meta_file, out, gis,
+                                     meth_file, meth_meta_file, outfile, gis,
                                      write_scores, remote_mode)
       : do_intervals<counts_res>(accession, cim, offsets, hostname, port,
-                                 meth_file, meth_meta_file, out, gis,
+                                 meth_file, meth_meta_file, outfile, gis,
                                  write_scores, remote_mode);
-
-  return intervals_err == std::errc() ? EXIT_SUCCESS : EXIT_FAILURE;
+  if (intervals_err) {
+    lgr.error("Error: {}", intervals_err);
+    return EXIT_FAILURE;
+  }
+  return EXIT_SUCCESS;
 }
