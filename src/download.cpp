@@ -52,16 +52,13 @@
 #include <utility>  // for std::move
 
 auto
-do_download(const std::string &host, const std::string &port,
-            const std::string &target, const std::string &outfile,
+do_download(const download_request &dr, const std::string &outfile,
             boost::asio::io_context &ioc,
             std::unordered_map<std::string, std::string> &header,
             boost::beast::error_code &ec, boost::asio::yield_context yield) {
   // ADS: this is the function that does the downloading called from
   // as asio io context. Also, look at these constants if bugs happen
   static constexpr auto http_version{11};
-  static constexpr auto connect_timeout_seconds{10};
-  static constexpr auto download_timeout_seconds{240};
 
   // attempt to open the file for output; do this prior to any async
   // ops starting
@@ -75,14 +72,14 @@ do_download(const std::string &host, const std::string &port,
   boost::beast::tcp_stream stream(ioc);
 
   // lookup server endpoint
-  auto const results = resolver.async_resolve(host, port, yield[ec]);
+  auto const results = resolver.async_resolve(dr.host, dr.port, yield[ec]);
   if (ec) {
     std::filesystem::remove(outfile);
     return;
   }
 
   // set the timeout for connecting
-  stream.expires_after(std::chrono::seconds(connect_timeout_seconds));
+  stream.expires_after(std::chrono::seconds(dr.connect_timeout));
 
   // connect to server
   stream.async_connect(results, yield[ec]);
@@ -93,12 +90,12 @@ do_download(const std::string &host, const std::string &port,
 
   // Set up an HTTP GET request message
   boost::beast::http::request<boost::beast::http::string_body> req{
-    boost::beast::http::verb::get, target, http_version};
-  req.set(boost::beast::http::field::host, host);
+    boost::beast::http::verb::get, dr.target, http_version};
+  req.set(boost::beast::http::field::host, dr.host);
   req.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
 
   // set the timeout for download (need a message for this)
-  stream.expires_after(std::chrono::seconds(download_timeout_seconds));
+  stream.expires_after(std::chrono::seconds(dr.download_timeout));
 
   // send request to server
   boost::beast::http::async_write(stream, req, yield[ec]);
@@ -149,11 +146,10 @@ do_download(const std::string &host, const std::string &port,
 
 [[nodiscard]]
 auto
-download(const std::string &host, const std::string &port,
-         const std::string &target, const std::string &outdir_arg)
+download(const download_request &dr)
   -> std::tuple<std::unordered_map<std::string, std::string>, std::error_code> {
-  const auto outdir = std::filesystem::path(outdir_arg);
-  const auto outfile = outdir / std::filesystem::path(target).filename();
+  const auto outdir = std::filesystem::path{dr.outdir};
+  const auto outfile = outdir / std::filesystem::path(dr.target).filename();
 
   std::error_code out_ec;
   {
@@ -186,8 +182,8 @@ download(const std::string &host, const std::string &port,
   boost::beast::error_code ec;
   boost::asio::io_context ioc;
   boost::asio::spawn(ioc,
-                     std::bind(&do_download, host, port, target, outfile,
-                               std::ref(ioc), std::ref(header), std::ref(ec),
+                     std::bind(&do_download, dr, outfile, std::ref(ioc),
+                               std::ref(header), std::ref(ec),
                                std::placeholders::_1),
                      // on completion, spawn will call this function
                      [](std::exception_ptr ex) {
