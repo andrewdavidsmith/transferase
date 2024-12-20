@@ -85,7 +85,9 @@ parse_counts_line(const std::string &line, std::uint32_t &pos,
 [[nodiscard]] STATIC auto
 is_counts_format(const std::string &filename) -> bool {
   static constexpr auto max_lines_to_read = 10000;
-  std::ifstream in(filename);
+
+  std::error_code unused_error{};
+  gzinfile in(filename, unused_error);
   if (!in)
     return false;
 
@@ -113,7 +115,7 @@ is_counts_format(const std::string &filename) -> bool {
 is_xcounts_format(const std::string &filename) -> bool {
   static constexpr auto max_lines_to_read = 10000;
 
-  std::error_code unused_error;
+  std::error_code unused_error{};
   gzinfile in(filename, unused_error);
   if (!in)
     return false;
