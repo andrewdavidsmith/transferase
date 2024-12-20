@@ -32,13 +32,15 @@
 #include "utilities.hpp"
 #include "xfrase_error.hpp"
 
-#include <chrono>    // for std::chrono::high_resolution_clock
-#include <cstdint>   // for std::uint32_t
-#include <cstring>   // for std::memcpy
-#include <iterator>  // for std::size, std::pair
-#include <memory>    // for std::shared_ptr
+#include <algorithm>  // for std::ranges::all_of
+#include <cctype>     // for std::isalnum
+#include <chrono>     // for std::chrono::high_resolution_clock
+#include <cstdint>    // for std::uint32_t
+#include <cstring>    // for std::memcpy
+#include <iterator>   // for std::size, std::pair
+#include <memory>     // for std::shared_ptr
 #include <print>
-#include <regex>
+#include <ranges>  // IWYU pragma: keep
 #include <string>
 #include <type_traits>  // for std::remove_cvref_t
 #include <utility>      // for std::pair
@@ -53,9 +55,8 @@ using std::uint32_t;
 
 [[nodiscard]] static auto
 is_valid_accession(const string &accession) -> bool {
-  static constexpr auto experiment_ptrn = R"(^(D|E|S)RX\d+$)";
-  std::regex experiment_re(experiment_ptrn);
-  return std::regex_search(accession, experiment_re);
+  return std::ranges::all_of(
+    accession, [](const auto c) { return std::isalnum(c) || c == '_'; });
 }
 
 auto
