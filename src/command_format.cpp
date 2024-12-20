@@ -408,7 +408,7 @@ command_format_main(int argc, char *argv[]) -> int {
 
   const auto output_check = check_output_file(methylome_output);
   if (output_check) {
-    lgr.error("Methylome output file {}: {}", methylome_output);
+    lgr.error("Methylome output file {}: {}", methylome_output, output_check);
     return EXIT_FAILURE;
   }
 
