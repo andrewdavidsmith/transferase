@@ -38,8 +38,10 @@ struct cpg_index_set {
   cpg_index_set &
   operator=(const cpg_index_set &) = delete;
 
-  explicit cpg_index_set(const std::string &cpg_index_directory,
-                         std::error_code &ec);
+  // ADS: this cpg_index_set constructor always attempts to read files
+  // so the error code is needed here; this contrasts with
+  // methylome_set, which does no such work until requested.
+  cpg_index_set(const std::string &cpg_index_directory, std::error_code &ec);
 
   [[nodiscard]] auto
   get_cpg_index_meta(const std::string &assembly_name)
