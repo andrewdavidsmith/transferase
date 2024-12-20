@@ -185,7 +185,7 @@ get_index_files(const bool verbose, const remote_indexes_resources &remote,
     if (verbose)
       std::println("Download: {}", remote.form_url(data_file));
     const auto [data_hdr, data_err] =
-      download(remote.host, remote.port, data_file, dirname);
+      download({remote.host, remote.port, data_file, dirname});
     if (data_err)
       dl_err(data_hdr, data_err, remote.form_url(data_file));
     const auto meta_file =
@@ -193,7 +193,7 @@ get_index_files(const bool verbose, const remote_indexes_resources &remote,
     if (verbose)
       std::println("Download: {}", remote.form_url(meta_file));
     const auto [meta_hdr, meta_err] =
-      download(remote.host, remote.port, meta_file, dirname);
+      download({remote.host, remote.port, meta_file, dirname});
     if (meta_err)
       dl_err(meta_hdr, meta_err, remote.form_url(meta_file));
   }
