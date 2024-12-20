@@ -37,13 +37,6 @@
 #include <unordered_map>
 #include <utility>  // for std::move, std::pair
 
-[[nodiscard]] static auto
-is_valid_accession(const std::string &accession) -> bool {
-  static constexpr auto experiment_ptrn = R"(^(D|E|S)RX\d+$)";
-  std::regex experiment_re(experiment_ptrn);
-  return std::regex_search(accession, experiment_re);
-}
-
 [[nodiscard]] auto
 methylome_set::get_methylome(const std::string &accession)
   -> std::tuple<std::shared_ptr<methylome>, std::shared_ptr<methylome_metadata>,

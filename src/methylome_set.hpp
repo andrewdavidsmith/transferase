@@ -34,6 +34,7 @@
 #include <iterator>  // std::begin
 #include <memory>    // std::shared_ptr, std::swap
 #include <mutex>
+#include <ranges>  // for std::ranges::all_of
 #include <string>
 #include <system_error>
 #include <tuple>
@@ -72,6 +73,12 @@ template <typename T> struct ring_buffer {
   std::size_t counter{};
   std::vector<T> buf;
 };
+
+[[nodiscard]] inline auto
+is_valid_accession(const std::string &accession) -> bool {
+  return std::ranges::all_of(
+    accession, [](const auto c) { return std::isalnum(c) || c == '_'; });
+}
 
 struct methylome_set {
   methylome_set(const methylome_set &) = delete;
