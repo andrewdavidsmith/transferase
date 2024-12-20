@@ -140,16 +140,11 @@ add_library(command_server OBJECT
   command_server.cpp)
 
 if(NOT ENABLE_UNIT_TESTS)
-  add_executable(xfrase)
-  target_include_directories(xfrase PRIVATE "${PROJECT_BINARY_DIR}")
-  target_sources(xfrase PRIVATE xfrase.cpp)
+  # Create the final library by linking the previous parts
+  add_library(xfrase_system STATIC)
 
-  if(USE_STATIC_LIBS)
-    # ADS: this avoids the static linkage that aiso warns against
-    target_link_options(xfrase PRIVATE -static-libgcc -static-libstdc++)
-  endif()
   target_link_libraries(
-    xfrase PRIVATE
+    xfrase_system PRIVATE
     utilities
     download
     logger
@@ -183,5 +178,18 @@ if(NOT ENABLE_UNIT_TESTS)
     Boost::context
     Threads::Threads
   )
+
+  add_executable(xfrase)
+  target_include_directories(xfrase PRIVATE "${PROJECT_BINARY_DIR}")
+  target_sources(xfrase PRIVATE xfrase.cpp)
+
+  if(USE_STATIC_LIBS)
+    # ADS: this avoids the static linkage that aiso warns against
+    target_link_options(xfrase PRIVATE -static-libgcc -static-libstdc++)
+  endif()
+
+  # Link the previously created libraries to this new one
+  target_link_libraries(xfrase PRIVATE xfrase_system)
+
   install(TARGETS xfrase DESTINATION bin)
 endif()
