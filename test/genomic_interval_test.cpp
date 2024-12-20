@@ -45,6 +45,18 @@ TEST(genomic_interval_test, basic_assertions) {
   EXPECT_EQ(gis[0].stop, 6890);
 }
 
+TEST(genomic_interval_test, read_non_existent_file) {
+  static constexpr auto index_file{"asdfasdfasdf"};
+  const auto [index, cim, index_ec] = read_cpg_index(index_file);
+  EXPECT_TRUE(index_ec);
+}
+
+TEST(genomic_interval_test, read_invalid_file) {
+  static constexpr auto index_file{"/etc/passwd"};
+  const auto [index, cim, index_ec] = read_cpg_index(index_file);
+  EXPECT_TRUE(index_ec);
+}
+
 // Test cases
 TEST(genomic_interval_test, valid_input) {
   cpg_index_meta cim;
