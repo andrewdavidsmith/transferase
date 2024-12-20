@@ -104,6 +104,9 @@ struct cpg_index_meta {
   std::vector<std::uint32_t> chrom_size;
   std::vector<std::uint32_t> chrom_offset;
 
+  auto
+  operator<=>(const cpg_index_meta &) const = default;
+
   [[nodiscard]] static auto
   read(const std::string &json_filename)
     -> std::tuple<cpg_index_meta, std::error_code>;
