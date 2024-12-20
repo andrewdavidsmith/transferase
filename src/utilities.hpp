@@ -85,6 +85,10 @@ get_time_as_string() -> std::string;
 auto
 check_output_file(const std::string &filename) -> std::error_code;
 
+[[nodiscard]] auto
+generate_temp_filename(const std::string &prefix,
+                       const std::string &suffix = "") -> std::string;
+
 enum class output_file_error : std::uint32_t {
   ok = 0,
   is_a_directory = 1,
