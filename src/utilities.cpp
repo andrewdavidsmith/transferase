@@ -98,7 +98,8 @@ check_output_file(const std::string &filename) -> std::error_code {
   }
 
   // if it doesn't already exist, test if it's writable
-  if (!already_exists) {  // ADS: redundant for now
+  // if (!already_exists) // ADS: would be redundant for now
+  {
     std::ofstream out_test(canonical);
     if (!out_test)
       ec = output_file_error::failed_to_open;
