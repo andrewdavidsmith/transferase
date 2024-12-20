@@ -23,6 +23,8 @@
 
 #include <zlib_adapter.hpp>
 
+#include <utilities.hpp>
+
 #include <gtest/gtest.h>
 #include <zlib.h>
 
@@ -37,8 +39,8 @@
 static auto
 create_gzipped_file(const std::string &content) -> std::string {
   // Can be any path for testing
-  static constexpr auto filename = "/tmp/test_file.gz";
-  gzFile gz = gzopen(filename, "wb");
+  const auto filename = generate_temp_filename("test_file", "gz");
+  gzFile gz = gzopen(filename.data(), "wb");
   assert(gz != nullptr);
   const std::int64_t content_size = std::size(content);
   assert(gzwrite(gz, content.data(), std::size(content)) == content_size);
@@ -60,7 +62,8 @@ TEST(zlib_adapter_test, valid_gz_file) {
 }
 
 TEST(zlib_adapter_test, invalid_file) {
-  const std::string non_existent_file = "/tmp/non_existent_file.gz";
+  const std::string non_existent_file =
+    generate_temp_filename("non_existent_file", "gz");
   const auto [buffer, ec] = read_gzfile_into_buffer(non_existent_file);
 
   EXPECT_TRUE(ec);  // Should return an error
@@ -69,7 +72,7 @@ TEST(zlib_adapter_test, invalid_file) {
 
 TEST(zlib_adapter_test, corrupted_gz_file) {
   // Manually create a corrupted gzipped file
-  const std::string gzfile = "/tmp/corrupted.gz";
+  const auto gzfile = generate_temp_filename("corrupted", "gz");
   auto file = fopen(gzfile.data(), "wb");
   ASSERT_NE(file, nullptr);
   // Write the gzip header: Magic Number (0x1F 0x8B), Compression Method
@@ -125,7 +128,7 @@ TEST(zlib_adapter_test, small_file) {
 }
 
 TEST(zlib_adapter_test, empty_file) {
-  const std::string gzfile = "/tmp/empty.gz";
+  const auto gzfile = generate_temp_filename("empty", "gz");
   auto file = fopen(gzfile.data(), "wb");
   ASSERT_NE(file, nullptr);
   fclose(file);
