@@ -87,15 +87,18 @@ check_output_file(const std::string &filename) -> std::error_code {
     return ec;
 
   // check if this is a directory
-  const bool is_dir = std::filesystem::is_directory(canonical, ec);
-  if (ec)
-    return ec;
-
-  if (is_dir)
-    return std::error_code{output_file_error::is_a_directory};
+  const bool already_exists = std::filesystem::exists(canonical);
+  if (already_exists) {
+    const bool is_dir = std::filesystem::is_directory(canonical, ec);
+    if (ec)
+      return ec;
+    if (is_dir)
+      return std::error_code{output_file_error::is_a_directory};
+    return {};
+  }
 
   // if it doesn't already exist, test if it's writable
-  if (!std::filesystem::exists(canonical)) {
+  if (!already_exists) {  // ADS: redundant for now
     std::ofstream out_test(canonical);
     if (!out_test)
       ec = output_file_error::failed_to_open;
