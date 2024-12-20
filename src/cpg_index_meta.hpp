@@ -49,6 +49,7 @@ enum class cpg_index_meta_error : std::uint32_t {
   n_cpgs_not_found = 8,
   failure_parsing_json = 9,
   inconsistent = 10,
+  n_values = 11,
 };
 
 // register cpg_index_meta_error as error code enum
