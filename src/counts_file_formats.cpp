@@ -30,9 +30,8 @@
 #include <cctype>  // for std::isdigit
 #include <cerrno>
 #include <charconv>
-#include <cmath>    // for std::round
-#include <cstdint>  // for std::uint32_t
-#include <fstream>
+#include <cmath>     // for std::round
+#include <cstdint>   // for std::uint32_t
 #include <iterator>  // for std::size
 #include <sstream>
 #include <string>
