@@ -28,13 +28,14 @@
 #include "methylome_metadata.hpp"
 
 #include <algorithm>
+#include <cctype>
 #include <cstdint>  // std::uint32_t
 #include <cstdlib>  // std::size_t
 #include <initializer_list>
 #include <iterator>  // std::begin
 #include <memory>    // std::shared_ptr, std::swap
 #include <mutex>
-#include <ranges>  // for std::ranges::all_of
+#include <ranges>  // IWYU pragma: keep
 #include <string>
 #include <system_error>
 #include <tuple>

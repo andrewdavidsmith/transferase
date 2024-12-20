@@ -31,7 +31,6 @@
 #include <format>
 #include <memory>  // for std::shared_ptr, std::make_shared
 #include <mutex>   // for std::scoped_lock
-#include <regex>
 #include <string>
 #include <tuple>
 #include <unordered_map>
