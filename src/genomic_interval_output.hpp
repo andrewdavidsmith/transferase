@@ -32,7 +32,8 @@
 #include <cassert>
 #include <cerrno>
 #include <charconv>
-#include <cstdint>   // for uint32_t
+#include <cstdint>  // for uint32_t
+#include <fstream>
 #include <iterator>  // for size, cbegin, cend, pair
 #include <ostream>
 #include <ranges>
@@ -46,7 +47,7 @@
 struct counts_res_cov;
 
 [[nodiscard]] auto
-write_intervals(std::ostream &out, const cpg_index_meta &cim,
+write_intervals(const std::string &outfile, const cpg_index_meta &cim,
                 const std::vector<genomic_interval> &gis,
                 std::ranges::input_range auto &&results) -> std::error_code {
   static constexpr auto buf_size{512};
@@ -61,6 +62,10 @@ write_intervals(std::ostream &out, const cpg_index_meta &cim,
   const auto same_chrom = [](const gis_res &a, const gis_res &b) {
     return a.first.ch_id == b.first.ch_id;
   };
+
+  std::ofstream out(outfile);
+  if (!out)
+    return std::make_error_code(std::errc(errno));
 
   for (const auto &chunk :
        std::views::zip(gis, results) | std::views::chunk_by(same_chrom)) {
@@ -98,7 +103,7 @@ write_intervals(std::ostream &out, const cpg_index_meta &cim,
 }
 
 [[nodiscard]] auto
-write_intervals_bedgraph(std::ostream &out, const cpg_index_meta &cim,
+write_intervals_bedgraph(const std::string &outfile, const cpg_index_meta &cim,
                          const std::vector<genomic_interval> &gis,
                          std::ranges::input_range auto &&scores)
   -> std::error_code {
@@ -113,6 +118,10 @@ write_intervals_bedgraph(std::ostream &out, const cpg_index_meta &cim,
   const auto same_chrom = [](const gis_score &a, const gis_score &b) {
     return a.first.ch_id == b.first.ch_id;
   };
+
+  std::ofstream out(outfile);
+  if (!out)
+    return std::make_error_code(std::errc(errno));
 
   for (const auto &chunk :
        std::views::zip(gis, scores) | std::views::chunk_by(same_chrom)) {
@@ -146,7 +155,7 @@ write_intervals_bedgraph(std::ostream &out, const cpg_index_meta &cim,
 }
 
 [[nodiscard]] auto
-write_bins(std::ostream &out, const cpg_index_meta &cim,
+write_bins(const std::string &outfile, const cpg_index_meta &cim,
            const std::uint32_t bin_size,
            const auto &results) -> std::error_code {
   static constexpr auto buf_size{512};
@@ -157,6 +166,10 @@ write_bins(std::ostream &out, const cpg_index_meta &cim,
 
   std::array<char, buf_size> buf{};
   const auto buf_end = buf.data() + buf_size;
+
+  std::ofstream out(outfile);
+  if (!out)
+    return std::make_error_code(std::errc(errno));
 
   auto results_itr = std::cbegin(results);
 
@@ -198,7 +211,7 @@ write_bins(std::ostream &out, const cpg_index_meta &cim,
 }
 
 [[nodiscard]] auto
-write_bins_bedgraph(std::ostream &out, const cpg_index_meta &cim,
+write_bins_bedgraph(const std::string &outfile, const cpg_index_meta &cim,
                     const std::uint32_t bin_size,
                     std::ranges::input_range auto &&scores) -> std::error_code {
   static constexpr auto score_precision{6};
@@ -207,6 +220,10 @@ write_bins_bedgraph(std::ostream &out, const cpg_index_meta &cim,
 
   std::array<char, buf_size> buf{};
   const auto buf_end = buf.data() + buf_size;
+
+  std::ofstream out(outfile);
+  if (!out)
+    return std::make_error_code(std::errc(errno));
 
   auto scores_itr = std::cbegin(scores);
 
