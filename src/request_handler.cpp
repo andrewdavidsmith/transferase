@@ -27,20 +27,18 @@
 #include "methylome.hpp"
 #include "methylome_metadata.hpp"
 #include "methylome_results_types.hpp"  // IWYU pragma: keep
+#include "methylome_set.hpp"            // for is_valid_accession
 #include "request.hpp"
 #include "response.hpp"
 #include "utilities.hpp"
 #include "xfrase_error.hpp"
 
-#include <algorithm>  // for std::ranges::all_of
-#include <cctype>     // for std::isalnum
-#include <chrono>     // for std::chrono::high_resolution_clock
-#include <cstdint>    // for std::uint32_t
-#include <cstring>    // for std::memcpy
-#include <iterator>   // for std::size, std::pair
-#include <memory>     // for std::shared_ptr
+#include <chrono>    // for std::chrono::high_resolution_clock
+#include <cstdint>   // for std::uint32_t
+#include <cstring>   // for std::memcpy
+#include <iterator>  // for std::size, std::pair
+#include <memory>    // for std::shared_ptr
 #include <print>
-#include <ranges>  // IWYU pragma: keep
 #include <string>
 #include <type_traits>  // for std::remove_cvref_t
 #include <utility>      // for std::pair
@@ -52,12 +50,6 @@ using std::pair;
 using std::println;
 using std::string;
 using std::uint32_t;
-
-[[nodiscard]] static auto
-is_valid_accession(const string &accession) -> bool {
-  return std::ranges::all_of(
-    accession, [](const auto c) { return std::isalnum(c) || c == '_'; });
-}
 
 auto
 request_handler::add_response_size_for_bins(const request_header &req_hdr,
@@ -80,6 +72,7 @@ request_handler::add_response_size_for_bins(const request_header &req_hdr,
     return;
   }
   resp_hdr.response_size = cim.get_n_bins(req.bin_size);
+  resp_hdr.status = server_response_code::ok;
 }
 
 auto
