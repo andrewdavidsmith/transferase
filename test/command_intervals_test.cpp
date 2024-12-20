@@ -51,7 +51,7 @@ TEST(command_intervals_test, basic_local_test) {
   static constexpr auto index_file = "data/pAntiquusx.cpg_idx";
   static constexpr auto meth_file = "data/SRX012346.m16";
   static constexpr auto intervals_file = "data/pAntiquusx_promoters.bed";
-  // Output filename and expected outptu
+  // Output filename and expected output
   static constexpr auto output_file = "data/output_file.bed";
   static constexpr auto expected_output_file =
     "data/pAntiquusx_promoters_local.bed";
@@ -83,5 +83,90 @@ TEST(command_intervals_test, basic_local_test) {
   EXPECT_TRUE(are_files_identical(output_file, expected_output_file));
 
   // Clean up: delete test files
-  std::filesystem::remove(output_file);
+  if (std::filesystem::exists(output_file))
+    std::filesystem::remove(output_file);
+}
+
+TEST(command_intervals_test, basic_local_test_scores) {
+  // Input files for test
+  static constexpr auto index_file = "data/pAntiquusx.cpg_idx";
+  static constexpr auto meth_file = "data/SRX012346.m16";
+  static constexpr auto intervals_file = "data/pAntiquusx_promoters.bed";
+  // Output filename and expected output
+  static constexpr auto output_file = "data/output_file.bed";
+  static constexpr auto unexpected_output_file =
+    "data/pAntiquusx_promoters_local.bed";
+
+  // Define command line arguments
+  const char *command_argv[] = {
+    // clang-format off
+    "intervals",
+    "local",
+    "-x",
+    index_file,
+    "-i",
+    intervals_file,
+    "-m",
+    meth_file,
+    "-o",
+    output_file,
+    "--score",
+    // clang-format on
+  };
+  const int command_argc = sizeof(command_argv) / sizeof(command_argv[0]);
+
+  // Run the main function
+  const int result =
+    command_intervals_main(command_argc, const_cast<char **>(command_argv));
+
+  // Check that the output file is created
+  EXPECT_EQ(result, EXIT_SUCCESS);
+  EXPECT_TRUE(std::filesystem::exists(output_file));
+  EXPECT_FALSE(are_files_identical(output_file, unexpected_output_file));
+
+  // Clean up: delete test files
+  if (std::filesystem::exists(output_file))
+    std::filesystem::remove(output_file);
+}
+
+TEST(command_intervals_test, failing_remote_test) {
+  // Input files for test
+  static constexpr auto index_file = "data/pAntiquusx.cpg_idx";
+  static constexpr auto accession = "SRX012346";
+  static constexpr auto intervals_file = "data/pAntiquusx_promoters.bed";
+  // Output filename and expected output
+  static constexpr auto output_file = "data/remote_output_file.bed";
+
+  // Define command line arguments
+  const char *command_argv[] = {
+    // clang-format off
+    "intervals",
+    "remote",
+    "-s",
+    "localhost",
+    "-p",
+    "5000",
+    "-x",
+    index_file,
+    "-i",
+    intervals_file,
+    "-a",
+    accession,
+    "-o",
+    output_file,
+    // clang-format on
+  };
+  const int command_argc = sizeof(command_argv) / sizeof(command_argv[0]);
+
+  // Run the main function
+  const int result =
+    command_intervals_main(command_argc, const_cast<char **>(command_argv));
+
+  // Check that the output file is created
+  EXPECT_EQ(result, EXIT_FAILURE);
+  EXPECT_FALSE(std::filesystem::exists(output_file));
+
+  // Clean up: delete test files
+  if (std::filesystem::exists(output_file))
+    std::filesystem::remove(output_file);
 }
