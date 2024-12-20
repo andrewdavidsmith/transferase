@@ -37,7 +37,8 @@
 
 #include <sys/types.h>  // for pid_t
 
-#include <array>     // for array
+#include <array>  // for array
+#include <cassert>
 #include <charconv>  // for to_chars, to_chars_result
 #include <chrono>
 #include <cstdint>  // std::uint32_t
@@ -158,6 +159,7 @@ public:
            const std::string &appname = "",
            xfrase_log_level min_log_level = xfrase_log_level::debug) {
     static logger fl(log_file_ptr, appname, min_log_level);
+    assert(fl.log_file != nullptr || log_file_ptr != nullptr);
     return fl;
   }
 
@@ -275,7 +277,7 @@ private:
   static constexpr std::uint32_t buf_size{1024};  // max log line
   std::array<char, buf_size> buf{};
   char *buf_end{buf.data() + buf_size};
-  std::shared_ptr<std::ostream> log_file;
+  std::shared_ptr<std::ostream> log_file{nullptr};
   std::mutex mtx{};
   char *cursor{};
   const xfrase_log_level min_log_level{};
