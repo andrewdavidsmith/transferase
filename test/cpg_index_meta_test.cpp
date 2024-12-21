@@ -108,7 +108,12 @@ TEST_F(cpg_index_meta_mock, cpg_index_meta_read_write_read) {
   const auto [cim_written, ec_written] =
     cpg_index_meta::read(cpg_index_meta_file_tmp);
 
-  EXPECT_EQ(cim, cim_written);
+  // ADS: gtest doesn't want to acknowledge my spaceships
+  EXPECT_EQ(cim.chrom_order, cim_written.chrom_order);
+  EXPECT_EQ(cim.chrom_offset, cim_written.chrom_offset);
+  EXPECT_EQ(cim.chrom_size, cim_written.chrom_size);
+  EXPECT_EQ(cim.index_hash, cim_written.index_hash);
+  EXPECT_EQ(cim.creation_time, cim_written.creation_time);
 
   std::error_code remove_ec{};
   [[maybe_unused]] const bool removed =
