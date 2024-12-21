@@ -31,14 +31,14 @@
 #include <cassert>
 #include <cstdint>
 #include <cstdio>
+#include <filesystem>
 #include <string>
 #include <system_error>
 
-// Helper function to create a temporary gzipped file
+// helper function to create a temporary gzip file
 [[nodiscard]]
 static auto
 create_gzipped_file(const std::string &content) -> std::string {
-  // Can be any path for testing
   const auto filename = generate_temp_filename("test_file", "gz");
   gzFile gz = gzopen(filename.data(), "wb");
   assert(gz != nullptr);
@@ -49,16 +49,19 @@ create_gzipped_file(const std::string &content) -> std::string {
 }
 
 TEST(zlib_adapter_test, valid_gz_file) {
-  // Prepare a gzipped file with known content
+  // prepare a gzipped file with known content
   const std::string content = "This is a test file!";
   const std::string gzfile = create_gzipped_file(content);
 
   const auto [buffer, ec] = read_gzfile_into_buffer(gzfile);
 
   EXPECT_FALSE(ec);
-  // The decompressed size should match the original content
+  // decompressed size should match the original content
   EXPECT_EQ(std::size(buffer), std::size(content));
   EXPECT_EQ(std::string(std::cbegin(buffer), std::cend(buffer)), content);
+
+  if (std::filesystem::exists(gzfile))
+    std::filesystem::remove(gzfile);
 }
 
 TEST(zlib_adapter_test, invalid_file) {
@@ -100,6 +103,9 @@ TEST(zlib_adapter_test, corrupted_gz_file) {
   EXPECT_TRUE(ec);
   // Protocol error (invalid gzip format)
   EXPECT_EQ(ec, zlib_adapter_error::unexpected_return_code);
+
+  if (std::filesystem::exists(gzfile))
+    std::filesystem::remove(gzfile);
 }
 
 TEST(zlib_adapter_test, larger_file) {
@@ -109,9 +115,12 @@ TEST(zlib_adapter_test, larger_file) {
   const auto [buffer, ec] = read_gzfile_into_buffer(gzfile);
 
   EXPECT_FALSE(ec);
-  // The decompressed size should match
+  // decompressed size should match
   EXPECT_EQ(std::size(buffer), std::size(content));
   EXPECT_EQ(std::string(std::cbegin(buffer), std::cend(buffer)), content);
+
+  if (std::filesystem::exists(gzfile))
+    std::filesystem::remove(gzfile);
 }
 
 TEST(zlib_adapter_test, small_file) {
@@ -121,10 +130,12 @@ TEST(zlib_adapter_test, small_file) {
   const auto [buffer, ec] = read_gzfile_into_buffer(gzfile);
 
   EXPECT_FALSE(ec);
-  // Size should be 1
   EXPECT_EQ(std::size(buffer), std::size(content));
   // Content should be 'A'
   EXPECT_EQ(std::string(std::cbegin(buffer), std::cend(buffer)), content);
+
+  if (std::filesystem::exists(gzfile))
+    std::filesystem::remove(gzfile);
 }
 
 TEST(zlib_adapter_test, empty_file) {
@@ -136,5 +147,8 @@ TEST(zlib_adapter_test, empty_file) {
   const auto [buffer, ec] = read_gzfile_into_buffer(gzfile);
 
   EXPECT_FALSE(ec);
-  EXPECT_EQ(std::size(buffer), 0);  // Buffer should be empty
+  EXPECT_EQ(std::size(buffer), 0);  // buffer should be empty
+
+  if (std::filesystem::exists(gzfile))
+    std::filesystem::remove(gzfile);
 }
