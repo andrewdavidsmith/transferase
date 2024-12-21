@@ -43,7 +43,9 @@ create_gzipped_file(const std::string &content) -> std::string {
   gzFile gz = gzopen(filename.data(), "wb");
   assert(gz != nullptr);
   const std::int64_t content_size = std::size(content);
-  assert(gzwrite(gz, content.data(), std::size(content)) == content_size);
+  [[maybe_unused]] const std::int64_t bytes_written =
+    gzwrite(gz, content.data(), content_size);
+  assert(bytes_written == content_size);
   gzclose(gz);
   return filename;
 }
