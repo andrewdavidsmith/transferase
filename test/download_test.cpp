@@ -35,8 +35,8 @@
 TEST(download_test, send_request_timeout) {
   const auto target = std::filesystem::path{"/index.html"};
   const auto outdir = std::filesystem::path{"/tmp"};
-  const std::uint32_t connect_timeout{0};
-  const std::uint32_t download_timeout{240};
+  const std::uint32_t connect_timeout{1};
+  const std::uint32_t download_timeout{240'000};  // milliseconds
   // clang-format off
   const download_request dr{
     "example.com",  // host
@@ -61,8 +61,8 @@ TEST(download_test, send_request_timeout) {
 TEST(download_test, receive_download_timeout) {
   const auto target = std::filesystem::path{"/index.html"};
   const auto outdir = std::filesystem::path{"/tmp"};
-  const std::uint32_t connect_timeout{10};
-  const std::uint32_t download_timeout{0};
+  const std::uint32_t connect_timeout{10'000};  // milliseconds
+  const std::uint32_t download_timeout{1};
   // clang-format off
   const download_request dr{
     "example.com",  // host
