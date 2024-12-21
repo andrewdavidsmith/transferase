@@ -125,31 +125,6 @@ do_local_intervals(const std::string &meth_file,
     return {std::move(meth.get_counts(offsets)), {}};
 }
 
-static inline auto
-write_output(const std::string &outfile,
-             const std::vector<genomic_interval> &gis,
-             const cpg_index_meta &cim, const auto &results,
-             const bool write_scores) {
-  if (write_scores) {
-    // ADS: counting intervals that have no reads
-    std::uint32_t zero_coverage = 0;
-    const auto to_score = [&zero_coverage](const auto &x) {
-      zero_coverage += (x.n_meth + x.n_unmeth == 0);
-      return x.n_meth /
-             std::max(1.0, static_cast<double>(x.n_meth + x.n_unmeth));
-    };
-    logger::instance().debug("Number of intervals without reads: {}",
-                             zero_coverage);
-    const auto write_ec = write_intervals_bedgraph(
-      outfile, cim, gis, std::views::transform(results, to_score));
-    if (write_ec)
-      return write_ec;
-    return std::error_code{};
-  }
-  else
-    return write_intervals(outfile, cim, gis, results);
-}
-
 template <typename counts_res_type>
 static auto
 do_intervals(const std::string &accession, const cpg_index_meta &cim,

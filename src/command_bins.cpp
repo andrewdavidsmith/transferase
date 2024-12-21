@@ -126,26 +126,6 @@ do_local_bins(const string &meth_file, const string &meta_file,
     return {std::move(meth.get_bins(bin_size, index, cim)), {}};
 }
 
-[[nodiscard]] static inline auto
-write_output(const std::string &outfile, const cpg_index_meta &cim,
-             const std::uint32_t bin_size, const auto &results,
-             const bool write_scores) {
-  if (write_scores) {
-    // ADS: counting intervals that have no reads
-    std::uint32_t zero_coverage = 0;
-    const auto to_score = [&zero_coverage](const auto &x) {
-      zero_coverage += (x.n_meth + x.n_unmeth == 0);
-      return x.n_meth /
-             std::max(1.0, static_cast<double>(x.n_meth + x.n_unmeth));
-    };
-    logger::instance().debug("Number of bins without reads: {}", zero_coverage);
-    const auto scores = std::views::transform(results, to_score);
-    return write_bins_bedgraph(outfile, cim, bin_size, scores);
-  }
-  else
-    return write_bins(outfile, cim, bin_size, results);
-}
-
 template <typename counts_res_type>
 static auto
 do_bins(const string &accession, const cpg_index &index,
