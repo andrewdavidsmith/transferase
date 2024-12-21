@@ -126,7 +126,8 @@ struct methylome {
            const cpg_index_metadata &meta) const -> std::vector<counts_res>;
   [[nodiscard]] auto
   get_bins_cov(const std::uint32_t bin_size, const cpg_index &index,
-               const cpg_index_metadata &meta) const -> std::vector<counts_res_cov>;
+               const cpg_index_metadata &meta) const
+    -> std::vector<counts_res_cov>;
 
   methylome::vec cpgs{};
   static constexpr auto record_size = sizeof(m_elem);

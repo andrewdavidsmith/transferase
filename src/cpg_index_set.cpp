@@ -50,7 +50,8 @@ cpg_index_set::get_cpg_index_metadata(const std::string &assembly_name)
 
 [[nodiscard]] auto
 cpg_index_set::get_cpg_index_with_meta(const std::string &assembly_name)
-  -> std::tuple<const cpg_index &, const cpg_index_metadata &, std::error_code> {
+  -> std::tuple<const cpg_index &, const cpg_index_metadata &,
+                std::error_code> {
   const auto itr_index = assembly_to_cpg_index.find(assembly_name);
   if (itr_index == std::cend(assembly_to_cpg_index))
     return {{}, {}, std::make_error_code(std::errc::invalid_argument)};
@@ -69,7 +70,8 @@ cpg_index_set::cpg_index_set(const std::string &cpg_index_directory,
   std::regex assembly_re(assembly_ptrn);
 
   std::unordered_map<std::string, cpg_index> assembly_to_cpg_index_in;
-  std::unordered_map<std::string, cpg_index_metadata> assembly_to_cpg_index_metadata_in;
+  std::unordered_map<std::string, cpg_index_metadata>
+    assembly_to_cpg_index_metadata_in;
 
   const std::filesystem::path idx_dir{cpg_index_directory};
   for (auto const &dir_entry : std::filesystem::directory_iterator{idx_dir}) {

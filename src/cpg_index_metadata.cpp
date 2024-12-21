@@ -116,7 +116,8 @@ cpg_index_metadata::read(const std::string &json_filename)
   cpg_index_metadata cim;
   boost::json::parse_into(cim, payload, ec);
   if (ec)
-    return {cpg_index_metadata{}, cpg_index_metadata_error::failure_parsing_json};
+    return {cpg_index_metadata{},
+            cpg_index_metadata_error::failure_parsing_json};
 
   return {std::move(cim), {}};
 }

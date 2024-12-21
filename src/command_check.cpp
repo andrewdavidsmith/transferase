@@ -175,7 +175,8 @@ command_check_main(int argc, char *argv[]) -> int {
   }
 
   const auto methylome_files = vm["methylomes"].as<std::vector<std::string>>();
-  const auto index_meta_file = get_default_cpg_index_metadata_filename(index_file);
+  const auto index_meta_file =
+    get_default_cpg_index_metadata_filename(index_file);
 
   const auto joined = methylome_files | std::views::join_with(',');
   std::vector<std::tuple<std::string, std::string>> args_to_log{

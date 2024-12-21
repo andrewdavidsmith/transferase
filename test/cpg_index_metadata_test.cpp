@@ -50,7 +50,8 @@ TEST(cpg_index_metadata_test, basic_assertions) {
 
 TEST(cpg_index_metadata_test, filename_functions) {
   static constexpr auto filename1 = "asdf";
-  const auto meta_filename1 = get_default_cpg_index_metadata_filename(filename1);
+  const auto meta_filename1 =
+    get_default_cpg_index_metadata_filename(filename1);
   EXPECT_EQ(meta_filename1, "asdf.json");
 
   std::error_code ec;
@@ -80,8 +81,9 @@ protected:
 };
 
 TEST_F(cpg_index_metadata_mock, read_existing_cpg_index_metadata) {
-  const auto cpg_index_metadata_file = std::format(
-    "{}/{}{}", cpg_index_dir, species_name, cpg_index_metadata::filename_extension);
+  const auto cpg_index_metadata_file =
+    std::format("{}/{}{}", cpg_index_dir, species_name,
+                cpg_index_metadata::filename_extension);
   const auto [cim, ec] = cpg_index_metadata::read(cpg_index_metadata_file);
   EXPECT_EQ(ec, std::error_code{});
   EXPECT_EQ(std::size(cim.chrom_index), std::size(cim.chrom_order));
@@ -97,8 +99,9 @@ TEST_F(cpg_index_metadata_mock, read_existing_cpg_index_metadata) {
 }
 
 TEST_F(cpg_index_metadata_mock, cpg_index_metadata_read_write_read) {
-  const auto cpg_index_metadata_file = std::format(
-    "{}/{}{}", cpg_index_dir, species_name, cpg_index_metadata::filename_extension);
+  const auto cpg_index_metadata_file =
+    std::format("{}/{}{}", cpg_index_dir, species_name,
+                cpg_index_metadata::filename_extension);
   const auto [cim, ec] = cpg_index_metadata::read(cpg_index_metadata_file);
   const auto cpg_index_metadata_file_tmp =
     std::format("{}.tmp", cpg_index_metadata_file);
@@ -122,8 +125,9 @@ TEST_F(cpg_index_metadata_mock, cpg_index_metadata_read_write_read) {
 }
 
 TEST_F(cpg_index_metadata_mock, cpg_index_metadata_get_n_bins) {
-  const auto cpg_index_metadata_file = std::format(
-    "{}/{}{}", cpg_index_dir, species_name, cpg_index_metadata::filename_extension);
+  const auto cpg_index_metadata_file =
+    std::format("{}/{}{}", cpg_index_dir, species_name,
+                cpg_index_metadata::filename_extension);
   const auto [cim, ec] = cpg_index_metadata::read(cpg_index_metadata_file);
   const auto n_bins = cim.get_n_bins(1);
   EXPECT_GE(n_bins, cim.n_cpgs);
