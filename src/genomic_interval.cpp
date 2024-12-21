@@ -82,7 +82,8 @@ parse(const cpg_index_metadata &cim, const std::string &line,
 }
 
 [[nodiscard]] auto
-genomic_interval::load(const cpg_index_metadata &cim, const std::string &filename)
+genomic_interval::load(const cpg_index_metadata &cim,
+                       const std::string &filename)
   -> std::tuple<std::vector<genomic_interval>, std::error_code> {
   std::ifstream in{filename};
   if (!in)

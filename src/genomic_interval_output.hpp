@@ -106,10 +106,10 @@ write_intervals(const std::string &outfile, const cpg_index_metadata &cim,
 }
 
 [[nodiscard]] auto
-write_intervals_bedgraph(const std::string &outfile, const cpg_index_metadata &cim,
-                         const std::vector<genomic_interval> &gis,
-                         std::ranges::input_range auto &&scores)
-  -> std::error_code {
+write_intervals_bedgraph(
+  const std::string &outfile, const cpg_index_metadata &cim,
+  const std::vector<genomic_interval> &gis,
+  std::ranges::input_range auto &&scores) -> std::error_code {
   static constexpr auto score_precision{6};
   static constexpr auto buf_size{512};
   // ADS: modified_buf_size is to ensure we can't go past the end of

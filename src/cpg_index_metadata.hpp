@@ -54,7 +54,8 @@ enum class cpg_index_metadata_error : std::uint32_t {
 
 // register cpg_index_metadata_error as error code enum
 template <>
-struct std::is_error_code_enum<cpg_index_metadata_error> : public std::true_type {};
+struct std::is_error_code_enum<cpg_index_metadata_error>
+  : public std::true_type {};
 
 // category to provide text descriptions
 struct cpg_index_metadata_error_category : std::error_category {

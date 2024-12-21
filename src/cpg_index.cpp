@@ -486,6 +486,7 @@ read_cpg_index(const std::string &index_file,
 [[nodiscard]] auto
 read_cpg_index(const std::string &index_file)
   -> std::tuple<cpg_index, cpg_index_metadata, std::error_code> {
-  const auto index_meta_file = get_default_cpg_index_metadata_filename(index_file);
+  const auto index_meta_file =
+    get_default_cpg_index_metadata_filename(index_file);
   return read_cpg_index(index_file, index_meta_file);
 }

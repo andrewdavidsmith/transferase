@@ -49,10 +49,12 @@ struct cpg_index_set {
 
   [[nodiscard]] auto
   get_cpg_index_with_meta(const std::string &assembly_name)
-    -> std::tuple<const cpg_index &, const cpg_index_metadata &, std::error_code>;
+    -> std::tuple<const cpg_index &, const cpg_index_metadata &,
+                  std::error_code>;
 
   std::unordered_map<std::string, cpg_index> assembly_to_cpg_index;
-  std::unordered_map<std::string, cpg_index_metadata> assembly_to_cpg_index_metadata;
+  std::unordered_map<std::string, cpg_index_metadata>
+    assembly_to_cpg_index_metadata;
 };
 
 #endif  // SRC_CPG_INDEX_SET_HPP_
