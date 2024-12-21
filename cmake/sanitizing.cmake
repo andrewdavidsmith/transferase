@@ -31,5 +31,5 @@ endif()
 
 # Set flags for the compiler and linker
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SANITIZER_FLAGS}")
-set(CMAKE_LINKER_FLAGS "${CMAKE_LINKER_FLAGS} ${SANITIZER_FLAGS}")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${SANITIZER_FLAGS}")
 message(STATUS "Sanitizer enabled: ${SANITIZER_TYPE}")

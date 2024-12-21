@@ -21,7 +21,7 @@
 # SOFTWARE.
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --coverage")
-set(CMAKE_LINKER_FLAGS "${CMAKE_LINKER_FLAGS} --coverage")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --coverage")
 
 add_custom_target(code_coverage
   COMMENT "Running lcov and cleaning using exclusion patterns"

@@ -37,4 +37,4 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s")
 
 # Set static for the compiler's libraries
 # ADS: this avoids the static linkage that aiso warns against
-set(CMAKE_LINKER_FLAGS "-static-libgcc -static-libstdc++")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libgcc -static-libstdc++")
