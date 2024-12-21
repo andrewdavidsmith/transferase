@@ -25,7 +25,7 @@
 #include <genomic_interval_impl.hpp>
 
 #include <cpg_index.hpp>
-#include <cpg_index_meta.hpp>  // IWYU pragma: keep
+#include <cpg_index_metadata.hpp>  // IWYU pragma: keep
 
 #include <gtest/gtest.h>
 
@@ -59,7 +59,7 @@ TEST(genomic_interval_test, read_invalid_file) {
 
 // Test cases
 TEST(genomic_interval_test, valid_input) {
-  cpg_index_meta cim;
+  cpg_index_metadata cim;
   cim.chrom_index["chr1"] = 0;
   cim.chrom_size.push_back(100000);
   std::error_code ec;
@@ -71,7 +71,7 @@ TEST(genomic_interval_test, valid_input) {
 }
 
 TEST(genomic_interval_test, valid_input_with_tabs) {
-  cpg_index_meta cim;
+  cpg_index_metadata cim;
   cim.chrom_index["chr1"] = 0;
   cim.chrom_size.push_back(100000);
   std::error_code ec;
@@ -83,7 +83,7 @@ TEST(genomic_interval_test, valid_input_with_tabs) {
 }
 
 TEST(genomic_interval_test, missing_chromosome_name) {
-  cpg_index_meta cim;
+  cpg_index_metadata cim;
   std::error_code ec;
   [[maybe_unused]] const auto result = parse(cim, "100 200", ec);
   EXPECT_TRUE(ec);
@@ -91,7 +91,7 @@ TEST(genomic_interval_test, missing_chromosome_name) {
 }
 
 TEST(genomic_interval_test, invalid_start_position) {
-  cpg_index_meta cim;
+  cpg_index_metadata cim;
   std::error_code ec;
   [[maybe_unused]] const auto result = parse(cim, "chr1 abc 200", ec);
   EXPECT_TRUE(ec);
@@ -99,7 +99,7 @@ TEST(genomic_interval_test, invalid_start_position) {
 }
 
 TEST(genomic_interval_test, non_existent_chromosome_name) {
-  cpg_index_meta cim;
+  cpg_index_metadata cim;
   std::error_code ec;
   [[maybe_unused]] const auto result = parse(cim, "chr2 100 200", ec);
   EXPECT_TRUE(ec);
@@ -107,7 +107,7 @@ TEST(genomic_interval_test, non_existent_chromosome_name) {
 }
 
 TEST(genomic_interval_test, stop_position_exceeds_chromosome_size) {
-  cpg_index_meta cim;
+  cpg_index_metadata cim;
   cim.chrom_index["chr1"] = 0;
   cim.chrom_size.push_back(100000);
   std::error_code ec;
