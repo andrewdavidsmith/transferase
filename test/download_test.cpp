@@ -33,14 +33,14 @@
 #include <utility>
 
 TEST(download_test, send_request_timeout) {
-  const auto target = std::filesystem::path{"/index.html"};
+  const auto target = std::filesystem::path{"/delay/1"};
   const auto outdir = std::filesystem::path{"/tmp"};
-  const std::uint32_t connect_timeout{1};
-  const std::uint32_t download_timeout{240'000};  // milliseconds
+  const std::uint32_t connect_timeout{0};
+  const std::uint32_t download_timeout{240};  // seconds
   // clang-format off
   const download_request dr{
-    "example.com",  // host
-    "80",           // port
+    "httpbin.org",
+    "80",
     target,
     outdir,
     connect_timeout,
@@ -59,14 +59,14 @@ TEST(download_test, send_request_timeout) {
 }
 
 TEST(download_test, receive_download_timeout) {
-  const auto target = std::filesystem::path{"/index.html"};
+  const auto target = std::filesystem::path{"/delay/1"};
   const auto outdir = std::filesystem::path{"/tmp"};
-  const std::uint32_t connect_timeout{10'000};  // milliseconds
+  const std::uint32_t connect_timeout{10};  // seconds
   const std::uint32_t download_timeout{1};
   // clang-format off
   const download_request dr{
-    "example.com",  // host
-    "80",           // port
+    "httpbin.org",
+    "80",
     target,
     outdir,
     connect_timeout,
