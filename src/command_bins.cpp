@@ -46,7 +46,7 @@ xfrase bins remote -x hg38.cpg_idx -o output.bed -s example.com -a SRX012345 -b 
 
 #include "client.hpp"
 #include "cpg_index.hpp"
-#include "cpg_index_meta.hpp"
+#include "cpg_index_metadata.hpp"
 #include "genomic_interval_output.hpp"
 #include "logger.hpp"
 #include "methylome.hpp"
@@ -82,7 +82,7 @@ using std::vector;
 
 template <typename counts_res_type>
 [[nodiscard]] static inline auto
-do_remote_bins(const string &accession, const cpg_index_meta &cim,
+do_remote_bins(const string &accession, const cpg_index_metadata &cim,
                const std::uint32_t bin_size, const string &hostname,
                const string &port)
   -> std::tuple<vector<counts_res_type>, std::error_code> {
@@ -106,7 +106,7 @@ do_remote_bins(const string &accession, const cpg_index_meta &cim,
 template <typename counts_res_type>
 [[nodiscard]] static inline auto
 do_local_bins(const string &meth_file, const string &meta_file,
-              const cpg_index &index, const cpg_index_meta &cim,
+              const cpg_index &index, const cpg_index_metadata &cim,
               const std::uint32_t bin_size)
   -> std::tuple<vector<counts_res_type>, std::error_code> {
   const auto [meta, meta_err] = methylome_metadata::read(meta_file);
@@ -129,7 +129,7 @@ do_local_bins(const string &meth_file, const string &meta_file,
 template <typename counts_res_type>
 static auto
 do_bins(const string &accession, const cpg_index &index,
-        const cpg_index_meta &cim, const std::uint32_t bin_size,
+        const cpg_index_metadata &cim, const std::uint32_t bin_size,
         const string &hostname, const string &port, const string &meth_file,
         const string &meta_file, const std::string &outfile,
         const bool write_scores, const bool remote_mode) -> std::error_code {

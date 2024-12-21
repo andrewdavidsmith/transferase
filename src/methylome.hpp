@@ -45,7 +45,7 @@
 
 struct counts_res;
 struct counts_res_cov;
-struct cpg_index_meta;
+struct cpg_index_metadata;
 struct methylome_metadata;
 
 struct methylome {
@@ -123,10 +123,10 @@ struct methylome {
   // each bin along all chromosomes
   [[nodiscard]] auto
   get_bins(const std::uint32_t bin_size, const cpg_index &index,
-           const cpg_index_meta &meta) const -> std::vector<counts_res>;
+           const cpg_index_metadata &meta) const -> std::vector<counts_res>;
   [[nodiscard]] auto
   get_bins_cov(const std::uint32_t bin_size, const cpg_index &index,
-               const cpg_index_meta &meta) const -> std::vector<counts_res_cov>;
+               const cpg_index_metadata &meta) const -> std::vector<counts_res_cov>;
 
   methylome::vec cpgs{};
   static constexpr auto record_size = sizeof(m_elem);

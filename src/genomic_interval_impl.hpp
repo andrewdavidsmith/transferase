@@ -36,7 +36,7 @@
 #include <system_error>
 
 [[nodiscard]] STATIC auto
-parse(const cpg_index_meta &cim, const std::string &line,
+parse(const cpg_index_metadata &cim, const std::string &line,
       std::error_code &ec) -> genomic_interval;
 
 #endif  // SRC_GENOMIC_INTERVAL_IMPL_HPP_

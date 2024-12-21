@@ -25,7 +25,7 @@
 #define SRC_CPG_INDEX_SET_HPP_
 
 #include "cpg_index.hpp"
-#include "cpg_index_meta.hpp"
+#include "cpg_index_metadata.hpp"
 
 #include <string>
 #include <system_error>
@@ -44,15 +44,15 @@ struct cpg_index_set {
   cpg_index_set(const std::string &cpg_index_directory, std::error_code &ec);
 
   [[nodiscard]] auto
-  get_cpg_index_meta(const std::string &assembly_name)
-    -> std::tuple<const cpg_index_meta &, std::error_code>;
+  get_cpg_index_metadata(const std::string &assembly_name)
+    -> std::tuple<const cpg_index_metadata &, std::error_code>;
 
   [[nodiscard]] auto
   get_cpg_index_with_meta(const std::string &assembly_name)
-    -> std::tuple<const cpg_index &, const cpg_index_meta &, std::error_code>;
+    -> std::tuple<const cpg_index &, const cpg_index_metadata &, std::error_code>;
 
   std::unordered_map<std::string, cpg_index> assembly_to_cpg_index;
-  std::unordered_map<std::string, cpg_index_meta> assembly_to_cpg_index_meta;
+  std::unordered_map<std::string, cpg_index_metadata> assembly_to_cpg_index_metadata;
 };
 
 #endif  // SRC_CPG_INDEX_SET_HPP_

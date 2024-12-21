@@ -46,7 +46,7 @@ xfrase intervals remote -x hg38.cpg_idx -o output.bed -s example.com -a SRX01234
 
 #include "client.hpp"
 #include "cpg_index.hpp"
-#include "cpg_index_meta.hpp"
+#include "cpg_index_metadata.hpp"
 #include "genomic_interval.hpp"
 #include "genomic_interval_output.hpp"
 #include "logger.hpp"
@@ -81,7 +81,7 @@ xfrase intervals remote -x hg38.cpg_idx -o output.bed -s example.com -a SRX01234
 
 template <typename counts_res_type>
 [[nodiscard]] static inline auto
-do_remote_intervals(const std::string &accession, const cpg_index_meta &cim,
+do_remote_intervals(const std::string &accession, const cpg_index_metadata &cim,
                     std::vector<methylome::offset_pair> offsets,
                     const std::string &hostname, const std::string &port)
   -> std::tuple<std::vector<counts_res_type>, std::error_code> {
@@ -127,7 +127,7 @@ do_local_intervals(const std::string &meth_file,
 
 template <typename counts_res_type>
 static auto
-do_intervals(const std::string &accession, const cpg_index_meta &cim,
+do_intervals(const std::string &accession, const cpg_index_metadata &cim,
              const std::vector<methylome::offset_pair> &offsets,
              const std::string &hostname, const std::string &port,
              const std::string &meth_file, const std::string &meth_meta_file,

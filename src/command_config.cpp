@@ -48,7 +48,7 @@ xfrase config -c my_config_file.toml -s example.com -p 5009 --assemblies hg38,mm
 #include "command_config_argset.hpp"
 #include "config_file_utils.hpp"  // write_client_config_file
 #include "cpg_index.hpp"
-#include "cpg_index_meta.hpp"
+#include "cpg_index_metadata.hpp"
 #include "download.hpp"
 #include "utilities.hpp"
 #include "xfrase_error.hpp"  // IWYU pragma: keep
@@ -189,7 +189,7 @@ get_index_files(const bool verbose, const remote_indexes_resources &remote,
     if (data_err)
       dl_err(data_hdr, data_err, remote.form_url(data_file));
     const auto meta_file =
-      std::format("{}{}", stem, cpg_index_meta::filename_extension);
+      std::format("{}{}", stem, cpg_index_metadata::filename_extension);
     if (verbose)
       std::println("Download: {}", remote.form_url(meta_file));
     const auto [meta_hdr, meta_err] =

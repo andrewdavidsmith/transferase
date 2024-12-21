@@ -47,7 +47,7 @@ xfrase check -x indexes/hg38.cpg_idx -m SRX012345.m16 SRX612345.m16
 )";
 
 #include "cpg_index.hpp"
-#include "cpg_index_meta.hpp"
+#include "cpg_index_metadata.hpp"
 #include "logger.hpp"
 #include "methylome.hpp"
 #include "methylome_metadata.hpp"
@@ -70,7 +70,7 @@ xfrase check -x indexes/hg38.cpg_idx -m SRX012345.m16 SRX612345.m16
 #include <vector>
 
 [[nodiscard]] static auto
-check_cpg_index_consistency(const cpg_index_meta &cim,
+check_cpg_index_consistency(const cpg_index_metadata &cim,
                             const cpg_index &index) -> bool {
   auto &lgr = logger::instance();
 
@@ -104,7 +104,7 @@ check_methylome_consistency(const methylome_metadata &meta,
 
 [[nodiscard]] static auto
 check_metadata_consistency(const methylome_metadata &meta,
-                           const cpg_index_meta &cim) -> bool {
+                           const cpg_index_metadata &cim) -> bool {
   auto &lgr = logger::instance();
 
   const auto versions_match = (cim.version == meta.version);
@@ -175,7 +175,7 @@ command_check_main(int argc, char *argv[]) -> int {
   }
 
   const auto methylome_files = vm["methylomes"].as<std::vector<std::string>>();
-  const auto index_meta_file = get_default_cpg_index_meta_filename(index_file);
+  const auto index_meta_file = get_default_cpg_index_metadata_filename(index_file);
 
   const auto joined = methylome_files | std::views::join_with(',');
   std::vector<std::tuple<std::string, std::string>> args_to_log{

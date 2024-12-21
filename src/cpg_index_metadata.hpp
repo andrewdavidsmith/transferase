@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_CPG_INDEX_META_HPP_
-#define SRC_CPG_INDEX_META_HPP_
+#ifndef SRC_CPG_INDEX_METADATA_HPP_
+#define SRC_CPG_INDEX_METADATA_HPP_
 
 #include <boost/describe.hpp>  // for BOOST_DESCRIBE_STRUCT
 
@@ -37,7 +37,7 @@
 #include <variant>  // IWYU pragma: keep
 #include <vector>
 
-enum class cpg_index_meta_error : std::uint32_t {
+enum class cpg_index_metadata_error : std::uint32_t {
   ok = 0,
   version_not_found = 1,
   host_not_found = 2,
@@ -52,15 +52,15 @@ enum class cpg_index_meta_error : std::uint32_t {
   n_values = 11,
 };
 
-// register cpg_index_meta_error as error code enum
+// register cpg_index_metadata_error as error code enum
 template <>
-struct std::is_error_code_enum<cpg_index_meta_error> : public std::true_type {};
+struct std::is_error_code_enum<cpg_index_metadata_error> : public std::true_type {};
 
 // category to provide text descriptions
-struct cpg_index_meta_error_category : std::error_category {
+struct cpg_index_metadata_error_category : std::error_category {
   const char *
   name() const noexcept override {
-    return "cpg_index_meta_error";
+    return "cpg_index_metadata_error";
   }
   std::string
   message(int code) const override {
@@ -85,12 +85,12 @@ struct cpg_index_meta_error_category : std::error_category {
 };
 
 inline std::error_code
-make_error_code(cpg_index_meta_error e) {
-  static auto category = cpg_index_meta_error_category{};
+make_error_code(cpg_index_metadata_error e) {
+  static auto category = cpg_index_metadata_error_category{};
   return std::error_code(std::to_underlying(e), category);
 }
 
-struct cpg_index_meta {
+struct cpg_index_metadata {
   static constexpr auto filename_extension{".cpg_idx.json"};
 
   std::string version;
@@ -107,7 +107,7 @@ struct cpg_index_meta {
 
   [[nodiscard]] static auto
   read(const std::string &json_filename)
-    -> std::tuple<cpg_index_meta, std::error_code>;
+    -> std::tuple<cpg_index_metadata, std::error_code>;
 
   [[nodiscard]] auto
   write(const std::string &json_filename) const -> std::error_code;
@@ -126,7 +126,7 @@ struct cpg_index_meta {
 };
 
 // clang-format off
-BOOST_DESCRIBE_STRUCT(cpg_index_meta, (),
+BOOST_DESCRIBE_STRUCT(cpg_index_metadata, (),
 (
  version,
  host,
@@ -143,19 +143,19 @@ BOOST_DESCRIBE_STRUCT(cpg_index_meta, (),
 // clang-format on
 
 template <>
-struct std::formatter<cpg_index_meta> : std::formatter<std::string> {
+struct std::formatter<cpg_index_metadata> : std::formatter<std::string> {
   auto
-  format(const cpg_index_meta &cm, std::format_context &ctx) const {
+  format(const cpg_index_metadata &cm, std::format_context &ctx) const {
     return std::formatter<std::string>::format(cm.tostring(), ctx);
   }
 };
 
 [[nodiscard]] auto
-get_default_cpg_index_meta_filename(const std::string &indexfile)
+get_default_cpg_index_metadata_filename(const std::string &indexfile)
   -> std::string;
 
 [[nodiscard]] auto
 get_assembly_from_filename(const std::string &filename,
                            std::error_code &ec) -> std::string;
 
-#endif  // SRC_CPG_INDEX_META_HPP_
+#endif  // SRC_CPG_INDEX_METADATA_HPP_

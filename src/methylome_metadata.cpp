@@ -24,7 +24,7 @@
 #include "methylome_metadata.hpp"
 
 #include "automatic_json.hpp"  // for tag_invoke
-#include "cpg_index_meta.hpp"
+#include "cpg_index_metadata.hpp"
 #include "methylome.hpp"
 #include "utilities.hpp"  // for get_time_as_string
 
@@ -66,7 +66,7 @@ methylome_metadata::init_env() -> std::error_code {
 }
 
 [[nodiscard]] auto
-methylome_metadata::init(const cpg_index_meta &cim, const methylome &meth,
+methylome_metadata::init(const cpg_index_metadata &cim, const methylome &meth,
                          const bool is_compressed)
   -> std::tuple<methylome_metadata, std::error_code> {
   // ADS: (todo) should there be a better way to get the "compression"

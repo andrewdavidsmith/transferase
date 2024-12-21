@@ -36,7 +36,7 @@
 #include <variant>
 #include <vector>
 
-struct cpg_index_meta;
+struct cpg_index_metadata;
 
 struct genomic_interval {
   static constexpr auto not_a_chrom{-1};
@@ -48,7 +48,7 @@ struct genomic_interval {
   operator<=>(const genomic_interval &) const = default;
 
   [[nodiscard]] static auto
-  load(const cpg_index_meta &index, const std::string &filename)
+  load(const cpg_index_metadata &index, const std::string &filename)
     -> std::tuple<std::vector<genomic_interval>, std::error_code>;
 };
 
@@ -56,7 +56,7 @@ struct genomic_interval {
 // chroms is arbitrary; then they are ordered by first coord position
 // and second position is not relevant.
 [[nodiscard]] auto
-intervals_sorted(const cpg_index_meta &cim,
+intervals_sorted(const cpg_index_metadata &cim,
                  const std::vector<genomic_interval> &gis) -> bool;
 
 [[nodiscard]] inline auto

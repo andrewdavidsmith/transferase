@@ -24,7 +24,7 @@
 #ifndef SRC_GENOMIC_INTERVAL_OUTPUT_HPP_
 #define SRC_GENOMIC_INTERVAL_OUTPUT_HPP_
 
-#include "cpg_index_meta.hpp"
+#include "cpg_index_metadata.hpp"
 #include "genomic_interval.hpp"
 
 #include <algorithm>  // std::min
@@ -47,7 +47,7 @@
 struct counts_res_cov;
 
 [[nodiscard]] auto
-write_intervals(const std::string &outfile, const cpg_index_meta &cim,
+write_intervals(const std::string &outfile, const cpg_index_metadata &cim,
                 const std::vector<genomic_interval> &gis,
                 std::ranges::input_range auto &&results) -> std::error_code {
   static constexpr auto buf_size{512};
@@ -106,7 +106,7 @@ write_intervals(const std::string &outfile, const cpg_index_meta &cim,
 }
 
 [[nodiscard]] auto
-write_intervals_bedgraph(const std::string &outfile, const cpg_index_meta &cim,
+write_intervals_bedgraph(const std::string &outfile, const cpg_index_metadata &cim,
                          const std::vector<genomic_interval> &gis,
                          std::ranges::input_range auto &&scores)
   -> std::error_code {
@@ -163,7 +163,7 @@ write_intervals_bedgraph(const std::string &outfile, const cpg_index_meta &cim,
 [[nodiscard]] inline auto
 write_output(const std::string &outfile,
              const std::vector<genomic_interval> &gis,
-             const cpg_index_meta &cim, const auto &results,
+             const cpg_index_metadata &cim, const auto &results,
              const bool write_scores) -> std::error_code {
   if (!write_scores)
     return write_intervals(outfile, cim, gis, results);
@@ -180,7 +180,7 @@ write_output(const std::string &outfile,
 }
 
 [[nodiscard]] auto
-write_bins(const std::string &outfile, const cpg_index_meta &cim,
+write_bins(const std::string &outfile, const cpg_index_metadata &cim,
            const std::uint32_t bin_size,
            const auto &results) -> std::error_code {
   static constexpr auto buf_size{512};
@@ -239,7 +239,7 @@ write_bins(const std::string &outfile, const cpg_index_meta &cim,
 }
 
 [[nodiscard]] auto
-write_bins_bedgraph(const std::string &outfile, const cpg_index_meta &cim,
+write_bins_bedgraph(const std::string &outfile, const cpg_index_metadata &cim,
                     const std::uint32_t bin_size,
                     std::ranges::input_range auto &&scores) -> std::error_code {
   static constexpr auto score_precision{6};
@@ -292,7 +292,7 @@ write_bins_bedgraph(const std::string &outfile, const cpg_index_meta &cim,
 }
 
 [[nodiscard]] static inline auto
-write_output(const std::string &outfile, const cpg_index_meta &cim,
+write_output(const std::string &outfile, const cpg_index_metadata &cim,
              const std::uint32_t bin_size, const auto &results,
              const bool write_scores) {
   if (!write_scores)

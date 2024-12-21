@@ -64,7 +64,7 @@ request_handler::add_response_size_for_bins(const request_header &req_hdr,
     return;
   }
 
-  const auto [cim, meta_err] = indexes.get_cpg_index_meta(meth_meta->assembly);
+  const auto [cim, meta_err] = indexes.get_cpg_index_metadata(meth_meta->assembly);
   if (meta_err) {
     lgr.error("Failed to load cpg index metadata for {}: {}",
               meth_meta->assembly, meta_err);
