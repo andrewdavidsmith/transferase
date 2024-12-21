@@ -43,10 +43,10 @@ struct request_handler {
   request_handler &
   operator=(const request_handler &) = delete;
 
-  explicit request_handler(const std::string &methylome_dir,
-                           const std::string &index_file_dir,
-                           const std::uint32_t max_live_methylomes,
-                           std::error_code &ec) :
+  request_handler(const std::string &methylome_dir,
+                  const std::string &index_file_dir,
+                  const std::uint32_t max_live_methylomes,
+                  std::error_code &ec) :
     methylome_dir{methylome_dir}, index_file_dir{index_file_dir},
     ms(max_live_methylomes, methylome_dir), indexes(index_file_dir, ec) {}
 
