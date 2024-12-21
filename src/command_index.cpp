@@ -48,7 +48,7 @@ xfrase index -v debug -x hg38.cpg_idx -g hg38.fa
 )";
 
 #include "cpg_index.hpp"
-#include "cpg_index_meta.hpp"
+#include "cpg_index_metadata.hpp"
 #include "logger.hpp"
 #include "utilities.hpp"
 #include "xfrase_error.hpp"  // IWYU pragma: keep
@@ -127,7 +127,7 @@ command_index_main(int argc, char *argv[]) -> int {
     return EXIT_FAILURE;
   }
 
-  const auto metadata_output = get_default_cpg_index_meta_filename(index_file);
+  const auto metadata_output = get_default_cpg_index_metadata_filename(index_file);
 
   std::vector<std::tuple<std::string, std::string>> args_to_log{
     // clang-format off

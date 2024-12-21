@@ -36,7 +36,7 @@
 #include <vector>
 
 struct genomic_interval;
-struct cpg_index_meta;
+struct cpg_index_metadata;
 
 struct cpg_index {
   // includes the dot because that's how std::filesystem::path works
@@ -50,7 +50,7 @@ struct cpg_index {
 #endif
 
   [[nodiscard]] static auto
-  read(const cpg_index_meta &cim,
+  read(const cpg_index_metadata &cim,
        const std::string &index_file) -> std::tuple<cpg_index, std::error_code>;
   [[nodiscard]] auto
   write(const std::string &index_file) const -> std::error_code;
@@ -68,12 +68,12 @@ struct cpg_index {
     -> std::vector<std::pair<std::uint32_t, std::uint32_t>>;
 
   [[nodiscard]] auto
-  get_offsets(const std::int32_t ch_id, const cpg_index_meta &cim,
+  get_offsets(const std::int32_t ch_id, const cpg_index_metadata &cim,
               const std::vector<std::pair<std::uint32_t, std::uint32_t>> &pos)
     const -> std::vector<std::pair<std::uint32_t, std::uint32_t>>;
 
   [[nodiscard]] auto
-  get_offsets(const cpg_index_meta &cim,
+  get_offsets(const cpg_index_metadata &cim,
               const std::vector<genomic_interval> &gis) const
     -> std::vector<std::pair<std::uint32_t, std::uint32_t>>;
 
@@ -82,15 +82,15 @@ struct cpg_index {
 
 [[nodiscard]] auto
 initialize_cpg_index(const std::string &genome_file)
-  -> std::tuple<cpg_index, cpg_index_meta, std::error_code>;
+  -> std::tuple<cpg_index, cpg_index_metadata, std::error_code>;
 
 [[nodiscard]] auto
 read_cpg_index(const std::string &index_file)
-  -> std::tuple<cpg_index, cpg_index_meta, std::error_code>;
+  -> std::tuple<cpg_index, cpg_index_metadata, std::error_code>;
 
 [[nodiscard]] auto
 read_cpg_index(const std::string &index_file,
                const std::string &index_meta_file)
-  -> std::tuple<cpg_index, cpg_index_meta, std::error_code>;
+  -> std::tuple<cpg_index, cpg_index_metadata, std::error_code>;
 
 #endif  // SRC_CPG_INDEX_HPP_

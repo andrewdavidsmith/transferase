@@ -89,7 +89,7 @@ make_error_code(methylome_metadata_error e) {
 }
 
 struct methylome;
-struct cpg_index_meta;
+struct cpg_index_metadata;
 
 struct methylome_metadata {
   static constexpr auto filename_extension{".m16.json"};
@@ -118,7 +118,7 @@ struct methylome_metadata {
 
   // ADS: (todo) think of a better way to get "compression" status
   [[nodiscard]] static auto
-  init(const cpg_index_meta &cim, const methylome &meth,
+  init(const cpg_index_metadata &cim, const methylome &meth,
        const bool is_compressed)
     -> std::tuple<methylome_metadata, std::error_code>;
 

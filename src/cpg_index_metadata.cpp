@@ -21,7 +21,7 @@
  * SOFTWARE.
  */
 
-#include "cpg_index_meta.hpp"
+#include "cpg_index_metadata.hpp"
 
 #include "utilities.hpp"  // for get_time_as_string
 
@@ -50,7 +50,7 @@
 #include <vector>
 
 [[nodiscard]] auto
-cpg_index_meta::init_env() -> std::error_code {
+cpg_index_metadata::init_env() -> std::error_code {
   boost::system::error_code boost_err;
   host = boost::asio::ip::host_name(boost_err);
   if (boost_err)
@@ -68,7 +68,7 @@ cpg_index_meta::init_env() -> std::error_code {
 }
 
 [[nodiscard]] auto
-cpg_index_meta::get_n_bins(const std::uint32_t bin_size) const
+cpg_index_metadata::get_n_bins(const std::uint32_t bin_size) const
   -> std::uint32_t {
   const auto get_n_bins_for_chrom = [&](const auto chrom_size) {
     return (chrom_size + bin_size) / bin_size;
@@ -79,7 +79,7 @@ cpg_index_meta::get_n_bins(const std::uint32_t bin_size) const
 }
 
 [[nodiscard]] auto
-cpg_index_meta::tostring() const -> std::string {
+cpg_index_metadata::tostring() const -> std::string {
   std::ostringstream o;
   if (!(o << boost::json::value_from(*this)))
     o.clear();
@@ -87,7 +87,7 @@ cpg_index_meta::tostring() const -> std::string {
 }
 
 [[nodiscard]] auto
-cpg_index_meta::get_n_cpgs_chrom() const -> std::vector<std::uint32_t> {
+cpg_index_metadata::get_n_cpgs_chrom() const -> std::vector<std::uint32_t> {
   std::vector<std::uint32_t> n_cpgs_chrom(chrom_offset);
   n_cpgs_chrom.push_back(n_cpgs);
   std::adjacent_difference(std::cbegin(n_cpgs_chrom), std::cend(n_cpgs_chrom),
@@ -98,31 +98,31 @@ cpg_index_meta::get_n_cpgs_chrom() const -> std::vector<std::uint32_t> {
 }
 
 [[nodiscard]] auto
-cpg_index_meta::read(const std::string &json_filename)
-  -> std::tuple<cpg_index_meta, std::error_code> {
+cpg_index_metadata::read(const std::string &json_filename)
+  -> std::tuple<cpg_index_metadata, std::error_code> {
   std::ifstream in(json_filename);
   if (!in)
-    return {cpg_index_meta{}, std::make_error_code(std::errc(errno))};
+    return {cpg_index_metadata{}, std::make_error_code(std::errc(errno))};
 
   std::error_code ec;
   const auto filesize = std::filesystem::file_size(json_filename, ec);
   if (ec)
-    return {cpg_index_meta{}, ec};
+    return {cpg_index_metadata{}, ec};
 
   std::string payload(filesize, '\0');
   if (!in.read(payload.data(), filesize))
-    return {cpg_index_meta{}, std::make_error_code(std::errc(errno))};
+    return {cpg_index_metadata{}, std::make_error_code(std::errc(errno))};
 
-  cpg_index_meta cim;
+  cpg_index_metadata cim;
   boost::json::parse_into(cim, payload, ec);
   if (ec)
-    return {cpg_index_meta{}, cpg_index_meta_error::failure_parsing_json};
+    return {cpg_index_metadata{}, cpg_index_metadata_error::failure_parsing_json};
 
   return {std::move(cim), {}};
 }
 
 [[nodiscard]] auto
-cpg_index_meta::write(const std::string &json_filename) const
+cpg_index_metadata::write(const std::string &json_filename) const
   -> std::error_code {
   std::ofstream out(json_filename);
   if (!out)
@@ -133,7 +133,7 @@ cpg_index_meta::write(const std::string &json_filename) const
 }
 
 [[nodiscard]] auto
-get_default_cpg_index_meta_filename(const std::string &indexfile)
+get_default_cpg_index_metadata_filename(const std::string &indexfile)
   -> std::string {
   return std::format("{}.json", indexfile);
 }

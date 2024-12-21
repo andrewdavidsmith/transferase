@@ -24,7 +24,7 @@
 #include "cpg_index_set.hpp"
 
 #include "cpg_index.hpp"
-#include "cpg_index_meta.hpp"
+#include "cpg_index_metadata.hpp"
 #include "logger.hpp"
 #include "xfrase_error.hpp"  // IWYU pragma: keep
 
@@ -40,22 +40,22 @@
 #include <vector>
 
 [[nodiscard]] auto
-cpg_index_set::get_cpg_index_meta(const std::string &assembly_name)
-  -> std::tuple<const cpg_index_meta &, std::error_code> {
-  const auto itr = assembly_to_cpg_index_meta.find(assembly_name);
-  if (itr == std::cend(assembly_to_cpg_index_meta))
+cpg_index_set::get_cpg_index_metadata(const std::string &assembly_name)
+  -> std::tuple<const cpg_index_metadata &, std::error_code> {
+  const auto itr = assembly_to_cpg_index_metadata.find(assembly_name);
+  if (itr == std::cend(assembly_to_cpg_index_metadata))
     return {{}, std::make_error_code(std::errc::invalid_argument)};
   return {itr->second, {}};
 }
 
 [[nodiscard]] auto
 cpg_index_set::get_cpg_index_with_meta(const std::string &assembly_name)
-  -> std::tuple<const cpg_index &, const cpg_index_meta &, std::error_code> {
+  -> std::tuple<const cpg_index &, const cpg_index_metadata &, std::error_code> {
   const auto itr_index = assembly_to_cpg_index.find(assembly_name);
   if (itr_index == std::cend(assembly_to_cpg_index))
     return {{}, {}, std::make_error_code(std::errc::invalid_argument)};
-  const auto itr_meta = assembly_to_cpg_index_meta.find(assembly_name);
-  if (itr_meta == std::cend(assembly_to_cpg_index_meta))
+  const auto itr_meta = assembly_to_cpg_index_metadata.find(assembly_name);
+  if (itr_meta == std::cend(assembly_to_cpg_index_metadata))
     return {{}, {}, std::make_error_code(std::errc::invalid_argument)};
   return {itr_index->second, itr_meta->second, {}};
 }
@@ -69,7 +69,7 @@ cpg_index_set::cpg_index_set(const std::string &cpg_index_directory,
   std::regex assembly_re(assembly_ptrn);
 
   std::unordered_map<std::string, cpg_index> assembly_to_cpg_index_in;
-  std::unordered_map<std::string, cpg_index_meta> assembly_to_cpg_index_meta_in;
+  std::unordered_map<std::string, cpg_index_metadata> assembly_to_cpg_index_metadata_in;
 
   const std::filesystem::path idx_dir{cpg_index_directory};
   for (auto const &dir_entry : std::filesystem::directory_iterator{idx_dir}) {
@@ -82,15 +82,15 @@ cpg_index_set::cpg_index_set(const std::string &cpg_index_directory,
 
         // read the cpg index metadata
         const auto meta_file =
-          get_default_cpg_index_meta_filename(index_filename);
-        const auto [cim, meta_ec] = cpg_index_meta::read(meta_file);
+          get_default_cpg_index_metadata_filename(index_filename);
+        const auto [cim, meta_ec] = cpg_index_metadata::read(meta_file);
         if (meta_ec) {
           logger::instance().error("Failed to read cpg index metadata {}: {}",
                                    meta_file, meta_ec);
           ec = meta_ec;
           return;
         }
-        assembly_to_cpg_index_meta_in.emplace(assembly, cim);
+        assembly_to_cpg_index_metadata_in.emplace(assembly, cim);
 
         // read the cpg index
         const auto [index, index_ec] = cpg_index::read(cim, index_filename);
@@ -106,5 +106,5 @@ cpg_index_set::cpg_index_set(const std::string &cpg_index_directory,
   }
 
   assembly_to_cpg_index = std::move(assembly_to_cpg_index_in);
-  assembly_to_cpg_index_meta = std::move(assembly_to_cpg_index_meta_in);
+  assembly_to_cpg_index_metadata = std::move(assembly_to_cpg_index_metadata_in);
 }

@@ -24,7 +24,7 @@
 #include "cpg_index.hpp"
 
 #include "cpg_index_impl.hpp"
-#include "cpg_index_meta.hpp"
+#include "cpg_index_metadata.hpp"
 #include "genomic_interval.hpp"
 #include "hash.hpp"  // for update_adler
 #include "xfrase_error.hpp"
@@ -145,7 +145,7 @@ get_chroms(const char *data, const std::size_t sz,
 
 [[nodiscard]] STATIC auto
 initialize_cpg_index_plain(const std::string &genome_filename)
-  -> std::tuple<cpg_index, cpg_index_meta, std::error_code> {
+  -> std::tuple<cpg_index, cpg_index_metadata, std::error_code> {
   genome_file gf = mmap_genome(genome_filename);  // memory map the genome file
   if (gf.ec)
     return {{}, {}, gf.ec};
@@ -168,7 +168,7 @@ initialize_cpg_index_plain(const std::string &genome_filename)
     return a.second < b.second;
   });
 
-  cpg_index_meta meta;
+  cpg_index_metadata meta;
   meta.chrom_order =
     chrom_sorter | std::views::elements<1> | std::ranges::to<std::vector>();
 
@@ -227,7 +227,7 @@ initialize_cpg_index_plain(const std::string &genome_filename)
 
 [[nodiscard]] STATIC auto
 initialize_cpg_index_gzip(const std::string &genome_filename)
-  -> std::tuple<cpg_index, cpg_index_meta, std::error_code> {
+  -> std::tuple<cpg_index, cpg_index_metadata, std::error_code> {
   const auto [data, gz_err] = read_gzfile_into_buffer(genome_filename);
   if (gz_err)
     return {{}, {}, cpg_index_code::failure_processing_genome_file};
@@ -251,7 +251,7 @@ initialize_cpg_index_gzip(const std::string &genome_filename)
     return a.second < b.second;
   });
 
-  cpg_index_meta meta;
+  cpg_index_metadata meta;
   meta.chrom_order =
     chrom_sorter | std::views::elements<1> | std::ranges::to<std::vector>();
 
@@ -307,14 +307,14 @@ initialize_cpg_index_gzip(const std::string &genome_filename)
 
 [[nodiscard]] auto
 initialize_cpg_index(const std::string &genome_filename)
-  -> std::tuple<cpg_index, cpg_index_meta, std::error_code> {
+  -> std::tuple<cpg_index, cpg_index_metadata, std::error_code> {
   return is_gzip_file(genome_filename)
            ? initialize_cpg_index_gzip(genome_filename)
            : initialize_cpg_index_plain(genome_filename);
 }
 
 [[nodiscard]] auto
-cpg_index::read(const cpg_index_meta &cim, const std::string &index_file)
+cpg_index::read(const cpg_index_metadata &cim, const std::string &index_file)
   -> std::tuple<cpg_index, std::error_code> {
   std::ifstream in(index_file, std::ios::binary);
   if (!in)
@@ -408,7 +408,7 @@ cpg_index::get_offsets_within_chrom(
 
 [[nodiscard]] auto
 cpg_index::get_offsets(
-  const std::int32_t ch_id, const cpg_index_meta &meta,
+  const std::int32_t ch_id, const cpg_index_metadata &meta,
   const std::vector<std::pair<std::uint32_t, std::uint32_t>> &queries) const
   -> std::vector<std::pair<std::uint32_t, std::uint32_t>> {
   assert(std::ranges::is_sorted(queries) && ch_id >= 0 &&
@@ -424,7 +424,7 @@ cpg_index::get_offsets(
 }
 
 [[nodiscard]] auto
-cpg_index::get_offsets(const cpg_index_meta &meta,
+cpg_index::get_offsets(const cpg_index_metadata &meta,
                        const std::vector<genomic_interval> &gis) const
   -> std::vector<std::pair<std::uint32_t, std::uint32_t>> {
   const auto same_chrom = [](const genomic_interval &a,
@@ -469,23 +469,23 @@ cpg_index::get_n_cpgs() const -> std::uint32_t {
 [[nodiscard]] auto
 read_cpg_index(const std::string &index_file,
                const std::string &index_meta_file)
-  -> std::tuple<cpg_index, cpg_index_meta, std::error_code> {
+  -> std::tuple<cpg_index, cpg_index_metadata, std::error_code> {
   // read the cpg_index metadata first
-  const auto [cim, meta_err] = cpg_index_meta::read(index_meta_file);
+  const auto [cim, meta_err] = cpg_index_metadata::read(index_meta_file);
   if (meta_err)
-    return {cpg_index{}, cpg_index_meta{}, meta_err};
+    return {cpg_index{}, cpg_index_metadata{}, meta_err};
 
   // read the cpg_index using its metadata
   const auto [ci, index_err] = cpg_index::read(cim, index_file);
   if (index_err)
-    return {cpg_index{}, cpg_index_meta{}, index_err};
+    return {cpg_index{}, cpg_index_metadata{}, index_err};
 
   return {std::move(ci), std::move(cim), {}};
 }
 
 [[nodiscard]] auto
 read_cpg_index(const std::string &index_file)
-  -> std::tuple<cpg_index, cpg_index_meta, std::error_code> {
-  const auto index_meta_file = get_default_cpg_index_meta_filename(index_file);
+  -> std::tuple<cpg_index, cpg_index_metadata, std::error_code> {
+  const auto index_meta_file = get_default_cpg_index_metadata_filename(index_file);
   return read_cpg_index(index_file, index_meta_file);
 }

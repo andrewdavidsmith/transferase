@@ -50,7 +50,7 @@ xfrase format -x hg38.cpg_idx -m SRX012345.xsym.gz -o SRX012345.m16
 
 #include "counts_file_formats.hpp"
 #include "cpg_index.hpp"
-#include "cpg_index_meta.hpp"
+#include "cpg_index_metadata.hpp"
 #include "logger.hpp"
 #include "methylome.hpp"
 #include "methylome_metadata.hpp"
@@ -136,7 +136,7 @@ skip_absent_cpgs(const std::uint64_t end_pos, const cpg_index::vec &idx,
 }
 
 static inline auto
-get_ch_id(const cpg_index_meta &cim,
+get_ch_id(const cpg_index_metadata &cim,
           const std::string &chrom_name) -> std::int32_t {
   const auto ch_id = cim.chrom_index.find(chrom_name);
   if (ch_id == cend(cim.chrom_index))
@@ -147,7 +147,7 @@ get_ch_id(const cpg_index_meta &cim,
 // ADS: this function is tied to the specifics of dnmtools::xcounts
 // code, and likely needs a review
 static auto
-verify_header_line(const cpg_index_meta &cim,
+verify_header_line(const cpg_index_metadata &cim,
                    const std::string &line) -> std::error_code {
   // ignore the version line and the header end line
   if (line.substr(0, 9) == "#DNMTOOLS" || size(line) == 1)
@@ -179,7 +179,7 @@ verify_header_line(const cpg_index_meta &cim,
 
 static auto
 process_cpg_sites(const std::string &infile, const cpg_index &index,
-                  const cpg_index_meta &cim)
+                  const cpg_index_metadata &cim)
   -> std::tuple<methylome, std::error_code> {
   auto &lgr = logger::instance();
 
@@ -268,7 +268,7 @@ process_cpg_sites(const std::string &infile, const cpg_index &index,
 
 static auto
 process_cpg_sites_counts(const std::string &infile, const cpg_index &index,
-                         const cpg_index_meta &cim)
+                         const cpg_index_metadata &cim)
   -> std::tuple<methylome, std::error_code> {
   auto &lgr = logger::instance();
 

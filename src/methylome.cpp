@@ -23,7 +23,7 @@
 
 #include "methylome.hpp"
 
-#include "cpg_index_meta.hpp"
+#include "cpg_index_metadata.hpp"
 #include "hash.hpp"
 #include "methylome_metadata.hpp"
 #include "methylome_results_types.hpp"
@@ -277,7 +277,7 @@ bin_counts_impl(cpg_index::vec::const_iterator &posn_itr,
 template <typename T>
 [[nodiscard]] static auto
 get_bins_impl(const std::uint32_t bin_size, const cpg_index &index,
-              const cpg_index_meta &meta,
+              const cpg_index_metadata &meta,
               const methylome::vec &cpgs) -> std::vector<T> {
   std::vector<T> results;  // ADS TODO: reserve n_bins
 
@@ -298,14 +298,14 @@ get_bins_impl(const std::uint32_t bin_size, const cpg_index &index,
 
 [[nodiscard]] auto
 methylome::get_bins(const std::uint32_t bin_size, const cpg_index &index,
-                    const cpg_index_meta &meta) const
+                    const cpg_index_metadata &meta) const
   -> std::vector<counts_res> {
   return get_bins_impl<counts_res>(bin_size, index, meta, cpgs);
 }
 
 [[nodiscard]] auto
 methylome::get_bins_cov(const std::uint32_t bin_size, const cpg_index &index,
-                        const cpg_index_meta &meta) const
+                        const cpg_index_metadata &meta) const
   -> std::vector<counts_res_cov> {
   return get_bins_impl<counts_res_cov>(bin_size, index, meta, cpgs);
 }

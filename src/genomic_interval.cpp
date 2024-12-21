@@ -24,7 +24,7 @@
 #include "genomic_interval.hpp"
 #include "genomic_interval_impl.hpp"
 
-#include "cpg_index_meta.hpp"  // for cpg_index_meta
+#include "cpg_index_metadata.hpp"  // for cpg_index_metadata
 
 #include <algorithm>
 #include <cerrno>
@@ -39,7 +39,7 @@
 #include <vector>
 
 [[nodiscard]] STATIC auto
-parse(const cpg_index_meta &cim, const std::string &line,
+parse(const cpg_index_metadata &cim, const std::string &line,
       std::error_code &ec) -> genomic_interval {
   auto cursor = line.data();
   const auto line_sz = std::size(line);
@@ -82,7 +82,7 @@ parse(const cpg_index_meta &cim, const std::string &line,
 }
 
 [[nodiscard]] auto
-genomic_interval::load(const cpg_index_meta &cim, const std::string &filename)
+genomic_interval::load(const cpg_index_metadata &cim, const std::string &filename)
   -> std::tuple<std::vector<genomic_interval>, std::error_code> {
   std::ifstream in{filename};
   if (!in)
@@ -100,7 +100,7 @@ genomic_interval::load(const cpg_index_meta &cim, const std::string &filename)
 }
 
 [[nodiscard]] auto
-intervals_sorted(const cpg_index_meta &cim,
+intervals_sorted(const cpg_index_metadata &cim,
                  const std::vector<genomic_interval> &gis) -> bool {
   // check that chroms appear consecutively
   std::vector<std::uint32_t> chroms_seen(std::size(cim.chrom_order), 0);
