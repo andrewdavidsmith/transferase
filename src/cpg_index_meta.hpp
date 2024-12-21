@@ -105,23 +105,6 @@ struct cpg_index_meta {
   std::vector<std::uint32_t> chrom_size;
   std::vector<std::uint32_t> chrom_offset;
 
-  auto
-  operator<=>(const cpg_index_meta &other) const {
-    // clang-format off
-    if (version != other.version) return version <=> other.version;
-    if (host != other.host) return host <=> other.host;
-    if (user != other.user) return user <=> other.user;
-    if (creation_time != other.creation_time) return creation_time <=> other.creation_time;
-    if (index_hash != other.index_hash) return index_hash <=> other.index_hash;
-    if (assembly != other.assembly) return assembly <=> other.assembly;
-    if (n_cpgs != other.n_cpgs) return n_cpgs <=> other.n_cpgs;
-    // ignoring the unordered_map chrom_index!
-    if (chrom_order != other.chrom_order) return chrom_order <=> other.chrom_order;
-    if (chrom_size != other.chrom_size) return chrom_size <=> other.chrom_size;
-    return chrom_offset <=> other.chrom_offset;
-    // clang-format on
-  }
-
   [[nodiscard]] static auto
   read(const std::string &json_filename)
     -> std::tuple<cpg_index_meta, std::error_code>;
