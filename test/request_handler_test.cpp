@@ -184,6 +184,29 @@ TEST_F(request_handler_mock, handle_header_success) {
   EXPECT_EQ(std::size(mock_request_handler->ms.accession_to_methylome), 1);
 }
 
+TEST_F(request_handler_mock, handle_header_bad_state) {
+  static constexpr auto ok_accession = "eFlareon_brain";
+  static constexpr auto malformed_accession = "eFlareon_..brain";
+  static constexpr auto valid_rq_type = request_header::request_type::counts;
+  // ADS: (below) not a valid type
+  static constexpr auto invalid_rq_type =
+    static_cast<request_header::request_type>(1000);
+  static constexpr auto eFlareon_methylome_size = 234;
+
+  request_header req_hdr{malformed_accession, eFlareon_methylome_size,
+                         valid_rq_type};
+  response_header resp_hdr;
+  mock_request_handler->handle_header(req_hdr, resp_hdr);
+
+  EXPECT_EQ(resp_hdr.status, server_response_code::invalid_accession);
+
+  req_hdr =
+    request_header{ok_accession, eFlareon_methylome_size, invalid_rq_type};
+  mock_request_handler->handle_header(req_hdr, resp_hdr);
+
+  EXPECT_EQ(resp_hdr.status, server_response_code::invalid_request_type);
+}
+
 TEST_F(request_handler_mock, handle_header_failure) {
   static constexpr auto eFlareon_methylome_size = 234;
   static constexpr auto non_existent_accession{"eFlareon_brainZZZ"};
