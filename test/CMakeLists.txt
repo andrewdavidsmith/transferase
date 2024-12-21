@@ -20,14 +20,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-cmake_minimum_required(VERSION 3.30)
-
-add_compile_options(-Wall -Wextra -Wpedantic -Werror -Wfatal-errors)
-
-include_directories(${PROJECT_SOURCE_DIR}/src)
-
 find_package(GTest REQUIRED)
 include(GoogleTest)
+
+include_directories(${PROJECT_SOURCE_DIR}/src)
 
 add_executable(zlib_adapter_test zlib_adapter_test.cpp)
 target_link_libraries(zlib_adapter_test
@@ -236,19 +232,11 @@ foreach(target ${EXECUTABLE_TARGETS})
   target_compile_definitions(${target} PRIVATE UNIT_TEST)
 endforeach()
 
-if(USE_STATIC_LIBS)
-  add_library(static_target INTERFACE)
-  target_link_options(static_target INTERFACE -static-libgcc -static-libstdc++)
-  foreach(target ${EXECUTABLE_TARGETS})
-    target_link_libraries(${target} PRIVATE static_target)
-  endforeach()
-endif()
-
 foreach(target ${EXECUTABLE_TARGETS})
   gtest_discover_tests(${target})
 endforeach()
 
-# Add compile definitions to specific targets
+# Ensure test data dir is in the right place relative to ctest paths
 file(CREATE_LINK
   ${PROJECT_SOURCE_DIR}/test/data
   ${PROJECT_BINARY_DIR}/test/data
