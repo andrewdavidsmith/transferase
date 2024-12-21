@@ -36,6 +36,18 @@ target_link_libraries(zlib_adapter_test
  GTest::Main
  ZLIB::ZLIB
  zlib_adapter
+ utilities
+)
+
+add_executable(download_test download_test.cpp)
+target_link_libraries(download_test
+ PRIVATE
+ GTest::GTest
+ GTest::Main
+ Boost::boost
+ Boost::context
+ download
+ utilities
 )
 
 add_executable(cpg_index_meta_test cpg_index_meta_test.cpp)
@@ -47,6 +59,7 @@ target_link_libraries(cpg_index_meta_test
  utilities
  cpg_index_meta
 )
+target_include_directories(cpg_index_meta_test PRIVATE "${PROJECT_BINARY_DIR}")
 
 add_executable(cpg_index_test cpg_index_test.cpp)
 target_link_libraries(cpg_index_test
@@ -118,6 +131,21 @@ target_link_libraries(methylome_set_test
  methylome_set
 )
 
+add_executable(cpg_index_set_test cpg_index_set_test.cpp)
+target_link_libraries(cpg_index_set_test
+ PRIVATE
+ GTest::GTest
+ GTest::Main
+ Boost::json
+ ZLIB::ZLIB
+ cpg_index
+ zlib_adapter
+ logger
+ utilities
+ cpg_index_meta
+ cpg_index_set
+)
+
 add_executable(request_handler_test request_handler_test.cpp)
 target_link_libraries(request_handler_test
  PRIVATE
@@ -130,6 +158,7 @@ target_link_libraries(request_handler_test
  methylome
  utilities
  methylome_metadata
+ genomic_interval
  methylome_set
  cpg_index
  cpg_index_meta
@@ -187,6 +216,8 @@ target_link_libraries(command_intervals_test
 
 set(EXECUTABLE_TARGETS
   zlib_adapter_test
+  download_test
+  cpg_index_set_test
   cpg_index_meta_test
   counts_file_formats_test
   cpg_index_test
