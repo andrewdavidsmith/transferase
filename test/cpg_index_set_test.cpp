@@ -62,18 +62,18 @@ protected:
   std::unique_ptr<cpg_index_set> cpg_index_set_ptr;
 };
 
-TEST_F(cpg_index_set_mock, get_cpg_index_meta) {
+TEST_F(cpg_index_set_mock, get_cpg_index_metadata) {
   static constexpr auto species = "tProrsus1";
   std::error_code unused_ec{};
-  const auto meta_and_ec = cpg_index_set_ptr->get_cpg_index_meta(species);
+  const auto meta_and_ec = cpg_index_set_ptr->get_cpg_index_metadata(species);
   EXPECT_FALSE(std::get<1>(meta_and_ec));
   EXPECT_EQ(std::size(cpg_index_set_ptr->assembly_to_cpg_index), 2);
 }
 
 TEST_F(cpg_index_set_mock, get_cpg_index_invalid_assembly) {
-  const auto [cpg_index_ref, cpg_index_meta_ref, ec] =
+  const auto [cpg_index_ref, cpg_index_metadata_ref, ec] =
     cpg_index_set_ptr->get_cpg_index_with_meta("invalid.assembly");
   std::ignore = cpg_index_ref;
-  std::ignore = cpg_index_meta_ref;
+  std::ignore = cpg_index_metadata_ref;
   EXPECT_EQ(ec, std::errc::invalid_argument);
 }
