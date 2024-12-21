@@ -51,10 +51,13 @@ write_intervals(const std::string &outfile, const cpg_index_meta &cim,
                 const std::vector<genomic_interval> &gis,
                 std::ranges::input_range auto &&results) -> std::error_code {
   static constexpr auto buf_size{512};
+  // ADS: modified_buf_size is to ensure we can't go past the end of
+  // the actual buffer with the (*tcr.ptr++) below
+  static constexpr auto modified_buf_size{buf_size - 5};
   static constexpr auto delim{'\t'};
 
   std::array<char, buf_size> buf{};
-  const auto buf_end = buf.data() + buf_size;
+  const auto buf_end = buf.data() + modified_buf_size;
 
   using counts_res_type =
     typename std::remove_cvref_t<decltype(results)>::value_type;
@@ -109,10 +112,13 @@ write_intervals_bedgraph(const std::string &outfile, const cpg_index_meta &cim,
   -> std::error_code {
   static constexpr auto score_precision{6};
   static constexpr auto buf_size{512};
+  // ADS: modified_buf_size is to ensure we can't go past the end of
+  // the actual buffer with the (*tcr.ptr++) below
+  static constexpr auto modified_buf_size{buf_size - 3};
   static constexpr auto delim{'\t'};
 
   std::array<char, buf_size> buf{};
-  const auto buf_end = buf.data() + buf_size;
+  const auto buf_end = buf.data() + modified_buf_size;
 
   using gis_score = std::pair<const genomic_interval &, const double>;
   const auto same_chrom = [](const gis_score &a, const gis_score &b) {
@@ -154,18 +160,40 @@ write_intervals_bedgraph(const std::string &outfile, const cpg_index_meta &cim,
   return {};
 }
 
+[[nodiscard]] inline auto
+write_output(const std::string &outfile,
+             const std::vector<genomic_interval> &gis,
+             const cpg_index_meta &cim, const auto &results,
+             const bool write_scores) -> std::error_code {
+  if (!write_scores)
+    return write_intervals(outfile, cim, gis, results);
+  // ADS: counting intervals that have no reads
+  std::uint32_t zero_coverage = 0;
+  const auto to_score = [&zero_coverage](const auto &x) {
+    zero_coverage += (x.n_meth + x.n_unmeth == 0);
+    return x.n_meth / std::max(1.0, static_cast<double>(x.n_meth + x.n_unmeth));
+  };
+  logger::instance().debug("Number of intervals without reads: {}",
+                           zero_coverage);
+  return write_intervals_bedgraph(outfile, cim, gis,
+                                  std::views::transform(results, to_score));
+}
+
 [[nodiscard]] auto
 write_bins(const std::string &outfile, const cpg_index_meta &cim,
            const std::uint32_t bin_size,
            const auto &results) -> std::error_code {
   static constexpr auto buf_size{512};
+  // ADS: modified_buf_size is to ensure we can't go past the end of
+  // the actual buffer with the (*tcr.ptr++) below
+  static constexpr auto modified_buf_size{buf_size - 5};
   static constexpr auto delim{'\t'};
 
   using counts_res_type =
     typename std::remove_cvref_t<decltype(results)>::value_type;
 
   std::array<char, buf_size> buf{};
-  const auto buf_end = buf.data() + buf_size;
+  const auto buf_end = buf.data() + modified_buf_size;
 
   std::ofstream out(outfile);
   if (!out)
@@ -216,10 +244,13 @@ write_bins_bedgraph(const std::string &outfile, const cpg_index_meta &cim,
                     std::ranges::input_range auto &&scores) -> std::error_code {
   static constexpr auto score_precision{6};
   static constexpr auto buf_size{512};
+  // ADS: modified_buf_size is to ensure we can't go past the end of
+  // the actual buffer with the (*tcr.ptr++) below
+  static constexpr auto modified_buf_size{buf_size - 3};
   static constexpr auto delim{'\t'};
 
   std::array<char, buf_size> buf{};
-  const auto buf_end = buf.data() + buf_size;
+  const auto buf_end = buf.data() + modified_buf_size;
 
   std::ofstream out(outfile);
   if (!out)
@@ -258,6 +289,23 @@ write_bins_bedgraph(const std::string &outfile, const cpg_index_meta &cim,
   }
   assert(scores_itr == std::cend(scores));
   return {};
+}
+
+[[nodiscard]] static inline auto
+write_output(const std::string &outfile, const cpg_index_meta &cim,
+             const std::uint32_t bin_size, const auto &results,
+             const bool write_scores) {
+  if (!write_scores)
+    return write_bins(outfile, cim, bin_size, results);
+  // ADS: counting intervals that have no reads
+  std::uint32_t zero_coverage = 0;
+  const auto to_score = [&zero_coverage](const auto &x) {
+    zero_coverage += (x.n_meth + x.n_unmeth == 0);
+    return x.n_meth / std::max(1.0, static_cast<double>(x.n_meth + x.n_unmeth));
+  };
+  logger::instance().debug("Number of bins without reads: {}", zero_coverage);
+  const auto scores = std::views::transform(results, to_score);
+  return write_bins_bedgraph(outfile, cim, bin_size, scores);
 }
 
 #endif  // SRC_GENOMIC_INTERVAL_OUTPUT_HPP_
