@@ -35,8 +35,8 @@ struct download_request {
   std::string port;
   std::string target;
   std::string outdir;
-  std::uint32_t connect_timeout{10'000};    // milliseconds
-  std::uint32_t download_timeout{240'000};  // seconds
+  std::uint32_t connect_timeout{10};    // seconds
+  std::uint32_t download_timeout{240};  // seconds
   download_request(const std::string &host, const std::string &port,
                    const std::string &target, const std::string &outdir) :
     host{host}, port{port}, target{target}, outdir{outdir} {}
