@@ -141,16 +141,16 @@ TEST(get_chrom_name_starts_test, valid_data) {
 TEST(get_chrom_name_stops_test, valid_data) {
   {
     constexpr auto data = ">chrom1\nATCG\n>chrom2\nGCTA";
-    auto starts = get_chrom_name_starts(data, strlen(data));
-    auto stops = get_chrom_name_stops(starts, data, strlen(data));
-    std::vector<std::size_t> expected = {7, 20};
+    const auto starts = get_chrom_name_starts(data, strlen(data));
+    const auto stops = get_chrom_name_stops(starts, data, strlen(data));
+    const auto expected = std::vector<std::size_t>{7, 20};
     EXPECT_EQ(stops, expected);
   }
   {
     constexpr auto data = ">chr1\nACGT\n>chr2\nGGCC\n";
-    auto starts = get_chrom_name_starts(data, strlen(data));
-    auto stops = get_chrom_name_stops(starts, data, strlen(data));
-    EXPECT_EQ(stops.size(), 2);
+    const auto starts = get_chrom_name_starts(data, strlen(data));
+    const auto stops = get_chrom_name_stops(starts, data, strlen(data));
+    EXPECT_EQ(std::size(stops), 2);
     EXPECT_EQ(stops[0], 5);
     EXPECT_EQ(stops[1], 16);
   }
@@ -159,7 +159,7 @@ TEST(get_chrom_name_stops_test, valid_data) {
 // get_chroms tests
 TEST(get_chroms_test, valid_data) {
   {
-    const char *data = ">chrom1\nATCG\n>chrom2\nGCTA";
+    const auto data = ">chrom1\nATCG\n>chrom2\nGCTA";
     const auto starts = get_chrom_name_starts(data, strlen(data));
     const auto stops = get_chrom_name_stops(starts, data, strlen(data));
     const auto chroms = get_chroms(data, strlen(data), starts, stops);
@@ -179,7 +179,7 @@ TEST(get_chroms_test, valid_data) {
 }
 
 TEST(initialize_cpg_index_test, valid_genome_file) {
-  auto [index, meta, ec] = initialize_cpg_index("data/tProrsus1.fa");
+  const auto [index, meta, ec] = initialize_cpg_index("data/tProrsus1.fa");
   EXPECT_FALSE(ec);
   EXPECT_GT(meta.chrom_order.size(), 0);
   EXPECT_GT(meta.chrom_size.size(), 0);
@@ -187,7 +187,7 @@ TEST(initialize_cpg_index_test, valid_genome_file) {
 }
 
 TEST(initialize_cpg_index_test, invalid_genome_file) {
-  auto [index, meta, ec] = initialize_cpg_index("data/intervals.bed");
+  const auto [index, meta, ec] = initialize_cpg_index("data/intervals.bed");
   EXPECT_TRUE(ec);
   EXPECT_EQ(meta.chrom_order.size(), 0);
   EXPECT_EQ(meta.chrom_size.size(), 0);
@@ -195,7 +195,7 @@ TEST(initialize_cpg_index_test, invalid_genome_file) {
 }
 
 TEST(read_cpg_index_test, valid_index_file) {
-  auto [index, meta, ec] = read_cpg_index("data/tProrsus1.cpg_idx");
+  const auto [index, meta, ec] = read_cpg_index("data/tProrsus1.cpg_idx");
   EXPECT_FALSE(ec);
   EXPECT_GT(meta.chrom_order.size(), 0);
   EXPECT_GT(meta.chrom_size.size(), 0);
@@ -203,7 +203,7 @@ TEST(read_cpg_index_test, valid_index_file) {
 }
 
 TEST(read_cpg_index_test, invalid_index_file) {
-  auto [index, meta, ec] = read_cpg_index("invalid_index_file.cpg_idx");
+  const auto [index, meta, ec] = read_cpg_index("invalid_index_file.cpg_idx");
   EXPECT_TRUE(ec);
   EXPECT_EQ(meta.chrom_order.size(), 0);
   EXPECT_EQ(meta.chrom_size.size(), 0);
@@ -214,7 +214,7 @@ TEST(cpg_index_write_test, valid_write) {
   cpg_index index;
   // Fill index with test data
   index.positions.push_back({1, 2, 3});
-  auto ec = index.write("test_index_file.cpg_idx");
+  const auto ec = index.write("test_index_file.cpg_idx");
   EXPECT_FALSE(ec);
 }
 
@@ -225,7 +225,7 @@ TEST(cpg_index_get_offsets_with_chrom_test, valid_offsets) {
     {1, 3},
     {4, 5},
   };
-  auto offsets = index.get_offsets_within_chrom(0, queries);
+  const auto offsets = index.get_offsets_within_chrom(0, queries);
   std::vector<std::pair<std::uint32_t, std::uint32_t>> expected = {
     {0, 2},
     {3, 4},
