@@ -20,12 +20,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-# to find the version of cmake do
-# $ cmake --version
-cmake_minimum_required(VERSION 3.30)
-
-add_compile_options(-Wall -Wextra -Wpedantic -Werror -Wfatal-errors)
-
 file(GLOB CPP_FILES "*.cpp")
 
 # Ensure all objects depend on both the cpp and hpp files
@@ -64,6 +58,4 @@ if(NOT ENABLE_UNIT_TESTS)
   add_executable(xfrase xfrase.cpp)
   target_include_directories(xfrase PRIVATE "${PROJECT_BINARY_DIR}")
   target_link_libraries(xfrase PRIVATE ${COMMAND_OBJECTS} xfrase_system)
-
-  install(TARGETS xfrase DESTINATION bin)
 endif()
