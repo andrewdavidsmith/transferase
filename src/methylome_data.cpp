@@ -21,7 +21,7 @@
  * SOFTWARE.
  */
 
-#include "methylome.hpp"
+#include "methylome_data.hpp"
 
 #include "cpg_index_metadata.hpp"
 #include "hash.hpp"
@@ -51,8 +51,8 @@
 #endif
 
 [[nodiscard]] auto
-methylome::get_n_cpgs_from_file(const std::string &filename,
-                                std::error_code &ec) -> std::uint32_t {
+methylome_data::get_n_cpgs_from_file(const std::string &filename,
+                                     std::error_code &ec) -> std::uint32_t {
   const auto filesize = std::filesystem::file_size(filename, ec);
   if (ec)
     return 0;
@@ -60,14 +60,16 @@ methylome::get_n_cpgs_from_file(const std::string &filename,
 }
 
 [[nodiscard]] auto
-methylome::get_n_cpgs_from_file(const std::string &filename) -> std::uint32_t {
+methylome_data::get_n_cpgs_from_file(const std::string &filename)
+  -> std::uint32_t {
   std::error_code ec;
   return get_n_cpgs_from_file(filename, ec);
 }
 
 [[nodiscard]] auto
-methylome::read(const std::string &filename, const methylome_metadata &metadata)
-  -> std::tuple<methylome, std::error_code> {
+methylome_data::read(const std::string &filename,
+                     const methylome_metadata &metadata)
+  -> std::tuple<methylome_data, std::error_code> {
   std::error_code ec;
   const auto filesize = std::filesystem::file_size(filename, ec);
   if (ec)
@@ -75,7 +77,7 @@ methylome::read(const std::string &filename, const methylome_metadata &metadata)
   std::ifstream in(filename);
   if (!in)
     return {{}, std::make_error_code(std::errc(errno))};
-  methylome meth;
+  methylome_data meth;
   if (metadata.is_compressed) {
     std::vector<std::uint8_t> buf(filesize);
     const bool read_ok = static_cast<bool>(
@@ -106,8 +108,8 @@ methylome::read(const std::string &filename, const methylome_metadata &metadata)
 }
 
 [[nodiscard]] auto
-methylome::write(const std::string &filename,
-                 const bool zip) const -> std::error_code {
+methylome_data::write(const std::string &filename,
+                      const bool zip) const -> std::error_code {
   std::vector<std::uint8_t> buf;
   if (zip) {
 #ifdef BENCHMARK
@@ -140,7 +142,7 @@ methylome::write(const std::string &filename,
 }
 
 auto
-methylome::add(const methylome &rhs) -> methylome & {
+methylome_data::add(const methylome_data &rhs) -> methylome_data & {
   // this follows the operator+= pattern
   assert(std::size(cpgs) == std::size(rhs.cpgs));
   std::ranges::transform(cpgs, rhs.cpgs, std::begin(cpgs),
@@ -165,9 +167,9 @@ get_counts_impl(const T b, const T e) -> U {
 
 template <typename U>
 [[nodiscard]] static inline auto
-get_counts_impl(const methylome::vec &cpgs, const cpg_index::vec &positions,
-                const std::uint32_t offset, const std::uint32_t start,
-                const std::uint32_t stop) -> U {
+get_counts_impl(const methylome_data::vec &cpgs,
+                const cpg_index::vec &positions, const std::uint32_t offset,
+                const std::uint32_t start, const std::uint32_t stop) -> U {
   // ADS: it is possible that the intervals requested are past the cpg
   // sites since they might be in the genome, but past the final cpg
   // site location. This code *should* be able to handle such a
@@ -184,35 +186,36 @@ get_counts_impl(const methylome::vec &cpgs, const cpg_index::vec &positions,
 }
 
 [[nodiscard]] auto
-methylome::get_counts_cov(const cpg_index::vec &positions,
-                          const std::uint32_t offset, const std::uint32_t start,
-                          const std::uint32_t stop) const -> counts_res_cov {
+methylome_data::get_counts_cov(
+  const cpg_index::vec &positions, const std::uint32_t offset,
+  const std::uint32_t start, const std::uint32_t stop) const -> counts_res_cov {
   return get_counts_impl<counts_res_cov>(cpgs, positions, offset, start, stop);
 }
 
 [[nodiscard]] auto
-methylome::get_counts(const cpg_index::vec &positions,
-                      const std::uint32_t offset, const std::uint32_t start,
-                      const std::uint32_t stop) const -> counts_res {
+methylome_data::get_counts(const cpg_index::vec &positions,
+                           const std::uint32_t offset,
+                           const std::uint32_t start,
+                           const std::uint32_t stop) const -> counts_res {
   return get_counts_impl<counts_res>(cpgs, positions, offset, start, stop);
 }
 
 [[nodiscard]] auto
-methylome::get_counts_cov(const std::uint32_t start,
-                          const std::uint32_t stop) const -> counts_res_cov {
+methylome_data::get_counts_cov(
+  const std::uint32_t start, const std::uint32_t stop) const -> counts_res_cov {
   return get_counts_impl<counts_res_cov>(std::cbegin(cpgs) + start,
                                          std::cbegin(cpgs) + stop);
 }
 
 [[nodiscard]] auto
-methylome::get_counts(const std::uint32_t start,
-                      const std::uint32_t stop) const -> counts_res {
+methylome_data::get_counts(const std::uint32_t start,
+                           const std::uint32_t stop) const -> counts_res {
   return get_counts_impl<counts_res>(std::cbegin(cpgs) + start,
                                      std::cbegin(cpgs) + stop);
 }
 
 [[nodiscard]] auto
-methylome::get_counts_cov(
+methylome_data::get_counts_cov(
   const std::vector<std::pair<std::uint32_t, std::uint32_t>> &queries) const
   -> std::vector<counts_res_cov> {
   std::vector<counts_res_cov> res(std::size(queries));
@@ -223,8 +226,9 @@ methylome::get_counts_cov(
 }
 
 [[nodiscard]] auto
-methylome::get_counts(const std::vector<std::pair<std::uint32_t, std::uint32_t>>
-                        &queries) const -> std::vector<counts_res> {
+methylome_data::get_counts(
+  const std::vector<std::pair<std::uint32_t, std::uint32_t>> &queries) const
+  -> std::vector<counts_res> {
   std::vector<counts_res> res(std::size(queries));
   const auto beg = std::cbegin(cpgs);
   for (const auto [i, q] : std::views::enumerate(queries))
@@ -233,7 +237,7 @@ methylome::get_counts(const std::vector<std::pair<std::uint32_t, std::uint32_t>>
 }
 
 [[nodiscard]] auto
-methylome::total_counts_cov() const -> counts_res_cov {
+methylome_data::total_counts_cov() const -> counts_res_cov {
   std::uint32_t n_meth{};
   std::uint32_t n_unmeth{};
   std::uint32_t n_covered{};
@@ -246,7 +250,7 @@ methylome::total_counts_cov() const -> counts_res_cov {
 }
 
 [[nodiscard]] auto
-methylome::total_counts() const -> counts_res {
+methylome_data::total_counts() const -> counts_res {
   std::uint32_t n_meth{};
   std::uint32_t n_unmeth{};
   for (const auto &cpg : cpgs) {
@@ -261,7 +265,7 @@ static auto
 bin_counts_impl(cpg_index::vec::const_iterator &posn_itr,
                 const cpg_index::vec::const_iterator posn_end,
                 const std::uint32_t bin_end,
-                methylome::vec::const_iterator &cpg_itr) -> T {
+                methylome_data::vec::const_iterator &cpg_itr) -> T {
   T t{};
   while (posn_itr != posn_end && *posn_itr < bin_end) {
     t.n_meth += cpg_itr->first;
@@ -278,7 +282,7 @@ template <typename T>
 [[nodiscard]] static auto
 get_bins_impl(const std::uint32_t bin_size, const cpg_index &index,
               const cpg_index_metadata &meta,
-              const methylome::vec &cpgs) -> std::vector<T> {
+              const methylome_data::vec &cpgs) -> std::vector<T> {
   std::vector<T> results;  // ADS TODO: reserve n_bins
 
   const auto zipped =
@@ -297,49 +301,49 @@ get_bins_impl(const std::uint32_t bin_size, const cpg_index &index,
 }
 
 [[nodiscard]] auto
-methylome::get_bins(const std::uint32_t bin_size, const cpg_index &index,
-                    const cpg_index_metadata &meta) const
+methylome_data::get_bins(const std::uint32_t bin_size, const cpg_index &index,
+                         const cpg_index_metadata &meta) const
   -> std::vector<counts_res> {
   return get_bins_impl<counts_res>(bin_size, index, meta, cpgs);
 }
 
 [[nodiscard]] auto
-methylome::get_bins_cov(const std::uint32_t bin_size, const cpg_index &index,
-                        const cpg_index_metadata &meta) const
-  -> std::vector<counts_res_cov> {
+methylome_data::get_bins_cov(
+  const std::uint32_t bin_size, const cpg_index &index,
+  const cpg_index_metadata &meta) const -> std::vector<counts_res_cov> {
   return get_bins_impl<counts_res_cov>(bin_size, index, meta, cpgs);
 }
 
 [[nodiscard]] auto
-methylome::hash() const -> std::uint64_t {
+methylome_data::hash() const -> std::uint64_t {
   return get_adler(cpgs.data(), std::size(cpgs) * record_size);
 }
 
 [[nodiscard]] auto
-methylome::get_n_cpgs() const -> std::uint32_t {
+methylome_data::get_n_cpgs() const -> std::uint32_t {
   return std::size(cpgs);
 }
 
 [[nodiscard]] auto
 read_methylome(const std::string &methylome_file,
                const std::string &methylome_meta_file)
-  -> std::tuple<methylome, methylome_metadata, std::error_code> {
+  -> std::tuple<methylome_data, methylome_metadata, std::error_code> {
   // read the methylome metadata first
   const auto [meta, meta_err] = methylome_metadata::read(methylome_meta_file);
   if (meta_err)
-    return {methylome{}, methylome_metadata{}, meta_err};
+    return {methylome_data{}, methylome_metadata{}, meta_err};
 
   // read the methylome using its metadata
-  const auto [meth, meth_err] = methylome::read(methylome_file, meta);
+  const auto [meth, meth_err] = methylome_data::read(methylome_file, meta);
   if (meth_err)
-    return {methylome{}, methylome_metadata{}, meta_err};
+    return {methylome_data{}, methylome_metadata{}, meta_err};
 
   return {std::move(meth), std::move(meta), {}};
 }
 
 [[nodiscard]] auto
 read_methylome(const std::string &methylome_file)
-  -> std::tuple<methylome, methylome_metadata, std::error_code> {
+  -> std::tuple<methylome_data, methylome_metadata, std::error_code> {
   const auto methylome_meta_file =
     get_default_methylome_metadata_filename(methylome_file);
   return read_methylome(methylome_file, methylome_meta_file);

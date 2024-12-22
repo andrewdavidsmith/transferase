@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_METHYLOME_HPP_
-#define SRC_METHYLOME_HPP_
+#ifndef SRC_METHYLOME_DATA_HPP_
+#define SRC_METHYLOME_DATA_HPP_
 
 #include "cpg_index.hpp"
 #if not defined(__APPLE__) && not defined(__MACH__)
@@ -48,7 +48,7 @@ struct counts_res_cov;
 struct cpg_index_metadata;
 struct methylome_metadata;
 
-struct methylome {
+struct methylome_data {
   static constexpr auto filename_extension{".m16"};
 
   typedef std::uint16_t m_count_t;
@@ -63,7 +63,7 @@ struct methylome {
   // need to be documented
   [[nodiscard]] static auto
   read(const std::string &filename, const methylome_metadata &meta)
-    -> std::tuple<methylome, std::error_code>;
+    -> std::tuple<methylome_data, std::error_code>;
 
   [[nodiscard]] auto
   write(const std::string &filename,
@@ -79,7 +79,7 @@ struct methylome {
   get_n_cpgs() const -> std::uint32_t;
 
   auto
-  add(const methylome &rhs) -> methylome &;
+  add(const methylome_data &rhs) -> methylome_data &;
 
   [[nodiscard]] auto
   hash() const -> std::uint64_t;
@@ -95,7 +95,7 @@ struct methylome {
              const std::uint32_t start,
              const std::uint32_t stop) const -> counts_res;
 
-  // takes only the pair of positions within the methylome::vec
+  // takes only the pair of positions within the methylome_data::vec
   // and accumulates between those
   [[nodiscard]] auto
   get_counts_cov(const std::uint32_t start,
@@ -105,7 +105,7 @@ struct methylome {
              const std::uint32_t stop) const -> counts_res;
 
   // takes a vector of pairs of positions (endpoints; eps) within the
-  // methylome::vec and accumulates between each of those pairs of
+  // methylome_data::vec and accumulates between each of those pairs of
   // enpoints
   [[nodiscard]] auto
   get_counts_cov(const std::vector<offset_pair> &eps) const
@@ -129,23 +129,23 @@ struct methylome {
                const cpg_index_metadata &meta) const
     -> std::vector<counts_res_cov>;
 
-  methylome::vec cpgs{};
+  methylome_data::vec cpgs{};
   static constexpr auto record_size = sizeof(m_elem);
 };
 
 [[nodiscard]] inline auto
-size(const methylome &m) -> std::size_t {
+size(const methylome_data &m) -> std::size_t {
   return std::size(m.cpgs);
 }
 
 [[nodiscard]] auto
 read_methylome(const std::string &methylome_file)
-  -> std::tuple<methylome, methylome_metadata, std::error_code>;
+  -> std::tuple<methylome_data, methylome_metadata, std::error_code>;
 
 [[nodiscard]] auto
 read_methylome(const std::string &methylome_file,
                const std::string &methylome_meta_file)
-  -> std::tuple<methylome, methylome_metadata, std::error_code>;
+  -> std::tuple<methylome_data, methylome_metadata, std::error_code>;
 
 template <typename T, typename U>
 inline auto
@@ -169,4 +169,4 @@ conditional_round_to_fit(U &a, U &b) -> void {
     round_to_fit<T>(a, b);
 }
 
-#endif  // SRC_METHYLOME_HPP_
+#endif  // SRC_METHYLOME_DATA_HPP_
