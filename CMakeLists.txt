@@ -48,10 +48,6 @@ if(ENABLE_STATIC_ANALYSIS)
   include(cmake/static_analysis.cmake)
 endif()
 
-if(ENABLE_SANITIZING)
-  include(cmake/sanitizing.cmake)
-endif()
-
 if(ENABLE_UNIT_TESTS)
   include(cmake/unit_tests.cmake)
   if(ENABLE_CODE_COVERAGE)
@@ -73,6 +69,11 @@ if(CMAKE_BUILD_TYPE STREQUAL "Release")
 endif()
 
 include(cmake/third_party.cmake)
+
+# Seems this needs to come after some third-party deps are found
+if(ENABLE_SANITIZING)
+  include(cmake/sanitizing.cmake)
+endif()
 
 # Configure this dir and JSON file for any build. They are always
 # needed in the right place with the version in the filename
