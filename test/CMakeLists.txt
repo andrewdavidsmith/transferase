@@ -71,14 +71,14 @@ target_link_libraries(cpg_index_test
  zlib_adapter
 )
 
-add_executable(methylome_test methylome_test.cpp)
-target_link_libraries(methylome_test
+add_executable(methylome_data_test methylome_data_test.cpp)
+target_link_libraries(methylome_data_test
  PRIVATE
  GTest::GTest
  GTest::Main
  ZLIB::ZLIB
  methylome_metadata
- methylome
+ methylome_data
  utilities
 )
 
@@ -121,7 +121,7 @@ target_link_libraries(methylome_set_test
  GTest::GTest
  GTest::Main
  ZLIB::ZLIB
- methylome
+ methylome_data
  utilities
  methylome_metadata
  methylome_set
@@ -151,7 +151,7 @@ target_link_libraries(request_handler_test
  request_handler
  request
  logger
- methylome
+ methylome_data
  utilities
  methylome_metadata
  genomic_interval
@@ -199,7 +199,7 @@ target_link_libraries(command_intervals_test
  Boost::program_options
  utilities
  logger
- methylome
+ methylome_data
  request
  response
  methylome_metadata
@@ -217,7 +217,7 @@ set(EXECUTABLE_TARGETS
   cpg_index_metadata_test
   counts_file_formats_test
   cpg_index_test
-  methylome_test
+  methylome_data_test
   methylome_set_test
   genomic_interval_test
   request_test
