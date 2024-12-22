@@ -87,6 +87,8 @@ TEST(download_test, receive_download_timeout) {
 TEST(download_test, download_non_existent_file) {
   // ADS: note the prefix slash below
   const std::filesystem::path target{generate_temp_filename("/file", "txt")};
+  // ADS: need to make sure this will be unique; got caught with an
+  // pre-existing filename
   const std::filesystem::path outdir{"/tmp"};
   const download_request dr{
     "example.com",  // host
@@ -115,6 +117,8 @@ TEST(download_test, download_non_existent_file) {
 
 TEST(download_test, download_success) {
   const auto target = std::filesystem::path{"/index.html"};
+  // ADS: need to make sure this will be unique; got caught with an
+  // pre-existing filename
   const auto outdir = std::filesystem::path{"/tmp"};
   const download_request dr{
     "example.com",  // host
