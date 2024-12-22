@@ -21,7 +21,7 @@
  * SOFTWARE.
  */
 
-#include <methylome.hpp>
+#include <methylome_data.hpp>
 
 #include <methylome_metadata.hpp>
 
@@ -30,21 +30,21 @@
 #include <cstdint>
 #include <utility>
 
-TEST(methylome_test, basic_assertions) {
+TEST(methylome_data_test, basic_assertions) {
   std::uint32_t n_meth{65536};
   std::uint32_t n_unmeth{65536};
-  conditional_round_to_fit<methylome::m_count_t>(n_meth, n_unmeth);
+  conditional_round_to_fit<methylome_data::m_count_t>(n_meth, n_unmeth);
   EXPECT_EQ(std::make_pair(n_meth, n_unmeth), std::make_pair(65535, 65535));
 }
 
-TEST(methylome_test, valid_read) {
+TEST(methylome_data_test, valid_read) {
   static constexpr auto filename{"data/SRX012345.m16"};
   const auto meta_filename = get_default_methylome_metadata_filename(filename);
 
   const auto [meta, meta_err] = methylome_metadata::read(meta_filename);
   EXPECT_FALSE(meta_err);
 
-  const auto [meth, meth_err] = methylome::read(filename, meta);
+  const auto [meth, meth_err] = methylome_data::read(filename, meta);
   EXPECT_FALSE(meth_err);
 
   EXPECT_EQ(size(meth), 6053);
