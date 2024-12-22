@@ -47,7 +47,7 @@ xfrase compress -u -o original.m16 -i compressed.m16
 )";
 
 #include "logger.hpp"
-#include "methylome.hpp"
+#include "methylome_data.hpp"
 #include "methylome_metadata.hpp"
 #include "utilities.hpp"     // duration()
 #include "xfrase_error.hpp"  // IWYU pragma: keep
@@ -159,7 +159,8 @@ command_compress_main(int argc, char *argv[]) -> int {
   }
 
   const auto meth_read_start = std::chrono::high_resolution_clock::now();
-  const auto [meth, meth_read_err] = methylome::read(methylome_input, meta);
+  const auto [meth, meth_read_err] =
+    methylome_data::read(methylome_input, meta);
   const auto meth_read_stop = std::chrono::high_resolution_clock::now();
   if (meth_read_err) {
     lgr.error("Error reading methylome {}: {}", methylome_input, meth_read_err);

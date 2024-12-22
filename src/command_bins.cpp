@@ -49,7 +49,7 @@ xfrase bins remote -x hg38.cpg_idx -o output.bed -s example.com -a SRX012345 -b 
 #include "cpg_index_metadata.hpp"
 #include "genomic_interval_output.hpp"
 #include "logger.hpp"
-#include "methylome.hpp"
+#include "methylome_data.hpp"
 #include "methylome_metadata.hpp"
 #include "methylome_results_types.hpp"
 #include "request.hpp"
@@ -115,7 +115,7 @@ do_local_bins(const string &meth_file, const string &meta_file,
     return {{}, meta_err};
   }
 
-  const auto [meth, meth_read_err] = methylome::read(meth_file, meta);
+  const auto [meth, meth_read_err] = methylome_data::read(meth_file, meta);
   if (meth_read_err) {
     logger::instance().error("Error: {} ({})", meth_read_err, meth_file);
     return {{}, meth_read_err};

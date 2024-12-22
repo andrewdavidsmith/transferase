@@ -50,7 +50,7 @@ xfrase intervals remote -x hg38.cpg_idx -o output.bed -s example.com -a SRX01234
 #include "genomic_interval.hpp"
 #include "genomic_interval_output.hpp"
 #include "logger.hpp"
-#include "methylome.hpp"
+#include "methylome_data.hpp"
 #include "methylome_metadata.hpp"
 #include "methylome_results_types.hpp"
 // #include "xfrase_error.hpp"
@@ -82,7 +82,7 @@ xfrase intervals remote -x hg38.cpg_idx -o output.bed -s example.com -a SRX01234
 template <typename counts_res_type>
 [[nodiscard]] static inline auto
 do_remote_intervals(const std::string &accession, const cpg_index_metadata &cim,
-                    std::vector<methylome::offset_pair> offsets,
+                    std::vector<methylome_data::offset_pair> offsets,
                     const std::string &hostname, const std::string &port)
   -> std::tuple<std::vector<counts_res_type>, std::error_code> {
   request_header hdr{accession, cim.n_cpgs, {}};
@@ -106,7 +106,7 @@ template <typename counts_res_type>
 [[nodiscard]] static inline auto
 do_local_intervals(const std::string &meth_file,
                    const std::string &meth_meta_file,
-                   std::vector<methylome::offset_pair> offsets)
+                   std::vector<methylome_data::offset_pair> offsets)
   -> std::tuple<std::vector<counts_res_type>, std::error_code> {
   logger &lgr = logger::instance();
   const auto [meta, meta_err] = methylome_metadata::read(meth_meta_file);
@@ -114,7 +114,7 @@ do_local_intervals(const std::string &meth_file,
     lgr.error("Error reading file {}: {}", meth_meta_file, meta_err);
     return {{}, meta_err};
   }
-  const auto [meth, meth_err] = methylome::read(meth_file, meta);
+  const auto [meth, meth_err] = methylome_data::read(meth_file, meta);
   if (meth_err) {
     lgr.error("Error reading file {}: {}", meth_file, meth_err);
     return {{}, meth_err};
@@ -128,7 +128,7 @@ do_local_intervals(const std::string &meth_file,
 template <typename counts_res_type>
 static auto
 do_intervals(const std::string &accession, const cpg_index_metadata &cim,
-             const std::vector<methylome::offset_pair> &offsets,
+             const std::vector<methylome_data::offset_pair> &offsets,
              const std::string &hostname, const std::string &port,
              const std::string &meth_file, const std::string &meth_meta_file,
              const std::string &outfile,

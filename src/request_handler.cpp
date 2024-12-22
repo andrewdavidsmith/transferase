@@ -24,7 +24,7 @@
 #include "request_handler.hpp"
 
 #include "logger.hpp"
-#include "methylome.hpp"
+#include "methylome_data.hpp"
 #include "methylome_metadata.hpp"
 #include "methylome_results_types.hpp"  // IWYU pragma: keep
 #include "methylome_set.hpp"            // for is_valid_accession

@@ -88,7 +88,7 @@ make_error_code(methylome_metadata_error e) {
   return std::error_code(std::to_underlying(e), category);
 }
 
-struct methylome;
+struct methylome_data;
 struct cpg_index_metadata;
 
 struct methylome_metadata {
@@ -118,12 +118,12 @@ struct methylome_metadata {
 
   // ADS: (todo) think of a better way to get "compression" status
   [[nodiscard]] static auto
-  init(const cpg_index_metadata &cim, const methylome &meth,
+  init(const cpg_index_metadata &cim, const methylome_data &meth,
        const bool is_compressed)
     -> std::tuple<methylome_metadata, std::error_code>;
 
   [[nodiscard]] auto
-  update(const methylome &meth) -> std::error_code;
+  update(const methylome_data &meth) -> std::error_code;
 };
 
 // clang-format off

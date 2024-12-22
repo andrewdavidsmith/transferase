@@ -52,7 +52,7 @@ xfrase format -x hg38.cpg_idx -m SRX012345.xsym.gz -o SRX012345.m16
 #include "cpg_index.hpp"
 #include "cpg_index_metadata.hpp"
 #include "logger.hpp"
-#include "methylome.hpp"
+#include "methylome_data.hpp"
 #include "methylome_metadata.hpp"
 #include "utilities.hpp"
 #include "xfrase_error.hpp"  // IWYU pragma: keep
@@ -180,7 +180,7 @@ verify_header_line(const cpg_index_metadata &cim,
 static auto
 process_cpg_sites(const std::string &infile, const cpg_index &index,
                   const cpg_index_metadata &cim)
-  -> std::tuple<methylome, std::error_code> {
+  -> std::tuple<methylome_data, std::error_code> {
   auto &lgr = logger::instance();
 
   std::error_code err;
@@ -197,12 +197,12 @@ process_cpg_sites(const std::string &infile, const cpg_index &index,
 
   // ADS: if optimization is needed, this can be flattened here to
   // avoid a copy later
-  std::vector<methylome::vec> cpgs;
+  std::vector<methylome_data::vec> cpgs;
   for (const auto n_cpgs_chrom : cim.get_n_cpgs_chrom())
-    cpgs.push_back(methylome::vec(n_cpgs_chrom));
+    cpgs.push_back(methylome_data::vec(n_cpgs_chrom));
   std::uint32_t cpg_idx_out{};
 
-  methylome::vec::iterator cpgs_itr;
+  methylome_data::vec::iterator cpgs_itr;
 
   std::string line;
   while (mf.getline(line)) {
@@ -219,7 +219,8 @@ process_cpg_sites(const std::string &infile, const cpg_index &index,
       const std::int32_t ch_id = get_ch_id(cim, line);
       if (ch_id < 0) {
         lgr.error("Failed to find chromosome in index: {}", line);
-        return {methylome{}, format_err::xcounts_file_chromosome_not_found};
+        return {methylome_data{},
+                format_err::xcounts_file_chromosome_not_found};
       }
       cpg_idx_out = 0;
 
@@ -245,11 +246,11 @@ process_cpg_sites(const std::string &infile, const cpg_index &index,
       }
 
       // ADS: prevent counts from overflowing
-      conditional_round_to_fit<methylome::m_count_t>(n_meth, n_unmeth);
+      conditional_round_to_fit<methylome_data::m_count_t>(n_meth, n_unmeth);
 
       *(cpgs_itr + cpg_idx_out++) = {
-        static_cast<methylome::m_count_t>(n_meth),
-        static_cast<methylome::m_count_t>(n_unmeth),
+        static_cast<methylome_data::m_count_t>(n_meth),
+        static_cast<methylome_data::m_count_t>(n_unmeth),
       };
 
       pos = curr_pos;
@@ -257,19 +258,19 @@ process_cpg_sites(const std::string &infile, const cpg_index &index,
     }
   }
 
-  methylome::vec cpgs_flat;
+  methylome_data::vec cpgs_flat;
   cpgs_flat.reserve(cim.n_cpgs);
   for (const auto &c : cpgs)
     cpgs_flat.insert(std::end(cpgs_flat), std::cbegin(c), std::cend(c));
 
   // tuple is move-returned, but making the tuple would copy
-  return {methylome{std::move(cpgs_flat)}, std::error_code{}};
+  return {methylome_data{std::move(cpgs_flat)}, std::error_code{}};
 }
 
 static auto
 process_cpg_sites_counts(const std::string &infile, const cpg_index &index,
                          const cpg_index_metadata &cim)
-  -> std::tuple<methylome, std::error_code> {
+  -> std::tuple<methylome_data, std::error_code> {
   auto &lgr = logger::instance();
 
   std::error_code err;
@@ -286,12 +287,12 @@ process_cpg_sites_counts(const std::string &infile, const cpg_index &index,
 
   // ADS: if optimization is needed, this can be flattened here to
   // avoid a copy later
-  std::vector<methylome::vec> cpgs;
+  std::vector<methylome_data::vec> cpgs;
   for (const auto n_cpgs_chrom : cim.get_n_cpgs_chrom())
-    cpgs.push_back(methylome::vec(n_cpgs_chrom));
+    cpgs.push_back(methylome_data::vec(n_cpgs_chrom));
   std::uint32_t cpg_idx_out{};
 
-  methylome::vec::iterator cpgs_itr;
+  methylome_data::vec::iterator cpgs_itr;
 
   std::string prev_chrom;
   std::string line;
@@ -305,7 +306,7 @@ process_cpg_sites_counts(const std::string &infile, const cpg_index &index,
       const std::int32_t ch_id = get_ch_id(cim, chrom);
       if (ch_id < 0) {
         lgr.error("Failed to find chromosome in index: {}", line);
-        return {methylome{}, /* ADS: fix this */
+        return {methylome_data{}, /* ADS: fix this */
                 format_err::xcounts_file_chromosome_not_found};
       }
       cpg_idx_out = 0;
@@ -327,24 +328,24 @@ process_cpg_sites_counts(const std::string &infile, const cpg_index &index,
     }
 
     // ADS: prevent counts from overflowing
-    conditional_round_to_fit<methylome::m_count_t>(n_meth, n_unmeth);
+    conditional_round_to_fit<methylome_data::m_count_t>(n_meth, n_unmeth);
 
     *(cpgs_itr + cpg_idx_out++) = {
-      static_cast<methylome::m_count_t>(n_meth),
-      static_cast<methylome::m_count_t>(n_unmeth),
+      static_cast<methylome_data::m_count_t>(n_meth),
+      static_cast<methylome_data::m_count_t>(n_unmeth),
     };
 
     pos = curr_pos;
     ++cpg_idx_in;
   }
 
-  methylome::vec cpgs_flat;
+  methylome_data::vec cpgs_flat;
   cpgs_flat.reserve(cim.n_cpgs);
   for (const auto &c : cpgs)
     cpgs_flat.insert(std::end(cpgs_flat), std::cbegin(c), std::cend(c));
 
   // tuple is move-returned, but making the tuple would copy
-  return {methylome{std::move(cpgs_flat)}, std::error_code{}};
+  return {methylome_data{std::move(cpgs_flat)}, std::error_code{}};
 }
 
 auto
@@ -375,7 +376,7 @@ command_format_main(int argc, char *argv[]) -> int {
      "methylation input file")
     ("index,x", po::value(&index_file)->required(), "index file")
     ("output,o", po::value(&methylome_output)->required(),
-     std::format("output file (must end in {})", methylome::filename_extension).data())
+     std::format("output file (must end in {})", methylome_data::filename_extension).data())
     ("zip,z", po::bool_switch(&zip), "zip the output")
     ("log-level,v", po::value(&log_level)->default_value(logger::default_level),
      "log level {debug,info,warning,error,critical}")
@@ -414,9 +415,9 @@ command_format_main(int argc, char *argv[]) -> int {
 
   const auto extension_found =
     std::filesystem::path(methylome_output).extension();
-  if (extension_found != methylome::filename_extension) {
+  if (extension_found != methylome_data::filename_extension) {
     lgr.error("Required filename extension {} (given: {})",
-              methylome::filename_extension, extension_found);
+              methylome_data::filename_extension, extension_found);
     return EXIT_FAILURE;
   }
 

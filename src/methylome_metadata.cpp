@@ -25,7 +25,7 @@
 
 #include "automatic_json.hpp"  // for tag_invoke
 #include "cpg_index_metadata.hpp"
-#include "methylome.hpp"
+#include "methylome_data.hpp"
 #include "utilities.hpp"  // for get_time_as_string
 
 #include <config.h>  // for VERSION
@@ -66,8 +66,8 @@ methylome_metadata::init_env() -> std::error_code {
 }
 
 [[nodiscard]] auto
-methylome_metadata::init(const cpg_index_metadata &cim, const methylome &meth,
-                         const bool is_compressed)
+methylome_metadata::init(const cpg_index_metadata &cim,
+                         const methylome_data &meth, const bool is_compressed)
   -> std::tuple<methylome_metadata, std::error_code> {
   // ADS: (todo) should there be a better way to get the "compression"
   // status?
@@ -92,7 +92,7 @@ methylome_metadata::init(const cpg_index_metadata &cim, const methylome &meth,
 }
 
 [[nodiscard]] auto
-methylome_metadata::update(const methylome &meth) -> std::error_code {
+methylome_metadata::update(const methylome_data &meth) -> std::error_code {
   const auto err = init_env();
   if (err)
     return err;

@@ -45,7 +45,7 @@ xfrase merge -o merged.m16 -i SRX0123*.m16
 )";
 
 #include "logger.hpp"
-#include "methylome.hpp"
+#include "methylome_data.hpp"
 #include "methylome_metadata.hpp"
 #include "utilities.hpp"
 #include "xfrase_error.hpp"  // IWYU pragma: keep
@@ -173,7 +173,7 @@ command_merge_main(int argc, char *argv[]) -> int {
     return EXIT_FAILURE;
   }
   auto read_start = std::chrono::high_resolution_clock::now();
-  auto [meth, meth_err] = methylome::read(input_files.back(), last_meta);
+  auto [meth, meth_err] = methylome_data::read(input_files.back(), last_meta);
   auto read_stop = std::chrono::high_resolution_clock::now();
   read_time += duration(read_start, read_stop);
   if (meth_err) {
@@ -195,7 +195,7 @@ command_merge_main(int argc, char *argv[]) -> int {
       return EXIT_FAILURE;
     }
     const auto read_start = std::chrono::high_resolution_clock::now();
-    const auto [tmp_meth, meth_err] = methylome::read(filename, meta);
+    const auto [tmp_meth, meth_err] = methylome_data::read(filename, meta);
     const auto read_stop = std::chrono::high_resolution_clock::now();
     read_time += duration(read_start, read_stop);
     if (meth_err) {

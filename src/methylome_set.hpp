@@ -24,7 +24,7 @@
 #ifndef SRC_METHYLOME_SET_HPP_
 #define SRC_METHYLOME_SET_HPP_
 
-#include "methylome.hpp"
+#include "methylome_data.hpp"
 #include "methylome_metadata.hpp"
 
 #include <algorithm>
@@ -93,7 +93,7 @@ struct methylome_set {
 
   [[nodiscard]] auto
   get_methylome(const std::string &accession)
-    -> std::tuple<std::shared_ptr<methylome>,
+    -> std::tuple<std::shared_ptr<methylome_data>,
                   std::shared_ptr<methylome_metadata>, std::error_code>;
 
   static constexpr std::uint32_t default_max_live_methylomes{128};
@@ -104,7 +104,7 @@ struct methylome_set {
 
   ring_buffer<std::string> accessions;
 
-  std::unordered_map<std::string, std::shared_ptr<methylome>>
+  std::unordered_map<std::string, std::shared_ptr<methylome_data>>
     accession_to_methylome;
   std::unordered_map<std::string, std::shared_ptr<methylome_metadata>>
     accession_to_methylome_metadata;

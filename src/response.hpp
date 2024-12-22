@@ -24,7 +24,7 @@
 #ifndef SRC_RESPONSE_HPP_
 #define SRC_RESPONSE_HPP_
 
-#include "methylome.hpp"  // for counts_res_cov
+#include "methylome_data.hpp"  // for counts_res_cov
 
 #include "utilities.hpp"
 #include "xfrase_error.hpp"
@@ -80,7 +80,7 @@ struct response_payload {
 };
 
 template <typename counts_type> struct response {
-  std::vector<counts_type> counts;  // counts_type is from methylome.hpp
+  std::vector<counts_type> counts;  // counts_type is from methylome_data.hpp
   [[nodiscard]] auto
   get_counts_n_bytes() const -> std::uint32_t {
     return sizeof(counts_type) * size(counts);

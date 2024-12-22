@@ -49,7 +49,7 @@ xfrase check -x indexes/hg38.cpg_idx -m SRX012345.m16 SRX612345.m16
 #include "cpg_index.hpp"
 #include "cpg_index_metadata.hpp"
 #include "logger.hpp"
-#include "methylome.hpp"
+#include "methylome_data.hpp"
 #include "methylome_metadata.hpp"
 #include "methylome_results_types.hpp"  // IWYU pragma: keep
 #include "utilities.hpp"
@@ -85,7 +85,7 @@ check_cpg_index_consistency(const cpg_index_metadata &cim,
 
 [[nodiscard]] static auto
 check_methylome_consistency(const methylome_metadata &meta,
-                            const methylome &meth) -> bool {
+                            const methylome_data &meth) -> bool {
   auto &lgr = logger::instance();
 
   lgr.debug("methylome metadata indicates compressed: {}", meta.is_compressed);
