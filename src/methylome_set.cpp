@@ -23,8 +23,8 @@
 
 #include "methylome_set.hpp"
 
-#include "methylome_data.hpp"
-#include "methylome_metadata.hpp"
+#include "methylome.hpp"
+
 #include "xfrase_error.hpp"  // for make_error_code, methylome_set_code
 
 #include <filesystem>
@@ -37,84 +37,59 @@
 #include <utility>  // for std::move, std::pair
 
 [[nodiscard]] auto
-methylome_set::get_methylome(const std::string &accession)
-  -> std::tuple<std::shared_ptr<methylome_data>,
-                std::shared_ptr<methylome_metadata>, std::error_code> {
-  static constexpr auto filename_format = "{}/{}{}";
+methylome_set::get_methylome(const std::string &accession, std::error_code &ec)
+  -> std::shared_ptr<methylome> {
 
-  if (!is_valid_accession(accession))
-    return {nullptr, nullptr, methylome_set_code::invalid_accession};
+  if (!is_valid_accession(accession)) {
+    ec = methylome_set_code::invalid_accession;
+    return nullptr;
+  }
 
-  // clang-format off
-  std::unordered_map<std::string, std::shared_ptr<methylome_data>>::const_iterator meth{};
-  std::unordered_map<std::string, std::shared_ptr<methylome_metadata>>::const_iterator meta{};
-  // clang-format on
+  std::unordered_map<std::string, std::shared_ptr<methylome>>::const_iterator
+    meth{};
 
   std::scoped_lock lock{mtx};
 
   // check if methylome is loaded
   const auto meth_itr = accession_to_methylome.find(accession);
-  const auto meta_itr = accession_to_methylome_metadata.find(accession);
-  if (meth_itr == std::cend(accession_to_methylome) &&
-      meta_itr == std::cend(accession_to_methylome_metadata)) {
-    const auto methylome_filename =
-      std::format(filename_format, methylome_directory, accession,
-                  methylome_data::filename_extension);
-    if (!std::filesystem::exists(methylome_filename))
-      return {nullptr, nullptr, methylome_set_code::methylome_file_not_found};
-
-    const auto metadata_filename =
-      std::format(filename_format, methylome_directory, accession,
-                  methylome_metadata::filename_extension);
-    if (!std::filesystem::exists(metadata_filename))
-      return {nullptr, nullptr,
-              methylome_set_code::methylome_metadata_file_not_found};
-
-    const std::string to_eject = accessions.push(accession);
-    if (!to_eject.empty()) {
-      const auto to_eject_meth_itr = accession_to_methylome.find(to_eject);
-      const auto to_eject_meta_itr =
-        accession_to_methylome_metadata.find(to_eject);
-      if (to_eject_meth_itr == std::cend(accession_to_methylome) ||
-          to_eject_meta_itr == std::cend(accession_to_methylome_metadata))
-        return {nullptr, nullptr,
-                methylome_set_code::error_updating_live_methylomes};
-
-      accession_to_methylome.erase(to_eject_meth_itr);
-      accession_to_methylome_metadata.erase(to_eject_meta_itr);
+  if (meth_itr == std::cend(accession_to_methylome)) {
+    // ADS: might not be needed as separate function, but ok for now
+    if (!methylome_files_exist(methylome_directory, accession)) {
+      ec = methylome_set_code::methylome_file_not_found;
+      return nullptr;
     }
 
-    const auto [mm, meta_ec] = methylome_metadata::read(metadata_filename);
-    if (meta_ec)
-      return {nullptr, nullptr,
-              methylome_set_code::error_reading_methylome_file};
+    // take care of removing loaded methylomes if needed to make room
+    const std::string to_eject = accessions.push(accession);
+    if (!to_eject.empty()) {
+      const auto to_eject_itr = accession_to_methylome.find(to_eject);
+      if (to_eject_itr == std::cend(accession_to_methylome)) {
+        ec = methylome_set_code::error_updating_live_methylomes;
+        return nullptr;
+      }
+      accession_to_methylome.erase(to_eject_itr);
+    }
 
-    // ADS: get an error code from methylome::read and use it
-    const auto [m, ec] = methylome_data::read(methylome_filename, mm);
+    const auto loaded_meth = read_methylome(methylome_directory, accession, ec);
     if (ec)
-      return {nullptr, nullptr,
-              methylome_set_code::error_reading_methylome_file};
+      return nullptr;
 
-    bool insertion_happened{false};
-    std::tie(meth, insertion_happened) = accession_to_methylome.emplace(
-      accession, std::make_shared<methylome_data>(std::move(m)));
-    if (!insertion_happened)
-      return {nullptr, nullptr, methylome_set_code::methylome_already_live};
-
-    std::tie(meta, insertion_happened) =
-      accession_to_methylome_metadata.emplace(
-        accession, std::make_shared<methylome_metadata>(std::move(mm)));
-    if (!insertion_happened)
-      return {nullptr, nullptr, methylome_set_code::methylome_already_live};
+    bool insertion_ok{false};
+    std::tie(meth, insertion_ok) = accession_to_methylome.emplace(
+      accession, std::make_shared<methylome>(std::move(loaded_meth)));
+    if (!insertion_ok) {
+      ec = methylome_set_code::unknown_error;
+      return nullptr;
+    }
   }
-  else if (meth_itr == std::cend(accession_to_methylome) ||
-           meta_itr == std::cend(accession_to_methylome_metadata)) {
-    return {nullptr, nullptr, methylome_set_code::methylome_already_live};
+  else if (meth_itr == std::cend(accession_to_methylome)) {
+    ec = methylome_set_code::methylome_already_live;
+    return nullptr;
   }
   else {
     meth = meth_itr;  // already loaded
-    meta = meta_itr;
   }
 
-  return {meth->second, meta->second, methylome_set_code::ok};
+  ec = methylome_set_code::ok;
+  return meth->second;
 }
