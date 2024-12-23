@@ -23,19 +23,14 @@
 
 #include <cpg_index_set.hpp>
 
-#include <xfrase_error.hpp>
-
 #include <gtest/gtest.h>
 
-#include <cstdint>  // for std::uint32_t
-#include <format>
 #include <iterator>  // for std::size
 #include <memory>    // for std::unique_ptr, std::shared_ptr
 #include <string>
 #include <system_error>
 #include <tuple>  // for std::get
 #include <unordered_map>
-#include <utility>  // For std::ignore
 
 TEST(cpg_index_set_test, valid_cpg_index_set) {
   static constexpr auto cpg_index_directory = "data";

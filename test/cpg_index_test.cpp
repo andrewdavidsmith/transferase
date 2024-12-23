@@ -31,6 +31,7 @@
 #include <cstring>
 #include <filesystem>
 #include <fstream>
+#include <iterator>  // for std::size
 #include <string>
 #include <string_view>
 #include <vector>

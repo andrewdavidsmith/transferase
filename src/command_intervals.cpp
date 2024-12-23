@@ -53,23 +53,19 @@ xfrase intervals remote -x hg38.cpg_idx -o output.bed -s example.com -a SRX01234
 #include "methylome_data.hpp"
 #include "methylome_metadata.hpp"
 #include "methylome_results_types.hpp"
-// #include "xfrase_error.hpp"
 #include "request.hpp"
 #include "utilities.hpp"
 
 #include <boost/program_options.hpp>
 
 #include <algorithm>
-#include <cerrno>
 #include <chrono>
 #include <cstdint>  // for std::uint32_t
 #include <cstdlib>  // for EXIT_FAILURE, EXIT_SUCCESS
 #include <format>
-#include <fstream>
 #include <iostream>
 #include <iterator>  // for std::size
 #include <print>
-#include <ranges>
 #include <string>
 #include <string_view>
 #include <system_error>

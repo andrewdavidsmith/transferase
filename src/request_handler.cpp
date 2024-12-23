@@ -24,6 +24,7 @@
 #include "request_handler.hpp"
 
 #include "logger.hpp"
+#include "methylome.hpp"
 #include "methylome_data.hpp"
 #include "methylome_metadata.hpp"
 #include "methylome_results_types.hpp"  // IWYU pragma: keep
@@ -41,12 +42,8 @@
 #include <print>
 #include <string>
 #include <type_traits>  // for std::remove_cvref_t
-#include <utility>      // for std::pair
-#include <variant>      // for std::get
 #include <vector>
 
-using std::get;
-using std::pair;
 using std::println;
 using std::string;
 using std::uint32_t;

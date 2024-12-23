@@ -26,10 +26,8 @@
 #include <config.h>  // for VERSION
 #include <gtest/gtest.h>
 
-#include <algorithm>  // std::equal
 #include <cstdint>
 #include <filesystem>
-#include <fstream>
 #include <iterator>  // std::size
 #include <numeric>
 #include <ranges>
