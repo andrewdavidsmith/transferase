@@ -50,6 +50,8 @@ xfrase check -x indexes/hg38.cpg_idx -m SRX012345.m16 SRX612345.m16
 #include "cpg_index_metadata.hpp"
 #include "logger.hpp"
 #include "methylome.hpp"
+#include "methylome_data.hpp"
+#include "methylome_metadata.hpp"
 #include "methylome_results_types.hpp"  // IWYU pragma: keep
 #include "utilities.hpp"
 #include "xfrase_error.hpp"  // IWYU pragma: keep
@@ -64,6 +66,7 @@ xfrase check -x indexes/hg38.cpg_idx -m SRX012345.m16 SRX612345.m16
 #include <ranges>
 #include <string>
 #include <string_view>
+#include <system_error>
 #include <tuple>
 #include <variant>  // IWYU pragma: keep
 #include <vector>
@@ -83,20 +86,20 @@ check_cpg_index_consistency(const cpg_index_metadata &cim,
 }
 
 [[nodiscard]] static auto
-check_metadata_consistency(const methylome_metadata &meta,
+check_metadata_consistency(const methylome &meth,
                            const cpg_index_metadata &cim) -> bool {
   auto &lgr = logger::instance();
 
-  const auto versions_match = (cim.version == meta.version);
+  const auto versions_match = (cim.version == meth.meta.version);
   lgr.debug("metadata versions match: {}", versions_match);
 
-  const auto index_hashes_match = (cim.index_hash == meta.index_hash);
+  const auto index_hashes_match = (cim.index_hash == meth.meta.index_hash);
   lgr.debug("metadata index hashes match: {}", index_hashes_match);
 
-  const auto assemblies_match = (cim.assembly == meta.assembly);
+  const auto assemblies_match = (cim.assembly == meth.meta.assembly);
   lgr.debug("metadata assemblies match: {}", assemblies_match);
 
-  const auto n_cpgs_match = (cim.n_cpgs == meta.n_cpgs);
+  const auto n_cpgs_match = (cim.n_cpgs == meth.meta.n_cpgs);
   lgr.debug("metadata assemblies match: {}", assemblies_match);
 
   return versions_match && index_hashes_match && assemblies_match &&
@@ -199,7 +202,7 @@ command_check_main(int argc, char *argv[]) -> int {
              methylome_consitency);
     all_methylomes_consitent = all_methylomes_consitent && methylome_consitency;
 
-    const auto metadata_consitency = check_metadata_consistency(meth.meta, cim);
+    const auto metadata_consitency = check_metadata_consistency(meth, cim);
     lgr.info("Methylome and index metadata consistent: {}",
              metadata_consitency);
     all_methylomes_metadata_consitent =
