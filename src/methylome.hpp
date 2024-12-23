@@ -27,6 +27,10 @@
 #include "methylome_data.hpp"
 #include "methylome_metadata.hpp"
 
+#include <cstddef>  // for std::size_t
+#include <string>
+#include <system_error>
+
 struct methylome {
   methylome_data data;
   methylome_metadata meta;

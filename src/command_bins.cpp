@@ -54,20 +54,16 @@ xfrase bins remote -x hg38.cpg_idx -o output.bed -s example.com -a SRX012345 -b 
 #include "methylome_results_types.hpp"
 #include "request.hpp"
 #include "utilities.hpp"
-// #include "xfrase_error.hpp"
 
 #include <boost/program_options.hpp>
 
 #include <algorithm>
-#include <cerrno>
 #include <chrono>
 #include <cstdint>
 #include <cstdlib>  // for EXIT_FAILURE, EXIT_SUCCESS
 #include <format>
-#include <fstream>
 #include <iostream>
 #include <print>
-#include <ranges>  // for std::views
 #include <string>
 #include <string_view>
 #include <system_error>

@@ -27,8 +27,6 @@
 
 #include "xfrase_error.hpp"  // for make_error_code, methylome_set_code
 
-#include <filesystem>
-#include <format>
 #include <memory>  // for std::shared_ptr, std::make_shared
 #include <mutex>   // for std::scoped_lock
 #include <string>
@@ -39,7 +37,6 @@
 [[nodiscard]] auto
 methylome_set::get_methylome(const std::string &accession, std::error_code &ec)
   -> std::shared_ptr<methylome> {
-
   if (!is_valid_accession(accession)) {
     ec = methylome_set_code::invalid_accession;
     return nullptr;

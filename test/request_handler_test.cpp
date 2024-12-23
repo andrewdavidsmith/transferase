@@ -26,6 +26,7 @@
 #include "cpg_index.hpp"
 #include "genomic_interval.hpp"
 #include "logger.hpp"  // ADS: so we can setup the logger
+#include "methylome_metadata.hpp"
 #include "request.hpp"
 #include "response.hpp"
 #include "xfrase_error.hpp"
@@ -36,6 +37,13 @@
 #include <string>
 #include <system_error>
 #include <vector>
+
+#include <filesystem>
+#include <format>
+#include <iterator>  // for std::size
+#include <tuple>     // for std::ignore
+#include <unordered_map>
+#include <utility>  // for std::pair
 
 TEST(request_handler_test, basic_assertions) {
   std::error_code ec;

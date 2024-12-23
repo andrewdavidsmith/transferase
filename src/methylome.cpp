@@ -27,21 +27,12 @@
 #include "methylome_metadata.hpp"
 
 #include "logger.hpp"
-#include "xfrase_error.hpp"
 
-#include <algorithm>
-#include <cassert>
-#include <cerrno>
-#include <cstdint>  // for uint32_t, uint16_t, uint8_t, uint64_t
 #include <filesystem>
-#include <fstream>
-#include <ranges>
 #include <string>
 #include <system_error>
 #include <tuple>
-#include <type_traits>  // for is_same
-#include <utility>      // for pair, move
-#include <vector>
+#include <utility>  // for std::move
 
 [[nodiscard]] auto
 methylome::is_consistent() const -> bool {
