@@ -92,9 +92,10 @@ enum class methylome_set_code : std::uint32_t {
   methylome_already_live = 5,
   methylome_metadata_file_not_found = 6,
   error_reading_metadata_file = 7,
+  unknown_error = 8,
 };
 
-static constexpr std::uint32_t methylome_set_code_n = 8;
+static constexpr std::uint32_t methylome_set_code_n = 9;
 
 // register methylome_set_code as error code enum
 template <>
@@ -119,6 +120,7 @@ struct methylome_set_category : std::error_category {
     case 5: return "methylome already live"s;
     case 6: return "methylome metadata file not found"s;
     case 7: return "error reading methylome metadata file"s;
+    case 8: return "methylome set unknown error"s;
     }
     // clang-format on
     std::unreachable();  // hopefully
