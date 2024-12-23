@@ -346,5 +346,5 @@ read_methylome_data(const std::string &methylome_file)
   -> std::tuple<methylome_data, methylome_metadata, std::error_code> {
   const auto methylome_meta_file =
     get_default_methylome_metadata_filename(methylome_file);
-  return read_methylome(methylome_file, methylome_meta_file);
+  return read_methylome_data(methylome_file, methylome_meta_file);
 }
