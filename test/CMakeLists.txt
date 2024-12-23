@@ -125,6 +125,8 @@ target_link_libraries(methylome_set_test
  utilities
  methylome_metadata
  methylome_set
+ methylome
+ logger
 )
 
 add_executable(cpg_index_set_test cpg_index_set_test.cpp)
@@ -152,6 +154,7 @@ target_link_libraries(request_handler_test
  request
  logger
  methylome_data
+ methylome
  utilities
  methylome_metadata
  genomic_interval
