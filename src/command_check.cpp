@@ -49,8 +49,7 @@ xfrase check -x indexes/hg38.cpg_idx -m SRX012345.m16 SRX612345.m16
 #include "cpg_index.hpp"
 #include "cpg_index_metadata.hpp"
 #include "logger.hpp"
-#include "methylome_data.hpp"
-#include "methylome_metadata.hpp"
+#include "methylome.hpp"
 #include "methylome_results_types.hpp"  // IWYU pragma: keep
 #include "utilities.hpp"
 #include "xfrase_error.hpp"  // IWYU pragma: keep
@@ -81,25 +80,6 @@ check_cpg_index_consistency(const cpg_index_metadata &cim,
   lgr.debug("cpg_index hashes match: {}", hashes_match);
 
   return n_cpgs_match && hashes_match;
-}
-
-[[nodiscard]] static auto
-check_methylome_consistency(const methylome_metadata &meta,
-                            const methylome_data &meth) -> bool {
-  auto &lgr = logger::instance();
-
-  lgr.debug("methylome metadata indicates compressed: {}", meta.is_compressed);
-  const auto n_cpgs_match = (meta.n_cpgs == meth.get_n_cpgs());
-  lgr.debug("methylome number of cpgs match: {}", n_cpgs_match);
-  const auto n_cpgs_match_ret = ((meta.is_compressed && !n_cpgs_match) ||
-                                 (!meta.is_compressed && n_cpgs_match));
-
-  const auto hashes_match = (meta.methylome_hash == meth.hash());
-  lgr.debug("methylome hashes match: {}", hashes_match);
-  const auto hashes_match_ret = ((meta.is_compressed && !hashes_match) ||
-                                 (!meta.is_compressed && hashes_match));
-
-  return n_cpgs_match_ret && hashes_match_ret;
 }
 
 [[nodiscard]] static auto
@@ -134,6 +114,7 @@ command_check_main(int argc, char *argv[]) -> int {
     std::format("{}\n{}", strip(description), strip(examples));
 
   std::string index_file{};
+  std::string methylome_directory{};
   xfrase_log_level log_level{};
 
   namespace po = boost::program_options;
@@ -143,8 +124,10 @@ command_check_main(int argc, char *argv[]) -> int {
     // clang-format off
     ("help,h", "print this message and exit")
     ("index,x", po::value(&index_file)->required(), "index file")
+    ("directory,d", po::value(&methylome_directory)->required(),
+     "directory containing methylomes")
     ("methylomes,m", po::value<std::vector<std::string>>()->multitoken()->required(),
-     "methylome files")
+     "methylome accessions or names")
     ("log-level,v", po::value(&log_level)->default_value(logger::default_level),
      "log level {debug,info,warning,error,critical}")
     // clang-format on
@@ -174,14 +157,15 @@ command_check_main(int argc, char *argv[]) -> int {
     return EXIT_FAILURE;
   }
 
-  const auto methylome_files = vm["methylomes"].as<std::vector<std::string>>();
+  const auto methylomes = vm["methylomes"].as<std::vector<std::string>>();
   const auto index_meta_file =
     get_default_cpg_index_metadata_filename(index_file);
 
-  const auto joined = methylome_files | std::views::join_with(',');
+  const auto joined = methylomes | std::views::join_with(',');
   std::vector<std::tuple<std::string, std::string>> args_to_log{
     // clang-format off
     {"Index", index_file},
+    {"Methylome directory", methylome_directory},
     {"Methylomes", std::string(std::cbegin(joined), std::cend(joined))},
     // clang-format on
   };
@@ -198,26 +182,24 @@ command_check_main(int argc, char *argv[]) -> int {
 
   bool all_methylomes_consitent = true;
   bool all_methylomes_metadata_consitent = true;
-  for (const auto &methylome_file : methylome_files) {
-    const auto methylome_meta_file =
-      get_default_methylome_metadata_filename(methylome_file);
-    const auto [meth, meta, meth_read_err] =
-      read_methylome(methylome_file, methylome_meta_file);
-    if (meth_read_err) {
-      lgr.error("Failed to read methylome {} ({})", methylome_file,
-                meth_read_err);
+  for (const auto &methylome_name : methylomes) {
+    std::error_code ec;
+    const auto meth = read_methylome(methylome_directory, methylome_name, ec);
+    if (ec) {
+      lgr.error("Failed to read methylome {}: {}", methylome_name, ec);
       return EXIT_FAILURE;
     }
 
-    lgr.info("Methylome total counts: {}", meth.total_counts());
-    lgr.info("Methylome total counts covered: {}", meth.total_counts_cov());
+    lgr.info("Methylome total counts: {}", meth.data.total_counts());
+    lgr.info("Methylome total counts covered: {}",
+             meth.data.total_counts_cov());
 
-    const auto methylome_consitency = check_methylome_consistency(meta, meth);
-    lgr.info("Methylome data and metadata consistent: {}",
+    const auto methylome_consitency = meth.is_consistent();
+    lgr.info("Methylome data and metadata are consistent: {}",
              methylome_consitency);
     all_methylomes_consitent = all_methylomes_consitent && methylome_consitency;
 
-    const auto metadata_consitency = check_metadata_consistency(meta, cim);
+    const auto metadata_consitency = check_metadata_consistency(meth.meta, cim);
     lgr.info("Methylome and index metadata consistent: {}",
              metadata_consitency);
     all_methylomes_metadata_consitent =
