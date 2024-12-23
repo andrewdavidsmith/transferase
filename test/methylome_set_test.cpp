@@ -68,23 +68,25 @@ protected:
 };
 
 TEST_F(methylome_set_mock, get_methylome_existing_accession) {
-  const auto [meth_ptr, meta_ptr, ec] =
-    methylome_set_ptr->get_methylome("SRX012345");
+  std::error_code ec;
+  const auto meth_ptr = methylome_set_ptr->get_methylome("SRX012345", ec);
+  EXPECT_FALSE(ec);
   EXPECT_EQ(std::size(methylome_set_ptr->accession_to_methylome), 1);
 }
 
 TEST_F(methylome_set_mock, get_methylome_invalid_accession) {
-  const auto [unused_meth_ptr, unused_meta_ptr, ec] =
-    methylome_set_ptr->get_methylome("invalid.accession");
-  EXPECT_EQ(unused_meth_ptr, nullptr);
-  EXPECT_EQ(unused_meth_ptr, nullptr);
+  std::error_code ec;
+  const auto meth_ptr =
+    methylome_set_ptr->get_methylome("invalid.accession", ec);
+  EXPECT_EQ(meth_ptr, nullptr);
   EXPECT_EQ(ec, methylome_set_code::invalid_accession);
 }
 
 TEST_F(methylome_set_mock, methylome_file_not_found) {
-  const auto [unused_meth_ptr, unused_meta_ptr, err] =
-    methylome_set_ptr->get_methylome("DRX000000");
-  EXPECT_EQ(err, methylome_set_code::methylome_file_not_found);
+  std::error_code ec;
+  const auto meth_ptr = methylome_set_ptr->get_methylome("DRX000000", ec);
+  EXPECT_EQ(meth_ptr, nullptr);
+  EXPECT_EQ(ec, methylome_set_code::methylome_file_not_found);
 }
 
 class methylome_set_lutions : public ::testing::Test {
@@ -125,34 +127,16 @@ protected:
 
 TEST_F(methylome_set_lutions, get_methylome_more_than_max_methylomes) {
   for (auto const &accession : accessions) {
-    const auto [meth, meta, ec] = methylome_set_ptr->get_methylome(accession);
+    std::error_code ec;
+    const auto meth_ptr = methylome_set_ptr->get_methylome(accession, ec);
     EXPECT_EQ(ec, methylome_set_code::ok);
-    EXPECT_NE(meth, nullptr);
-    EXPECT_NE(meta, nullptr);
+    EXPECT_NE(meth_ptr, nullptr);
   }
 }
 
 TEST_F(methylome_set_lutions, get_methylome_get_already_loaded) {
-  const auto [meth, meta, ec] =
-    methylome_set_ptr->get_methylome(accessions.back());
+  std::error_code ec;
+  const auto meth_ptr = methylome_set_ptr->get_methylome(accessions.back(), ec);
   EXPECT_EQ(ec, methylome_set_code::ok);
-  EXPECT_NE(meth, nullptr);
-  EXPECT_NE(meta, nullptr);
-}
-
-TEST_F(methylome_set_lutions, get_methylome_get_inconsistent_state) {
-  // Put the methylome_set in an inconsistent state
-  const auto [meth, meta, ec] =
-    methylome_set_ptr->get_methylome(accessions.back());
-  auto to_remove =
-    methylome_set_ptr->accession_to_methylome.find(accessions.back());
-  EXPECT_NE(to_remove, std::cend(methylome_set_ptr->accession_to_methylome));
-  if (to_remove != std::cend(methylome_set_ptr->accession_to_methylome))
-    methylome_set_ptr->accession_to_methylome.erase(to_remove);
-
-  const auto [meth_other, meta_other, ec_other] =
-    methylome_set_ptr->get_methylome(accessions.back());
-  EXPECT_EQ(ec_other, methylome_set_code::methylome_already_live);
-  EXPECT_EQ(meth_other, nullptr);
-  EXPECT_EQ(meta_other, nullptr);
+  EXPECT_NE(meth_ptr, nullptr);
 }
