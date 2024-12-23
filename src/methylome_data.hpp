@@ -37,6 +37,7 @@
 #include <iterator>  // for std::pair, std::size
 #include <limits>    // for std::numeric_limits
 #include <string>
+#include <string_view>
 #include <system_error>
 #include <tuple>
 #include <utility>  // for std::pair
@@ -49,7 +50,7 @@ struct cpg_index_metadata;
 struct methylome_metadata;
 
 struct methylome_data {
-  static constexpr auto filename_extension{".m16"};
+  static constexpr std::string_view filename_extension{".m16"};
 
   typedef std::uint16_t m_count_t;
   typedef std::pair<m_count_t, m_count_t> m_elem;
@@ -134,17 +135,23 @@ struct methylome_data {
 };
 
 [[nodiscard]] inline auto
+compose_methylome_data_filename(auto wo_extension) {
+  wo_extension += methylome_data::filename_extension;
+  return wo_extension;
+}
+
+[[nodiscard]] inline auto
 size(const methylome_data &m) -> std::size_t {
   return std::size(m.cpgs);
 }
 
 [[nodiscard]] auto
-read_methylome(const std::string &methylome_file)
+read_methylome_data(const std::string &methylome_file)
   -> std::tuple<methylome_data, methylome_metadata, std::error_code>;
 
 [[nodiscard]] auto
-read_methylome(const std::string &methylome_file,
-               const std::string &methylome_meta_file)
+read_methylome_data(const std::string &methylome_file,
+                    const std::string &methylome_meta_file)
   -> std::tuple<methylome_data, methylome_metadata, std::error_code>;
 
 template <typename T, typename U>
