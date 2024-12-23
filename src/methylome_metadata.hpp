@@ -29,6 +29,7 @@
 #include <cstdint>  // for uint32_t, uint64_t
 #include <format>
 #include <string>
+#include <string_view>
 #include <system_error>
 #include <tuple>
 #include <type_traits>  // for std::true_type
@@ -92,7 +93,7 @@ struct methylome_data;
 struct cpg_index_metadata;
 
 struct methylome_metadata {
-  static constexpr auto filename_extension{".m16.json"};
+  static constexpr std::string_view filename_extension{".m16.json"};
   std::string version;
   std::string host;
   std::string user;
@@ -140,6 +141,12 @@ BOOST_DESCRIBE_STRUCT(methylome_metadata, (),
  is_compressed
 ))
 // clang-format on
+
+[[nodiscard]] inline auto
+compose_methylome_metadata_filename(auto wo_extension) {
+  wo_extension += methylome_metadata::filename_extension;
+  return wo_extension;
+}
 
 [[nodiscard]] inline auto
 methylome_metadata_consistent(const methylome_metadata &a,
