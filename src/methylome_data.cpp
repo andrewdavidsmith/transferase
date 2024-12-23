@@ -325,8 +325,8 @@ methylome_data::get_n_cpgs() const -> std::uint32_t {
 }
 
 [[nodiscard]] auto
-read_methylome(const std::string &methylome_file,
-               const std::string &methylome_meta_file)
+read_methylome_data(const std::string &methylome_file,
+                    const std::string &methylome_meta_file)
   -> std::tuple<methylome_data, methylome_metadata, std::error_code> {
   // read the methylome metadata first
   const auto [meta, meta_err] = methylome_metadata::read(methylome_meta_file);
@@ -342,7 +342,7 @@ read_methylome(const std::string &methylome_file,
 }
 
 [[nodiscard]] auto
-read_methylome(const std::string &methylome_file)
+read_methylome_data(const std::string &methylome_file)
   -> std::tuple<methylome_data, methylome_metadata, std::error_code> {
   const auto methylome_meta_file =
     get_default_methylome_metadata_filename(methylome_file);
