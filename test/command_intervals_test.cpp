@@ -31,6 +31,7 @@
 #include <fstream>
 #include <iterator>
 #include <string>
+#include <system_error>
 
 [[nodiscard]] static bool
 are_files_identical(const std::filesystem::path &file1,
@@ -48,8 +49,10 @@ are_files_identical(const std::filesystem::path &file1,
 
 TEST(command_intervals_test, basic_local_test) {
   // Input files for test
-  static constexpr auto index_file = "data/pAntiquusx.cpg_idx";
-  static constexpr auto meth_file = "data/SRX012346.m16";
+  static constexpr auto index_directory = "data";
+  static constexpr auto genome_name = "pAntiquusx";
+  static constexpr auto methylome_directory = "data";
+  static constexpr auto methylome_name = "SRX012346";
   static constexpr auto intervals_file = "data/pAntiquusx_promoters.bed";
   // Output filename and expected output
   static constexpr auto output_file = "data/output_file.bed";
@@ -62,11 +65,15 @@ TEST(command_intervals_test, basic_local_test) {
     "intervals",
     "local",
     "-x",
-    index_file,
+    index_directory,
+    "-g",
+    genome_name,
+    "-d",
+    methylome_directory,
+    "-m",
+    methylome_name,
     "-i",
     intervals_file,
-    "-m",
-    meth_file,
     "-o",
     output_file,
     // clang-format on
@@ -79,7 +86,8 @@ TEST(command_intervals_test, basic_local_test) {
 
   // Check that the output file is created
   EXPECT_EQ(result, EXIT_SUCCESS);
-  EXPECT_TRUE(std::filesystem::exists(output_file));
+  std::error_code ignored_ec;
+  EXPECT_TRUE(std::filesystem::exists(output_file, ignored_ec));
   EXPECT_TRUE(are_files_identical(output_file, expected_output_file));
 
   // Clean up: delete test files
@@ -89,8 +97,10 @@ TEST(command_intervals_test, basic_local_test) {
 
 TEST(command_intervals_test, basic_local_test_scores) {
   // Input files for test
-  static constexpr auto index_file = "data/pAntiquusx.cpg_idx";
-  static constexpr auto meth_file = "data/SRX012346.m16";
+  static constexpr auto index_directory = "data";
+  static constexpr auto genome_name = "pAntiquusx";
+  static constexpr auto methylome_directory = "data";
+  static constexpr auto methylome_name = "SRX012346";
   static constexpr auto intervals_file = "data/pAntiquusx_promoters.bed";
   // Output filename and expected output
   static constexpr auto output_file = "data/output_file.bed";
@@ -103,11 +113,15 @@ TEST(command_intervals_test, basic_local_test_scores) {
     "intervals",
     "local",
     "-x",
-    index_file,
+    index_directory,
+    "-g",
+    genome_name,
+    "-d",
+    methylome_directory,
+    "-m",
+    methylome_name,
     "-i",
     intervals_file,
-    "-m",
-    meth_file,
     "-o",
     output_file,
     "--score",
@@ -125,8 +139,9 @@ TEST(command_intervals_test, basic_local_test_scores) {
   EXPECT_FALSE(are_files_identical(output_file, unexpected_output_file));
 
   // Clean up: delete test files
-  if (std::filesystem::exists(output_file))
-    std::filesystem::remove(output_file);
+  std::error_code ignored_ec;
+  if (std::filesystem::exists(output_file, ignored_ec))
+    std::filesystem::remove(output_file, ignored_ec);
 }
 
 TEST(command_intervals_test, failing_remote_test) {
