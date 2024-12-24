@@ -25,13 +25,14 @@
 #define SRC_CPG_INDEX_SET_HPP_
 
 #include "cpg_index.hpp"
-#include "cpg_index_metadata.hpp"
 
+#include <cstdint>  // for std::uint32_t
+#include <memory>
 #include <string>
 #include <system_error>
-#include <tuple>
+#include <type_traits>  // for std::true_type
 #include <unordered_map>
-#include <variant>
+#include <utility>  // for std::to_underlying, std::unreachable
 
 struct cpg_index_set {
   cpg_index_set(const cpg_index_set &) = delete;
@@ -44,17 +45,44 @@ struct cpg_index_set {
   cpg_index_set(const std::string &cpg_index_directory, std::error_code &ec);
 
   [[nodiscard]] auto
-  get_cpg_index_metadata(const std::string &assembly_name)
-    -> std::tuple<const cpg_index_metadata &, std::error_code>;
+  get_cpg_index(const std::string &assembly,
+                std::error_code &ec) -> std::shared_ptr<cpg_index>;
 
-  [[nodiscard]] auto
-  get_cpg_index_with_meta(const std::string &assembly_name)
-    -> std::tuple<const cpg_index &, const cpg_index_metadata &,
-                  std::error_code>;
-
-  std::unordered_map<std::string, cpg_index> assembly_to_cpg_index;
-  std::unordered_map<std::string, cpg_index_metadata>
-    assembly_to_cpg_index_metadata;
+  std::unordered_map<std::string, std::shared_ptr<cpg_index>>
+    assembly_to_cpg_index;
 };
+
+// error code for cpg_index_set
+enum class cpg_index_set_error : std::uint32_t {
+  ok = 0,
+  cpg_index_not_found = 1,
+};
+
+template <>
+struct std::is_error_code_enum<cpg_index_set_error> : public std::true_type {};
+
+struct cpg_index_set_category : std::error_category {
+  auto
+  name() const noexcept -> const char * override {
+    return "cpg_index_set";
+  }
+  auto
+  message(int code) const -> std::string override {
+    using std::string_literals::operator""s;
+    // clang-format off
+    switch (code) {
+    case 0: return "ok"s;
+    case 1: return "cpg index not found"s;
+    }
+    // clang-format on
+    std::unreachable();  // hopefully
+  }
+};
+
+inline auto
+make_error_code(cpg_index_set_error e) -> std::error_code {
+  static auto category = cpg_index_set_category{};
+  return std::error_code(std::to_underlying(e), category);
+}
 
 #endif  // SRC_CPG_INDEX_SET_HPP_
