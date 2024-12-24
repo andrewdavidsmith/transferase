@@ -47,7 +47,7 @@ xfrase config -c my_config_file.toml -s example.com -p 5009 --assemblies hg38,mm
 #include "arguments.hpp"
 #include "command_config_argset.hpp"
 #include "config_file_utils.hpp"  // write_client_config_file
-#include "cpg_index.hpp"
+#include "cpg_index_data.hpp"
 #include "cpg_index_metadata.hpp"
 #include "download.hpp"
 #include "utilities.hpp"
@@ -181,7 +181,7 @@ get_index_files(const bool verbose, const remote_indexes_resources &remote,
     const auto assem = std::string{std::cbegin(assembly), std::cend(assembly)};
     const auto stem = remote.form_target_stem(assem);
     const auto data_file =
-      std::format("{}{}", stem, cpg_index::filename_extension);
+      std::format("{}{}", stem, cpg_index_data::filename_extension);
     if (verbose)
       std::println("Download: {}", remote.form_url(data_file));
     const auto [data_hdr, data_err] =
