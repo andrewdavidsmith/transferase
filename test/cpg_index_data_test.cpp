@@ -43,7 +43,7 @@ TEST(read_cpg_index_data_test, valid_index_file) {
   static constexpr auto index_dir{"data"};
   static constexpr auto assembly{"tProrsus1"};
   std::error_code ec;
-  const auto index = read_cpg_index(index_dir, assembly, ec);
+  const auto index = cpg_index::read(index_dir, assembly, ec);
   EXPECT_FALSE(ec);
   EXPECT_GT(std::size(index.meta.chrom_order), 0);
   EXPECT_GT(std::size(index.meta.chrom_size), 0);
@@ -54,7 +54,7 @@ TEST(read_cpg_index_data_test, invalid_index_file) {
   static constexpr auto index_dir{"data"};
   static constexpr auto assembly{"invalid_index_file"};
   std::error_code ec;
-  const auto index = read_cpg_index(index_dir, assembly, ec);
+  const auto index = cpg_index::read(index_dir, assembly, ec);
   EXPECT_TRUE(ec);
   EXPECT_EQ(std::size(index.meta.chrom_order), 0);
   EXPECT_EQ(std::size(index.meta.chrom_size), 0);
