@@ -22,10 +22,10 @@
  */
 
 #include <genomic_interval.hpp>
-#include <genomic_interval_impl.hpp>
 
 #include <cpg_index.hpp>
-#include <cpg_index_metadata.hpp>  // IWYU pragma: keep
+#include <cpg_index_metadata.hpp>
+#include <genomic_interval_impl.hpp>
 
 #include <gtest/gtest.h>
 
@@ -34,11 +34,14 @@
 #include <unordered_map>
 
 TEST(genomic_interval_test, basic_assertions) {
-  static constexpr auto index_file{"data/tProrsus1.cpg_idx"};
+  static constexpr auto index_dir{"data"};
+  static constexpr auto assembly{"tProrsus1"};
   static constexpr auto intervals_file{"data/tProrsus1_intervals.bed"};
-  const auto [index, cim, index_ec] = read_cpg_index(index_file);
-  EXPECT_FALSE(index_ec);
-  const auto [gis, intervals_ec] = genomic_interval::load(cim, intervals_file);
+  std::error_code ec;
+  const auto index = read_cpg_index(index_dir, assembly, ec);
+  EXPECT_FALSE(ec);
+  const auto [gis, intervals_ec] =
+    genomic_interval::load(index.meta, intervals_file);
   EXPECT_FALSE(intervals_ec);
   EXPECT_EQ(std::size(gis), 20);
   EXPECT_EQ(gis[0].start, 6595);
@@ -46,15 +49,19 @@ TEST(genomic_interval_test, basic_assertions) {
 }
 
 TEST(genomic_interval_test, read_non_existent_file) {
-  static constexpr auto index_file{"asdfasdfasdf"};
-  const auto [index, cim, index_ec] = read_cpg_index(index_file);
-  EXPECT_TRUE(index_ec);
+  static constexpr auto index_dir{"data"};
+  static constexpr auto assembly{"asdfasdfasdf"};
+  std::error_code ec;
+  [[maybe_unused]] const auto index = read_cpg_index(index_dir, assembly, ec);
+  EXPECT_TRUE(ec);
 }
 
 TEST(genomic_interval_test, read_invalid_file) {
-  static constexpr auto index_file{"/etc/passwd"};
-  const auto [index, cim, index_ec] = read_cpg_index(index_file);
-  EXPECT_TRUE(index_ec);
+  static constexpr auto index_dir{"/etc/"};
+  static constexpr auto assembly{"passwd"};
+  std::error_code ec;
+  [[maybe_unused]] const auto index = read_cpg_index(index_dir, assembly, ec);
+  EXPECT_TRUE(ec);
 }
 
 // Test cases
