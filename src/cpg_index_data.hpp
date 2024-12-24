@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_CPG_INDEX_HPP_
-#define SRC_CPG_INDEX_HPP_
+#ifndef SRC_CPG_INDEX_DATA_HPP_
+#define SRC_CPG_INDEX_DATA_HPP_
 
 #if not defined(__APPLE__) && not defined(__MACH__)
 #include "aligned_allocator.hpp"  // for aligned_allocator
@@ -32,13 +32,14 @@
 #include <string>
 #include <system_error>
 #include <tuple>
-#include <utility>  // for std::pair
+#include <type_traits>  // for std::true_type
+#include <utility>      // for std::pair
 #include <vector>
 
 struct genomic_interval;
 struct cpg_index_metadata;
 
-struct cpg_index {
+struct cpg_index_data {
   // includes the dot because that's how std::filesystem::path works
   static constexpr auto filename_extension{".cpg_idx"};
 
@@ -50,8 +51,8 @@ struct cpg_index {
 #endif
 
   [[nodiscard]] static auto
-  read(const cpg_index_metadata &cim,
-       const std::string &index_file) -> std::tuple<cpg_index, std::error_code>;
+  read(const std::string &index_file, const cpg_index_metadata &cim)
+    -> std::tuple<cpg_index_data, std::error_code>;
   [[nodiscard]] auto
   write(const std::string &index_file) const -> std::error_code;
 
@@ -77,20 +78,53 @@ struct cpg_index {
               const std::vector<genomic_interval> &gis) const
     -> std::vector<std::pair<std::uint32_t, std::uint32_t>>;
 
-  std::vector<cpg_index::vec> positions;
+  std::vector<cpg_index_data::vec> positions;
 };
 
-[[nodiscard]] auto
-initialize_cpg_index(const std::string &genome_file)
-  -> std::tuple<cpg_index, cpg_index_metadata, std::error_code>;
+[[nodiscard]] inline auto
+compose_cpg_index_data_filename(auto wo_extension) {
+  wo_extension += cpg_index_data::filename_extension;
+  return wo_extension;
+}
 
 [[nodiscard]] auto
-read_cpg_index(const std::string &index_file)
-  -> std::tuple<cpg_index, cpg_index_metadata, std::error_code>;
+initialize_cpg_index_data(const std::string &genome_file)
+  -> std::tuple<cpg_index_data, cpg_index_metadata, std::error_code>;
 
-[[nodiscard]] auto
-read_cpg_index(const std::string &index_file,
-               const std::string &index_meta_file)
-  -> std::tuple<cpg_index, cpg_index_metadata, std::error_code>;
+// cpg_index_data errors
 
-#endif  // SRC_CPG_INDEX_HPP_
+enum class cpg_index_data_code : std::uint32_t {
+  ok = 0,
+  failure_reading_index_data = 1,
+};
+
+// register cpg_index_data_code as error code enum
+template <>
+struct std::is_error_code_enum<cpg_index_data_code> : public std::true_type {};
+
+// category to provide text descriptions
+struct cpg_index_data_category : std::error_category {
+  auto
+  name() const noexcept -> const char * override {
+    return "cpg_index_data";
+  }
+  auto
+  message(int code) const -> std::string override {
+    using std::string_literals::operator""s;
+    // clang-format off
+    switch (code) {
+    case 0: return "ok"s;
+    case 1: return "failure reading index data"s;
+    }
+    // clang-format on
+    std::unreachable();  // hopefully
+  }
+};
+
+inline auto
+make_error_code(cpg_index_data_code e) -> std::error_code {
+  static auto category = cpg_index_data_category{};
+  return std::error_code(std::to_underlying(e), category);
+}
+
+#endif  // SRC_CPG_INDEX_DATA_HPP_
