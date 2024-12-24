@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_CPG_INDEX_IMPL_HPP_
-#define SRC_CPG_INDEX_IMPL_HPP_
+#ifndef SRC_CPG_INDEX_DATA_IMPL_HPP_
+#define SRC_CPG_INDEX_DATA_IMPL_HPP_
 
 #ifdef UNIT_TEST
 #define STATIC
@@ -36,43 +36,14 @@
 #include <tuple>
 #include <vector>
 
-struct genome_file {
-  std::error_code ec{};
-  char *data{};
-  std::size_t sz{};
-};
-
-[[nodiscard]] STATIC auto
-mmap_genome(const std::string &filename) -> genome_file;
-
-[[nodiscard]] STATIC auto
-cleanup_mmap_genome(genome_file &gf) -> std::error_code;
-
-[[nodiscard]] STATIC auto
-get_cpgs(const std::string_view chrom) -> cpg_index::vec;
-
-[[nodiscard]] STATIC auto
-get_chrom_name_starts(const char *data,
-                      const std::size_t sz) -> std::vector<std::size_t>;
-
-[[nodiscard]] STATIC auto
-get_chrom_name_stops(std::vector<std::size_t> starts, const char *data,
-                     const std::size_t sz) -> std::vector<std::size_t>;
-
-[[nodiscard]] STATIC auto
-get_chroms(const char *data, const std::size_t sz,
-           const std::vector<std::size_t> &name_starts,
-           const std::vector<std::size_t> &name_stops)
-  -> std::vector<std::string_view>;
-
 [[nodiscard]] STATIC auto
 get_offsets_within_chrom(
-  const cpg_index::vec &positions,
+  const cpg_index_data::vec &positions,
   const std::vector<std::pair<std::uint32_t, std::uint32_t>> &queries)
   -> std::vector<std::pair<std::uint32_t, std::uint32_t>>;
 
 [[nodiscard]] STATIC auto
-add_offsets_within_chrom(const cpg_index::vec &positions, auto queries_beg,
+add_offsets_within_chrom(const cpg_index_data::vec &positions, auto queries_beg,
                          const auto queries_end);
 
-#endif  // SRC_CPG_INDEX_IMPL_HPP_
+#endif  // SRC_CPG_INDEX_DATA_IMPL_HPP_
