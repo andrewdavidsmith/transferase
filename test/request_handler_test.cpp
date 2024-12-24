@@ -24,6 +24,8 @@
 #include "request_handler.hpp"
 
 #include "cpg_index.hpp"
+#include "cpg_index_data.hpp"  // for cpg_index::data::get_offsets
+#include "cpg_index_metadata.hpp"
 #include "genomic_interval.hpp"
 #include "logger.hpp"  // ADS: so we can setup the logger
 #include "methylome_metadata.hpp"
@@ -114,10 +116,10 @@ TEST_F(request_handler_mock, add_response_size_for_bins_methylome_error) {
   response_header resp_hdr;
   mock_request_handler->add_response_size_for_bins(req_hdr, req, resp_hdr);
 
-  EXPECT_EQ(resp_hdr.status, server_response_code::server_failure);
+  EXPECT_EQ(resp_hdr.status, server_response_code::methylome_not_found);
 }
 
-TEST_F(request_handler_mock, add_response_size_for_bins_meta_error) {
+TEST_F(request_handler_mock, add_response_size_for_bins_bad_assembly) {
   static constexpr auto real_accession = "eFlareon_brain";
   static constexpr auto fake_accession = "eFlareon_brainZZZ";
   static constexpr auto eFlareon_methylome_size = 234;
@@ -250,15 +252,16 @@ TEST_F(request_handler_mock, handle_get_counts_success) {
   EXPECT_TRUE(std::filesystem::exists(intervals_path));
   EXPECT_TRUE(std::filesystem::exists(index_path));
 
-  const auto [index, cim, index_ec] = read_cpg_index(index_path);
-  EXPECT_FALSE(index_ec);
-  const auto [gis, gis_ec] = genomic_interval::load(cim, intervals_path);
+  std::error_code ec;
+  const auto index = read_cpg_index(index_file_dir, assembly, ec);
+  EXPECT_FALSE(ec);
+  const auto [gis, gis_ec] = genomic_interval::load(index.meta, intervals_path);
   EXPECT_FALSE(gis_ec);
 
-  const auto offsets = index.get_offsets(cim, gis);
+  const auto offsets = index.data.get_offsets(index.meta, gis);
 
   request req{static_cast<std::uint32_t>(std::size(gis)), offsets};
-  request_header req_hdr{methylome_name, cim.n_cpgs, rq_type};
+  request_header req_hdr{methylome_name, index.meta.n_cpgs, rq_type};
   response_header resp_hdr;
 
   mock_request_handler->add_response_size_for_intervals(req_hdr, req, resp_hdr);
@@ -283,11 +286,12 @@ TEST_F(request_handler_mock, handle_get_bins_success) {
 
   EXPECT_TRUE(std::filesystem::exists(index_path));
 
-  const auto [index, cim, index_ec] = read_cpg_index(index_path);
-  EXPECT_FALSE(index_ec);
+  std::error_code ec;
+  const auto index = read_cpg_index(index_file_dir, assembly, ec);
+  EXPECT_FALSE(ec);
 
   bins_request req{bin_size};
-  request_header req_hdr{methylome_name, cim.n_cpgs, rq_type};
+  request_header req_hdr{methylome_name, index.meta.n_cpgs, rq_type};
   response_header resp_hdr;
 
   mock_request_handler->add_response_size_for_bins(req_hdr, req, resp_hdr);
@@ -296,7 +300,7 @@ TEST_F(request_handler_mock, handle_get_bins_success) {
   response_payload resp_data;
   mock_request_handler->handle_get_bins(req_hdr, req, resp_hdr, resp_data);
 
-  const auto expected_n_bins = cim.get_n_bins(bin_size);
+  const auto expected_n_bins = index.meta.get_n_bins(bin_size);
 
   const auto req_offset_elem_size = sizeof(request::offset_type);
   const auto expected_payload_size = req_offset_elem_size * expected_n_bins;
