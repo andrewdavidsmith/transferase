@@ -24,7 +24,10 @@
 #include "metadata_is_consistent.hpp"
 
 #include "cpg_index.hpp"
+#include "cpg_index_metadata.hpp"
 #include "methylome.hpp"
+#include "methylome_metadata.hpp"
+#include <string>
 
 [[nodiscard]] auto
 metadata_is_consistent(const methylome &meth, const cpg_index &index) -> bool {
