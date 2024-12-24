@@ -254,7 +254,7 @@ TEST_F(request_handler_mock, handle_get_counts_success) {
   EXPECT_TRUE(std::filesystem::exists(index_path));
 
   std::error_code ec;
-  const auto index = read_cpg_index(index_file_dir, assembly, ec);
+  const auto index = cpg_index::read(index_file_dir, assembly, ec);
   EXPECT_FALSE(ec);
   const auto [gis, gis_ec] = genomic_interval::load(index.meta, intervals_path);
   EXPECT_FALSE(gis_ec);
@@ -288,7 +288,7 @@ TEST_F(request_handler_mock, handle_get_bins_success) {
   EXPECT_TRUE(std::filesystem::exists(index_path));
 
   std::error_code ec;
-  const auto index = read_cpg_index(index_file_dir, assembly, ec);
+  const auto index = cpg_index::read(index_file_dir, assembly, ec);
   EXPECT_FALSE(ec);
 
   bins_request req{bin_size};
