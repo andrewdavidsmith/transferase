@@ -46,6 +46,10 @@ struct cpg_index {
   cpg_index_data data;
   cpg_index_metadata meta;
 
+  [[nodiscard]] static auto
+  read(const std::string &dirname, const std::string &genome_name,
+       std::error_code &ec) -> cpg_index;
+
   [[nodiscard]]
   auto
   is_consistent() const -> bool;
@@ -57,15 +61,15 @@ struct cpg_index {
   [[nodiscard]] auto
   write(const std::string &outdir,
         const std::string &name) const -> std::error_code;
+
+  [[nodiscard]] auto
+  make_query(const std::vector<genomic_interval> &gis) const
+    -> std::vector<std::pair<std::uint32_t, std::uint32_t>>;
 };
 
 [[nodiscard]] auto
 make_cpg_index(const std::string &genome_file)
   -> std::tuple<cpg_index, std::error_code>;
-
-[[nodiscard]] auto
-read_cpg_index(const std::string &directory, const std::string &cpg_index_name,
-               std::error_code &ec) -> cpg_index;
 
 [[nodiscard]] auto
 cpg_index_files_exist(const std::string &directory,

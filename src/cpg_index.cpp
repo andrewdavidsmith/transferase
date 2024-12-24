@@ -54,12 +54,6 @@
 struct genomic_interval;
 
 [[nodiscard]] auto
-cpg_index::get_offsets(const std::vector<genomic_interval> &gis) const
-  -> std::vector<std::pair<std::uint32_t, std::uint32_t>> {
-  return data.get_offsets(meta, gis);
-}
-
-[[nodiscard]] auto
 cpg_index::is_consistent() const -> bool {
   auto &lgr = logger::instance();
 
@@ -99,12 +93,15 @@ cpg_index::write(const std::string &outdir,
 }
 
 [[nodiscard]] auto
-read_cpg_index(const std::string &directory, const std::string &cpg_index_name,
-               std::error_code &ec) -> cpg_index {
-  const auto fn_wo_extn = std::filesystem::path{directory} / cpg_index_name;
+cpg_index::make_query(const std::vector<genomic_interval> &gis) const
+  -> std::vector<std::pair<std::uint32_t, std::uint32_t>> {
+  return data.get_offsets(meta, gis);
+}
 
-  // ADS: metadata needs to be read first because it's the only way to
-  // know if the cpg_index has been compressed...
+[[nodiscard]] auto
+cpg_index::read(const std::string &dirname, const std::string &genome_name,
+                std::error_code &ec) -> cpg_index {
+  const auto fn_wo_extn = std::filesystem::path{dirname} / genome_name;
 
   // compose cpg_index metadata filename
   const auto meta_filename = compose_cpg_index_metadata_filename(fn_wo_extn);
