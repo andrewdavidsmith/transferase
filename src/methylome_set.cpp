@@ -67,7 +67,8 @@ methylome_set::get_methylome(const std::string &accession, std::error_code &ec)
       accession_to_methylome.erase(to_eject_itr);
     }
 
-    const auto loaded_meth = read_methylome(methylome_directory, accession, ec);
+    const auto loaded_meth =
+      methylome::read(methylome_directory, accession, ec);
     if (ec)
       return nullptr;
 
