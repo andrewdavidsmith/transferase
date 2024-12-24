@@ -29,6 +29,7 @@
 #include "logger.hpp"
 
 #include <filesystem>
+#include <ranges>
 #include <string>
 #include <system_error>
 #include <tuple>
