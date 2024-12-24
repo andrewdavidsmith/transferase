@@ -105,7 +105,7 @@ do_local_bins(const std::string &accession,
   auto &lgr = logger::instance();
 
   std::error_code ec;
-  const auto meth = read_methylome(methylome_directory, accession, ec);
+  const auto meth = methylome::read(methylome_directory, accession, ec);
   if (ec) {
     lgr.error("Error reading methylome {} {}: {}", methylome_directory,
               accession, ec);
@@ -198,8 +198,9 @@ command_bins_main(int argc, char *argv[]) -> int {
   general.add_options()
     ("help,h", "print this message and exit")
     ("methylome,m", po::value(&methylome_name)->required(), "methylome name/accession")
-    ("genome,g", po::value(&genome_name)->required(), "genome name/assembly")
     ("bin-size,b", po::value(&bin_size)->required(), "size of bins")
+    ("genome,g", po::value(&genome_name)->required(), "genome name/assembly")
+    ("indexdir,x", po::value(&index_directory)->required(), "local cpg index directory")
     ("log-level,v", po::value(&log_level)->default_value(logger::default_level),
      "log level {debug,info,warning,error,critical}")
     ;
@@ -217,7 +218,6 @@ command_bins_main(int argc, char *argv[]) -> int {
   po::options_description local("Local");
   local.add_options()
     ("methdir,d", po::value(&methylome_directory)->required(), "local methylome directory")
-    ("indexdir,x", po::value(&index_directory)->required(), "local cpg index directory")
     ;
   // clang-format on
 
@@ -274,8 +274,9 @@ command_bins_main(int argc, char *argv[]) -> int {
   // ADS: log the command line arguments (assuming right log level)
   std::vector<std::tuple<std::string, std::string>> args_to_log{
     {"Methylome", methylome_name},
-    {"Genome", genome_name},
     {"Binsize", std::format("{}", bin_size)},
+    {"Genome", genome_name},
+    {"Index directory", index_directory},
     {"Output", outfile},
     {"Covered", std::format("{}", count_covered)},
     {"Bedgraph", std::format("{}", write_scores)},
@@ -285,13 +286,12 @@ command_bins_main(int argc, char *argv[]) -> int {
   };
   std::vector<std::tuple<std::string, std::string>> local_args{
     {"Methylome directory", methylome_directory},
-    {"Index directory", index_directory},
   };
   log_args<xfrase_log_level::info>(args_to_log);
   log_args<xfrase_log_level::info>(remote_mode ? remote_args : local_args);
 
   std::error_code index_ec;
-  const auto index = read_cpg_index(index_directory, genome_name, index_ec);
+  const auto index = cpg_index::read(index_directory, genome_name, index_ec);
   if (index_ec) {
     lgr.error("Failed to read cpg index {} {}: {}", index_directory,
               genome_name, index_ec);
