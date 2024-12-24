@@ -31,6 +31,7 @@
 #include "command_format.hpp"
 #include "command_index.hpp"
 #include "command_intervals.hpp"
+#include "command_list.hpp"
 #include "command_merge.hpp"
 #include "command_server.hpp"
 
@@ -54,6 +55,7 @@ typedef std::function<int(int, char **)> main_fun;
 const std::tuple<std::string_view, main_fun, std::string_view> commands[] = {
   // clang-format off
   {"config", command_config_main, "configure a client for remote queries"},
+  {"list", command_list_main, "list methylome or indexs in a directory"},
   {"index", command_index_main, "make an index for a reference genome"},
   {"format", command_format_main, "format a methylome file"},
   {"check", command_check_main, "perform checks on methylome and index files"},
