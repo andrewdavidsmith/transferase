@@ -24,6 +24,7 @@
 #include "methylome_metadata.hpp"
 
 #include "automatic_json.hpp"  // for tag_invoke
+#include "cpg_index.hpp"
 #include "cpg_index_metadata.hpp"
 #include "methylome_data.hpp"
 #include "utilities.hpp"  // for get_time_as_string
@@ -66,8 +67,8 @@ methylome_metadata::init_env() -> std::error_code {
 }
 
 [[nodiscard]] auto
-methylome_metadata::init(const cpg_index_metadata &cim,
-                         const methylome_data &meth, const bool is_compressed)
+methylome_metadata::init(const cpg_index &index, const methylome_data &meth,
+                         const bool is_compressed)
   -> std::tuple<methylome_metadata, std::error_code> {
   // ADS: (todo) should there be a better way to get the "compression"
   // status?
@@ -76,10 +77,10 @@ methylome_metadata::init(const cpg_index_metadata &cim,
   if (boost_err)
     return {{}, std::error_code{boost_err}};
 
-  const auto index_hash = cim.index_hash;
+  const auto index_hash = index.meta.index_hash;
   const auto methylome_hash = meth.hash();
-  const auto assembly = cim.assembly;
-  const auto n_cpgs = cim.n_cpgs;
+  const auto assembly = index.meta.assembly;
+  const auto n_cpgs = index.meta.n_cpgs;
 
   const auto [username, err] = get_username();
   if (err)
