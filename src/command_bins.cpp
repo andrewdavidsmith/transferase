@@ -40,8 +40,8 @@ on the mode you select, the options you must specify will differ.
 static constexpr auto examples = R"(
 Examples:
 
-xfrase bins local -x hg38.cpg_idx -o output.bed -m methylome.m16 -b 1000
-xfrase bins remote -x hg38.cpg_idx -o output.bed -s example.com -a SRX012345 -b 1000
+xfrase bins local -x index_dir -g hg38 -d methylome_dir -m methylome_name  -o output.bed -b 1000
+xfrase bins remote -x index_dir -g hg38 -s example.com -m SRX012345 -o output.bed -b 1000
 )";
 
 #include "client.hpp"

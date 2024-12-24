@@ -43,7 +43,7 @@ determined.
 static constexpr auto examples = R"(
 Examples:
 
-xfrase check -x indexes/hg38.cpg_idx -m SRX012345.m16 SRX612345.m16
+xfrase check -x index_dir -d methylome_dir -g hg38 -m SRX012345 SRX612345
 )";
 
 #include "cpg_index.hpp"

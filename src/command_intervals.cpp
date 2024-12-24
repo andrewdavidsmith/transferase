@@ -40,8 +40,8 @@ select, the options you must specify will differ.
 static constexpr auto examples = R"(
 Examples:
 
-xfrase intervals local -x hg38.cpg_idx -o output.bed -m methylome.m16 -i input.bed
-xfrase intervals remote -x hg38.cpg_idx -o output.bed -s example.com -a SRX012345 -i input.bed
+xfrase intervals local -x index_dir -g hg38 -d methylome_dir -m methylome_name -o output.bed -i input.bed
+xfrase intervals remote -x index_dir -g hg38 -s example.com -m methylome_name -o output.bed -i input.bed
 )";
 
 #include "client.hpp"
