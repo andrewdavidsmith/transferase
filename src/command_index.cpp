@@ -44,11 +44,10 @@ specified when it is used.
 static constexpr auto examples = R"(
 Examples:
 
-xfrase index -v debug -x hg38.cpg_idx -g hg38.fa
+xfrase index -v debug -x /path/to/index_directory -g hg38.fa
 )";
 
 #include "cpg_index.hpp"
-#include "cpg_index_metadata.hpp"
 #include "logger.hpp"
 #include "utilities.hpp"
 #include "xfrase_error.hpp"  // IWYU pragma: keep
@@ -56,7 +55,6 @@ xfrase index -v debug -x hg38.cpg_idx -g hg38.fa
 #include <boost/program_options.hpp>
 
 #include <chrono>
-#include <filesystem>
 #include <format>
 #include <iostream>
 #include <print>
@@ -80,6 +78,7 @@ command_index_main(int argc, char *argv[]) -> int {
 
   std::string genome_filename{};
   std::string index_file{};
+  std::string index_directory{};
   xfrase_log_level log_level{};
 
   namespace po = boost::program_options;
@@ -89,8 +88,7 @@ command_index_main(int argc, char *argv[]) -> int {
     // clang-format off
     ("help,h", "print this message and exit")
     ("genome,g", po::value(&genome_filename)->required(), "genome_file")
-    ("index,x", po::value(&index_file)->required(),
-     std::format("output file (must end in {})", cpg_index::filename_extension).data())
+    ("indexdir,x", po::value(&index_directory)->required(), "index output directory")
     ("log-level,v", po::value(&log_level)->default_value(logger::default_level),
      "log level {debug,info,warning,error,critical}")
     // clang-format on
@@ -120,27 +118,25 @@ command_index_main(int argc, char *argv[]) -> int {
     return EXIT_FAILURE;
   }
 
-  const auto extension_found = std::filesystem::path(index_file).extension();
-  if (extension_found != cpg_index::filename_extension) {
-    lgr.error("Required filename extension {} (given: {})",
-              cpg_index::filename_extension, extension_found);
-    return EXIT_FAILURE;
-  }
-
-  const auto metadata_output =
-    get_default_cpg_index_metadata_filename(index_file);
-
   std::vector<std::tuple<std::string, std::string>> args_to_log{
     // clang-format off
     {"Genome", genome_filename},
-    {"Index", index_file},
-    {"Index metadata", metadata_output},
+    {"Index directory", index_directory},
     // clang-format on
   };
   log_args<xfrase_log_level::info>(args_to_log);
 
+  std::error_code assembly_name_err;
+  const auto assembly =
+    get_assembly_from_filename(genome_filename, assembly_name_err);
+  if (assembly_name_err) {
+    lgr.error("Failed to parse assembly name from: {}", genome_filename);
+    return EXIT_FAILURE;
+  }
+  lgr.info("Identified genome/assembly name: {}", assembly);
+
   const auto constr_start = std::chrono::high_resolution_clock::now();
-  const auto [index, cim, err] = initialize_cpg_index(genome_filename);
+  const auto [index, err] = make_cpg_index(genome_filename);
   const auto constr_stop = std::chrono::high_resolution_clock::now();
   if (err) {
     if (err == std::errc::no_such_file_or_directory)
@@ -152,13 +148,10 @@ command_index_main(int argc, char *argv[]) -> int {
   lgr.debug("Index construction time: {:.3}s",
             duration(constr_start, constr_stop));
 
-  if (const auto write_err = index.write(index_file); write_err) {
-    lgr.error("Error writing cpg index {}: {}", index_file, write_err);
-    return EXIT_FAILURE;
-  }
-
-  if (const auto write_err = cim.write(metadata_output); write_err) {
-    lgr.error("Error writing cpg index metadata: {}", write_err);
+  const auto write_err = index.write(index_directory, assembly);
+  if (write_err) {
+    lgr.error("Error writing cpg index {} {}: {}", index_directory, assembly,
+              write_err);
     return EXIT_FAILURE;
   }
 
