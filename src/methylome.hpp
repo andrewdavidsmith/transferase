@@ -32,12 +32,17 @@
 #include <system_error>
 
 struct methylome {
+  static constexpr auto data_extn = methylome_data::filename_extension;
+  static constexpr auto meta_extn = methylome_metadata::filename_extension;
+
   methylome_data data;
   methylome_metadata meta;
 
   [[nodiscard]]
   auto
   is_consistent() const -> bool;
+
+  using offset_pair = methylome_data::offset_pair;
 };
 
 [[nodiscard]] inline auto
@@ -52,5 +57,9 @@ read_methylome(const std::string &directory, const std::string &methylome_name,
 [[nodiscard]] auto
 methylome_files_exist(const std::string &directory,
                       const std::string &methylome_name) -> bool;
+
+[[nodiscard]] auto
+list_methylomes(const std::string &dirname,
+                std::error_code &ec) -> std::vector<std::string>;
 
 #endif  // SRC_METHYLOME_HPP_

@@ -32,6 +32,7 @@
 #include <string>
 #include <system_error>
 #include <tuple>
+#include <unordered_set>
 #include <utility>  // for std::move
 
 [[nodiscard]] auto
@@ -85,4 +86,48 @@ methylome_files_exist(const std::string &directory,
   const auto data_filename = compose_methylome_data_filename(fn_wo_extn);
   return std::filesystem::exists(meta_filename) &&
          std::filesystem::exists(data_filename);
+}
+
+[[nodiscard]] auto
+list_methylomes(const std::string &dirname,
+                std::error_code &ec) -> std::vector<std::string> {
+  static constexpr auto data_extn = methylome::data_extn;
+  static constexpr auto meta_extn = methylome::meta_extn;
+
+  using dir_itr_type = std::filesystem::directory_iterator;
+  auto dir_itr = dir_itr_type(dirname, ec);
+  if (ec)
+    return {};
+
+  const auto data_files = std::ranges::subrange{dir_itr, dir_itr_type{}} |
+                          std::views::filter([&](const auto &d) {
+                            return d.path().extension().string() == data_extn;
+                          }) |
+                          std::ranges::to<std::vector>();
+
+  const auto to_meta_file = [&](const auto &d) {
+    std::string tmp = d.path().filename().string();
+    return tmp.replace(tmp.find('.'), std::string::npos, meta_extn);
+  };
+
+  auto meta_names = std::ranges::transform_view(data_files, to_meta_file) |
+                    std::ranges::to<std::vector>();
+
+  std::unordered_set<std::string> meta_names_lookup;
+  for (const auto &m : meta_names)
+    meta_names_lookup.emplace(m);
+  meta_names.clear();
+
+  const auto remove_all_suffixes = [&](std::string s) {
+    const auto dot = s.find('.');
+    return dot == std::string::npos ? s : s.replace(dot, std::string::npos, "");
+  };
+
+  for (const auto &d : dir_itr_type{dirname}) {
+    const auto fn = d.path().filename().string();
+    if (meta_names_lookup.contains(fn))
+      meta_names.emplace_back(remove_all_suffixes(fn));
+  }
+
+  return meta_names;
 }
