@@ -38,7 +38,7 @@ TEST(genomic_interval_test, basic_assertions) {
   static constexpr auto assembly{"tProrsus1"};
   static constexpr auto intervals_file{"data/tProrsus1_intervals.bed"};
   std::error_code ec;
-  const auto index = read_cpg_index(index_dir, assembly, ec);
+  const auto index = cpg_index::read(index_dir, assembly, ec);
   EXPECT_FALSE(ec);
   const auto [gis, intervals_ec] =
     genomic_interval::load(index.meta, intervals_file);
@@ -52,7 +52,7 @@ TEST(genomic_interval_test, read_non_existent_file) {
   static constexpr auto index_dir{"data"};
   static constexpr auto assembly{"asdfasdfasdf"};
   std::error_code ec;
-  [[maybe_unused]] const auto index = read_cpg_index(index_dir, assembly, ec);
+  [[maybe_unused]] const auto index = cpg_index::read(index_dir, assembly, ec);
   EXPECT_TRUE(ec);
 }
 
@@ -60,7 +60,7 @@ TEST(genomic_interval_test, read_invalid_file) {
   static constexpr auto index_dir{"/etc/"};
   static constexpr auto assembly{"passwd"};
   std::error_code ec;
-  [[maybe_unused]] const auto index = read_cpg_index(index_dir, assembly, ec);
+  [[maybe_unused]] const auto index = cpg_index::read(index_dir, assembly, ec);
   EXPECT_TRUE(ec);
 }
 
