@@ -50,6 +50,7 @@ xfrase format -x hg38.cpg_idx -m SRX012345.xsym.gz -o SRX012345.m16
 
 #include "counts_file_formats.hpp"
 #include "cpg_index.hpp"
+#include "cpg_index_data.hpp"
 #include "cpg_index_metadata.hpp"
 #include "logger.hpp"
 #include "methylome_data.hpp"
@@ -127,7 +128,7 @@ make_error_code(format_err e) {
 }
 
 static inline auto
-skip_absent_cpgs(const std::uint64_t end_pos, const cpg_index::vec &idx,
+skip_absent_cpgs(const std::uint64_t end_pos, const cpg_index_data::vec &idx,
                  std::uint32_t cpg_idx_in) -> std::uint32_t {
   const std::uint32_t first_idx = cpg_idx_in;
   while (cpg_idx_in < size(idx) && idx[cpg_idx_in] < end_pos)
@@ -178,10 +179,12 @@ verify_header_line(const cpg_index_metadata &cim,
 }
 
 static auto
-process_cpg_sites(const std::string &infile, const cpg_index &index,
-                  const cpg_index_metadata &cim)
+process_cpg_sites(const std::string &infile, const cpg_index &index)
   -> std::tuple<methylome_data, std::error_code> {
   auto &lgr = logger::instance();
+
+  const cpg_index_metadata &index_meta = index.meta;
+  const auto begin_positions = std::cbegin(index.data.positions);
 
   std::error_code err;
   gzinfile mf(infile, err);
@@ -193,12 +196,12 @@ process_cpg_sites(const std::string &infile, const cpg_index &index,
   std::uint32_t cpg_idx_in{};  // index of current input cpg position
   std::uint64_t pos = std::numeric_limits<std::uint64_t>::max();
 
-  std::vector<cpg_index::vec>::const_iterator positions{};
+  std::vector<cpg_index_data::vec>::const_iterator positions{};
 
   // ADS: if optimization is needed, this can be flattened here to
   // avoid a copy later
   std::vector<methylome_data::vec> cpgs;
-  for (const auto n_cpgs_chrom : cim.get_n_cpgs_chrom())
+  for (const auto n_cpgs_chrom : index_meta.get_n_cpgs_chrom())
     cpgs.push_back(methylome_data::vec(n_cpgs_chrom));
   std::uint32_t cpg_idx_out{};
 
@@ -209,14 +212,14 @@ process_cpg_sites(const std::string &infile, const cpg_index &index,
     if (line[0] == '#') {
       // consistency check between reference used for the index and
       // reference used for the methylome
-      if (err = verify_header_line(cim, line); err) {
+      if (err = verify_header_line(index_meta, line); err) {
         lgr.error("Error parsing xcounts header line: {} ({})", line, err);
         return {{}, err};
       }
       continue;  // ADS: early loop exit
     }
     if (!std::isdigit(line[0])) {  // check for new chromosome
-      const std::int32_t ch_id = get_ch_id(cim, line);
+      const std::int32_t ch_id = get_ch_id(index_meta, line);
       if (ch_id < 0) {
         lgr.error("Failed to find chromosome in index: {}", line);
         return {methylome_data{},
@@ -224,7 +227,7 @@ process_cpg_sites(const std::string &infile, const cpg_index &index,
       }
       cpg_idx_out = 0;
 
-      positions = std::cbegin(index.positions) + ch_id;
+      positions = begin_positions + ch_id;
       pos = 0;         // position in genome
       cpg_idx_in = 0;  // index of current cpg site
 
@@ -259,7 +262,7 @@ process_cpg_sites(const std::string &infile, const cpg_index &index,
   }
 
   methylome_data::vec cpgs_flat;
-  cpgs_flat.reserve(cim.n_cpgs);
+  cpgs_flat.reserve(index_meta.n_cpgs);
   for (const auto &c : cpgs)
     cpgs_flat.insert(std::end(cpgs_flat), std::cbegin(c), std::cend(c));
 
@@ -268,10 +271,12 @@ process_cpg_sites(const std::string &infile, const cpg_index &index,
 }
 
 static auto
-process_cpg_sites_counts(const std::string &infile, const cpg_index &index,
-                         const cpg_index_metadata &cim)
+process_cpg_sites_counts(const std::string &infile, const cpg_index &index)
   -> std::tuple<methylome_data, std::error_code> {
   auto &lgr = logger::instance();
+
+  const cpg_index_metadata &index_meta = index.meta;
+  const auto begin_positions = std::cbegin(index.data.positions);
 
   std::error_code err;
   gzinfile mf(infile, err);
@@ -283,12 +288,12 @@ process_cpg_sites_counts(const std::string &infile, const cpg_index &index,
   std::uint32_t cpg_idx_in{};  // index of current input cpg position
   std::uint64_t pos = std::numeric_limits<std::uint64_t>::max();
 
-  std::vector<cpg_index::vec>::const_iterator positions{};
+  std::vector<cpg_index_data::vec>::const_iterator positions{};
 
   // ADS: if optimization is needed, this can be flattened here to
   // avoid a copy later
   std::vector<methylome_data::vec> cpgs;
-  for (const auto n_cpgs_chrom : cim.get_n_cpgs_chrom())
+  for (const auto n_cpgs_chrom : index_meta.get_n_cpgs_chrom())
     cpgs.push_back(methylome_data::vec(n_cpgs_chrom));
   std::uint32_t cpg_idx_out{};
 
@@ -303,7 +308,7 @@ process_cpg_sites_counts(const std::string &infile, const cpg_index &index,
     const auto end_of_chrom = line.find_first_of(" \t");
     const std::string chrom{line.substr(0, end_of_chrom)};
     if (chrom != prev_chrom) {  // check for new chromosome
-      const std::int32_t ch_id = get_ch_id(cim, chrom);
+      const std::int32_t ch_id = get_ch_id(index_meta, chrom);
       if (ch_id < 0) {
         lgr.error("Failed to find chromosome in index: {}", line);
         return {methylome_data{}, /* ADS: fix this */
@@ -311,7 +316,7 @@ process_cpg_sites_counts(const std::string &infile, const cpg_index &index,
       }
       cpg_idx_out = 0;
 
-      positions = std::cbegin(index.positions) + ch_id;
+      positions = begin_positions + ch_id;
       pos = 0;         // position in genome
       cpg_idx_in = 0;  // index of current cpg site
 
@@ -340,7 +345,7 @@ process_cpg_sites_counts(const std::string &infile, const cpg_index &index,
   }
 
   methylome_data::vec cpgs_flat;
-  cpgs_flat.reserve(cim.n_cpgs);
+  cpgs_flat.reserve(index_meta.n_cpgs);
   for (const auto &c : cpgs)
     cpgs_flat.insert(std::end(cpgs_flat), std::cbegin(c), std::cend(c));
 
@@ -360,6 +365,9 @@ command_format_main(int argc, char *argv[]) -> int {
   static const auto description_msg =
     std::format("{}\n{}", strip(description), strip(examples));
 
+  std::string index_directory{};
+  std::string genome_name{};
+
   std::string methylation_input{};
   std::string methylome_output{};
   std::string index_file{};
@@ -374,7 +382,8 @@ command_format_main(int argc, char *argv[]) -> int {
     ("help,h", "print this message and exit")
     ("meth,m", po::value(&methylation_input)->required(),
      "methylation input file")
-    ("index,x", po::value(&index_file)->required(), "index file")
+    ("indexdir,x", po::value(&index_directory)->required(), "cpg index directory")
+    ("genome,g", po::value(&genome_name)->required(), "genome name/assembly")
     ("output,o", po::value(&methylome_output)->required(),
      std::format("output file (must end in {})", methylome_data::filename_extension).data())
     ("zip,z", po::bool_switch(&zip), "zip the output")
@@ -427,7 +436,8 @@ command_format_main(int argc, char *argv[]) -> int {
   std::vector<std::tuple<std::string, std::string>> args_to_log{
     // clang-format off
     {"Methylation", methylation_input},
-    {"Index", index_file},
+    {"Index directory", index_directory},
+    {"Genome", genome_name},
     {"Methylome output", methylome_output},
     {"Metadata output", metadata_output},
     {"Zip", std::format("{}", zip)},
@@ -435,9 +445,11 @@ command_format_main(int argc, char *argv[]) -> int {
   };
   log_args<xfrase_log_level::info>(args_to_log);
 
-  const auto [index, cim, index_read_err] = read_cpg_index(index_file);
-  if (index_read_err) {
-    lgr.error("Failed to read cpg index {}: {}", index_file, index_read_err);
+  std::error_code index_ec;
+  const auto index = read_cpg_index(index_directory, genome_name, index_ec);
+  if (index_ec) {
+    lgr.error("Failed to read cpg index {} {}: {}", index_directory,
+              genome_name, index_ec);
     return EXIT_FAILURE;
   }
 
@@ -450,15 +462,15 @@ command_format_main(int argc, char *argv[]) -> int {
 
   const auto [meth, meth_err] =
     (format_id == counts_format::xcounts)
-      ? process_cpg_sites(methylation_input, index, cim)
-      : process_cpg_sites_counts(methylation_input, index, cim);
+      ? process_cpg_sites(methylation_input, index)
+      : process_cpg_sites_counts(methylation_input, index);
 
   if (meth_err) {
     lgr.error("Error generating methylome: {}", meth_err);
     return EXIT_FAILURE;
   }
 
-  const auto [meta, meta_err] = methylome_metadata::init(cim, meth, zip);
+  const auto [meta, meta_err] = methylome_metadata::init(index, meth, zip);
   if (meta_err) {
     lgr.error("Error initializing metadata: {}", meta_err);
     return EXIT_FAILURE;
