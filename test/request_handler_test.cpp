@@ -130,12 +130,13 @@ TEST_F(request_handler_mock, add_response_size_for_bins_bad_assembly) {
     return methylome_dir / std::format("{}.m16.json", acc);
   };
 
-  auto [mm, ec] = methylome_metadata::read(get_mm_json_path(real_accession));
+  std::error_code ec;
+  auto meta = methylome_metadata::read(get_mm_json_path(real_accession), ec);
   EXPECT_FALSE(ec);
 
-  mm.assembly = "eUmbreon";
+  meta.assembly = "eUmbreon";
   const auto fake_meta_file = get_mm_json_path(fake_accession);
-  ec = mm.write(fake_meta_file);
+  ec = meta.write(fake_meta_file);
   EXPECT_FALSE(ec);
 
   const std::filesystem::path real_methylome_file =
