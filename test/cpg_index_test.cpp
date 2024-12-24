@@ -28,7 +28,9 @@
 #include <config.h>  // for VERSION
 #include <gtest/gtest.h>
 
+#include <string>
 #include <system_error>
+#include <vector>
 
 TEST(cpg_index_test, filename_functions) {
   static constexpr auto filename1 = "asdf";
