@@ -24,6 +24,7 @@
 #include "cpg_index_set.hpp"
 
 #include "cpg_index.hpp"
+#include "cpg_index_data.hpp"
 #include "cpg_index_metadata.hpp"
 #include "logger.hpp"
 #include "xfrase_error.hpp"  // IWYU pragma: keep
@@ -31,47 +32,32 @@
 #include <filesystem>
 #include <format>
 #include <iterator>  // for std::cend
+#include <memory>    // for std::make_shared
 #include <regex>
 #include <string>
 #include <system_error>
-#include <tuple>
 #include <unordered_map>
 #include <utility>  // for std::move, std::pair
-#include <vector>
 
 [[nodiscard]] auto
-cpg_index_set::get_cpg_index_metadata(const std::string &assembly_name)
-  -> std::tuple<const cpg_index_metadata &, std::error_code> {
-  const auto itr = assembly_to_cpg_index_metadata.find(assembly_name);
-  if (itr == std::cend(assembly_to_cpg_index_metadata))
-    return {{}, std::make_error_code(std::errc::invalid_argument)};
-  return {itr->second, {}};
-}
-
-[[nodiscard]] auto
-cpg_index_set::get_cpg_index_with_meta(const std::string &assembly_name)
-  -> std::tuple<const cpg_index &, const cpg_index_metadata &,
-                std::error_code> {
-  const auto itr_index = assembly_to_cpg_index.find(assembly_name);
-  if (itr_index == std::cend(assembly_to_cpg_index))
-    return {{}, {}, std::make_error_code(std::errc::invalid_argument)};
-  const auto itr_meta = assembly_to_cpg_index_metadata.find(assembly_name);
-  if (itr_meta == std::cend(assembly_to_cpg_index_metadata))
-    return {{}, {}, std::make_error_code(std::errc::invalid_argument)};
-  return {itr_index->second, itr_meta->second, {}};
+cpg_index_set::get_cpg_index(const std::string &assembly, std::error_code &ec)
+  -> std::shared_ptr<cpg_index> {
+  const auto itr_index = assembly_to_cpg_index.find(assembly);
+  if (itr_index == std::cend(assembly_to_cpg_index)) {
+    ec = cpg_index_set_error::cpg_index_not_found;
+    return nullptr;
+  }
+  ec = cpg_index_set_error::ok;
+  return itr_index->second;
 }
 
 cpg_index_set::cpg_index_set(const std::string &cpg_index_directory,
                              std::error_code &ec) {
   static constexpr auto assembly_ptrn = R"(^[_[:alnum:]]+)";
   static const auto cpg_index_filename_ptrn =
-    std::format(R"({}{}$)", assembly_ptrn, cpg_index::filename_extension);
+    std::format(R"({}{}$)", assembly_ptrn, cpg_index_data::filename_extension);
   std::regex cpg_index_filename_re(cpg_index_filename_ptrn);
   std::regex assembly_re(assembly_ptrn);
-
-  std::unordered_map<std::string, cpg_index> assembly_to_cpg_index_in;
-  std::unordered_map<std::string, cpg_index_metadata>
-    assembly_to_cpg_index_metadata_in;
 
   const std::filesystem::path idx_dir{cpg_index_directory};
   for (auto const &dir_entry : std::filesystem::directory_iterator{idx_dir}) {
@@ -85,28 +71,27 @@ cpg_index_set::cpg_index_set(const std::string &cpg_index_directory,
         // read the cpg index metadata
         const auto meta_file =
           get_default_cpg_index_metadata_filename(index_filename);
-        const auto [cim, meta_ec] = cpg_index_metadata::read(meta_file);
+        const auto [meta, meta_ec] = cpg_index_metadata::read(meta_file);
         if (meta_ec) {
           logger::instance().error("Failed to read cpg index metadata {}: {}",
                                    meta_file, meta_ec);
           ec = meta_ec;
+          assembly_to_cpg_index.clear();
           return;
         }
-        assembly_to_cpg_index_metadata_in.emplace(assembly, cim);
 
-        // read the cpg index
-        const auto [index, index_ec] = cpg_index::read(cim, index_filename);
-        if (index_ec) {
+        // read the cpg data
+        const auto [data, data_ec] = cpg_index_data::read(index_filename, meta);
+        if (data_ec) {
           logger::instance().error("Failed to read cpg index {}: {}",
-                                   index_filename, index_ec);
-          ec = index_ec;
+                                   index_filename, data_ec);
+          ec = data_ec;
+          assembly_to_cpg_index.clear();
           return;
         }
-        assembly_to_cpg_index_in.emplace(assembly, index);
+        assembly_to_cpg_index.emplace(assembly,
+                                      std::make_shared<cpg_index>(data, meta));
       }
     }
   }
-
-  assembly_to_cpg_index = std::move(assembly_to_cpg_index_in);
-  assembly_to_cpg_index_metadata = std::move(assembly_to_cpg_index_metadata_in);
 }
