@@ -50,8 +50,8 @@ xfrase intervals remote -x hg38.cpg_idx -o output.bed -s example.com -a SRX01234
 #include "genomic_interval.hpp"
 #include "genomic_interval_output.hpp"
 #include "logger.hpp"
-#include "methylome_data.hpp"
-#include "methylome_metadata.hpp"
+#include "methylome.hpp"
+#include "methylome_data.hpp"  // for methylome::data::get_counts
 #include "methylome_results_types.hpp"
 #include "request.hpp"
 #include "utilities.hpp"
@@ -77,11 +77,11 @@ xfrase intervals remote -x hg38.cpg_idx -o output.bed -s example.com -a SRX01234
 
 template <typename counts_res_type>
 [[nodiscard]] static inline auto
-do_remote_intervals(const std::string &accession, const cpg_index_metadata &cim,
-                    std::vector<methylome_data::offset_pair> offsets,
+do_remote_intervals(const std::string &accession, const cpg_index &index,
+                    const std::vector<methylome::offset_pair> &offsets,
                     const std::string &hostname, const std::string &port)
   -> std::tuple<std::vector<counts_res_type>, std::error_code> {
-  request_header hdr{accession, cim.n_cpgs, {}};
+  request_header hdr{accession, index.meta.n_cpgs, {}};
 
   if constexpr (std::is_same<counts_res_type, counts_res>::value)
     hdr.rq_type = request_header::request_type::counts;
@@ -100,42 +100,39 @@ do_remote_intervals(const std::string &accession, const cpg_index_metadata &cim,
 
 template <typename counts_res_type>
 [[nodiscard]] static inline auto
-do_local_intervals(const std::string &meth_file,
-                   const std::string &meth_meta_file,
-                   std::vector<methylome_data::offset_pair> offsets)
+do_local_intervals(const std::string &accession,
+                   const std::string &methylome_directory,
+                   const std::vector<methylome::offset_pair> &offsets)
   -> std::tuple<std::vector<counts_res_type>, std::error_code> {
   logger &lgr = logger::instance();
-  const auto [meta, meta_err] = methylome_metadata::read(meth_meta_file);
-  if (meta_err) {
-    lgr.error("Error reading file {}: {}", meth_meta_file, meta_err);
-    return {{}, meta_err};
-  }
-  const auto [meth, meth_err] = methylome_data::read(meth_file, meta);
-  if (meth_err) {
-    lgr.error("Error reading file {}: {}", meth_file, meth_err);
-    return {{}, meth_err};
+
+  std::error_code ec;
+  const auto meth = read_methylome(methylome_directory, accession, ec);
+  if (ec) {
+    lgr.error("Error reading methylome {} {}: {}", methylome_directory,
+              accession, ec);
+    return {{}, ec};
   }
   if constexpr (std::is_same<counts_res_type, counts_res_cov>::value)
-    return {std::move(meth.get_counts_cov(offsets)), {}};
+    return {std::move(meth.data.get_counts_cov(offsets)), {}};
   else
-    return {std::move(meth.get_counts(offsets)), {}};
+    return {std::move(meth.data.get_counts(offsets)), {}};
 }
 
 template <typename counts_res_type>
 static auto
-do_intervals(const std::string &accession, const cpg_index_metadata &cim,
-             const std::vector<methylome_data::offset_pair> &offsets,
+do_intervals(const std::string &accession, const cpg_index &index,
+             const std::vector<methylome::offset_pair> &offsets,
              const std::string &hostname, const std::string &port,
-             const std::string &meth_file, const std::string &meth_meta_file,
-             const std::string &outfile,
+             const std::string &methylome_directory, const std::string &outfile,
              const std::vector<genomic_interval> &gis, const bool write_scores,
              const bool remote_mode) -> std::error_code {
   const auto intervals_start{std::chrono::high_resolution_clock::now()};
   const auto [results, intervals_err] =
-    remote_mode
-      ? do_remote_intervals<counts_res_type>(accession, cim, offsets, hostname,
-                                             port)
-      : do_local_intervals<counts_res_type>(meth_file, meth_meta_file, offsets);
+    remote_mode ? do_remote_intervals<counts_res_type>(accession, index,
+                                                       offsets, hostname, port)
+                : do_local_intervals<counts_res_type>(
+                    accession, methylome_directory, offsets);
   const auto intervals_stop{std::chrono::high_resolution_clock::now()};
   logger::instance().debug("Elapsed time for query: {:.3}s",
                            duration(intervals_start, intervals_stop));
@@ -144,7 +141,8 @@ do_intervals(const std::string &accession, const cpg_index_metadata &cim,
     return std::make_error_code(std::errc::invalid_argument);
 
   const auto output_start{std::chrono::high_resolution_clock::now()};
-  const auto write_err = write_output(outfile, gis, cim, results, write_scores);
+  const auto write_err =
+    write_output(outfile, gis, index, results, write_scores);
   const auto output_stop{std::chrono::high_resolution_clock::now()};
   // ADS: elapsed time for output will include conversion to scores
   logger::instance().debug("Elapsed time for output: {:.3}s",
@@ -166,12 +164,16 @@ command_intervals_main(int argc, char *argv[]) -> int {
 
   bool write_scores{};
   bool count_covered{};
-  std::string port{};
-  std::string accession{};
-  std::string index_file{};
-  std::string meth_file{};
-  std::string meth_meta_file{};
+
+  std::string methylome_directory{};
+  std::string index_directory{};
+
+  std::string methylome_name{};
+  std::string genome_name{};
+
   std::string intervals_file{};
+
+  std::string port{};
   std::string hostname{};
   std::string outfile{};
   xfrase_log_level log_level{};
@@ -195,7 +197,8 @@ command_intervals_main(int argc, char *argv[]) -> int {
   // clang-format off
   general.add_options()
     ("help,h", "print this message and exit")
-    ("index,x", po::value(&index_file)->required(), "index file")
+    ("methylome,m", po::value(&methylome_name)->required(), "methylome name/accession")
+    ("genome,g", po::value(&genome_name)->required(), "genome name/assembly")
     ("intervals,i", po::value(&intervals_file)->required(), "intervals file")
     ("log-level,v", po::value(&log_level)->default_value(logger::default_level),
      "log level {debug,info,warning,error,critical}")
@@ -210,12 +213,11 @@ command_intervals_main(int argc, char *argv[]) -> int {
   remote.add_options()
     ("hostname,s", po::value(&hostname)->required(), "server hostname")
     ("port,p", po::value(&port)->default_value(default_port), "port")
-    ("accession,a", po::value(&accession)->required(), "methylome accession")
     ;
   po::options_description local("Local");
   local.add_options()
-    ("methylome,m", po::value(&meth_file)->required(), "local methylome file")
-    ("metadata", po::value(&meth_meta_file), "methylome metadata (default: methylome.json)")
+    ("methdir,d", po::value(&methylome_directory)->required(), "local methylome directory")
+    ("indexdir,x", po::value(&index_directory)->required(), "local cpg index directory")
     ;
   // clang-format on
 
@@ -263,9 +265,6 @@ command_intervals_main(int argc, char *argv[]) -> int {
 
   const bool remote_mode = (subcmd == "remote");
 
-  if (meth_meta_file.empty())
-    meth_meta_file = get_default_methylome_metadata_filename(meth_file);
-
   logger &lgr = logger::instance(shared_from_cout(), command, log_level);
   if (!lgr) {
     std::println("Failure initializing logging: {}.", lgr.get_status());
@@ -274,7 +273,8 @@ command_intervals_main(int argc, char *argv[]) -> int {
 
   // ADS: log the command line arguments (assuming right log level)
   std::vector<std::tuple<std::string, std::string>> args_to_log{
-    {"Index", index_file},
+    {"Methylome", methylome_name},
+    {"Genome", genome_name},
     {"Intervals", intervals_file},
     {"Output", outfile},
     {"Covered", std::format("{}", count_covered)},
@@ -282,30 +282,31 @@ command_intervals_main(int argc, char *argv[]) -> int {
   };
   std::vector<std::tuple<std::string, std::string>> remote_args{
     {"Hostname:port", std::format("{}:{}", hostname, port)},
-    {"Accession", accession},
   };
   std::vector<std::tuple<std::string, std::string>> local_args{
-    {"Methylome", meth_file},
-    {"Metadata", meth_meta_file},
+    {"Methylome directory", methylome_directory},
+    {"Index directory", index_directory},
   };
   log_args<xfrase_log_level::info>(args_to_log);
   log_args<xfrase_log_level::info>(remote_mode ? remote_args : local_args);
 
-  const auto [index, cim, index_read_err] = read_cpg_index(index_file);
-  if (index_read_err) {
-    lgr.error("Failed to read cpg index: {} ({})", index_file, index_read_err);
+  std::error_code index_ec;
+  const auto index = read_cpg_index(index_directory, genome_name, index_ec);
+  if (index_ec) {
+    lgr.error("Failed to read cpg index {} {}: {}", index_directory,
+              genome_name, index_ec);
     return EXIT_FAILURE;
   }
 
-  lgr.debug("Number of CpGs in index: {}", cim.n_cpgs);
+  lgr.debug("Number of CpGs in index: {}", index.meta.n_cpgs);
 
   // Read query intervals and validate them
-  const auto [gis, ec] = genomic_interval::load(cim, intervals_file);
-  if (ec) {
-    lgr.error("Error reading intervals file: {} ({})", intervals_file, ec);
+  const auto [gis, gis_ec] = genomic_interval::load(index.meta, intervals_file);
+  if (gis_ec) {
+    lgr.error("Error reading intervals file: {} ({})", intervals_file, gis_ec);
     return EXIT_FAILURE;
   }
-  if (!intervals_sorted(cim, gis)) {
+  if (!intervals_sorted(index.meta, gis)) {
     lgr.error("Intervals not sorted: {}", intervals_file);
     return EXIT_FAILURE;
   }
@@ -317,18 +318,18 @@ command_intervals_main(int argc, char *argv[]) -> int {
 
   // Convert intervals into offsets
   const auto get_offsets_start{std::chrono::high_resolution_clock::now()};
-  const auto offsets = index.get_offsets(cim, gis);
+  const auto offsets = index.get_offsets(gis);
   const auto get_offsets_stop{std::chrono::high_resolution_clock::now()};
   lgr.debug("Elapsed time to get offsets: {:.3}s",
             duration(get_offsets_start, get_offsets_stop));
 
   const auto intervals_err =
     count_covered
-      ? do_intervals<counts_res_cov>(accession, cim, offsets, hostname, port,
-                                     meth_file, meth_meta_file, outfile, gis,
+      ? do_intervals<counts_res_cov>(methylome_name, index, offsets, hostname,
+                                     port, methylome_directory, outfile, gis,
                                      write_scores, remote_mode)
-      : do_intervals<counts_res>(accession, cim, offsets, hostname, port,
-                                 meth_file, meth_meta_file, outfile, gis,
+      : do_intervals<counts_res>(methylome_name, index, offsets, hostname, port,
+                                 methylome_directory, outfile, gis,
                                  write_scores, remote_mode);
   if (intervals_err) {
     lgr.error("Error: {}", intervals_err);
