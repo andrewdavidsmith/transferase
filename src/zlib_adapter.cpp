@@ -26,8 +26,9 @@
 #include <zlib.h>
 
 #include <algorithm>  // for std::ranges::copy_n
-#include <cerrno>     // for errno
-#include <cstdio>     // std::fread
+#include <cassert>
+#include <cerrno>  // for errno
+#include <cstdio>  // std::fread
 #include <filesystem>
 #include <ranges>  // IWYU pragma: keep
 #include <string>
@@ -44,8 +45,10 @@ is_gzip_file(const std::string &filename) -> bool {
 
   // Read the first two bytes of the file
   std::array<std::uint8_t, 2> buf{};
-  if (std::fread(buf.data(), 1, 2, f) != 2)
+  if (std::fread(buf.data(), 1, 2, f) != 2) {
+    std::fclose(f);
     return false;
+  }
   std::fclose(f);
 
   // Check if the first two bytes match the gzip magic number
@@ -93,7 +96,8 @@ gzinfile::getline(std::string &line) -> gzinfile & {
       return *this;
     }
   }
-  ++pos;  // if here, then buf[pos] == '\n'
+  assert(pos < buf_size);
+  ++pos;  // if here, then hopefully pos < buf_size && buf[pos]=='\n'
   return *this;
 }
 
