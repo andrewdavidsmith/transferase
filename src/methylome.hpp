@@ -30,6 +30,7 @@
 #include <cstddef>  // for std::size_t
 #include <string>
 #include <system_error>
+#include <vector>
 
 struct methylome {
   static constexpr auto data_extn = methylome_data::filename_extension;
