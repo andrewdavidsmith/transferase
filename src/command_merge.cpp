@@ -53,7 +53,6 @@ xfrase merge -o merged.m16 -i SRX0123*.m16
 
 #include <boost/program_options.hpp>
 
-#include <algorithm>
 #include <chrono>
 #include <cstdlib>  // for EXIT_FAILURE, EXIT_SUCCESS
 #include <format>
