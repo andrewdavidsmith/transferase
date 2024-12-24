@@ -49,6 +49,7 @@ xfrase check -x index_dir -d methylome_dir -g hg38 -m SRX012345 SRX612345
 #include "cpg_index.hpp"
 #include "cpg_index_metadata.hpp"
 #include "logger.hpp"
+#include "metadata_is_consistent.hpp"
 #include "methylome.hpp"
 #include "methylome_data.hpp"
 #include "methylome_metadata.hpp"
@@ -70,28 +71,6 @@ xfrase check -x index_dir -d methylome_dir -g hg38 -m SRX012345 SRX612345
 #include <tuple>
 #include <variant>  // IWYU pragma: keep
 #include <vector>
-
-[[nodiscard]] static auto
-check_metadata_consistency(const methylome &meth,
-                           const cpg_index &index) -> bool {
-  auto &lgr = logger::instance();
-
-  const auto versions_match = (index.meta.version == meth.meta.version);
-  lgr.debug("metadata versions match: {}", versions_match);
-
-  const auto index_hashes_match =
-    (index.meta.index_hash == meth.meta.index_hash);
-  lgr.debug("metadata index hashes match: {}", index_hashes_match);
-
-  const auto assemblies_match = (index.meta.assembly == meth.meta.assembly);
-  lgr.debug("metadata assemblies match: {}", assemblies_match);
-
-  const auto n_cpgs_match = (index.meta.n_cpgs == meth.meta.n_cpgs);
-  lgr.debug("metadata assemblies match: {}", assemblies_match);
-
-  return versions_match && index_hashes_match && assemblies_match &&
-         n_cpgs_match;
-}
 
 auto
 command_check_main(int argc, char *argv[]) -> int {
@@ -164,7 +143,7 @@ command_check_main(int argc, char *argv[]) -> int {
 
   std::error_code index_read_err;
   const auto index =
-    read_cpg_index(index_directory, genome_name, index_read_err);
+    cpg_index::read(index_directory, genome_name, index_read_err);
   if (index_read_err) {
     lgr.error("Failed to read cpg index {} {}: {}", index_directory,
               genome_name, index_read_err);
@@ -177,7 +156,7 @@ command_check_main(int argc, char *argv[]) -> int {
   bool all_methylomes_metadata_consitent = true;
   for (const auto &methylome_name : methylomes) {
     std::error_code ec;
-    const auto meth = read_methylome(methylome_directory, methylome_name, ec);
+    const auto meth = methylome::read(methylome_directory, methylome_name, ec);
     if (ec) {
       lgr.error("Failed to read methylome {}: {}", methylome_name, ec);
       return EXIT_FAILURE;
@@ -193,7 +172,7 @@ command_check_main(int argc, char *argv[]) -> int {
     all_methylomes_consitent =
       all_methylomes_consitent && methylome_consistency;
 
-    const auto metadata_consistency = check_metadata_consistency(meth, index);
+    const auto metadata_consistency = metadata_is_consistent(meth, index);
     lgr.info("Methylome and index metadata consistent: {}",
              metadata_consistency);
     all_methylomes_metadata_consitent =
