@@ -44,8 +44,6 @@ enum class server_response_code : std::uint32_t {
   bad_request = 7,
 };
 
-static constexpr std::uint32_t server_response_code_n = 8;
-
 // register server_response_code as error code enum
 template <>
 struct std::is_error_code_enum<server_response_code> : public std::true_type {};
@@ -182,52 +180,6 @@ struct methylome_category : std::error_category {
 inline auto
 make_error_code(methylome_code e) -> std::error_code {
   static auto category = methylome_category{};
-  return std::error_code(std::to_underlying(e), category);
-}
-
-// cpg_index errors
-
-enum class cpg_index_code : std::uint32_t {
-  ok = 0,
-  wrong_identifier_in_header = 1,
-  error_parsing_index_header_line = 2,
-  failure_reading_index_header = 3,
-  failure_reading_index_body = 4,
-  inconsistent_chromosome_sizes = 5,
-  failure_processing_genome_file = 6,
-};
-
-// register cpg_index_code as error code enum
-template <>
-struct std::is_error_code_enum<cpg_index_code> : public std::true_type {};
-
-// category to provide text descriptions
-struct cpg_index_category : std::error_category {
-  auto
-  name() const noexcept -> const char * override {
-    return "cpg_index";
-  }
-  auto
-  message(int code) const -> std::string override {
-    using std::string_literals::operator""s;
-    // clang-format off
-    switch (code) {
-    case 0: return "ok"s;
-    case 1: return "wrong identifier in header"s;
-    case 2: return "error parsing index header line"s;
-    case 3: return "failure reading index header"s;
-    case 4: return "failure reading index body"s;
-    case 5: return "inconsistent chromosome sizes"s;
-    case 6: return "failure processing genome file"s;
-    }
-    // clang-format on
-    std::unreachable();  // hopefully
-  }
-};
-
-inline auto
-make_error_code(cpg_index_code e) -> std::error_code {
-  static auto category = cpg_index_category{};
   return std::error_code(std::to_underlying(e), category);
 }
 
