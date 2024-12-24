@@ -34,6 +34,7 @@
 #include <tuple>
 #include <unordered_set>
 #include <utility>  // for std::move
+#include <vector>
 
 [[nodiscard]] auto
 methylome::is_consistent() const -> bool {
