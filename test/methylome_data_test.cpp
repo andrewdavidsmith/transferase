@@ -28,6 +28,7 @@
 #include <gtest/gtest.h>
 
 #include <cstdint>
+#include <system_error>
 #include <utility>
 
 TEST(methylome_data_test, basic_assertions) {
@@ -38,14 +39,15 @@ TEST(methylome_data_test, basic_assertions) {
 }
 
 TEST(methylome_data_test, valid_read) {
-  static constexpr auto filename{"data/SRX012345.m16"};
-  const auto meta_filename = get_default_methylome_metadata_filename(filename);
+  static constexpr auto dirname{"data"};
+  static constexpr auto methylome_name{"SRX012345"};
 
-  const auto [meta, meta_err] = methylome_metadata::read(meta_filename);
-  EXPECT_FALSE(meta_err);
+  std::error_code ec;
+  const auto meta = methylome_metadata::read(dirname, methylome_name, ec);
+  EXPECT_FALSE(ec);
 
-  const auto [meth, meth_err] = methylome_data::read(filename, meta);
-  EXPECT_FALSE(meth_err);
+  const auto data = methylome_data::read(dirname, methylome_name, meta, ec);
+  EXPECT_FALSE(ec);
 
-  EXPECT_EQ(size(meth), 6053);
+  EXPECT_EQ(size(data), 6053);
 }
