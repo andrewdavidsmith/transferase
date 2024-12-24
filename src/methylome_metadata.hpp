@@ -29,7 +29,6 @@
 #include <cstdint>  // for uint32_t, uint64_t
 #include <format>
 #include <string>
-#include <string_view>
 #include <system_error>
 #include <tuple>
 #include <type_traits>  // for std::true_type
@@ -90,10 +89,10 @@ make_error_code(methylome_metadata_error e) {
 }
 
 struct methylome_data;
-struct cpg_index_metadata;
+struct cpg_index;
 
 struct methylome_metadata {
-  static constexpr std::string_view filename_extension{".m16.json"};
+  static constexpr auto filename_extension{".m16.json"};
   std::string version;
   std::string host;
   std::string user;
@@ -119,7 +118,7 @@ struct methylome_metadata {
 
   // ADS: (todo) think of a better way to get "compression" status
   [[nodiscard]] static auto
-  init(const cpg_index_metadata &cim, const methylome_data &meth,
+  init(const cpg_index &index, const methylome_data &meth,
        const bool is_compressed)
     -> std::tuple<methylome_metadata, std::error_code>;
 
