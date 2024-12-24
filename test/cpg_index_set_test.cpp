@@ -21,7 +21,9 @@
  * SOFTWARE.
  */
 
-#include <cpg_index_set.hpp>
+#include "cpg_index_set.hpp"
+
+#include "cpg_index_metadata.hpp"
 
 #include <gtest/gtest.h>
 
@@ -30,7 +32,6 @@
 #include <string>
 #include <system_error>
 #include <tuple>  // for std::get
-#include <unordered_map>
 
 TEST(cpg_index_set_test, valid_cpg_index_set) {
   static constexpr auto cpg_index_directory = "data";
@@ -57,18 +58,18 @@ protected:
   std::unique_ptr<cpg_index_set> cpg_index_set_ptr;
 };
 
-TEST_F(cpg_index_set_mock, get_cpg_index_metadata) {
+TEST_F(cpg_index_set_mock, get_cpg_index_metadata_assembly_name) {
   static constexpr auto species = "tProrsus1";
-  std::error_code unused_ec{};
-  const auto meta_and_ec = cpg_index_set_ptr->get_cpg_index_metadata(species);
-  EXPECT_FALSE(std::get<1>(meta_and_ec));
-  EXPECT_EQ(std::size(cpg_index_set_ptr->assembly_to_cpg_index), 2);
+  std::error_code ec{};
+  const auto index_ptr = cpg_index_set_ptr->get_cpg_index(species, ec);
+  EXPECT_FALSE(ec);
+  EXPECT_EQ(index_ptr->meta.assembly, species);
 }
 
-TEST_F(cpg_index_set_mock, get_cpg_index_invalid_assembly) {
-  const auto [cpg_index_ref, cpg_index_metadata_ref, ec] =
-    cpg_index_set_ptr->get_cpg_index_with_meta("invalid.assembly");
-  std::ignore = cpg_index_ref;
-  std::ignore = cpg_index_metadata_ref;
-  EXPECT_EQ(ec, std::errc::invalid_argument);
+TEST_F(cpg_index_set_mock, get_cpg_index_set_assembly_not_found) {
+  std::error_code ec;
+  const auto index_ptr =
+    cpg_index_set_ptr->get_cpg_index("invalid.assembly", ec);
+  std::ignore = index_ptr;
+  EXPECT_EQ(ec, cpg_index_set_error::cpg_index_not_found);
 }
