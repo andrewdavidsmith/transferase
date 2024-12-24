@@ -40,7 +40,6 @@
 #include <ranges>
 #include <string>
 #include <system_error>
-#include <tuple>
 #include <type_traits>  // for is_same
 #include <utility>      // for pair, move
 #include <vector>
@@ -69,43 +68,67 @@ methylome_data::get_n_cpgs_from_file(const std::string &filename)
 
 [[nodiscard]] auto
 methylome_data::read(const std::string &filename,
-                     const methylome_metadata &metadata)
-  -> std::tuple<methylome_data, std::error_code> {
-  std::error_code ec;
+                     const methylome_metadata &metadata,
+                     std::error_code &ec) -> methylome_data {
   const auto filesize = std::filesystem::file_size(filename, ec);
   if (ec)
-    return {{}, ec};
+    return {};
   std::ifstream in(filename);
-  if (!in)
-    return {{}, std::make_error_code(std::errc(errno))};
+  if (!in) {
+    ec = std::make_error_code(std::errc(errno));
+    return {};
+  }
+
   methylome_data meth;
   if (metadata.is_compressed) {
     std::vector<std::uint8_t> buf(filesize);
     const bool read_ok = static_cast<bool>(
       in.read(reinterpret_cast<char *>(buf.data()), filesize));
     const auto n_bytes = in.gcount();
-    if (!read_ok || n_bytes != static_cast<std::streamsize>(filesize))
-      return {{}, std::error_code{methylome_code::error_reading_methylome}};
+    if (!read_ok || n_bytes != static_cast<std::streamsize>(filesize)) {
+      ec = methylome_code::error_reading_methylome;
+      return {};
+    }
     meth.cpgs.resize(metadata.n_cpgs);
 #ifdef BENCHMARK
     const auto decompress_start{std::chrono::high_resolution_clock::now()};
 #endif
-    const auto decompress_err = decompress(buf, meth.cpgs);
+    ec = decompress(buf, meth.cpgs);
 #ifdef BENCHMARK
     const auto decompress_stop{std::chrono::high_resolution_clock::now()};
     std::println("decompress(buf, cpgs) time: {}s",
                  duration(decompress_start, decompress_stop));
 #endif
-    return {std::move(meth), decompress_err};
+    return meth;
   }
   meth.cpgs.resize(metadata.n_cpgs);
   const bool read_ok = static_cast<bool>(
     in.read(reinterpret_cast<char *>(meth.cpgs.data()), filesize));
   const auto n_bytes = in.gcount();
-  if (!read_ok || n_bytes != static_cast<std::streamsize>(filesize))
-    return {{}, std::error_code{methylome_code::error_reading_methylome}};
+  if (!read_ok || n_bytes != static_cast<std::streamsize>(filesize)) {
+    ec = methylome_code::error_reading_methylome;
+    return {};
+  }
 
-  return {std::move(meth), std::error_code{}};
+  ec = std::error_code{};
+  return meth;
+}
+
+[[nodiscard]]
+static inline auto
+make_methylome_data_filename(const std::string &dirname,
+                             const std::string &methylome_name) {
+  const auto with_extension =
+    std::format("{}{}", methylome_name, methylome_data::filename_extension);
+  return (std::filesystem::path{dirname} / with_extension).string();
+}
+
+[[nodiscard]] auto
+methylome_data::read(const std::string &dirname,
+                     const std::string &methylome_name,
+                     const methylome_metadata &meta,
+                     std::error_code &ec) -> methylome_data {
+  return read(make_methylome_data_filename(dirname, methylome_name), meta, ec);
 }
 
 [[nodiscard]] auto

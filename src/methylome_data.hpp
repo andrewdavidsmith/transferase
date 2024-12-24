@@ -59,11 +59,13 @@ struct methylome_data {
   typedef std::vector<m_elem> vec;
 #endif
 
-  // ADS: use of n_cpgs to validate might be confusing and at least
-  // need to be documented
   [[nodiscard]] static auto
-  read(const std::string &filename, const methylome_metadata &meta)
-    -> std::tuple<methylome_data, std::error_code>;
+  read(const std::string &filename, const methylome_metadata &meta,
+       std::error_code &ec) -> methylome_data;
+
+  [[nodiscard]] static auto
+  read(const std::string &dirname, const std::string &methylome_name,
+       const methylome_metadata &meta, std::error_code &ec) -> methylome_data;
 
   [[nodiscard]] auto
   write(const std::string &filename,
