@@ -45,6 +45,7 @@ xfrase merge -o merged.m16 -i SRX0123*.m16
 )";
 
 #include "logger.hpp"
+#include "methylome.hpp"
 #include "methylome_data.hpp"
 #include "methylome_metadata.hpp"
 #include "utilities.hpp"
@@ -67,28 +68,6 @@ xfrase merge -o merged.m16 -i SRX0123*.m16
 #include <variant>  // IWYU pragma: keep
 #include <vector>
 
-[[nodiscard]] static auto
-verify_consistent_metadata_files(const std::vector<std::string> &meth_files)
-  -> std::error_code {
-  std::vector<methylome_metadata> mms;
-  for (const auto &mf : meth_files) {
-    const auto filename = get_default_methylome_metadata_filename(mf);
-    const auto [mm, mm_err] = methylome_metadata::read(filename);
-    if (mm_err)
-      return mm_err;
-    mms.emplace_back(mm);
-  }
-
-  const auto consistent = [&a = mms.back()](const auto &b) -> bool {
-    return methylome_metadata_consistent(a, b);
-  };
-
-  // ADS: this does an extra comparison of the final element to itself
-  return std::ranges::all_of(mms, consistent)
-           ? methylome_metadata_error::ok
-           : methylome_metadata_error::inconsistent;
-}
-
 auto
 command_merge_main(int argc, char *argv[]) -> int {
   static constexpr auto command = "merge";
@@ -100,8 +79,9 @@ command_merge_main(int argc, char *argv[]) -> int {
     std::format("{}\n{}", strip(description), strip(examples));
 
   xfrase_log_level log_level{};
-  std::string output_file{};
-  std::string metadata_output{};
+  std::string methylome_directory{};
+  std::string methylome_outdir{};
+  std::string merged_name{};
 
   namespace po = boost::program_options;
 
@@ -109,9 +89,11 @@ command_merge_main(int argc, char *argv[]) -> int {
   desc.add_options()
     // clang-format off
     ("help,h", "print this message and exit")
-    ("output,o", po::value(&output_file)->required(), "methylome output file")
-    ("meta,e", po::value(&metadata_output), "output metadata (default: output.json)")
-    ("input,i", po::value<std::vector<std::string>>()->multitoken()->required(), "input files")
+    ("methylomes,m", po::value<std::vector<std::string>>()->multitoken()->required(),
+     "names of methylomes to merge")
+    ("directory,d", po::value(&methylome_directory)->required(), "methylome input directory")
+    ("outdir,o", po::value(&methylome_outdir)->required(), "methylome output directory")
+    ("name,n", po::value(&merged_name)->required(), "merged methylome name")
     ("log-level,v", po::value(&log_level)->default_value(logger::default_level),
      "log level {debug,info,warning,error,critical}")
     // clang-format on
@@ -135,90 +117,88 @@ command_merge_main(int argc, char *argv[]) -> int {
     return EXIT_FAILURE;
   }
 
-  if (metadata_output.empty())
-    metadata_output = get_default_methylome_metadata_filename(output_file);
-
-  logger &lgr = logger::instance(shared_from_cout(), command, log_level);
+  auto &lgr = logger::instance(shared_from_cout(), command, log_level);
   if (!lgr) {
     std::println("Failure initializing logging: {}.", lgr.get_status());
     return EXIT_FAILURE;
   }
 
-  const auto input_files = vm["input"].as<std::vector<std::string>>();
-  const auto n_inputs = std::size(input_files);
+  const auto methylome_names = vm["methylomes"].as<std::vector<std::string>>();
+  const auto n_methylomes = std::size(methylome_names);
 
   std::vector<std::tuple<std::string, std::string>> args_to_log{
     // clang-format off
-    {"Output", output_file},
-    {"Output metadata", metadata_output},
-    {"Number of inputs", std::format("{}", n_inputs)},
+    {"Output directory", methylome_outdir},
+    {"Merged methylome name", merged_name},
+    {"Input directory", methylome_directory},
+    {"Number of methylomes to merge", std::format("{}", n_methylomes)},
     // clang-format on
   };
   log_args<xfrase_log_level::info>(args_to_log);
 
   std::vector<std::tuple<std::string, std::string>> filenames_to_log;
-  for (const auto [i, filename] : std::views::enumerate(input_files))
+  for (const auto [i, filename] : std::views::enumerate(methylome_names))
     filenames_to_log.emplace_back(std::format("Methylome{}", i), filename);
   log_args<xfrase_log_level::debug>(filenames_to_log);
+
+  std::error_code ec;
+  double read_time{};
 
   // ADS: first read the last methylome in the input files list as we only
   // do n-1 merges so we need one to start with; we can't merge an
   // empty methylome, so we need a real one outside the loop
-  double read_time{};
-  const auto last_meta_file =
-    get_default_methylome_metadata_filename(input_files.back());
-  auto [last_meta, last_meta_err] = methylome_metadata::read(last_meta_file);
-  if (last_meta_err) {
-    lgr.error("Error reading metadata {}: {}", last_meta_file, last_meta_err);
-    return EXIT_FAILURE;
-  }
+  const auto last_methylome = methylome_names.back();
   auto read_start = std::chrono::high_resolution_clock::now();
-  auto [meth, meth_err] = methylome_data::read(input_files.back(), last_meta);
+  auto meth = methylome::read(methylome_directory, last_methylome, ec);
   auto read_stop = std::chrono::high_resolution_clock::now();
   read_time += duration(read_start, read_stop);
-  if (meth_err) {
-    lgr.error("Error reading methylome {}: {}", input_files.back(), meth_err);
+  if (ec) {
+    lgr.error("Error reading methylome {} {}: {}", methylome_directory,
+              last_methylome, ec);
     return EXIT_FAILURE;
   }
 
-  const auto n_cpgs = size(meth);  // quick consistency check
   double merge_time{};
 
   // ADS: consider threads here; no reason not to
 
   // ADS: iterate through the first n-1 methylomes, merge each with the n-th
-  for (const auto &filename : input_files | std::views::take(n_inputs - 1)) {
-    const auto meta_file = get_default_methylome_metadata_filename(filename);
-    const auto [meta, meta_err] = methylome_metadata::read(meta_file);
-    if (meta_err) {
-      lgr.error("Error reading metadata {}: {}", meta_file, meta_err);
-      return EXIT_FAILURE;
-    }
-    const auto read_start = std::chrono::high_resolution_clock::now();
-    const auto [tmp_meth, meth_err] = methylome_data::read(filename, meta);
-    const auto read_stop = std::chrono::high_resolution_clock::now();
+  for (const auto &name :
+       methylome_names | std::views::take(n_methylomes - 1)) {
+    read_start = std::chrono::high_resolution_clock::now();
+    const auto tmp_meth = methylome::read(methylome_directory, name, ec);
+    read_stop = std::chrono::high_resolution_clock::now();
     read_time += duration(read_start, read_stop);
-    if (meth_err) {
-      lgr.error("Error reading methylome {}: {}", filename, meth_err);
+    if (ec) {
+      lgr.error("Error reading methylome {}: {}", methylome_directory, name,
+                ec);
       return EXIT_FAILURE;
     }
-    if (size(tmp_meth) != n_cpgs) {
-      lgr.error("Wrong methylome size {} (expected {})", size(tmp_meth),
-                n_cpgs);
+    const auto is_consistent = meth.meta.consistent(tmp_meth.meta);
+    if (!is_consistent) {
+      lgr.error("Inconsistent metadata: {} {}", last_methylome, name);
       return EXIT_FAILURE;
     }
     const auto merge_start = std::chrono::high_resolution_clock::now();
-    meth.add(tmp_meth);
+    meth.data.add(tmp_meth.data);
     const auto merge_stop = std::chrono::high_resolution_clock::now();
     merge_time += duration(merge_start, merge_stop);
   }
 
-  const auto write_start = std::chrono::high_resolution_clock::now();
-  if (const auto meth_write_err = meth.write(output_file); meth_write_err) {
-    lgr.error("Error writing methylome {}: {}", output_file, meth_write_err);
+  ec = meth.update_metadata();
+  if (ec) {
+    lgr.error("Error updating metadata: {}", ec);
     return EXIT_FAILURE;
   }
+
+  const auto write_start = std::chrono::high_resolution_clock::now();
+  ec = meth.write(methylome_outdir, merged_name);
   const auto write_stop = std::chrono::high_resolution_clock::now();
+  if (ec) {
+    lgr.error("Error writing methylome {} {}: {}", methylome_outdir,
+              merged_name, ec);
+    return EXIT_FAILURE;
+  }
   const auto write_time = duration(write_start, write_stop);
 
   std::vector<std::tuple<std::string, std::string>> timing_to_log{
@@ -229,25 +209,6 @@ command_merge_main(int argc, char *argv[]) -> int {
     // clang-format on
   };
   log_args<xfrase_log_level::debug>(timing_to_log);
-
-  if (const auto err = verify_consistent_metadata_files(input_files); err) {
-    lgr.error("Inconsistent metadata: {}", err);
-    return EXIT_FAILURE;
-  }
-
-  if (const auto update_err = last_meta.update(meth); update_err) {
-    lgr.error("Error updating metadata: {}", update_err);
-    return EXIT_FAILURE;
-  }
-
-  const auto meta_outfile =
-    get_default_methylome_metadata_filename(output_file);
-  if (const auto meta_write_err = last_meta.write(meta_outfile);
-      meta_write_err) {
-    lgr.error("Error updating metadata {}: {}", metadata_output,
-              meta_write_err);
-    return EXIT_FAILURE;
-  }
 
   return EXIT_SUCCESS;
 }
