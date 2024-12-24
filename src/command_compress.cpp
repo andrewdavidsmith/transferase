@@ -42,11 +42,12 @@ files.
 static constexpr auto examples = R"(
 Examples:
 
-xfrase compress -o compressed.m16 -i original.m16
-xfrase compress -u -o original.m16 -i compressed.m16
+xfrase compress -d methylome_dir -m methylome_name -o output_dir
+xfrase compress -u -d methylome_dir -m methylome_name -o output_dir
 )";
 
 #include "logger.hpp"
+#include "methylome.hpp"
 #include "methylome_data.hpp"
 #include "methylome_metadata.hpp"
 #include "utilities.hpp"     // duration()
@@ -76,10 +77,9 @@ command_compress_main(int argc, char *argv[]) -> int {
   static const auto description_msg =
     std::format("{}\n{}", strip(description), strip(examples));
 
-  std::string methylome_input{};
-  std::string metadata_input{};
-  std::string methylome_output{};
-  std::string metadata_output{};
+  std::string methylome_directory{};
+  std::string methylome_name{};
+  std::string methylome_outdir{};
   xfrase_log_level log_level{};
   bool uncompress{false};
 
@@ -89,13 +89,11 @@ command_compress_main(int argc, char *argv[]) -> int {
   // clang-format off
   desc.add_options()
     ("help,h", "print this message and exit")
-    ("input,i", po::value(&methylome_input)->required(), "input file")
-    ("output,o", po::value(&methylome_output)->required(),
-     "output file")
+    ("directory,d", po::value(&methylome_directory)->required(), "input methylome directory")
+    ("methylome,m", po::value(&methylome_name)->required(), "methylome name/accession")
+    ("output,o", po::value(&methylome_outdir)->required(),
+     "methylome output directory")
     ("uncompress,u", po::bool_switch(&uncompress), "uncompress the file")
-    ("meta", po::value(&metadata_input), "metadata input (default: input.json)")
-    ("meta-out", po::value(&metadata_output),
-     "metadata output (default: output.json)")
     ("log-level,v", po::value(&log_level)->default_value(logger::default_level),
      "log level {debug,info,warning,error,critical}")
     ;
@@ -125,66 +123,48 @@ command_compress_main(int argc, char *argv[]) -> int {
     return EXIT_FAILURE;
   }
 
-  if (metadata_input.empty())
-    metadata_input = std::format("{}.json", methylome_input);
-
-  if (metadata_output.empty())
-    metadata_output = std::format("{}.json", methylome_output);
-
   std::vector<std::tuple<std::string, std::string>> args_to_log{
     // clang-format off
-    {"Input", methylome_input},
-    {"Metadata input", metadata_input},
-    {"Output", methylome_output},
-    {"Metadata output", metadata_output},
+    {"Methylome input directory", methylome_directory},
+    {"Methylome output directory", methylome_outdir},
+    {"Methylome name", methylome_name},
     {"Uncompress", std::format("{}", uncompress)},
     // clang-format on
   };
   log_args<xfrase_log_level::info>(args_to_log);
 
-  auto [meta, meta_read_err] = methylome_metadata::read(metadata_input);
-  if (meta_read_err) {
-    lgr.error("Error reading metadata {}: {}", metadata_input, meta_read_err);
+  std::error_code ec;
+  const auto read_start = std::chrono::high_resolution_clock::now();
+  auto meth = methylome::read(methylome_directory, methylome_name, ec);
+  const auto read_stop = std::chrono::high_resolution_clock::now();
+  if (ec) {
+    lgr.error("Error reading methylome {} {}: {}", methylome_directory,
+              methylome_name, ec);
     return EXIT_FAILURE;
   }
+  lgr.debug("Methylome read time: {}s", duration(read_start, read_stop));
 
-  if (uncompress && !meta.is_compressed) {
+  if (uncompress && !meth.meta.is_compressed) {
     lgr.warning("Attempting to uncompress but methylome is not compressed");
     return EXIT_FAILURE;
   }
 
-  if (!uncompress && meta.is_compressed) {
+  if (!uncompress && meth.meta.is_compressed) {
     lgr.warning("Attempting to compress but methylome is compressed");
     return EXIT_FAILURE;
   }
 
-  const auto meth_read_start = std::chrono::high_resolution_clock::now();
-  const auto [meth, meth_read_err] =
-    methylome_data::read(methylome_input, meta);
-  const auto meth_read_stop = std::chrono::high_resolution_clock::now();
-  if (meth_read_err) {
-    lgr.error("Error reading methylome {}: {}", methylome_input, meth_read_err);
+  meth.meta.is_compressed = !uncompress;
+
+  const auto write_start = std::chrono::high_resolution_clock::now();
+  const auto write_err = meth.write(methylome_outdir, methylome_name);
+  const auto write_stop = std::chrono::high_resolution_clock::now();
+  if (write_err) {
+    lgr.error("Error writing output {} {}: {}", methylome_outdir,
+              methylome_name, write_err);
     return EXIT_FAILURE;
   }
-  lgr.debug("Methylome read time: {}s",
-            duration(meth_read_start, meth_read_stop));
-
-  const auto meth_write_start = std::chrono::high_resolution_clock::now();
-  if (const auto meth_write_err = meth.write(methylome_output, !uncompress);
-      meth_write_err) {
-    lgr.error("Error writing output {}: {}", methylome_output, meth_write_err);
-    return EXIT_FAILURE;
-  }
-  const auto meth_write_stop = std::chrono::high_resolution_clock::now();
-  lgr.debug("Methylome write time: {}s",
-            duration(meth_write_start, meth_write_stop));
-
-  meta.is_compressed = !meta.is_compressed;
-
-  if (const auto meta_write_err = meta.write(metadata_output); meta_write_err) {
-    lgr.error("Error writing metadata {}: {}", metadata_output, meta_write_err);
-    return EXIT_FAILURE;
-  }
+  lgr.debug("Methylome write time: {}s", duration(write_start, write_stop));
 
   return EXIT_SUCCESS;
 }
