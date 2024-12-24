@@ -116,10 +116,8 @@ struct methylome_metadata {
   [[nodiscard]] auto
   tostring() const -> std::string;
 
-  // ADS: (todo) think of a better way to get "compression" status
   [[nodiscard]] static auto
-  init(const cpg_index &index, const methylome_data &meth,
-       const bool is_compressed)
+  init(const cpg_index &index, const methylome_data &meth)
     -> std::tuple<methylome_metadata, std::error_code>;
 
   [[nodiscard]] auto

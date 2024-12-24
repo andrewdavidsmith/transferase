@@ -67,8 +67,7 @@ methylome_metadata::init_env() -> std::error_code {
 }
 
 [[nodiscard]] auto
-methylome_metadata::init(const cpg_index &index, const methylome_data &meth,
-                         const bool is_compressed)
+methylome_metadata::init(const cpg_index &index, const methylome_data &meth)
   -> std::tuple<methylome_metadata, std::error_code> {
   // ADS: (todo) should there be a better way to get the "compression"
   // status?
@@ -86,9 +85,10 @@ methylome_metadata::init(const cpg_index &index, const methylome_data &meth,
   if (err)
     return {{}, err};
 
+  static constexpr auto is_compressed_init = false;
   return {methylome_metadata{VERSION, host, username, get_time_as_string(),
                              methylome_hash, index_hash, assembly, n_cpgs,
-                             is_compressed},
+                             is_compressed_init},
           std::error_code{}};
 }
 
