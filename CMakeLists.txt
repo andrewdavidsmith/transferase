@@ -39,6 +39,10 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS on)
 include(CheckIncludeFileCXX)
 include(CheckFunctionExists)
 
+## ADS: this was needed for something and I can't recall what...
+# Ensure that -fPIC is used when compiling the static library
+# set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
 include(GNUInstallDirs)
 set(DATADIR "${CMAKE_INSTALL_DATADIR}")
 
