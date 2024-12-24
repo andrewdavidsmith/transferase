@@ -72,34 +72,21 @@ xfrase check -x indexes/hg38.cpg_idx -m SRX012345.m16 SRX612345.m16
 #include <vector>
 
 [[nodiscard]] static auto
-check_cpg_index_consistency(const cpg_index_metadata &cim,
-                            const cpg_index &index) -> bool {
-  auto &lgr = logger::instance();
-
-  const auto n_cpgs_match = (cim.n_cpgs == index.get_n_cpgs());
-  lgr.debug("cpg_index number of cpgs match: {}", n_cpgs_match);
-
-  const auto hashes_match = (cim.index_hash == index.hash());
-  lgr.debug("cpg_index hashes match: {}", hashes_match);
-
-  return n_cpgs_match && hashes_match;
-}
-
-[[nodiscard]] static auto
 check_metadata_consistency(const methylome &meth,
-                           const cpg_index_metadata &cim) -> bool {
+                           const cpg_index &index) -> bool {
   auto &lgr = logger::instance();
 
-  const auto versions_match = (cim.version == meth.meta.version);
+  const auto versions_match = (index.meta.version == meth.meta.version);
   lgr.debug("metadata versions match: {}", versions_match);
 
-  const auto index_hashes_match = (cim.index_hash == meth.meta.index_hash);
+  const auto index_hashes_match =
+    (index.meta.index_hash == meth.meta.index_hash);
   lgr.debug("metadata index hashes match: {}", index_hashes_match);
 
-  const auto assemblies_match = (cim.assembly == meth.meta.assembly);
+  const auto assemblies_match = (index.meta.assembly == meth.meta.assembly);
   lgr.debug("metadata assemblies match: {}", assemblies_match);
 
-  const auto n_cpgs_match = (cim.n_cpgs == meth.meta.n_cpgs);
+  const auto n_cpgs_match = (index.meta.n_cpgs == meth.meta.n_cpgs);
   lgr.debug("metadata assemblies match: {}", assemblies_match);
 
   return versions_match && index_hashes_match && assemblies_match &&
@@ -116,7 +103,8 @@ command_check_main(int argc, char *argv[]) -> int {
   static const auto description_msg =
     std::format("{}\n{}", strip(description), strip(examples));
 
-  std::string index_file{};
+  std::string index_directory{};
+  std::string genome_name{};
   std::string methylome_directory{};
   xfrase_log_level log_level{};
 
@@ -126,11 +114,12 @@ command_check_main(int argc, char *argv[]) -> int {
   desc.add_options()
     // clang-format off
     ("help,h", "print this message and exit")
-    ("index,x", po::value(&index_file)->required(), "index file")
-    ("directory,d", po::value(&methylome_directory)->required(),
+    ("indexdir,x", po::value(&index_directory)->required(), "cpg index directory")
+    ("genome,g", po::value(&genome_name)->required(), "genome name/assembly")
+    ("methdir,d", po::value(&methylome_directory)->required(),
      "directory containing methylomes")
     ("methylomes,m", po::value<std::vector<std::string>>()->multitoken()->required(),
-     "methylome accessions or names")
+     "methylome names/accessions")
     ("log-level,v", po::value(&log_level)->default_value(logger::default_level),
      "log level {debug,info,warning,error,critical}")
     // clang-format on
@@ -154,34 +143,35 @@ command_check_main(int argc, char *argv[]) -> int {
     return EXIT_FAILURE;
   }
 
-  logger &lgr = logger::instance(shared_from_cout(), command, log_level);
+  auto &lgr = logger::instance(shared_from_cout(), command, log_level);
   if (!lgr) {
     std::println("Failure initializing logging: {}.", lgr.get_status());
     return EXIT_FAILURE;
   }
 
   const auto methylomes = vm["methylomes"].as<std::vector<std::string>>();
-  const auto index_meta_file =
-    get_default_cpg_index_metadata_filename(index_file);
 
   const auto joined = methylomes | std::views::join_with(',');
   std::vector<std::tuple<std::string, std::string>> args_to_log{
     // clang-format off
-    {"Index", index_file},
+    {"Index directory", index_directory},
+    {"Genome", genome_name},
     {"Methylome directory", methylome_directory},
     {"Methylomes", std::string(std::cbegin(joined), std::cend(joined))},
     // clang-format on
   };
   log_args<xfrase_log_level::info>(args_to_log);
 
-  const auto [index, cim, index_read_err] =
-    read_cpg_index(index_file, index_meta_file);
+  std::error_code index_read_err;
+  const auto index =
+    read_cpg_index(index_directory, genome_name, index_read_err);
   if (index_read_err) {
-    lgr.error("Failed to read cpg index {} ({})", index_file, index_read_err);
+    lgr.error("Failed to read cpg index {} {}: {}", index_directory,
+              genome_name, index_read_err);
     return EXIT_FAILURE;
   }
-  const auto cpg_index_consitency = check_cpg_index_consistency(cim, index);
-  lgr.info("Index data and metadata consistent: {}", cpg_index_consitency);
+  const auto cpg_index_consistency = index.is_consistent();
+  lgr.info("Index data and metadata consistent: {}", cpg_index_consistency);
 
   bool all_methylomes_consitent = true;
   bool all_methylomes_metadata_consitent = true;
@@ -197,22 +187,23 @@ command_check_main(int argc, char *argv[]) -> int {
     lgr.info("Methylome total counts covered: {}",
              meth.data.total_counts_cov());
 
-    const auto methylome_consitency = meth.is_consistent();
+    const auto methylome_consistency = meth.is_consistent();
     lgr.info("Methylome data and metadata are consistent: {}",
-             methylome_consitency);
-    all_methylomes_consitent = all_methylomes_consitent && methylome_consitency;
+             methylome_consistency);
+    all_methylomes_consitent =
+      all_methylomes_consitent && methylome_consistency;
 
-    const auto metadata_consitency = check_metadata_consistency(meth, cim);
+    const auto metadata_consistency = check_metadata_consistency(meth, index);
     lgr.info("Methylome and index metadata consistent: {}",
-             metadata_consitency);
+             metadata_consistency);
     all_methylomes_metadata_consitent =
-      all_methylomes_metadata_consitent && metadata_consitency;
+      all_methylomes_metadata_consitent && metadata_consistency;
   }
 
   lgr.info("all methylomes consistent: {}", all_methylomes_consitent);
   lgr.info("all methylome metadata consistent: {}",
            all_methylomes_metadata_consitent);
 
-  return cpg_index_consitency && all_methylomes_consitent &&
+  return cpg_index_consistency && all_methylomes_consitent &&
          all_methylomes_metadata_consitent;
 }
