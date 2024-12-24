@@ -38,6 +38,29 @@
 #include <vector>
 
 [[nodiscard]] auto
+methylome::read(const std::string &dirname, const std::string &methylome_name,
+                std::error_code &ec) -> methylome {
+  methylome m;
+  m.meta = methylome_metadata::read(dirname, methylome_name, ec);
+  if (ec)
+    return {};
+  m.data = methylome_data::read(dirname, methylome_name, m.meta, ec);
+  if (ec)
+    return {};
+  return m;
+}
+
+[[nodiscard]]
+auto
+methylome::update_metadata() -> std::error_code {
+  const std::error_code ec = meta.init_env();
+  if (ec)
+    return ec;
+  meta.methylome_hash = data.hash();
+  return std::error_code{};
+}
+
+[[nodiscard]] auto
 methylome::is_consistent() const -> bool {
   static auto &lgr = logger::instance();
 
@@ -69,7 +92,7 @@ methylome::write(const std::string &outdir,
     }
     return meta_write_ec;
   }
-  const auto data_filename = compose_methylome_metadata_filename(fn_wo_extn);
+  const auto data_filename = compose_methylome_data_filename(fn_wo_extn);
   const auto data_write_ec = data.write(data_filename, meta.is_compressed);
   if (data_write_ec) {
     std::error_code remove_ec;
@@ -79,31 +102,6 @@ methylome::write(const std::string &outdir,
       std::filesystem::remove(meta_filename, remove_ec);
   }
   return data_write_ec;
-}
-
-[[nodiscard]] auto
-read_methylome(const std::string &directory, const std::string &methylome_name,
-               std::error_code &ec) -> methylome {
-  const auto fn_wo_extn = std::filesystem::path{directory} / methylome_name;
-
-  // ADS: metadata needs to be read first because it's the only way to
-  // know if the methylome has been compressed...
-
-  // compose methylome metadata filename
-  const auto meta_filename = compose_methylome_metadata_filename(fn_wo_extn);
-  methylome_metadata meta;
-  std::tie(meta, ec) = methylome_metadata::read(meta_filename);
-  if (ec)
-    return {};
-
-  // compose methylome data filename
-  const auto data_filename = compose_methylome_data_filename(fn_wo_extn);
-  methylome_data data;
-  std::tie(data, ec) = methylome_data::read(data_filename, meta);
-  if (ec)
-    return {};
-
-  return methylome{std::move(data), std::move(meta)};
 }
 
 [[nodiscard]] auto

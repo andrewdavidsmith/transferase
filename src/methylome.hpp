@@ -40,9 +40,15 @@ struct methylome {
   methylome_data data;
   methylome_metadata meta;
 
-  [[nodiscard]]
-  auto
+  [[nodiscard]] static auto
+  read(const std::string &dirname, const std::string &methylome_name,
+       std::error_code &ec) -> methylome;
+
+  [[nodiscard]] auto
   is_consistent() const -> bool;
+
+  [[nodiscard]] auto
+  update_metadata() -> std::error_code;
 
   [[nodiscard]] auto
   write(const std::string &outdir,
@@ -55,10 +61,6 @@ struct methylome {
 size(const methylome &m) -> std::size_t {
   return size(m.data);
 }
-
-[[nodiscard]] auto
-read_methylome(const std::string &directory, const std::string &methylome_name,
-               std::error_code &ec) -> methylome;
 
 [[nodiscard]] auto
 methylome_files_exist(const std::string &directory,
