@@ -24,7 +24,7 @@
 #ifndef SRC_METHYLOME_DATA_HPP_
 #define SRC_METHYLOME_DATA_HPP_
 
-#include "cpg_index.hpp"
+#include "cpg_index_data.hpp"  // for cpg_index_data::vec
 #if not defined(__APPLE__) && not defined(__MACH__)
 #include "aligned_allocator.hpp"
 #endif
@@ -37,20 +37,19 @@
 #include <iterator>  // for std::pair, std::size
 #include <limits>    // for std::numeric_limits
 #include <string>
-#include <string_view>
 #include <system_error>
 #include <tuple>
 #include <utility>  // for std::pair
 #include <variant>  // IWYU pragma: keep
 #include <vector>
 
+struct cpg_index;
 struct counts_res;
 struct counts_res_cov;
-struct cpg_index_metadata;
 struct methylome_metadata;
 
 struct methylome_data {
-  static constexpr std::string_view filename_extension{".m16"};
+  static constexpr auto filename_extension{".m16"};
 
   typedef std::uint16_t m_count_t;
   typedef std::pair<m_count_t, m_count_t> m_elem;
@@ -88,11 +87,11 @@ struct methylome_data {
   typedef std::pair<std::uint32_t, std::uint32_t> offset_pair;
 
   [[nodiscard]] auto
-  get_counts_cov(const cpg_index::vec &positions, const std::uint32_t offset,
-                 const std::uint32_t start,
+  get_counts_cov(const cpg_index_data::vec &positions,
+                 const std::uint32_t offset, const std::uint32_t start,
                  const std::uint32_t stop) const -> counts_res_cov;
   [[nodiscard]] auto
-  get_counts(const cpg_index::vec &positions, const std::uint32_t offset,
+  get_counts(const cpg_index_data::vec &positions, const std::uint32_t offset,
              const std::uint32_t start,
              const std::uint32_t stop) const -> counts_res;
 
@@ -123,12 +122,11 @@ struct methylome_data {
   // takes a bins size and a cpg_index and calculates the counts in
   // each bin along all chromosomes
   [[nodiscard]] auto
-  get_bins(const std::uint32_t bin_size, const cpg_index &index,
-           const cpg_index_metadata &meta) const -> std::vector<counts_res>;
+  get_bins(const std::uint32_t bin_size,
+           const cpg_index &index) const -> std::vector<counts_res>;
   [[nodiscard]] auto
-  get_bins_cov(const std::uint32_t bin_size, const cpg_index &index,
-               const cpg_index_metadata &meta) const
-    -> std::vector<counts_res_cov>;
+  get_bins_cov(const std::uint32_t bin_size,
+               const cpg_index &index) const -> std::vector<counts_res_cov>;
 
   methylome_data::vec cpgs{};
   static constexpr auto record_size = sizeof(m_elem);
@@ -144,15 +142,6 @@ compose_methylome_data_filename(auto wo_extension) {
 size(const methylome_data &m) -> std::size_t {
   return std::size(m.cpgs);
 }
-
-[[nodiscard]] auto
-read_methylome_data(const std::string &methylome_file)
-  -> std::tuple<methylome_data, methylome_metadata, std::error_code>;
-
-[[nodiscard]] auto
-read_methylome_data(const std::string &methylome_file,
-                    const std::string &methylome_meta_file)
-  -> std::tuple<methylome_data, methylome_metadata, std::error_code>;
 
 template <typename T, typename U>
 inline auto
