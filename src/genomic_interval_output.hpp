@@ -162,11 +162,10 @@ write_intervals_bedgraph(
 
 [[nodiscard]] inline auto
 write_output(const std::string &outfile,
-             const std::vector<genomic_interval> &gis,
-             const cpg_index_metadata &cim, const auto &results,
-             const bool write_scores) -> std::error_code {
+             const std::vector<genomic_interval> &gis, const cpg_index &index,
+             const auto &results, const bool write_scores) -> std::error_code {
   if (!write_scores)
-    return write_intervals(outfile, cim, gis, results);
+    return write_intervals(outfile, index.meta, gis, results);
   // ADS: counting intervals that have no reads
   std::uint32_t zero_coverage = 0;
   const auto to_score = [&zero_coverage](const auto &x) {
@@ -175,7 +174,7 @@ write_output(const std::string &outfile,
   };
   logger::instance().debug("Number of intervals without reads: {}",
                            zero_coverage);
-  return write_intervals_bedgraph(outfile, cim, gis,
+  return write_intervals_bedgraph(outfile, index.meta, gis,
                                   std::views::transform(results, to_score));
 }
 
@@ -292,11 +291,11 @@ write_bins_bedgraph(const std::string &outfile, const cpg_index_metadata &cim,
 }
 
 [[nodiscard]] static inline auto
-write_output(const std::string &outfile, const cpg_index_metadata &cim,
+write_output(const std::string &outfile, const cpg_index &index,
              const std::uint32_t bin_size, const auto &results,
              const bool write_scores) {
   if (!write_scores)
-    return write_bins(outfile, cim, bin_size, results);
+    return write_bins(outfile, index.meta, bin_size, results);
   // ADS: counting intervals that have no reads
   std::uint32_t zero_coverage = 0;
   const auto to_score = [&zero_coverage](const auto &x) {
@@ -305,7 +304,7 @@ write_output(const std::string &outfile, const cpg_index_metadata &cim,
   };
   logger::instance().debug("Number of bins without reads: {}", zero_coverage);
   const auto scores = std::views::transform(results, to_score);
-  return write_bins_bedgraph(outfile, cim, bin_size, scores);
+  return write_bins_bedgraph(outfile, index.meta, bin_size, scores);
 }
 
 #endif  // SRC_GENOMIC_INTERVAL_OUTPUT_HPP_
