@@ -38,9 +38,7 @@
 #include <limits>    // for std::numeric_limits
 #include <string>
 #include <system_error>
-#include <tuple>
 #include <utility>  // for std::pair
-#include <variant>  // IWYU pragma: keep
 #include <vector>
 
 struct cpg_index;
