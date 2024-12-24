@@ -53,6 +53,7 @@ xfrase format -x hg38.cpg_idx -m SRX012345.xsym.gz -o SRX012345.m16
 #include "cpg_index_data.hpp"
 #include "cpg_index_metadata.hpp"
 #include "logger.hpp"
+#include "methylome.hpp"
 #include "methylome_data.hpp"
 #include "methylome_metadata.hpp"
 #include "utilities.hpp"
@@ -66,7 +67,6 @@ xfrase format -x hg38.cpg_idx -m SRX012345.xsym.gz -o SRX012345.m16
 #include <chrono>
 #include <cstdint>  // for std::uint32_t, std::uint64_t, std::int32_t
 #include <cstdlib>  // for EXIT_FAILURE, abort, EXIT_SUCCESS
-#include <filesystem>
 #include <format>
 #include <iostream>
 #include <iterator>  // for std::cbegin, std::size
@@ -369,8 +369,7 @@ command_format_main(int argc, char *argv[]) -> int {
   std::string genome_name{};
 
   std::string methylation_input{};
-  std::string methylome_output{};
-  std::string index_file{};
+  std::string methylome_outdir{};
   xfrase_log_level log_level{};
   bool zip{false};
 
@@ -383,9 +382,8 @@ command_format_main(int argc, char *argv[]) -> int {
     ("meth,m", po::value(&methylation_input)->required(),
      "methylation input file")
     ("indexdir,x", po::value(&index_directory)->required(), "cpg index directory")
+    ("outdir,o", po::value(&methylome_outdir)->required(), "methylome output directory")
     ("genome,g", po::value(&genome_name)->required(), "genome name/assembly")
-    ("output,o", po::value(&methylome_output)->required(),
-     std::format("output file (must end in {})", methylome_data::filename_extension).data())
     ("zip,z", po::bool_switch(&zip), "zip the output")
     ("log-level,v", po::value(&log_level)->default_value(logger::default_level),
      "log level {debug,info,warning,error,critical}")
@@ -416,37 +414,23 @@ command_format_main(int argc, char *argv[]) -> int {
     return EXIT_FAILURE;
   }
 
-  const auto output_check = check_output_file(methylome_output);
-  if (output_check) {
-    lgr.error("Methylome output file {}: {}", methylome_output, output_check);
-    return EXIT_FAILURE;
-  }
-
-  const auto extension_found =
-    std::filesystem::path(methylome_output).extension();
-  if (extension_found != methylome_data::filename_extension) {
-    lgr.error("Required filename extension {} (given: {})",
-              methylome_data::filename_extension, extension_found);
-    return EXIT_FAILURE;
-  }
-
-  const auto metadata_output =
-    get_default_methylome_metadata_filename(methylome_output);
+  const auto methylome_name =
+    get_methylome_name_from_filename(methylation_input);
 
   std::vector<std::tuple<std::string, std::string>> args_to_log{
     // clang-format off
     {"Methylation", methylation_input},
-    {"Index directory", index_directory},
+    {"Methylome name", methylome_name},
     {"Genome", genome_name},
-    {"Methylome output", methylome_output},
-    {"Metadata output", metadata_output},
+    {"Index directory", index_directory},
+    {"Methylome directory", methylome_outdir},
     {"Zip", std::format("{}", zip)},
     // clang-format on
   };
   log_args<xfrase_log_level::info>(args_to_log);
 
   std::error_code index_ec;
-  const auto index = read_cpg_index(index_directory, genome_name, index_ec);
+  const auto index = cpg_index::read(index_directory, genome_name, index_ec);
   if (index_ec) {
     lgr.error("Failed to read cpg index {} {}: {}", index_directory,
               genome_name, index_ec);
@@ -460,29 +444,32 @@ command_format_main(int argc, char *argv[]) -> int {
   }
   lgr.info("Input file format: {}", message(format_id));
 
-  const auto [meth, meth_err] =
+  const auto [meth_data, meth_data_err] =
     (format_id == counts_format::xcounts)
       ? process_cpg_sites(methylation_input, index)
       : process_cpg_sites_counts(methylation_input, index);
 
-  if (meth_err) {
-    lgr.error("Error generating methylome: {}", meth_err);
+  if (meth_data_err) {
+    lgr.error("Error generating methylome: {}", meth_data_err);
     return EXIT_FAILURE;
   }
 
-  const auto [meta, meta_err] = methylome_metadata::init(index, meth, zip);
-  if (meta_err) {
-    lgr.error("Error initializing metadata: {}", meta_err);
+  auto [meth_meta, meth_meta_err] = methylome_metadata::init(index, meth_data);
+  if (meth_meta_err) {
+    lgr.error("Error initializing metadata: {}", meth_meta_err);
     return EXIT_FAILURE;
   }
 
-  if (const auto write_err = meth.write(methylome_output, zip); write_err) {
-    lgr.error("Error writing methylome {}: {}", methylome_output, write_err);
-    return EXIT_FAILURE;
-  }
+  // ADS: this is where compression status is determined, and then
+  // effected as data is written
+  meth_meta.is_compressed = zip;
 
-  if (const auto write_err = meta.write(metadata_output); write_err) {
-    lgr.error("Error writing metadata {}: {}", metadata_output, write_err);
+  const methylome meth{std::move(meth_data), std::move(meth_meta)};
+
+  const auto write_err = meth.write(methylome_outdir, methylome_name);
+  if (write_err) {
+    lgr.error("Error writing methylome {} {}: {}", methylome_outdir,
+              methylome_name, write_err);
     return EXIT_FAILURE;
   }
 
