@@ -44,6 +44,10 @@ struct methylome {
   auto
   is_consistent() const -> bool;
 
+  [[nodiscard]] auto
+  write(const std::string &outdir,
+        const std::string &name) const -> std::error_code;
+
   using offset_pair = methylome_data::offset_pair;
 };
 
@@ -63,5 +67,8 @@ methylome_files_exist(const std::string &directory,
 [[nodiscard]] auto
 list_methylomes(const std::string &dirname,
                 std::error_code &ec) -> std::vector<std::string>;
+
+[[nodiscard]] auto
+get_methylome_name_from_filename(const std::string &filename) -> std::string;
 
 #endif  // SRC_METHYLOME_HPP_

@@ -56,6 +56,32 @@ methylome::is_consistent() const -> bool {
 }
 
 [[nodiscard]] auto
+methylome::write(const std::string &outdir,
+                 const std::string &name) const -> std::error_code {
+  // make filenames
+  const auto fn_wo_extn = std::filesystem::path{outdir} / name;
+  const auto meta_filename = compose_methylome_metadata_filename(fn_wo_extn);
+  const auto meta_write_ec = meta.write(meta_filename);
+  if (meta_write_ec) {
+    if (std::filesystem::exists(meta_filename)) {
+      std::error_code remove_ec;
+      std::filesystem::remove(meta_filename, remove_ec);
+    }
+    return meta_write_ec;
+  }
+  const auto data_filename = compose_methylome_metadata_filename(fn_wo_extn);
+  const auto data_write_ec = data.write(data_filename, meta.is_compressed);
+  if (data_write_ec) {
+    std::error_code remove_ec;
+    if (std::filesystem::exists(data_filename))
+      std::filesystem::remove(meta_filename, remove_ec);
+    if (std::filesystem::exists(meta_filename))
+      std::filesystem::remove(meta_filename, remove_ec);
+  }
+  return data_write_ec;
+}
+
+[[nodiscard]] auto
 read_methylome(const std::string &directory, const std::string &methylome_name,
                std::error_code &ec) -> methylome {
   const auto fn_wo_extn = std::filesystem::path{directory} / methylome_name;
@@ -132,4 +158,11 @@ list_methylomes(const std::string &dirname,
   }
 
   return meta_names;
+}
+
+[[nodiscard]] auto
+get_methylome_name_from_filename(const std::string &filename) -> std::string {
+  auto s = std::filesystem::path{filename}.filename().string();
+  const auto dot = s.find('.');
+  return dot == std::string::npos ? s : s.replace(dot, std::string::npos, "");
 }
