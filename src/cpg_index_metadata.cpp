@@ -39,11 +39,8 @@
 #include <functional>  // for std::plus
 #include <iterator>    // for std::cbegin
 #include <numeric>     // for std::adjacent_difference
-#include <ranges>
-#include <regex>
 #include <sstream>
 #include <string>
-#include <string_view>  // for operator""sv
 #include <system_error>
 #include <tuple>
 #include <utility>  // for std::move
@@ -137,32 +134,4 @@ cpg_index_metadata::write(const std::string &json_filename) const
 get_default_cpg_index_metadata_filename(const std::string &indexfile)
   -> std::string {
   return std::format("{}.json", indexfile);
-}
-
-[[nodiscard]] auto
-get_assembly_from_filename(const std::string &filename,
-                           std::error_code &ec) -> std::string {
-  using std::string_literals::operator""s;
-  using std::literals::string_view_literals::operator""sv;
-  // clang-format off
-  const auto fasta_suff = std::vector {
-    ".fa"sv,
-    ".fa.gz"sv,
-    ".faa"sv,
-    ".faa.gz"sv,
-    ".fasta"sv,
-    ".fasta.gz"sv,
-  } | std::views::join_with('|');
-  // clang-format on
-  const auto reference_genome_pattern =
-    "("s + std::string(std::cbegin(fasta_suff), std::cend(fasta_suff)) + ")$"s;
-  const std::regex suffix_re{reference_genome_pattern};
-  std::smatch base_match;
-  const std::string name = std::filesystem::path(filename).filename();
-  if (std::regex_search(name, base_match, suffix_re)) {
-    ec = std::error_code{};
-    return base_match.prefix().str();
-  }
-  ec = std::make_error_code(std::errc::invalid_argument);
-  return {};
 }
