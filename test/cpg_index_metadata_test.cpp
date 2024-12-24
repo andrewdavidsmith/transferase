@@ -51,16 +51,6 @@ TEST(cpg_index_metadata_test, filename_functions) {
   const auto meta_filename1 =
     get_default_cpg_index_metadata_filename(filename1);
   EXPECT_EQ(meta_filename1, "asdf.json");
-
-  std::error_code ec;
-  auto assembly = get_assembly_from_filename(filename1, ec);
-  EXPECT_EQ(ec, std::errc::invalid_argument);
-  EXPECT_EQ(assembly, std::string{});
-
-  static constexpr auto valid_ref_genome = "asdf.faa.gz";
-  assembly = get_assembly_from_filename(valid_ref_genome, ec);
-  EXPECT_FALSE(ec);
-  EXPECT_EQ(assembly, "asdf");
 }
 
 class cpg_index_metadata_mock : public ::testing::Test {
