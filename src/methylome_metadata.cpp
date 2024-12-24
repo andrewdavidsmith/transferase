@@ -74,7 +74,7 @@ methylome_metadata::init(const cpg_index &index, const methylome_data &meth)
   boost::system::error_code boost_err;
   const auto host = boost::asio::ip::host_name(boost_err);
   if (boost_err)
-    return {{}, std::error_code{boost_err}};
+    return {methylome_metadata{}, std::error_code{boost_err}};
 
   const auto index_hash = index.meta.index_hash;
   const auto methylome_hash = meth.hash();
@@ -83,7 +83,7 @@ methylome_metadata::init(const cpg_index &index, const methylome_data &meth)
 
   const auto [username, err] = get_username();
   if (err)
-    return {{}, err};
+    return {methylome_metadata{}, err};
 
   static constexpr auto is_compressed_init = false;
   return {methylome_metadata{VERSION, host, username, get_time_as_string(),
@@ -102,28 +102,47 @@ methylome_metadata::update(const methylome_data &meth) -> std::error_code {
 }
 
 [[nodiscard]] auto
-methylome_metadata::read(const std::string &json_filename)
-  -> std::tuple<methylome_metadata, std::error_code> {
+methylome_metadata::read(const std::string &json_filename,
+                         std::error_code &ec) -> methylome_metadata {
   std::ifstream in(json_filename);
-  if (!in)
-    return {methylome_metadata{}, std::make_error_code(std::errc(errno))};
+  if (!in) {
+    ec = std::make_error_code(std::errc(errno));
+    return {};
+  }
 
-  std::error_code ec;
   const auto filesize = std::filesystem::file_size(json_filename, ec);
   if (ec)
-    return {methylome_metadata{}, ec};
+    return {};
 
   std::string payload(filesize, '\0');
-  if (!in.read(payload.data(), filesize))
-    return {{}, std::make_error_code(std::errc(errno))};
+  if (!in.read(payload.data(), filesize)) {
+    ec = std::make_error_code(std::errc(errno));
+    return {};
+  }
 
   methylome_metadata mm;
   boost::json::parse_into(mm, payload, ec);
   if (ec)
-    return {methylome_metadata{},
-            methylome_metadata_error::failure_parsing_json};
+    return {};
 
-  return {std::move(mm), methylome_metadata_error::ok};
+  ec = std::error_code{};
+  return mm;
+}
+
+[[nodiscard]]
+static inline auto
+make_methylome_metadata_filename(const std::string &dirname,
+                                 const std::string &methylome_name) {
+  const auto with_extension =
+    std::format("{}{}", methylome_name, methylome_metadata::filename_extension);
+  return (std::filesystem::path{dirname} / with_extension).string();
+}
+
+[[nodiscard]] auto
+methylome_metadata::read(const std::string &dirname,
+                         const std::string &methylome_name,
+                         std::error_code &ec) -> methylome_metadata {
+  return read(make_methylome_metadata_filename(dirname, methylome_name), ec);
 }
 
 [[nodiscard]] auto

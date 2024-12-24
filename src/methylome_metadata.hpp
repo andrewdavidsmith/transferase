@@ -103,9 +103,23 @@ struct methylome_metadata {
   std::uint32_t n_cpgs{};
   bool is_compressed{};
 
+  [[nodiscard]] auto
+  consistent(const methylome_metadata &rhs) -> bool {
+    // clang-format off
+    return (index_hash == rhs.index_hash ||
+            n_cpgs == rhs.n_cpgs ||
+            assembly == rhs.assembly ||
+            version == rhs.version);
+    // clang-format on
+  }
+
   [[nodiscard]] static auto
-  read(const std::string &json_filename)
-    -> std::tuple<methylome_metadata, std::error_code>;
+  read(const std::string &json_filename,
+       std::error_code &ec) -> methylome_metadata;
+
+  [[nodiscard]] static auto
+  read(const std::string &dirname, const std::string &methylome_name,
+       std::error_code &ec) -> methylome_metadata;
 
   [[nodiscard]] auto
   write(const std::string &json_filename) const -> std::error_code;
