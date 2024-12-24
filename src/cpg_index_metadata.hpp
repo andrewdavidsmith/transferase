@@ -143,6 +143,12 @@ BOOST_DESCRIBE_STRUCT(cpg_index_metadata, (),
 ))
 // clang-format on
 
+[[nodiscard]] inline auto
+compose_cpg_index_metadata_filename(auto wo_extension) {
+  wo_extension += cpg_index_metadata::filename_extension;
+  return wo_extension;
+}
+
 template <>
 struct std::formatter<cpg_index_metadata> : std::formatter<std::string> {
   auto
@@ -154,9 +160,5 @@ struct std::formatter<cpg_index_metadata> : std::formatter<std::string> {
 [[nodiscard]] auto
 get_default_cpg_index_metadata_filename(const std::string &indexfile)
   -> std::string;
-
-[[nodiscard]] auto
-get_assembly_from_filename(const std::string &filename,
-                           std::error_code &ec) -> std::string;
 
 #endif  // SRC_CPG_INDEX_METADATA_HPP_
