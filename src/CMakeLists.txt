@@ -41,20 +41,20 @@ foreach(CPP_FILE ${CPP_FILES})
   endif()
 endforeach()
 
-if(NOT ENABLE_UNIT_TESTS)
-  # Create the final library by linking the previous parts
-  add_library(xfrase_system STATIC)
-  target_link_libraries(
-    xfrase_system PRIVATE
-    ${LIBRARY_OBJECTS}
-    ZLIB::ZLIB
-    Boost::boost
-    Boost::program_options
-    Boost::json
-    Boost::context
-    Threads::Threads
-  )
+# Create the final library by linking the previous parts
+add_library(xfrase_system STATIC)
+target_link_libraries(
+  xfrase_system PRIVATE
+  ${LIBRARY_OBJECTS}
+  ZLIB::ZLIB
+  Boost::boost
+  Boost::program_options
+  Boost::json
+  Boost::context
+  Threads::Threads
+)
 
+if(NOT ENABLE_UNIT_TESTS)
   add_executable(xfrase xfrase.cpp)
   target_include_directories(xfrase PRIVATE "${PROJECT_BINARY_DIR}")
   target_link_libraries(xfrase PRIVATE ${COMMAND_OBJECTS} xfrase_system)
