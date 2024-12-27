@@ -142,7 +142,7 @@ TEST(zlib_adapter_test, small_file) {
 
 TEST(zlib_adapter_test, empty_file) {
   const auto gzfile = generate_temp_filename("empty", "gz");
-  auto file = fopen(gzfile.data(), "wb");
+  const auto file = fopen(gzfile.data(), "wb");
   ASSERT_NE(file, nullptr);
   fclose(file);
 
