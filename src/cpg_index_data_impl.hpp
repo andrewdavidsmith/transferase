@@ -37,13 +37,8 @@
 #include <vector>
 
 [[nodiscard]] STATIC auto
-get_offsets_within_chrom(
-  const cpg_index_data::vec &positions,
-  const std::vector<std::pair<std::uint32_t, std::uint32_t>> &queries)
-  -> std::vector<std::pair<std::uint32_t, std::uint32_t>>;
-
-[[nodiscard]] STATIC auto
-add_offsets_within_chrom(const cpg_index_data::vec &positions, auto queries_beg,
-                         const auto queries_end);
+get_query_within_chrom(const cpg_index_data::vec &positions,
+                       const std::vector<chrom_range_t> &queries)
+  -> std::vector<query_elem>;
 
 #endif  // SRC_CPG_INDEX_DATA_IMPL_HPP_
