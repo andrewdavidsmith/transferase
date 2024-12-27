@@ -259,7 +259,7 @@ TEST_F(request_handler_mock, handle_get_counts_success) {
   const auto [gis, gis_ec] = genomic_interval::load(index.meta, intervals_path);
   EXPECT_FALSE(gis_ec);
 
-  const auto offsets = index.data.get_offsets(index.meta, gis);
+  const auto offsets = index.data.get_query(index.meta, gis);
 
   request req{static_cast<std::uint32_t>(std::size(gis)), offsets};
   request_header req_hdr{methylome_name, index.meta.n_cpgs, rq_type};
