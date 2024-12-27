@@ -23,6 +23,8 @@
 
 #include <cpg_index_metadata.hpp>
 
+#include <utilities.hpp>
+
 #include <config.h>  // for VERSION
 #include <gtest/gtest.h>
 
@@ -35,22 +37,15 @@
 #include <vector>
 
 TEST(cpg_index_metadata_test, basic_assertions) {
-  cpg_index_metadata cim;
-  EXPECT_EQ(cim.get_n_cpgs_chrom(), std::vector<std::uint32_t>());
-  cim.chrom_offset = {0, 1000, 10000};
-  cim.n_cpgs = 11000;
-  EXPECT_EQ(cim.get_n_cpgs_chrom(),
+  cpg_index_metadata meta;
+  EXPECT_EQ(meta.get_n_cpgs_chrom(), std::vector<std::uint32_t>());
+  meta.chrom_offset = {0, 1000, 10000};
+  meta.n_cpgs = 11000;
+  EXPECT_EQ(meta.get_n_cpgs_chrom(),
             std::vector<std::uint32_t>({1000, 9000, 1000}));
-  cim.chrom_offset = {0};
-  cim.n_cpgs = 0;
-  EXPECT_EQ(cim.get_n_cpgs_chrom(), std::vector<std::uint32_t>({0}));
-}
-
-TEST(cpg_index_metadata_test, filename_functions) {
-  static constexpr auto filename1 = "asdf";
-  const auto meta_filename1 =
-    get_default_cpg_index_metadata_filename(filename1);
-  EXPECT_EQ(meta_filename1, "asdf.json");
+  meta.chrom_offset = {0};
+  meta.n_cpgs = 0;
+  EXPECT_EQ(meta.get_n_cpgs_chrom(), std::vector<std::uint32_t>({0}));
 }
 
 class cpg_index_metadata_mock : public ::testing::Test {
@@ -69,77 +64,63 @@ protected:
 };
 
 TEST_F(cpg_index_metadata_mock, read_existing_cpg_index_metadata) {
-  const auto cpg_index_metadata_file =
-    std::format("{}/{}{}", cpg_index_dir, species_name,
-                cpg_index_metadata::filename_extension);
-  const auto [cim, ec] = cpg_index_metadata::read(cpg_index_metadata_file);
-  EXPECT_EQ(ec, std::error_code{});
-  EXPECT_EQ(std::size(cim.chrom_index), std::size(cim.chrom_order));
-  EXPECT_EQ(std::size(cim.chrom_index), std::size(cim.chrom_size));
-  EXPECT_EQ(std::size(cim.chrom_index), std::size(cim.chrom_offset));
-  EXPECT_GT(cim.n_cpgs, 0);
+  std::error_code ec;
+  const auto meta = cpg_index_metadata::read(cpg_index_dir, species_name, ec);
+  EXPECT_FALSE(ec);
+  EXPECT_EQ(std::size(meta.chrom_index), std::size(meta.chrom_order));
+  EXPECT_EQ(std::size(meta.chrom_index), std::size(meta.chrom_size));
+  EXPECT_EQ(std::size(meta.chrom_index), std::size(meta.chrom_offset));
+  EXPECT_GT(meta.n_cpgs, 0);
 
-  const auto n_cpgs_chrom = cim.get_n_cpgs_chrom();
-  EXPECT_EQ(std::size(cim.chrom_index), std::size(n_cpgs_chrom));
+  const auto n_cpgs_chrom = meta.get_n_cpgs_chrom();
+  EXPECT_EQ(std::size(meta.chrom_index), std::size(n_cpgs_chrom));
   const auto total =
     std::reduce(std::cbegin(n_cpgs_chrom), std::cend(n_cpgs_chrom));
-  EXPECT_EQ(cim.n_cpgs, total);
+  EXPECT_EQ(meta.n_cpgs, total);
 }
 
 TEST_F(cpg_index_metadata_mock, cpg_index_metadata_read_write_read) {
-  const auto cpg_index_metadata_file =
-    std::format("{}/{}{}", cpg_index_dir, species_name,
-                cpg_index_metadata::filename_extension);
-  const auto [cim, ec] = cpg_index_metadata::read(cpg_index_metadata_file);
-  const auto cpg_index_metadata_file_tmp =
-    std::format("{}.tmp", cpg_index_metadata_file);
-  const auto write_ec = cim.write(cpg_index_metadata_file_tmp);
-  EXPECT_FALSE(write_ec);
+  std::error_code ec;
+  const auto meta = cpg_index_metadata::read(cpg_index_dir, species_name, ec);
+  EXPECT_EQ(ec, std::error_code{});
 
-  const auto [cim_written, ec_written] =
-    cpg_index_metadata::read(cpg_index_metadata_file_tmp);
+  const auto tmpfile =
+    generate_temp_filename("temp", cpg_index_metadata::filename_extension);
+  ec = meta.write(tmpfile);
+  EXPECT_EQ(ec, std::error_code{});
+
+  const auto meta_written = cpg_index_metadata::read(tmpfile, ec);
+  EXPECT_EQ(ec, std::error_code{});
 
   // ADS: gtest doesn't want to acknowledge my spaceships
-  EXPECT_EQ(cim.chrom_order, cim_written.chrom_order);
-  EXPECT_EQ(cim.chrom_offset, cim_written.chrom_offset);
-  EXPECT_EQ(cim.chrom_size, cim_written.chrom_size);
-  EXPECT_EQ(cim.index_hash, cim_written.index_hash);
-  EXPECT_EQ(cim.creation_time, cim_written.creation_time);
+  EXPECT_EQ(meta.chrom_order, meta_written.chrom_order);
+  EXPECT_EQ(meta.chrom_offset, meta_written.chrom_offset);
+  EXPECT_EQ(meta.chrom_size, meta_written.chrom_size);
+  EXPECT_EQ(meta.index_hash, meta_written.index_hash);
+  EXPECT_EQ(meta.creation_time, meta_written.creation_time);
 
-  std::error_code remove_ec{};
-  [[maybe_unused]] const bool removed =
-    std::filesystem::remove(cpg_index_metadata_file_tmp, remove_ec);
-  EXPECT_FALSE(remove_ec);
+  const auto removed = std::filesystem::remove(tmpfile, ec);
+  EXPECT_FALSE(ec);
+  EXPECT_TRUE(removed);
 }
 
 TEST_F(cpg_index_metadata_mock, cpg_index_metadata_get_n_bins) {
-  const auto cpg_index_metadata_file =
-    std::format("{}/{}{}", cpg_index_dir, species_name,
-                cpg_index_metadata::filename_extension);
-  const auto [cim, ec] = cpg_index_metadata::read(cpg_index_metadata_file);
-  const auto n_bins = cim.get_n_bins(1);
-  EXPECT_GE(n_bins, cim.n_cpgs);
+  std::error_code ec;
+  const auto meta = cpg_index_metadata::read(cpg_index_dir, species_name, ec);
+  EXPECT_EQ(ec, std::error_code{});
+  const auto n_bins = meta.get_n_bins(1);
+  EXPECT_GE(n_bins, meta.n_cpgs);
 }
 
 TEST_F(cpg_index_metadata_mock, cpg_index_metadata_init_env) {
-  cpg_index_metadata cim{};
-  const auto init_env_err = cim.init_env();
+  cpg_index_metadata meta{};
+  const auto init_env_err = meta.init_env();
   EXPECT_FALSE(init_env_err);
-  EXPECT_EQ(cim.version, VERSION);
+  EXPECT_EQ(meta.version, VERSION);
 }
 
 TEST_F(cpg_index_metadata_mock, cpg_index_metadata_tostring) {
-  cpg_index_metadata cim{};
-  const auto cim_str = cim.tostring();
-  EXPECT_GT(std::size(cim_str), 0);
-}
-
-TEST(cpg_index_metadata_error, cpg_index_metadata_error_all_values) {
-  static const auto category = cpg_index_metadata_error_category{};
-  constexpr int lim = std::to_underlying(cpg_index_metadata_error::n_values);
-  for (const auto i : std::views::iota(0, lim)) {
-    const std::error_code ec =
-      make_error_code(static_cast<cpg_index_metadata_error>(i));
-    EXPECT_EQ(ec.message(), category.message(i));
-  }
+  cpg_index_metadata meta{};
+  const auto meta_str = meta.tostring();
+  EXPECT_GT(std::size(meta_str), 0);
 }
