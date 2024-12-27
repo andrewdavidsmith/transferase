@@ -179,11 +179,11 @@ struct request {
   summary() const -> std::string;
 
   [[nodiscard]] auto
-  get_offsets_n_bytes() const -> std::uint32_t {
+  get_query_n_bytes() const -> std::uint32_t {
     return sizeof(decltype(offsets)::value_type) * size(offsets);
   }
   [[nodiscard]] auto
-  get_offsets_data() -> char * {
+  get_query_data() -> char * {
     return reinterpret_cast<char *>(offsets.data());
   }
   auto
