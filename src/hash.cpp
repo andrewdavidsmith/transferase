@@ -25,6 +25,7 @@
 
 #include <zlib.h>  // for adler32_z
 
+#include <cassert>
 #include <cerrno>
 #include <filesystem>
 #include <fstream>
@@ -36,6 +37,7 @@
 // the data as though it were serealized but without reading the file
 [[nodiscard]] auto
 get_adler(const std::string &filename) -> std::uint64_t {
+  assert(std::filesystem::exists(filename));
   const auto filesize = std::filesystem::file_size(filename);
   std::vector<char> buf(filesize);
   std::ifstream in(filename);
