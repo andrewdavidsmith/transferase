@@ -23,6 +23,8 @@
 
 #include <command_index.hpp>
 
+#include "unit_test_utils.hpp"
+
 #include <cpg_index_data.hpp>
 #include <cpg_index_metadata.hpp>
 
@@ -35,20 +37,6 @@
 #include <iterator>
 #include <string>
 #include <system_error>
-
-[[nodiscard]] static inline bool
-are_files_identical(const std::filesystem::path &file1,
-                    const std::filesystem::path &file2) {
-  namespace fs = std::filesystem;
-  if (fs::file_size(file1) != fs::file_size(file2))
-    return false;
-
-  std::ifstream f1(file1, std::ifstream::binary);
-  std::ifstream f2(file2, std::ifstream::binary);
-  return std::equal(std::istreambuf_iterator<char>(f1.rdbuf()),
-                    std::istreambuf_iterator<char>(),
-                    std::istreambuf_iterator<char>(f2.rdbuf()));
-}
 
 TEST(command_index_test, basic_test) {
   // Input files for test
@@ -89,7 +77,7 @@ TEST(command_index_test, basic_test) {
 
   const auto expected_data_outfile =
     compose_cpg_index_data_filename(index_directory, genome_name);
-  EXPECT_TRUE(are_files_identical(data_outfile, expected_data_outfile));
+  EXPECT_TRUE(files_are_identical(data_outfile, expected_data_outfile));
 
   if (std::filesystem::exists(data_outfile, ec))
     std::filesystem::remove(data_outfile, ec);
