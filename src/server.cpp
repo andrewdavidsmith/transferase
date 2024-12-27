@@ -83,7 +83,7 @@ write_pid_to_file(std::error_code &ec) -> void {
   }
   lgr.info("xfrase daemon pid file: {}", pid_file);
   const auto pid_str = std::format("{}", pid);
-  out.write(pid_str.data(), size(pid_str));
+  out.write(pid_str.data(), std::size(pid_str));
   if (!out) {
     ec = std::make_error_code(std::errc{errno});
     lgr.error("Error writing pid file: {} ({})", ec, pid_file);
