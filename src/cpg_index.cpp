@@ -94,7 +94,7 @@ cpg_index::write(const std::string &outdir,
 [[nodiscard]] auto
 cpg_index::make_query(const std::vector<genomic_interval> &gis) const
   -> std::vector<std::pair<std::uint32_t, std::uint32_t>> {
-  return data.get_offsets(meta, gis);
+  return data.get_query(meta, gis);
 }
 
 [[nodiscard]] auto
