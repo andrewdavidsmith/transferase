@@ -23,7 +23,7 @@
 
 #include "cpg_index_metadata.hpp"
 
-#include "utilities.hpp"  // for get_time_as_string
+#include "environment_utilities.hpp"
 
 #include <config.h>  // for VERSION
 
@@ -48,20 +48,14 @@
 
 [[nodiscard]] auto
 cpg_index_metadata::init_env() -> std::error_code {
-  boost::system::error_code boost_err;
-  host = boost::asio::ip::host_name(boost_err);
-  if (boost_err)
-    return std::error_code{boost_err};
-
-  const auto [username, err] = get_username();
-  if (err)
-    return err;
-
-  version = VERSION;
-  user = username;
+  version = get_version();
   creation_time = get_time_as_string();
-
-  return {};
+  std::error_code ec;
+  std::tie(host, ec) = get_hostname();
+  if (ec)
+    return ec;
+  std::tie(user, ec) = get_username();
+  return ec;
 }
 
 [[nodiscard]] auto
@@ -95,28 +89,48 @@ cpg_index_metadata::get_n_cpgs_chrom() const -> std::vector<std::uint32_t> {
 }
 
 [[nodiscard]] auto
-cpg_index_metadata::read(const std::string &json_filename)
-  -> std::tuple<cpg_index_metadata, std::error_code> {
+cpg_index_metadata::read(const std::string &json_filename,
+                         std::error_code &ec) -> cpg_index_metadata {
   std::ifstream in(json_filename);
-  if (!in)
-    return {cpg_index_metadata{}, std::make_error_code(std::errc(errno))};
+  if (!in) {
+    ec = std::make_error_code(std::errc(errno));
+    return {};
+  }
 
-  std::error_code ec;
   const auto filesize = std::filesystem::file_size(json_filename, ec);
   if (ec)
-    return {cpg_index_metadata{}, ec};
+    return {};
 
   std::string payload(filesize, '\0');
-  if (!in.read(payload.data(), filesize))
-    return {cpg_index_metadata{}, std::make_error_code(std::errc(errno))};
+  if (!in.read(payload.data(), filesize)) {
+    ec = std::make_error_code(std::errc(errno));
+    return {};
+  }
 
-  cpg_index_metadata cim;
-  boost::json::parse_into(cim, payload, ec);
-  if (ec)
-    return {cpg_index_metadata{},
-            cpg_index_metadata_error::failure_parsing_json};
+  cpg_index_metadata meta;
+  boost::json::parse_into(meta, payload, ec);
+  if (ec) {
+    ec = cpg_index_metadata_error::failure_parsing_json;
+    return {};
+  }
 
-  return {std::move(cim), {}};
+  return meta;
+}
+
+[[nodiscard]]
+static inline auto
+make_cpg_index_metadata_filename(const std::string &dirname,
+                                 const std::string &genome_name) {
+  const auto with_extension =
+    std::format("{}{}", genome_name, cpg_index_metadata::filename_extension);
+  return (std::filesystem::path{dirname} / with_extension).string();
+}
+
+[[nodiscard]] auto
+cpg_index_metadata::read(const std::string &dirname,
+                         const std::string &genome_name,
+                         std::error_code &ec) -> cpg_index_metadata {
+  return read(make_cpg_index_metadata_filename(dirname, genome_name), ec);
 }
 
 [[nodiscard]] auto
@@ -128,10 +142,4 @@ cpg_index_metadata::write(const std::string &json_filename) const
   if (!(out << boost::json::value_from(*this)))
     return std::make_error_code(std::errc(errno));
   return {};
-}
-
-[[nodiscard]] auto
-get_default_cpg_index_metadata_filename(const std::string &indexfile)
-  -> std::string {
-  return std::format("{}.json", indexfile);
 }

@@ -27,6 +27,7 @@
 #include <boost/describe.hpp>  // for BOOST_DESCRIBE_STRUCT
 
 #include <cstdint>  // for uint32_t, int32_t
+#include <filesystem>
 #include <format>
 #include <string>
 #include <system_error>
@@ -107,8 +108,12 @@ struct cpg_index_metadata {
   std::vector<std::uint32_t> chrom_offset;
 
   [[nodiscard]] static auto
-  read(const std::string &json_filename)
-    -> std::tuple<cpg_index_metadata, std::error_code>;
+  read(const std::string &json_filename,
+       std::error_code &ec) -> cpg_index_metadata;
+
+  [[nodiscard]] static auto
+  read(const std::string &dirname, const std::string &genome_name,
+       std::error_code &ec) -> cpg_index_metadata;
 
   [[nodiscard]] auto
   write(const std::string &json_filename) const -> std::error_code;
@@ -149,6 +154,12 @@ compose_cpg_index_metadata_filename(auto wo_extension) {
   return wo_extension;
 }
 
+[[nodiscard]] inline auto
+compose_cpg_index_metadata_filename(const auto &directory, const auto &name) {
+  const auto wo_extn = (std::filesystem::path{directory} / name).string();
+  return std::format("{}{}", wo_extn, cpg_index_metadata::filename_extension);
+}
+
 template <>
 struct std::formatter<cpg_index_metadata> : std::formatter<std::string> {
   auto
@@ -156,9 +167,5 @@ struct std::formatter<cpg_index_metadata> : std::formatter<std::string> {
     return std::formatter<std::string>::format(cm.tostring(), ctx);
   }
 };
-
-[[nodiscard]] auto
-get_default_cpg_index_metadata_filename(const std::string &indexfile)
-  -> std::string;
 
 #endif  // SRC_CPG_INDEX_METADATA_HPP_
