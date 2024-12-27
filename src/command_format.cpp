@@ -35,17 +35,16 @@ files.  The methylome data is a binary file with size just over 100MB
 for the human genome and it should have the extension '.m16'. The
 methylome metadata is a small JSON format file (on a single line) that
 can easily be examined with any JSON formatter (e.g., jq or
-json_pp). These two files should reside in the same directory and
-typically only the methylome data file is specified when it is used.
-If xfrase is used remotely, the methylome will reside on the server.  If
-you are analyzing your own DNA methylation data, you will need to
-format your methylomes with this command.
+json_pp). These two files reside in the same directory. If xfrase is
+used remotely, the methylome will reside on the server. If you are
+analyzing your own DNA methylation data, you will need to format your
+methylomes with this command.
 )";
 
 static constexpr auto examples = R"(
 Examples:
 
-xfrase format -x hg38.cpg_idx -m SRX012345.xsym.gz -o SRX012345.m16
+xfrase format -x index_dir -g hg38 -o output_dir -m SRX012345.xsym.gz
 )";
 
 #include "counts_file_formats.hpp"
