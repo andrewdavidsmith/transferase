@@ -23,8 +23,10 @@
 
 #include <command_format.hpp>
 
-// #include <cpg_index_data.hpp>
-// #include <cpg_index_metadata.hpp>
+#include "unit_test_utils.hpp"
+
+#include <methylome_data.hpp>
+#include <methylome_metadata.hpp>
 
 #include <gtest/gtest.h>
 
@@ -36,67 +38,54 @@
 #include <string>
 #include <system_error>
 
-[[nodiscard]] static inline bool
-are_files_identical(const std::filesystem::path &file1,
-                    const std::filesystem::path &file2) {
-  namespace fs = std::filesystem;
-  if (fs::file_size(file1) != fs::file_size(file2))
-    return false;
-
-  std::ifstream f1(file1, std::ifstream::binary);
-  std::ifstream f2(file2, std::ifstream::binary);
-  return std::equal(std::istreambuf_iterator<char>(f1.rdbuf()),
-                    std::istreambuf_iterator<char>(),
-                    std::istreambuf_iterator<char>(f2.rdbuf()));
-}
-
 TEST(command_format_test, basic_test) {
   // Input files for test
-  static constexpr auto genome_directory = "data/lutions/raw";
+  static constexpr auto methylome_directory = "data/lutions/methylomes";
   static constexpr auto index_directory = "data/lutions/indexes";
-  static constexpr auto output_directory = "data";
+  static constexpr auto output_directory = "data/lutions";
   static constexpr auto genome_name = "eFlareon";
-
-  const auto genome_path = std::filesystem::path{genome_directory} /
-                           std::format(genome_name, ".fa.gz");
+  static constexpr auto methylome_name = "eFlareon_brain";
+  static constexpr auto methylation_file =
+    "data/lutions/raw/eFlareon_brain.sym.gz";
 
   // Define command line arguments
   const char *command_argv[] = {
     // clang-format off
-    "index",
+    "format",
     "-x",
-    output_directory,
+    index_directory,
     "-g",
-    "data/lutions/raw/eFlareon.fa.gz", // genome_path.string().data(),
-    "-v",
-    "debug",
+    genome_name,
+    "-o",
+    output_directory,
+    "-m",
+    methylation_file,
     // clang-format on
   };
   const int command_argc = sizeof(command_argv) / sizeof(command_argv[0]);
 
   // Run the main function
   const int result =
-    command_index_main(command_argc, const_cast<char **>(command_argv));
+    command_format_main(command_argc, const_cast<char **>(command_argv));
+  EXPECT_EQ(result, EXIT_SUCCESS);
 
   const auto data_outfile =
-    compose_cpg_index_data_filename(output_directory, genome_name);
-  // Check that the output file is created
-  EXPECT_EQ(result, EXIT_SUCCESS);
+    compose_methylome_data_filename(output_directory, methylome_name);
   std::error_code ec;
   const auto data_outfile_exists = std::filesystem::exists(data_outfile, ec);
   EXPECT_EQ(ec, std::error_code{});
   EXPECT_TRUE(data_outfile_exists);
 
   const auto expected_data_outfile =
-    compose_cpg_index_data_filename(index_directory, genome_name);
-  EXPECT_TRUE(are_files_identical(data_outfile, expected_data_outfile));
+    compose_methylome_data_filename(methylome_directory, methylome_name);
+  EXPECT_TRUE(files_are_identical(data_outfile, expected_data_outfile));
 
   if (std::filesystem::exists(data_outfile, ec))
     std::filesystem::remove(data_outfile, ec);
   EXPECT_EQ(ec, std::error_code{});
 
   const auto meta_outfile =
-    compose_cpg_index_metadata_filename(output_directory, genome_name);
+    compose_methylome_metadata_filename(output_directory, methylome_name);
   if (std::filesystem::exists(meta_outfile, ec))
     std::filesystem::remove(meta_outfile, ec);
   EXPECT_EQ(ec, std::error_code{});
