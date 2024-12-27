@@ -23,17 +23,14 @@
 
 #include <methylome_metadata.hpp>
 
-#include <cpg_index.hpp>
-#include <methylome_data.hpp>
 #include <utilities.hpp>
 
 #include <config.h>
 
 #include <gtest/gtest.h>
 
-#include <cstdint>
+#include <string>
 #include <system_error>
-#include <utility>
 
 // Mock functions to simulate external dependencies
 [[nodiscard]]
@@ -125,32 +122,3 @@ TEST(methylome_metadata_test, write_test) {
     std::filesystem::remove(outfile, ec);
   EXPECT_FALSE(ec);
 }
-
-// // Test read method
-// TEST(methylome_metadata_test, read) {
-//   std::error_code ec;
-//   auto metadata = methylome_metadata::read("test.json", ec);
-//   EXPECT_FALSE(ec);
-//   EXPECT_EQ(metadata.host, "test_host");
-//   EXPECT_EQ(metadata.user, "test_user");
-//   EXPECT_EQ(metadata.version, VERSION);
-//   EXPECT_EQ(metadata.creation_time, "2024-12-24T12:34:56");
-// }
-
-// // Test tostring method
-// TEST(methylome_metadata_test, tostring) {
-//   methylome_metadata metadata;
-//   metadata.host = "test_host";
-//   metadata.user = "test_user";
-//   metadata.version = VERSION;
-//   metadata.creation_time = "2024-12-24T12:34:56";
-
-//   std::string result = metadata.tostring();
-//   EXPECT_FALSE(result.empty());
-// }
-
-// int
-// main(int argc, char **argv) {
-//   ::testing::InitGoogleTest(&argc, argv);
-//   return RUN_ALL_TESTS();
-// }

@@ -24,10 +24,7 @@
 #include "methylome_metadata.hpp"
 
 #include "automatic_json.hpp"  // for tag_invoke
-#include "cpg_index.hpp"
-#include "cpg_index_metadata.hpp"
 #include "environment_utilities.hpp"
-#include "methylome_data.hpp"
 
 #include <config.h>  // for VERSION
 
@@ -44,8 +41,6 @@
 #include <sstream>
 #include <string>
 #include <system_error>
-#include <tuple>
-#include <utility>  // std::move
 
 [[nodiscard]] auto
 methylome_metadata::init_env() -> std::error_code {

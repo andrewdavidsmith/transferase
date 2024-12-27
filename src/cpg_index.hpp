@@ -29,7 +29,6 @@
 #include "cpg_index_types.hpp"
 
 #include <cstdint>  // for std::uint32_t
-#include <format>   // for std::vector??
 #include <string>
 #include <system_error>
 #include <type_traits>  // for std::true_type

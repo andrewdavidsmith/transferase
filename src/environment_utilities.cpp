@@ -25,20 +25,21 @@
 
 #include <config.h>
 
-#include <boost/asio.hpp>  // boost::asio::ip::host_name();
-// ADS: this one seems not needed
-#include <boost/container_hash/hash.hpp>  // for hash_range
-#include <boost/system.hpp>               // for boost::system::error_code
+#include <boost/asio.hpp>    // boost::asio::ip::host_name();
+#include <boost/system.hpp>  // for boost::system::error_code
 
 // getpwuid_r
 #include <pwd.h>
 #include <unistd.h>  // for getuid
 
 #include <array>
+#include <cerrno>
 #include <chrono>
+#include <format>
 #include <string>
 #include <system_error>
 #include <tuple>
+#include <utility>
 
 [[nodiscard]] auto
 get_username() -> std::tuple<std::string, std::error_code> {

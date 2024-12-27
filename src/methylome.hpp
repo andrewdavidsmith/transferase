@@ -28,10 +28,14 @@
 #include "methylome_metadata.hpp"
 
 #include <cstddef>  // for std::size_t
-#include <format>   // for std::vector??
+#include <cstdint>  // std::uint32_t
 #include <string>
 #include <system_error>
+#include <type_traits>
+#include <utility>
 #include <vector>
+
+struct cpg_index;
 
 struct methylome {
   static constexpr auto data_extn = methylome_data::filename_extension;

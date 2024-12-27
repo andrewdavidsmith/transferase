@@ -36,10 +36,8 @@
 #include <string>
 #include <string_view>
 #include <system_error>
-#include <tuple>
 #include <type_traits>  // for std::true_type
 #include <utility>
-#include <variant>  // IWYU pragma: keep
 
 struct compose_result {
   char *ptr{};

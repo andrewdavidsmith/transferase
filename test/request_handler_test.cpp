@@ -45,7 +45,6 @@
 #include <iterator>  // for std::size
 #include <tuple>     // for std::ignore
 #include <unordered_map>
-#include <utility>  // for std::pair
 
 TEST(request_handler_test, basic_assertions) {
   std::error_code ec;

@@ -26,17 +26,10 @@
 #include "logger.hpp"        // IWYU pragma: keep
 #include "xfrase_error.hpp"  // IWYU pragma: keep
 
-#include <array>
 #include <cerrno>
-#include <cstdlib>  // for getenv
+#include <cstdlib>  // for std::getenv
 #include <fstream>
 #include <string>
-#include <tuple>
-#include <utility>  // for std::move
-
-// getpwuid_r
-#include <pwd.h>
-#include <unistd.h>  // for getuid
 
 [[nodiscard]] auto
 get_xfrase_config_dir_default(std::error_code &ec) -> std::string {

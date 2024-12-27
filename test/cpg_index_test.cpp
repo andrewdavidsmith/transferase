@@ -25,12 +25,14 @@
 
 #include "cpg_index_impl.hpp"
 
-#include <config.h>  // for VERSION
 #include <gtest/gtest.h>
 
+#include <cstring>
 #include <filesystem>
 #include <fstream>
+#include <iterator>
 #include <string>
+#include <string_view>
 #include <system_error>
 #include <vector>
 

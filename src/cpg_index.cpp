@@ -38,7 +38,6 @@
 #include <cstddef>  // for std::size_t
 #include <cstdint>
 #include <filesystem>
-#include <format>
 #include <iterator>
 #include <numeric>
 #include <ranges>

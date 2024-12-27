@@ -32,7 +32,6 @@
 #include <filesystem>
 #include <iterator>  // std::size
 #include <numeric>
-#include <ranges>
 #include <string>
 #include <vector>
 

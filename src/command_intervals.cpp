@@ -47,6 +47,7 @@ xfrase intervals remote -x index_dir -g hg38 -s example.com -m methylome_name -o
 #include "client.hpp"
 #include "cpg_index.hpp"
 #include "cpg_index_metadata.hpp"
+#include "cpg_index_types.hpp"  // for query_elem
 #include "genomic_interval.hpp"
 #include "genomic_interval_output.hpp"
 #include "logger.hpp"
@@ -265,7 +266,7 @@ command_intervals_main(int argc, char *argv[]) -> int {
 
   const bool remote_mode = (subcmd == "remote");
 
-  logger &lgr = logger::instance(shared_from_cout(), command, log_level);
+  auto &lgr = logger::instance(shared_from_cout(), command, log_level);
   if (!lgr) {
     std::println("Failure initializing logging: {}.", lgr.get_status());
     return EXIT_FAILURE;

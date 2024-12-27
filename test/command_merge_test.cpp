@@ -30,12 +30,9 @@
 
 #include <gtest/gtest.h>
 
-#include <algorithm>  // for std::equal
 #include <array>
 #include <cstdlib>  // for EXIT_SUCCESS
 #include <filesystem>
-#include <fstream>
-#include <iterator>
 #include <string>
 #include <string_view>
 #include <system_error>

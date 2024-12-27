@@ -24,20 +24,16 @@
 #include "cpg_index_set.hpp"
 
 #include "cpg_index.hpp"
-#include "cpg_index_data.hpp"
-#include "cpg_index_metadata.hpp"
 #include "logger.hpp"
 #include "xfrase_error.hpp"  // IWYU pragma: keep
 
-#include <filesystem>
-#include <format>
 #include <iterator>  // for std::cend
 #include <memory>    // for std::make_shared
-#include <regex>
 #include <string>
 #include <system_error>
 #include <unordered_map>
 #include <utility>  // for std::move, std::pair
+#include <vector>
 
 [[nodiscard]] auto
 cpg_index_set::get_cpg_index(const std::string &assembly, std::error_code &ec)

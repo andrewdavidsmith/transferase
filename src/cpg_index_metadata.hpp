@@ -31,11 +31,9 @@
 #include <format>
 #include <string>
 #include <system_error>
-#include <tuple>
 #include <type_traits>  // for true_type
 #include <unordered_map>
 #include <utility>  // for to_underlying, unreachable
-#include <variant>  // IWYU pragma: keep
 #include <vector>
 
 enum class cpg_index_metadata_error : std::uint32_t {

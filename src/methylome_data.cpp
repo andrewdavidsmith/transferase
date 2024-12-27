@@ -28,7 +28,6 @@
 #include "hash.hpp"
 #include "methylome_metadata.hpp"
 #include "methylome_results_types.hpp"
-#include "xfrase_error.hpp"
 #include "zlib_adapter.hpp"
 
 #include <algorithm>
@@ -36,10 +35,12 @@
 #include <cerrno>
 #include <cstdint>  // for uint32_t, uint16_t, uint8_t, uint64_t
 #include <filesystem>
+#include <format>
 #include <fstream>
 #include <ranges>
 #include <string>
 #include <system_error>
+#include <tuple>
 #include <type_traits>  // for is_same
 #include <utility>      // for pair, move
 #include <vector>

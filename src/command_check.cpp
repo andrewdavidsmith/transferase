@@ -47,12 +47,10 @@ xfrase check -x index_dir -d methylome_dir -g hg38 -m SRX012345 SRX612345
 )";
 
 #include "cpg_index.hpp"
-#include "cpg_index_metadata.hpp"
 #include "logger.hpp"
 #include "metadata_is_consistent.hpp"
 #include "methylome.hpp"
 #include "methylome_data.hpp"
-#include "methylome_metadata.hpp"
 #include "methylome_results_types.hpp"  // IWYU pragma: keep
 #include "utilities.hpp"
 #include "xfrase_error.hpp"  // IWYU pragma: keep

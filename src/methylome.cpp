@@ -24,15 +24,14 @@
 #include "methylome.hpp"
 
 #include "cpg_index.hpp"
+#include "cpg_index_metadata.hpp"
 #include "methylome_data.hpp"
 #include "methylome_metadata.hpp"
 
 #include "logger.hpp"
 
-#include <boost/asio.hpp>    // boost::asio::ip::host_name();
-#include <boost/system.hpp>  // for boost::system::error_code
-
 #include <filesystem>
+#include <iterator>
 #include <ranges>
 #include <string>
 #include <system_error>

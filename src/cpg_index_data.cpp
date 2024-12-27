@@ -39,7 +39,6 @@
 #include <numeric>     // for std::adjacent_difference, std::exclusive_scan
 #include <ranges>
 #include <string>
-#include <tuple>
 #include <utility>  // for std::pair, std::move
 #include <vector>
 

@@ -30,11 +30,8 @@
 
 #include <gtest/gtest.h>
 
-#include <algorithm>  // for std::equal
-#include <cstdlib>    // for EXIT_SUCCESS
+#include <cstdlib>  // for EXIT_SUCCESS
 #include <filesystem>
-#include <fstream>
-#include <iterator>
 #include <string>
 #include <system_error>
 

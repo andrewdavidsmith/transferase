@@ -25,16 +25,14 @@
 
 #include "unit_test_utils.hpp"
 
+#include <gtest/gtest.h>
+
 #include <cpg_index_data.hpp>
 #include <cpg_index_metadata.hpp>
 
-#include <gtest/gtest.h>
-
-#include <algorithm>  // for std::equal
-#include <cstdlib>    // for EXIT_SUCCESS
+#include <cstdlib>
 #include <filesystem>
-#include <fstream>
-#include <iterator>
+#include <format>
 #include <string>
 #include <system_error>
 
@@ -55,7 +53,7 @@ TEST(command_index_test, basic_test) {
     "-x",
     output_directory,
     "-g",
-    "data/lutions/raw/eFlareon.fa.gz", // genome_path.string().data(),
+    "data/lutions/raw/eFlareon.fa.gz",  // genome_path.string().data(),
     "-v",
     "debug",
     // clang-format on

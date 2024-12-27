@@ -40,6 +40,7 @@
 #include <limits>    // for std::numeric_limits
 #include <string>
 #include <system_error>
+#include <type_traits>
 #include <utility>  // for std::pair
 #include <vector>
 

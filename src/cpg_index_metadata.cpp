@@ -25,11 +25,7 @@
 
 #include "environment_utilities.hpp"
 
-#include <config.h>  // for VERSION
-
-#include <boost/asio.hpp>  // boost::asio::ip::host_name();
 #include <boost/json.hpp>
-#include <boost/system.hpp>  // for boost::system::error_code
 
 #include <algorithm>
 #include <cerrno>
@@ -42,8 +38,6 @@
 #include <sstream>
 #include <string>
 #include <system_error>
-#include <tuple>
-#include <utility>  // for std::move
 #include <vector>
 
 [[nodiscard]] auto
