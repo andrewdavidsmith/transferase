@@ -75,12 +75,6 @@ strip(char const *const x) -> const std::string_view {
   return std::string_view(x + start, x + std::size(s));
 }
 
-[[nodiscard]] auto
-get_username() -> std::tuple<std::string, std::error_code>;
-
-[[nodiscard]] auto
-get_time_as_string() -> std::string;
-
 [[nodiscard]]
 auto
 check_output_file(const std::string &filename) -> std::error_code;

@@ -39,33 +39,6 @@
 #include <unistd.h>  // for getuid
 
 [[nodiscard]] auto
-get_username() -> std::tuple<std::string, std::error_code> {
-  // ADS: long code here; static needs it for threadsafe
-  constexpr auto bufsize{1024};
-  struct passwd pwd;
-  struct passwd *result;
-  std::array<char, bufsize> buf;
-  const auto s = getpwuid_r(getuid(), &pwd, buf.data(), bufsize, &result);
-  if (result == nullptr)
-    return {{},
-            std::make_error_code(s == 0 ? std::errc::invalid_argument
-                                        : std::errc(errno))};
-  // ADS: pw_name below might be better as pw_gecos
-  return {std::move(std::string(pwd.pw_name)), {}};
-}
-
-[[nodiscard]] auto
-get_time_as_string() -> std::string {
-  const auto now{std::chrono::system_clock::now()};
-  const std::chrono::year_month_day ymd{
-    std::chrono::floor<std::chrono::days>(now)};
-  const std::chrono::hh_mm_ss hms{
-    std::chrono::floor<std::chrono::seconds>(now) -
-    std::chrono::floor<std::chrono::days>(now)};
-  return std::format("{:%F} {:%T}", ymd, hms);
-}
-
-[[nodiscard]] auto
 get_xfrase_config_dir_default(std::error_code &ec) -> std::string {
   static const auto config_dir_rhs = std::filesystem::path(".config/xfrase");
   static const auto env_home = std::getenv("HOME");
