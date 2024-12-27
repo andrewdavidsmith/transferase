@@ -34,4 +34,11 @@ typedef std::uint32_t q_elem_t;
 // };
 typedef std::pair<q_elem_t, q_elem_t> query_elem;
 
+typedef std::uint32_t chrom_pos_t;
+// struct chrom_range_t {
+//   chrom_pos_t start{};
+//   chrom_pos_t stop{};
+// };
+typedef std::pair<chrom_pos_t, chrom_pos_t> chrom_range_t;
+
 #endif  // SRC_CPG_INDEX_TYPES_HPP_

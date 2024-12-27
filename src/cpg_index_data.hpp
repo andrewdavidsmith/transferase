@@ -25,8 +25,10 @@
 #define SRC_CPG_INDEX_DATA_HPP_
 
 #if not defined(__APPLE__) && not defined(__MACH__)
-#include "aligned_allocator.hpp"  // for aligned_allocator
+#include "aligned_allocator.hpp"
 #endif
+
+#include "cpg_index_types.hpp"
 
 #include <cstdint>  // for std::uint32_t, std::int32_t, std::uint64_t
 #include <filesystem>
@@ -69,20 +71,19 @@ struct cpg_index_data {
   get_n_cpgs() const -> std::uint32_t;
 
   [[nodiscard]] auto
-  get_offsets_within_chrom(
-    const std::int32_t ch_id,
-    const std::vector<std::pair<std::uint32_t, std::uint32_t>> &pos) const
-    -> std::vector<std::pair<std::uint32_t, std::uint32_t>>;
+  get_offsets_within_chrom(const std::int32_t ch_id,
+                           const std::vector<chrom_range_t> &pos) const
+    -> std::vector<query_elem>;
 
   [[nodiscard]] auto
-  get_offsets(const std::int32_t ch_id, const cpg_index_metadata &cim,
-              const std::vector<std::pair<std::uint32_t, std::uint32_t>> &pos)
-    const -> std::vector<std::pair<std::uint32_t, std::uint32_t>>;
+  get_offsets(const std::int32_t ch_id, const cpg_index_metadata &meta,
+              const std::vector<chrom_range_t> &pos) const
+    -> std::vector<query_elem>;
 
   [[nodiscard]] auto
-  get_offsets(const cpg_index_metadata &cim,
+  get_offsets(const cpg_index_metadata &meta,
               const std::vector<genomic_interval> &gis) const
-    -> std::vector<std::pair<std::uint32_t, std::uint32_t>>;
+    -> std::vector<query_elem>;
 
   std::vector<cpg_index_data::vec> positions;
 };
