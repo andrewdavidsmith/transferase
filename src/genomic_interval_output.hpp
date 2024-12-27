@@ -75,9 +75,9 @@ write_intervals(const std::string &outfile, const cpg_index_metadata &cim,
     const auto ch_id = get<0>(chunk.front()).ch_id;
     const std::string chrom{cim.chrom_order[ch_id]};
     std::ranges::copy(chrom, buf.data());
-    buf[size(chrom)] = delim;
+    buf[std::size(chrom)] = delim;
     for (const auto &[gi, single_result] : chunk) {
-      std::to_chars_result tcr{buf.data() + size(chrom) + 1, std::errc()};
+      std::to_chars_result tcr{buf.data() + std::size(chrom) + 1, std::errc()};
 #if defined(__GNUG__) and not defined(__clang__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic error "-Wstringop-overflow=0"
@@ -134,9 +134,9 @@ write_intervals_bedgraph(
     const auto ch_id = get<0>(chunk.front()).ch_id;
     const std::string chrom{cim.chrom_order[ch_id]};
     std::ranges::copy(chrom, buf.data());
-    buf[size(chrom)] = delim;
+    buf[std::size(chrom)] = delim;
     for (const auto &[gi, single_score] : chunk) {
-      std::to_chars_result tcr{buf.data() + size(chrom) + 1, std::errc()};
+      std::to_chars_result tcr{buf.data() + std::size(chrom) + 1, std::errc()};
 #if defined(__GNUG__) and not defined(__clang__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic error "-Wstringop-overflow=0"
@@ -203,7 +203,7 @@ write_bins(const std::string &outfile, const cpg_index_metadata &cim,
   const auto zipped = std::views::zip(cim.chrom_size, cim.chrom_order);
   for (const auto [chrom_size, chrom_name] : zipped) {
     std::ranges::copy(chrom_name, buf.data());
-    buf[size(chrom_name)] = delim;
+    buf[std::size(chrom_name)] = delim;
     for (std::uint32_t bin_beg = 0; bin_beg < chrom_size; bin_beg += bin_size) {
       const auto bin_end = std::min(bin_beg + bin_size, chrom_size);
       std::to_chars_result tcr{buf.data() + std::size(chrom_name) + 1,
@@ -260,7 +260,7 @@ write_bins_bedgraph(const std::string &outfile, const cpg_index_metadata &cim,
   const auto zipped = std::views::zip(cim.chrom_size, cim.chrom_order);
   for (const auto [chrom_size, chrom_name] : zipped) {
     std::ranges::copy(chrom_name, buf.data());
-    buf[size(chrom_name)] = delim;
+    buf[std::size(chrom_name)] = delim;
     for (std::uint32_t bin_beg = 0; bin_beg < chrom_size; bin_beg += bin_size) {
       const auto bin_end = std::min(bin_beg + bin_size, chrom_size);
       std::to_chars_result tcr{buf.data() + std::size(chrom_name) + 1,
