@@ -21,10 +21,12 @@
  * SOFTWARE.
  */
 
-#include "command_merge.hpp"
+#include <command_merge.hpp>
 
-#include "methylome_data.hpp"
-#include "methylome_metadata.hpp"
+#include "unit_test_utils.hpp"
+
+#include <methylome_data.hpp>
+#include <methylome_metadata.hpp>
 
 #include <gtest/gtest.h>
 
@@ -37,26 +39,6 @@
 #include <string>
 #include <string_view>
 #include <system_error>
-
-[[nodiscard]] static inline bool
-are_files_identical(const std::filesystem::path &file1,
-                    const std::filesystem::path &file2) {
-  std::error_code ec;
-  const auto fs1 = std::filesystem::file_size(file1, ec);
-  if (ec)
-    return false;
-  const auto fs2 = std::filesystem::file_size(file2, ec);
-  if (ec)
-    return false;
-  if (fs1 != fs2)
-    return false;
-
-  std::ifstream f1(file1, std::ifstream::binary);
-  std::ifstream f2(file2, std::ifstream::binary);
-  return std::equal(std::istreambuf_iterator<char>(f1.rdbuf()),
-                    std::istreambuf_iterator<char>(),
-                    std::istreambuf_iterator<char>(f2.rdbuf()));
-}
 
 TEST(command_merge_test, basic_local_test) {
   // Input files for test
@@ -115,7 +97,7 @@ TEST(command_merge_test, basic_local_test) {
   const auto data_exists = std::filesystem::exists(output_data_fn, ec);
   EXPECT_FALSE(ec);
   EXPECT_TRUE(data_exists);
-  EXPECT_TRUE(are_files_identical(output_data_fn, expected_output_data_file));
+  EXPECT_TRUE(files_are_identical(output_data_fn, expected_output_data_file));
   if (std::filesystem::exists(output_data_fn, ec))
     std::filesystem::remove(output_meta_fn, ec);
   EXPECT_FALSE(ec);
