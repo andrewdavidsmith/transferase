@@ -26,15 +26,14 @@
 
 #include "cpg_index_data.hpp"
 #include "cpg_index_metadata.hpp"
+#include "cpg_index_types.hpp"
 
 #include <cstdint>  // for std::uint32_t
 #include <format>   // for std::vector??
 #include <string>
 #include <system_error>
-#include <tuple>
 #include <type_traits>  // for std::true_type
-#include <utility>      // for std::pair, std::to_underlying, std::unreachable
-#include <variant>      // for std::tuple
+#include <utility>      // for std::to_underlying, std::unreachable
 #include <vector>
 
 struct genomic_interval;
@@ -55,21 +54,17 @@ struct cpg_index {
   is_consistent() const -> bool;
 
   [[nodiscard]] auto
-  get_offsets(const std::vector<genomic_interval> &gis) const
-    -> std::vector<std::pair<std::uint32_t, std::uint32_t>>;
-
-  [[nodiscard]] auto
   write(const std::string &outdir,
         const std::string &name) const -> std::error_code;
 
   [[nodiscard]] auto
   make_query(const std::vector<genomic_interval> &gis) const
-    -> std::vector<std::pair<std::uint32_t, std::uint32_t>>;
+    -> std::vector<query_elem>;
 };
 
 [[nodiscard]] auto
-make_cpg_index(const std::string &genome_file)
-  -> std::tuple<cpg_index, std::error_code>;
+make_cpg_index(const std::string &genome_file,
+               std::error_code &ec) -> cpg_index;
 
 [[nodiscard]] auto
 cpg_index_files_exist(const std::string &directory,
@@ -95,11 +90,9 @@ enum class cpg_index_code : std::uint32_t {
   failure_processing_genome_file = 6,
 };
 
-// register cpg_index_code as error code enum
 template <>
 struct std::is_error_code_enum<cpg_index_code> : public std::true_type {};
 
-// category to provide text descriptions
 struct cpg_index_category : std::error_category {
   auto
   name() const noexcept -> const char * override {

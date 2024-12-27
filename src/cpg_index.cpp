@@ -45,7 +45,6 @@
 #include <regex>
 #include <string>
 #include <string_view>
-#include <tuple>  // for std::tuple<>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>  // for std::move
@@ -101,22 +100,13 @@ cpg_index::make_query(const std::vector<genomic_interval> &gis) const
 [[nodiscard]] auto
 cpg_index::read(const std::string &dirname, const std::string &genome_name,
                 std::error_code &ec) -> cpg_index {
-  const auto fn_wo_extn = std::filesystem::path{dirname} / genome_name;
-
-  // compose cpg_index metadata filename
-  const auto meta_filename = compose_cpg_index_metadata_filename(fn_wo_extn);
-  cpg_index_metadata meta;
-  std::tie(meta, ec) = cpg_index_metadata::read(meta_filename);
+  const cpg_index_metadata meta =
+    cpg_index_metadata::read(dirname, genome_name, ec);
   if (ec)
     return {};
-
-  // compose cpg_index data filename
-  const auto data_filename = compose_cpg_index_data_filename(fn_wo_extn);
-  cpg_index_data data;
-  std::tie(data, ec) = cpg_index_data::read(data_filename, meta);
+  const auto data = cpg_index_data::read(dirname, genome_name, meta, ec);
   if (ec)
     return {};
-
   return cpg_index{std::move(data), std::move(meta)};
 }
 
@@ -249,17 +239,21 @@ get_chroms(const char *data, const std::size_t sz,
 }
 
 [[nodiscard]] STATIC auto
-make_cpg_index_plain(const std::string &genome_filename)
-  -> std::tuple<cpg_index, std::error_code> {
+make_cpg_index_plain(const std::string &genome_filename,
+                     std::error_code &ec) -> cpg_index {
   genome_file gf = mmap_genome(genome_filename);  // memory map the genome file
-  if (gf.ec)
-    return {cpg_index{}, gf.ec};
+  if (gf.ec) {
+    ec = gf.ec;
+    return {};
+  }
 
   // get start and stop positions of chrom names in the file
   const auto name_starts = get_chrom_name_starts(gf.data, gf.sz);
   const auto name_stops = get_chrom_name_stops(name_starts, gf.data, gf.sz);
-  if (name_starts.empty() || name_stops.empty())
-    return {cpg_index{}, cpg_index_code::failure_processing_genome_file};
+  if (name_starts.empty() || name_stops.empty()) {
+    ec = cpg_index_code::failure_processing_genome_file;
+    return {};
+  }
 
   // initialize the chromosome order
   std::vector<std::pair<std::uint32_t, std::string>> chrom_sorter;
@@ -297,8 +291,9 @@ make_cpg_index_plain(const std::string &genome_filename)
     });
 
   // finished with any views that look into 'data' so cleanup
-  if (const auto munmap_err = cleanup_mmap_genome(gf); munmap_err)
-    return {cpg_index{}, munmap_err};
+  ec = cleanup_mmap_genome(gf);
+  if (ec)
+    return {};
 
   // initialize chrom offsets within the compressed files
   std::ranges::transform(data.positions, std::back_inserter(meta.chrom_offset),
@@ -316,34 +311,37 @@ make_cpg_index_plain(const std::string &genome_filename)
   for (const auto [i, chrom_name] : std::views::enumerate(meta.chrom_order))
     meta.chrom_index.emplace(chrom_name, i);
 
-  const auto meta_init_err = meta.init_env();
-  if (meta_init_err)
-    return {cpg_index{}, meta_init_err};
+  ec = meta.init_env();
+  if (ec)
+    return {};
 
   meta.index_hash = data.hash();
 
-  std::error_code asm_err;
-  meta.assembly = get_assembly_from_filename(genome_filename, asm_err);
-  if (asm_err)
-    return {cpg_index{}, asm_err};
+  meta.assembly = get_assembly_from_filename(genome_filename, ec);
+  if (ec)
+    return {};
 
-  cpg_index index{std::move(data), std::move(meta)};
-  return {std::move(index), std::error_code{}};
+  ec = std::error_code{};
+  return {std::move(data), std::move(meta)};
 }
 
 [[nodiscard]] STATIC auto
-make_cpg_index_gzip(const std::string &genome_filename)
-  -> std::tuple<cpg_index, std::error_code> {
+make_cpg_index_gzip(const std::string &genome_filename,
+                    std::error_code &ec) -> cpg_index {
   const auto [raw, gz_err] = read_gzfile_into_buffer(genome_filename);
-  if (gz_err)
-    return {cpg_index{}, cpg_index_code::failure_processing_genome_file};
+  if (gz_err) {
+    ec = cpg_index_code::failure_processing_genome_file;
+    return {};
+  }
 
   // get start and stop positions of chrom names in the file
   const auto name_starts = get_chrom_name_starts(raw.data(), std::size(raw));
   const auto name_stops =
     get_chrom_name_stops(name_starts, raw.data(), std::size(raw));
-  if (name_starts.empty() || name_stops.empty())
-    return {cpg_index{}, cpg_index_code::failure_processing_genome_file};
+  if (name_starts.empty() || name_stops.empty()) {
+    ec = cpg_index_code::failure_processing_genome_file;
+    return {};
+  }
 
   // initialize the chromosome order
   std::vector<std::pair<std::uint32_t, std::string>> chrom_sorter;
@@ -396,28 +394,26 @@ make_cpg_index_gzip(const std::string &genome_filename)
   for (const auto [i, chrom_name] : std::views::enumerate(meta.chrom_order))
     meta.chrom_index.emplace(chrom_name, i);
 
-  const auto meta_init_err = meta.init_env();
-  if (meta_init_err)
-    return {cpg_index{}, meta_init_err};
+  ec = meta.init_env();
+  if (ec)
+    return {};
 
   meta.index_hash = data.hash();
 
-  std::error_code asm_err;
-  meta.assembly = get_assembly_from_filename(genome_filename, asm_err);
-  if (asm_err)
-    return {cpg_index{}, asm_err};
+  meta.assembly = get_assembly_from_filename(genome_filename, ec);
+  if (ec)
+    return {};
 
-  cpg_index index;
-  index.data = std::move(data);
-  index.meta = std::move(meta);
-  return {std::move(index), std::error_code{}};
+  ec = std::error_code{};
+  return {std::move(data), std::move(meta)};
 }
 
 [[nodiscard]] auto
-make_cpg_index(const std::string &genome_filename)
-  -> std::tuple<cpg_index, std::error_code> {
-  return is_gzip_file(genome_filename) ? make_cpg_index_gzip(genome_filename)
-                                       : make_cpg_index_plain(genome_filename);
+make_cpg_index(const std::string &genome_filename,
+               std::error_code &ec) -> cpg_index {
+  return is_gzip_file(genome_filename)
+           ? make_cpg_index_gzip(genome_filename, ec)
+           : make_cpg_index_plain(genome_filename, ec);
 }
 
 [[nodiscard]] auto
