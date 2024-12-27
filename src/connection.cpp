@@ -50,9 +50,9 @@ auto
 connection::prepare_to_read_offsets() -> void {
   // This function is needed because this can't be done in the
   // read_offsets() function as it is recursive
-  req.offsets.resize(req.n_intervals);           // get space for offsets
-  offset_remaining = req.get_offsets_n_bytes();  // init counters
-  offset_byte = 0;                               // should be init to this
+  req.offsets.resize(req.n_intervals);        // get space for offsets
+  query_remaining = req.get_query_n_bytes();  // init counters
+  query_byte = 0;                             // should be init to this
 }
 
 auto
@@ -131,16 +131,16 @@ auto
 connection::read_offsets() -> void {
   auto self(shared_from_this());
   socket.async_read_some(
-    boost::asio::buffer(req.get_offsets_data() + offset_byte, offset_remaining),
+    boost::asio::buffer(req.get_query_data() + query_byte, query_remaining),
     [this, self](const boost::system::error_code ec,
                  const std::size_t bytes_transferred) {
       // remove deadline while doing computation
       deadline.expires_at(boost::asio::steady_timer::time_point::max());
       if (!ec) {
-        offset_remaining -= bytes_transferred;
-        offset_byte += bytes_transferred;
-        if (offset_remaining == 0) {
-          lgr.debug("{} Finished reading offsets ({}B)", conn_id, offset_byte);
+        query_remaining -= bytes_transferred;
+        query_byte += bytes_transferred;
+        if (query_remaining == 0) {
+          lgr.debug("{} Finished reading offsets ({}B)", conn_id, query_byte);
           handler.handle_get_counts(req_hdr, req, resp_hdr, resp);
           lgr.debug("{} Finished computing levels in intervals", conn_id);
           // exiting the read loop -- no deadline for now

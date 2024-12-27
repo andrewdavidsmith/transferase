@@ -109,8 +109,8 @@ struct connection : public std::enable_shared_from_this<connection> {
 
   // These help keep track of where we are in the incoming offsets;
   // they might best be associated with the request.
-  std::size_t offset_byte{};
-  std::size_t offset_remaining{};
+  std::size_t query_byte{};
+  std::size_t query_remaining{};
 };
 
 #endif  // SRC_CONNECTION_HPP_
