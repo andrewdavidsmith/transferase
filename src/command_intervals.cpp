@@ -78,7 +78,7 @@ xfrase intervals remote -x index_dir -g hg38 -s example.com -m methylome_name -o
 template <typename counts_res_type>
 [[nodiscard]] static inline auto
 do_remote_intervals(const std::string &accession, const cpg_index &index,
-                    const std::vector<methylome::offset_pair> &query,
+                    const std::vector<query_elem> &query,
                     const std::string &hostname, const std::string &port)
   -> std::tuple<std::vector<counts_res_type>, std::error_code> {
   request_header hdr{accession, index.meta.n_cpgs, {}};
@@ -88,7 +88,7 @@ do_remote_intervals(const std::string &accession, const cpg_index &index,
   else
     hdr.rq_type = request_header::request_type::counts_cov;
 
-  request req{static_cast<std::uint32_t>(size(query)), query};
+  request req{static_cast<std::uint32_t>(std::size(query)), query};
   xfrase::client<counts_res_type, request> cl(hostname, port, hdr, req);
   const auto status = cl.run();
   if (status) {
@@ -102,7 +102,7 @@ template <typename counts_res_type>
 [[nodiscard]] static inline auto
 do_local_intervals(const std::string &accession,
                    const std::string &methylome_directory,
-                   const std::vector<methylome::offset_pair> &query)
+                   const std::vector<query_elem> &query)
   -> std::tuple<std::vector<counts_res_type>, std::error_code> {
   logger &lgr = logger::instance();
 
@@ -122,9 +122,9 @@ do_local_intervals(const std::string &accession,
 template <typename counts_res_type>
 static auto
 do_intervals(const std::string &accession, const cpg_index &index,
-             const std::vector<methylome::offset_pair> &query,
-             const std::string &hostname, const std::string &port,
-             const std::string &methylome_directory, const std::string &outfile,
+             const std::vector<query_elem> &query, const std::string &hostname,
+             const std::string &port, const std::string &methylome_directory,
+             const std::string &outfile,
              const std::vector<genomic_interval> &gis, const bool write_scores,
              const bool remote_mode) -> std::error_code {
   const auto intervals_start{std::chrono::high_resolution_clock::now()};
@@ -314,7 +314,7 @@ command_intervals_main(int argc, char *argv[]) -> int {
     lgr.error("Intervals not valid: {} (negative size found)", intervals_file);
     return EXIT_FAILURE;
   }
-  lgr.info("Number of intervals: {}", size(gis));
+  lgr.info("Number of intervals: {}", std::size(gis));
 
   // Convert intervals into query
   const auto format_query_start{std::chrono::high_resolution_clock::now()};
