@@ -53,45 +53,17 @@ cpg_index_set::get_cpg_index(const std::string &assembly, std::error_code &ec)
 
 cpg_index_set::cpg_index_set(const std::string &cpg_index_directory,
                              std::error_code &ec) {
-  static constexpr auto assembly_ptrn = R"(^[_[:alnum:]]+)";
-  static const auto cpg_index_filename_ptrn =
-    std::format(R"({}{}$)", assembly_ptrn, cpg_index_data::filename_extension);
-  std::regex cpg_index_filename_re(cpg_index_filename_ptrn);
-  std::regex assembly_re(assembly_ptrn);
-
-  const std::filesystem::path idx_dir{cpg_index_directory};
-  for (auto const &dir_entry : std::filesystem::directory_iterator{idx_dir}) {
-    const std::string name = dir_entry.path().filename().string();
-    if (std::regex_search(name, cpg_index_filename_re)) {
-      std::smatch base_match;
-      if (std::regex_search(name, base_match, assembly_re)) {
-        const auto assembly = base_match[0].str();
-        const std::string index_filename = dir_entry.path().string();
-
-        // read the cpg index metadata
-        const auto meta_file =
-          get_default_cpg_index_metadata_filename(index_filename);
-        const auto [meta, meta_ec] = cpg_index_metadata::read(meta_file);
-        if (meta_ec) {
-          logger::instance().error("Failed to read cpg index metadata {}: {}",
-                                   meta_file, meta_ec);
-          ec = meta_ec;
-          assembly_to_cpg_index.clear();
-          return;
-        }
-
-        // read the cpg data
-        const auto [data, data_ec] = cpg_index_data::read(index_filename, meta);
-        if (data_ec) {
-          logger::instance().error("Failed to read cpg index {}: {}",
-                                   index_filename, data_ec);
-          ec = data_ec;
-          assembly_to_cpg_index.clear();
-          return;
-        }
-        assembly_to_cpg_index.emplace(assembly,
-                                      std::make_shared<cpg_index>(data, meta));
-      }
+  const auto genome_names = list_cpg_indexes(cpg_index_directory, ec);
+  if (ec)
+    return;
+  for (const auto &name : genome_names) {
+    const auto index = cpg_index::read(cpg_index_directory, name, ec);
+    if (ec) {
+      logger::instance().error("Failed to read cpg index {} {}: {}",
+                               cpg_index_directory, name, ec);
+      assembly_to_cpg_index.clear();
+      return;
     }
+    assembly_to_cpg_index.emplace(name, std::make_shared<cpg_index>(index));
   }
 }
