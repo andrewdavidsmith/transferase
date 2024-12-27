@@ -38,6 +38,8 @@ if(FOUND_IWYU)
   set(CMAKE_CXX_INCLUDE_WHAT_YOU_USE
     include-what-you-use
     -Xiwyu
+    --no_comments
+    -Xiwyu
     --mapping_file=${PROJECT_SOURCE_DIR}/iwyu.json
   )
 endif()
