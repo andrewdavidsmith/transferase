@@ -48,13 +48,14 @@ struct methylome {
   is_consistent() const -> bool;
 
   [[nodiscard]] auto
-  update_metadata() -> std::error_code;
-
-  [[nodiscard]] auto
   write(const std::string &outdir,
         const std::string &name) const -> std::error_code;
 
-  using offset_pair = methylome_data::offset_pair;
+  [[nodiscard]] auto
+  init_metadata(const cpg_index &index) -> std::error_code;
+
+  [[nodiscard]] auto
+  update_metadata() -> std::error_code;
 };
 
 [[nodiscard]] inline auto
@@ -72,5 +73,39 @@ list_methylomes(const std::string &dirname,
 
 [[nodiscard]] auto
 get_methylome_name_from_filename(const std::string &filename) -> std::string;
+
+// methylome error codes
+
+enum class methylome_code : std::uint32_t {
+  ok = 0,
+  invalid_methylome_data = 1,
+};
+
+template <>
+struct std::is_error_code_enum<methylome_code> : public std::true_type {};
+
+struct methylome_category : std::error_category {
+  auto
+  name() const noexcept -> const char * override {
+    return "methylome";
+  }
+  auto
+  message(int code) const -> std::string override {
+    using std::string_literals::operator""s;
+    // clang-format off
+    switch (code) {
+    case 0: return "ok"s;
+    case 1: return "invalid methylome data"s;
+    }
+    // clang-format on
+    std::unreachable();
+  }
+};
+
+inline auto
+make_error_code(methylome_code e) -> std::error_code {
+  static auto category = methylome_category{};
+  return std::error_code(std::to_underlying(e), category);
+}
 
 #endif  // SRC_METHYLOME_HPP_

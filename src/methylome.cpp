@@ -23,10 +23,14 @@
 
 #include "methylome.hpp"
 
+#include "cpg_index.hpp"
 #include "methylome_data.hpp"
 #include "methylome_metadata.hpp"
 
 #include "logger.hpp"
+
+#include <boost/asio.hpp>    // boost::asio::ip::host_name();
+#include <boost/system.hpp>  // for boost::system::error_code
 
 #include <filesystem>
 #include <ranges>
@@ -34,6 +38,40 @@
 #include <system_error>
 #include <unordered_set>
 #include <vector>
+
+[[nodiscard]] auto
+methylome::init_metadata(const cpg_index &index) -> std::error_code {
+  static constexpr auto is_compressed_init = false;
+  if (std::size(data.cpgs) != index.meta.n_cpgs)
+    return std::error_code{methylome_code::invalid_methylome_data};
+  meta = {
+    // clang-format off
+    "",  // version
+    "",  // host
+    "",  // user
+    "",  // creation_time
+    data.hash(),
+    index.meta.index_hash,
+    index.meta.assembly,
+    index.meta.n_cpgs,
+    is_compressed_init
+    // clang-format on
+  };
+  // ADS: take care of variables not dependent on cpg_index or
+  // methylome_data
+  const auto ec = meta.init_env();
+  return ec;
+}
+
+[[nodiscard]]
+auto
+methylome::update_metadata() -> std::error_code {
+  const std::error_code ec = meta.init_env();
+  if (ec)
+    return ec;
+  meta.methylome_hash = data.hash();
+  return std::error_code{};
+}
 
 [[nodiscard]] auto
 methylome::read(const std::string &dirname, const std::string &methylome_name,
@@ -46,16 +84,6 @@ methylome::read(const std::string &dirname, const std::string &methylome_name,
   if (ec)
     return {};
   return m;
-}
-
-[[nodiscard]]
-auto
-methylome::update_metadata() -> std::error_code {
-  const std::error_code ec = meta.init_env();
-  if (ec)
-    return ec;
-  meta.methylome_hash = data.hash();
-  return std::error_code{};
 }
 
 [[nodiscard]] auto
