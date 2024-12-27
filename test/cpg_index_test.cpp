@@ -28,6 +28,8 @@
 #include <config.h>  // for VERSION
 #include <gtest/gtest.h>
 
+#include <filesystem>
+#include <fstream>
 #include <string>
 #include <system_error>
 #include <vector>
@@ -46,14 +48,14 @@ TEST(cpg_index_test, filename_functions) {
   EXPECT_EQ(assembly, "asdf");
 }
 
-TEST(mmap_genome_test, non_existent_file) {
+TEST(cpg_index_test, mmap_genome_non_existent_file) {
   auto gf = mmap_genome("non_existent_file.txt");
   EXPECT_TRUE(gf.ec);
   EXPECT_EQ(gf.data, nullptr);
   EXPECT_EQ(gf.sz, 0);
 }
 
-TEST(mmap_genome_test, valid_file) {
+TEST(cpg_index_test, mmap_genome_valid_file) {
   static constexpr auto filename = "data/tProrsus1.fa";
   auto gf = mmap_genome(filename);
   EXPECT_FALSE(gf.ec);
@@ -75,7 +77,7 @@ TEST(mmap_genome_test, valid_file) {
   std::filesystem::remove("test_genome.txt");
 }
 
-TEST(mmap_genome_test, invalid_file) {
+TEST(cpg_index_test, mmap_genome_invalid_file) {
   static constexpr auto invalid_filename = "/not_a_file";
   auto gf = mmap_genome(invalid_filename);
   EXPECT_TRUE(gf.ec);
@@ -83,7 +85,7 @@ TEST(mmap_genome_test, invalid_file) {
   EXPECT_EQ(gf.sz, 0);
 }
 
-TEST(cleanup_mmap_genome_test, valid_unmap) {
+TEST(cpg_index_test, cleanup_mmap_genome_valid_unmap) {
   static constexpr auto filename = "data/tProrsus1.fa";
   auto gf = mmap_genome(filename);
   ASSERT_FALSE(gf.ec);
@@ -93,7 +95,7 @@ TEST(cleanup_mmap_genome_test, valid_unmap) {
   EXPECT_FALSE(err);
 }
 
-TEST(cleanup_mmap_genome_test, valid_data) {
+TEST(cpg_index_test, cleanup_mmap_genome_valid_data) {
   // Create a temporary file with some content
   std::ofstream outfile("test_genome.txt");
   outfile << ">chr1\nACGT\n>chr2\nGGCC\n";
@@ -107,7 +109,7 @@ TEST(cleanup_mmap_genome_test, valid_data) {
   std::filesystem::remove("test_genome.txt");
 }
 
-TEST(cleanup_mmap_genome_test, invalid_unmap) {
+TEST(cpg_index_test, cleanup_mmap_genome_invalid_unmap) {
   genome_file gf = {std::error_code{}, nullptr, 0};
   auto err = cleanup_mmap_genome(gf);
   EXPECT_TRUE(err);
@@ -127,7 +129,7 @@ TEST(get_cpgs_test, no_cpgs) {
   EXPECT_TRUE(cpgs.empty());
 }
 
-TEST(get_chrom_name_starts_test, valid_data) {
+TEST(cpg_index_test, get_chrom_name_starts_valid_data) {
   {
     constexpr auto data = ">chrom1\nATCG\n>chrom2\nGCTA";
     const auto starts = get_chrom_name_starts(data, strlen(data));
@@ -143,7 +145,7 @@ TEST(get_chrom_name_starts_test, valid_data) {
   }
 }
 
-TEST(get_chrom_name_stops_test, valid_data) {
+TEST(cpg_index_test, get_chrom_name_stops_valid_data) {
   {
     constexpr auto data = ">chrom1\nATCG\n>chrom2\nGCTA";
     const auto starts = get_chrom_name_starts(data, strlen(data));
@@ -161,8 +163,7 @@ TEST(get_chrom_name_stops_test, valid_data) {
   }
 }
 
-// get_chroms tests
-TEST(get_chroms_test, valid_data) {
+TEST(cpg_index_test, get_chroms_valid_data) {
   {
     const auto data = ">chrom1\nATCG\n>chrom2\nGCTA";
     const auto starts = get_chrom_name_starts(data, strlen(data));
@@ -183,16 +184,18 @@ TEST(get_chroms_test, valid_data) {
   }
 }
 
-TEST(initialize_cpg_index_test, valid_genome_file) {
-  const auto [index, ec] = initialize_cpg_index("data/tProrsus1.fa");
+TEST(cpg_index_test, make_cpg_index_valid_genome_file) {
+  std::error_code ec;
+  const auto index = make_cpg_index("data/tProrsus1.fa", ec);
   EXPECT_FALSE(ec);
   EXPECT_GT(std::size(index.meta.chrom_order), 0);
   EXPECT_GT(std::size(index.meta.chrom_size), 0);
   EXPECT_GT(std::size(index.data.positions), 0);
 }
 
-TEST(initialize_cpg_index_test, invalid_genome_file) {
-  const auto [index, ec] = initialize_cpg_index("data/intervals.bed");
+TEST(cpg_index_test, initialize_cpg_index_invalid_genome_file) {
+  std::error_code ec;
+  const auto index = make_cpg_index("data/intervals.bed", ec);
   EXPECT_TRUE(ec);
   EXPECT_EQ(std::size(index.meta.chrom_order), 0);
   EXPECT_EQ(std::size(index.meta.chrom_size), 0);
