@@ -24,7 +24,8 @@
 #ifndef SRC_METHYLOME_DATA_HPP_
 #define SRC_METHYLOME_DATA_HPP_
 
-#include "cpg_index_data.hpp"  // for cpg_index_data::vec
+#include "cpg_index_data.hpp"   // for cpg_index_data::vec
+#include "cpg_index_types.hpp"  // for query_elem
 #if not defined(__APPLE__) && not defined(__MACH__)
 #include "aligned_allocator.hpp"
 #endif
@@ -33,6 +34,7 @@
 #include <cmath>    // for std::round
 #include <cstddef>  // for std::size_t
 #include <cstdint>  // for std::uint32_t
+#include <filesystem>
 #include <format>
 #include <iterator>  // for std::pair, std::size
 #include <limits>    // for std::numeric_limits
@@ -46,10 +48,18 @@ struct counts_res;
 struct counts_res_cov;
 struct methylome_metadata;
 
+typedef std::uint16_t m_count_t;
+// struct m_count_elem {
+//   m_count_t n_meth{};
+//   m_count_t n_unmeth{};
+// };
+typedef std::pair<m_count_t, m_count_t> m_count_elem;
+// ADS: allow for accumulation
+typedef std::uint32_t m_count_acc_t;
+
 struct methylome_data {
   static constexpr auto filename_extension{".m16"};
 
-  typedef std::uint16_t m_count_t;
   typedef std::pair<m_count_t, m_count_t> m_elem;
 #if not defined(__APPLE__) && not defined(__MACH__)
   typedef std::vector<m_elem, aligned_allocator<m_elem>> vec;
@@ -84,8 +94,6 @@ struct methylome_data {
   [[nodiscard]] auto
   hash() const -> std::uint64_t;
 
-  typedef std::pair<std::uint32_t, std::uint32_t> offset_pair;
-
   [[nodiscard]] auto
   get_counts_cov(const cpg_index_data::vec &positions,
                  const std::uint32_t offset, const std::uint32_t start,
@@ -108,10 +116,10 @@ struct methylome_data {
   // methylome_data::vec and accumulates between each of those pairs of
   // enpoints
   [[nodiscard]] auto
-  get_counts_cov(const std::vector<offset_pair> &eps) const
+  get_counts_cov(const std::vector<query_elem> &eps) const
     -> std::vector<counts_res_cov>;
   [[nodiscard]] auto
-  get_counts(const std::vector<offset_pair> &eps) const
+  get_counts(const std::vector<query_elem> &eps) const
     -> std::vector<counts_res>;
 
   [[nodiscard]] auto
@@ -139,6 +147,12 @@ compose_methylome_data_filename(auto wo_extension) {
 }
 
 [[nodiscard]] inline auto
+compose_methylome_data_filename(const auto &directory, const auto &name) {
+  const auto wo_extn = (std::filesystem::path{directory} / name).string();
+  return std::format("{}{}", wo_extn, methylome_data::filename_extension);
+}
+
+[[nodiscard]] inline auto
 size(const methylome_data &m) -> std::size_t {
   return std::size(m.cpgs);
 }
@@ -163,6 +177,43 @@ conditional_round_to_fit(U &a, U &b) -> void {
   // ADS: optimization possible here?
   if (std::max(a, b) > std::numeric_limits<T>::max())
     round_to_fit<T>(a, b);
+}
+
+// methylome_data errors
+enum class methylome_data_code : std::uint32_t {
+  ok = 0,
+  error_reading = 1,
+  error_writing = 2,
+  inconsistent = 3,
+};
+
+template <>
+struct std::is_error_code_enum<methylome_data_code> : public std::true_type {};
+
+struct methylome_data_category : std::error_category {
+  auto
+  name() const noexcept -> const char * override {
+    return "methylome_data";
+  }
+  auto
+  message(int code) const -> std::string override {
+    using std::string_literals::operator""s;
+    // clang-format off
+    switch (code) {
+    case 0: return "ok"s;
+    case 1: return "error reading methylome data"s;
+    case 2: return "error writing methylome data"s;
+    case 3: return "inconsistent methylome data"s;
+    }
+    // clang-format on
+    std::unreachable();  // hopefully
+  }
+};
+
+inline auto
+make_error_code(methylome_data_code e) -> std::error_code {
+  static auto category = methylome_data_category{};
+  return std::error_code(std::to_underlying(e), category);
 }
 
 #endif  // SRC_METHYLOME_DATA_HPP_
