@@ -23,6 +23,8 @@
 
 #include <command_intervals.hpp>
 
+#include "unit_test_utils.hpp"
+
 #include <gtest/gtest.h>
 
 #include <algorithm>  // for std::equal
@@ -32,20 +34,6 @@
 #include <iterator>
 #include <string>
 #include <system_error>
-
-[[nodiscard]] static bool
-are_files_identical(const std::filesystem::path &file1,
-                    const std::filesystem::path &file2) {
-  namespace fs = std::filesystem;
-  if (fs::file_size(file1) != fs::file_size(file2))
-    return false;
-
-  std::ifstream f1(file1, std::ifstream::binary);
-  std::ifstream f2(file2, std::ifstream::binary);
-  return std::equal(std::istreambuf_iterator<char>(f1.rdbuf()),
-                    std::istreambuf_iterator<char>(),
-                    std::istreambuf_iterator<char>(f2.rdbuf()));
-}
 
 TEST(command_intervals_test, basic_local_test) {
   // Input files for test
@@ -88,7 +76,7 @@ TEST(command_intervals_test, basic_local_test) {
   EXPECT_EQ(result, EXIT_SUCCESS);
   std::error_code ignored_ec;
   EXPECT_TRUE(std::filesystem::exists(output_file, ignored_ec));
-  EXPECT_TRUE(are_files_identical(output_file, expected_output_file));
+  EXPECT_TRUE(files_are_identical(output_file, expected_output_file));
 
   // Clean up: delete test files
   if (std::filesystem::exists(output_file))
@@ -136,7 +124,7 @@ TEST(command_intervals_test, basic_local_test_scores) {
   // Check that the output file is created
   EXPECT_EQ(result, EXIT_SUCCESS);
   EXPECT_TRUE(std::filesystem::exists(output_file));
-  EXPECT_FALSE(are_files_identical(output_file, unexpected_output_file));
+  EXPECT_FALSE(files_are_identical(output_file, unexpected_output_file));
 
   // Clean up: delete test files
   std::error_code ignored_ec;
