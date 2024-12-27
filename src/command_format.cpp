@@ -131,7 +131,7 @@ static inline auto
 skip_absent_cpgs(const std::uint64_t end_pos, const cpg_index_data::vec &idx,
                  std::uint32_t cpg_idx_in) -> std::uint32_t {
   const std::uint32_t first_idx = cpg_idx_in;
-  while (cpg_idx_in < size(idx) && idx[cpg_idx_in] < end_pos)
+  while (cpg_idx_in < std::size(idx) && idx[cpg_idx_in] < end_pos)
     ++cpg_idx_in;
   return cpg_idx_in - first_idx;
 }
@@ -151,7 +151,7 @@ static auto
 verify_header_line(const cpg_index_metadata &cim,
                    const std::string &line) -> std::error_code {
   // ignore the version line and the header end line
-  if (line.substr(0, 9) == "#DNMTOOLS" || size(line) == 1)
+  if (line.substr(0, 9) == "#DNMTOOLS" || std::size(line) == 1)
     return format_err::ok;
 
   // parse the chrom and its size
@@ -235,7 +235,7 @@ process_cpg_sites(const std::string &infile, const cpg_index &index)
     }
     else {
       std::uint32_t pos_step = 0, n_meth = 0, n_unmeth = 0;
-      const auto end_line = line.data() + size(line);
+      const auto end_line = line.data() + std::size(line);
       auto res = std::from_chars(line.data(), end_line, pos_step);
       res = std::from_chars(res.ptr + 1, end_line, n_meth);
       res = std::from_chars(res.ptr + 1, end_line, n_unmeth);
@@ -249,11 +249,11 @@ process_cpg_sites(const std::string &infile, const cpg_index &index)
       }
 
       // ADS: prevent counts from overflowing
-      conditional_round_to_fit<methylome_data::m_count_t>(n_meth, n_unmeth);
+      conditional_round_to_fit<m_count_t>(n_meth, n_unmeth);
 
       *(cpgs_itr + cpg_idx_out++) = {
-        static_cast<methylome_data::m_count_t>(n_meth),
-        static_cast<methylome_data::m_count_t>(n_unmeth),
+        static_cast<m_count_t>(n_meth),
+        static_cast<m_count_t>(n_unmeth),
       };
 
       pos = curr_pos;
@@ -333,11 +333,11 @@ process_cpg_sites_counts(const std::string &infile, const cpg_index &index)
     }
 
     // ADS: prevent counts from overflowing
-    conditional_round_to_fit<methylome_data::m_count_t>(n_meth, n_unmeth);
+    conditional_round_to_fit<m_count_t>(n_meth, n_unmeth);
 
     *(cpgs_itr + cpg_idx_out++) = {
-      static_cast<methylome_data::m_count_t>(n_meth),
-      static_cast<methylome_data::m_count_t>(n_unmeth),
+      static_cast<m_count_t>(n_meth),
+      static_cast<m_count_t>(n_unmeth),
     };
 
     pos = curr_pos;
@@ -454,17 +454,17 @@ command_format_main(int argc, char *argv[]) -> int {
     return EXIT_FAILURE;
   }
 
-  auto [meth_meta, meth_meta_err] = methylome_metadata::init(index, meth_data);
-  if (meth_meta_err) {
-    lgr.error("Error initializing metadata: {}", meth_meta_err);
+  methylome meth{std::move(meth_data), methylome_metadata{}};
+
+  const auto meth_init_err = meth.init_metadata(index);
+  if (meth_init_err) {
+    lgr.error("Error initializing methylome metadata: {}", meth_init_err);
     return EXIT_FAILURE;
   }
 
   // ADS: this is where compression status is determined, and then
   // effected as data is written
-  meth_meta.is_compressed = zip;
-
-  const methylome meth{std::move(meth_data), std::move(meth_meta)};
+  meth.meta.is_compressed = zip;
 
   const auto write_err = meth.write(methylome_outdir, methylome_name);
   if (write_err) {
