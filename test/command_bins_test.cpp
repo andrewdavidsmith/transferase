@@ -21,7 +21,9 @@
  * SOFTWARE.
  */
 
-#include "command_bins.hpp"
+#include <command_bins.hpp>
+
+#include "unit_test_utils.hpp"
 
 #include <gtest/gtest.h>
 
@@ -32,26 +34,6 @@
 #include <iterator>
 #include <string>
 #include <system_error>
-
-[[nodiscard]] static inline bool
-are_files_identical(const std::filesystem::path &file1,
-                    const std::filesystem::path &file2) {
-  std::error_code ec;
-  const auto fs1 = std::filesystem::file_size(file1, ec);
-  if (ec)
-    return false;
-  const auto fs2 = std::filesystem::file_size(file2, ec);
-  if (ec)
-    return false;
-  if (fs1 != fs2)
-    return false;
-
-  std::ifstream f1(file1, std::ifstream::binary);
-  std::ifstream f2(file2, std::ifstream::binary);
-  return std::equal(std::istreambuf_iterator<char>(f1.rdbuf()),
-                    std::istreambuf_iterator<char>(),
-                    std::istreambuf_iterator<char>(f2.rdbuf()));
-}
 
 TEST(command_bins_test, basic_local_test) {
   // Input files for test
@@ -93,7 +75,7 @@ TEST(command_bins_test, basic_local_test) {
   EXPECT_EQ(result, EXIT_SUCCESS);
   std::error_code ignored_ec;
   EXPECT_TRUE(std::filesystem::exists(output_file, ignored_ec));
-  EXPECT_TRUE(are_files_identical(output_file, expected_output_file));
+  EXPECT_TRUE(files_are_identical(output_file, expected_output_file));
 
   // Clean up: delete test files
   if (std::filesystem::exists(output_file))
