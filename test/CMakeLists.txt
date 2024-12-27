@@ -25,6 +25,8 @@ include(GoogleTest)
 
 include_directories(${PROJECT_SOURCE_DIR}/src)
 
+add_library(unit_test_utils OBJECT unit_test_utils.cpp unit_test_utils.hpp)
+
 file(GLOB CPP_FILES "*_test.cpp")
 
 # Ensure all objects depend on both the cpp and hpp files
@@ -47,6 +49,7 @@ foreach(CPP_FILE ${CPP_FILES})
     if(EXISTS ${SOURCE_FILE})
       target_link_libraries(${BASE_NAME} PRIVATE ${COMMAND_LIBRARY})
     endif()
+    target_link_libraries(${BASE_NAME} PRIVATE unit_test_utils)
   endif()
   list(APPEND TEST_OBJECTS ${BASE_NAME})
 endforeach()
