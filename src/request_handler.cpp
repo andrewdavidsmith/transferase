@@ -143,7 +143,7 @@ request_handler::handle_header(const request_header &req_hdr,
   resp_hdr.response_size = req_hdr.methylome_size;
 }
 
-static inline auto
+[[nodiscard]] static inline auto
 counts_to_payload(const auto &counts) -> response_payload {
   using counts_res_type =
     typename std::remove_cvref_t<decltype(counts)>::value_type;
@@ -159,7 +159,7 @@ request_handler::handle_get_counts(const request_header &req_hdr,
                                    const request &req,
                                    response_header &resp_hdr,
                                    response_payload &resp_data) -> void {
-  logger &lgr = logger::instance();
+  auto &lgr = logger::instance();
 
   // assume methylome availability has been determined
   std::error_code get_meth_err;
