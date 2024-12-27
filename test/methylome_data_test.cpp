@@ -34,7 +34,7 @@
 TEST(methylome_data_test, basic_assertions) {
   std::uint32_t n_meth{65536};
   std::uint32_t n_unmeth{65536};
-  conditional_round_to_fit<methylome_data::m_count_t>(n_meth, n_unmeth);
+  conditional_round_to_fit<m_count_t>(n_meth, n_unmeth);
   EXPECT_EQ(std::make_pair(n_meth, n_unmeth), std::make_pair(65535, 65535));
 }
 
