@@ -131,58 +131,6 @@ make_error_code(methylome_set_code e) {
   return std::error_code(std::to_underlying(e), category);
 }
 
-// methylome errors
-
-enum class methylome_code : std::uint32_t {
-  ok = 0,
-  error_reading_methylome_header = 1,
-  invalid_methylome_header = 2,
-  error_reading_methylome = 3,
-  error_decompressing_methylome = 4,
-  error_compressing_methylome = 5,
-  error_writing_methylome_header = 6,
-  error_writing_methylome = 7,
-  incorrect_methylome_size = 8,
-};
-
-static constexpr std::uint32_t methylome_code_n = 9;
-
-// register methylome_code as error code enum
-template <>
-struct std::is_error_code_enum<methylome_code> : public std::true_type {};
-
-// category to provide text descriptions
-struct methylome_category : std::error_category {
-  auto
-  name() const noexcept -> const char * override {
-    return "methylome";
-  }
-  auto
-  message(int code) const -> std::string override {
-    using std::string_literals::operator""s;
-    // clang-format off
-    switch (code) {
-    case 0: return "ok"s;
-    case 1: return "error reading methylome header"s;
-    case 2: return "invalid methylome header"s;
-    case 3: return "error reading methylome"s;
-    case 4: return "error decompressing methylome"s;
-    case 5: return "error compressing methylome"s;
-    case 6: return "error writing methylome header"s;
-    case 7: return "error writing methylome"s;
-    case 8: return "incorrect methylome size"s;
-    }
-    // clang-format on
-    std::unreachable();  // hopefully
-  }
-};
-
-inline auto
-make_error_code(methylome_code e) -> std::error_code {
-  static auto category = methylome_category{};
-  return std::error_code(std::to_underlying(e), category);
-}
-
 // print std::error_code messages
 template <>
 struct std::formatter<std::error_code> : std::formatter<std::string> {
