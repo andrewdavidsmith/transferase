@@ -28,7 +28,7 @@
 #include <string>
 #include <vector>
 
-TEST(request_header, basic_assertions) {
+TEST(request_header_test, basic_assertions) {
   request_header hdr;
   EXPECT_EQ(hdr, request_header{});
 
@@ -44,7 +44,7 @@ TEST(request_header, basic_assertions) {
   EXPECT_EQ(std::string(buf.data(), res.ptr), "2\n");
 }
 
-TEST(request, basic_assertions) {
+TEST(request_test, basic_assertions) {
   const auto req = request{
     3,
     {{1, 3}, {10, 20}, {100, 321}},
@@ -52,7 +52,7 @@ TEST(request, basic_assertions) {
   EXPECT_EQ(req.n_intervals, 3);
 }
 
-TEST(request, get_offsets) {
+TEST(request_test, get_query) {
   constexpr char expected[] = {
     1, 0, 0, 0, 3, 0, 0, 0, 10, 0, 0, 0, 20, 0, 0, 0, 100, 0, 0, 0, 65, 1, 0, 0,
   };
@@ -60,9 +60,9 @@ TEST(request, get_offsets) {
     3,
     {{1, 3}, {10, 20}, {100, 321}},
   };
-  const auto n_bytes = req.get_offsets_n_bytes();
+  const auto n_bytes = req.get_query_n_bytes();
   EXPECT_EQ(n_bytes, 24) << "failure in request::get_offsets_n_bytes()";
-  const char *data = req.get_offsets_data();
+  const char *data = req.get_query_data();
   const char *data_end = data + n_bytes;
   const auto data_vec = std::vector<char>(data, data_end);
   EXPECT_STREQ(data_vec.data(), expected);
