@@ -29,6 +29,7 @@
 #endif
 
 #include <cstdint>  // for std::uint32_t, std::int32_t, std::uint64_t
+#include <filesystem>
 #include <string>
 #include <system_error>
 #include <tuple>
@@ -51,8 +52,13 @@ struct cpg_index_data {
 #endif
 
   [[nodiscard]] static auto
-  read(const std::string &index_file, const cpg_index_metadata &cim)
-    -> std::tuple<cpg_index_data, std::error_code>;
+  read(const std::string &filename, const cpg_index_metadata &meta,
+       std::error_code &ec) -> cpg_index_data;
+
+  [[nodiscard]] static auto
+  read(const std::string &dirname, const std::string &genomic_name,
+       const cpg_index_metadata &meta, std::error_code &ec) -> cpg_index_data;
+
   [[nodiscard]] auto
   write(const std::string &index_file) const -> std::error_code;
 
@@ -87,9 +93,11 @@ compose_cpg_index_data_filename(auto wo_extension) {
   return wo_extension;
 }
 
-[[nodiscard]] auto
-initialize_cpg_index_data(const std::string &genome_file)
-  -> std::tuple<cpg_index_data, cpg_index_metadata, std::error_code>;
+[[nodiscard]] inline auto
+compose_cpg_index_data_filename(const auto &directory, const auto &name) {
+  const auto wo_extn = (std::filesystem::path{directory} / name).string();
+  return std::format("{}{}", wo_extn, cpg_index_data::filename_extension);
+}
 
 // cpg_index_data errors
 

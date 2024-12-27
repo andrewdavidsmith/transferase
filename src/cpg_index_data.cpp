@@ -44,36 +44,58 @@
 
 [[nodiscard]] auto
 cpg_index_data::read(const std::string &index_file,
-                     const cpg_index_metadata &cim)
-  -> std::tuple<cpg_index_data, std::error_code> {
+                     const cpg_index_metadata &meta,
+                     std::error_code &ec) -> cpg_index_data {
   std::ifstream in(index_file, std::ios::binary);
-  if (!in)
-    return {{}, std::make_error_code(std::errc(errno))};
+  if (!in) {
+    ec = std::make_error_code(std::errc(errno));
+    return {};
+  }
 
-  std::vector<std::uint32_t> n_cpgs(cim.chrom_offset);
+  std::vector<std::uint32_t> n_cpgs(meta.chrom_offset);
   {
-    n_cpgs.front() = cim.n_cpgs;
+    n_cpgs.front() = meta.n_cpgs;
     std::ranges::rotate(n_cpgs, std::begin(n_cpgs) + 1);
     std::adjacent_difference(std::cbegin(n_cpgs), std::cend(n_cpgs),
                              std::begin(n_cpgs));
   }
 
-  cpg_index_data ci;
+  cpg_index_data data;
   for (const auto n_cpgs_chrom : n_cpgs) {
-    ci.positions.push_back(vec(n_cpgs_chrom));
+    data.positions.push_back(vec(n_cpgs_chrom));
     {
       const std::streamsize n_bytes_expected =
         n_cpgs_chrom * sizeof(std::uint32_t);
-      in.read(reinterpret_cast<char *>(ci.positions.back().data()),
+      in.read(reinterpret_cast<char *>(data.positions.back().data()),
               n_bytes_expected);
       const auto read_ok = static_cast<bool>(in);
       const auto n_bytes = in.gcount();
-      if (!read_ok || n_bytes != n_bytes_expected)
-        return {
-          {}, std::error_code(cpg_index_data_code::failure_reading_index_data)};
+      if (!read_ok || n_bytes != n_bytes_expected) {
+        ec = std::error_code(cpg_index_data_code::failure_reading_index_data);
+        return {};
+      }
     }
   }
-  return {std::move(ci), std::error_code{}};
+
+  ec = std::error_code{};
+  return data;
+}
+
+[[nodiscard]]
+static inline auto
+make_cpg_index_data_filename(const std::string &dirname,
+                             const std::string &genomic_name) {
+  const auto with_extension =
+    std::format("{}{}", genomic_name, cpg_index_data::filename_extension);
+  return (std::filesystem::path{dirname} / with_extension).string();
+}
+
+[[nodiscard]] auto
+cpg_index_data::read(const std::string &dirname,
+                     const std::string &genomic_name,
+                     const cpg_index_metadata &meta,
+                     std::error_code &ec) -> cpg_index_data {
+  return read(make_cpg_index_data_filename(dirname, genomic_name), meta, ec);
 }
 
 [[nodiscard]] auto
