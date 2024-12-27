@@ -26,8 +26,8 @@
 #include "automatic_json.hpp"  // for tag_invoke
 #include "cpg_index.hpp"
 #include "cpg_index_metadata.hpp"
+#include "environment_utilities.hpp"
 #include "methylome_data.hpp"
-#include "utilities.hpp"  // for get_time_as_string
 
 #include <config.h>  // for VERSION
 
@@ -63,41 +63,6 @@ methylome_metadata::init_env() -> std::error_code {
   user = username;
   creation_time = get_time_as_string();
 
-  return {};
-}
-
-[[nodiscard]] auto
-methylome_metadata::init(const cpg_index &index, const methylome_data &meth)
-  -> std::tuple<methylome_metadata, std::error_code> {
-  // ADS: (todo) should there be a better way to get the "compression"
-  // status?
-  boost::system::error_code boost_err;
-  const auto host = boost::asio::ip::host_name(boost_err);
-  if (boost_err)
-    return {methylome_metadata{}, std::error_code{boost_err}};
-
-  const auto index_hash = index.meta.index_hash;
-  const auto methylome_hash = meth.hash();
-  const auto assembly = index.meta.assembly;
-  const auto n_cpgs = index.meta.n_cpgs;
-
-  const auto [username, err] = get_username();
-  if (err)
-    return {methylome_metadata{}, err};
-
-  static constexpr auto is_compressed_init = false;
-  return {methylome_metadata{VERSION, host, username, get_time_as_string(),
-                             methylome_hash, index_hash, assembly, n_cpgs,
-                             is_compressed_init},
-          std::error_code{}};
-}
-
-[[nodiscard]] auto
-methylome_metadata::update(const methylome_data &meth) -> std::error_code {
-  const auto err = init_env();
-  if (err)
-    return err;
-  methylome_hash = meth.hash();
   return {};
 }
 

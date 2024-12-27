@@ -27,6 +27,7 @@
 #include <boost/describe.hpp>  // for BOOST_DESCRIBE_STRUCT
 
 #include <cstdint>  // for uint32_t, uint64_t
+#include <filesystem>
 #include <format>
 #include <string>
 #include <system_error>
@@ -130,10 +131,6 @@ struct methylome_metadata {
   [[nodiscard]] auto
   tostring() const -> std::string;
 
-  [[nodiscard]] static auto
-  init(const cpg_index &index, const methylome_data &meth)
-    -> std::tuple<methylome_metadata, std::error_code>;
-
   [[nodiscard]] auto
   update(const methylome_data &meth) -> std::error_code;
 };
@@ -160,14 +157,9 @@ compose_methylome_metadata_filename(auto wo_extension) {
 }
 
 [[nodiscard]] inline auto
-methylome_metadata_consistent(const methylome_metadata &a,
-                              const methylome_metadata &b) -> bool {
-  // clang-format off
-  return (a.index_hash == b.index_hash ||
-          a.n_cpgs == b.n_cpgs ||
-          a.assembly == b.assembly ||
-          a.version == b.version);
-  // clang-format on
+compose_methylome_metadata_filename(const auto &directory, const auto &name) {
+  const auto wo_extn = (std::filesystem::path{directory} / name).string();
+  return std::format("{}{}", wo_extn, methylome_metadata::filename_extension);
 }
 
 template <>
