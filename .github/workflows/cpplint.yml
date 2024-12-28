@@ -1,11 +1,18 @@
 name: Linting with cpplint
 
+paths_pattern: &cpp_paths
+  - '**/*.cpp'
+  - '**/*.hpp'
+
 on:
   push:
     branches: [ "main" ]
+    paths: *cpp_paths
   pull_request:
     branches: [ "main" ]
+    paths: *cpp_paths
   workflow_dispatch:
+    paths: *cpp_paths
 
 jobs:
   cpplint:
