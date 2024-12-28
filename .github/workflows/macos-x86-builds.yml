@@ -1,4 +1,4 @@
-oname: Build transferase on macOS for x86
+name: Build transferase on macOS for x86
 
 on:
   workflow_dispatch:
