@@ -28,8 +28,6 @@
 #include "methylome_data.hpp"
 #include "methylome_metadata.hpp"
 
-#include "logger.hpp"
-
 #include <filesystem>
 #include <iterator>
 #include <ranges>
