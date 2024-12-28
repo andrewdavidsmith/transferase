@@ -29,6 +29,7 @@
 
 #include <cstddef>  // for std::size_t
 #include <cstdint>  // std::uint32_t
+#include <ranges>
 #include <string>
 #include <system_error>
 #include <type_traits>
@@ -78,34 +79,34 @@ list_methylomes(const std::string &dirname,
 [[nodiscard]] auto
 get_methylome_name_from_filename(const std::string &filename) -> std::string;
 
-// methylome error codes
+[[nodiscard]] inline auto
+is_valid_accession(const std::string &accession) -> bool {
+  return std::ranges::all_of(
+    accession, [](const auto c) { return std::isalnum(c) || c == '_'; });
+}
 
+// methylome error codes
 enum class methylome_code : std::uint32_t {
   ok = 0,
-  invalid_methylome_data = 1,
+  invalid_accession = 1,
+  invalid_methylome_data = 2,
 };
-
 template <>
 struct std::is_error_code_enum<methylome_code> : public std::true_type {};
-
 struct methylome_category : std::error_category {
-  auto
-  name() const noexcept -> const char * override {
-    return "methylome";
-  }
-  auto
-  message(int code) const -> std::string override {
+  // clang-format off
+  auto name() const noexcept -> const char * override { return "methylome"; }
+  auto message(int code) const -> std::string override {
     using std::string_literals::operator""s;
-    // clang-format off
     switch (code) {
     case 0: return "ok"s;
-    case 1: return "invalid methylome data"s;
+    case 1: return "invalid accession"s;
+    case 2: return "invalid methylome data"s;
     }
-    // clang-format on
     std::unreachable();
   }
+  // clang-format on
 };
-
 inline auto
 make_error_code(methylome_code e) -> std::error_code {
   static auto category = methylome_category{};
