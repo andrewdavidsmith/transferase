@@ -38,6 +38,7 @@
 #include <sstream>
 #include <string>
 #include <system_error>
+#include <tuple>  // for std::tie, std::tuple
 #include <vector>
 
 [[nodiscard]] auto
