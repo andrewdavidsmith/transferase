@@ -181,6 +181,27 @@ BOOST_DESCRIBE_STRUCT(server_argset, (), (
 )
 // clang-format on
 
+[[nodiscard]] static auto
+check_directory(const auto &dirname, std::error_code &ec) -> std::string {
+  auto &lgr = logger::instance();
+  const auto canonical_dir = std::filesystem::canonical(dirname, ec);
+  if (ec || canonical_dir.empty()) {
+    lgr.error("Failed to get canonical directory for {}: {}", dirname, ec);
+    return {};
+  }
+  const auto is_dir = std::filesystem::is_directory(canonical_dir, ec);
+  if (ec) {
+    lgr.error("Failed to identify directory {}: {}", canonical_dir, ec);
+    return {};
+  }
+  if (!is_dir) {
+    ec = std::make_error_code(std::errc::not_a_directory);
+    lgr.error("{}: {}", canonical_dir, ec);
+    return {};
+  }
+  return canonical_dir.string();
+}
+
 auto
 command_server_main(int argc, char *argv[]) -> int {
   static constexpr auto command = "server";
@@ -206,7 +227,7 @@ command_server_main(int argc, char *argv[]) -> int {
       ? std::make_shared<std::ostream>(std::cout.rdbuf())
       : std::make_shared<std::ofstream>(args.log_filename, std::ios::app);
 
-  logger &lgr = logger::instance(log_file, command, args.log_level);
+  auto &lgr = logger::instance(log_file, command, args.log_level);
   if (!lgr) {
     std::println("Failure initializing logging: {}.", lgr.get_status());
     return EXIT_FAILURE;
@@ -214,26 +235,30 @@ command_server_main(int argc, char *argv[]) -> int {
 
   args.log_options();
 
-  args.methylome_dir = std::filesystem::canonical(args.methylome_dir, ec);
-  if (ec || args.methylome_dir.empty()) {
-    lgr.error("Failed to get canonical dir for {}: {}", args.methylome_dir, ec);
+  const auto methylome_dir = check_directory(args.methylome_dir, ec);
+  if (ec)
     return EXIT_FAILURE;
-  }
+
+  const auto index_dir = check_directory(args.index_dir, ec);
+  if (ec)
+    return EXIT_FAILURE;
 
   if (args.daemonize) {
-    auto s =
-      server(args.hostname, args.port, args.n_threads, args.methylome_dir,
-             args.index_dir, args.max_resident, lgr, ec, args.daemonize);
+    auto s = server(args.hostname, args.port, args.n_threads, methylome_dir,
+                    index_dir, args.max_resident, lgr, ec, args.daemonize);
     if (ec) {
-      lgr.error("Failure daemonizing server: {}.", ec);
+      lgr.error("Failure daemonizing server: {}", ec);
       return EXIT_FAILURE;
     }
     s.run();
   }
   else {
-    auto s =
-      server(args.hostname, args.port, args.n_threads, args.methylome_dir,
-             args.index_dir, args.max_resident, lgr, ec);
+    auto s = server(args.hostname, args.port, args.n_threads, methylome_dir,
+                    index_dir, args.max_resident, lgr, ec);
+    if (ec) {
+      lgr.error("Failure initializing server: {}", ec);
+      return EXIT_FAILURE;
+    }
     s.run();
   }
 
