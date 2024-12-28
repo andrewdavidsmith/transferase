@@ -27,9 +27,10 @@
 #include "methylome_data.hpp"
 #include "methylome_metadata.hpp"
 
+#include <algorithm>
+#include <cctype>
 #include <cstddef>  // for std::size_t
 #include <cstdint>  // std::uint32_t
-#include <ranges>
 #include <string>
 #include <system_error>
 #include <type_traits>
