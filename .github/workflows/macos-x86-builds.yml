@@ -1,0 +1,28 @@
+oname: Build transferase on macOS for x86
+
+on:
+  workflow_dispatch:
+
+jobs:
+  macos-x86-build:
+    runs-on: macos-13
+    steps:
+    - uses: actions/checkout@v3
+    - name: Update Homebrew
+      run: brew update
+    - name: Install dependencies
+      run: |
+        brew install zlib boost
+    - name: Configure release build with g++-14
+      run: |
+        cmake -B Release \
+        -DZLIB_LIBRARY=$(brew --prefix zlib) \
+        -DUSE_STATIC_LIBS=on \
+        -DCMAKE_CXX_COMPILER=g++-14 \
+        -DCMAKE_BUILD_TYPE=Release
+    - name: Build transferase
+      run: |
+        cmake --build Release -j4
+    - name: Check that it runs
+      run: |
+        ./Release/src/xfrase
