@@ -27,7 +27,6 @@
 #include <algorithm>
 #include <cstddef>  // for std::size_t
 #include <iterator>
-#include <memory>
 #include <vector>
 
 template <typename T> struct ring_buffer {
