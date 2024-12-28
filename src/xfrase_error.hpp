@@ -79,58 +79,6 @@ make_error_code(server_response_code e) -> std::error_code {
   return std::error_code(std::to_underlying(e), category);
 }
 
-// methylome_set errors
-
-enum class methylome_set_code : std::uint32_t {
-  ok = 0,
-  invalid_accession = 1,
-  methylome_file_not_found = 2,
-  error_updating_live_methylomes = 3,
-  error_reading_methylome_file = 4,
-  methylome_already_live = 5,
-  methylome_metadata_file_not_found = 6,
-  error_reading_metadata_file = 7,
-  unknown_error = 8,
-};
-
-static constexpr std::uint32_t methylome_set_code_n = 9;
-
-// register methylome_set_code as error code enum
-template <>
-struct std::is_error_code_enum<methylome_set_code> : public std::true_type {};
-
-// category to provide text descriptions
-struct methylome_set_category : std::error_category {
-  auto
-  name() const noexcept -> const char * override {
-    return "methylome_set";
-  }
-  auto
-  message(int code) const -> std::string override {
-    using std::string_literals::operator""s;
-    // clang-format off
-    switch (code) {
-    case 0: return "ok"s;
-    case 1: return "invalid accession"s;
-    case 2: return "methylome file not found"s;
-    case 3: return "error updating live methylomes"s;
-    case 4: return "error reading methylome file"s;
-    case 5: return "methylome already live"s;
-    case 6: return "methylome metadata file not found"s;
-    case 7: return "error reading methylome metadata file"s;
-    case 8: return "methylome set unknown error"s;
-    }
-    // clang-format on
-    std::unreachable();  // hopefully
-  }
-};
-
-inline std::error_code
-make_error_code(methylome_set_code e) {
-  static auto category = methylome_set_category{};
-  return std::error_code(std::to_underlying(e), category);
-}
-
 // print std::error_code messages
 template <>
 struct std::formatter<std::error_code> : std::formatter<std::string> {
