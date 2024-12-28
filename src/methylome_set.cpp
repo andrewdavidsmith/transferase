@@ -25,10 +25,10 @@
 
 #include "methylome.hpp"
 
-#include <memory>  // for std::shared_ptr, std::make_shared
-#include <mutex>   // for std::scoped_lock
+#include <iterator>  // for std::cend
+#include <memory>    // for std::shared_ptr, std::make_shared
+#include <mutex>     // for std::scoped_lock
 #include <string>
-#include <tuple>
 #include <unordered_map>
 #include <utility>  // for std::move, std::pair
 
