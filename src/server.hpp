@@ -40,19 +40,18 @@ struct server {
   server &
   operator=(const server &) = delete;
 
-  explicit server(const std::string &address, const std::string &port,
-                  const std::uint32_t n_threads,
-                  const std::string &methylome_dir,
-                  const std::string &index_file_dir,
-                  const std::uint32_t max_live_methylomes, logger &lgr,
-                  std::error_code &ec);
+  server(const std::string &address, const std::string &port,
+         const std::uint32_t n_threads, const std::string &methylome_dir,
+         const std::string &index_file_dir,
+         const std::uint32_t max_live_methylomes, logger &lgr,
+         std::error_code &ec);
 
-  explicit server(const std::string &address, const std::string &port,
-                  const std::uint32_t n_threads,
-                  const std::string &methylome_dir,
-                  const std::string &index_file_dir,
-                  const std::uint32_t max_live_methylomes, logger &lgr,
-                  std::error_code &ec, [[maybe_unused]] const bool daemonize);
+  server(const std::string &address, const std::string &port,
+         const std::uint32_t n_threads, const std::string &methylome_dir,
+         const std::string &index_file_dir,
+         const std::uint32_t max_live_methylomes, logger &lgr,
+         std::error_code &ec, [[maybe_unused]] const bool daemonize);
+
   // clang-format off
   auto run() -> void;
   auto do_accept() -> void;  // do async accept operation
