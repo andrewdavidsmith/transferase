@@ -56,7 +56,7 @@ struct command_config_argset : argset_base<command_config_argset> {
   std::string assemblies{};
   xfrase_log_level log_level{};
   std::string client_config_file{};
-  bool verbose{};
+  bool quiet{};
 
   auto
   log_options_impl() const {}
@@ -75,10 +75,9 @@ struct command_config_argset : argset_base<command_config_argset> {
     opts.add_options()
       ("help,h", "print this message and exit")
       ("config-file,c", value(&client_config_file)
-       ->value_name("[arg]")->default_value(get_default_config_file(), "[default]"),
-       "use this config file")
-      ("hostname,s", value(&hostname)->required(),
-       "server hostname")
+       ->value_name("[arg]")->default_value(get_default_config_file(), ""),
+       "config file; see help for default")
+      ("hostname,s", value(&hostname)->required(), "server hostname")
       ("port,p", value(&port)->default_value(port_default), "server port")
       ("assemblies,a", value(&assemblies),
        "get index files for these assemblies (comma sep, e.g., hg38,mm39)")
@@ -86,7 +85,7 @@ struct command_config_argset : argset_base<command_config_argset> {
        "log level {debug,info,warning,error,critical}")
       ("log-file,l", value(&log_filename)->value_name("console"),
        "log file name")
-      ("verbose", po::bool_switch(&verbose), "print info to terminal")
+      ("quiet,q", po::bool_switch(&quiet), "only print error info to terminal")
       ;
     // clang-format on
     return opts;
