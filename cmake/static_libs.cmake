@@ -30,8 +30,6 @@ set(ZLIB_USE_STATIC_LIBS on)
 set(HOME_DIR $ENV{HOME}) # For Unix-like systems
 set(PREFIX_MAP "${HOME_DIR}/=/")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ffile-prefix-map=${PREFIX_MAP}")
-# Boost asserts can leave paths; disable them
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DBOOST_DISABLE_ASSERTS")
 # Make sure compile command strips symbols
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s")
 
