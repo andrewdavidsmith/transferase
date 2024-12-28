@@ -28,13 +28,12 @@ configure an xfrase client
 )";
 
 static constexpr auto description = R"(
-This command does the configuration to faciliate commands running in
-mode. In particular, this command creates a configuration file that
-reduces the amount of information a user needs to provide on command
-lines. It also will retrieve index files that are needed to accelerate
-queries. Note that this configuration is not needed, as all arguments
-can be specified on the command line and index files can be downloaded
-separately. The default config directory is
+This command does the configuration to faciliate other commands,
+reducing the number of command line arguments by putting them in
+configuration file. It also will retrieve index files that are needed
+to accelerate queries. Note that this configuration is not needed, as
+all arguments can be specified on the command line and index files can
+be downloaded separately. The default config directory is
 '${HOME}/.config/transferase'.
 )";
 
@@ -50,6 +49,7 @@ xfrase config -c my_config_file.toml -s example.com -p 5009 --assemblies hg38,mm
 #include "cpg_index_data.hpp"
 #include "cpg_index_metadata.hpp"
 #include "download.hpp"
+#include "find_path_to_binary.hpp"
 #include "utilities.hpp"
 #include "xfrase_error.hpp"  // IWYU pragma: keep
 
@@ -110,11 +110,10 @@ get_remote_indexes_resources()
   -> std::tuple<std::vector<remote_indexes_resources>, std::error_code> {
   // ADS: this function prints error messages itself
 
-  // ADS: linux specific
-  static constexpr auto linux_exe_path = "/proc/self/exe";
+  static const auto exe_path = find_path_to_binary();
 
   const auto exe_dir_parent =
-    std::filesystem::canonical(linux_exe_path).parent_path().parent_path();
+    std::filesystem::canonical(exe_path).parent_path().parent_path();
   if (!std::filesystem::is_directory(exe_dir_parent)) {
     std::println("Not a directory: {}", exe_dir_parent);
     return {{}, std::make_error_code(std::errc::not_a_directory)};
