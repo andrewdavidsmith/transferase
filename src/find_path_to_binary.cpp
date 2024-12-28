@@ -24,7 +24,7 @@
 #include "find_path_to_binary.hpp"
 
 #if defined(__linux__)
-#include <limits.h>
+#include <limits.h>  // IWYU pragma: keep
 #include <unistd.h>
 #elif defined(__APPLE__)
 #include <libproc.h>
