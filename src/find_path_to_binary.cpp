@@ -36,6 +36,7 @@
 
 #include <array>
 #include <string>
+#include <sys/types.h>  // for ssize_t
 
 [[nodiscard]] auto
 find_path_to_binary() -> std::string {
