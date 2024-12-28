@@ -68,7 +68,7 @@ if(USE_STATIC_LIBS)
 endif()
 
 # Turn on LTO for Release builds
-if(CMAKE_BUILD_TYPE STREQUAL "Release")
+if(ENABLE_LTO)
   set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
 endif()
 
