@@ -37,8 +37,9 @@
 // the data as though it were serealized but without reading the file
 [[nodiscard]] auto
 get_adler(const std::string &filename) -> std::uint64_t {
-  assert(std::filesystem::exists(filename));
-  const auto filesize = std::filesystem::file_size(filename);
+  std::error_code ec;
+  const auto filesize = std::filesystem::file_size(filename, ec);
+  assert(ec == std::error_code{});
   std::vector<char> buf(filesize);
   std::ifstream in(filename);
   in.read(buf.data(), filesize);
