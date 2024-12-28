@@ -34,28 +34,30 @@
 #include <windows.h>
 #endif
 
+#include <array>
 #include <string>
 
 [[nodiscard]] auto
 find_path_to_binary() -> std::string {
   static constexpr auto path_buf_len = 1024;
-  char path_buf[path_buf_len];
+  std::array<char, path_buf_len> path_buf;
 
 #if defined(__linux__)
-  const ssize_t length = readlink("/proc/self/exe", path_buf, path_buf_len - 1);
+  const ssize_t length =
+    readlink("/proc/self/exe", path_buf.data(), path_buf_len - 1);
   if (length != -1) {
     path_buf[length] = '\0';
-    return std::string{path_buf};
+    return std::string{path_buf.data()};
   }
 #elif defined(__APPLE__)
   const pid_t pid = getpid();
-  const ssize_t length = proc_pidpath(pid, path_buf, path_buf_len);
+  const ssize_t length = proc_pidpath(pid, path_buf.data(), path_buf_len);
   if (length > 0)
-    return std::string{path_buf};
+    return std::string{path_buf.data()};
 #elif defined(_WIN32)
-  const DWORD size = GetModuleFileName(nullptr, path_buf, path_buf_len);
+  const DWORD size = GetModuleFileName(nullptr, path_buf.data(), path_buf_len);
   if (size > 0)
-    return std::string{path_buf};
+    return std::string{path_buf.data()};
 #else
   (void)path_buf;
 #endif
