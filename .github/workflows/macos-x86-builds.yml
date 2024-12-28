@@ -15,7 +15,7 @@ jobs:
         brew install zlib boost
     - name: Find boost
       run: |
-        find / -name boost 2> /dev/null
+        brew --prefix boost
     # ADS: homebrew might install libz in an "opt" dir, so specify the
     # brew prefix and then the path to the static lib
     - name: Configure release build with g++-14
