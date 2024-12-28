@@ -35,20 +35,6 @@
 #include <unordered_map>
 #include <vector>
 
-TEST(methylome_set_test, invalid_accession) {
-  auto res = is_valid_accession("invalid.accession");
-  EXPECT_FALSE(res);
-  res = is_valid_accession("invalid/accession");
-  EXPECT_FALSE(res);
-}
-
-TEST(methylome_set_test, valid_accessions) {
-  auto res = is_valid_accession("eFlareon_brain");
-  EXPECT_TRUE(res);
-  res = is_valid_accession("SRX012345");
-  EXPECT_TRUE(res);
-}
-
 class methylome_set_mock : public ::testing::Test {
 protected:
   auto
@@ -56,7 +42,7 @@ protected:
     max_live_methylomes = 128;
     methylome_directory = "data";
     methylome_set_ptr =
-      std::make_unique<methylome_set>(max_live_methylomes, methylome_directory);
+      std::make_unique<methylome_set>(methylome_directory, max_live_methylomes);
   }
 
   auto
@@ -79,14 +65,14 @@ TEST_F(methylome_set_mock, get_methylome_invalid_accession) {
   const auto meth_ptr =
     methylome_set_ptr->get_methylome("invalid.accession", ec);
   EXPECT_EQ(meth_ptr, nullptr);
-  EXPECT_EQ(ec, methylome_set_code::invalid_accession);
+  EXPECT_EQ(ec, methylome_code::invalid_accession);
 }
 
 TEST_F(methylome_set_mock, methylome_file_not_found) {
   std::error_code ec;
   const auto meth_ptr = methylome_set_ptr->get_methylome("DRX000000", ec);
   EXPECT_EQ(meth_ptr, nullptr);
-  EXPECT_EQ(ec, methylome_set_code::methylome_file_not_found);
+  EXPECT_EQ(ec, methylome_set_code::methylome_not_found);
 }
 
 class methylome_set_lutions : public ::testing::Test {
@@ -113,7 +99,7 @@ protected:
     max_live_methylomes = 3;
     methylome_directory = "data/lutions/methylomes";
     methylome_set_ptr =
-      std::make_unique<methylome_set>(max_live_methylomes, methylome_directory);
+      std::make_unique<methylome_set>(methylome_directory, max_live_methylomes);
   }
 
   auto
@@ -129,7 +115,7 @@ TEST_F(methylome_set_lutions, get_methylome_more_than_max_methylomes) {
   for (auto const &accession : accessions) {
     std::error_code ec;
     const auto meth_ptr = methylome_set_ptr->get_methylome(accession, ec);
-    EXPECT_EQ(ec, methylome_set_code::ok);
+    EXPECT_EQ(ec, std::error_code{});
     EXPECT_NE(meth_ptr, nullptr);
   }
 }
@@ -137,6 +123,6 @@ TEST_F(methylome_set_lutions, get_methylome_more_than_max_methylomes) {
 TEST_F(methylome_set_lutions, get_methylome_get_already_loaded) {
   std::error_code ec;
   const auto meth_ptr = methylome_set_ptr->get_methylome(accessions.back(), ec);
-  EXPECT_EQ(ec, methylome_set_code::ok);
+  EXPECT_EQ(ec, std::error_code{});
   EXPECT_NE(meth_ptr, nullptr);
 }
