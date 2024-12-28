@@ -56,6 +56,8 @@ find_path_to_binary() -> std::string {
   const DWORD size = GetModuleFileName(nullptr, path_buf, path_buf_len);
   if (size > 0)
     return std::string{path_buf};
+#else
+  (void)path_buf;
 #endif
   return std::string{};
 }
