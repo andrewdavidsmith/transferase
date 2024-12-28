@@ -162,7 +162,7 @@ get_remote_indexes_resources()
 
 [[nodiscard]]
 static auto
-get_index_files(const bool verbose, const remote_indexes_resources &remote,
+get_index_files(const bool quiet, const remote_indexes_resources &remote,
                 const std::string &assemblies,
                 const std::string &dirname) -> std::error_code {
   const auto dl_err = [&](const auto &hdr, const auto &ec, const auto &url) {
@@ -181,7 +181,7 @@ get_index_files(const bool verbose, const remote_indexes_resources &remote,
     const auto stem = remote.form_target_stem(assem);
     const auto data_file =
       std::format("{}{}", stem, cpg_index_data::filename_extension);
-    if (verbose)
+    if (!quiet)
       std::println("Download: {}", remote.form_url(data_file));
     const auto [data_hdr, data_err] =
       download({remote.host, remote.port, data_file, dirname});
@@ -189,7 +189,7 @@ get_index_files(const bool verbose, const remote_indexes_resources &remote,
       dl_err(data_hdr, data_err, remote.form_url(data_file));
     const auto meta_file =
       std::format("{}{}", stem, cpg_index_metadata::filename_extension);
-    if (verbose)
+    if (!quiet)
       std::println("Download: {}", remote.form_url(meta_file));
     const auto [meta_hdr, meta_err] =
       download({remote.host, remote.port, meta_file, dirname});
@@ -221,7 +221,7 @@ command_config_main(int argc, char *argv[]) -> int {
       ? std::make_shared<std::ostream>(std::cout.rdbuf())
       : std::make_shared<std::ofstream>(args.log_filename, std::ios::app);
 
-  if (args.verbose)
+  if (!args.quiet)
     std::ranges::for_each(
       std::vector<std::tuple<std::string, std::string>>{
         // clang-format off
@@ -245,7 +245,7 @@ command_config_main(int argc, char *argv[]) -> int {
 
   const auto config_dir =
     std::filesystem::path(args.client_config_file).parent_path();
-  if (args.verbose)
+  if (!args.quiet)
     std::println("Client config directory: {}", config_dir);
 
   {
@@ -256,7 +256,7 @@ command_config_main(int argc, char *argv[]) -> int {
       return EXIT_FAILURE;
     }
     if (!dir_exists) {
-      if (args.verbose)
+      if (!args.quiet)
         std::println("Creating directory {}", config_dir);
       const bool made_dir = std::filesystem::create_directories(config_dir, ec);
       if (!made_dir) {
@@ -280,10 +280,10 @@ command_config_main(int argc, char *argv[]) -> int {
 
   // take care of obtaining index files
   for (const auto &remote : remotes) {
-    if (args.verbose)
-      std::println("Using host: {}:{}", remote.host, remote.port);
+    if (!args.quiet)
+      std::println("Host for index files: {}:{}", remote.host, remote.port);
     const auto index_err =
-      get_index_files(args.verbose, remote, args.assemblies, config_dir);
+      get_index_files(args.quiet, remote, args.assemblies, config_dir);
     if (index_err) {
       std::println("Error obtaining cpg index files: {}", index_err);
       return EXIT_FAILURE;
