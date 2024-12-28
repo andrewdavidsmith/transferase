@@ -26,6 +26,8 @@
 
 #include "methylome.hpp"
 
+#include "ring_buffer.hpp"
+
 #include <algorithm>
 #include <cctype>
 #include <cstdint>  // std::uint32_t
@@ -43,52 +45,16 @@
 #include <variant>
 #include <vector>
 
-template <typename T> struct ring_buffer {
-  // support queue ops and be iterable
-  explicit ring_buffer(const std::size_t capacity) :
-    capacity{capacity}, counter{0}, buf{capacity} {}
-  auto
-  push(T t) -> T {
-    std::swap(buf[counter++ % capacity], t);
-    return t;
-  }
-  // clang-format off
-  [[nodiscard]] auto
-  size() const {return counter < capacity ? counter : capacity;}
-  [[nodiscard]] auto
-  front() const {return buf[counter < capacity ? 0 : (counter + 1) % capacity];}
-  [[nodiscard]] auto
-  begin() {return std::begin(buf);}
-  [[nodiscard]] auto
-  begin() const {return std::cbegin(buf);}
-  [[nodiscard]] auto
-  end() {return std::begin(buf) + std::min(counter, capacity);}
-  [[nodiscard]] auto
-  end() const {return std::cbegin(buf) + std::min(counter, capacity);}
-  // clang-format on
-
-  // ADS: just use capacity inside the vector?
-  // ADS: use boost circular buffer?
-  std::size_t capacity{};
-  std::size_t counter{};
-  std::vector<T> buf;
-};
-
-[[nodiscard]] inline auto
-is_valid_accession(const std::string &accession) -> bool {
-  return std::ranges::all_of(
-    accession, [](const auto c) { return std::isalnum(c) || c == '_'; });
-}
-
 struct methylome_set {
   methylome_set(const methylome_set &) = delete;
   methylome_set &
   operator=(const methylome_set &) = delete;
 
-  methylome_set(const std::uint32_t max_live_methylomes,
-                const std::string &methylome_directory) :
-    max_live_methylomes{max_live_methylomes},
-    methylome_directory{methylome_directory}, accessions{max_live_methylomes} {}
+  explicit methylome_set(
+    const std::string &methylome_directory,
+    const std::uint32_t max_live_methylomes = default_max_live_methylomes) :
+    methylome_directory{methylome_directory},
+    max_live_methylomes{max_live_methylomes}, accessions{max_live_methylomes} {}
 
   [[nodiscard]] auto
   get_methylome(const std::string &accession,
@@ -97,12 +63,42 @@ struct methylome_set {
   static constexpr std::uint32_t default_max_live_methylomes{128};
 
   std::mutex mtx;
-  std::uint32_t max_live_methylomes{};
   std::string methylome_directory;
+  std::uint32_t max_live_methylomes{};
 
   ring_buffer<std::string> accessions;
   std::unordered_map<std::string, std::shared_ptr<methylome>>
     accession_to_methylome;
 };
+
+// methylome_set errors
+enum class methylome_set_code : std::uint32_t {
+  ok = 0,
+  error_loading_methylome = 1,
+  methylome_not_found = 2,
+  unknown_error = 3,
+};
+template <>
+struct std::is_error_code_enum<methylome_set_code> : public std::true_type {};
+struct methylome_set_category : std::error_category {
+  // clang-format off
+  auto name() const noexcept -> const char * override {return "methylome_set";}
+  auto message(int code) const -> std::string override {
+    using std::string_literals::operator""s;
+    switch (code) {
+    case 0: return "ok"s;
+    case 1: return "error loading methylome"s;
+    case 2: return "methylome not found"s;
+    case 3: return "methylome set unknown error"s;
+    }
+    std::unreachable();
+  }
+  // clang-format on
+};
+inline auto
+make_error_code(methylome_set_code e) -> std::error_code {
+  static auto category = methylome_set_category{};
+  return std::error_code(std::to_underlying(e), category);
+}
 
 #endif  // SRC_METHYLOME_SET_HPP_
