@@ -87,20 +87,9 @@ methylome::read(const std::string &dirname, const std::string &methylome_name,
 
 [[nodiscard]] auto
 methylome::is_consistent() const -> bool {
-  static auto &lgr = logger::instance();
-
-  lgr.debug("Methylome metadata indicates compressed: {}", meta.is_compressed);
   const auto n_cpgs_match = (meta.n_cpgs == data.get_n_cpgs());
-  lgr.debug("Methylome number of cpgs match: {}", n_cpgs_match);
-  const auto n_cpgs_match_ret = ((meta.is_compressed && !n_cpgs_match) ||
-                                 (!meta.is_compressed && n_cpgs_match));
-
   const auto hashes_match = (meta.methylome_hash == data.hash());
-  lgr.debug("Methylome hashes match: {}", hashes_match);
-  const auto hashes_match_ret = ((meta.is_compressed && !hashes_match) ||
-                                 (!meta.is_compressed && hashes_match));
-
-  return n_cpgs_match_ret && hashes_match_ret;
+  return n_cpgs_match && hashes_match;
 }
 
 [[nodiscard]] auto
