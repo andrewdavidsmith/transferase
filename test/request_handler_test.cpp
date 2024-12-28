@@ -67,7 +67,7 @@ protected:
     logger::instance(shared_from_cout(), "command", xfrase_log_level::critical);
 
     mock_methylome_set =
-      std::make_unique<methylome_set>(max_live_methylomes, methylome_dir);
+      std::make_unique<methylome_set>(methylome_dir, max_live_methylomes);
     std::error_code unused_ec;
     mock_cpg_index_set =
       std::make_unique<cpg_index_set>(index_file_dir, unused_ec);
