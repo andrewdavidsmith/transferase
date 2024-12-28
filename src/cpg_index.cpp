@@ -24,7 +24,6 @@
 #include "cpg_index.hpp"
 
 #include "cpg_index_impl.hpp"
-#include "logger.hpp"
 #include "zlib_adapter.hpp"
 
 #include <fcntl.h>     // for open, O_RDONLY
@@ -44,6 +43,7 @@
 #include <regex>
 #include <string>
 #include <string_view>
+#include <tuple>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>  // for std::move
@@ -53,14 +53,8 @@ struct genomic_interval;
 
 [[nodiscard]] auto
 cpg_index::is_consistent() const -> bool {
-  auto &lgr = logger::instance();
-
   const auto n_cpgs_match = (meta.n_cpgs == data.get_n_cpgs());
-  lgr.debug("cpg_index number of cpgs match: {}", n_cpgs_match);
-
   const auto hashes_match = (meta.index_hash == data.hash());
-  lgr.debug("cpg_index hashes match: {}", hashes_match);
-
   return n_cpgs_match && hashes_match;
 }
 
