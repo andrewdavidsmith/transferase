@@ -25,7 +25,7 @@
 set(CPACK_PACKAGE_VENDOR "Andrew D Smith")
 set(CPACK_PACKAGE_CONTACT "Andrew D Smith")
 set(CPACK_RESOURCE_FILE_LICENSE ${PROJECT_SOURCE_DIR}/LICENSE)
-set(CPACK_GENERATOR "TGZ;STGZ;DEB")
+set(CPACK_GENERATOR "TGZ;STGZ")
 
 ## Strip binaries for size and build system info
 set(CPACK_STRIP_FILES ON)
@@ -35,6 +35,8 @@ set(CPACK_STGZ_HEADER_FILE "${CMAKE_SOURCE_DIR}/modules/CPack.STGZ_Header.sh.in"
 
 ## Only make the Debian installer if building on Linux
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+  list(APPEND CPACK_GENERATOR "DEB")
+
   ## For Debian
   set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Andrew D Smith <andrewds@usc.edu>")
   # Get the system processor architecture
