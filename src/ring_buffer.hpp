@@ -41,7 +41,7 @@ template <typename T> struct ring_buffer {
   [[nodiscard]] auto
   full() const {return counter >= capacity;}
   [[nodiscard]] auto
-  front() const {return buf[counter < capacity ? 0 : (counter + 1) % capacity];}
+  front() const {return buf[counter < capacity ? 0 : counter % capacity];}
   [[nodiscard]] auto
   begin() {return std::begin(buf);}
   [[nodiscard]] auto
