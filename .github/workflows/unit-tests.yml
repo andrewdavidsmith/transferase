@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  ubuntu-unit-tests:
     runs-on: ubuntu-latest
     container: andrewdavidsmith/gcc-cmake-boost
     steps:

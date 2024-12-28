@@ -6,28 +6,24 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  ubuntu-build:
     runs-on: ubuntu-latest
     container: andrewdavidsmith/gcc-cmake-boost
     steps:
       - uses: actions/checkout@v4
-
       - name: Install dependencies
         run: |
           apt-get update
           apt-get install -y zlib1g-dev libgtest-dev
-
       - name: Configure a release build that uses GCC
         run: |
           cmake -B Release \
           -DCMAKE_VERBOSE_MAKEFILE=on \
           -DCMAKE_CXX_COMPILER=g++ \
           -DCMAKE_BUILD_TYPE=Release
-
       - name: Build the system
         run: |
           cmake --build Release -j4
-
       - name: Check that it runs
         run: |
           export LD_LIBRARY_PATH=/usr/local/lib
