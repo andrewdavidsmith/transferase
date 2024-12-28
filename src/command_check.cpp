@@ -181,6 +181,8 @@ command_check_main(int argc, char *argv[]) -> int {
   lgr.info("all methylome metadata consistent: {}",
            all_methylomes_metadata_consitent);
 
-  return cpg_index_consistency && all_methylomes_consitent &&
-         all_methylomes_metadata_consitent;
+  const auto ret_val = cpg_index_consistency && all_methylomes_consitent &&
+                       all_methylomes_metadata_consitent;
+
+  return ret_val ? EXIT_SUCCESS : EXIT_FAILURE;
 }
