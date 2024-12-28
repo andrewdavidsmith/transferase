@@ -1,15 +1,11 @@
 name: Linting with clang-tidy
 
-paths_pattern: &cpp_paths
-  - '**/*.cpp'
-  - '**/*.hpp'
-
 on:
   # When this works, we can use it on PRs
   # pull_request:
   #   branches: [ "main" ]
   workflow_dispatch:
-    paths: *cpp_paths
+    paths: '**/*.*pp'
 
 jobs:
   clang-tidy:
