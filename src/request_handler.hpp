@@ -48,7 +48,7 @@ struct request_handler {
                   const std::uint32_t max_live_methylomes,
                   std::error_code &ec) :
     methylome_dir{methylome_dir}, index_file_dir{index_file_dir},
-    ms(max_live_methylomes, methylome_dir), indexes(index_file_dir, ec) {}
+    ms(methylome_dir, max_live_methylomes), indexes(index_file_dir, ec) {}
 
   auto
   handle_header(const request_header &req_hdr,
