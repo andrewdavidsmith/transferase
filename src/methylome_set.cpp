@@ -25,8 +25,6 @@
 
 #include "methylome.hpp"
 
-#include "xfrase_error.hpp"  // for make_error_code, methylome_set_code
-
 #include <memory>  // for std::shared_ptr, std::make_shared
 #include <mutex>   // for std::scoped_lock
 #include <string>
@@ -37,57 +35,57 @@
 [[nodiscard]] auto
 methylome_set::get_methylome(const std::string &accession, std::error_code &ec)
   -> std::shared_ptr<methylome> {
+  // ADS: make sure the error code starts out ok
+  ec = std::error_code{};
+
   if (!is_valid_accession(accession)) {
-    ec = methylome_set_code::invalid_accession;
+    ec = methylome_code::invalid_accession;
     return nullptr;
   }
-
-  std::unordered_map<std::string, std::shared_ptr<methylome>>::const_iterator
-    meth{};
 
   std::scoped_lock lock{mtx};
 
   // check if methylome is loaded
   const auto meth_itr = accession_to_methylome.find(accession);
-  if (meth_itr == std::cend(accession_to_methylome)) {
-    // ADS: might not be needed as separate function, but ok for now
-    if (!methylome_files_exist(methylome_directory, accession)) {
-      ec = methylome_set_code::methylome_file_not_found;
-      return nullptr;
-    }
-
-    // take care of removing loaded methylomes if needed to make room
-    const std::string to_eject = accessions.push(accession);
-    if (!to_eject.empty()) {
-      const auto to_eject_itr = accession_to_methylome.find(to_eject);
-      if (to_eject_itr == std::cend(accession_to_methylome)) {
-        ec = methylome_set_code::error_updating_live_methylomes;
-        return nullptr;
-      }
-      accession_to_methylome.erase(to_eject_itr);
-    }
-
-    const auto loaded_meth =
-      methylome::read(methylome_directory, accession, ec);
-    if (ec)
-      return nullptr;
-
-    bool insertion_ok{false};
-    std::tie(meth, insertion_ok) = accession_to_methylome.emplace(
-      accession, std::make_shared<methylome>(std::move(loaded_meth)));
-    if (!insertion_ok) {
-      ec = methylome_set_code::unknown_error;
-      return nullptr;
-    }
+  if (meth_itr != std::cend(accession_to_methylome)) {
+    return meth_itr->second;
   }
-  else if (meth_itr == std::cend(accession_to_methylome)) {
-    ec = methylome_set_code::methylome_already_live;
+
+  // ADS: we need to load a methylome; make sure the file exists;
+  // probably should check the directory in batch
+  if (!methylome_files_exist(methylome_directory, accession)) {
+    ec = methylome_set_code::methylome_not_found;
     return nullptr;
   }
-  else {
-    meth = meth_itr;  // already loaded
+
+  const auto loaded_meth = methylome::read(methylome_directory, accession, ec);
+  if (ec) {
+    // ADS: need to ensure the error code is sensibly propagated
+    return nullptr;
   }
 
-  ec = methylome_set_code::ok;
-  return meth->second;
+  // remove loaded methylomes if we need to make room
+  if (accessions.full()) {
+    const auto to_eject_itr = accession_to_methylome.find(accessions.front());
+    if (to_eject_itr == std::cend(accession_to_methylome)) {
+      ec = methylome_set_code::error_loading_methylome;
+      return nullptr;
+    }
+    accession_to_methylome.erase(to_eject_itr);
+    // ADS: no need to pop from the accessions, it will happen on push
+    // since accessions was full.
+  }
+
+  const auto insertion_result = accession_to_methylome.emplace(
+    accession, std::make_shared<methylome>(std::move(loaded_meth)));
+  if (!insertion_result.second) {
+    ec = methylome_set_code::unknown_error;
+    return nullptr;
+  }
+
+  // ADS: if we are here, then everything went ok and we can insert
+  // the accession into the ring buffer
+  accessions.push_back(accession);
+
+  return insertion_result.first->second;
 }
