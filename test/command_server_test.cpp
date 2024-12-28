@@ -26,6 +26,7 @@
 #include <gtest/gtest.h>
 
 #include <cstdlib>  // for EXIT_FAILURE
+#include <string>
 
 TEST(command_server_test, failing_server_missing_directory) {
   static constexpr auto methylome_directory = "data/lutions/methylomes";

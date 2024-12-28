@@ -28,14 +28,8 @@
 
 #include <gtest/gtest.h>
 
-#include <cstdint>  // for std::uint32_t
-#include <format>
-#include <iterator>  // for std::size
-#include <memory>    // for std::unique_ptr, std::shared_ptr
+#include <filesystem>
 #include <string>
-#include <tuple>  // for std::get
-#include <unordered_map>
-#include <vector>
 
 TEST(methylome_test, invalid_accession) {
   auto res = is_valid_accession("invalid.accession");

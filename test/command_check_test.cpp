@@ -23,12 +23,12 @@
 
 #include <command_check.hpp>
 
-#include "unit_test_utils.hpp"
-
 #include <gtest/gtest.h>
 
+#include <array>    // for array
 #include <cstdlib>  // for EXIT_SUCCESS
 #include <string>
+#include <string_view>  // for operator""sv
 
 TEST(command_check_test, basic_test) {
   static constexpr auto methylome_directory = "data/lutions/methylomes";
