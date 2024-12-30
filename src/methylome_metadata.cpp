@@ -26,13 +26,9 @@
 #include "automatic_json.hpp"  // for tag_invoke
 #include "environment_utilities.hpp"
 
-#include <config.h>  // for VERSION
-
-#include <boost/asio.hpp>  // boost::asio::ip::host_name();
 // ADS: this one seems not needed
-#include <boost/container_hash/hash.hpp>  // for hash_range
+#include <boost/container_hash/hash.hpp>  // for boost::hash_range
 #include <boost/json.hpp>
-#include <boost/system.hpp>  // for boost::system::error_code
 
 #include <cerrno>
 #include <filesystem>
@@ -41,23 +37,19 @@
 #include <sstream>
 #include <string>
 #include <system_error>
+#include <tuple>  // for std::tie
 
 [[nodiscard]] auto
 methylome_metadata::init_env() -> std::error_code {
-  // ADS: where are we getting comression status?
-  boost::system::error_code boost_err;
-  host = boost::asio::ip::host_name(boost_err);
-  if (boost_err)
-    return std::error_code{boost_err};
-
-  const auto [username, err] = get_username();
-  if (err)
-    return err;
-
-  version = VERSION;
-  user = username;
+  std::error_code ec;
+  std::tie(host, ec) = get_hostname();
+  if (ec)
+    return ec;
+  std::tie(user, ec) = get_username();
+  if (ec)
+    return ec;
+  version = get_version();
   creation_time = get_time_as_string();
-
   return {};
 }
 
