@@ -23,7 +23,7 @@
 
 #include "server.hpp"
 #include "connection.hpp"
-#include "logger.hpp"  // for logger
+#include "logger.hpp"
 
 #include <boost/asio.hpp>
 #include <boost/lexical_cast.hpp>
@@ -66,11 +66,16 @@ write_pid_to_file(std::error_code &ec) -> void {
     lgr.error("Error forming config dir: {}", ec);
     return;
   }
-  const std::filesystem::path pid_file =
-    std::filesystem::path(env_home) / pid_file_rhs;
-  if (std::filesystem::exists(pid_file)) {
-    ec = std::make_error_code(std::errc::file_exists);
+  const std::string pid_file = std::filesystem::path(env_home) / pid_file_rhs;
+  const auto pid_file_exists = std::filesystem::exists(pid_file, ec);
+  if (ec) {
     lgr.error("Error: {}", ec);
+    return;
+  }
+
+  if (pid_file_exists) {
+    ec = std::make_error_code(std::errc::file_exists);
+    lgr.error("Error: pid file {} exists ({})", pid_file, ec);
     return;
   }
   const auto pid = getpid();
@@ -78,7 +83,7 @@ write_pid_to_file(std::error_code &ec) -> void {
   std::ofstream out(pid_file);
   if (!out) {
     ec = std::make_error_code(std::errc{errno});
-    lgr.error("Error writing pid file: {} ({})", ec, pid_file);
+    lgr.error("Error writing pid file {}: {}", pid_file, ec);
     return;
   }
   lgr.info("xfrase daemon pid file: {}", pid_file);
@@ -86,7 +91,7 @@ write_pid_to_file(std::error_code &ec) -> void {
   out.write(pid_str.data(), std::size(pid_str));
   if (!out) {
     ec = std::make_error_code(std::errc{errno});
-    lgr.error("Error writing pid file: {} ({})", ec, pid_file);
+    lgr.error("Error writing pid file {}: {}", pid_file, ec);
     return;
   }
 }
