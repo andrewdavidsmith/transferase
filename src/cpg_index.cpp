@@ -95,11 +95,10 @@ cpg_index::make_query(const std::vector<genomic_interval> &gis) const
 [[nodiscard]] auto
 cpg_index::read(const std::string &dirname, const std::string &genome_name,
                 std::error_code &ec) -> cpg_index {
-  const cpg_index_metadata meta =
-    cpg_index_metadata::read(dirname, genome_name, ec);
+  auto meta = cpg_index_metadata::read(dirname, genome_name, ec);
   if (ec)
     return {};
-  const auto data = cpg_index_data::read(dirname, genome_name, meta, ec);
+  auto data = cpg_index_data::read(dirname, genome_name, meta, ec);
   if (ec)
     return {};
   return cpg_index{std::move(data), std::move(meta)};
