@@ -51,7 +51,7 @@ struct methylome_metadata {
   bool is_compressed{};
 
   [[nodiscard]] auto
-  valid() const -> bool {
+  is_valid() const -> bool {
     // clang-format off
     return (!version.empty()       &&
             !host.empty()          &&
@@ -62,7 +62,7 @@ struct methylome_metadata {
   }
 
   [[nodiscard]] auto
-  consistent(const methylome_metadata &rhs) const -> bool {
+  is_consistent(const methylome_metadata &rhs) const -> bool {
     // clang-format off
     return (index_hash == rhs.index_hash &&
             n_cpgs     == rhs.n_cpgs     &&
