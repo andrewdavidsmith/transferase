@@ -26,9 +26,10 @@
 
 #include "cpg_index_data.hpp"
 #include "cpg_index_metadata.hpp"
-#include "cpg_index_types.hpp"
+#include "query.hpp"
 
 #include <cstdint>  // for std::uint32_t
+#include <format>   // for std::vector???
 #include <string>
 #include <system_error>
 #include <type_traits>  // for std::true_type
@@ -57,8 +58,7 @@ struct cpg_index {
         const std::string &name) const -> std::error_code;
 
   [[nodiscard]] auto
-  make_query(const std::vector<genomic_interval> &gis) const
-    -> std::vector<query_elem>;
+  make_query(const std::vector<genomic_interval> &gis) const -> xfrase::query;
 };
 
 [[nodiscard]] auto
@@ -93,14 +93,10 @@ template <>
 struct std::is_error_code_enum<cpg_index_code> : public std::true_type {};
 
 struct cpg_index_category : std::error_category {
-  auto
-  name() const noexcept -> const char * override {
-    return "cpg_index";
-  }
-  auto
-  message(int code) const -> std::string override {
+  // clang-format off
+  auto name() const noexcept -> const char * override {return "cpg_index";}
+  auto message(int code) const -> std::string override {
     using std::string_literals::operator""s;
-    // clang-format off
     switch (code) {
     case 0: return "ok"s;
     case 1: return "wrong identifier in header"s;
@@ -110,9 +106,9 @@ struct cpg_index_category : std::error_category {
     case 5: return "inconsistent chromosome sizes"s;
     case 6: return "failure processing genome file"s;
     }
-    // clang-format on
     std::unreachable();  // hopefully
   }
+  // clang-format on
 };
 
 inline auto
