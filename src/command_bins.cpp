@@ -53,6 +53,7 @@ xfrase bins remote -x index_dir -g hg38 -s example.com -m SRX012345 -o output.be
 #include "methylome_data.hpp"
 #include "methylome_results_types.hpp"
 #include "request.hpp"
+#include "request_type_code.hpp"
 #include "utilities.hpp"
 
 #include <boost/program_options.hpp>
@@ -79,15 +80,15 @@ do_remote_bins(const std::string &accession, const cpg_index &index,
                const std::uint32_t bin_size, const std::string &hostname,
                const std::string &port)
   -> std::tuple<std::vector<counts_res_type>, std::error_code> {
-  request_header hdr{accession, index.meta.n_cpgs, {}};
-
+  request_type_code rq_type{};
   if constexpr (std::is_same<counts_res_type, counts_res>::value)
-    hdr.rq_type = request_header::request_type::bin_counts;
+    rq_type = request_type_code::bin_counts;
   else
-    hdr.rq_type = request_header::request_type::bin_counts_cov;
+    rq_type = request_type_code::bin_counts_cov;
 
-  bins_request req{bin_size};
-  xfrase::client<counts_res_type, bins_request> cl(hostname, port, hdr, req);
+  request req{accession, rq_type, index.meta.index_hash, bin_size};
+
+  xfrase::client<counts_res_type> cl(hostname, port, req, bin_size);
   const auto status = cl.run();
   if (status) {
     logger::instance().error("Transaction status: {}", status);
