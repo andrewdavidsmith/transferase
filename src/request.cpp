@@ -39,9 +39,12 @@ compose(char *first, char const *last, const request &req) -> std::error_code {
   // ADS: use to_chars here
   const std::string s = std::format("{}\n", req);
 
+#ifndef NDEBUG
   typedef std::iterator_traits<char *>::difference_type diff_type;
-  assert(static_cast<diff_type>(std::size(s)) <
-         std::distance(static_cast<char const *>(first), last));
+  const auto first_const = static_cast<char const *>(first);
+  const auto dt_size_s = static_cast<diff_type>(std::size(s));
+#endif
+  assert(dt_size_s < std::distance(first_const, last));
 
   // std::ranges::in_out_result::out
   const auto data_end = std::ranges::copy(s, first);  // in_out_result
