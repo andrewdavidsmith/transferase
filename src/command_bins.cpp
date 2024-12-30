@@ -74,6 +74,8 @@ xfrase bins remote -x index_dir -g hg38 -s example.com -m SRX012345 -o output.be
 #include <variant>      // for std::tuple
 #include <vector>
 
+namespace xfrase {
+
 template <typename counts_res_type>
 [[nodiscard]] static inline auto
 do_remote_bins(const std::string &accession, const cpg_index &index,
@@ -88,7 +90,7 @@ do_remote_bins(const std::string &accession, const cpg_index &index,
 
   request req{accession, rq_type, index.meta.index_hash, bin_size};
 
-  xfrase::client<counts_res_type> cl(hostname, port, req, bin_size);
+  client<counts_res_type> cl(hostname, port, req, bin_size);
   const auto status = cl.run();
   if (status) {
     logger::instance().error("Transaction status: {}", status);
@@ -119,7 +121,7 @@ do_local_bins(const std::string &accession,
 }
 
 template <typename counts_res_type>
-static auto
+auto
 do_bins(const std::string &accession, const cpg_index &index,
         const std::uint32_t bin_size, const std::string &hostname,
         const std::string &port, const std::string &methylome_directory,
@@ -151,9 +153,12 @@ do_bins(const std::string &accession, const cpg_index &index,
   return {};
 }
 
+}  // namespace xfrase
+
 auto
 command_bins_main(int argc, char *argv[]) -> int {
   static constexpr auto command = "bins";
+  static constexpr auto default_port = "5000";
   static const auto usage =
     std::format("Usage: xfrase bins [local|remote] [options]\n");
   static const auto about_msg =
@@ -161,7 +166,12 @@ command_bins_main(int argc, char *argv[]) -> int {
   static const auto description_msg =
     std::format("{}\n{}", strip(description), strip(examples));
 
-  static constexpr auto default_port = "5000";
+  using xfrase::counts_res;
+  using xfrase::counts_res_cov;
+  using xfrase::cpg_index;
+  using xfrase::log_args;
+  using xfrase::log_level_t;
+  using xfrase::logger;
 
   bool write_scores{};
   bool count_covered{};
@@ -177,7 +187,7 @@ command_bins_main(int argc, char *argv[]) -> int {
   std::string hostname{};
   std::string port{};
   std::string outfile{};
-  xfrase_log_level log_level{};
+  log_level_t log_level{};
 
   std::string subcmd;
 
@@ -266,7 +276,7 @@ command_bins_main(int argc, char *argv[]) -> int {
 
   const bool remote_mode = (subcmd == "remote");
 
-  logger &lgr = logger::instance(shared_from_cout(), command, log_level);
+  auto &lgr = logger::instance(xfrase::shared_from_cout(), command, log_level);
   if (!lgr) {
     std::println("Failure initializing logging: {}.", lgr.get_status());
     return EXIT_FAILURE;
@@ -288,8 +298,8 @@ command_bins_main(int argc, char *argv[]) -> int {
   std::vector<std::tuple<std::string, std::string>> local_args{
     {"Methylome directory", methylome_directory},
   };
-  log_args<xfrase_log_level::info>(args_to_log);
-  log_args<xfrase_log_level::info>(remote_mode ? remote_args : local_args);
+  log_args<log_level_t::info>(args_to_log);
+  log_args<log_level_t::info>(remote_mode ? remote_args : local_args);
 
   std::error_code index_ec;
   const auto index = cpg_index::read(index_directory, genome_name, index_ec);
@@ -302,12 +312,13 @@ command_bins_main(int argc, char *argv[]) -> int {
   lgr.debug("Number of CpGs in index: {}", index.meta.n_cpgs);
 
   const auto bins_err =
-    count_covered ? do_bins<counts_res_cov>(methylome_name, index, bin_size,
-                                            hostname, port, methylome_directory,
-                                            outfile, write_scores, remote_mode)
-                  : do_bins<counts_res>(methylome_name, index, bin_size,
+    count_covered
+      ? xfrase::do_bins<counts_res_cov>(methylome_name, index, bin_size,
                                         hostname, port, methylome_directory,
-                                        outfile, write_scores, remote_mode);
+                                        outfile, write_scores, remote_mode)
+      : xfrase::do_bins<counts_res>(methylome_name, index, bin_size, hostname,
+                                    port, methylome_directory, outfile,
+                                    write_scores, remote_mode);
   if (bins_err) {
     lgr.error("Error: {}", bins_err);
     return EXIT_FAILURE;
