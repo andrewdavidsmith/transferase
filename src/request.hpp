@@ -80,8 +80,8 @@ struct request {
 template <> struct std::formatter<request> : std::formatter<std::string> {
   auto
   format(const request &r, std::format_context &ctx) const {
-    return std::format_to(ctx.out(), "{}\t{}\t{}", r.accession, r.index_hash,
-                          r.request_type, r.aux_value);
+    return std::format_to(ctx.out(), "{}\t{}\t{}\t{}", r.accession,
+                          r.request_type, r.index_hash, r.aux_value);
   }
 };
 
@@ -101,8 +101,8 @@ parse(const request_buffer &buf, request &req) -> std::error_code;
 enum class request_error : std::uint32_t {
   ok = 0,
   parse_error_accession = 1,
-  parse_error_index_hash = 2,
-  parse_error_request_type = 3,
+  parse_error_request_type = 2,
+  parse_error_index_hash = 3,
   parse_error_aux_value = 4,
   error_reading_query = 5,
 };
@@ -117,8 +117,8 @@ struct request_error_category : std::error_category {
     switch (code) {
     case 0: return "ok"s;
     case 1: return "error parsing accession"s;
-    case 2: return "error parsing index_hash"s;
-    case 3: return "error parsing request_type"s;
+    case 2: return "error parsing request_type"s;
+    case 3: return "error parsing index_hash"s;
     case 4: return "error parsing aux_value"s;
     case 5: return "error reading query"s;
     }
