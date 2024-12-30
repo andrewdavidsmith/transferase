@@ -97,7 +97,7 @@ genomic_interval::load(const cpg_index_metadata &cim,
     const auto gi = parse(cim, line, ec);
     if (ec)
       return {{}, ec};
-    v.push_back(std::move(gi));
+    v.push_back(gi);
   }
   return {std::move(v), genomic_interval_code::ok};
 }
