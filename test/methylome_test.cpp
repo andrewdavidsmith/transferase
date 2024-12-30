@@ -28,10 +28,37 @@
 
 #include <gtest/gtest.h>
 
+#include <chrono>
 #include <filesystem>
+#include <random>
 #include <string>
 
 using namespace xfrase;  // NOLINT
+
+auto
+generate_unique_dir_name() -> std::string {
+  // Generate a random string based on current time and random numbers
+  auto now = std::chrono::system_clock::now().time_since_epoch().count();
+  std::random_device rd;
+  std::mt19937 gen(rd());
+  std::uniform_int_distribution<> dis(1000, 9999);
+
+  return "/tmp/test_dir_" + std::to_string(now) + "_" +
+         std::to_string(dis(gen));
+}
+
+auto
+change_permissions_to_read_only(const std::filesystem::path &dir) -> void {
+  // clang-format off
+  std::filesystem::permissions(dir,
+                               std::filesystem::perms::owner_read |
+                               std::filesystem::perms::owner_exec |
+                               std::filesystem::perms::group_read |
+                               std::filesystem::perms::group_exec |
+                               std::filesystem::perms::others_read,
+                               std::filesystem::perm_options::replace);
+  // clang-format on
+}
 
 TEST(methylome_test, invalid_accession) {
   auto res = is_valid_accession("invalid.accession");
@@ -108,9 +135,14 @@ TEST(methylome_test, valid_write) {
 
 TEST(methylome_test, invalid_write) {
   static constexpr auto methylome_directory = "data/lutions/methylomes";
-  static constexpr auto output_directory = "/etc";
   static constexpr auto methylome_name = "eFlareon_brain";
+
+  const auto output_directory = generate_unique_dir_name();
   std::error_code ec;
+  std::filesystem::create_directory(output_directory, ec);
+  EXPECT_FALSE(ec);
+  change_permissions_to_read_only(output_directory);
+
   const auto meth = methylome::read(methylome_directory, methylome_name, ec);
   EXPECT_FALSE(ec);
 
@@ -136,6 +168,9 @@ TEST(methylome_test, invalid_write) {
     std::filesystem::remove(data_filename, ec);
     EXPECT_FALSE(ec);
   }
+
+  std::filesystem::remove_all(output_directory, ec);
+  EXPECT_FALSE(ec);
 }
 
 TEST(methylome_test, init_metadata) {
