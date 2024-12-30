@@ -30,12 +30,13 @@
 
 #include <chrono>
 #include <filesystem>
+#include <fstream>
 #include <random>
 #include <string>
 
 using namespace xfrase;  // NOLINT
 
-auto
+[[nodiscard]] auto
 generate_unique_dir_name() -> std::string {
   // Generate a random string based on current time and random numbers
   auto now = std::chrono::system_clock::now().time_since_epoch().count();
@@ -47,8 +48,10 @@ generate_unique_dir_name() -> std::string {
          std::to_string(dis(gen));
 }
 
-auto
-change_permissions_to_read_only(const std::filesystem::path &dir) -> void {
+[[nodiscard]] auto
+change_permissions_to_read_only(const std::filesystem::path &dir)
+  -> std::error_code {
+  std::error_code ec;
   // clang-format off
   std::filesystem::permissions(dir,
                                std::filesystem::perms::owner_read |
@@ -56,8 +59,33 @@ change_permissions_to_read_only(const std::filesystem::path &dir) -> void {
                                std::filesystem::perms::group_read |
                                std::filesystem::perms::group_exec |
                                std::filesystem::perms::others_read,
-                               std::filesystem::perm_options::replace);
+                               std::filesystem::perm_options::replace, ec);
   // clang-format on
+  return ec;
+}
+
+[[nodiscard]] auto
+write_should_fail(const std::filesystem::path &dir,
+                  std::error_code &ec) -> bool {
+  bool write_failed = false;
+  std::filesystem::path file = dir / "test_file.txt";
+  std::ofstream test_file(file);
+  if (!test_file.is_open()) {
+    ec = std::make_error_code(std::errc(errno));
+    write_failed = true;
+  }
+  if (!write_failed) {
+    test_file << "Test content" << std::endl;
+    if (test_file.fail()) {
+      ec = std::make_error_code(std::errc(errno));
+      write_failed = true;
+    }
+    std::error_code local_ec;
+    const auto file_exists = std::filesystem::exists(file, local_ec);
+    if (file_exists)
+      std::filesystem::remove(file, local_ec);
+  }
+  return write_failed;
 }
 
 TEST(methylome_test, invalid_accession) {
@@ -137,11 +165,23 @@ TEST(methylome_test, invalid_write) {
   static constexpr auto methylome_directory = "data/lutions/methylomes";
   static constexpr auto methylome_name = "eFlareon_brain";
 
-  const auto output_directory = generate_unique_dir_name();
   std::error_code ec;
+  const auto output_directory = generate_unique_dir_name();
   std::filesystem::create_directory(output_directory, ec);
-  EXPECT_FALSE(ec);
-  change_permissions_to_read_only(output_directory);
+  if (ec)
+    return;
+
+  ec = change_permissions_to_read_only(output_directory);
+  if (ec)
+    return;
+
+  const auto proceed_this_test = write_should_fail(output_directory, ec);
+  if (ec || !proceed_this_test)
+    return;
+
+  const auto write_worked = try_write_to_directory(output_directory, ec);
+  EXPECT_FALSE(write_worked);
+  EXPECT_TRUE(ec);
 
   const auto meth = methylome::read(methylome_directory, methylome_name, ec);
   EXPECT_FALSE(ec);
@@ -153,6 +193,7 @@ TEST(methylome_test, invalid_write) {
     compose_methylome_metadata_filename(output_directory, methylome_name);
   const auto meta_file_exists = std::filesystem::exists(meta_filename, ec);
   EXPECT_FALSE(ec);
+
   EXPECT_FALSE(meta_file_exists);
   if (meta_file_exists) {
     std::filesystem::remove(meta_filename, ec);

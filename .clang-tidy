@@ -1,4 +1,4 @@
-Checks: 'clang-diagnostic-*,clang-analyzer-*,-clang-diagnostic-unqualified-std-cast-call,-clang-diagnostic-unknown-warning-option,-clang-analyzer-unix.BlockInCriticalSection'
+Checks: 'performance-*,clang-diagnostic-*,clang-analyzer-*,-clang-diagnostic-unqualified-std-cast-call,-clang-diagnostic-unknown-warning-option,-clang-analyzer-unix.BlockInCriticalSection'
 WarningsAsErrors: '*'
 HeaderFileExtensions:
   - ''
