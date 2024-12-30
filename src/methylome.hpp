@@ -102,7 +102,7 @@ is_valid_accession(const std::string &accession) -> bool {
 }  // namespace xfrase
 
 // methylome error codes
-enum class methylome_code : std::uint32_t {
+enum class methylome_code : std::uint8_t {
   ok = 0,
   invalid_accession = 1,
   invalid_methylome_data = 2,

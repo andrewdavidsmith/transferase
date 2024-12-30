@@ -117,7 +117,7 @@ struct std::formatter<xfrase::cpg_index_metadata>
   }
 };
 
-enum class cpg_index_metadata_error : std::uint32_t {
+enum class cpg_index_metadata_error : std::uint8_t {
   ok = 0,
   version_not_found = 1,
   host_not_found = 2,

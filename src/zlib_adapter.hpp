@@ -49,7 +49,7 @@
 // #define Z_BUF_ERROR    (-5)
 // #define Z_VERSION_ERROR (-6)
 // clang-format on
-enum class zlib_adapter_error : std::uint32_t {
+enum class zlib_adapter_error : std::uint8_t {
   ok = 0,
   z_stream_end = 1,
   z_need_dict = 2,

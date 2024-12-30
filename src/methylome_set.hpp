@@ -68,7 +68,7 @@ struct methylome_set {
 }  // namespace xfrase
 
 // methylome_set errors
-enum class methylome_set_code : std::uint32_t {
+enum class methylome_set_code : std::uint8_t {
   ok = 0,
   error_loading_methylome = 1,
   methylome_not_found = 2,

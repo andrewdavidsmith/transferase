@@ -61,7 +61,7 @@ check_output_file(const std::string &filename) -> std::error_code;
 generate_temp_filename(const std::string &prefix,
                        const std::string &suffix = "") -> std::string;
 
-enum class output_file_error : std::uint32_t {
+enum class output_file_error : std::uint8_t {
   ok = 0,
   is_a_directory = 1,
   failed_to_open = 2,

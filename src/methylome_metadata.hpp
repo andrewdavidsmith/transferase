@@ -136,7 +136,7 @@ struct std::formatter<xfrase::methylome_metadata>
 
 // methylome metadata error code
 
-enum class methylome_metadata_error : std::uint32_t {
+enum class methylome_metadata_error : std::uint8_t {
   ok = 0,
   version_not_found = 1,
   host_not_found = 2,

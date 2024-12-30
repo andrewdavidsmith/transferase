@@ -183,7 +183,7 @@ conditional_round_to_fit(U &a, U &b) -> void {
 }  // namespace xfrase
 
 // methylome_data errors
-enum class methylome_data_code : std::uint32_t {
+enum class methylome_data_code : std::uint8_t {
   ok = 0,
   error_reading = 1,
   error_writing = 2,

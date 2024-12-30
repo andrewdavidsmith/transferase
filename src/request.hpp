@@ -88,7 +88,7 @@ parse(const request_buffer &buf, request &req) -> std::error_code;
 }  // namespace xfrase
 
 // request error code
-enum class request_error : std::uint32_t {
+enum class request_error : std::uint8_t {
   ok = 0,
   parse_error_accession = 1,
   parse_error_request_type = 2,

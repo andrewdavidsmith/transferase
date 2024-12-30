@@ -33,7 +33,7 @@
 
 namespace xfrase {
 
-enum class request_type_code : std::uint32_t {
+enum class request_type_code : std::uint8_t {
   counts = 0,
   counts_cov = 1,
   bin_counts = 2,

@@ -57,7 +57,7 @@ struct cpg_index_set {
 }  // namespace xfrase
 
 // error code for cpg_index_set
-enum class cpg_index_set_error : std::uint32_t {
+enum class cpg_index_set_error : std::uint8_t {
   ok = 0,
   cpg_index_not_found = 1,
 };

@@ -36,7 +36,7 @@
 
 namespace xfrase {
 
-enum class counts_format : std::uint32_t {
+enum class counts_format : std::uint8_t {
   none = 0,
   xcounts = 1,
   counts = 2,

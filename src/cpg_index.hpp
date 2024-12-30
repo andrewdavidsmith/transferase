@@ -83,7 +83,7 @@ list_cpg_indexes(const std::string &dirname,
 
 // cpg_index errors
 
-enum class cpg_index_code : std::uint32_t {
+enum class cpg_index_code : std::uint8_t {
   ok = 0,
   wrong_identifier_in_header = 1,
   error_parsing_index_header_line = 2,
@@ -110,7 +110,7 @@ struct cpg_index_category : std::error_category {
     case 5: return "inconsistent chromosome sizes"s;
     case 6: return "failure processing genome file"s;
     }
-    std::unreachable();  // hopefully
+    std::unreachable();
   }
   // clang-format on
 };

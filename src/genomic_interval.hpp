@@ -78,7 +78,7 @@ struct std::formatter<xfrase::genomic_interval> : std::formatter<std::string> {
 
 // genomic_interval errors
 
-enum class genomic_interval_code : std::uint32_t {
+enum class genomic_interval_code : std::uint8_t {
   ok = 0,
   error_parsing_bed_line = 1,
   chrom_name_not_found_in_index = 2,

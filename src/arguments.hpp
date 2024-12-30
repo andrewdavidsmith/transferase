@@ -33,17 +33,15 @@
 #include <string>
 #include <system_error>
 
-enum class argument_error : std::uint32_t {
+enum class argument_error : std::uint8_t {
   ok = 0,
   help_requested = 1,
   failure = 2,
 };
 
-// register argument_error as error code enum
 template <>
 struct std::is_error_code_enum<argument_error> : public std::true_type {};
 
-// category to provide text descriptions
 struct argument_error_category : std::error_category {
   const char *
   name() const noexcept override {

@@ -105,7 +105,7 @@ compose_cpg_index_data_filename(const auto &directory, const auto &name) {
 
 // cpg_index_data errors
 
-enum class cpg_index_data_code : std::uint32_t {
+enum class cpg_index_data_code : std::uint8_t {
   ok = 0,
   failure_reading_index_data = 1,
 };

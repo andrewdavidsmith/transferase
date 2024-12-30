@@ -33,7 +33,7 @@
 #include <type_traits>
 #include <utility>
 
-enum class server_response_code : std::uint32_t {
+enum class server_response_code : std::uint8_t {
   ok = 0,
   invalid_accession = 1,
   invalid_request_type = 2,
@@ -48,14 +48,10 @@ template <>
 struct std::is_error_code_enum<server_response_code> : public std::true_type {};
 
 struct server_response_category : std::error_category {
-  auto
-  name() const noexcept -> const char * override {
-    return "server_response";
-  }
-  auto
-  message(int code) const -> std::string override {
+  // clang-format off
+  auto name() const noexcept -> const char * override {return "server_response";}
+  auto message(int code) const -> std::string override {
     using std::string_literals::operator""s;
-    // clang-format off
     switch (code) {
     case 0: return "ok"s;
     case 1: return "invalid accession"s;
@@ -66,9 +62,9 @@ struct server_response_category : std::error_category {
     case 6: return "server failure"s;
     case 7: return "bad request"s;
     }
-    // clang-format on
-    std::unreachable();  // hopefully
+    std::unreachable();
   }
+  // clang-format on
 };
 
 inline auto
