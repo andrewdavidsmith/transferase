@@ -82,7 +82,7 @@ xfrase format -x index_dir -g hg38 -o output_dir -m SRX012345.xsym.gz
 #include <variant>  // IWYU pragma: keep
 #include <vector>
 
-enum class format_err {
+enum class format_err : std::uint32_t {
   // clang-format off
   ok                                         = 0,
   xcounts_file_open_failure                  = 1,
@@ -94,15 +94,14 @@ enum class format_err {
   // clang-format on
 };
 
+template <>
+struct std::is_error_code_enum<format_err> : public std::true_type {};
+
 struct format_err_cat : std::error_category {
-  auto
-  name() const noexcept -> const char * override {
-    return "format error";
-  }
-  auto
-  message(const int condition) const -> std::string override {
+  // clang-format off
+  auto name() const noexcept -> const char * override { return "format_err"; }
+  auto message(const int condition) const -> std::string override {
     using std::string_literals::operator""s;
-    // clang-format off
     switch (condition) {
     case 0: return "ok"s;
     case 1: return "failed to open methylome file"s;
@@ -112,16 +111,13 @@ struct format_err_cat : std::error_category {
     case 5: return "failed to generate methylome file"s;
     case 6: return "failed to write methylome file"s;
     }
-    // clang-format on
-    std::abort();  // unreacheable
+    std::unreachable();  // unreachable
   }
+  // clang-format on
 };
 
-template <>
-struct std::is_error_code_enum<format_err> : public std::true_type {};
-
-std::error_code
-make_error_code(format_err e) {
+inline auto
+make_error_code(format_err e) -> std::error_code {
   static auto category = format_err_cat{};
   return std::error_code(std::to_underlying(e), category);
 }
@@ -307,7 +303,7 @@ process_cpg_sites_counts(const std::string &infile, const cpg_index &index)
     if (line[0] == '#')
       continue;
     const auto end_of_chrom = line.find_first_of(" \t");
-    const std::string chrom{line.substr(0, end_of_chrom)};
+    std::string chrom{line.substr(0, end_of_chrom)};
     if (chrom != prev_chrom) {  // check for new chromosome
       const std::int32_t ch_id = get_ch_id(index_meta, chrom);
       if (ch_id < 0) {
@@ -456,7 +452,7 @@ command_format_main(int argc, char *argv[]) -> int {
   }
   lgr.info("Input file format: {}", message(format_id));
 
-  const auto [meth_data, meth_data_err] =
+  auto [meth_data, meth_data_err] =
     (format_id == counts_format::xcounts)
       ? process_cpg_sites(methylation_input, index)
       : process_cpg_sites_counts(methylation_input, index);
