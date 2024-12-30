@@ -109,7 +109,6 @@ read_gzfile_into_buffer(const std::string &filename)
   -> std::tuple<std::vector<char>, std::error_code> {
   static constexpr auto buf_size = 1024 * 1024;
 
-  // Open the gzipped file
   gzFile gz = gzopen(filename.data(), "rb");
   if (!gz)
     return {{}, std::make_error_code(std::errc(errno))};
@@ -125,7 +124,7 @@ read_gzfile_into_buffer(const std::string &filename)
   if (n_bytes < 0)
     return {{}, std::error_code{zlib_adapter_error::unexpected_return_code}};
 
-  return {std::move(buffer), {}};  // Success
+  return std::make_tuple(std::move(buffer), std::error_code{});
 }
 
 }  // namespace xfrase
