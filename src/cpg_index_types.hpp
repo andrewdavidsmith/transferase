@@ -27,13 +27,6 @@
 #include <cstdint>  // for std::uint32_t
 #include <utility>  // for std::pair
 
-typedef std::uint32_t q_elem_t;
-// struct query_elem {
-//   q_elem_t start{};
-//   q_elem_t stop{};
-// };
-typedef std::pair<q_elem_t, q_elem_t> query_elem;
-
 typedef std::uint32_t chrom_pos_t;
 // struct chrom_range_t {
 //   chrom_pos_t start{};
