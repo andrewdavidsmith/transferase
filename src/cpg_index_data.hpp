@@ -40,6 +40,8 @@
 #include <utility>      // for std::pair
 #include <vector>
 
+namespace xfrase {
+
 struct genomic_interval;
 struct cpg_index_metadata;
 
@@ -99,6 +101,8 @@ compose_cpg_index_data_filename(const auto &directory, const auto &name) {
   return std::format("{}{}", wo_extn, cpg_index_data::filename_extension);
 }
 
+}  // namespace xfrase
+
 // cpg_index_data errors
 
 enum class cpg_index_data_code : std::uint32_t {
@@ -106,27 +110,21 @@ enum class cpg_index_data_code : std::uint32_t {
   failure_reading_index_data = 1,
 };
 
-// register cpg_index_data_code as error code enum
 template <>
 struct std::is_error_code_enum<cpg_index_data_code> : public std::true_type {};
 
-// category to provide text descriptions
 struct cpg_index_data_category : std::error_category {
-  auto
-  name() const noexcept -> const char * override {
-    return "cpg_index_data";
-  }
-  auto
-  message(int code) const -> std::string override {
+  // clang-format off
+  auto name() const noexcept -> const char * override {return "cpg_index_data";}
+  auto message(int code) const -> std::string override {
     using std::string_literals::operator""s;
-    // clang-format off
     switch (code) {
     case 0: return "ok"s;
     case 1: return "failure reading index data"s;
     }
-    // clang-format on
-    std::unreachable();  // hopefully
+    std::unreachable();
   }
+  // clang-format on
 };
 
 inline auto

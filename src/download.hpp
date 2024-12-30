@@ -30,6 +30,8 @@
 #include <tuple>
 #include <unordered_map>
 
+namespace xfrase {
+
 struct download_request {
   std::string host;
   std::string port;
@@ -52,5 +54,7 @@ struct download_request {
 auto
 download(const download_request &dr)
   -> std::tuple<std::unordered_map<std::string, std::string>, std::error_code>;
+
+}  // namespace xfrase
 
 #endif  // SRC_DOWNLOAD_HPP_

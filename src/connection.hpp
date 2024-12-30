@@ -39,6 +39,8 @@
 #include <string>
 #include <utility>  // for std::move
 
+namespace xfrase {
+
 struct request_handler;
 
 struct connection : public std::enable_shared_from_this<connection> {
@@ -112,5 +114,7 @@ struct connection : public std::enable_shared_from_this<connection> {
   std::size_t query_byte{};
   std::size_t query_remaining{};
 };
+
+}  // namespace xfrase
 
 #endif  // SRC_CONNECTION_HPP_

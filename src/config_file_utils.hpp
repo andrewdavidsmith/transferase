@@ -34,6 +34,8 @@
 #include <string>
 #include <system_error>
 
+namespace xfrase {
+
 [[nodiscard]] inline auto
 format_as_config(const auto &t) -> std::string {
   using T = std::remove_cvref_t<decltype(t)>;
@@ -94,5 +96,7 @@ write_client_config_file(const auto &args,
   }
   return {};
 }
+
+}  // namespace xfrase
 
 #endif  // SRC_CONFIG_FILE_UTILS_HPP_

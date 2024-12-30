@@ -36,6 +36,8 @@
 #include <system_error>
 #include <vector>
 
+namespace xfrase {
+
 static constexpr std::uint32_t response_header_buffer_size = 256;
 typedef std::array<char, response_header_buffer_size> response_header_buffer;
 
@@ -81,4 +83,5 @@ template <typename counts_type> struct response {
   }
 };
 
+}  // namespace xfrase
 #endif  // SRC_RESPONSE_HPP_

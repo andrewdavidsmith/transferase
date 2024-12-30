@@ -34,6 +34,8 @@
 #include <unordered_map>
 #include <utility>  // for std::to_underlying, std::unreachable
 
+namespace xfrase {
+
 struct cpg_index_set {
   cpg_index_set(const cpg_index_set &) = delete;
   cpg_index_set &
@@ -51,6 +53,8 @@ struct cpg_index_set {
   std::unordered_map<std::string, std::shared_ptr<cpg_index>>
     assembly_to_cpg_index;
 };
+
+}  // namespace xfrase
 
 // error code for cpg_index_set
 enum class cpg_index_set_error : std::uint32_t {

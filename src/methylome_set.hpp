@@ -37,6 +37,8 @@
 #include <unordered_map>
 #include <utility>
 
+namespace xfrase {
+
 struct methylome_set {
   methylome_set(const methylome_set &) = delete;
   methylome_set &
@@ -63,6 +65,8 @@ struct methylome_set {
     accession_to_methylome;
 };
 
+}  // namespace xfrase
+
 // methylome_set errors
 enum class methylome_set_code : std::uint32_t {
   ok = 0,
@@ -70,8 +74,10 @@ enum class methylome_set_code : std::uint32_t {
   methylome_not_found = 2,
   unknown_error = 3,
 };
+
 template <>
 struct std::is_error_code_enum<methylome_set_code> : public std::true_type {};
+
 struct methylome_set_category : std::error_category {
   // clang-format off
   auto name() const noexcept -> const char * override {return "methylome_set";}
@@ -88,6 +94,7 @@ struct methylome_set_category : std::error_category {
   // clang-format on
 };
 inline auto
+
 make_error_code(methylome_set_code e) -> std::error_code {
   static auto category = methylome_set_category{};
   return std::error_code(std::to_underlying(e), category);

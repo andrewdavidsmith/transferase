@@ -43,14 +43,13 @@
 #include <utility>  // for std::pair
 #include <vector>
 
+namespace xfrase {
+
 struct cpg_index;
 struct counts_res;
 struct counts_res_cov;
 struct methylome_metadata;
-
-namespace xfrase {
 struct query;
-}
 
 typedef std::uint16_t m_count_t;
 // struct m_count_elem {
@@ -181,6 +180,8 @@ conditional_round_to_fit(U &a, U &b) -> void {
     round_to_fit<T>(a, b);
 }
 
+}  // namespace xfrase
+
 // methylome_data errors
 enum class methylome_data_code : std::uint32_t {
   ok = 0,
@@ -188,8 +189,10 @@ enum class methylome_data_code : std::uint32_t {
   error_writing = 2,
   inconsistent = 3,
 };
+
 template <>
 struct std::is_error_code_enum<methylome_data_code> : public std::true_type {};
+
 struct methylome_data_category : std::error_category {
   // clang-format off
   auto name() const noexcept -> const char * override {return "methylome_data";}
@@ -205,6 +208,7 @@ struct methylome_data_category : std::error_category {
   }
   // clang-format on
 };
+
 inline auto
 make_error_code(methylome_data_code e) -> std::error_code {
   static auto category = methylome_data_category{};

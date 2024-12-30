@@ -44,6 +44,8 @@
 #include <utility>      // std::pair
 #include <vector>
 
+namespace xfrase {
+
 struct counts_res_cov;
 
 [[nodiscard]] auto
@@ -164,6 +166,7 @@ write_intervals_bedgraph(
 write_output(const std::string &outfile,
              const std::vector<genomic_interval> &gis, const cpg_index &index,
              const auto &results, const bool write_scores) -> std::error_code {
+  auto &lgr = xfrase::logger::instance();
   if (!write_scores)
     return write_intervals(outfile, index.meta, gis, results);
   // ADS: counting intervals that have no reads
@@ -172,8 +175,7 @@ write_output(const std::string &outfile,
     zero_coverage += (x.n_meth + x.n_unmeth == 0);
     return x.n_meth / std::max(1.0, static_cast<double>(x.n_meth + x.n_unmeth));
   };
-  logger::instance().debug("Number of intervals without reads: {}",
-                           zero_coverage);
+  lgr.debug("Number of intervals without reads: {}", zero_coverage);
   return write_intervals_bedgraph(outfile, index.meta, gis,
                                   std::views::transform(results, to_score));
 }
@@ -294,6 +296,7 @@ write_bins_bedgraph(const std::string &outfile, const cpg_index_metadata &cim,
 write_output(const std::string &outfile, const cpg_index &index,
              const std::uint32_t bin_size, const auto &results,
              const bool write_scores) {
+  auto &lgr = xfrase::logger::instance();
   if (!write_scores)
     return write_bins(outfile, index.meta, bin_size, results);
   // ADS: counting intervals that have no reads
@@ -302,9 +305,11 @@ write_output(const std::string &outfile, const cpg_index &index,
     zero_coverage += (x.n_meth + x.n_unmeth == 0);
     return x.n_meth / std::max(1.0, static_cast<double>(x.n_meth + x.n_unmeth));
   };
-  logger::instance().debug("Number of bins without reads: {}", zero_coverage);
+  lgr.debug("Number of bins without reads: {}", zero_coverage);
   const auto scores = std::views::transform(results, to_score);
   return write_bins_bedgraph(outfile, index.meta, bin_size, scores);
 }
+
+}  // namespace xfrase
 
 #endif  // SRC_GENOMIC_INTERVAL_OUTPUT_HPP_

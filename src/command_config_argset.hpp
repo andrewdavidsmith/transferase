@@ -35,6 +35,8 @@
 #include <string>
 #include <system_error>
 
+namespace xfrase {
+
 struct command_config_argset : argset_base<command_config_argset> {
   static constexpr auto default_config_filename = "xfrase_client_config.toml";
 
@@ -48,13 +50,13 @@ struct command_config_argset : argset_base<command_config_argset> {
   }
 
   static constexpr auto port_default{"5000"};
-  static constexpr auto log_level_default{xfrase_log_level::info};
+  static constexpr auto log_level_default{log_level_t::info};
   std::string hostname{};
   std::string port{};
   std::string index_dir{};
   std::string log_filename{};
   std::string assemblies{};
-  xfrase_log_level log_level{};
+  log_level_t log_level{};
   std::string client_config_file{};
   bool quiet{};
 
@@ -100,5 +102,7 @@ BOOST_DESCRIBE_STRUCT(command_config_argset, (), (
   log_level
 ))
 // clang-format on
+
+}  // namespace xfrase
 
 #endif  // SRC_COMMAND_CONFIG_ARGSET_HPP_

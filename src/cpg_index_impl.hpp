@@ -36,6 +36,8 @@
 #include <tuple>
 #include <vector>
 
+namespace xfrase {
+
 struct genome_file {
   std::error_code ec{};
   char *data{};
@@ -64,5 +66,7 @@ get_chroms(const char *data, const std::size_t sz,
            const std::vector<std::size_t> &name_starts,
            const std::vector<std::size_t> &name_stops)
   -> std::vector<std::string_view>;
+
+}  // namespace xfrase
 
 #endif  // SRC_CPG_INDEX_IMPL_HPP_

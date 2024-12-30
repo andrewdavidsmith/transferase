@@ -26,7 +26,11 @@
 
 #include <string>
 
+namespace xfrase {
+
 [[nodiscard]] auto
 find_path_to_binary() -> std::string;
+
+}  // namespace xfrase
 
 #endif  // SRC_FIND_PATH_TO_BINARY_HPP_

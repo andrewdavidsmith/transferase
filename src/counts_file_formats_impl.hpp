@@ -32,10 +32,14 @@
 
 #include <string>
 
+namespace xfrase {
+
 [[nodiscard]] STATIC auto
 is_counts_format(const std::string &filename) -> bool;
 
 [[nodiscard]] STATIC auto
 is_xcounts_format(const std::string &filename) -> bool;
+
+}  // namespace xfrase
 
 #endif  // SRC_COUNTS_FILE_FORMATS_IMPL_HPP_
