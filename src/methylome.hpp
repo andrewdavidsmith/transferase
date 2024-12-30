@@ -31,6 +31,7 @@
 #include <cctype>
 #include <cstddef>  // for std::size_t
 #include <cstdint>  // std::uint32_t
+#include <format>   // for std::vector??
 #include <string>
 #include <system_error>
 #include <type_traits>
@@ -92,8 +93,10 @@ enum class methylome_code : std::uint32_t {
   invalid_accession = 1,
   invalid_methylome_data = 2,
 };
+
 template <>
 struct std::is_error_code_enum<methylome_code> : public std::true_type {};
+
 struct methylome_category : std::error_category {
   // clang-format off
   auto name() const noexcept -> const char * override { return "methylome"; }
@@ -108,6 +111,7 @@ struct methylome_category : std::error_category {
   }
   // clang-format on
 };
+
 inline auto
 make_error_code(methylome_code e) -> std::error_code {
   static auto category = methylome_category{};
