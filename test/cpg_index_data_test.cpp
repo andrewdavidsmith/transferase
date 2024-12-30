@@ -122,10 +122,10 @@ TEST(cpg_index_data_test, valid_get_query_within_chrom) {
     {1, 3},
     {4, 5},
   };
-  const auto offsets = index.get_query_within_chrom(0, queries);
-  std::vector<std::pair<std::uint32_t, std::uint32_t>> expected = {
+  const auto qry = index.get_query_within_chrom(0, queries);
+  const auto expected = xfrase::query({
     {0, 2},
     {3, 4},
-  };
-  EXPECT_EQ(offsets, expected);
+  });
+  EXPECT_EQ(qry, expected);
 }
