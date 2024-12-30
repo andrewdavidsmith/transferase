@@ -70,9 +70,20 @@ xfrase server -s localhost -m methylomes -x indexes
 #include <string>
 #include <string_view>
 #include <system_error>
+#include <thread>  // apparently for std::formatter
 #include <tuple>
-#include <variant>  // IWYU pragma: keep
+#include <variant>
 #include <vector>
+
+template <>
+struct std::formatter<std::filesystem::path> : std::formatter<std::string> {
+  auto
+  format(const std::filesystem::path &p, std::format_context &ctx) const {
+    return std::format_to(ctx.out(), "{}", p.string());
+  }
+};
+
+namespace xfrase {
 
 struct server_argset : argset_base<server_argset> {
   static constexpr auto default_config_filename = "xfrase_server_config.toml";
@@ -88,7 +99,7 @@ struct server_argset : argset_base<server_argset> {
 
   static constexpr auto hostname_default{"localhost"};
   static constexpr auto port_default{"5000"};
-  static constexpr auto log_level_default{xfrase_log_level::info};
+  static constexpr auto log_level_default{xfrase::log_level_t::info};
   static constexpr auto n_threads_default{1};
   static constexpr auto max_resident_default = 32;
   std::string hostname{};
@@ -96,7 +107,7 @@ struct server_argset : argset_base<server_argset> {
   std::string methylome_dir{};
   std::string index_dir{};
   std::string log_filename{};
-  xfrase_log_level log_level{};
+  xfrase::log_level_t log_level{};
   std::uint32_t n_threads{};
   std::uint32_t max_resident{};
   bool daemonize{};
@@ -104,7 +115,7 @@ struct server_argset : argset_base<server_argset> {
 
   auto
   log_options_impl() const {
-    log_args<xfrase_log_level::info>(
+    xfrase::log_args<xfrase::log_level_t::info>(
       std::vector<std::tuple<std::string, std::string>>{
         // clang-format off
         {"hostname", std::format("{}", hostname)},
@@ -199,8 +210,10 @@ check_directory(const auto &dirname, std::error_code &ec) -> std::string {
     lgr.error("{}: {}", canonical_dir, ec);
     return {};
   }
-  return canonical_dir.string();
+  return canonical_dir;
 }
+
+}  // namespace xfrase
 
 auto
 command_server_main(int argc, char *argv[]) -> int {
@@ -212,7 +225,11 @@ command_server_main(int argc, char *argv[]) -> int {
   static const auto description_msg =
     std::format("{}\n{}", strip(description), strip(examples));
 
-  server_argset args;
+  using xfrase::check_directory;
+  using xfrase::log_level_t;
+  using xfrase::logger;
+
+  xfrase::server_argset args;
   auto ec = args.parse(argc, argv, usage, about_msg, description_msg);
   if (ec == argument_error::help_requested)
     return EXIT_SUCCESS;
@@ -220,7 +237,7 @@ command_server_main(int argc, char *argv[]) -> int {
     return EXIT_FAILURE;
 
   if (!args.config_out.empty())
-    return write_config_file(args) ? EXIT_FAILURE : EXIT_SUCCESS;
+    return xfrase::write_config_file(args) ? EXIT_FAILURE : EXIT_SUCCESS;
 
   std::shared_ptr<std::ostream> log_file =
     args.log_filename.empty()
@@ -244,8 +261,9 @@ command_server_main(int argc, char *argv[]) -> int {
     return EXIT_FAILURE;
 
   if (args.daemonize) {
-    auto s = server(args.hostname, args.port, args.n_threads, methylome_dir,
-                    index_dir, args.max_resident, lgr, ec, args.daemonize);
+    auto s =
+      xfrase::server(args.hostname, args.port, args.n_threads, methylome_dir,
+                     index_dir, args.max_resident, lgr, ec, args.daemonize);
     if (ec) {
       lgr.error("Failure daemonizing server: {}", ec);
       return EXIT_FAILURE;
@@ -253,8 +271,9 @@ command_server_main(int argc, char *argv[]) -> int {
     s.run();
   }
   else {
-    auto s = server(args.hostname, args.port, args.n_threads, methylome_dir,
-                    index_dir, args.max_resident, lgr, ec);
+    auto s =
+      xfrase::server(args.hostname, args.port, args.n_threads, methylome_dir,
+                     index_dir, args.max_resident, lgr, ec);
     if (ec) {
       lgr.error("Failure initializing server: {}", ec);
       return EXIT_FAILURE;
