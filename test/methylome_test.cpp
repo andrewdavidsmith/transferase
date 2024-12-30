@@ -28,6 +28,7 @@
 
 #include <gtest/gtest.h>
 
+#include <cerrno>
 #include <chrono>
 #include <filesystem>
 #include <fstream>
@@ -75,7 +76,7 @@ write_should_fail(const std::filesystem::path &dir,
     write_failed = true;
   }
   if (!write_failed) {
-    test_file << "Test content" << std::endl;
+    test_file << "Test content";
     if (test_file.fail()) {
       ec = std::make_error_code(std::errc(errno));
       write_failed = true;
