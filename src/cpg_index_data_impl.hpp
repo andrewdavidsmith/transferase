@@ -30,6 +30,7 @@
 #define STATIC static
 #endif
 
+#include "cpg_index_data.hpp"
 #include "query.hpp"
 
 #include <cstddef>  // std::size_t

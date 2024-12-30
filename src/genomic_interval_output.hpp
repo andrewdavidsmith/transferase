@@ -24,8 +24,10 @@
 #ifndef SRC_GENOMIC_INTERVAL_OUTPUT_HPP_
 #define SRC_GENOMIC_INTERVAL_OUTPUT_HPP_
 
+#include "cpg_index.hpp"
 #include "cpg_index_metadata.hpp"
 #include "genomic_interval.hpp"
+#include "logger.hpp"
 
 #include <algorithm>  // std::min
 #include <array>
