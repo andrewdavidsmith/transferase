@@ -30,6 +30,8 @@
 #define STATIC static
 #endif
 
+#include "query.hpp"
+
 #include <cstddef>  // std::size_t
 #include <string>
 #include <system_error>
@@ -38,7 +40,7 @@
 
 [[nodiscard]] STATIC auto
 get_query_within_chrom(const cpg_index_data::vec &positions,
-                       const std::vector<chrom_range_t> &queries)
-  -> std::vector<query_elem>;
+                       const std::vector<chrom_range_t> &chrom_ranges)
+  -> xfrase::query;
 
 #endif  // SRC_CPG_INDEX_DATA_IMPL_HPP_
