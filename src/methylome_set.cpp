@@ -60,7 +60,7 @@ methylome_set::get_methylome(const std::string &accession, std::error_code &ec)
     return nullptr;
   }
 
-  const auto loaded_meth = methylome::read(methylome_directory, accession, ec);
+  auto loaded_meth = methylome::read(methylome_directory, accession, ec);
   if (ec) {
     // ADS: need to ensure the error code is sensibly propagated
     return nullptr;
