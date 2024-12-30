@@ -27,6 +27,7 @@
 #include <boost/describe.hpp>
 #include <boost/mp11.hpp>
 
+#include <algorithm>  // for std::ranges::replace
 #include <format>
 #include <fstream>
 #include <print>
