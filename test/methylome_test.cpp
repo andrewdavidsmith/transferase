@@ -30,12 +30,13 @@
 
 #include <chrono>
 #include <filesystem>
+#include <fstream>
 #include <random>
 #include <string>
 
 using namespace xfrase;  // NOLINT
 
-auto
+[[nodiscard]] auto
 generate_unique_dir_name() -> std::string {
   // Generate a random string based on current time and random numbers
   auto now = std::chrono::system_clock::now().time_since_epoch().count();
@@ -58,6 +59,23 @@ change_permissions_to_read_only(const std::filesystem::path &dir) -> void {
                                std::filesystem::perms::others_read,
                                std::filesystem::perm_options::replace);
   // clang-format on
+}
+
+[[nodiscard]] auto
+try_write_to_directory(const std::filesystem::path &dir,
+                       std::error_code &ec) -> bool {
+  std::filesystem::path file = dir / "test_file.txt";
+  std::ofstream test_file(file);
+  if (!test_file.is_open()) {
+    ec = std::make_error_code(std::errc::io_error);
+    return false;
+  }
+  test_file << "Test content" << std::endl;
+  if (test_file.fail()) {
+    ec = std::make_error_code(std::errc::io_error);
+    return false;
+  }
+  return true;
 }
 
 TEST(methylome_test, invalid_accession) {
@@ -142,6 +160,9 @@ TEST(methylome_test, invalid_write) {
   std::filesystem::create_directory(output_directory, ec);
   EXPECT_FALSE(ec);
   change_permissions_to_read_only(output_directory);
+  const auto write_worked = try_write_to_directory(output_directory, ec);
+  EXPECT_FALSE(write_worked) << "write_worked: " << write_worked << "\n";
+  EXPECT_TRUE(ec) << "error_code: " << ec.message() << "\n";
 
   const auto meth = methylome::read(methylome_directory, methylome_name, ec);
   EXPECT_FALSE(ec);
