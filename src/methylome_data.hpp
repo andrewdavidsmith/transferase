@@ -92,7 +92,7 @@ struct methylome_data {
   get_n_cpgs() const -> std::uint32_t;
 
   auto
-  add(const methylome_data &rhs) -> methylome_data &;
+  add(const methylome_data &rhs) -> void;
 
   [[nodiscard]] auto
   hash() const -> std::uint64_t;
