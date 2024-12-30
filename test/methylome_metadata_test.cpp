@@ -72,24 +72,24 @@ mock_get_version() -> std::string {
   return "9.9.9";
 }
 
-TEST(methylome_metadata_test, valid_test) {
+TEST(methylome_metadata_test, is_valid_test) {
   methylome_metadata meta;
-  EXPECT_FALSE(meta.valid());
+  EXPECT_FALSE(meta.is_valid());
 
   meta.version = mock_get_version();
-  EXPECT_FALSE(meta.valid());
+  EXPECT_FALSE(meta.is_valid());
 
   meta.host = mock_get_hostname();
-  EXPECT_FALSE(meta.valid());
+  EXPECT_FALSE(meta.is_valid());
 
   meta.user = mock_get_username();
-  EXPECT_FALSE(meta.valid());
+  EXPECT_FALSE(meta.is_valid());
 
   meta.creation_time = mock_get_time_as_string();
-  EXPECT_FALSE(meta.valid());
+  EXPECT_FALSE(meta.is_valid());
 
   meta.assembly = mock_get_assembly();
-  EXPECT_TRUE(meta.valid());
+  EXPECT_TRUE(meta.is_valid());
 }
 
 TEST(methylome_metadata_test, init_env_test) {
@@ -98,15 +98,15 @@ TEST(methylome_metadata_test, init_env_test) {
   EXPECT_FALSE(ec);
 
   meta.assembly = mock_get_assembly();
-  EXPECT_TRUE(meta.valid());
+  EXPECT_TRUE(meta.is_valid());
 }
 
 TEST(methylome_metadata_test, consistent_test) {
   methylome_metadata meta1;
   methylome_metadata meta2;
 
-  EXPECT_TRUE(meta1.consistent(meta2));
-  EXPECT_TRUE(meta2.consistent(meta1));
+  EXPECT_TRUE(meta1.is_consistent(meta2));
+  EXPECT_TRUE(meta2.is_consistent(meta1));
 
   const auto init1_err = meta1.init_env();
   EXPECT_FALSE(init1_err);
@@ -114,12 +114,12 @@ TEST(methylome_metadata_test, consistent_test) {
   const auto init2_err = meta2.init_env();
   EXPECT_FALSE(init2_err);
 
-  EXPECT_TRUE(meta1.consistent(meta2));
-  EXPECT_TRUE(meta2.consistent(meta1));
+  EXPECT_TRUE(meta1.is_consistent(meta2));
+  EXPECT_TRUE(meta2.is_consistent(meta1));
 
   meta2.assembly = mock_get_assembly();
-  EXPECT_TRUE(meta2.valid());
-  EXPECT_FALSE(meta2.consistent(meta1));
+  EXPECT_TRUE(meta2.is_valid());
+  EXPECT_FALSE(meta2.is_consistent(meta1));
 }
 
 TEST(methylome_metadata_test, successful_read) {
@@ -130,7 +130,7 @@ TEST(methylome_metadata_test, successful_read) {
   std::error_code ec;
   const auto meta = methylome_metadata::read(json_filename, ec);
   EXPECT_FALSE(ec);
-  EXPECT_TRUE(meta.valid());
+  EXPECT_TRUE(meta.is_valid());
 }
 
 TEST(methylome_metadata_test, failing_read) {
@@ -141,7 +141,7 @@ TEST(methylome_metadata_test, failing_read) {
   std::error_code ec;
   const auto meta = methylome_metadata::read(json_filename, ec);
   EXPECT_TRUE(ec);
-  EXPECT_FALSE(meta.valid());
+  EXPECT_FALSE(meta.is_valid());
 }
 
 TEST(methylome_metadata_test, compose_methylome_metadata_filename_test) {
