@@ -119,8 +119,7 @@ TEST(methylome_metadata_test, consistent_test) {
 
   meta2.assembly = mock_get_assembly();
   EXPECT_TRUE(meta2.valid());
-  EXPECT_FALSE(meta2.consistent(meta1)) << meta2.tostring() << "\n"
-                                        << meta1.tostring();
+  EXPECT_FALSE(meta2.consistent(meta1));
 }
 
 TEST(methylome_metadata_test, successful_read) {
