@@ -149,16 +149,15 @@ is_xcounts_format(const std::string &filename) -> bool {
 get_meth_file_format(const std::string &filename)
   -> std::tuple<counts_format, std::error_code> {
   // check file first
-  {
-    std::error_code ec;
-    gzinfile in(filename, ec);
-    if (ec)
-      return {{}, ec};
 
-    std::string line;
-    if (!getline(in, line))
-      return {{}, std::make_error_code(std::errc(errno))};
-  }
+  std::error_code ec;
+  gzinfile in(filename, ec);
+  if (ec)
+    return {{}, ec};
+
+  std::string line;
+  if (!getline(in, line))
+    return {{}, std::make_error_code(std::errc(errno))};
 
   if (is_counts_format(filename))
     return {counts_format::counts, {}};
