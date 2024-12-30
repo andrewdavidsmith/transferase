@@ -57,7 +57,8 @@ auto
 do_download(const download_request &dr, const std::string &outfile,
             boost::asio::io_context &ioc,
             std::unordered_map<std::string, std::string> &header,
-            boost::beast::error_code &ec, boost::asio::yield_context yield) {
+            boost::beast::error_code &ec,
+            const boost::asio::yield_context &yield) {
   // ADS: this is the function that does the downloading called from
   // as asio io context. Also, look at these constants if bugs happen
   static constexpr auto http_version{11};
@@ -66,9 +67,8 @@ do_download(const download_request &dr, const std::string &outfile,
   // ops starting
   boost::beast::http::file_body::value_type body;
   body.open(outfile.data(), boost::beast::file_mode::write, ec);
-  if (ec) {
+  if (ec)
     return;
-  }
 
   boost::asio::ip::tcp::resolver resolver(ioc);
   boost::beast::tcp_stream stream(ioc);
@@ -155,14 +155,13 @@ download(const download_request &dr)
 
   std::error_code out_ec;
   {
-    std::filesystem::path outdir_path(outdir);
-    if (std::filesystem::exists(outdir_path) &&
-        !std::filesystem::is_directory(outdir_path)) {
+    if (std::filesystem::exists(outdir) &&
+        !std::filesystem::is_directory(outdir)) {
       out_ec = std::make_error_code(std::errc::file_exists);
       std::println("{}: {}", outdir.string(), out_ec.message());
       return {{}, out_ec};
     }
-    if (!std::filesystem::exists(outdir_path)) {
+    if (!std::filesystem::exists(outdir)) {
       const bool made_dir = std::filesystem::create_directories(outdir, out_ec);
       if (!made_dir) {
         std::println("{}: {}", outdir.string(), out_ec.message());
@@ -188,7 +187,7 @@ download(const download_request &dr)
                                std::ref(header), std::ref(ec),
                                std::placeholders::_1),
                      // on completion, spawn will call this function
-                     [](std::exception_ptr ex) {
+                     [](const std::exception_ptr &ex) {
                        if (ex)
                          std::rethrow_exception(ex);
                      });
