@@ -104,7 +104,7 @@ do_remote_intervals(const std::string &accession, const cpg_index &index,
 template <typename counts_res_type>
 [[nodiscard]] static inline auto
 do_local_intervals(const std::string &accession,
-                   const std::string &methylome_directory, query &&qry)
+                   const std::string &methylome_directory, const query &qry)
   -> std::tuple<std::vector<counts_res_type>, std::error_code> {
   auto &lgr = logger::instance();
 
@@ -130,11 +130,10 @@ do_intervals(const std::string &accession, const cpg_index &index, query &&qry,
              const bool remote_mode) -> std::error_code {
   const auto intervals_start{std::chrono::high_resolution_clock::now()};
   const auto [results, intervals_err] =
-    remote_mode
-      ? do_remote_intervals<counts_res_type>(accession, index, std::move(qry),
-                                             hostname, port)
-      : do_local_intervals<counts_res_type>(accession, methylome_directory,
-                                            std::move(qry));
+    remote_mode ? do_remote_intervals<counts_res_type>(
+                    accession, index, std::move(qry), hostname, port)
+                : do_local_intervals<counts_res_type>(accession,
+                                                      methylome_directory, qry);
   const auto intervals_stop{std::chrono::high_resolution_clock::now()};
   logger::instance().debug("Elapsed time for query: {:.3}s",
                            duration(intervals_start, intervals_stop));
