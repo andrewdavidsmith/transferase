@@ -57,4 +57,4 @@ struct std::formatter<request_type_code> : std::formatter<std::string> {
   }
 };
 
-#endif  // SRC_REQUEST_TYPE_HPP_
+#endif  // SRC_REQUEST_TYPE_CODE_HPP_
