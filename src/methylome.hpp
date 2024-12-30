@@ -57,6 +57,11 @@ struct methylome {
   is_consistent() const -> bool;
 
   [[nodiscard]] auto
+  is_consistent(const methylome &other) const -> bool {
+    return meta.is_consistent(other.meta);
+  }
+
+  [[nodiscard]] auto
   write(const std::string &outdir,
         const std::string &name) const -> std::error_code;
 
@@ -65,6 +70,11 @@ struct methylome {
 
   [[nodiscard]] auto
   update_metadata() -> std::error_code;
+
+  auto
+  add(const methylome &rhs) -> void {
+    data.add(rhs.data);
+  }
 };
 
 [[nodiscard]] inline auto
