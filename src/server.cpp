@@ -345,7 +345,7 @@ server::run() -> void {
   */
   std::vector<std::jthread> threads;
   for (std::uint32_t i = 0; i < n_threads; ++i)
-    threads.emplace_back([this] { ioc.run(); });
+    threads.emplace_back([this] { ioc.run(); });  // NOLINT
 }
 
 auto
