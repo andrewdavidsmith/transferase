@@ -51,12 +51,23 @@ struct methylome_metadata {
   bool is_compressed{};
 
   [[nodiscard]] auto
-  consistent(const methylome_metadata &rhs) -> bool {
+  valid() const -> bool {
     // clang-format off
-    return (index_hash == rhs.index_hash ||
-            n_cpgs == rhs.n_cpgs ||
-            assembly == rhs.assembly ||
-            version == rhs.version);
+    return (!version.empty()       &&
+            !host.empty()          &&
+            !user.empty()          &&
+            !creation_time.empty() &&
+            !assembly.empty());
+    // clang-format on
+  }
+
+  [[nodiscard]] auto
+  consistent(const methylome_metadata &rhs) const -> bool {
+    // clang-format off
+    return (index_hash == rhs.index_hash &&
+            n_cpgs     == rhs.n_cpgs     &&
+            assembly   == rhs.assembly   &&
+            version    == rhs.version);
     // clang-format on
   }
 
