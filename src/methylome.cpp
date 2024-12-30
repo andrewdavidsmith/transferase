@@ -62,8 +62,7 @@ methylome::init_metadata(const cpg_index &index) -> std::error_code {
   return ec;
 }
 
-[[nodiscard]]
-auto
+[[nodiscard]] auto
 methylome::update_metadata() -> std::error_code {
   const std::error_code ec = meta.init_env();
   if (ec)
@@ -87,9 +86,7 @@ methylome::read(const std::string &dirname, const std::string &methylome_name,
 
 [[nodiscard]] auto
 methylome::is_consistent() const -> bool {
-  const auto n_cpgs_match = (meta.n_cpgs == data.get_n_cpgs());
-  const auto hashes_match = (meta.methylome_hash == data.hash());
-  return n_cpgs_match && hashes_match;
+  return meta.methylome_hash == data.hash();
 }
 
 [[nodiscard]] auto
