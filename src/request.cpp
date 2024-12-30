@@ -23,165 +23,91 @@
 
 #include "request.hpp"
 
-#include "xfrase_error.hpp"  // IWYU pragma: keep
+#include "request_type_code.hpp"  // IWYU pragma: keep
+#include "xfrase_error.hpp"       // IWYU pragma: keep
 
 #include <algorithm>
 #include <cassert>
 #include <charconv>  // std::from_chars
 #include <format>
-#include <ranges>  // IWYU pragma: keep
+#include <iterator>  // for std::size, std::distance, std::iterator_traits
+#include <ranges>    // IWYU pragma: keep
 #include <string>
 
 [[nodiscard]] auto
-compose(char *first, [[maybe_unused]] char *last,
-        const request_header &header) -> compose_result {
+compose(char *first, char const *last, const request &req) -> std::error_code {
   // ADS: use to_chars here
-  const std::string s = std::format("{}\n", header);
-  assert(static_cast<std::iterator_traits<char *>::difference_type>(
-           std::size(s)) < std::distance(first, last));
+  const std::string s = std::format("{}\n", req);
+  assert(static_cast<std::iterator_traits<char *>::difference_type>(std::size(
+           s)) < std::distance(static_cast<char const *>(first), last));
   // std::ranges::in_out_result::out
-  return {std::ranges::copy(s, first).out, request_error::ok};
+  const auto data_end = std::ranges::copy(s, first);  // in_out_result
+  if (data_end.out == last)
+    return std::make_error_code(std::errc::result_out_of_range);
+  return std::error_code{};
 }
 
 [[nodiscard]] auto
-parse(const char *first, const char *last,
-      request_header &header) -> parse_result {
+parse(char const *first, char const *last, request &req) -> std::error_code {
   static constexpr auto delim = '\t';
   static constexpr auto term = '\n';
 
-  header.methylome_size = 0;
-  header.rq_type = static_cast<request_header::request_type>(0);
+  req.index_hash = 0;
+  req.request_type = static_cast<request_type_code>(0);
 
   // accession
-  header.accession.clear();
+  req.accession.clear();
   auto cursor = std::find(first, last, delim);
 
   if (cursor == last)
-    return {cursor, request_error::header_parse_error_accession};
-  header.accession = std::string(first, std::distance(first, cursor));
+    return request_error::parse_error_accession;
+  req.accession = std::string(first, std::distance(first, cursor));
 
   // methylome size
   if (*cursor != delim)
-    return {cursor, request_error::header_parse_error_methylome_size};
+    return request_error::parse_error_index_hash;
   ++cursor;
   {
-    const auto [ptr, ec] = std::from_chars(cursor, last, header.methylome_size);
+    const auto [ptr, ec] = std::from_chars(cursor, last, req.index_hash);
     if (ec != std::errc{})
-      return {ptr, request_error::header_parse_error_methylome_size};
+      return request_error::parse_error_index_hash;
     cursor = ptr;
   }
 
   // request type
   if (*cursor != delim)
-    return {cursor, request_error::header_parse_error_request_type};
+    return request_error::parse_error_request_type;
   ++cursor;
   {
-    std::underlying_type_t<request_header::request_type> tmp{};
+    std::underlying_type_t<request_type_code> tmp{};
     const auto [ptr, ec] = std::from_chars(cursor, last, tmp);
     if (ec != std::errc{})
-      return {ptr, request_error::header_parse_error_request_type};
-    header.rq_type = static_cast<request_header::request_type>(tmp);
+      return request_error::parse_error_request_type;
+    req.request_type = static_cast<request_type_code>(tmp);
     cursor = ptr;
   }
-
   if (*cursor != term)
-    return {cursor, request_error::header_parse_error_request_type};
+    return request_error::parse_error_request_type;
   ++cursor;
 
-  return {cursor, request_error::ok};
+  return std::error_code{};
 }
 
 [[nodiscard]] auto
-compose(request_header_buffer &buf,
-        const request_header &hdr) -> compose_result {
-  return compose(buf.data(), buf.data() + std::size(buf), hdr);
+compose(request_buffer &buf, const request &req) -> std::error_code {
+  return compose(buf.data(), buf.data() + std::size(buf), req);
 }
 
 [[nodiscard]] auto
-parse(const request_header_buffer &buf, request_header &hdr) -> parse_result {
-  return parse(buf.data(), buf.data() + std::size(buf), hdr);
+parse(const request_buffer &buf, request &req) -> std::error_code {
+  return parse(buf.data(), buf.data() + std::size(buf), req);
 }
-
-[[nodiscard]] auto
-request_header::summary() const -> std::string {
-  return std::format(R"({{"accession": "{}", )"
-                     R"("methylome_size": {}, )"
-                     R"("request_type": {}}})",
-                     accession, methylome_size, rq_type);
-}
-
-// request
 
 [[nodiscard]] auto
 request::summary() const -> std::string {
-  return std::format(R"({{"n_intervals": {}}})", n_intervals);
-}
-
-[[nodiscard]] auto
-compose(char *first, [[maybe_unused]] char *last,
-        const request &req) -> compose_result {
-  // ADS: use to_chars here
-  const std::string s = std::format("{}\n", req.n_intervals);
-  assert(static_cast<std::iterator_traits<char *>::difference_type>(
-           std::size(s)) < std::distance(first, last));
-  // std::ranges::in_out_result::out
-  return {std::ranges::copy(s, first).out, request_error::ok};
-}
-
-[[nodiscard]] auto
-parse(const char *first, const char *last, request &req) -> parse_result {
-  [[maybe_unused]] static constexpr auto delim = '\t';
-  static constexpr auto term = '\n';
-
-  auto cursor = first;
-
-  // number of intervals
-  const auto [ptr, ec] = std::from_chars(cursor, last, req.n_intervals);
-  if (ec != std::errc{})
-    return {ptr, request_error::lookup_parse_error_n_intervals};
-  cursor = ptr;
-
-  // terminator
-  if (*cursor != term)
-    return {cursor, request_error::lookup_parse_error_n_intervals};
-  ++cursor;
-
-  return {cursor, request_error::ok};
-}
-
-// bins_request
-
-[[nodiscard]] auto
-bins_request::summary() const -> std::string {
-  return std::format(R"({{"bin_size": {}}})", bin_size);
-}
-
-[[nodiscard]] auto
-compose(char *first, [[maybe_unused]] char *last,
-        const bins_request &req) -> compose_result {
-  static constexpr auto term = '\n';
-  // ADS: use to_chars here
-  const std::string s = std::format("{}{}", req.bin_size, term);
-  assert(static_cast<std::iterator_traits<char *>::difference_type>(
-           std::size(s)) < std::distance(first, last));
-  // std::ranges::in_out_result::out
-  return {std::ranges::copy(s, first).out, request_error::ok};
-}
-
-[[nodiscard]] auto
-parse(const char *first, const char *last, bins_request &req) -> parse_result {
-  static constexpr auto term = '\n';
-
-  auto cursor = first;
-  const auto [ptr, ec] = std::from_chars(cursor, last, req.bin_size);
-  if (ec != std::errc{})
-    return {ptr, request_error::bins_error_bin_size};
-  cursor = ptr;
-
-  // check terminator
-  if (*cursor != term)
-    return {cursor, request_error::bins_error_bin_size};
-  ++cursor;
-
-  return {cursor, request_error::ok};
+  return std::format(R"({{"accession": "{}", )"
+                     R"("request_type": {}, )"
+                     R"("index_hash": {}, )"
+                     R"("aux_value": {}}})",
+                     accession, request_type, index_hash, aux_value);
 }
