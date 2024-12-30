@@ -38,8 +38,11 @@
 compose(char *first, char const *last, const request &req) -> std::error_code {
   // ADS: use to_chars here
   const std::string s = std::format("{}\n", req);
-  assert(static_cast<std::iterator_traits<char *>::difference_type>(std::size(
-           s)) < std::distance(static_cast<char const *>(first), last));
+
+  typedef std::iterator_traits<char *>::difference_type diff_type;
+  assert(static_cast<diff_type>(std::size(s)) <
+         std::distance(static_cast<char const *>(first), last));
+
   // std::ranges::in_out_result::out
   const auto data_end = std::ranges::copy(s, first);  // in_out_result
   if (data_end.out == last)
@@ -63,17 +66,6 @@ parse(char const *first, char const *last, request &req) -> std::error_code {
     return request_error::parse_error_accession;
   req.accession = std::string(first, std::distance(first, cursor));
 
-  // methylome size
-  if (*cursor != delim)
-    return request_error::parse_error_index_hash;
-  ++cursor;
-  {
-    const auto [ptr, ec] = std::from_chars(cursor, last, req.index_hash);
-    if (ec != std::errc{})
-      return request_error::parse_error_index_hash;
-    cursor = ptr;
-  }
-
   // request type
   if (*cursor != delim)
     return request_error::parse_error_request_type;
@@ -86,8 +78,31 @@ parse(char const *first, char const *last, request &req) -> std::error_code {
     req.request_type = static_cast<request_type_code>(tmp);
     cursor = ptr;
   }
+
+  // index hash
+  if (*cursor != delim)
+    return request_error::parse_error_index_hash;
+  ++cursor;
+  {
+    const auto [ptr, ec] = std::from_chars(cursor, last, req.index_hash);
+    if (ec != std::errc{})
+      return request_error::parse_error_index_hash;
+    cursor = ptr;
+  }
+
+  // aux value (either n_intervals or bin_size)
+  if (*cursor != delim)
+    return request_error::parse_error_aux_value;
+  ++cursor;
+  {
+    const auto [ptr, ec] = std::from_chars(cursor, last, req.aux_value);
+    if (ec != std::errc{})
+      return request_error::parse_error_aux_value;
+    cursor = ptr;
+  }
+
   if (*cursor != term)
-    return request_error::parse_error_request_type;
+    return request_error::parse_error_aux_value;
   ++cursor;
 
   return std::error_code{};
