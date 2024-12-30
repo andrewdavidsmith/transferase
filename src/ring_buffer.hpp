@@ -29,6 +29,8 @@
 #include <iterator>
 #include <vector>
 
+namespace xfrase {
+
 template <typename T> struct ring_buffer {
   // support queue ops and be iterable
   explicit ring_buffer(const std::size_t capacity) :
@@ -56,5 +58,7 @@ template <typename T> struct ring_buffer {
   std::size_t counter{};
   std::vector<T> buf;
 };
+
+}  // namespace xfrase
 
 #endif  // SRC_RING_BUFFER_HPP_

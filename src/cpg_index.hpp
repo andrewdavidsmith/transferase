@@ -36,6 +36,8 @@
 #include <utility>      // for std::to_underlying, std::unreachable
 #include <vector>
 
+namespace xfrase {
+
 struct genomic_interval;
 
 struct cpg_index {
@@ -76,6 +78,8 @@ get_assembly_from_filename(const std::string &filename,
 [[nodiscard]] auto
 list_cpg_indexes(const std::string &dirname,
                  std::error_code &ec) -> std::vector<std::string>;
+
+}  // namespace xfrase
 
 // cpg_index errors
 

@@ -31,13 +31,12 @@
 #include <string>
 #include <system_error>
 
+namespace xfrase {
+
 struct request;
 struct response_header;
 struct response_payload;
-
-namespace xfrase {
 struct query;
-}
 
 // handles all incoming requests
 struct request_handler {
@@ -71,5 +70,7 @@ struct request_handler {
   methylome_set ms;
   cpg_index_set indexes;
 };
+
+}  // namespace xfrase
 
 #endif  // SRC_REQUEST_HANDLER_HPP_

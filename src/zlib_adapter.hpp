@@ -62,20 +62,14 @@ enum class zlib_adapter_error : std::uint32_t {
   unexpected_return_code = 9,
 };
 
-// register zlib_adapter_error as error code enum
 template <>
 struct std::is_error_code_enum<zlib_adapter_error> : public std::true_type {};
 
-// category to provide text descriptions
 struct zlib_adapter_error_category : std::error_category {
-  const char *
-  name() const noexcept override {
-    return "zlib_adapter_error";
-  }
-  std::string
-  message(int code) const override {
+  // clang-format off
+  auto name() const noexcept -> const char * override {return "zlib_adapter_error";}
+  auto message(int code) const -> std::string override {
     using std::string_literals::operator""s;
-    // clang-format off
     switch (code) {
     case 0: return "ok"s;
     case 1: return "Z_STREAM_END"s;
@@ -88,9 +82,9 @@ struct zlib_adapter_error_category : std::error_category {
     case 8: return "Z_VERSION_ERROR"s;
     case 9: return "unexpected return code from zlib"s;
     }
-    // clang-format on
-    std::unreachable();  // hopefully this is unreacheable
+    std::unreachable();
   }
+  // clang-format on
 };
 
 inline std::error_code
@@ -98,6 +92,8 @@ make_error_code(zlib_adapter_error e) {
   static auto category = zlib_adapter_error_category{};
   return std::error_code(std::to_underlying(e), category);
 }
+
+namespace xfrase {
 
 struct gzinfile {
   gzinfile(const gzinfile &other) = delete;
@@ -248,5 +244,7 @@ is_gzip_file(const std::string &filename) -> bool;
 auto
 read_gzfile_into_buffer(const std::string &filename)
   -> std::tuple<std::vector<char>, std::error_code>;
+
+}  // namespace xfrase
 
 #endif  // SRC_ZLIB_ADAPTER_HPP_

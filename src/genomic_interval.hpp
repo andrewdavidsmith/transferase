@@ -36,6 +36,8 @@
 #include <variant>
 #include <vector>
 
+namespace xfrase {
+
 struct cpg_index_metadata;
 
 struct genomic_interval {
@@ -64,10 +66,12 @@ intervals_valid(const auto &g) -> bool {
   return std::ranges::all_of(g, [](const auto x) { return x.start <= x.stop; });
 };
 
+}  // namespace xfrase
+
 template <>
-struct std::formatter<genomic_interval> : std::formatter<std::string> {
+struct std::formatter<xfrase::genomic_interval> : std::formatter<std::string> {
   auto
-  format(const genomic_interval &gi, std::format_context &ctx) const {
+  format(const xfrase::genomic_interval &gi, std::format_context &ctx) const {
     return std::format_to(ctx.out(), "{}\t{}\t{}", gi.ch_id, gi.start, gi.stop);
   }
 };

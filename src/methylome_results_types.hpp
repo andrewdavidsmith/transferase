@@ -28,6 +28,8 @@
 #include <format>
 #include <string>
 
+namespace xfrase {
+
 struct counts_res {
   std::uint32_t n_meth{};
   std::uint32_t n_unmeth{};
@@ -39,18 +41,21 @@ struct counts_res_cov {
   std::uint32_t n_covered{};
 };
 
-template <> struct std::formatter<counts_res> : std::formatter<std::string> {
+}  // namespace xfrase
+
+template <>
+struct std::formatter<xfrase::counts_res> : std::formatter<std::string> {
   auto
-  format(const counts_res &cr, std::format_context &ctx) const {
+  format(const xfrase::counts_res &cr, std::format_context &ctx) const {
     return std::format_to(ctx.out(), R"({{"n_meth": {}, "n_unmeth": {}}})",
                           cr.n_meth, cr.n_unmeth);
   }
 };
 
 template <>
-struct std::formatter<counts_res_cov> : std::formatter<std::string> {
+struct std::formatter<xfrase::counts_res_cov> : std::formatter<std::string> {
   auto
-  format(const counts_res_cov &cr, std::format_context &ctx) const {
+  format(const xfrase::counts_res_cov &cr, std::format_context &ctx) const {
     return std::format_to(
       ctx.out(), R"({{"n_meth": {}, "n_unmeth": {}, "n_covered": {}}})",
       cr.n_meth, cr.n_unmeth, cr.n_covered);

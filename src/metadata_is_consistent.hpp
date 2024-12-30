@@ -24,10 +24,14 @@
 #ifndef SRC_METADATA_IS_CONSISTENT_HPP_
 #define SRC_METADATA_IS_CONSISTENT_HPP_
 
+namespace xfrase {
+
 struct methylome;
 struct cpg_index;
 
 [[nodiscard]] auto
 metadata_is_consistent(const methylome &meth, const cpg_index &index) -> bool;
+
+}  // namespace xfrase
 
 #endif  // SRC_METADATA_IS_CONSISTENT_HPP_

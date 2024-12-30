@@ -34,6 +34,8 @@
 #include <type_traits>  // for std::true_type
 #include <utility>      // for std::to_underlying, std::unreachable
 
+namespace xfrase {
+
 struct methylome_data;
 
 struct methylome_metadata {
@@ -106,17 +108,20 @@ compose_methylome_metadata_filename(const auto &directory, const auto &name) {
   return std::format("{}{}", wo_extn, methylome_metadata::filename_extension);
 }
 
-template <>
-struct std::formatter<methylome_metadata> : std::formatter<std::string> {
-  auto
-  format(const methylome_metadata &mm, std::format_context &ctx) const {
-    return std::format_to(ctx.out(), "{}", mm.tostring());
-  }
-};
-
 auto
 get_default_methylome_metadata_filename(const std::string &methfile)
   -> std::string;
+
+}  // namespace xfrase
+
+template <>
+struct std::formatter<xfrase::methylome_metadata>
+  : std::formatter<std::string> {
+  auto
+  format(const xfrase::methylome_metadata &mm, std::format_context &ctx) const {
+    return std::format_to(ctx.out(), "{}", mm.tostring());
+  }
+};
 
 // methylome metadata error code
 

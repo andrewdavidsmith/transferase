@@ -31,6 +31,8 @@
 #include <string_view>
 #include <utility>  // for to_underlying, unreachable
 
+namespace xfrase {
+
 enum class request_type_code : std::uint32_t {
   counts = 0,
   counts_cov = 1,
@@ -50,10 +52,12 @@ static constexpr auto request_type_code_names = std::array{
   // clang-format on
 };
 
+}  // namespace xfrase
+
 template <>
-struct std::formatter<request_type_code> : std::formatter<std::string> {
+struct std::formatter<xfrase::request_type_code> : std::formatter<std::string> {
   auto
-  format(const request_type_code &rtc, std::format_context &ctx) const {
+  format(const xfrase::request_type_code &rtc, std::format_context &ctx) const {
     return std::format_to(ctx.out(), "{}", std::to_underlying(rtc));
   }
 };

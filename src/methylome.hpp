@@ -38,6 +38,8 @@
 #include <utility>
 #include <vector>
 
+namespace xfrase {
+
 struct cpg_index;
 
 struct methylome {
@@ -86,6 +88,8 @@ is_valid_accession(const std::string &accession) -> bool {
   return std::ranges::all_of(
     accession, [](const auto c) { return std::isalnum(c) || c == '_'; });
 }
+
+}  // namespace xfrase
 
 // methylome error codes
 enum class methylome_code : std::uint32_t {

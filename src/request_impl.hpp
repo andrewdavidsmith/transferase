@@ -35,7 +35,11 @@
 #include "request.hpp"
 #include <system_error>
 
+namespace xfrase {
+
 [[nodiscard]] STATIC auto
 compose(char *first, char const *last, const request &req) -> std::error_code;
+
+}  // namespace xfrase
 
 #endif  // SRC_REQUEST_IMPL_HPP_

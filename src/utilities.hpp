@@ -29,9 +29,7 @@
  */
 
 #include <chrono>
-#include <cstdint>  // for std::uint32_t
-#include <filesystem>
-#include <format>
+#include <cstdint>   // for std::uint32_t
 #include <iterator>  // for std::size
 #include <string>
 #include <string_view>
@@ -39,29 +37,11 @@
 #include <type_traits>  // for std::true_type
 #include <utility>
 
-struct compose_result {
-  char *ptr{};
-  std::error_code error{};
-};
-
-struct parse_result {
-  const char *ptr{};
-  std::error_code error{};
-};
-
 [[nodiscard]] inline auto
 duration(const auto start, const auto stop) {
   const auto d = stop - start;
   return std::chrono::duration_cast<std::chrono::duration<double>>(d).count();
 }
-
-template <>
-struct std::formatter<std::filesystem::path> : std::formatter<std::string> {
-  auto
-  format(const std::filesystem::path &p, std::format_context &ctx) const {
-    return std::formatter<std::string>::format(p.string(), ctx);
-  }
-};
 
 [[nodiscard]] auto
 get_xfrase_config_dir_default(std::error_code &ec) -> std::string;
@@ -87,28 +67,22 @@ enum class output_file_error : std::uint32_t {
   failed_to_open = 2,
 };
 
-// register output_file_error as error code enum
 template <>
 struct std::is_error_code_enum<output_file_error> : public std::true_type {};
 
-// category to provide text descriptions
 struct output_file_category : std::error_category {
-  auto
-  name() const noexcept -> const char * override {
-    return "output_file_error";
-  }
-  auto
-  message(int code) const -> std::string override {
+  // clang-format off
+  auto name() const noexcept -> const char * override {return "output_file_error";}
+  auto message(int code) const -> std::string override {
     using std::string_literals::operator""s;
-    // clang-format off
     switch (code) {
     case 0: return "ok"s;
     case 1: return "is a directory"s;
     case 2: return "failed to open"s;
     }
-    // clang-format on
-    std::unreachable();  // hopefully
+    std::unreachable();
   }
+  // clang-format on
 };
 
 inline auto
