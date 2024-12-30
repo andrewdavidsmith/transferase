@@ -37,7 +37,7 @@ enum class server_response_code : std::uint32_t {
   ok = 0,
   invalid_accession = 1,
   invalid_request_type = 2,
-  invalid_methylome_size = 3,
+  invalid_index_hash = 3,
   methylome_not_found = 4,
   index_not_found = 5,
   server_failure = 6,
