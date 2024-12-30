@@ -45,6 +45,8 @@
 #include <type_traits>  // for std::remove_cvref_t
 #include <vector>
 
+namespace xfrase {
+
 auto
 request_handler::add_response_size(const request &req,
                                    response_header &resp_hdr) -> void {
@@ -206,3 +208,5 @@ request_handler::handle_get_bins(const request &req, response_header &resp_hdr,
   // ADS: if we arrive here, the request was bad
   resp_hdr.status = server_response_code::bad_request;
 }
+
+}  // namespace xfrase

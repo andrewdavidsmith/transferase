@@ -52,6 +52,8 @@
 #include <syslog.h>
 #include <unistd.h>
 
+namespace xfrase {
+
 static auto
 write_pid_to_file(std::error_code &ec) -> void {
   static const auto pid_file_rhs =
@@ -391,3 +393,5 @@ server::do_daemon_await_stop() -> void {
       ioc.stop();
     });
 }
+
+}  // namespace xfrase

@@ -38,6 +38,8 @@
 #include <string>
 #include <sys/types.h>  // for ssize_t
 
+namespace xfrase {
+
 [[nodiscard]] auto
 find_path_to_binary() -> std::string {
   static constexpr auto path_buf_len = 1024;
@@ -64,3 +66,5 @@ find_path_to_binary() -> std::string {
 #endif
   return std::string{};
 }
+
+}  // namespace xfrase

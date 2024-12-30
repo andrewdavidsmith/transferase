@@ -37,6 +37,8 @@
 #include <utility>  // std::move
 #include <vector>
 
+namespace xfrase {
+
 [[nodiscard]] auto
 is_gzip_file(const std::string &filename) -> bool {
   auto f = std::fopen(filename.data(), "rb");
@@ -125,3 +127,5 @@ read_gzfile_into_buffer(const std::string &filename)
 
   return {std::move(buffer), {}};  // Success
 }
+
+}  // namespace xfrase

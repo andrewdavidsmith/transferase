@@ -52,6 +52,8 @@
 #include <print>
 #endif
 
+namespace xfrase {
+
 [[nodiscard]] auto
 methylome_data::get_n_cpgs_from_file(const std::string &filename,
                                      std::error_code &ec) -> std::uint32_t {
@@ -348,3 +350,5 @@ methylome_data::hash() const -> std::uint64_t {
 methylome_data::get_n_cpgs() const -> std::uint32_t {
   return std::size(cpgs);
 }
+
+}  // namespace xfrase

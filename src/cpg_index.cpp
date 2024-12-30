@@ -49,6 +49,8 @@
 #include <utility>  // for std::move
 #include <vector>
 
+namespace xfrase {
+
 struct genomic_interval;
 
 [[nodiscard]] auto
@@ -452,3 +454,5 @@ list_cpg_indexes(const std::string &dirname,
 
   return meta_names;
 }
+
+}  // namespace xfrase

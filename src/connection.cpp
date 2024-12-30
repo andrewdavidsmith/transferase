@@ -34,6 +34,8 @@
 #include <compare>  // for operator<=
 #include <system_error>
 
+namespace xfrase {
+
 auto
 connection::stop() -> void {
   lgr.debug("{} Initiating connection shutdown.", conn_id);
@@ -247,3 +249,5 @@ connection::check_deadline() -> void {
       std::bind(&connection::check_deadline, shared_from_this()));
   }
 }
+
+}  // namespace xfrase

@@ -31,6 +31,8 @@
 #include <string_view>
 #include <system_error>
 
+namespace xfrase {
+
 [[nodiscard]] auto
 logger::set_attributes(const std::string_view appname) -> std::error_code {
   // get the hostname
@@ -78,3 +80,5 @@ logger::set_attributes(const std::string_view appname) -> std::error_code {
 
   return std::make_error_code(std::errc{});
 };
+
+}  // namespace xfrase

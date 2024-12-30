@@ -36,6 +36,8 @@
 #include <unordered_set>
 #include <vector>
 
+namespace xfrase {
+
 [[nodiscard]] auto
 methylome::init_metadata(const cpg_index &index) -> std::error_code {
   static constexpr auto is_compressed_init = false;
@@ -176,3 +178,5 @@ get_methylome_name_from_filename(const std::string &filename) -> std::string {
   const auto dot = s.find('.');
   return dot == std::string::npos ? s : s.replace(dot, std::string::npos, "");
 }
+
+}  // namespace xfrase

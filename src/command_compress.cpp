@@ -79,7 +79,7 @@ command_compress_main(int argc, char *argv[]) -> int {
   std::string methylome_directory{};
   std::string methylome_name{};
   std::string methylome_outdir{};
-  xfrase_log_level log_level{};
+  xfrase::log_level_t log_level{};
   bool uncompress{false};
 
   namespace po = boost::program_options;
@@ -93,7 +93,7 @@ command_compress_main(int argc, char *argv[]) -> int {
     ("output,o", po::value(&methylome_outdir)->required(),
      "methylome output directory")
     ("uncompress,u", po::bool_switch(&uncompress), "uncompress the file")
-    ("log-level,v", po::value(&log_level)->default_value(logger::default_level),
+    ("log-level,v", po::value(&log_level)->default_value(xfrase::logger::default_level),
      "log level {debug,info,warning,error,critical}")
     ;
   // clang-format on
@@ -116,7 +116,8 @@ command_compress_main(int argc, char *argv[]) -> int {
     return EXIT_FAILURE;
   }
 
-  auto &lgr = logger::instance(shared_from_cout(), command, log_level);
+  auto &lgr =
+    xfrase::logger::instance(xfrase::shared_from_cout(), command, log_level);
   if (!lgr) {
     std::println("Failure initializing logging: {}.", lgr.get_status());
     return EXIT_FAILURE;
@@ -130,11 +131,11 @@ command_compress_main(int argc, char *argv[]) -> int {
     {"Uncompress", std::format("{}", uncompress)},
     // clang-format on
   };
-  log_args<xfrase_log_level::info>(args_to_log);
+  xfrase::log_args<xfrase::log_level_t::info>(args_to_log);
 
   std::error_code ec;
   const auto read_start = std::chrono::high_resolution_clock::now();
-  auto meth = methylome::read(methylome_directory, methylome_name, ec);
+  auto meth = xfrase::methylome::read(methylome_directory, methylome_name, ec);
   const auto read_stop = std::chrono::high_resolution_clock::now();
   if (ec) {
     lgr.error("Error reading methylome {} {}: {}", methylome_directory,

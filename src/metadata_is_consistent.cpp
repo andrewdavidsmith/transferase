@@ -29,6 +29,8 @@
 #include "methylome_metadata.hpp"
 #include <string>
 
+namespace xfrase {
+
 [[nodiscard]] auto
 metadata_is_consistent(const methylome &meth, const cpg_index &index) -> bool {
   const auto versions_match = (index.meta.version == meth.meta.version);
@@ -39,3 +41,5 @@ metadata_is_consistent(const methylome &meth, const cpg_index &index) -> bool {
   return versions_match && index_hashes_match && assemblies_match &&
          n_cpgs_match;
 }
+
+}  // namespace xfrase

@@ -23,11 +23,11 @@
 
 #include "methylome_metadata.hpp"
 
-#include "automatic_json.hpp"  // for tag_invoke
+// #include "automatic_json.hpp"  // for tag_invoke
 #include "environment_utilities.hpp"
 
 // ADS: this one seems not needed
-#include <boost/container_hash/hash.hpp>  // for boost::hash_range
+// #include <boost/container_hash/hash.hpp>  // for boost::hash_range
 #include <boost/json.hpp>
 
 #include <cerrno>
@@ -38,6 +38,8 @@
 #include <string>
 #include <system_error>
 #include <tuple>  // for std::tie
+
+namespace xfrase {
 
 [[nodiscard]] auto
 methylome_metadata::init_env() -> std::error_code {
@@ -121,3 +123,5 @@ get_default_methylome_metadata_filename(const std::string &methfile)
   -> std::string {
   return std::format("{}.json", methfile);
 }
+
+}  // namespace xfrase

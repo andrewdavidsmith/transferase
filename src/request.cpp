@@ -23,6 +23,7 @@
 
 #include "request.hpp"
 
+#include "request_impl.hpp"
 #include "request_type_code.hpp"  // IWYU pragma: keep
 #include "xfrase_error.hpp"       // IWYU pragma: keep
 
@@ -34,7 +35,9 @@
 #include <ranges>    // IWYU pragma: keep
 #include <string>
 
-[[nodiscard]] auto
+namespace xfrase {
+
+[[nodiscard]] STATIC INLINE auto
 compose(char *first, char const *last, const request &req) -> std::error_code {
   // ADS: use to_chars here
   const std::string s = std::format("{}\n", req);
@@ -53,7 +56,7 @@ compose(char *first, char const *last, const request &req) -> std::error_code {
   return std::error_code{};
 }
 
-[[nodiscard]] auto
+[[nodiscard]] STATIC inline auto
 parse(char const *first, char const *last, request &req) -> std::error_code {
   static constexpr auto delim = '\t';
   static constexpr auto term = '\n';
@@ -129,3 +132,5 @@ request::summary() const -> std::string {
                      R"("aux_value": {}}})",
                      accession, request_type, index_hash, aux_value);
 }
+
+}  // namespace xfrase

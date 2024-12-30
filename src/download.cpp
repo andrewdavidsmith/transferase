@@ -51,6 +51,8 @@
 #include <unordered_map>
 #include <utility>  // for std::move
 
+namespace xfrase {
+
 auto
 do_download(const download_request &dr, const std::string &outfile,
             boost::asio::io_context &ioc,
@@ -205,3 +207,5 @@ download(const download_request &dr)
 
   return {header, ec};
 }
+
+}  // namespace xfrase
