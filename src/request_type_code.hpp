@@ -35,7 +35,8 @@ enum class request_type_code : std::uint32_t {
   counts_cov = 1,
   bin_counts = 2,
   bin_counts_cov = 3,
-  n_request_types = 4,
+  unknown = 4,
+  n_request_types = 5,
 };
 
 static constexpr auto request_type_code_names = std::array{
