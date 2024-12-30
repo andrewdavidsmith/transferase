@@ -22,53 +22,35 @@
  */
 
 #include <request.hpp>
+#include <request_type_code.hpp>
 
 #include <gtest/gtest.h>
 
+#include <cstring>
 #include <string>
 #include <vector>
 
-TEST(request_header_test, basic_assertions) {
-  request_header hdr;
-  EXPECT_EQ(hdr, request_header{});
+TEST(request_test, basic_assertions) {
+  request req;
+  EXPECT_EQ(req, request{});
 
-  const auto rq_type = request_header::request_type::counts;
-  hdr = request_header{"SRX012345", 12345, rq_type};
-  EXPECT_TRUE(hdr.is_valid_type());
+  const auto rq_type = request_type_code::counts;
+  req = request{"SRX012345", rq_type, 0, 0};
+  EXPECT_TRUE(req.is_valid_type());
+}
 
+TEST(request_test, valid_compose) {
+  static constexpr auto rq_type = request_type_code::counts;
+  static constexpr auto accession = "SRX012345";
   static constexpr auto buf_size{1024};
   std::vector<char> buf(buf_size);
-  const auto req = request{2, {{0, 1}, {3, 4}}};
-  const auto res = compose(buf.data(), buf.data() + std::size(buf), req);
-  EXPECT_FALSE(res.error);
-  EXPECT_EQ(std::string(buf.data(), res.ptr), "2\n");
+  const request req{accession, rq_type, 0, 0};
+  const auto res = compose(buf.data(), buf.data() + buf_size, req);
+  EXPECT_FALSE(res);
+  EXPECT_EQ(std::string(buf.data(), buf.data() + strlen(accession)), accession);
 }
 
-TEST(request_test, basic_assertions) {
-  const auto req = request{
-    3,
-    {{1, 3}, {10, 20}, {100, 321}},
-  };
-  EXPECT_EQ(req.n_intervals, 3);
-}
-
-TEST(request_test, get_query) {
-  constexpr char expected[] = {
-    1, 0, 0, 0, 3, 0, 0, 0, 10, 0, 0, 0, 20, 0, 0, 0, 100, 0, 0, 0, 65, 1, 0, 0,
-  };
-  auto req = request{
-    3,
-    {{1, 3}, {10, 20}, {100, 321}},
-  };
-  const auto n_bytes = req.get_query_n_bytes();
-  EXPECT_EQ(n_bytes, 24) << "failure in request::get_offsets_n_bytes()";
-  const char *data = req.get_query_data();
-  const char *data_end = data + n_bytes;
-  const auto data_vec = std::vector<char>(data, data_end);
-  EXPECT_STREQ(data_vec.data(), expected);
-}
-
-TEST(bins_request, basic_assertions) {
-  const auto req = bins_request{100};
-  EXPECT_EQ(req.bin_size, 100);
+TEST(request_test, basic_assertions_bins) {
+  const request req{"SRX12345", request_type_code::bin_counts, 0, 100};
+  EXPECT_EQ(req.bin_size(), 100);
 }
