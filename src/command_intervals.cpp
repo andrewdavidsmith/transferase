@@ -76,10 +76,12 @@ xfrase intervals remote -x index_dir -g hg38 -s example.com -m methylome_name -o
 #include <variant>
 #include <vector>
 
+namespace xfrase {
+
 template <typename counts_res_type>
 [[nodiscard]] static inline auto
 do_remote_intervals(const std::string &accession, const cpg_index &index,
-                    xfrase::query &&qry, const std::string &hostname,
+                    query &&qry, const std::string &hostname,
                     const std::string &port)
   -> std::tuple<std::vector<counts_res_type>, std::error_code> {
   request_type_code rq_type{};
@@ -90,7 +92,7 @@ do_remote_intervals(const std::string &accession, const cpg_index &index,
 
   request req{accession, rq_type, index.meta.index_hash, size(qry)};
 
-  xfrase::client<counts_res_type> cl(hostname, port, req, std::move(qry));
+  client<counts_res_type> cl(hostname, port, req, std::move(qry));
   const auto status = cl.run();
   if (status) {
     logger::instance().error("Transaction status: {}", status);
@@ -102,9 +104,9 @@ do_remote_intervals(const std::string &accession, const cpg_index &index,
 template <typename counts_res_type>
 [[nodiscard]] static inline auto
 do_local_intervals(const std::string &accession,
-                   const std::string &methylome_directory, xfrase::query &&qry)
+                   const std::string &methylome_directory, query &&qry)
   -> std::tuple<std::vector<counts_res_type>, std::error_code> {
-  logger &lgr = logger::instance();
+  auto &lgr = logger::instance();
 
   std::error_code ec;
   const auto meth = methylome::read(methylome_directory, accession, ec);
@@ -121,10 +123,9 @@ do_local_intervals(const std::string &accession,
 
 template <typename counts_res_type>
 static auto
-do_intervals(const std::string &accession, const cpg_index &index,
-             xfrase::query &&qry, const std::string &hostname,
-             const std::string &port, const std::string &methylome_directory,
-             const std::string &outfile,
+do_intervals(const std::string &accession, const cpg_index &index, query &&qry,
+             const std::string &hostname, const std::string &port,
+             const std::string &methylome_directory, const std::string &outfile,
              const std::vector<genomic_interval> &gis, const bool write_scores,
              const bool remote_mode) -> std::error_code {
   const auto intervals_start{std::chrono::high_resolution_clock::now()};
@@ -151,6 +152,8 @@ do_intervals(const std::string &accession, const cpg_index &index,
   return write_err;
 }
 
+}  // namespace xfrase
+
 auto
 command_intervals_main(int argc, char *argv[]) -> int {
   static constexpr auto command = "intervals";
@@ -162,6 +165,15 @@ command_intervals_main(int argc, char *argv[]) -> int {
     std::format("{}\n{}", strip(description), strip(examples));
 
   static constexpr auto default_port = "5000";
+
+  using xfrase::counts_res;
+  using xfrase::counts_res_cov;
+  using xfrase::cpg_index;
+  using xfrase::do_intervals;
+  using xfrase::genomic_interval;
+  using xfrase::log_args;
+  using xfrase::log_level_t;
+  using xfrase::logger;
 
   bool write_scores{};
   bool count_covered{};
@@ -177,7 +189,7 @@ command_intervals_main(int argc, char *argv[]) -> int {
   std::string port{};
   std::string hostname{};
   std::string outfile{};
-  xfrase_log_level log_level{};
+  log_level_t log_level{};
 
   std::string subcmd;
 
@@ -266,7 +278,7 @@ command_intervals_main(int argc, char *argv[]) -> int {
 
   const bool remote_mode = (subcmd == "remote");
 
-  auto &lgr = logger::instance(shared_from_cout(), command, log_level);
+  auto &lgr = logger::instance(xfrase::shared_from_cout(), command, log_level);
   if (!lgr) {
     std::println("Failure initializing logging: {}.", lgr.get_status());
     return EXIT_FAILURE;
@@ -288,8 +300,8 @@ command_intervals_main(int argc, char *argv[]) -> int {
   std::vector<std::tuple<std::string, std::string>> local_args{
     {"Methylome directory", methylome_directory},
   };
-  log_args<xfrase_log_level::info>(args_to_log);
-  log_args<xfrase_log_level::info>(remote_mode ? remote_args : local_args);
+  log_args<log_level_t::info>(args_to_log);
+  log_args<log_level_t::info>(remote_mode ? remote_args : local_args);
 
   std::error_code index_ec;
   const auto index = cpg_index::read(index_directory, genome_name, index_ec);
