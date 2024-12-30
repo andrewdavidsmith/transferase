@@ -62,7 +62,7 @@ struct server_response_category : std::error_category {
     case 0: return "ok"s;
     case 1: return "invalid accession"s;
     case 2: return "invalid request type"s;
-    case 3: return "invalid methylome size"s;
+    case 3: return "invalid index hash"s;
     case 4: return "methylome not found"s;
     case 5: return "index not found"s;
     case 6: return "server failure"s;
