@@ -53,13 +53,13 @@ change_permissions_to_no_write(const std::filesystem::path &dir)
   -> std::error_code {
   std::error_code ec;
   // clang-format off
-  std::filesystem::permissions(dir,
-                               std::filesystem::perms::owner_read |
-                               std::filesystem::perms::owner_exec |
-                               std::filesystem::perms::group_read |
-                               std::filesystem::perms::group_exec |
-                               std::filesystem::perms::others_read,
-                               std::filesystem::perm_options::replace, ec);
+  namespace fs = std::filesystem;
+  fs::permissions(dir, (fs::perms::owner_read |
+                        fs::perms::owner_exec |
+                        fs::perms::group_read |
+                        fs::perms::group_exec |
+                        fs::perms::others_read),
+                  fs::perm_options::replace, ec);
   // clang-format on
   return ec;
 }
