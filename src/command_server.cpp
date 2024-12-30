@@ -94,12 +94,12 @@ struct server_argset : argset_base<server_argset> {
     const auto config_dir = get_xfrase_config_dir_default(ec);
     if (ec)
       return {};
-    return std::filesystem::path(config_dir) / default_config_filename;
+    return std::filesystem::path{config_dir} / default_config_filename;
   }
 
   static constexpr auto hostname_default{"localhost"};
   static constexpr auto port_default{"5000"};
-  static constexpr auto log_level_default{xfrase::log_level_t::info};
+  static constexpr auto log_level_default{log_level_t::info};
   static constexpr auto n_threads_default{1};
   static constexpr auto max_resident_default = 32;
   std::string hostname{};
