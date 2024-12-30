@@ -49,7 +49,7 @@ generate_unique_dir_name() -> std::string {
 }
 
 [[nodiscard]] auto
-change_permissions_to_read_only(const std::filesystem::path &dir)
+change_permissions_to_no_write(const std::filesystem::path &dir)
   -> std::error_code {
   std::error_code ec;
   // clang-format off
@@ -171,17 +171,13 @@ TEST(methylome_test, invalid_write) {
   if (ec)
     return;
 
-  ec = change_permissions_to_read_only(output_directory);
+  ec = change_permissions_to_no_write(output_directory);
   if (ec)
     return;
 
   const auto proceed_this_test = write_should_fail(output_directory, ec);
   if (ec || !proceed_this_test)
     return;
-
-  const auto write_worked = try_write_to_directory(output_directory, ec);
-  EXPECT_FALSE(write_worked);
-  EXPECT_TRUE(ec);
 
   const auto meth = methylome::read(methylome_directory, methylome_name, ec);
   EXPECT_FALSE(ec);
