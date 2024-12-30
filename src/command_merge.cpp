@@ -46,8 +46,6 @@ xfrase merge -o merged.m16 -i SRX0123*.m16
 
 #include "logger.hpp"
 #include "methylome.hpp"
-#include "methylome_data.hpp"
-#include "methylome_metadata.hpp"
 #include "utilities.hpp"
 #include "xfrase_error.hpp"  // IWYU pragma: keep
 
@@ -152,7 +150,7 @@ command_merge_main(int argc, char *argv[]) -> int {
   // ADS: first read the last methylome in the input files list as we only
   // do n-1 merges so we need one to start with; we can't merge an
   // empty methylome, so we need a real one outside the loop
-  const auto last_methylome = methylome_names.back();
+  const auto &last_methylome = methylome_names.back();
   auto read_start = std::chrono::high_resolution_clock::now();
   auto meth = methylome::read(methylome_directory, last_methylome, ec);
   auto read_stop = std::chrono::high_resolution_clock::now();
@@ -179,13 +177,13 @@ command_merge_main(int argc, char *argv[]) -> int {
                 ec);
       return EXIT_FAILURE;
     }
-    const auto is_consistent = meth.meta.consistent(tmp_meth.meta);
+    const auto is_consistent = meth.is_consistent(tmp_meth);
     if (!is_consistent) {
       lgr.error("Inconsistent metadata: {} {}", last_methylome, name);
       return EXIT_FAILURE;
     }
     const auto merge_start = std::chrono::high_resolution_clock::now();
-    meth.data.add(tmp_meth.data);
+    meth.add(tmp_meth);
     const auto merge_stop = std::chrono::high_resolution_clock::now();
     merge_time += duration(merge_start, merge_stop);
   }
