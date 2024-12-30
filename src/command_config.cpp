@@ -79,6 +79,16 @@ xfrase config -c my_config_file.toml -s example.com -p 5009 --assemblies hg38,mm
 #include <variant>  // IWYU pragma: keep
 #include <vector>
 
+template <>
+struct std::formatter<std::filesystem::path> : std::formatter<std::string> {
+  auto
+  format(const std::filesystem::path &p, std::format_context &ctx) const {
+    return std::format_to(ctx.out(), "{}", p.string());
+  }
+};
+
+namespace xfrase {
+
 struct remote_indexes_resources {
   std::string host;
   std::string port;
@@ -97,14 +107,6 @@ struct remote_indexes_resources {
 };
 BOOST_DESCRIBE_STRUCT(remote_indexes_resources, (), (host, port, path))
 
-template <>
-struct std::formatter<remote_indexes_resources> : std::formatter<std::string> {
-  auto
-  format(const remote_indexes_resources &r, std::format_context &ctx) const {
-    return std::format_to(ctx.out(), "{}:{}{}", r.host, r.port, r.path);
-  }
-};
-
 [[nodiscard]] static auto
 get_remote_indexes_resources()
   -> std::tuple<std::vector<remote_indexes_resources>, std::error_code> {
@@ -112,9 +114,15 @@ get_remote_indexes_resources()
 
   static const auto exe_path = find_path_to_binary();
 
+  std::error_code ec;
   const auto exe_dir_parent =
     std::filesystem::canonical(exe_path).parent_path().parent_path();
-  if (!std::filesystem::is_directory(exe_dir_parent)) {
+  bool is_dir = std::filesystem::is_directory(exe_dir_parent, ec);
+  if (ec) {
+    std::println("Error: {} ({})", ec, exe_dir_parent);
+    return {{}, ec};
+  }
+  if (!is_dir) {
     std::println("Not a directory: {}", exe_dir_parent);
     return {{}, std::make_error_code(std::errc::not_a_directory)};
   }
@@ -122,22 +130,24 @@ get_remote_indexes_resources()
   // ADS: DATADIR comes from config.h which comes from config.h.in and
   // is set by cmake
   const auto data_path = std::filesystem::path{DATADIR};
-  const std::filesystem::path data_dir =
-    exe_dir_parent / data_path / std::string(PROJECT_NAME);
-
-  if (!std::filesystem::is_directory(data_dir)) {
-    std::println("Not a directory: {}", exe_dir_parent);
+  const auto data_dir = exe_dir_parent / data_path / std::string(PROJECT_NAME);
+  is_dir = std::filesystem::is_directory(data_dir, ec);
+  if (ec) {
+    std::println("Error: {} ({})", ec, data_dir);
+    return {{}, ec};
+  }
+  if (!is_dir) {
+    std::println("Not a directory: {}", data_dir);
     return {{}, std::make_error_code(std::errc::not_a_directory)};
   }
 
-  const std::filesystem::path json_file =
+  const auto json_file =
     data_dir / std::format("{}_data_{}.json", PROJECT_NAME, VERSION);
 
   std::ifstream in(json_file);
   if (!in)
     return {{}, std::make_error_code(std::errc(errno))};
 
-  std::error_code ec;
   const auto filesize = std::filesystem::file_size(json_file, ec);
   if (ec) {
     std::println("Bad system config file: {}", json_file);
@@ -153,10 +163,9 @@ get_remote_indexes_resources()
   std::vector<remote_indexes_resources> resources;
   boost::json::parse_into(resources, payload, ec);
   if (ec) {
-    std::println("Malformed JSON for remote resources: {}", json_file);
-    return {{}, std::make_error_code(std::errc(errno))};
+    std::println("Malformed JSON for remote resources {}: {}", json_file, ec);
+    return {{}, ec};
   }
-
   return {std::move(resources), {}};
 }
 
@@ -180,7 +189,7 @@ get_index_files(const bool quiet, const remote_indexes_resources &remote,
     const auto assem = std::string{std::cbegin(assembly), std::cend(assembly)};
     const auto stem = remote.form_target_stem(assem);
     const auto data_file =
-      std::format("{}{}", stem, cpg_index_data::filename_extension);
+      std::format("{}{}", stem, xfrase::cpg_index_data::filename_extension);
     if (!quiet)
       std::println("Download: {}", remote.form_url(data_file));
     const auto [data_hdr, data_err] =
@@ -188,7 +197,7 @@ get_index_files(const bool quiet, const remote_indexes_resources &remote,
     if (data_err)
       dl_err(data_hdr, data_err, remote.form_url(data_file));
     const auto meta_file =
-      std::format("{}{}", stem, cpg_index_metadata::filename_extension);
+      std::format("{}{}", stem, xfrase::cpg_index_metadata::filename_extension);
     if (!quiet)
       std::println("Download: {}", remote.form_url(meta_file));
     const auto [meta_hdr, meta_err] =
@@ -198,6 +207,18 @@ get_index_files(const bool quiet, const remote_indexes_resources &remote,
   }
   return {};
 }
+
+}  // namespace xfrase
+
+template <>
+struct std::formatter<xfrase::remote_indexes_resources>
+  : std::formatter<std::string> {
+  auto
+  format(const xfrase::remote_indexes_resources &r,
+         std::format_context &ctx) const {
+    return std::format_to(ctx.out(), "{}:{}{}", r.host, r.port, r.path);
+  }
+};
 
 auto
 command_config_main(int argc, char *argv[]) -> int {
@@ -209,7 +230,7 @@ command_config_main(int argc, char *argv[]) -> int {
   static const auto description_msg =
     std::format("{}\n{}", strip(description), strip(examples));
 
-  command_config_argset args;
+  xfrase::command_config_argset args;
   auto ec = args.parse(argc, argv, usage, about_msg, description_msg);
   if (ec == argument_error::help_requested)
     return EXIT_SUCCESS;
@@ -272,7 +293,7 @@ command_config_main(int argc, char *argv[]) -> int {
     return EXIT_FAILURE;
   }
 
-  const auto [remotes, remote_err] = get_remote_indexes_resources();
+  const auto [remotes, remote_err] = xfrase::get_remote_indexes_resources();
   if (remote_err) {
     std::println("Error identifying remote server: {}", remote_err);
     return EXIT_FAILURE;
