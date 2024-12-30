@@ -81,7 +81,7 @@ TEST(zlib_adapter_test, corrupted_gz_file) {
   // Manually create a corrupted gzipped file
   const auto gzfile = generate_temp_filename("corrupted", "gz");
   auto file = fopen(gzfile.data(), "wb");
-  ASSERT_NE(file, nullptr);
+  ASSERT_NE(file, nullptr);  // NOLINT
   // Write the gzip header: Magic Number (0x1F 0x8B), Compression Method
   // (DEFLATE)
   fputc(0x1F, file);  // Magic byte 1
@@ -145,7 +145,7 @@ TEST(zlib_adapter_test, small_file) {
 TEST(zlib_adapter_test, empty_file) {
   const auto gzfile = generate_temp_filename("empty", "gz");
   const auto file = fopen(gzfile.data(), "wb");
-  ASSERT_NE(file, nullptr);
+  ASSERT_NE(file, nullptr);  // NOLINT
   fclose(file);
 
   const auto [buffer, ec] = read_gzfile_into_buffer(gzfile);
