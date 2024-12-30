@@ -31,11 +31,13 @@
 #include <string>
 #include <system_error>
 
-struct bins_request;
 struct request;
-struct request_header;
 struct response_header;
 struct response_payload;
+
+namespace xfrase {
+struct query;
+}
 
 // handles all incoming requests
 struct request_handler {
@@ -51,26 +53,18 @@ struct request_handler {
     ms(methylome_dir, max_live_methylomes), indexes(index_file_dir, ec) {}
 
   auto
-  handle_header(const request_header &req_hdr,
-                response_header &resp_hdr) -> void;
+  handle_request(const request &req, response_header &resp_hdr) -> void;
 
   auto
-  handle_get_counts(const request_header &req_hdr, const request &req,
+  handle_get_counts(const request &req, const xfrase::query &qry,
                     response_header &resp_hdr, response_payload &resp) -> void;
 
   auto
-  handle_get_bins(const request_header &req_hdr, const bins_request &req,
-                  response_header &resp_hdr, response_payload &resp) -> void;
+  handle_get_bins(const request &req, response_header &resp_hdr,
+                  response_payload &resp) -> void;
 
   auto
-  add_response_size_for_bins(const request_header &req_hdr,
-                             const bins_request &req,
-                             response_header &resp_hdr) -> void;
-
-  auto
-  add_response_size_for_intervals(
-    [[maybe_unused]] const request_header &req_hdr, const request &req,
-    response_header &resp_hdr) -> void;
+  add_response_size(const request &req, response_header &resp_hdr) -> void;
 
   std::string methylome_dir;   // dir of available methylomes
   std::string index_file_dir;  // dir of cpg index files

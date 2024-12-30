@@ -31,29 +31,23 @@
 #include "methylome_metadata.hpp"
 #include "methylome_results_types.hpp"  // IWYU pragma: keep
 #include "methylome_set.hpp"            // for is_valid_accession
+#include "query.hpp"                    // IWYU pragma: keep
 #include "request.hpp"
+#include "request_type_code.hpp"
 #include "response.hpp"
 #include "utilities.hpp"
 #include "xfrase_error.hpp"
 
-#include <chrono>    // for std::chrono::high_resolution_clock
-#include <cstdint>   // for std::uint32_t
-#include <cstring>   // for std::memcpy
-#include <iterator>  // for std::size, std::pair
-#include <memory>    // for std::shared_ptr
-#include <print>
-#include <string>
+#include <chrono>       // for std::chrono::high_resolution_clock
+#include <cstring>      // for std::memcpy
+#include <iterator>     // for std::size, std::pair
+#include <memory>       // for std::shared_ptr
 #include <type_traits>  // for std::remove_cvref_t
 #include <vector>
 
-using std::println;
-using std::string;
-using std::uint32_t;
-
 auto
-request_handler::add_response_size_for_bins(const request_header &req_hdr,
-                                            const bins_request &req,
-                                            response_header &resp_hdr) -> void {
+request_handler::add_response_size(const request &req,
+                                   response_header &resp_hdr) -> void {
   // ADS: error codes in here should be converted to codes that will
   // make more sense on the other end of a connection: "can't read a
   // methylome file" => "can't find the methylome". Not the best
@@ -62,9 +56,9 @@ request_handler::add_response_size_for_bins(const request_header &req_hdr,
   std::error_code ec;
 
   // assume methylome availability has been determined
-  const auto meth = ms.get_methylome(req_hdr.accession, ec);
+  const auto meth = ms.get_methylome(req.accession, ec);
   if (ec) {
-    lgr.error("Failed to load methylome: {}", ec);
+    lgr.warning("Error loading methylome {}: {}", req.accession, ec);
     resp_hdr.status = server_response_code::methylome_not_found;
     return;
   }
@@ -75,60 +69,51 @@ request_handler::add_response_size_for_bins(const request_header &req_hdr,
     resp_hdr.status = server_response_code::index_not_found;
     return;
   }
-  resp_hdr.response_size = index->meta.get_n_bins(req.bin_size);
+  resp_hdr.response_size = req.is_intervals_request()
+                             ? req.n_intervals()
+                             : index->meta.get_n_bins(req.bin_size());
   resp_hdr.status = server_response_code::ok;
 }
 
 auto
-request_handler::add_response_size_for_intervals(
-  [[maybe_unused]] const request_header &req_hdr, const request &req,
-  response_header &resp_hdr) -> void {
-  resp_hdr.response_size = req.n_intervals;
-}
-
-// ADS: This function needs a complete request *except* it does not
-// need the offsets to have been allocated or have any values read
-// into them.
-auto
-request_handler::handle_header(const request_header &req_hdr,
-                               response_header &resp_hdr) -> void {
+request_handler::handle_request(const request &req,
+                                response_header &resp_hdr) -> void {
   auto &lgr = logger::instance();
-
   resp_hdr.response_size = 0;
 
+  // ADS: might be redundant here
   // verify that the accession makes sense
-  if (!is_valid_accession(req_hdr.accession)) {
-    lgr.warning("Malformed accession: {}", req_hdr.accession);
+  if (!is_valid_accession(req.accession)) {
+    lgr.warning("Malformed accession: {}", req.accession);
     resp_hdr.status = server_response_code::invalid_accession;
     return;
   }
 
   // verify that the request type makes sense
-  if (!req_hdr.is_valid_type()) {
-    lgr.warning("Request type not valid: {}", req_hdr.rq_type);
+  if (!req.is_valid_type()) {
+    lgr.warning("Request type not valid: {}", req.request_type);
     resp_hdr.status = server_response_code::invalid_request_type;
     return;
   }
 
-  std::error_code get_meth_err;
-  const auto get_methylome_start{std::chrono::high_resolution_clock::now()};
-  const auto meth = ms.get_methylome(req_hdr.accession, get_meth_err);
-  const auto get_methylome_stop{std::chrono::high_resolution_clock::now()};
-  lgr.debug("Elapsed time for get methylome: {:.3}s",
-            duration(get_methylome_start, get_methylome_stop));
+  std::error_code ec;
+  const auto start_time{std::chrono::high_resolution_clock::now()};
+  const auto meth = ms.get_methylome(req.accession, ec);
+  const auto stop_time{std::chrono::high_resolution_clock::now()};
+  lgr.debug("Elapsed time for get_methylome: {:.3}s",
+            duration(start_time, stop_time));
 
-  if (get_meth_err) {
-    lgr.warning("Error loading methylome: {}", req_hdr.accession);
-    lgr.warning("Error: {}", get_meth_err);
+  if (ec) {
+    lgr.warning("Error loading methylome {}: {}", req.accession, ec);
     resp_hdr.status = server_response_code::methylome_not_found;
     return;
   }
 
   // confirm that the methylome size is as expected
-  if (req_hdr.methylome_size != meth->meta.n_cpgs) {
-    lgr.warning("Incorrect methylome size (provided={}, expected={})",
-                req_hdr.methylome_size, meth->meta.n_cpgs);
-    resp_hdr.status = server_response_code::invalid_methylome_size;
+  if (req.index_hash != meth->meta.index_hash) {
+    lgr.warning("Incorrect index_hash (provided={}, expected={})",
+                req.index_hash, meth->meta.index_hash);
+    resp_hdr.status = server_response_code::invalid_index_hash;
     return;
   }
 
@@ -140,7 +125,6 @@ request_handler::handle_header(const request_header &req_hdr,
 
   // ADS TODO: allocate the space to start reading offsets? Can't do
   // that if the number of intervals is not yet known
-  resp_hdr.response_size = req_hdr.methylome_size;
 }
 
 [[nodiscard]] static inline auto
@@ -155,30 +139,28 @@ counts_to_payload(const auto &counts) -> response_payload {
 }
 
 auto
-request_handler::handle_get_counts(const request_header &req_hdr,
-                                   const request &req,
+request_handler::handle_get_counts(const request &req, const xfrase::query &qry,
                                    response_header &resp_hdr,
                                    response_payload &resp_data) -> void {
   auto &lgr = logger::instance();
 
   // assume methylome availability has been determined
-  std::error_code get_meth_err;
-  const auto meth = ms.get_methylome(req_hdr.accession, get_meth_err);
-  if (get_meth_err) {
-    lgr.error("Failed to load methylome: {}", get_meth_err);
-    // keep methylome size in response header
-    resp_hdr.status = server_response_code::server_failure;
+  std::error_code ec;
+  const auto meth = ms.get_methylome(req.accession, ec);
+  if (ec) {
+    lgr.error("Failed to load methylome {}: {}", req.accession, ec);
+    resp_hdr.status = ec;
     return;
   }
 
-  lgr.debug("Computing counts for methylome: {}", req_hdr.accession);
+  lgr.debug("Computing counts for methylome: {}", req.accession);
 
-  if (req_hdr.rq_type == request_header::request_type::counts) {
-    resp_data = counts_to_payload(meth->data.get_counts(req.offsets));
+  if (req.request_type == request_type_code::counts) {
+    resp_data = counts_to_payload(meth->data.get_counts(qry));
     return;
   }
-  if (req_hdr.rq_type == request_header::request_type::counts_cov) {
-    resp_data = counts_to_payload(meth->data.get_counts_cov(req.offsets));
+  if (req.request_type == request_type_code::counts_cov) {
+    resp_data = counts_to_payload(meth->data.get_counts_cov(qry));
     return;
   }
 
@@ -187,23 +169,20 @@ request_handler::handle_get_counts(const request_header &req_hdr,
 }
 
 auto
-request_handler::handle_get_bins(const request_header &req_hdr,
-                                 const bins_request &req,
-                                 response_header &resp_hdr,
+request_handler::handle_get_bins(const request &req, response_header &resp_hdr,
                                  response_payload &resp_data) -> void {
   auto &lgr = logger::instance();
 
   // assume methylome availability has been determined
   std::error_code ec;
-  const auto meth = ms.get_methylome(req_hdr.accession, ec);
+  const auto meth = ms.get_methylome(req.accession, ec);
   if (ec) {
-    lgr.error("Failed to load methylome: {}", ec);
-    // keep methylome size in response header
-    resp_hdr.status = server_response_code::server_failure;
+    lgr.error("Failed to load methylome {}: {}", req.accession, ec);
+    resp_hdr.status = ec;
     return;
   }
 
-  lgr.debug("Computing bins for methylome: {}", req_hdr.accession);
+  lgr.debug("Computing bins for methylome: {}", req.accession);
 
   // need cpg index to know what is in each bin
   const auto index = indexes.get_cpg_index(meth->meta.assembly, ec);
@@ -213,14 +192,14 @@ request_handler::handle_get_bins(const request_header &req_hdr,
     return;
   }
 
-  if (req_hdr.rq_type == request_header::request_type::bin_counts) {
-    resp_data = counts_to_payload(meth->data.get_bins(req.bin_size, *index));
+  if (req.request_type == request_type_code::bin_counts) {
+    resp_data = counts_to_payload(meth->data.get_bins(req.bin_size(), *index));
     return;
   }
 
-  if (req_hdr.rq_type == request_header::request_type::bin_counts_cov) {
+  if (req.request_type == request_type_code::bin_counts_cov) {
     resp_data =
-      counts_to_payload(meth->data.get_bins_cov(req.bin_size, *index));
+      counts_to_payload(meth->data.get_bins_cov(req.bin_size(), *index));
     return;
   }
 
