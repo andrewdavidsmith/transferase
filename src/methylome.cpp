@@ -100,7 +100,9 @@ methylome::write(const std::string &outdir,
   const auto meta_filename = compose_methylome_metadata_filename(fn_wo_extn);
   const auto meta_write_ec = meta.write(meta_filename);
   if (meta_write_ec) {
-    if (std::filesystem::exists(meta_filename)) {
+    std::error_code ec;
+    const auto meta_exists = std::filesystem::exists(meta_filename, ec);
+    if (!ec && meta_exists) {
       std::error_code remove_ec;
       std::filesystem::remove(meta_filename, remove_ec);
     }
@@ -109,11 +111,17 @@ methylome::write(const std::string &outdir,
   const auto data_filename = compose_methylome_data_filename(fn_wo_extn);
   const auto data_write_ec = data.write(data_filename, meta.is_compressed);
   if (data_write_ec) {
-    std::error_code remove_ec;
-    if (std::filesystem::exists(data_filename))
+    std::error_code ec;
+    const auto data_exists = std::filesystem::exists(data_filename, ec);
+    if (!ec && data_exists) {
+      std::error_code remove_ec;
+      std::filesystem::remove(data_filename, remove_ec);
+    }
+    const auto meta_exists = std::filesystem::exists(meta_filename, ec);
+    if (!ec && meta_exists) {
+      std::error_code remove_ec;
       std::filesystem::remove(meta_filename, remove_ec);
-    if (std::filesystem::exists(meta_filename))
-      std::filesystem::remove(meta_filename, remove_ec);
+    }
   }
   return data_write_ec;
 }
