@@ -25,6 +25,7 @@
 #define SRC_CONNECTION_HPP_
 
 #include "logger.hpp"
+#include "query.hpp"
 #include "request.hpp"
 #include "response.hpp"
 
@@ -74,12 +75,12 @@ struct connection : public std::enable_shared_from_this<connection> {
   // Allocate space for offsets and initialize the variables that
   // track where we are in the buffer as data arrives.
   auto
-  prepare_to_read_offsets() -> void;
+  prepare_to_read_query() -> void;
 
   auto
   read_request() -> void;  // read 'request'
   auto
-  read_offsets() -> void;  // read the 'offsets' part of request
+  read_query() -> void;  // read the 'query' part of request
   auto
   compute_bins() -> void;  // do the computation for bins
 
@@ -96,10 +97,8 @@ struct connection : public std::enable_shared_from_this<connection> {
   boost::asio::ip::tcp::socket socket;  // this connection's socket
   boost::asio::steady_timer deadline;
   request_handler &handler;  // handles incoming requests
-  request_header_buffer req_hdr_buf{};
-  request_header req_hdr;  // this connection's request header
-  request req;             // this connection's request
-  bins_request bins_req;   // this connection's bins request
+  request_buffer req_buf{};
+  request req;  // this connection's request
   response_header_buffer resp_hdr_buf{};
   response_header resp_hdr;  // header of the response
   response_payload resp;     // response to send back
@@ -109,6 +108,7 @@ struct connection : public std::enable_shared_from_this<connection> {
 
   // These help keep track of where we are in the incoming offsets;
   // they might best be associated with the request.
+  xfrase::query qry;
   std::size_t query_byte{};
   std::size_t query_remaining{};
 };

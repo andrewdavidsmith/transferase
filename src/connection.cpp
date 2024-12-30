@@ -23,19 +23,16 @@
 
 #include "connection.hpp"
 
-#include "request.hpp"
+#include "query.hpp"
 #include "request_handler.hpp"
 #include "response.hpp"
-#include "utilities.hpp"
 
 #include <boost/asio.hpp>
 #include <boost/system.hpp>
 
 #include <chrono>
-#include <compare>   // for operator<=
-#include <iterator>  // for cend
+#include <compare>  // for operator<=
 #include <system_error>
-#include <vector>
 
 auto
 connection::stop() -> void {
@@ -47,12 +44,14 @@ connection::stop() -> void {
 }
 
 auto
-connection::prepare_to_read_offsets() -> void {
-  // This function is needed because this can't be done in the
-  // read_offsets() function as it is recursive
-  req.offsets.resize(req.n_intervals);        // get space for offsets
-  query_remaining = req.get_query_n_bytes();  // init counters
-  query_byte = 0;                             // should be init to this
+connection::prepare_to_read_query() -> void {
+  // ADS: This can't be done in read_query() function as it is
+  // recursive. If intervals request, then 'aux_value' is size of
+  // query
+  qry.resize(req.aux_value);
+  // ADS: initialize the counters used while reading the query
+  query_remaining = qry.get_n_bytes();
+  query_byte = 0;
 }
 
 auto
@@ -61,47 +60,25 @@ connection::read_request() -> void {
   auto self(shared_from_this());
   // default capturing 'this' puts names in search
   boost::asio::async_read(
-    socket, boost::asio::buffer(req_hdr_buf),
-    boost::asio::transfer_exactly(request_header_buf_size),
+    socket, boost::asio::buffer(req_buf),
+    boost::asio::transfer_exactly(request_buffer_size),
     [this, self](const boost::system::error_code ec,
                  [[maybe_unused]] const std::size_t bytes_transferred) {
       // waiting is done; remove deadline for now
       deadline.expires_at(boost::asio::steady_timer::time_point::max());
       if (!ec) {
-        if (const auto req_hdr_parse{parse(req_hdr_buf, req_hdr)};
-            !req_hdr_parse.error) {
-          lgr.debug("{} Received request header: {}", conn_id,
-                    req_hdr.summary());
-          handler.handle_header(req_hdr, resp_hdr);
+        if (const auto req_parse_error = parse(req_buf, req);
+            !req_parse_error) {
+          lgr.debug("{} Received request: {}", conn_id, req.summary());
+          handler.handle_request(req, resp_hdr);
           if (!resp_hdr.error()) {
-            if (req_hdr.is_intervals_request()) {
-              if (const auto req_parse =
-                    parse(req_hdr_parse.ptr, cend(req_hdr_buf), req);
-                  !req_parse.error) {
-                prepare_to_read_offsets();
-                handler.add_response_size_for_intervals(req_hdr, req, resp_hdr);
-                read_offsets();
-              }
-              else {
-                lgr.warning("{} Request parse error: {}", conn_id,
-                            req_parse.error);
-                resp_hdr = {req_parse.error, 0};
-                respond_with_error();
-              }
+            handler.add_response_size(req, resp_hdr);
+            if (req.is_intervals_request()) {
+              prepare_to_read_query();
+              read_query();
             }
-            else {  // is_bins_request
-              if (const auto req_parse =
-                    parse(req_hdr_parse.ptr, cend(req_hdr_buf), bins_req);
-                  !req_parse.error) {
-                handler.add_response_size_for_bins(req_hdr, bins_req, resp_hdr);
-                compute_bins();
-              }
-              else {
-                lgr.warning("{} Bins request parse error: {}", conn_id,
-                            req_parse.error);
-                resp_hdr = {req_parse.error, 0};
-                respond_with_error();
-              }
+            else {  // req.is_bins_request()
+              compute_bins();
             }
           }
           else {
@@ -110,9 +87,8 @@ connection::read_request() -> void {
           }
         }
         else {
-          lgr.warning("{} Request parse error: {}", conn_id,
-                      req_hdr_parse.error);
-          resp_hdr = {req_hdr_parse.error, 0};
+          lgr.warning("{} Request parse error: {}", conn_id, req_parse_error);
+          resp_hdr = {req_parse_error, 0};
           respond_with_error();
         }
       }
@@ -128,10 +104,10 @@ connection::read_request() -> void {
 }
 
 auto
-connection::read_offsets() -> void {
+connection::read_query() -> void {
   auto self(shared_from_this());
   socket.async_read_some(
-    boost::asio::buffer(req.get_query_data() + query_byte, query_remaining),
+    boost::asio::buffer(qry.data() + query_byte, query_remaining),
     [this, self](const boost::system::error_code ec,
                  const std::size_t bytes_transferred) {
       // remove deadline while doing computation
@@ -140,18 +116,18 @@ connection::read_offsets() -> void {
         query_remaining -= bytes_transferred;
         query_byte += bytes_transferred;
         if (query_remaining == 0) {
-          lgr.debug("{} Finished reading offsets ({}B)", conn_id, query_byte);
-          handler.handle_get_counts(req_hdr, req, resp_hdr, resp);
+          lgr.debug("{} Finished reading query ({}B)", conn_id, query_byte);
+          handler.handle_get_counts(req, qry, resp_hdr, resp);
           lgr.debug("{} Finished computing levels in intervals", conn_id);
           // exiting the read loop -- no deadline for now
           respond_with_header();
         }
         else
-          read_offsets();
+          read_query();
       }
       else {
-        lgr.warning("{} Error reading offsets: {}", conn_id, ec);
-        resp_hdr = {request_error::lookup_error_reading_offsets, 0};
+        lgr.warning("{} Error reading query: {}", conn_id, ec);
+        resp_hdr = {request_error::error_reading_query, 0};
         // exiting the read loop -- no deadline for now
         respond_with_error();
       }
@@ -162,15 +138,15 @@ connection::read_offsets() -> void {
 auto
 connection::compute_bins() -> void {
   deadline.expires_at(boost::asio::steady_timer::time_point::max());
-  handler.handle_get_bins(req_hdr, bins_req, resp_hdr, resp);
+  handler.handle_get_bins(req, resp_hdr, resp);
   lgr.debug("{} Finished computing levels in bins", conn_id);
   respond_with_header();
 }
 
 auto
 connection::respond_with_error() -> void {
-  if (const auto resp_hdr_compose{compose(resp_hdr_buf, resp_hdr)};
-      !resp_hdr_compose.error) {
+  const auto compose_error = compose(resp_hdr_buf, resp_hdr);
+  if (!compose_error) {
     lgr.warning("{} Responding with error: {}", conn_id, resp_hdr.summary());
     auto self(shared_from_this());
     boost::asio::async_write(
@@ -185,7 +161,7 @@ connection::respond_with_error() -> void {
     deadline.expires_after(std::chrono::seconds(read_timeout_seconds));
   }
   else {
-    lgr.error("{} Error responding: {}", conn_id, resp_hdr_compose.error);
+    lgr.error("{} Error responding: {}", conn_id, compose_error);
     stop();
   }
 }
@@ -193,8 +169,8 @@ connection::respond_with_error() -> void {
 auto
 connection::respond_with_header() -> void {
   lgr.debug("{} Responding with header: {}", conn_id, resp_hdr.summary());
-  if (const auto resp_hdr_composed{compose(resp_hdr_buf, resp_hdr)};
-      !resp_hdr_composed.error) {
+  const auto compose_error = compose(resp_hdr_buf, resp_hdr);
+  if (!compose_error) {
     auto self(shared_from_this());
     boost::asio::async_write(
       socket, boost::asio::buffer(resp_hdr_buf),
@@ -211,8 +187,7 @@ connection::respond_with_header() -> void {
     deadline.expires_after(std::chrono::seconds(read_timeout_seconds));
   }
   else {
-    lgr.error("{} Error composing response header: {}", conn_id,
-              resp_hdr_composed.error);
+    lgr.error("{} Error composing response header: {}", conn_id, compose_error);
     stop();
   }
 }
