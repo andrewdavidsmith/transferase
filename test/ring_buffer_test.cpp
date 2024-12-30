@@ -28,6 +28,8 @@
 #include <string>
 #include <vector>
 
+using namespace xfrase;  // NOLINT
+
 TEST(ring_buffer_test, push_back_and_size) {
   ring_buffer<std::string> buffer(3);
   EXPECT_EQ(buffer.size(), 0);

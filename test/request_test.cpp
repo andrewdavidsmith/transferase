@@ -28,7 +28,8 @@
 
 #include <cstring>
 #include <string>
-#include <vector>
+
+using namespace xfrase;  // NOLINT
 
 TEST(request_test, basic_assertions) {
   request req;
@@ -42,10 +43,9 @@ TEST(request_test, basic_assertions) {
 TEST(request_test, valid_compose) {
   static constexpr auto rq_type = request_type_code::counts;
   static constexpr auto accession = "SRX012345";
-  static constexpr auto buf_size{1024};
-  std::vector<char> buf(buf_size);
+  request_buffer buf;
   const request req{accession, rq_type, 0, 0};
-  const auto res = compose(buf.data(), buf.data() + buf_size, req);
+  const auto res = compose(buf, req);
   EXPECT_FALSE(res);
   EXPECT_EQ(std::string(buf.data(), buf.data() + strlen(accession)), accession);
 }

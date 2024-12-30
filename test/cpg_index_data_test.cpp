@@ -34,6 +34,8 @@
 #include <string>
 #include <vector>
 
+namespace xfrase {
+
 TEST(cpg_index_data_test, basic_assertions) {
   cpg_index_data data;
   EXPECT_EQ(data.positions, std::vector<cpg_index_data::vec>());
@@ -129,3 +131,5 @@ TEST(cpg_index_data_test, valid_get_query_within_chrom) {
   });
   EXPECT_EQ(qry, expected);
 }
+
+}  // namespace xfrase

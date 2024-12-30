@@ -36,6 +36,8 @@
 #include <system_error>
 #include <vector>
 
+using namespace xfrase;  // NOLINT
+
 TEST(cpg_index_test, filename_functions) {
   static constexpr auto filename1 = "asdf";
 

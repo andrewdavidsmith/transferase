@@ -33,6 +33,8 @@
 #include <string>
 #include <unordered_map>
 
+using namespace xfrase;  // NOLINT
+
 TEST(genomic_interval_test, basic_assertions) {
   static constexpr auto index_dir{"data"};
   static constexpr auto assembly{"tProrsus1"};

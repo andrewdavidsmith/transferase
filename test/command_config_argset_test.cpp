@@ -31,6 +31,8 @@
 #include <string>
 #include <vector>
 
+using namespace xfrase;  // NOLINT
+
 TEST(command_config_argset_test, run_success) {
   // clang-format off
   std::vector<const char *> argv = {

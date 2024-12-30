@@ -36,6 +36,8 @@
 #include <string>
 #include <system_error>
 
+namespace xfrase {
+
 TEST(command_index_test, basic_test) {
   // Input files for test
   static constexpr auto genome_directory = "data/lutions/raw";
@@ -87,3 +89,5 @@ TEST(command_index_test, basic_test) {
     std::filesystem::remove(meta_outfile, ec);
   EXPECT_EQ(ec, std::error_code{});
 }
+
+}  // namespace xfrase

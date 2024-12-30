@@ -37,6 +37,8 @@
 #include <string_view>
 #include <system_error>
 
+namespace xfrase {
+
 TEST(command_merge_test, basic_local_test) {
   // Input files for test
   static constexpr auto methylome_directory = "data/lutions/methylomes";
@@ -99,3 +101,5 @@ TEST(command_merge_test, basic_local_test) {
     std::filesystem::remove(output_meta_fn, ec);
   EXPECT_FALSE(ec);
 }
+
+}  // namespace xfrase

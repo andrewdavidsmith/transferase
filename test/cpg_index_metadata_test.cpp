@@ -35,6 +35,8 @@
 #include <string>
 #include <vector>
 
+using namespace xfrase;  // NOLINT  // NOLINT
+
 TEST(cpg_index_metadata_test, basic_assertions) {
   cpg_index_metadata meta;
   EXPECT_EQ(meta.get_n_cpgs_chrom(), std::vector<std::uint32_t>());
