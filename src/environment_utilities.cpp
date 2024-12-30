@@ -39,7 +39,6 @@
 #include <string>
 #include <system_error>
 #include <tuple>
-#include <utility>
 
 namespace xfrase {
 
@@ -56,7 +55,7 @@ get_username() -> std::tuple<std::string, std::error_code> {
             std::make_error_code(s == 0 ? std::errc::invalid_argument
                                         : std::errc(errno))};
   // ADS: pw_name below might be better as pw_gecos
-  return {std::move(std::string(pwd.pw_name)), {}};
+  return std::make_tuple(std::string(pwd.pw_name), std::error_code{});
 }
 
 [[nodiscard]] auto
