@@ -31,6 +31,8 @@
 #include <filesystem>
 #include <string>
 
+using namespace xfrase;  // NOLINT
+
 TEST(methylome_test, invalid_accession) {
   auto res = is_valid_accession("invalid.accession");
   EXPECT_FALSE(res);

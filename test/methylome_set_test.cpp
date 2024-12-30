@@ -35,6 +35,8 @@
 #include <unordered_map>
 #include <vector>
 
+using namespace xfrase;  // NOLINT
+
 class methylome_set_mock : public ::testing::Test {
 protected:
   auto

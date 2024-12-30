@@ -32,6 +32,8 @@
 #include <string>
 #include <system_error>
 
+using namespace xfrase;  // NOLINT
+
 // Mock functions to simulate external dependencies
 [[nodiscard]]
 static inline std::string

@@ -35,6 +35,8 @@
 #include <string>
 #include <system_error>
 
+using namespace xfrase;  // NOLINT
+
 // helper function to create a temporary gzip file
 [[nodiscard]]
 static auto

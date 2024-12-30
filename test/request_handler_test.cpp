@@ -48,6 +48,8 @@
 #include <tuple>     // for std::ignore
 #include <unordered_map>
 
+using namespace xfrase;  // NOLINT
+
 TEST(request_handler_test, basic_assertions) {
   std::error_code ec;
   request_handler rh("data", "data", 8, ec);
@@ -66,7 +68,7 @@ protected:
     index_file_dir = "data/lutions/indexes";
     raw_data_dir = "data/lutions/raw";
 
-    logger::instance(shared_from_cout(), "command", xfrase_log_level::critical);
+    logger::instance(shared_from_cout(), "command", log_level_t::critical);
 
     mock_methylome_set =
       std::make_unique<methylome_set>(methylome_dir, max_live_methylomes);
