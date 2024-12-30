@@ -44,11 +44,9 @@ enum class server_response_code : std::uint32_t {
   bad_request = 7,
 };
 
-// register server_response_code as error code enum
 template <>
 struct std::is_error_code_enum<server_response_code> : public std::true_type {};
 
-// category to provide text descriptions
 struct server_response_category : std::error_category {
   auto
   name() const noexcept -> const char * override {
@@ -79,21 +77,19 @@ make_error_code(server_response_code e) -> std::error_code {
   return std::error_code(std::to_underlying(e), category);
 }
 
-// print std::error_code messages
 template <>
 struct std::formatter<std::error_code> : std::formatter<std::string> {
   auto
   format(const std::error_code &e, std::format_context &ctx) const {
-    return std::formatter<std::string>::format(e.message(), ctx);
+    return std::format_to(ctx.out(), "{}", e.message());
   }
 };
 
-// print boost::system::error_code messages
 template <>
 struct std::formatter<boost::system::error_code> : std::formatter<std::string> {
   auto
   format(const boost::system::error_code &e, std::format_context &ctx) const {
-    return std::formatter<std::string>::format(e.message(), ctx);
+    return std::format_to(ctx.out(), "{}", e.message());
   }
 };
 
