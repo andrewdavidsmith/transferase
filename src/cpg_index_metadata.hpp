@@ -36,59 +36,7 @@
 #include <utility>  // for to_underlying, unreachable
 #include <vector>
 
-enum class cpg_index_metadata_error : std::uint32_t {
-  ok = 0,
-  version_not_found = 1,
-  host_not_found = 2,
-  user_not_found = 3,
-  creation_time_not_found = 4,
-  chrom_names_not_found = 5,
-  index_hash_not_found = 6,
-  assembly_not_found = 7,
-  n_cpgs_not_found = 8,
-  failure_parsing_json = 9,
-  inconsistent = 10,
-  n_values = 11,
-};
-
-// register cpg_index_metadata_error as error code enum
-template <>
-struct std::is_error_code_enum<cpg_index_metadata_error>
-  : public std::true_type {};
-
-// category to provide text descriptions
-struct cpg_index_metadata_error_category : std::error_category {
-  const char *
-  name() const noexcept override {
-    return "cpg_index_metadata_error";
-  }
-  std::string
-  message(int code) const override {
-    using std::string_literals::operator""s;
-    // clang-format off
-    switch (code) {
-    case 0: return "ok"s;
-    case 1: return "verion not found"s;
-    case 2: return "host not found"s;
-    case 3: return "user not found"s;
-    case 4: return "creation_time not found"s;
-    case 5: return "chrom names not found"s;
-    case 6: return "index_hash not found"s;
-    case 7: return "assembly not found"s;
-    case 8: return "n_cpgs not found"s;
-    case 9: return "failure parsing methylome metadata json"s;
-    case 10: return "inconsistent metadata"s;
-    }
-    // clang-format on
-    std::unreachable();  // hopefully this is unreacheable
-  }
-};
-
-inline std::error_code
-make_error_code(cpg_index_metadata_error e) {
-  static auto category = cpg_index_metadata_error_category{};
-  return std::error_code(std::to_underlying(e), category);
-}
+namespace xfrase {
 
 struct cpg_index_metadata {
   static constexpr auto filename_extension{".cpg_idx.json"};
@@ -158,12 +106,65 @@ compose_cpg_index_metadata_filename(const auto &directory, const auto &name) {
   return std::format("{}{}", wo_extn, cpg_index_metadata::filename_extension);
 }
 
+}  // namespace xfrase
+
 template <>
-struct std::formatter<cpg_index_metadata> : std::formatter<std::string> {
+struct std::formatter<xfrase::cpg_index_metadata>
+  : std::formatter<std::string> {
   auto
-  format(const cpg_index_metadata &cm, std::format_context &ctx) const {
+  format(const xfrase::cpg_index_metadata &cm, std::format_context &ctx) const {
     return std::formatter<std::string>::format(cm.tostring(), ctx);
   }
 };
+
+enum class cpg_index_metadata_error : std::uint32_t {
+  ok = 0,
+  version_not_found = 1,
+  host_not_found = 2,
+  user_not_found = 3,
+  creation_time_not_found = 4,
+  chrom_names_not_found = 5,
+  index_hash_not_found = 6,
+  assembly_not_found = 7,
+  n_cpgs_not_found = 8,
+  failure_parsing_json = 9,
+  inconsistent = 10,
+  n_values = 11,
+};
+
+template <>
+struct std::is_error_code_enum<cpg_index_metadata_error>
+  : public std::true_type {};
+
+struct cpg_index_metadata_error_category : std::error_category {
+  // clang-format off
+  auto name() const noexcept -> const char * override {
+    return "cpg_index_metadata_error";
+  }
+  auto message(int code) const -> std::string override {
+    using std::string_literals::operator""s;
+    switch (code) {
+    case 0: return "ok"s;
+    case 1: return "verion not found"s;
+    case 2: return "host not found"s;
+    case 3: return "user not found"s;
+    case 4: return "creation_time not found"s;
+    case 5: return "chrom names not found"s;
+    case 6: return "index_hash not found"s;
+    case 7: return "assembly not found"s;
+    case 8: return "n_cpgs not found"s;
+    case 9: return "failure parsing methylome metadata json"s;
+    case 10: return "inconsistent metadata"s;
+    }
+    std::unreachable();
+  }
+  // clang-format on
+};
+
+inline std::error_code
+make_error_code(cpg_index_metadata_error e) {
+  static auto category = cpg_index_metadata_error_category{};
+  return std::error_code(std::to_underlying(e), category);
+}
 
 #endif  // SRC_CPG_INDEX_METADATA_HPP_
