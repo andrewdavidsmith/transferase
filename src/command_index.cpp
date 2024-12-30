@@ -79,7 +79,7 @@ command_index_main(int argc, char *argv[]) -> int {
   std::string genome_filename{};
   std::string index_file{};
   std::string index_directory{};
-  xfrase_log_level log_level{};
+  xfrase::log_level_t log_level{};
 
   namespace po = boost::program_options;
 
@@ -89,7 +89,7 @@ command_index_main(int argc, char *argv[]) -> int {
     ("help,h", "print this message and exit")
     ("genome,g", po::value(&genome_filename)->required(), "genome_file")
     ("indexdir,x", po::value(&index_directory)->required(), "index output directory")
-    ("log-level,v", po::value(&log_level)->default_value(logger::default_level),
+    ("log-level,v", po::value(&log_level)->default_value(xfrase::logger::default_level),
      "log level {debug,info,warning,error,critical}")
     // clang-format on
     ;
@@ -112,7 +112,8 @@ command_index_main(int argc, char *argv[]) -> int {
     return EXIT_FAILURE;
   }
 
-  auto &lgr = logger::instance(shared_from_cout(), command, log_level);
+  auto &lgr =
+    xfrase::logger::instance(xfrase::shared_from_cout(), command, log_level);
   if (!lgr) {
     lgr.error("Failure initializing logging: {}.", lgr.get_status());
     return EXIT_FAILURE;
@@ -124,10 +125,10 @@ command_index_main(int argc, char *argv[]) -> int {
     {"Index directory", index_directory},
     // clang-format on
   };
-  log_args<xfrase_log_level::info>(args_to_log);
+  xfrase::log_args<xfrase::log_level_t::info>(args_to_log);
 
   std::error_code ec;
-  const auto assembly = get_assembly_from_filename(genome_filename, ec);
+  const auto assembly = xfrase::get_assembly_from_filename(genome_filename, ec);
   if (ec) {
     lgr.error("Failed to parse assembly name from: {}", genome_filename);
     return EXIT_FAILURE;
@@ -135,7 +136,7 @@ command_index_main(int argc, char *argv[]) -> int {
   lgr.info("Identified genome/assembly name: {}", assembly);
 
   const auto constr_start = std::chrono::high_resolution_clock::now();
-  const auto index = make_cpg_index(genome_filename, ec);
+  const auto index = xfrase::make_cpg_index(genome_filename, ec);
   const auto constr_stop = std::chrono::high_resolution_clock::now();
   if (ec) {
     if (ec == std::errc::no_such_file_or_directory)

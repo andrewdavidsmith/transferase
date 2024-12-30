@@ -32,6 +32,8 @@
 #include <string>
 #include <type_traits>  // for std::underlying_type_t
 
+namespace xfrase {
+
 [[nodiscard]] auto
 compose(char *first, const char *last,
         const response_header &hdr) -> std::error_code {
@@ -100,3 +102,5 @@ response_header::summary() const -> std::string {
   static constexpr auto fmt = R"({{"{}": "{}", "response_size": {}}})";
   return std::format(fmt, status.category().name(), status, response_size);
 }
+
+}  // namespace xfrase

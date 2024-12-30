@@ -41,6 +41,8 @@
 #include <tuple>  // for std::tie, std::tuple
 #include <vector>
 
+namespace xfrase {
+
 [[nodiscard]] auto
 cpg_index_metadata::init_env() -> std::error_code {
   version = get_version();
@@ -138,3 +140,5 @@ cpg_index_metadata::write(const std::string &json_filename) const
     return std::make_error_code(std::errc(errno));
   return {};
 }
+
+}  // namespace xfrase

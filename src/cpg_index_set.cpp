@@ -35,6 +35,8 @@
 #include <utility>  // for std::move, std::pair
 #include <vector>
 
+namespace xfrase {
+
 [[nodiscard]] auto
 cpg_index_set::get_cpg_index(const std::string &assembly, std::error_code &ec)
   -> std::shared_ptr<cpg_index> {
@@ -63,3 +65,5 @@ cpg_index_set::cpg_index_set(const std::string &cpg_index_directory,
     assembly_to_cpg_index.emplace(name, std::make_shared<cpg_index>(index));
   }
 }
+
+}  // namespace xfrase

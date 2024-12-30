@@ -41,6 +41,8 @@
 #include <tuple>
 #include <utility>
 
+namespace xfrase {
+
 [[nodiscard]] auto
 get_username() -> std::tuple<std::string, std::error_code> {
   // ADS: long code here; static needs it for threadsafe
@@ -81,3 +83,5 @@ get_hostname() -> std::tuple<std::string, std::error_code> {
 get_version() -> std::string {
   return VERSION;
 }
+
+}  // namespace xfrase

@@ -83,7 +83,7 @@ command_check_main(int argc, char *argv[]) -> int {
   std::string index_directory{};
   std::string genome_name{};
   std::string methylome_directory{};
-  xfrase_log_level log_level{};
+  xfrase::log_level_t log_level{};
 
   namespace po = boost::program_options;
 
@@ -97,7 +97,7 @@ command_check_main(int argc, char *argv[]) -> int {
      "directory containing methylomes")
     ("methylomes,m", po::value<std::vector<std::string>>()->multitoken()->required(),
      "methylome names/accessions")
-    ("log-level,v", po::value(&log_level)->default_value(logger::default_level),
+    ("log-level,v", po::value(&log_level)->default_value(xfrase::logger::default_level),
      "log level {debug,info,warning,error,critical}")
     // clang-format on
     ;
@@ -120,7 +120,8 @@ command_check_main(int argc, char *argv[]) -> int {
     return EXIT_FAILURE;
   }
 
-  auto &lgr = logger::instance(shared_from_cout(), command, log_level);
+  auto &lgr =
+    xfrase::logger::instance(xfrase::shared_from_cout(), command, log_level);
   if (!lgr) {
     std::println("Failure initializing logging: {}.", lgr.get_status());
     return EXIT_FAILURE;
@@ -137,11 +138,11 @@ command_check_main(int argc, char *argv[]) -> int {
     {"Methylomes", std::string(std::cbegin(joined), std::cend(joined))},
     // clang-format on
   };
-  log_args<xfrase_log_level::info>(args_to_log);
+  xfrase::log_args<xfrase::log_level_t::info>(args_to_log);
 
   std::error_code index_read_err;
   const auto index =
-    cpg_index::read(index_directory, genome_name, index_read_err);
+    xfrase::cpg_index::read(index_directory, genome_name, index_read_err);
   if (index_read_err) {
     lgr.error("Failed to read cpg index {} {}: {}", index_directory,
               genome_name, index_read_err);
@@ -154,7 +155,8 @@ command_check_main(int argc, char *argv[]) -> int {
   bool all_methylomes_metadata_consitent = true;
   for (const auto &methylome_name : methylomes) {
     std::error_code ec;
-    const auto meth = methylome::read(methylome_directory, methylome_name, ec);
+    const auto meth =
+      xfrase::methylome::read(methylome_directory, methylome_name, ec);
     if (ec) {
       lgr.error("Failed to read methylome {}: {}", methylome_name, ec);
       return EXIT_FAILURE;

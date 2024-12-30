@@ -37,6 +37,8 @@
 #include <string>
 #include <tuple>
 
+namespace xfrase {
+
 [[nodiscard]] auto
 parse_counts_line(const std::string &line, std::uint32_t &pos,
                   std::uint32_t &n_meth, uint32_t &n_unmeth) -> bool {
@@ -166,3 +168,5 @@ get_meth_file_format(const std::string &filename)
 
   return {counts_format::none, {}};
 }
+
+}  // namespace xfrase

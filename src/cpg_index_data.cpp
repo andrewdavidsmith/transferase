@@ -42,6 +42,8 @@
 #include <utility>  // for std::pair, std::move
 #include <vector>
 
+namespace xfrase {
+
 [[nodiscard]] auto
 cpg_index_data::read(const std::string &index_file,
                      const cpg_index_metadata &meta,
@@ -140,7 +142,7 @@ cpg_index_data::get_query_within_chrom(
   const std::vector<chrom_range_t> &chrom_ranges) const -> xfrase::query {
   assert(std::ranges::is_sorted(chrom_ranges) && ch_id >= 0 &&
          ch_id < std::ranges::ssize(positions));
-  return ::get_query_within_chrom(positions[ch_id], chrom_ranges);
+  return xfrase::get_query_within_chrom(positions[ch_id], chrom_ranges);
 }
 
 [[nodiscard]] auto
@@ -152,7 +154,7 @@ cpg_index_data::get_query_chrom(
 
   const auto offset = meta.chrom_offset[ch_id];
 
-  auto q = ::get_query_within_chrom(positions[ch_id], chrom_ranges) |
+  auto q = xfrase::get_query_within_chrom(positions[ch_id], chrom_ranges) |
            std::views::transform([&](const auto &x) -> xfrase::query_element {
              return {offset + x.first, offset + x.second};
            }) |
@@ -201,3 +203,5 @@ cpg_index_data::get_n_cpgs() const -> std::uint32_t {
                                static_cast<std::uint32_t>(0), std::plus{},
                                std::size<cpg_index_data::vec>);
 }
+
+}  // namespace xfrase
