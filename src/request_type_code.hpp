@@ -54,8 +54,7 @@ template <>
 struct std::formatter<request_type_code> : std::formatter<std::string> {
   auto
   format(const request_type_code &rtc, std::format_context &ctx) const {
-    const auto ul = std::to_underlying(rtc);
-    return std::format_to(ctx.out(), "{}:{}", request_type_code_names[ul], ul);
+    return std::format_to(ctx.out(), "{}", std::to_underlying(rtc));
   }
 };
 
