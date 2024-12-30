@@ -170,14 +170,13 @@ methylome_data::write(const std::string &filename,
 }
 
 auto
-methylome_data::add(const methylome_data &rhs) -> methylome_data & {
+methylome_data::add(const methylome_data &rhs) -> void {
   // this follows the operator+= pattern
   assert(std::size(cpgs) == std::size(rhs.cpgs));
   std::ranges::transform(cpgs, rhs.cpgs, std::begin(cpgs),
                          [](const auto &l, const auto &r) -> m_elem {
                            return {l.first + r.first, l.second + r.second};
                          });
-  return *this;
 }
 
 template <typename U, typename T>
