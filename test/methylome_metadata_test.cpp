@@ -34,23 +34,62 @@
 
 using namespace xfrase;  // NOLINT
 
-// Mock functions to simulate external dependencies
-[[nodiscard]]
-static inline std::string
-mock_get_username() {
+// clang-format off
+/* Functions to test:
+- valid() const -> bool;
+- consistent(const methylome_metadata &rhs) const -> bool;
+- read(const std::string &, std::error_code &) -> methylome_metadata;
+- read(const std::string &, const std::string &, std::error_code &) -> methylome_metadata;
+- write(const std::string &) const -> std::error_code;
+- init_env() -> std::error_code;
+- tostring() const -> std::string;
+- update(const methylome_data &meth) -> std::error_code;
+*/
+// clang-format on
+
+[[nodiscard]] static inline auto
+mock_get_username() -> std::string {
   return "test_user";
 }
 
-[[nodiscard]]
-static inline std::string
-mock_get_hostname() {
+[[nodiscard]] static inline auto
+mock_get_assembly() -> std::string {
+  return "mUnicornicus";
+}
+
+[[nodiscard]] static inline auto
+mock_get_hostname() -> std::string {
   return "test_host";
 }
 
-[[nodiscard]]
-static inline std::string
-mock_get_time_as_string() {
-  return "2024-12-24T12:34:56";
+[[nodiscard]] static inline auto
+mock_get_time_as_string() -> std::string {
+  return "1999-12-31T23:59:59";
+}
+
+[[nodiscard]] static inline auto
+mock_get_version() -> std::string {
+  return "9.9.9";
+}
+
+TEST(methylome_metadata_test, valid_test) {
+  methylome_metadata meta;
+  EXPECT_FALSE(meta.valid());
+
+  meta.version = mock_get_version();
+  EXPECT_FALSE(meta.valid());
+
+  meta.host = mock_get_hostname();
+  EXPECT_FALSE(meta.valid());
+
+  meta.user = mock_get_username();
+  EXPECT_FALSE(meta.valid());
+
+  meta.creation_time = mock_get_time_as_string();
+  EXPECT_FALSE(meta.valid());
+
+  meta.assembly = mock_get_assembly();
+  EXPECT_TRUE(meta.valid());
 }
 
 TEST(methylome_metadata_test, init_env_test) {
@@ -58,14 +97,8 @@ TEST(methylome_metadata_test, init_env_test) {
   const std::error_code ec = meta.init_env();
   EXPECT_FALSE(ec);
 
-  meta.user = mock_get_username();
-  meta.creation_time = mock_get_time_as_string();
-  meta.host = mock_get_hostname();
-
-  EXPECT_EQ(meta.host, "test_host");
-  EXPECT_EQ(meta.user, "test_user");
-  EXPECT_EQ(meta.version, VERSION);
-  EXPECT_EQ(meta.creation_time, "2024-12-24T12:34:56");
+  meta.assembly = mock_get_assembly();
+  EXPECT_TRUE(meta.valid());
 }
 
 TEST(methylome_metadata_test, consistent_test) {
@@ -73,14 +106,43 @@ TEST(methylome_metadata_test, consistent_test) {
   methylome_metadata meta2;
 
   EXPECT_TRUE(meta1.consistent(meta2));
-  EXPECT_EQ(meta1.consistent(meta2), meta2.consistent(meta1));
+  EXPECT_TRUE(meta2.consistent(meta1));
 
   const auto init1_err = meta1.init_env();
-  const auto init2_err = meta2.init_env();
-
   EXPECT_FALSE(init1_err);
+
+  const auto init2_err = meta2.init_env();
   EXPECT_FALSE(init2_err);
+
   EXPECT_TRUE(meta1.consistent(meta2));
+  EXPECT_TRUE(meta2.consistent(meta1));
+
+  meta2.assembly = mock_get_assembly();
+  EXPECT_TRUE(meta2.valid());
+  EXPECT_FALSE(meta2.consistent(meta1)) << meta2.tostring() << "\n"
+                                        << meta1.tostring();
+}
+
+TEST(methylome_metadata_test, successful_read) {
+  static constexpr auto methylome_directory = "data/lutions/methylomes";
+  static constexpr auto methylome_name = "eFlareon_brain";
+  const auto json_filename =
+    compose_methylome_metadata_filename(methylome_directory, methylome_name);
+  std::error_code ec;
+  const auto meta = methylome_metadata::read(json_filename, ec);
+  EXPECT_FALSE(ec);
+  EXPECT_TRUE(meta.valid());
+}
+
+TEST(methylome_metadata_test, failing_read) {
+  static constexpr auto methylome_directory = "data/lutions/methylomes";
+  static constexpr auto methylome_name = "eFlareon_brainZZZ";
+  const auto json_filename =
+    compose_methylome_metadata_filename(methylome_directory, methylome_name);
+  std::error_code ec;
+  const auto meta = methylome_metadata::read(json_filename, ec);
+  EXPECT_TRUE(ec);
+  EXPECT_FALSE(meta.valid());
 }
 
 TEST(methylome_metadata_test, compose_methylome_metadata_filename_test) {
@@ -91,17 +153,6 @@ TEST(methylome_metadata_test, compose_methylome_metadata_filename_test) {
   const auto filename =
     compose_methylome_metadata_filename(methylome_directory, methylome_name);
   EXPECT_EQ(filename, expected_filename);
-}
-
-TEST(methylome_metadata_test, methylome_metadata_read) {
-  static constexpr auto methylome_directory = "data/lutions/methylomes";
-  static constexpr auto methylome_name = "eFlareon_brain";
-  const auto json_filename =
-    compose_methylome_metadata_filename(methylome_directory, methylome_name);
-  std::error_code ec;
-  [[maybe_unused]] const auto meta =
-    methylome_metadata::read(json_filename, ec);
-  EXPECT_FALSE(ec);
 }
 
 TEST(methylome_metadata_test, write_test) {
