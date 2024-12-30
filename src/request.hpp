@@ -34,6 +34,8 @@
 #include <type_traits>  // for true_type
 #include <utility>      // for to_underlying, pair, unreachable
 
+namespace xfrase {
+
 static constexpr std::uint32_t request_buffer_size{256};
 typedef std::array<char, request_buffer_size> request_buffer;
 
@@ -77,25 +79,13 @@ struct request {
   }
 };
 
-template <> struct std::formatter<request> : std::formatter<std::string> {
-  auto
-  format(const request &r, std::format_context &ctx) const {
-    return std::format_to(ctx.out(), "{}\t{}\t{}\t{}", r.accession,
-                          r.request_type, r.index_hash, r.aux_value);
-  }
-};
-
-[[nodiscard]] auto
-compose(char *first, char const *last, const request &req) -> std::error_code;
-
-[[nodiscard]] auto
-parse(char *const first, char *const last, request &req) -> std::error_code;
-
 [[nodiscard]] auto
 compose(request_buffer &buf, const request &req) -> std::error_code;
 
 [[nodiscard]] auto
 parse(const request_buffer &buf, request &req) -> std::error_code;
+
+}  // namespace xfrase
 
 // request error code
 enum class request_error : std::uint32_t {
@@ -132,5 +122,14 @@ make_error_code(request_error e) -> std::error_code {
   static auto category = request_error_category{};
   return std::error_code(std::to_underlying(e), category);
 }
+
+template <>
+struct std::formatter<xfrase::request> : std::formatter<std::string> {
+  auto
+  format(const xfrase::request &r, std::format_context &ctx) const {
+    return std::format_to(ctx.out(), "{}\t{}\t{}\t{}", r.accession,
+                          r.request_type, r.index_hash, r.aux_value);
+  }
+};
 
 #endif  // SRC_REQUEST_HPP_
