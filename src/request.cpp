@@ -43,11 +43,11 @@ compose(char *first, char const *last, const request &req) -> std::error_code {
   typedef std::iterator_traits<char *>::difference_type diff_type;
   const auto first_const = static_cast<char const *>(first);
   const auto dt_size_s = static_cast<diff_type>(std::size(s));
-#endif
   assert(dt_size_s < std::distance(first_const, last));
+#endif
 
-  // std::ranges::in_out_result::out
-  const auto data_end = std::ranges::copy(s, first);  // in_out_result
+  // std::ranges::in_out_result
+  const auto data_end = std::ranges::copy(s, first);
   if (data_end.out == last)
     return std::make_error_code(std::errc::result_out_of_range);
   return std::error_code{};
