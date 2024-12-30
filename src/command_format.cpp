@@ -126,6 +126,8 @@ make_error_code(format_err e) {
   return std::error_code(std::to_underlying(e), category);
 }
 
+namespace xfrase {
+
 static inline auto
 skip_absent_cpgs(const std::uint64_t end_pos, const cpg_index_data::vec &idx,
                  std::uint32_t cpg_idx_in) -> std::uint32_t {
@@ -180,7 +182,7 @@ verify_header_line(const cpg_index_metadata &cim,
 static auto
 process_cpg_sites(const std::string &infile, const cpg_index &index)
   -> std::tuple<methylome_data, std::error_code> {
-  auto &lgr = logger::instance();
+  auto &lgr = xfrase::logger::instance();
 
   const cpg_index_metadata &index_meta = index.meta;
   const auto begin_positions = std::cbegin(index.data.positions);
@@ -272,7 +274,7 @@ process_cpg_sites(const std::string &infile, const cpg_index &index)
 static auto
 process_cpg_sites_counts(const std::string &infile, const cpg_index &index)
   -> std::tuple<methylome_data, std::error_code> {
-  auto &lgr = logger::instance();
+  auto &lgr = xfrase::logger::instance();
 
   const cpg_index_metadata &index_meta = index.meta;
   const auto begin_positions = std::cbegin(index.data.positions);
@@ -352,6 +354,8 @@ process_cpg_sites_counts(const std::string &infile, const cpg_index &index)
   return {methylome_data{std::move(cpgs_flat)}, std::error_code{}};
 }
 
+}  // namespace xfrase
+
 auto
 command_format_main(int argc, char *argv[]) -> int {
   const auto command_start = std::chrono::high_resolution_clock::now();
@@ -364,12 +368,21 @@ command_format_main(int argc, char *argv[]) -> int {
   static const auto description_msg =
     std::format("{}\n{}", strip(description), strip(examples));
 
+  using xfrase::counts_format;
+  using xfrase::cpg_index;
+  using xfrase::get_meth_file_format;
+  using xfrase::get_methylome_name_from_filename;
+  using xfrase::log_level_t;
+  using xfrase::logger;
+  using xfrase::methylome;
+  using xfrase::methylome_metadata;
+
   std::string index_directory{};
   std::string genome_name{};
 
   std::string methylation_input{};
   std::string methylome_outdir{};
-  xfrase_log_level log_level{};
+  log_level_t log_level{};
   bool zip{false};
 
   namespace po = boost::program_options;
@@ -407,7 +420,7 @@ command_format_main(int argc, char *argv[]) -> int {
     return EXIT_FAILURE;
   }
 
-  auto &lgr = logger::instance(shared_from_cout(), command, log_level);
+  auto &lgr = logger::instance(xfrase::shared_from_cout(), command, log_level);
   if (!lgr) {
     std::println("Failure initializing logging: {}.", lgr.get_status());
     return EXIT_FAILURE;
@@ -426,7 +439,7 @@ command_format_main(int argc, char *argv[]) -> int {
     {"Zip", std::format("{}", zip)},
     // clang-format on
   };
-  log_args<xfrase_log_level::info>(args_to_log);
+  xfrase::log_args<log_level_t::info>(args_to_log);
 
   std::error_code index_ec;
   const auto index = cpg_index::read(index_directory, genome_name, index_ec);
