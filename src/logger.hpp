@@ -67,7 +67,7 @@ namespace xfrase {
   - message
 */
 
-enum class log_level_t : std::uint32_t {
+enum class log_level_t : std::uint8_t {
   debug,
   info,
   warning,
@@ -147,7 +147,7 @@ public:
   static constexpr log_level_t default_level{log_level_t::info};
 
   static logger &
-  instance(std::shared_ptr<std::ostream> log_file_ptr = nullptr,
+  instance(const std::shared_ptr<std::ostream> &log_file_ptr = nullptr,
            const std::string &appname = "",
            log_level_t min_log_level = log_level_t::debug) {
     static logger fl(log_file_ptr, appname, min_log_level);
@@ -157,7 +157,7 @@ public:
 
   logger(std::shared_ptr<std::ostream> log_file_ptr, const std::string &appname,
          log_level_t min_log_level = log_level_t::info) :
-    log_file{log_file_ptr}, min_log_level{min_log_level} {
+    log_file{std::move(log_file_ptr)}, min_log_level{min_log_level} {
     // ADS: check for log file good here?
     // status = std::make_error_code(std::errc(errno));
     buf.fill(' ');  // ADS: not sure this is needed
