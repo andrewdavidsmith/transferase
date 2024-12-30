@@ -166,7 +166,7 @@ get_remote_indexes_resources()
     std::println("Malformed JSON for remote resources {}: {}", json_file, ec);
     return {{}, ec};
   }
-  return {std::move(resources), {}};
+  return std::make_tuple(std::move(resources), std::error_code{});
 }
 
 [[nodiscard]]
