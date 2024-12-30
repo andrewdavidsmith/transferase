@@ -77,7 +77,13 @@ command_merge_main(int argc, char *argv[]) -> int {
   static const auto description_msg =
     std::format("{}\n{}", strip(description), strip(examples));
 
-  xfrase_log_level log_level{};
+  using xfrase::log_args;
+  using xfrase::log_level_t;
+  using xfrase::logger;
+  using xfrase::methylome;
+  using xfrase::shared_from_cout;
+
+  log_level_t log_level{};
   std::string methylome_directory{};
   std::string methylome_outdir{};
   std::string merged_name{};
@@ -133,12 +139,12 @@ command_merge_main(int argc, char *argv[]) -> int {
     {"Number of methylomes to merge", std::format("{}", n_methylomes)},
     // clang-format on
   };
-  log_args<xfrase_log_level::info>(args_to_log);
+  log_args<log_level_t::info>(args_to_log);
 
   std::vector<std::tuple<std::string, std::string>> filenames_to_log;
   for (const auto [i, filename] : std::views::enumerate(methylome_names))
     filenames_to_log.emplace_back(std::format("Methylome{}", i), filename);
-  log_args<xfrase_log_level::debug>(filenames_to_log);
+  log_args<log_level_t::debug>(filenames_to_log);
 
   std::error_code ec;
   double read_time{};
@@ -207,7 +213,7 @@ command_merge_main(int argc, char *argv[]) -> int {
     {"write time", std::format("{:.3}s", write_time)},
     // clang-format on
   };
-  log_args<xfrase_log_level::debug>(timing_to_log);
+  log_args<log_level_t::debug>(timing_to_log);
 
   return EXIT_SUCCESS;
 }
