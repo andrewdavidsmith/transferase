@@ -59,25 +59,25 @@ if(FOUND_CPPCHECK)
   )
 endif()
 
-# # clang-tidy: need to make sure version is at least 20
-# find_program(CLANG_TIDY_EXECUTABLE NAMES clang-tidy)
-# # Minimum required version
-# set(MIN_CLANG_TIDY_VERSION "20.0.0")
-# if(CLANG_TIDY_EXECUTABLE)
-#   execute_process(
-#     COMMAND bash -c "${CLANG_TIDY_EXECUTABLE} --version | grep version | tr -cd '0-9.\n'"
-#     OUTPUT_VARIABLE CLANG_TIDY_VERSION
-#     OUTPUT_STRIP_TRAILING_WHITESPACE
-#   )
-#   # Compare the version numbers
-#   if(CLANG_TIDY_VERSION VERSION_GREATER_EQUAL MIN_CLANG_TIDY_VERSION)
-#     message(STATUS "Enabling clang-tidy (version: ${CLANG_TIDY_VERSION})")
-#     set(CMAKE_CXX_CLANG_TIDY
-#       clang-tidy
-#       --quiet
-#       -p Build
-#     )
-#   else()
-#     message(STATUS "Not enabling clang-tidy (version not found")
-#   endif()
-# endif()
+# clang-tidy: need to make sure version is at least 20
+find_program(CLANG_TIDY_EXECUTABLE NAMES clang-tidy)
+# Minimum required version
+set(MIN_CLANG_TIDY_VERSION "20.0.0")
+if(CLANG_TIDY_EXECUTABLE)
+  execute_process(
+    COMMAND bash -c "${CLANG_TIDY_EXECUTABLE} --version | grep version | tr -cd '0-9.\n'"
+    OUTPUT_VARIABLE CLANG_TIDY_VERSION
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+  )
+  # Compare the version numbers
+  if(CLANG_TIDY_VERSION VERSION_GREATER_EQUAL MIN_CLANG_TIDY_VERSION)
+    message(STATUS "Enabling clang-tidy (version: ${CLANG_TIDY_VERSION})")
+    set(CMAKE_CXX_CLANG_TIDY
+      clang-tidy
+      --quiet
+      -p Build
+    )
+  else()
+    message(STATUS "Not enabling clang-tidy (version not found")
+  endif()
+endif()
