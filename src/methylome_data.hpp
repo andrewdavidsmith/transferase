@@ -24,8 +24,7 @@
 #ifndef SRC_METHYLOME_DATA_HPP_
 #define SRC_METHYLOME_DATA_HPP_
 
-#include "cpg_index_data.hpp"   // for cpg_index_data::vec
-#include "cpg_index_types.hpp"  // for query_elem
+#include "cpg_index_data.hpp"  // for cpg_index_data::vec
 #if not defined(__APPLE__) && not defined(__MACH__)
 #include "aligned_allocator.hpp"
 #endif
@@ -48,6 +47,10 @@ struct cpg_index;
 struct counts_res;
 struct counts_res_cov;
 struct methylome_metadata;
+
+namespace xfrase {
+struct query;
+}
 
 typedef std::uint16_t m_count_t;
 // struct m_count_elem {
@@ -117,11 +120,9 @@ struct methylome_data {
   // methylome_data::vec and accumulates between each of those pairs of
   // enpoints
   [[nodiscard]] auto
-  get_counts_cov(const std::vector<query_elem> &eps) const
-    -> std::vector<counts_res_cov>;
+  get_counts_cov(const xfrase::query &qry) const -> std::vector<counts_res_cov>;
   [[nodiscard]] auto
-  get_counts(const std::vector<query_elem> &eps) const
-    -> std::vector<counts_res>;
+  get_counts(const xfrase::query &qry) const -> std::vector<counts_res>;
 
   [[nodiscard]] auto
   total_counts() const -> counts_res;
@@ -187,30 +188,23 @@ enum class methylome_data_code : std::uint32_t {
   error_writing = 2,
   inconsistent = 3,
 };
-
 template <>
 struct std::is_error_code_enum<methylome_data_code> : public std::true_type {};
-
 struct methylome_data_category : std::error_category {
-  auto
-  name() const noexcept -> const char * override {
-    return "methylome_data";
-  }
-  auto
-  message(int code) const -> std::string override {
+  // clang-format off
+  auto name() const noexcept -> const char * override {return "methylome_data";}
+  auto message(int code) const -> std::string override {
     using std::string_literals::operator""s;
-    // clang-format off
     switch (code) {
     case 0: return "ok"s;
     case 1: return "error reading methylome data"s;
     case 2: return "error writing methylome data"s;
     case 3: return "inconsistent methylome data"s;
     }
-    // clang-format on
     std::unreachable();  // hopefully
   }
+  // clang-format on
 };
-
 inline auto
 make_error_code(methylome_data_code e) -> std::error_code {
   static auto category = methylome_data_category{};

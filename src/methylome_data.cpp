@@ -28,6 +28,7 @@
 #include "hash.hpp"
 #include "methylome_metadata.hpp"
 #include "methylome_results_types.hpp"
+#include "query.hpp"
 #include "zlib_adapter.hpp"
 
 #include <algorithm>
@@ -194,8 +195,8 @@ template <typename U>
 [[nodiscard]] static inline auto
 get_counts_impl(const methylome_data::vec &cpgs,
                 const cpg_index_data::vec &positions,
-                const std::uint32_t offset, const q_elem_t start,
-                const q_elem_t stop) -> U {
+                const std::uint32_t offset, const xfrase::q_elem_t start,
+                const xfrase::q_elem_t stop) -> U {
   // ADS: it is possible that the intervals requested are past the cpg
   // sites since they might be in the genome, but past the final cpg
   // site location. This code *should* be able to handle such a
@@ -212,49 +213,52 @@ get_counts_impl(const methylome_data::vec &cpgs,
 }
 
 [[nodiscard]] auto
-methylome_data::get_counts_cov(const cpg_index_data::vec &positions,
-                               const std::uint32_t offset, const q_elem_t start,
-                               const q_elem_t stop) const -> counts_res_cov {
+methylome_data::get_counts_cov(
+  const cpg_index_data::vec &positions, const std::uint32_t offset,
+  const xfrase::q_elem_t start,
+  const xfrase::q_elem_t stop) const -> counts_res_cov {
   return get_counts_impl<counts_res_cov>(cpgs, positions, offset, start, stop);
 }
 
 [[nodiscard]] auto
 methylome_data::get_counts(const cpg_index_data::vec &positions,
-                           const std::uint32_t offset, const q_elem_t start,
-                           const q_elem_t stop) const -> counts_res {
+                           const std::uint32_t offset,
+                           const xfrase::q_elem_t start,
+                           const xfrase::q_elem_t stop) const -> counts_res {
   return get_counts_impl<counts_res>(cpgs, positions, offset, start, stop);
 }
 
 [[nodiscard]] auto
-methylome_data::get_counts_cov(const q_elem_t start,
-                               const q_elem_t stop) const -> counts_res_cov {
+methylome_data::get_counts_cov(const xfrase::q_elem_t start,
+                               const xfrase::q_elem_t stop) const
+  -> counts_res_cov {
   return get_counts_impl<counts_res_cov>(std::cbegin(cpgs) + start,
                                          std::cbegin(cpgs) + stop);
 }
 
 [[nodiscard]] auto
-methylome_data::get_counts(const q_elem_t start,
-                           const q_elem_t stop) const -> counts_res {
+methylome_data::get_counts(const xfrase::q_elem_t start,
+                           const xfrase::q_elem_t stop) const -> counts_res {
   return get_counts_impl<counts_res>(std::cbegin(cpgs) + start,
                                      std::cbegin(cpgs) + stop);
 }
 
 [[nodiscard]] auto
-methylome_data::get_counts_cov(const std::vector<query_elem> &queries) const
+methylome_data::get_counts_cov(const xfrase::query &qry) const
   -> std::vector<counts_res_cov> {
-  std::vector<counts_res_cov> res(std::size(queries));
+  std::vector<counts_res_cov> res(size(qry));
   const auto beg = std::cbegin(cpgs);
-  for (const auto [i, q] : std::views::enumerate(queries))
+  for (const auto [i, q] : std::views::enumerate(qry))
     res[i] = get_counts_impl<counts_res_cov>(beg + q.first, beg + q.second);
   return res;
 }
 
 [[nodiscard]] auto
-methylome_data::get_counts(const std::vector<query_elem> &queries) const
+methylome_data::get_counts(const xfrase::query &qry) const
   -> std::vector<counts_res> {
-  std::vector<counts_res> res(std::size(queries));
+  std::vector<counts_res> res(size(qry));
   const auto beg = std::cbegin(cpgs);
-  for (const auto [i, q] : std::views::enumerate(queries))
+  for (const auto [i, q] : std::views::enumerate(qry))
     res[i] = get_counts_impl<counts_res>(beg + q.first, beg + q.second);
   return res;
 }
