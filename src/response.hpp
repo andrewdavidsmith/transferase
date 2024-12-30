@@ -26,7 +26,6 @@
 
 #include "methylome_data.hpp"  // for counts_res_cov
 
-#include "utilities.hpp"
 #include "xfrase_error.hpp"
 
 #include <array>
@@ -37,39 +36,34 @@
 #include <system_error>
 #include <vector>
 
-static constexpr std::uint32_t response_buf_size = 256;  // how much needed?
-// buffers do not own underlying memory; keep the data alive!
-typedef std::array<char, response_buf_size> response_header_buffer;
+static constexpr std::uint32_t response_header_buffer_size = 256;
+typedef std::array<char, response_header_buffer_size> response_header_buffer;
 
 struct response_header {
-  std::error_code status{make_error_code(server_response_code::ok)};
+  std::error_code status{server_response_code::ok};
   std::uint32_t response_size{};
-
   // ADS: doing the strange stuff below for cpplint...
-  [[nodiscard]] auto
-  error() const -> bool {
-    return (status) ? true : false;
-  }
-
-  [[nodiscard]] auto
-  summary() const -> std::string;
+  // clang-format off
+  [[nodiscard]] auto error() const -> bool { return (status) ? true : false; }
+  [[nodiscard]] auto summary() const -> std::string;
+  // clang-format on
 };
 
 [[nodiscard]] auto
-compose(char *first, char *last,
-        const response_header &header) -> compose_result;
+compose(char *first, const char *last,
+        const response_header &hdr) -> std::error_code;
 
 [[nodiscard]] auto
 parse(const char *first, const char *last,
-      response_header &header) -> parse_result;
+      response_header &hdr) -> std::error_code;
 
 [[nodiscard]] auto
-compose(std::array<char, response_buf_size> &buf,
-        const response_header &hdr) -> compose_result;
+compose(response_header_buffer &buf,
+        const response_header &hdr) -> std::error_code;
 
 [[nodiscard]] auto
-parse(const std::array<char, response_buf_size> &buf,
-      response_header &hdr) -> parse_result;
+parse(const response_header_buffer &buf,
+      response_header &hdr) -> std::error_code;
 
 struct response_payload {
   std::vector<std::byte> payload;

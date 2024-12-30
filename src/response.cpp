@@ -22,75 +22,77 @@
  */
 
 #include "response.hpp"
-#include "utilities.hpp"
 #include "xfrase_error.hpp"
 
 #include <algorithm>
-#include <array>
 #include <cassert>
 #include <charconv>  // for std::from_chars
 #include <format>
 #include <ranges>  // IWYU pragma: keep
 #include <string>
+#include <type_traits>  // for std::underlying_type_t
 
 [[nodiscard]] auto
-compose(char *first, [[maybe_unused]] char *last,
-        const response_header &hdr) -> compose_result {
+compose(char *first, const char *last,
+        const response_header &hdr) -> std::error_code {
   // ADS: use to_chars here
   const auto s = std::format("{}\t{}\n", hdr.status.value(), hdr.response_size);
-  assert(std::ranges::ssize(s) < std::distance(first, last));
+  assert(std::ranges::ssize(s) <
+         std::distance(const_cast<const char *>(first), last));
   const auto data_end = std::ranges::copy(s, first);  // in_out_result
-  return {data_end.out, std::error_code{}};
+  if (data_end.out == last)
+    return std::make_error_code(std::errc::result_out_of_range);
+  return std::error_code{};
 }
 
 [[nodiscard]] auto
 parse(const char *first, const char *last,
-      response_header &hdr) -> parse_result {
+      response_header &hdr) -> std::error_code {
   static constexpr auto delim = '\t';
   static constexpr auto term = '\n';
 
   auto cursor = first;
 
   // status
-  int v{};
+  std::underlying_type_t<server_response_code> tmp{};
   {
-    const auto [ptr, ec] = std::from_chars(cursor, last, v);
+    const auto [ptr, ec] = std::from_chars(cursor, last, tmp);
     if (ec != std::errc{})
-      return {ptr, server_response_code::server_failure};
+      return server_response_code::server_failure;
     cursor = ptr;
   }
-  hdr.status = make_error_code(static_cast<server_response_code>(v));
+  hdr.status = static_cast<server_response_code>(tmp);
 
   if (*cursor != delim)
-    return {cursor, server_response_code::server_failure};
+    return server_response_code::server_failure;
   ++cursor;
 
-  // methylome size
+  // response size
   {
     const auto [ptr, ec] = std::from_chars(cursor, last, hdr.response_size);
     if (ec != std::errc{})
-      return {ptr, server_response_code::server_failure};
+      return server_response_code::server_failure;
     cursor = ptr;
   }
 
   // terminator
   if (*cursor != term)
-    return {cursor, server_response_code::server_failure};
+    return server_response_code::server_failure;
   ++cursor;
 
-  return {cursor, server_response_code::ok};
+  return server_response_code::ok;
 }
 
 [[nodiscard]] auto
-compose(std::array<char, response_buf_size> &buf,
-        const response_header &hdr) -> compose_result {
-  return compose(buf.data(), buf.data() + response_buf_size, hdr);
+compose(response_header_buffer &buf,
+        const response_header &hdr) -> std::error_code {
+  return compose(buf.data(), buf.data() + response_header_buffer_size, hdr);
 }
 
 [[nodiscard]] auto
-parse(const std::array<char, response_buf_size> &buf,
-      response_header &hdr) -> parse_result {
-  return parse(buf.data(), buf.data() + response_buf_size, hdr);
+parse(const response_header_buffer &buf,
+      response_header &hdr) -> std::error_code {
+  return parse(buf.data(), buf.data() + response_header_buffer_size, hdr);
 }
 
 [[nodiscard]] auto
