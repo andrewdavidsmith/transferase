@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_METHYLOME_RESOURCE_
-#define SRC_METHYLOME_RESOURCE_
+#ifndef SRC_METHYLOME_RESOURCE_HPP_
+#define SRC_METHYLOME_RESOURCE_HPP_
 
 #include <string>
 
@@ -39,4 +39,4 @@ struct remote_methylome_resource {
 
 }  // namespace xfrase
 
-#endif  // SRC_METHYLOME_RESOURCE_
+#endif  // SRC_METHYLOME_RESOURCE_HPP_
