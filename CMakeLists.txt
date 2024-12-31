@@ -39,14 +39,16 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS on)
 include(CheckIncludeFileCXX)
 include(CheckFunctionExists)
 
-## ADS: this was needed for something and I can't recall what...
-# Ensure that -fPIC is used when compiling the static library
-# set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-
 include(GNUInstallDirs)
 set(DATADIR "${CMAKE_INSTALL_DATADIR}")
 
 include(cmake/config_options.cmake)
+
+if(BUILD_PYTHON)
+  # Ensure that -fPIC is used when compiling the static library so
+  # pybind11 works
+  set(CMAKE_POSITION_INDEPENDENT_CODE on)
+endif()
 
 if(ENABLE_STATIC_ANALYSIS)
   include(cmake/static_analysis.cmake)
@@ -100,4 +102,8 @@ add_subdirectory(src)
 
 if(NOT ENABLE_UNIT_TESTS)
   include(cmake/install.cmake)
+endif()
+
+if(BUILD_PYTHON)
+  add_subdirectory(python)
 endif()
