@@ -28,4 +28,11 @@ option(USE_STATIC_LIBS "Use static linkage for non-system libs" off)
 option(ENABLE_SANITIZING "Enable sanitizing" off)
 option(ENABLE_CODE_COVERAGE "Enable code coverage analysis" off)
 option(ENABLE_LTO "Enable link-time optimization" off)
+option(BUILD_PYTHON "Build Python bindings" off)
+option(ENABLE_PYTHON_UNIT_TESTS "Enable Python unit tests" off)
 set(SANITIZER_TYPE "address" CACHE STRING "Choose sanitizer type (address, undefined)")
+
+# Make ENABLE_PYTHON_UNIT_TESTS depend on BUILD_PYTHON
+if(NOT BUILD_PYTHON)
+  set(ENABLE_PYTHON_UNIT_TESTS OFF CACHE BOOL "Enable Python unit tests" FORCE)
+endif()
