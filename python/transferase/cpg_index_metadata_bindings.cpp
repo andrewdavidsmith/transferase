@@ -23,20 +23,19 @@
 
 #include "cpg_index_metadata.hpp"
 
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>  // For automatic conversions of STL types
-                           // like std::string, std::vector, etc.
 #include <pybind11/chrono.h>
 #include <pybind11/functional.h>
+#include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
 
 #include <format>
+#include <string>
 #include <system_error>
 #include <tuple>
 
 namespace py = pybind11;
 
 PYBIND11_MODULE(cpg_index_metadata, m) {
-
   // Expose std::error_code as 'ErrorCode'
   py::class_<std::error_code>(m, "ErrorCode")
     .def(py::init<>())                          // Default constructor
