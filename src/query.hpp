@@ -42,16 +42,17 @@ struct query {
   std::vector<query_element> v;
   typedef std::vector<query_element>::size_type size_type;
   query() = default;
-  explicit query(const std::uint64_t n) : v(n) {}
+  explicit query(const std::uint64_t data_size) : v(data_size) {}
   // ADS: below, for pass-through to v
-  explicit query(std::vector<query_element> &&v) : v{v} {}
+  explicit query(std::vector<query_element> &&elements) :
+    v{std::move(elements)} {}
   auto
-  resize(const auto x) {
-    v.resize(x);
+  resize(const auto new_size) {
+    v.resize(new_size);
   }
   auto
-  reserve(const auto x) {
-    v.reserve(x);
+  reserve(const auto new_capacity) {
+    v.reserve(new_capacity);
   }
   [[nodiscard]] auto
   get_n_bytes() const -> std::size_t {
