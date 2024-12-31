@@ -82,7 +82,7 @@ xfrase format -x index_dir -g hg38 -o output_dir -m SRX012345.xsym.gz
 #include <variant>  // IWYU pragma: keep
 #include <vector>
 
-enum class format_err : std::uint32_t {
+enum class format_err : std::uint8_t {
   // clang-format off
   ok                                         = 0,
   xcounts_file_open_failure                  = 1,
