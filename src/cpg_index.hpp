@@ -55,6 +55,12 @@ struct cpg_index {
   auto
   is_consistent() const -> bool;
 
+  [[nodiscard]]
+  auto
+  get_hash() const -> std::uint64_t {
+    return meta.index_hash;
+  }
+
   [[nodiscard]] auto
   write(const std::string &outdir,
         const std::string &name) const -> std::error_code;
