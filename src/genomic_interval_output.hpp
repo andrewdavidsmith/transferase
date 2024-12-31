@@ -164,24 +164,6 @@ write_intervals_bedgraph(
   return {};
 }
 
-[[nodiscard]] inline auto
-write_output(const std::string &outfile,
-             const std::vector<genomic_interval> &gis, const cpg_index &index,
-             const auto &results, const bool write_scores) -> std::error_code {
-  auto &lgr = xfrase::logger::instance();
-  if (!write_scores)
-    return write_intervals(outfile, index.meta, gis, results);
-  // ADS: counting intervals that have no reads
-  std::uint32_t zero_coverage = 0;
-  const auto to_score = [&zero_coverage](const auto &x) {
-    zero_coverage += (x.n_meth + x.n_unmeth == 0);
-    return x.n_meth / std::max(1.0, static_cast<double>(x.n_meth + x.n_unmeth));
-  };
-  lgr.debug("Number of intervals without reads: {}", zero_coverage);
-  return write_intervals_bedgraph(outfile, index.meta, gis,
-                                  std::views::transform(results, to_score));
-}
-
 [[nodiscard]] auto
 write_bins(const std::string &outfile, const cpg_index_metadata &cim,
            const std::uint32_t bin_size,
@@ -294,13 +276,50 @@ write_bins_bedgraph(const std::string &outfile, const cpg_index_metadata &cim,
   return {};
 }
 
-[[nodiscard]] static inline auto
-write_output(const std::string &outfile, const cpg_index &index,
-             const std::uint32_t bin_size, const auto &results,
-             const bool write_scores) {
+struct intervals_output_mgr {
+  const std::string &outfile;
+  const std::vector<genomic_interval> &intervals;
+  const cpg_index &index;
+  const bool &write_scores;
+  intervals_output_mgr(const std::string &outfile,
+                       const std::vector<genomic_interval> &intervals,
+                       const cpg_index &index, const bool &write_scores) :
+    outfile{outfile}, intervals{intervals}, index{index},
+    write_scores{write_scores} {}
+};
+
+[[nodiscard]] inline auto
+write_output(const intervals_output_mgr &m, const auto &results) {
   auto &lgr = xfrase::logger::instance();
-  if (!write_scores)
-    return write_bins(outfile, index.meta, bin_size, results);
+  if (!m.write_scores)
+    return write_intervals(m.outfile, m.index.meta, m.intervals, results);
+  // ADS: counting intervals that have no reads
+  std::uint32_t zero_coverage = 0;
+  const auto to_score = [&zero_coverage](const auto &x) {
+    zero_coverage += (x.n_meth + x.n_unmeth == 0);
+    return x.n_meth / std::max(1.0, static_cast<double>(x.n_meth + x.n_unmeth));
+  };
+  lgr.debug("Number of intervals without reads: {}", zero_coverage);
+  return write_intervals_bedgraph(m.outfile, m.index.meta, m.intervals,
+                                  std::views::transform(results, to_score));
+}
+
+struct bins_output_mgr {
+  const std::string &outfile;
+  const std::uint32_t &bin_size;
+  const cpg_index &index;
+  const bool &write_scores;
+  bins_output_mgr(const std::string &outfile, const std::uint32_t &bin_size,
+                  const cpg_index &index, const bool &write_scores) :
+    outfile{outfile}, bin_size{bin_size}, index{index},
+    write_scores{write_scores} {}
+};
+
+[[nodiscard]] inline auto
+write_output(const bins_output_mgr &m, const auto &results) {
+  auto &lgr = xfrase::logger::instance();
+  if (!m.write_scores)
+    return write_bins(m.outfile, m.index.meta, m.bin_size, results);
   // ADS: counting intervals that have no reads
   std::uint32_t zero_coverage = 0;
   const auto to_score = [&zero_coverage](const auto &x) {
@@ -309,7 +328,7 @@ write_output(const std::string &outfile, const cpg_index &index,
   };
   lgr.debug("Number of bins without reads: {}", zero_coverage);
   const auto scores = std::views::transform(results, to_score);
-  return write_bins_bedgraph(outfile, index.meta, bin_size, scores);
+  return write_bins_bedgraph(m.outfile, m.index.meta, m.bin_size, scores);
 }
 
 }  // namespace xfrase
