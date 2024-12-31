@@ -50,7 +50,7 @@ xfrase bins remote -x index_dir -g hg38 -s example.com -m SRX012345 -o output.be
 #include "genomic_interval_output.hpp"
 #include "logger.hpp"
 #include "methylome.hpp"
-#include "methylome_data.hpp"
+#include "methylome_resource.hpp"
 #include "methylome_results_types.hpp"
 #include "request.hpp"
 #include "request_type_code.hpp"
@@ -58,7 +58,6 @@ xfrase bins remote -x index_dir -g hg38 -s example.com -m SRX012345 -o output.be
 
 #include <boost/program_options.hpp>
 
-#include <algorithm>
 #include <chrono>
 #include <cstdint>
 #include <cstdlib>  // for EXIT_FAILURE, EXIT_SUCCESS
@@ -70,87 +69,67 @@ xfrase bins remote -x index_dir -g hg38 -s example.com -m SRX012345 -o output.be
 #include <system_error>
 #include <tuple>
 #include <type_traits>  // for std::is_same
-#include <utility>      // for std::move
 #include <variant>      // for std::tuple
 #include <vector>
 
 namespace xfrase {
 
-template <typename counts_res_type>
+template <typename results_type>
 [[nodiscard]] static inline auto
-do_remote_bins(const std::string &accession, const cpg_index &index,
-               const std::uint32_t bin_size, const std::string &hostname,
-               const std::string &port)
-  -> std::tuple<std::vector<counts_res_type>, std::error_code> {
-  request_type_code rq_type{};
-  if constexpr (std::is_same<counts_res_type, counts_res>::value)
-    rq_type = request_type_code::bin_counts;
-  else
-    rq_type = request_type_code::bin_counts_cov;
-
-  request req{accession, rq_type, index.meta.index_hash, bin_size};
-
-  client<counts_res_type> cl(hostname, port, req, bin_size);
-  const auto status = cl.run();
-  if (status) {
-    logger::instance().error("Transaction status: {}", status);
-    return {{}, status};
-  }
-  return {std::move(cl.take_counts()), {}};
-}
-
-template <typename counts_res_type>
-[[nodiscard]] static inline auto
-do_local_bins(const std::string &accession,
-              const std::string &methylome_directory, const cpg_index &index,
-              const std::uint32_t bin_size)
-  -> std::tuple<std::vector<counts_res_type>, std::error_code> {
-  auto &lgr = logger::instance();
-
-  std::error_code ec;
-  const auto meth = methylome::read(methylome_directory, accession, ec);
+do_remote_bins(const request &req, const auto &resource,
+               std::error_code &ec) -> std::vector<results_type> {
+  client<results_type> cl(resource.host, resource.port, req, req.bin_size());
+  ec = cl.run();
   if (ec) {
-    lgr.error("Error reading methylome {} {}: {}", methylome_directory,
-              accession, ec);
-    return {{}, ec};
+    logger::instance().error("Transaction status: {}", ec);
+    return {};
   }
-  if constexpr (std::is_same<counts_res_type, counts_res_cov>::value)
-    return {std::move(meth.data.get_bins_cov(bin_size, index)), {}};
-  else
-    return {std::move(meth.data.get_bins(bin_size, index)), {}};
+  return cl.take_counts();
 }
 
-template <typename counts_res_type>
-auto
-do_bins(const std::string &accession, const cpg_index &index,
-        const std::uint32_t bin_size, const std::string &hostname,
-        const std::string &port, const std::string &methylome_directory,
-        const std::string &outfile, const bool write_scores,
-        const bool remote_mode) -> std::error_code {
+template <typename results_type>
+[[nodiscard]] static inline auto
+do_local_bins(const request &req, const auto &resource, const cpg_index &index,
+              std::error_code &ec) -> std::vector<results_type> {
+  const auto meth = methylome::read(resource.dir, req.accession, ec);
+  if (ec)
+    return {};
+  if constexpr (std::is_same_v<results_type, counts_res_cov>)
+    return meth.data.get_bins_cov(req.bin_size(), index);
+  else
+    return meth.data.get_bins(req.bin_size(), index);
+}
+
+template <typename results_type>
+[[nodiscard]] auto
+do_bins(const request &req, const auto &resource, const auto &outmgr,
+        const cpg_index &index) -> std::error_code {
   auto &lgr = logger::instance();
+  std::vector<results_type> results;
+  std::error_code ec;
+
   const auto bins_start{std::chrono::high_resolution_clock::now()};
-  const auto [results, bins_err] =
-    remote_mode ? do_remote_bins<counts_res_type>(accession, index, bin_size,
-                                                  hostname, port)
-                : do_local_bins<counts_res_type>(accession, methylome_directory,
-                                                 index, bin_size);
+
+  using given_type = std::remove_cvref_t<decltype(resource)>;
+  using local_type = local_methylome_resource;
+  if constexpr (std::is_same_v<given_type, local_type>)
+    results = do_local_bins<results_type>(req, resource, index, ec);
+  else
+    results = do_remote_bins<results_type>(req, resource, ec);
+
   const auto bins_stop{std::chrono::high_resolution_clock::now()};
   lgr.debug("Elapsed time for bins query: {:.3}s",
             duration(bins_start, bins_stop));
-
-  if (bins_err)  // ADS: error messages already logged
-    return std::make_error_code(std::errc::invalid_argument);
+  if (ec)
+    return ec;
 
   const auto output_start{std::chrono::high_resolution_clock::now()};
-  const auto write_err =
-    write_output(outfile, index, bin_size, results, write_scores);
-  if (write_err)
-    return write_err;
+  ec = write_output(outmgr, results);
   const auto output_stop{std::chrono::high_resolution_clock::now()};
   // ADS: elapsed time for output will include conversion to scores
   lgr.debug("Elapsed time for output: {:.3}s",
             duration(output_start, output_stop));
-  return {};
+  return ec;
 }
 
 }  // namespace xfrase
@@ -311,14 +290,27 @@ command_bins_main(int argc, char *argv[]) -> int {
 
   lgr.debug("Number of CpGs in index: {}", index.meta.n_cpgs);
 
+  const auto request_type = count_covered
+                              ? xfrase::request_type_code::bin_counts_cov
+                              : xfrase::request_type_code::bin_counts;
+
+  const auto req =
+    xfrase::request{methylome_name, request_type, index.get_hash(), bin_size};
+
+  const auto outmgr =
+    xfrase::bins_output_mgr{outfile, bin_size, index, write_scores};
+
+  // ADS: only one of these will get used
+  xfrase::local_methylome_resource lmr{methylome_directory};
+  xfrase::remote_methylome_resource rmr{hostname, port};
+
   const auto bins_err =
     count_covered
-      ? xfrase::do_bins<counts_res_cov>(methylome_name, index, bin_size,
-                                        hostname, port, methylome_directory,
-                                        outfile, write_scores, remote_mode)
-      : xfrase::do_bins<counts_res>(methylome_name, index, bin_size, hostname,
-                                    port, methylome_directory, outfile,
-                                    write_scores, remote_mode);
+      ? (remote_mode ? do_bins<counts_res_cov>(req, rmr, outmgr, index)
+                     : do_bins<counts_res_cov>(req, lmr, outmgr, index))
+      : (remote_mode ? do_bins<counts_res>(req, rmr, outmgr, index)
+                     : do_bins<counts_res>(req, lmr, outmgr, index));
+
   if (bins_err) {
     lgr.error("Error: {}", bins_err);
     return EXIT_FAILURE;

@@ -51,7 +51,7 @@ xfrase intervals remote -x index_dir -g hg38 -s example.com -m methylome_name -o
 #include "genomic_interval_output.hpp"
 #include "logger.hpp"
 #include "methylome.hpp"
-#include "methylome_data.hpp"  // for methylome::data::get_counts
+#include "methylome_resource.hpp"
 #include "methylome_results_types.hpp"
 #include "query.hpp"  // for query_element
 #include "request.hpp"
@@ -60,7 +60,6 @@ xfrase intervals remote -x index_dir -g hg38 -s example.com -m methylome_name -o
 
 #include <boost/program_options.hpp>
 
-#include <algorithm>
 #include <chrono>
 #include <cstdlib>  // for EXIT_FAILURE, EXIT_SUCCESS
 #include <format>
@@ -78,76 +77,60 @@ xfrase intervals remote -x index_dir -g hg38 -s example.com -m methylome_name -o
 
 namespace xfrase {
 
-template <typename counts_res_type>
+template <typename results_type>
 [[nodiscard]] static inline auto
-do_remote_intervals(const std::string &accession, const cpg_index &index,
-                    query &&qry, const std::string &hostname,
-                    const std::string &port)
-  -> std::tuple<std::vector<counts_res_type>, std::error_code> {
-  request_type_code rq_type{};
-  if constexpr (std::is_same<counts_res_type, counts_res>::value)
-    rq_type = request_type_code::counts;
-  else
-    rq_type = request_type_code::counts_cov;
-
-  request req{accession, rq_type, index.meta.index_hash, size(qry)};
-
-  client<counts_res_type> cl(hostname, port, req, std::move(qry));
-  const auto status = cl.run();
-  if (status) {
-    logger::instance().error("Transaction status: {}", status);
-    return {{}, status};
-  }
-  return {std::move(cl.take_counts()), {}};
-}
-
-template <typename counts_res_type>
-[[nodiscard]] static inline auto
-do_local_intervals(const std::string &accession,
-                   const std::string &methylome_directory, const query &qry)
-  -> std::tuple<std::vector<counts_res_type>, std::error_code> {
-  auto &lgr = logger::instance();
-
-  std::error_code ec;
-  const auto meth = methylome::read(methylome_directory, accession, ec);
+do_intervals(const request &req, query &&qry, const auto &resource,
+             std::error_code &ec) -> std::vector<results_type> {
+  client<results_type> cl(resource.host, resource.port, req, std::move(qry));
+  ec = cl.run();
   if (ec) {
-    lgr.error("Error reading methylome {} {}: {}", methylome_directory,
-              accession, ec);
-    return {{}, ec};
+    logger::instance().error("Transaction status: {}", ec);
+    return {};
   }
-  if constexpr (std::is_same<counts_res_type, counts_res_cov>::value)
-    return {std::move(meth.data.get_counts_cov(qry)), {}};
-  else
-    return {std::move(meth.data.get_counts(qry)), {}};
+  return cl.take_counts();
 }
 
-template <typename counts_res_type>
-static auto
-do_intervals(const std::string &accession, const cpg_index &index, query &&qry,
-             const std::string &hostname, const std::string &port,
-             const std::string &methylome_directory, const std::string &outfile,
-             const std::vector<genomic_interval> &gis, const bool write_scores,
-             const bool remote_mode) -> std::error_code {
-  const auto intervals_start{std::chrono::high_resolution_clock::now()};
-  const auto [results, intervals_err] =
-    remote_mode ? do_remote_intervals<counts_res_type>(
-                    accession, index, std::move(qry), hostname, port)
-                : do_local_intervals<counts_res_type>(accession,
-                                                      methylome_directory, qry);
-  const auto intervals_stop{std::chrono::high_resolution_clock::now()};
-  logger::instance().debug("Elapsed time for query: {:.3}s",
-                           duration(intervals_start, intervals_stop));
+template <typename results_type>
+[[nodiscard]] static inline auto
+do_intervals(const request &req, const query &qry, const auto &resource,
+             std::error_code &ec) -> std::vector<results_type> {
+  const auto meth = methylome::read(resource.dir, req.accession, ec);
+  if (ec)
+    return {};
+  if constexpr (std::is_same_v<results_type, counts_res_cov>)
+    return meth.data.get_counts_cov(qry);
+  else
+    return meth.data.get_counts(qry);
+}
 
-  if (intervals_err)  // ADS: error messages already logged
-    return std::make_error_code(std::errc::invalid_argument);
+template <typename results_type>
+[[nodiscard]] auto
+do_intervals(const request &req, query &&qry, const auto &resource,
+             const auto &outmgr) -> std::error_code {
+  auto &lgr = logger::instance();
+  std::vector<results_type> results;
+  std::error_code ec;
+
+  const auto intervals_start{std::chrono::high_resolution_clock::now()};
+
+  using given_type = std::remove_cvref_t<decltype(resource)>;
+  using local_type = local_methylome_resource;
+  if constexpr (std::is_same_v<given_type, local_type>)
+    results = do_intervals<results_type>(req, qry, resource, ec);
+  else
+    results = do_intervals<results_type>(req, std::move(qry), resource, ec);
+
+  const auto intervals_stop{std::chrono::high_resolution_clock::now()};
+  lgr.debug("Elapsed time for query: {:.3}s",
+            duration(intervals_start, intervals_stop));
+  if (ec)
+    return ec;
 
   const auto output_start{std::chrono::high_resolution_clock::now()};
-  const auto write_err =
-    write_output(outfile, gis, index, results, write_scores);
+  const auto write_err = write_output(outmgr, results);
   const auto output_stop{std::chrono::high_resolution_clock::now()};
-  // ADS: elapsed time for output will include conversion to scores
-  logger::instance().debug("Elapsed time for output: {:.3}s",
-                           duration(output_start, output_stop));
+  lgr.debug("Elapsed time for output: {:.3}s",
+            duration(output_start, output_stop));
   return write_err;
 }
 
@@ -313,39 +296,56 @@ command_intervals_main(int argc, char *argv[]) -> int {
   lgr.debug("Number of CpGs in index: {}", index.meta.n_cpgs);
 
   // Read query intervals and validate them
-  const auto [gis, gis_ec] = genomic_interval::load(index.meta, intervals_file);
+  const auto [intervals, gis_ec] =
+    genomic_interval::load(index.meta, intervals_file);
   if (gis_ec) {
     lgr.error("Error reading intervals file: {} ({})", intervals_file, gis_ec);
     return EXIT_FAILURE;
   }
-  if (!intervals_sorted(index.meta, gis)) {
+  if (!intervals_sorted(index.meta, intervals)) {
     lgr.error("Intervals not sorted: {}", intervals_file);
     return EXIT_FAILURE;
   }
-  if (!intervals_valid(gis)) {
+  if (!intervals_valid(intervals)) {
     lgr.error("Intervals not valid: {} (negative size found)", intervals_file);
     return EXIT_FAILURE;
   }
-  lgr.info("Number of intervals: {}", std::size(gis));
+  lgr.info("Number of intervals: {}", std::size(intervals));
+
+  const auto request_type = count_covered
+                              ? xfrase::request_type_code::counts_cov
+                              : xfrase::request_type_code::counts;
 
   // Convert intervals into query
   const auto format_query_start{std::chrono::high_resolution_clock::now()};
-  auto qry = index.make_query(gis);
+  auto qry = index.make_query(intervals);
   const auto format_query_stop{std::chrono::high_resolution_clock::now()};
   lgr.debug("Elapsed time to get format query: {:.3}s",
             duration(format_query_start, format_query_stop));
 
+  const auto req = xfrase::request{methylome_name, request_type,
+                                   index.get_hash(), std::size(intervals)};
+
+  const auto outmgr =
+    xfrase::intervals_output_mgr{outfile, intervals, index, write_scores};
+
+  // ADS: only one of these will get used
+  xfrase::local_methylome_resource lmr{methylome_directory};
+  xfrase::remote_methylome_resource rmr{hostname, port};
+
   const auto intervals_err =
     count_covered
-      ? do_intervals<counts_res_cov>(methylome_name, index, std::move(qry),
-                                     hostname, port, methylome_directory,
-                                     outfile, gis, write_scores, remote_mode)
-      : do_intervals<counts_res>(methylome_name, index, std::move(qry),
-                                 hostname, port, methylome_directory, outfile,
-                                 gis, write_scores, remote_mode);
+      ? (remote_mode
+           ? do_intervals<counts_res_cov>(req, std::move(qry), rmr, outmgr)
+           : do_intervals<counts_res_cov>(req, std::move(qry), lmr, outmgr))
+      : (remote_mode
+           ? do_intervals<counts_res>(req, std::move(qry), rmr, outmgr)
+           : do_intervals<counts_res>(req, std::move(qry), lmr, outmgr));
+
   if (intervals_err) {
     lgr.error("Error: {}", intervals_err);
     return EXIT_FAILURE;
   }
+
   return EXIT_SUCCESS;
 }
