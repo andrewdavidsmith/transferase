@@ -42,8 +42,8 @@
 namespace xfrase {
 
 [[nodiscard]] STATIC auto
-get_query_within_chrom(const cpg_index_data::vec &positions,
-                       const std::vector<chrom_range_t> &chrom_ranges)
+make_query_within_chrom(const cpg_index_data::vec &positions,
+                        const std::vector<chrom_range_t> &chrom_ranges)
   -> xfrase::query;
 
 }
