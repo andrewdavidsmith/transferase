@@ -87,9 +87,6 @@ struct methylome_metadata {
 
   [[nodiscard]] auto
   tostring() const -> std::string;
-
-  [[nodiscard]] auto
-  update(const methylome_data &meth) -> std::error_code;
 };
 
 // clang-format off
