@@ -256,12 +256,13 @@ TEST_F(request_handler_mock, handle_get_counts_success) {
   std::error_code ec;
   const auto index = cpg_index::read(index_file_dir, assembly, ec);
   EXPECT_FALSE(ec);
-  const auto [gis, gis_ec] = genomic_interval::load(index.meta, intervals_path);
-  EXPECT_FALSE(gis_ec);
 
-  const auto qry = index.make_query(gis);
+  const auto intervals = genomic_interval::read(index.meta, intervals_path, ec);
+  EXPECT_FALSE(ec);
 
-  request req{methylome_name, rq_type, index_hash, std::size(gis)};
+  const auto qry = index.make_query(intervals);
+
+  request req{methylome_name, rq_type, index_hash, std::size(intervals)};
   response_header resp_hdr;
 
   mock_request_handler->add_response_size(req, resp_hdr);
