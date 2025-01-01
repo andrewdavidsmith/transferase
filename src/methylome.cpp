@@ -85,11 +85,6 @@ methylome::read(const std::string &dirname, const std::string &methylome_name,
 }
 
 [[nodiscard]] auto
-methylome::is_consistent() const -> bool {
-  return meta.methylome_hash == data.hash();
-}
-
-[[nodiscard]] auto
 methylome::write(const std::string &outdir,
                  const std::string &name) const -> std::error_code {
   // make filenames

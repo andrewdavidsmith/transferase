@@ -54,7 +54,9 @@ struct methylome {
        std::error_code &ec) -> methylome;
 
   [[nodiscard]] auto
-  is_consistent() const -> bool;
+  is_consistent() const -> bool {
+    return meta.methylome_hash == data.hash();
+  }
 
   [[nodiscard]] auto
   is_consistent(const methylome &other) const -> bool {
@@ -70,6 +72,11 @@ struct methylome {
 
   [[nodiscard]] auto
   update_metadata() -> std::error_code;
+
+  [[nodiscard]] auto
+  tostring() const -> std::string {
+    return meta.tostring();
+  }
 
   auto
   add(const methylome &rhs) -> void {
