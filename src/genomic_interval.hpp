@@ -50,8 +50,8 @@ struct genomic_interval {
   operator<=>(const genomic_interval &) const = default;
 
   [[nodiscard]] static auto
-  load(const cpg_index_metadata &index, const std::string &filename)
-    -> std::tuple<std::vector<genomic_interval>, std::error_code>;
+  load(const cpg_index_metadata &index, const std::string &filename,
+       std::error_code &ec) -> std::vector<genomic_interval>;
 };
 
 // ADS: Sorted intervals have chromosomes together but the order on

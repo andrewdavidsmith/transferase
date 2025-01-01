@@ -85,21 +85,24 @@ parse(const cpg_index_metadata &cim, const std::string &line,
 
 [[nodiscard]] auto
 genomic_interval::load(const cpg_index_metadata &cim,
-                       const std::string &filename)
-  -> std::tuple<std::vector<genomic_interval>, std::error_code> {
+                       const std::string &filename,
+                       std::error_code &ec) -> std::vector<genomic_interval> {
+  ec = std::error_code{};
   std::ifstream in{filename};
-  if (!in)
-    return {{}, std::make_error_code(std::errc(errno))};
+  if (!in) {
+    ec = std::make_error_code(std::errc(errno));
+    return {};
+  }
+
   std::vector<genomic_interval> v;
   std::string line;
-  std::error_code ec;
   while (getline(in, line)) {
     const auto gi = parse(cim, line, ec);
     if (ec)
-      return {{}, ec};
+      return {};
     v.push_back(gi);
   }
-  return {std::move(v), genomic_interval_code::ok};
+  return v;
 }
 
 [[nodiscard]] auto
