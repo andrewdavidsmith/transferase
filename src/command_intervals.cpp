@@ -285,21 +285,20 @@ command_intervals_main(int argc, char *argv[]) -> int {
   log_args<log_level_t::info>(args_to_log);
   log_args<log_level_t::info>(remote_mode ? remote_args : local_args);
 
-  std::error_code index_ec;
-  const auto index = cpg_index::read(index_directory, genome_name, index_ec);
-  if (index_ec) {
+  std::error_code ec;
+  const auto index = cpg_index::read(index_directory, genome_name, ec);
+  if (ec) {
     lgr.error("Failed to read cpg index {} {}: {}", index_directory,
-              genome_name, index_ec);
+              genome_name, ec);
     return EXIT_FAILURE;
   }
 
   lgr.debug("Number of CpGs in index: {}", index.meta.n_cpgs);
 
   // Read query intervals and validate them
-  const auto [intervals, gis_ec] =
-    genomic_interval::load(index.meta, intervals_file);
-  if (gis_ec) {
-    lgr.error("Error reading intervals file: {} ({})", intervals_file, gis_ec);
+  const auto intervals = genomic_interval::load(index.meta, intervals_file, ec);
+  if (ec) {
+    lgr.error("Error reading intervals file: {} ({})", intervals_file, ec);
     return EXIT_FAILURE;
   }
   if (!intervals_sorted(index.meta, intervals)) {
