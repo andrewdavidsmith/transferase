@@ -42,12 +42,11 @@ TEST(genomic_interval_test, basic_assertions) {
   std::error_code ec;
   const auto index = cpg_index::read(index_dir, assembly, ec);
   EXPECT_FALSE(ec);
-  const auto [gis, intervals_ec] =
-    genomic_interval::load(index.meta, intervals_file);
-  EXPECT_FALSE(intervals_ec);
-  EXPECT_EQ(std::size(gis), 20);
-  EXPECT_EQ(gis[0].start, 6595);
-  EXPECT_EQ(gis[0].stop, 6890);
+  const auto intervals = genomic_interval::read(index.meta, intervals_file, ec);
+  EXPECT_FALSE(ec);
+  EXPECT_EQ(std::size(intervals), 20);
+  EXPECT_EQ(intervals[0].start, 6595);
+  EXPECT_EQ(intervals[0].stop, 6890);
 }
 
 TEST(genomic_interval_test, read_non_existent_file) {
