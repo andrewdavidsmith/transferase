@@ -89,7 +89,7 @@ cpg_index::write(const std::string &outdir,
 [[nodiscard]] auto
 cpg_index::make_query(const std::vector<genomic_interval> &gis) const
   -> xfrase::query {
-  return data.get_query(meta, gis);
+  return data.make_query(meta, gis);
 }
 
 [[nodiscard]] auto
