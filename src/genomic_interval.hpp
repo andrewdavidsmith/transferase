@@ -50,7 +50,7 @@ struct genomic_interval {
   operator<=>(const genomic_interval &) const = default;
 
   [[nodiscard]] static auto
-  load(const cpg_index_metadata &index, const std::string &filename,
+  read(const cpg_index_metadata &index, const std::string &filename,
        std::error_code &ec) -> std::vector<genomic_interval>;
 };
 

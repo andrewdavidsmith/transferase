@@ -41,7 +41,7 @@
 namespace xfrase {
 
 [[nodiscard]] STATIC auto
-parse(const cpg_index_metadata &cim, const std::string &line,
+parse(const cpg_index_metadata &meta, const std::string &line,
       std::error_code &ec) -> genomic_interval {
   auto cursor = line.data();
   const auto line_sz = std::size(line);
@@ -71,12 +71,12 @@ parse(const cpg_index_metadata &cim, const std::string &line,
     ec = genomic_interval_code::error_parsing_bed_line;
 
   // Find chromosome ID
-  const auto ch_id_itr = cim.chrom_index.find(chrom_name);
-  if (!ec && ch_id_itr == std::cend(cim.chrom_index))
+  const auto ch_id_itr = meta.chrom_index.find(chrom_name);
+  if (!ec && ch_id_itr == std::cend(meta.chrom_index))
     ec = genomic_interval_code::chrom_name_not_found_in_index;
 
   // Check interval
-  if (!ec && stop > cim.chrom_size[ch_id_itr->second])
+  if (!ec && stop > meta.chrom_size[ch_id_itr->second])
     ec = genomic_interval_code::interval_past_chrom_end_in_index;
 
   return ec ? genomic_interval{}
@@ -84,7 +84,7 @@ parse(const cpg_index_metadata &cim, const std::string &line,
 }
 
 [[nodiscard]] auto
-genomic_interval::load(const cpg_index_metadata &cim,
+genomic_interval::read(const cpg_index_metadata &meta,
                        const std::string &filename,
                        std::error_code &ec) -> std::vector<genomic_interval> {
   ec = std::error_code{};
@@ -97,7 +97,7 @@ genomic_interval::load(const cpg_index_metadata &cim,
   std::vector<genomic_interval> v;
   std::string line;
   while (getline(in, line)) {
-    const auto gi = parse(cim, line, ec);
+    const auto gi = parse(meta, line, ec);
     if (ec)
       return {};
     v.push_back(gi);
@@ -106,10 +106,10 @@ genomic_interval::load(const cpg_index_metadata &cim,
 }
 
 [[nodiscard]] auto
-intervals_sorted(const cpg_index_metadata &cim,
+intervals_sorted(const cpg_index_metadata &meta,
                  const std::vector<genomic_interval> &gis) -> bool {
   // check that chroms appear consecutively
-  std::vector<std::uint32_t> chroms_seen(std::size(cim.chrom_order), 0);
+  std::vector<std::uint32_t> chroms_seen(std::size(meta.chrom_order), 0);
   std::int32_t prev_ch_id{genomic_interval::not_a_chrom};
   for (const auto &i : gis) {
     chroms_seen[i.ch_id] += (i.ch_id != prev_ch_id);
