@@ -54,13 +54,6 @@ namespace xfrase {
 struct genomic_interval;
 
 [[nodiscard]] auto
-cpg_index::is_consistent() const -> bool {
-  const auto n_cpgs_match = (meta.n_cpgs == data.get_n_cpgs());
-  const auto hashes_match = (meta.index_hash == data.hash());
-  return n_cpgs_match && hashes_match;
-}
-
-[[nodiscard]] auto
 cpg_index::write(const std::string &outdir,
                  const std::string &name) const -> std::error_code {
   // make filenames

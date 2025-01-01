@@ -53,7 +53,9 @@ struct cpg_index {
 
   [[nodiscard]]
   auto
-  is_consistent() const -> bool;
+  is_consistent() const -> bool {
+    return meta.index_hash == data.hash();
+  }
 
   [[nodiscard]]
   auto
