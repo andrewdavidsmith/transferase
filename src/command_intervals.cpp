@@ -296,7 +296,7 @@ command_intervals_main(int argc, char *argv[]) -> int {
   lgr.debug("Number of CpGs in index: {}", index.meta.n_cpgs);
 
   // Read query intervals and validate them
-  const auto intervals = genomic_interval::load(index.meta, intervals_file, ec);
+  const auto intervals = genomic_interval::read(index.meta, intervals_file, ec);
   if (ec) {
     lgr.error("Error reading intervals file: {} ({})", intervals_file, ec);
     return EXIT_FAILURE;
