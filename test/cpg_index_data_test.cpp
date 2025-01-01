@@ -117,14 +117,14 @@ TEST(cpg_index_data_test, invalid_read) {
   EXPECT_EQ(std::size(index.data.positions), 0);
 }
 
-TEST(cpg_index_data_test, valid_get_query_within_chrom) {
+TEST(cpg_index_data_test, valid_make_query_within_chrom) {
   cpg_index_data index;
   index.positions.push_back({1, 2, 3, 4, 5});
   std::vector<std::pair<std::uint32_t, std::uint32_t>> queries = {
     {1, 3},
     {4, 5},
   };
-  const auto qry = index.get_query_within_chrom(0, queries);
+  const auto qry = index.make_query_within_chrom(0, queries);
   const auto expected = xfrase::query({
     {0, 2},
     {3, 4},
