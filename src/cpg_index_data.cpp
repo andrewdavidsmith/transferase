@@ -119,8 +119,8 @@ cpg_index_data::write(const std::string &index_file) const -> std::error_code {
 // within the chrom, get the query in the form of identity of CpG
 // sites using std::lower_bound
 [[nodiscard]] STATIC inline auto
-get_query_within_chrom(const cpg_index_data::vec &positions,
-                       const std::vector<chrom_range_t> &chrom_ranges)
+make_query_within_chrom(const cpg_index_data::vec &positions,
+                        const std::vector<chrom_range_t> &chrom_ranges)
   -> xfrase::query {
   xfrase::query qry(std::size(chrom_ranges));
   auto cursor = std::cbegin(positions);
@@ -137,16 +137,16 @@ get_query_within_chrom(const cpg_index_data::vec &positions,
 // given the chromosome id (from chrom_index) and a set of ranges
 // within the chrom, get the query in the form of CpG site identities
 [[nodiscard]] auto
-cpg_index_data::get_query_within_chrom(
+cpg_index_data::make_query_within_chrom(
   const std::int32_t ch_id,
   const std::vector<chrom_range_t> &chrom_ranges) const -> xfrase::query {
   assert(std::ranges::is_sorted(chrom_ranges) && ch_id >= 0 &&
          ch_id < std::ranges::ssize(positions));
-  return xfrase::get_query_within_chrom(positions[ch_id], chrom_ranges);
+  return xfrase::make_query_within_chrom(positions[ch_id], chrom_ranges);
 }
 
 [[nodiscard]] auto
-cpg_index_data::get_query_chrom(
+cpg_index_data::make_query_chrom(
   const std::int32_t ch_id, const cpg_index_metadata &meta,
   const std::vector<chrom_range_t> &chrom_ranges) const -> xfrase::query {
   assert(std::ranges::is_sorted(chrom_ranges) && ch_id >= 0 &&
@@ -154,7 +154,7 @@ cpg_index_data::get_query_chrom(
 
   const auto offset = meta.chrom_offset[ch_id];
 
-  auto q = xfrase::get_query_within_chrom(positions[ch_id], chrom_ranges) |
+  auto q = xfrase::make_query_within_chrom(positions[ch_id], chrom_ranges) |
            std::views::transform([&](const auto &x) -> xfrase::query_element {
              return {offset + x.first, offset + x.second};
            }) |
@@ -163,8 +163,8 @@ cpg_index_data::get_query_chrom(
 }
 
 [[nodiscard]] auto
-cpg_index_data::get_query(const cpg_index_metadata &meta,
-                          const std::vector<genomic_interval> &gis) const
+cpg_index_data::make_query(const cpg_index_metadata &meta,
+                           const std::vector<genomic_interval> &gis) const
   -> xfrase::query {
   const auto same_chrom = [](const genomic_interval &a,
                              const genomic_interval &b) {
@@ -181,7 +181,7 @@ cpg_index_data::get_query(const cpg_index_metadata &meta,
     std::vector<chrom_range_t> tmp(std::size(gis_for_chrom));
     std::ranges::transform(gis_for_chrom, std::begin(tmp), start_stop);
     const auto ch_id = gis_for_chrom.front().ch_id;
-    std::ranges::copy(get_query_chrom(ch_id, meta, tmp),
+    std::ranges::copy(make_query_chrom(ch_id, meta, tmp),
                       std::back_inserter(qry.v));
   }
   return qry;

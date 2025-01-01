@@ -74,17 +74,18 @@ struct cpg_index_data {
   get_n_cpgs() const -> std::uint32_t;
 
   [[nodiscard]] auto
-  get_query_within_chrom(const std::int32_t ch_id,
-                         const std::vector<chrom_range_t> &pos) const
+  make_query_within_chrom(const std::int32_t ch_id,
+                          const std::vector<chrom_range_t> &pos) const
     -> xfrase::query;
 
   [[nodiscard]] auto
-  get_query_chrom(const std::int32_t ch_id, const cpg_index_metadata &meta,
-                  const std::vector<chrom_range_t> &pos) const -> xfrase::query;
+  make_query_chrom(const std::int32_t ch_id, const cpg_index_metadata &meta,
+                   const std::vector<chrom_range_t> &pos) const
+    -> xfrase::query;
 
   [[nodiscard]] auto
-  get_query(const cpg_index_metadata &meta,
-            const std::vector<genomic_interval> &gis) const -> xfrase::query;
+  make_query(const cpg_index_metadata &meta,
+             const std::vector<genomic_interval> &gis) const -> xfrase::query;
 
   std::vector<cpg_index_data::vec> positions;
 };
