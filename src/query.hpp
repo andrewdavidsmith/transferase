@@ -34,21 +34,21 @@
 
 namespace xfrase {
 
-struct query {
+struct query_container {
   std::vector<query_element> v;
   typedef std::vector<query_element>::size_type size_type;
 
-  query() = default;
-  explicit query(const std::uint64_t data_size) : v(data_size) {}
-  explicit query(std::vector<query_element> &&elements) :
+  query_container() = default;
+  explicit query_container(const std::uint64_t data_size) : v(data_size) {}
+  explicit query_container(std::vector<query_element> &&elements) :
     v{std::move(elements)} {}
 
   // prevent copying and allow moving
   // clang-format off
-  query(const query &) = delete;
-  query &operator=(const query &) = delete;
-  query(query &&) noexcept = default;
-  query &operator=(query &&) noexcept = default;
+  query_container(const query_container &) = delete;
+  query_container &operator=(const query_container &) = delete;
+  query_container(query_container &&) noexcept = default;
+  query_container &operator=(query_container &&) noexcept = default;
   // clang-format on
 
   auto
@@ -77,11 +77,11 @@ struct query {
   // clang-format on
 
   auto
-  operator<=>(const query &other) const = default;
+  operator<=>(const query_container &other) const = default;
 };
 
 [[nodiscard]] inline auto
-size(const query &qry) {
+size(const query_container &qry) {
   return std::size(qry.v);
 }
 

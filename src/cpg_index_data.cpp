@@ -121,8 +121,8 @@ cpg_index_data::write(const std::string &index_file) const -> std::error_code {
 [[nodiscard]] STATIC inline auto
 make_query_within_chrom(const cpg_index_data::vec &positions,
                         const std::vector<chrom_range_t> &chrom_ranges)
-  -> xfrase::query {
-  xfrase::query qry(std::size(chrom_ranges));
+  -> xfrase::query_container {
+  xfrase::query_container qry(std::size(chrom_ranges));
   auto cursor = std::cbegin(positions);
   for (const auto [i, cr] : std::views::enumerate(chrom_ranges)) {
     cursor = std::ranges::lower_bound(cursor, std::cend(positions), cr.start);
@@ -141,7 +141,7 @@ make_query_within_chrom(const cpg_index_data::vec &positions,
 [[nodiscard]] auto
 cpg_index_data::make_query_within_chrom(
   const std::int32_t ch_id,
-  const std::vector<chrom_range_t> &chrom_ranges) const -> xfrase::query {
+  const std::vector<chrom_range_t> &chrom_ranges) const -> xfrase::query_container {
   assert(std::ranges::is_sorted(chrom_ranges) && ch_id >= 0 &&
          ch_id < std::ranges::ssize(positions));
   return xfrase::make_query_within_chrom(positions[ch_id], chrom_ranges);
@@ -150,7 +150,7 @@ cpg_index_data::make_query_within_chrom(
 [[nodiscard]] auto
 cpg_index_data::make_query_chrom(
   const std::int32_t ch_id, const cpg_index_metadata &meta,
-  const std::vector<chrom_range_t> &chrom_ranges) const -> xfrase::query {
+  const std::vector<chrom_range_t> &chrom_ranges) const -> xfrase::query_container {
   assert(std::ranges::is_sorted(chrom_ranges) && ch_id >= 0 &&
          ch_id < std::ranges::ssize(positions));
   const auto offset = meta.chrom_offset[ch_id];
@@ -165,7 +165,7 @@ cpg_index_data::make_query_chrom(
 [[nodiscard]] auto
 cpg_index_data::make_query(const cpg_index_metadata &meta,
                            const std::vector<genomic_interval> &intervals) const
-  -> xfrase::query {
+  -> xfrase::query_container {
   const auto same_chrom = [](const genomic_interval &a,
                              const genomic_interval &b) {
     return a.ch_id == b.ch_id;
@@ -175,7 +175,7 @@ cpg_index_data::make_query(const cpg_index_metadata &meta,
     return chrom_range_t{x.start, x.stop};
   };
 
-  xfrase::query qry;
+  xfrase::query_container qry;
   qry.reserve(std::size(intervals));
   for (const auto &intervals_for_chrom :
        intervals | std::views::chunk_by(same_chrom)) {

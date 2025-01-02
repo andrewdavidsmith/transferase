@@ -49,7 +49,7 @@ namespace xfrase {
 template <typename level_element> class client {
 public:
   client(const std::string &server, const std::string &port, const request &req,
-         query &&qry);
+         query_container &&qry);
   client(const std::string &server, const std::string &port, const request &req,
          const std::uint32_t bin_size);
 
@@ -104,7 +104,7 @@ private:
 
   request_buffer req_buf;
   request req;
-  query qry;
+  query_container qry;
   std::uint32_t bin_size{};
 
   response_header_buffer resp_hdr_buf;
@@ -124,7 +124,7 @@ private:
 template <typename level_element>
 client<level_element>::client(const std::string &server,
                               const std::string &port, const request &req,
-                              query &&qry) :
+                              query_container &&qry) :
   resolver(io_context), socket(io_context), deadline{socket.get_executor()},
   req{req}, qry{std::move(qry)},  // move b/c req can be big
   lgr{logger::instance()} {
@@ -268,7 +268,7 @@ auto
 client<level_element>::prepare_to_read_response_payload() -> void {
   // This function is needed because this can't be done in the
   // read_query() function as it is recursive
-  resp.levels.resize(resp_hdr.response_size);     // get space for query
+  resp.levels.resize(resp_hdr.response_size);     // get space for query_container
   levels_bytes_remaining = get_levels_n_bytes();  // init counters
   levels_bytes_received = 0;                      // should be init to this
 }

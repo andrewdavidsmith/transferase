@@ -141,7 +141,7 @@ levels_to_payload(auto &&levels) -> response_payload {
 }
 
 auto
-request_handler::handle_get_levels(const request &req, const xfrase::query &qry,
+request_handler::handle_get_levels(const request &req, const xfrase::query_container &qry,
                                    response_header &resp_hdr,
                                    response_payload &resp_data) -> void {
   auto &lgr = logger::instance();

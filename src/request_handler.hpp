@@ -36,7 +36,7 @@ namespace xfrase {
 struct request;
 struct response_header;
 struct response_payload;
-struct query;
+struct query_container;
 
 // handles all incoming requests
 struct request_handler {
@@ -56,7 +56,7 @@ struct request_handler {
 
   /// handle a request to get levels for query intervals
   auto
-  handle_get_levels(const request &req, const xfrase::query &qry,
+  handle_get_levels(const request &req, const xfrase::query_container &qry,
                     response_header &resp_hdr, response_payload &resp) -> void;
 
   /// handle a request to get levels for genomic bins

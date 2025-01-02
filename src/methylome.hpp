@@ -40,7 +40,7 @@
 namespace xfrase {
 
 struct cpg_index;
-struct query;
+struct query_container;
 
 struct methylome {
   static constexpr auto data_extn = methylome_data::filename_extension;
@@ -97,14 +97,14 @@ struct methylome {
 
   /// get methylation levels for query intervals
   [[nodiscard]] auto
-  get_levels(const xfrase::query &qry) const {
+  get_levels(const xfrase::query_container &qry) const {
     return data.get_levels(qry);
   }
 
   /// get methylation levels for query intervals and number for query
   /// intervals covered
   [[nodiscard]] auto
-  get_levels_covered(const xfrase::query &qry) const {
+  get_levels_covered(const xfrase::query_container &qry) const {
     return data.get_levels_covered(qry);
   }
 

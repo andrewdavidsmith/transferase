@@ -75,16 +75,16 @@ struct cpg_index_data {
   [[nodiscard]] auto
   make_query_within_chrom(const std::int32_t ch_id,
                           const std::vector<chrom_range_t> &pos) const
-    -> xfrase::query;
+    -> xfrase::query_container;
 
   [[nodiscard]] auto
   make_query_chrom(const std::int32_t ch_id, const cpg_index_metadata &meta,
                    const std::vector<chrom_range_t> &pos) const
-    -> xfrase::query;
+    -> xfrase::query_container;
 
   [[nodiscard]] auto
   make_query(const cpg_index_metadata &meta,
-             const std::vector<genomic_interval> &gis) const -> xfrase::query;
+             const std::vector<genomic_interval> &gis) const -> xfrase::query_container;
 
   [[nodiscard]] static auto
   compose_filename(auto wo_extension) {

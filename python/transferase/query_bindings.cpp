@@ -30,14 +30,14 @@
 
 namespace py = pybind11;
 
-PYBIND11_MODULE(query, m) {
-  py::class_<xfrase::query>(m, "Query")
+PYBIND11_MODULE(query_container, m) {
+  py::class_<xfrase::query_container>(m, "Query")
     // ADS: constructors only for testing
     .def(py::init<>())
     // bind const operator[] for read access (get)
     .def(
       "__getitem__",
-      [](const xfrase::query &self, const std::size_t pos) {
+      [](const xfrase::query_container &self, const std::size_t pos) {
         // Return tuple of two values
         const auto &elem = self[pos];
         return py::make_tuple(elem.first, elem.second);
@@ -47,11 +47,11 @@ PYBIND11_MODULE(query, m) {
     // Define equality operator explicitly as returning a bool
     .def(
       "__eq__",
-      [](const xfrase::query &a, const xfrase::query &b) {
+      [](const xfrase::query_container &a, const xfrase::query_container &b) {
         return (a <=> b) == std::strong_ordering::equal;
       },
       py::is_operator())
-    .def("__repr__", [](const xfrase::query &q) {
+    .def("__repr__", [](const xfrase::query_container &q) {
       return std::format("<Query size={}>", q.v.size());
     });
 }

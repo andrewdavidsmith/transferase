@@ -36,12 +36,12 @@
 namespace xfrase {
 
 struct chrom_range_t;
-struct query;
+struct query_container;
 
 [[nodiscard]] STATIC auto
 make_query_within_chrom(const cpg_index_data::vec &positions,
                         const std::vector<chrom_range_t> &chrom_ranges)
-  -> xfrase::query;
+  -> xfrase::query_container;
 
 }  // namespace xfrase
 

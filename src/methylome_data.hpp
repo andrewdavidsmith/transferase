@@ -48,7 +48,7 @@ namespace xfrase {
 
 struct cpg_index;
 struct methylome_metadata;
-struct query;
+struct query_container;
 
 typedef std::uint16_t m_count_t;
 struct m_count_p {
@@ -98,12 +98,12 @@ struct methylome_data {
   /// get methylation levels for query intervals and number for query
   /// intervals covered
   [[nodiscard]] auto
-  get_levels_covered(const xfrase::query &qry) const
+  get_levels_covered(const xfrase::query_container &qry) const
     -> level_container<level_element_covered_t>;
 
   /// get methylation levels for query intervals
   [[nodiscard]] auto
-  get_levels(const xfrase::query &qry) const
+  get_levels(const xfrase::query_container &qry) const
     -> level_container<level_element_t>;
 
   /// get global methylation level
