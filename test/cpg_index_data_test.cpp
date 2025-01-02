@@ -23,13 +23,15 @@
 
 #include <cpg_index_data.hpp>
 
+#include "cpg_index_metadata.hpp"
+#include "query_element.hpp"
+
 #include <chrom_range.hpp>
 #include <cpg_index.hpp>
 #include <utilities.hpp>
 
 #include <gtest/gtest.h>
 
-#include <cstdint>
 #include <iterator>  // for std::size
 #include <string>
 #include <vector>

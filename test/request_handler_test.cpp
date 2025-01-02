@@ -24,12 +24,12 @@
 #include "request_handler.hpp"
 
 #include "cpg_index.hpp"
-#include "cpg_index_metadata.hpp"
 #include "genomic_interval.hpp"
 #include "logger.hpp"  // ADS: so we can setup the logger
 #include "methylome_data.hpp"
 #include "methylome_metadata.hpp"
 #include "query.hpp"
+#include "query_element.hpp"
 #include "request.hpp"
 #include "request_type_code.hpp"
 #include "response.hpp"
@@ -163,7 +163,8 @@ TEST_F(request_handler_mock, add_response_size_for_intervals_success) {
   static constexpr auto index_hash = 0;
   static constexpr auto n_intervals = 100;
   static constexpr auto expected_response_size_n_intervals = n_intervals;
-  const auto offsets = std::vector<xfrase::query_element>(n_intervals);
+  [[maybe_unused]] const auto offsets =
+    std::vector<xfrase::query_element>(n_intervals);
 
   const request req{"eFlareon_brain", rq_type, index_hash, n_intervals};
   response_header resp_hdr;
@@ -179,7 +180,8 @@ TEST_F(request_handler_mock, handle_request_success) {
   static constexpr auto index_hash = 0;
   static constexpr auto expected_response_size_n_intervals = n_intervals;
 
-  const auto offsets = std::vector<xfrase::query_element>(n_intervals);
+  [[maybe_unused]] const auto offsets =
+    std::vector<xfrase::query_element>(n_intervals);
   const request req{"eFlareon_brain", rq_type, index_hash, n_intervals};
   response_header resp_hdr;
 
@@ -221,7 +223,8 @@ TEST_F(request_handler_mock, handle_request_failure) {
   static constexpr auto rq_type = request_type_code::intervals;
   static constexpr auto n_intervals = 100;
   static constexpr auto expected_response_size_n_intervals = n_intervals;
-  const auto offsets = std::vector<xfrase::query_element>(n_intervals);
+  [[maybe_unused]] const auto offsets =
+    std::vector<xfrase::query_element>(n_intervals);
 
   request req{"eFlareon_brain", rq_type, index_hash, n_intervals};
 
