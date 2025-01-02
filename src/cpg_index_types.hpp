@@ -30,11 +30,16 @@
 namespace xfrase {
 
 typedef std::uint32_t chrom_pos_t;
-// struct chrom_range_t {
-//   chrom_pos_t start{};
-//   chrom_pos_t stop{};
-// };
-typedef std::pair<chrom_pos_t, chrom_pos_t> chrom_range_t;
+
+struct chrom_range_t {
+  chrom_pos_t start{};
+  chrom_pos_t stop{};
+  chrom_range_t() = default;
+  chrom_range_t(const chrom_pos_t start, const chrom_pos_t stop) :
+    start{start}, stop{stop} {}
+  [[nodiscard]] auto
+  operator<=>(const chrom_range_t &) const = default;
+};
 
 }  // namespace xfrase
 
