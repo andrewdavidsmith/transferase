@@ -70,6 +70,16 @@ struct cpg_index {
   [[nodiscard]] auto
   make_query(const std::vector<genomic_interval> &gis) const -> xfrase::query;
 
+  [[nodiscard]] auto
+  get_n_cpgs_chrom() const {
+    return meta.get_n_cpgs_chrom();
+  }
+
+  [[nodiscard]] auto
+  get_n_bins(const std::uint32_t bin_size) const {
+    return meta.get_n_bins(bin_size);
+  }
+
   [[nodiscard]] static auto
   make_cpg_index(const std::string &genome_file,
                  std::error_code &ec) -> cpg_index;

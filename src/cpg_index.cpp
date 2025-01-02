@@ -58,7 +58,7 @@ cpg_index::write(const std::string &outdir,
                  const std::string &name) const -> std::error_code {
   // make filenames
   const auto fn_wo_extn = std::filesystem::path{outdir} / name;
-  const auto meta_filename = compose_cpg_index_metadata_filename(fn_wo_extn);
+  const auto meta_filename = cpg_index_metadata::compose_filename(fn_wo_extn);
   const auto meta_write_ec = meta.write(meta_filename);
   if (meta_write_ec) {
     if (std::filesystem::exists(meta_filename)) {
@@ -67,7 +67,7 @@ cpg_index::write(const std::string &outdir,
     }
     return meta_write_ec;
   }
-  const auto data_filename = compose_cpg_index_data_filename(fn_wo_extn);
+  const auto data_filename = cpg_index_data::compose_filename(fn_wo_extn);
   const auto data_write_ec = data.write(data_filename);
   if (data_write_ec) {
     std::error_code remove_ec;
@@ -101,10 +101,17 @@ cpg_index::read(const std::string &dirname, const std::string &genome_name,
 cpg_index::files_exist(const std::string &directory,
                        const std::string &cpg_index_name) -> bool {
   const auto fn_wo_extn = std::filesystem::path{directory} / cpg_index_name;
-  const auto meta_filename = compose_cpg_index_metadata_filename(fn_wo_extn);
-  const auto data_filename = compose_cpg_index_data_filename(fn_wo_extn);
-  return std::filesystem::exists(meta_filename) &&
-         std::filesystem::exists(data_filename);
+  const auto meta_filename = cpg_index_metadata::compose_filename(fn_wo_extn);
+  const auto data_filename = cpg_index_data::compose_filename(fn_wo_extn);
+
+  std::error_code ec;
+  const auto meta_exists = std::filesystem::exists(meta_filename, ec);
+  if (ec || !meta_exists)
+    return false;
+  const auto data_exists = std::filesystem::exists(data_filename, ec);
+  if (ec || !data_exists)
+    return false;
+  return true;
 }
 
 [[nodiscard]] auto
