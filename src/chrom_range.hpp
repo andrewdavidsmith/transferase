@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_CPG_INDEX_TYPES_HPP_
-#define SRC_CPG_INDEX_TYPES_HPP_
+#ifndef SRC_CHROM_RANGE_HPP_
+#define SRC_CHROM_RANGE_HPP_
 
 #include <cstdint>  // for std::uint32_t
 #include <utility>  // for std::pair
@@ -43,4 +43,4 @@ struct chrom_range_t {
 
 }  // namespace xfrase
 
-#endif  // SRC_CPG_INDEX_TYPES_HPP_
+#endif  // SRC_CHROM_RANGE_HPP_
