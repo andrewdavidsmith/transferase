@@ -75,6 +75,18 @@ struct cpg_index_metadata {
 
   [[nodiscard]] auto
   get_n_bins(const std::uint32_t bin_size) const -> std::uint32_t;
+
+  [[nodiscard]] static auto
+  compose_filename(auto wo_extension) {
+    wo_extension += filename_extension;
+    return wo_extension;
+  }
+
+  [[nodiscard]] static auto
+  compose_filename(const auto &directory, const auto &name) {
+    const auto wo_extn = (std::filesystem::path{directory} / name).string();
+    return std::format("{}{}", wo_extn, filename_extension);
+  }
 };
 
 // clang-format off
@@ -93,18 +105,6 @@ BOOST_DESCRIBE_STRUCT(cpg_index_metadata, (),
  chrom_offset
 ))
 // clang-format on
-
-[[nodiscard]] inline auto
-compose_cpg_index_metadata_filename(auto wo_extension) {
-  wo_extension += cpg_index_metadata::filename_extension;
-  return wo_extension;
-}
-
-[[nodiscard]] inline auto
-compose_cpg_index_metadata_filename(const auto &directory, const auto &name) {
-  const auto wo_extn = (std::filesystem::path{directory} / name).string();
-  return std::format("{}{}", wo_extn, cpg_index_metadata::filename_extension);
-}
 
 }  // namespace xfrase
 
