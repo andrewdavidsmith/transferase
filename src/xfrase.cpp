@@ -119,7 +119,7 @@ main(int argc, char *argv[]) {
   po::notify(vm);
 
   const auto cmd_itr = std::ranges::find_if(
-    commands, [&command](const auto c) { return get<0>(c) == command; });
+    commands, [&command](const auto &c) { return get<0>(c) == command; });
 
   if (cmd_itr == std::cend(commands)) {
     format_help(program, commands);
