@@ -25,6 +25,7 @@
 
 #include "cpg_index.hpp"
 #include "cpg_index_metadata.hpp"
+#include "level_container.hpp"  // for xfrase::size
 #include "logger.hpp"
 #include "methylome.hpp"
 #include "methylome_data.hpp"
@@ -39,7 +40,6 @@
 
 #include <chrono>       // for std::chrono::high_resolution_clock
 #include <cstring>      // for std::memcpy
-#include <iterator>     // for std::size, std::pair
 #include <memory>       // for std::shared_ptr
 #include <type_traits>  // for std::remove_cvref_t
 #include <vector>

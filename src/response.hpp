@@ -34,6 +34,7 @@
 #include <iterator>  // for std::size
 #include <string>
 #include <system_error>
+#include <utility>  // for std::move
 #include <vector>
 
 namespace xfrase {
