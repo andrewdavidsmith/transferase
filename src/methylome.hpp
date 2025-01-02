@@ -29,9 +29,7 @@
 
 #include <algorithm>
 #include <cctype>
-#include <cstddef>  // for std::size_t
 #include <cstdint>  // std::uint32_t
-#include <format>   // for std::vector??
 #include <string>
 #include <system_error>
 #include <type_traits>
@@ -41,6 +39,7 @@
 namespace xfrase {
 
 struct cpg_index;
+struct query;
 
 struct methylome {
   static constexpr auto data_extn = methylome_data::filename_extension;
