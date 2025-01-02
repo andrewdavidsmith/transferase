@@ -28,6 +28,7 @@
 #include "cpg_index_types.hpp"
 #include "genomic_interval.hpp"
 #include "hash.hpp"  // for update_adler
+#include "query_element.hpp"
 
 #include <algorithm>
 #include <cassert>
@@ -39,7 +40,6 @@
 #include <numeric>     // for std::adjacent_difference, std::exclusive_scan
 #include <ranges>
 #include <string>
-#include <utility>  // for std::pair, std::move
 #include <vector>
 
 namespace xfrase {

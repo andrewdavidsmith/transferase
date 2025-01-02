@@ -28,7 +28,6 @@
 #include "aligned_allocator.hpp"
 #endif
 
-#include "cpg_index_types.hpp"
 #include "query.hpp"
 
 #include <cstdint>  // for std::uint32_t, std::int32_t, std::uint64_t
@@ -44,6 +43,7 @@ namespace xfrase {
 
 struct genomic_interval;
 struct cpg_index_metadata;
+struct chrom_range_t;
 
 struct cpg_index_data {
   // includes the dot because that's how std::filesystem::path works
