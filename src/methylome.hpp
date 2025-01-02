@@ -24,6 +24,7 @@
 #ifndef SRC_METHYLOME_HPP_
 #define SRC_METHYLOME_HPP_
 
+#include "level_element.hpp"
 #include "methylome_data.hpp"
 #include "methylome_metadata.hpp"
 

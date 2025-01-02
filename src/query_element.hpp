@@ -24,6 +24,7 @@
 #ifndef SRC_QUERY_ELEMENT_HPP_
 #define SRC_QUERY_ELEMENT_HPP_
 
+#include <compare>
 #include <cstdint>  // for std::uint32_t
 
 namespace xfrase {
