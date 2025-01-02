@@ -40,7 +40,7 @@ methylome_set::get_methylome(const std::string &accession, std::error_code &ec)
   // ADS: make sure the error code starts out ok
   ec = std::error_code{};
 
-  if (!is_valid_accession(accession)) {
+  if (!methylome::is_valid_name(accession)) {
     ec = methylome_code::invalid_accession;
     return nullptr;
   }
@@ -55,7 +55,7 @@ methylome_set::get_methylome(const std::string &accession, std::error_code &ec)
 
   // ADS: we need to load a methylome; make sure the file exists;
   // probably should check the directory in batch
-  if (!methylome_files_exist(methylome_directory, accession)) {
+  if (!methylome::files_exist(methylome_directory, accession)) {
     ec = methylome_set_code::methylome_not_found;
     return nullptr;
   }
