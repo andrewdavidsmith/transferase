@@ -34,7 +34,7 @@
 #include <system_error>
 #include <tuple>  // for std::get
 
-namespace xfrase {
+using namespace xfrase;  // NOLINT
 
 TEST(cpg_index_set_test, valid_cpg_index_set) {
   static constexpr auto cpg_index_directory = "data";
@@ -76,5 +76,3 @@ TEST_F(cpg_index_set_mock, get_cpg_index_set_assembly_not_found) {
   std::ignore = index_ptr;
   EXPECT_EQ(ec, cpg_index_set_error::cpg_index_not_found);
 }
-
-}  // namespace xfrase

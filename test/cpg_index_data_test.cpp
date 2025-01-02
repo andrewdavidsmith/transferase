@@ -36,7 +36,7 @@
 #include <string>
 #include <vector>
 
-namespace xfrase {
+using namespace xfrase;  // NOLINT
 
 TEST(cpg_index_data_test, basic_assertions) {
   cpg_index_data data;
@@ -133,5 +133,3 @@ TEST(cpg_index_data_test, valid_make_query_within_chrom) {
   });
   EXPECT_EQ(qry, expected);
 }
-
-}  // namespace xfrase
