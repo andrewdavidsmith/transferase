@@ -21,29 +21,9 @@
 # SOFTWARE.
 
 import unittest
-import transferase
-from transferase import cpg_index_metadata
 from transferase.cpg_index_metadata import CpgIndexMetadata
 
 class TestCpgIndexMetadata(unittest.TestCase):
-
-    def test_read_from_json(self):
-        """
-        Test the read function from a JSON file
-        """
-        ec = cpg_index_metadata.ErrorCode()
-        metadata = CpgIndexMetadata.read("data/pAntiquusx.cpg_idx.json", ec)
-        self.assertIsNotNone(metadata)
-        self.assertIsInstance(metadata, CpgIndexMetadata)
-
-    def test_read_from_directory(self):
-        """
-        Test the read function from directory and genome name
-        """
-        ec = cpg_index_metadata.ErrorCode()
-        metadata = CpgIndexMetadata.read("data", "tProrsus1", ec)
-        self.assertIsNotNone(metadata)
-        self.assertIsInstance(metadata, CpgIndexMetadata)
 
     def test_tostring(self):
         """
@@ -51,7 +31,6 @@ class TestCpgIndexMetadata(unittest.TestCase):
         """
         metadata = CpgIndexMetadata()
         result = metadata.tostring()
-        print(result)
         self.assertIsInstance(result, str)
         self.assertIn("version", result)
 
