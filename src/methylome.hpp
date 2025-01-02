@@ -26,6 +26,7 @@
 
 #include "methylome_data.hpp"
 #include "methylome_metadata.hpp"
+#include "methylome_results_types.hpp"
 
 #include <algorithm>
 #include <cctype>
@@ -81,6 +82,41 @@ struct methylome {
   auto
   add(const methylome &rhs) -> void {
     data.add(rhs.data);
+  }
+
+  // takes a vector of pairs of positions (endpoints; eps) within the
+  // methylome_data::vec and accumulates between each of those pairs of
+  // enpoints
+  [[nodiscard]] auto
+  get_counts_cov(const xfrase::query &qry) const {
+    return data.get_counts_cov(qry);
+  }
+
+  [[nodiscard]] auto
+  get_counts(const xfrase::query &qry) const {
+    return data.get_counts(qry);
+  }
+
+  [[nodiscard]] auto
+  total_counts() const {
+    return data.total_counts();
+  }
+
+  [[nodiscard]] auto
+  total_counts_cov() const {
+    return data.total_counts_cov();
+  }
+
+  // takes a bins size and a cpg_index and calculates the counts in
+  // each bin along all chromosomes
+  [[nodiscard]] auto
+  get_bins(const std::uint32_t bin_size, const cpg_index &index) const {
+    return data.get_bins(bin_size, index);
+  }
+
+  [[nodiscard]] auto
+  get_bins_cov(const std::uint32_t bin_size, const cpg_index &index) const {
+    return data.get_bins_cov(bin_size, index);
   }
 
   [[nodiscard]] static auto
