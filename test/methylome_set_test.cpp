@@ -23,6 +23,8 @@
 
 #include <methylome_set.hpp>
 
+#include <methylome.hpp>
+
 #include <gtest/gtest.h>
 
 #include <cstdint>  // for std::uint32_t

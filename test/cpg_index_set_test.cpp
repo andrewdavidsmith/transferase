@@ -21,6 +21,7 @@
  * SOFTWARE.
  */
 
+#include "cpg_index.hpp"
 #include "cpg_index_set.hpp"
 
 #include "cpg_index_metadata.hpp"
