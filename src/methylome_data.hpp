@@ -28,6 +28,9 @@
 #include "aligned_allocator.hpp"
 #endif
 
+#include "level_container.hpp"
+#include "level_element.hpp"
+
 #include <algorithm>
 #include <cmath>    // for std::round
 #include <cstdint>  // for std::uint32_t
@@ -43,9 +46,6 @@
 
 namespace xfrase {
 
-struct level_element_covered_t;
-struct level_element_t;
-template <typename level_element_type> struct level_container;
 struct cpg_index;
 struct methylome_metadata;
 struct query;

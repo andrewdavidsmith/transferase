@@ -84,13 +84,13 @@ struct methylome {
 
   /// get global methylation level
   [[nodiscard]] auto
-  global_levels() const {
+  global_levels() const -> level_element_t {
     return data.global_levels();
   }
 
   /// get global methylation level and sites covered
   [[nodiscard]] auto
-  global_levels_covered() const {
+  global_levels_covered() const -> level_element_covered_t {
     return data.global_levels_covered();
   }
 
