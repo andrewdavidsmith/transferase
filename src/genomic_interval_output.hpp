@@ -94,7 +94,8 @@ write_intervals(const std::string &outfile, const cpg_index_metadata &cim,
       tcr = std::to_chars(tcr.ptr, buf_end, single_result.n_meth);
       *tcr.ptr++ = delim;
       tcr = std::to_chars(tcr.ptr, buf_end, single_result.n_unmeth);
-      if constexpr (std::is_same<level_element, level_element_covered_t>::value) {
+      if constexpr (std::is_same<level_element,
+                                 level_element_covered_t>::value) {
         *tcr.ptr++ = delim;
         tcr = std::to_chars(tcr.ptr, buf_end, single_result.n_covered);
       }
@@ -206,7 +207,8 @@ write_bins(const std::string &outfile, const cpg_index_metadata &cim,
       tcr = std::to_chars(tcr.ptr, buf_end, results_itr->n_meth);
       *tcr.ptr++ = delim;
       tcr = std::to_chars(tcr.ptr, buf_end, results_itr->n_unmeth);
-      if constexpr (std::is_same<level_element, level_element_covered_t>::value) {
+      if constexpr (std::is_same<level_element,
+                                 level_element_covered_t>::value) {
         *tcr.ptr++ = delim;
         tcr = std::to_chars(tcr.ptr, buf_end, results_itr->n_covered);
       }

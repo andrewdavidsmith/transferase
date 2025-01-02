@@ -122,8 +122,9 @@ private:
 };  // class client
 
 template <typename level_element>
-client<level_element>::client(const std::string &server, const std::string &port,
-                           const request &req, query &&qry) :
+client<level_element>::client(const std::string &server,
+                              const std::string &port, const request &req,
+                              query &&qry) :
   resolver(io_context), socket(io_context), deadline{socket.get_executor()},
   req{req}, qry{std::move(qry)},  // move b/c req can be big
   lgr{logger::instance()} {
@@ -148,8 +149,9 @@ client<level_element>::client(const std::string &server, const std::string &port
 }
 
 template <typename level_element>
-client<level_element>::client(const std::string &server, const std::string &port,
-                           const request &req, const std::uint32_t bin_size) :
+client<level_element>::client(const std::string &server,
+                              const std::string &port, const request &req,
+                              const std::uint32_t bin_size) :
   resolver(io_context), socket(io_context), deadline{socket.get_executor()},
   req{req}, bin_size{bin_size}, lgr{logger::instance()} {
   // (1) call async, (2) set deadline, (3) register check_deadline
