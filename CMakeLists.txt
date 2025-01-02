@@ -61,7 +61,7 @@ if(ENABLE_UNIT_TESTS)
   endif()
 endif()
 
-if(NOT UNABLE_UNIT_TESTS)
+if(NOT ENABLE_UNIT_TESTS)
   include(cmake/packaging.cmake)
 endif()
 
