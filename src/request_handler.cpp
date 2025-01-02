@@ -85,7 +85,7 @@ request_handler::handle_request(const request &req,
 
   // ADS: might be redundant here
   // verify that the accession makes sense
-  if (!is_valid_accession(req.accession)) {
+  if (!methylome::is_valid_name(req.accession)) {
     lgr.warning("Malformed accession: {}", req.accession);
     resp_hdr.status = server_response_code::invalid_accession;
     return;
