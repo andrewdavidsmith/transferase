@@ -25,6 +25,8 @@
 #define SRC_METHYLOME_DATA_HPP_
 
 #include "cpg_index_data.hpp"  // for cpg_index_data::vec
+#include "level_container.hpp"
+#include "level_element.hpp"
 #if not defined(__APPLE__) && not defined(__MACH__)
 #include "aligned_allocator.hpp"
 #endif
@@ -46,8 +48,6 @@
 namespace xfrase {
 
 struct cpg_index;
-struct counts_res;
-struct counts_res_cov;
 struct methylome_metadata;
 struct query;
 
@@ -59,8 +59,6 @@ struct m_count_p {
   [[nodiscard]] auto
   operator<=>(const m_count_p &) const = default;
 };
-
-typedef std::uint32_t m_count_t_accumulator;
 
 struct methylome_data {
   static constexpr auto filename_extension{".m16"};
@@ -98,45 +96,32 @@ struct methylome_data {
   [[nodiscard]] auto
   hash() const -> std::uint64_t;
 
+  /// get methylation levels for query intervals and number for query
+  /// intervals covered
   [[nodiscard]] auto
-  get_counts_cov(const cpg_index_data::vec &positions,
-                 const std::uint32_t offset, const std::uint32_t start,
-                 const std::uint32_t stop) const -> counts_res_cov;
-  [[nodiscard]] auto
-  get_counts(const cpg_index_data::vec &positions, const std::uint32_t offset,
-             const std::uint32_t start,
-             const std::uint32_t stop) const -> counts_res;
+  get_levels_covered(const xfrase::query &qry) const -> level_container<level_element_covered_t>;
 
-  // takes only the pair of positions within the methylome_data::vec
-  // and accumulates between those
+  /// get methylation levels for query intervals
   [[nodiscard]] auto
-  get_counts_cov(const std::uint32_t start,
-                 const std::uint32_t stop) const -> counts_res_cov;
-  [[nodiscard]] auto
-  get_counts(const std::uint32_t start,
-             const std::uint32_t stop) const -> counts_res;
+  get_levels(const xfrase::query &qry) const -> level_container<level_element_t>;
 
-  // takes a vector of pairs of positions (endpoints; eps) within the
-  // methylome_data::vec and accumulates between each of those pairs of
-  // enpoints
+  /// get global methylation level
   [[nodiscard]] auto
-  get_counts_cov(const xfrase::query &qry) const -> std::vector<counts_res_cov>;
-  [[nodiscard]] auto
-  get_counts(const xfrase::query &qry) const -> std::vector<counts_res>;
+  global_levels() const -> level_element_t;
 
+  /// get global methylation level and sites covered
   [[nodiscard]] auto
-  total_counts() const -> counts_res;
-  [[nodiscard]] auto
-  total_counts_cov() const -> counts_res_cov;
+  global_levels_covered() const -> level_element_covered_t;
 
-  // takes a bins size and a cpg_index and calculates the counts in
-  // each bin along all chromosomes
+  /// get methylation levels for bins
   [[nodiscard]] auto
-  get_bins(const std::uint32_t bin_size,
-           const cpg_index &index) const -> std::vector<counts_res>;
+  get_levels(const std::uint32_t bin_size,
+             const cpg_index &index) const -> level_container<level_element_t>;
+
+  /// get methylation levels for bins and number of bins covered
   [[nodiscard]] auto
-  get_bins_cov(const std::uint32_t bin_size,
-               const cpg_index &index) const -> std::vector<counts_res_cov>;
+  get_levels_covered(const std::uint32_t bin_size,
+                     const cpg_index &index) const -> level_container<level_element_covered_t>;
 
   [[nodiscard]] static auto
   compose_filename(auto wo_extension) {
@@ -152,6 +137,27 @@ struct methylome_data {
 
   methylome_data::vec cpgs{};
   static constexpr auto record_size = sizeof(m_count_p);
+
+private:
+  [[nodiscard]] auto
+  get_levels_covered(const cpg_index_data::vec &positions,
+                     const std::uint32_t offset, const std::uint32_t start,
+                     const std::uint32_t stop) const -> level_element_covered_t;
+
+  [[nodiscard]] auto
+  get_levels(const cpg_index_data::vec &positions, const std::uint32_t offset,
+             const std::uint32_t start,
+             const std::uint32_t stop) const -> level_element_t;
+
+  // takes only the pair of positions within the methylome_data::vec
+  // and accumulates between those
+  [[nodiscard]] auto
+  get_levels_covered(const std::uint32_t start,
+                     const std::uint32_t stop) const -> level_element_covered_t;
+
+  [[nodiscard]] auto
+  get_levels(const std::uint32_t start,
+             const std::uint32_t stop) const -> level_element_t;
 };
 
 template <typename T, typename U>

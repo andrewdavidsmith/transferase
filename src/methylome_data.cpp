@@ -27,7 +27,6 @@
 #include "cpg_index_metadata.hpp"
 #include "hash.hpp"
 #include "methylome_metadata.hpp"
-#include "methylome_results_types.hpp"
 #include "query.hpp"
 #include "zlib_adapter.hpp"
 
@@ -183,12 +182,12 @@ methylome_data::add(const methylome_data &rhs) -> void {
 
 template <typename U, typename T>
 [[nodiscard]] static inline auto
-get_counts_impl(const T b, const T e) -> U {
+get_levels_impl(const T b, const T e) -> U {
   U u;
   for (auto cursor = b; cursor != e; ++cursor) {
     u.n_meth += cursor->n_meth;
     u.n_unmeth += cursor->n_unmeth;
-    if constexpr (std::is_same<U, counts_res_cov>::value)
+    if constexpr (std::is_same<U, level_element_covered_t>::value)
       u.n_covered += (*cursor != m_count_p{});
   }
   return u;
@@ -196,7 +195,7 @@ get_counts_impl(const T b, const T e) -> U {
 
 template <typename U>
 [[nodiscard]] static inline auto
-get_counts_impl(const methylome_data::vec &cpgs,
+get_levels_impl(const methylome_data::vec &cpgs,
                 const cpg_index_data::vec &positions,
                 const std::uint32_t offset, const xfrase::q_elem_t start,
                 const xfrase::q_elem_t stop) -> U {
@@ -212,65 +211,65 @@ get_counts_impl(const methylome_data::vec &cpgs,
     rg::lower_bound(cpg_beg_lb, std::cend(positions), stop);
   const auto cpg_end_dist = rg::distance(std::cbegin(positions), cpg_end_lb);
   const auto cpg_end = std::cbegin(cpgs) + offset + cpg_end_dist;
-  return get_counts_impl<U>(cpg_beg, cpg_end);
+  return get_levels_impl<U>(cpg_beg, cpg_end);
 }
 
 [[nodiscard]] auto
-methylome_data::get_counts_cov(
+methylome_data::get_levels_covered(
   const cpg_index_data::vec &positions, const std::uint32_t offset,
   const xfrase::q_elem_t start,
-  const xfrase::q_elem_t stop) const -> counts_res_cov {
-  return get_counts_impl<counts_res_cov>(cpgs, positions, offset, start, stop);
+  const xfrase::q_elem_t stop) const -> level_element_covered_t {
+  return get_levels_impl<level_element_covered_t>(cpgs, positions, offset, start, stop);
 }
 
 [[nodiscard]] auto
-methylome_data::get_counts(const cpg_index_data::vec &positions,
+methylome_data::get_levels(const cpg_index_data::vec &positions,
                            const std::uint32_t offset,
                            const xfrase::q_elem_t start,
-                           const xfrase::q_elem_t stop) const -> counts_res {
-  return get_counts_impl<counts_res>(cpgs, positions, offset, start, stop);
+                           const xfrase::q_elem_t stop) const -> level_element_t {
+  return get_levels_impl<level_element_t>(cpgs, positions, offset, start, stop);
 }
 
 [[nodiscard]] auto
-methylome_data::get_counts_cov(const xfrase::q_elem_t start,
-                               const xfrase::q_elem_t stop) const
-  -> counts_res_cov {
-  return get_counts_impl<counts_res_cov>(std::cbegin(cpgs) + start,
-                                         std::cbegin(cpgs) + stop);
+methylome_data::get_levels_covered(const xfrase::q_elem_t start,
+                                   const xfrase::q_elem_t stop) const
+  -> level_element_covered_t {
+  return get_levels_impl<level_element_covered_t>(std::cbegin(cpgs) + start,
+                                      std::cbegin(cpgs) + stop);
 }
 
 [[nodiscard]] auto
-methylome_data::get_counts(const xfrase::q_elem_t start,
-                           const xfrase::q_elem_t stop) const -> counts_res {
-  return get_counts_impl<counts_res>(std::cbegin(cpgs) + start,
-                                     std::cbegin(cpgs) + stop);
+methylome_data::get_levels(const xfrase::q_elem_t start,
+                           const xfrase::q_elem_t stop) const -> level_element_t {
+  return get_levels_impl<level_element_t>(std::cbegin(cpgs) + start,
+                                  std::cbegin(cpgs) + stop);
 }
 
 [[nodiscard]] auto
-methylome_data::get_counts_cov(const xfrase::query &qry) const
-  -> std::vector<counts_res_cov> {
-  std::vector<counts_res_cov> res(size(qry));
+methylome_data::get_levels_covered(const xfrase::query &qry) const
+  -> level_container<level_element_covered_t> {
+  auto res = level_container<level_element_covered_t>(size(qry));
   const auto beg = std::cbegin(cpgs);
   for (const auto [i, q] : std::views::enumerate(qry))
-    res[i] = get_counts_impl<counts_res_cov>(beg + q.start, beg + q.stop);
+    res[i] = get_levels_impl<level_element_covered_t>(beg + q.start, beg + q.stop);
   return res;
 }
 
 [[nodiscard]] auto
-methylome_data::get_counts(const xfrase::query &qry) const
-  -> std::vector<counts_res> {
-  std::vector<counts_res> res(size(qry));
+methylome_data::get_levels(const xfrase::query &qry) const
+  -> level_container<level_element_t> {
+  std::vector<level_element_t> res(size(qry));
   const auto beg = std::cbegin(cpgs);
   for (const auto [i, q] : std::views::enumerate(qry))
-    res[i] = get_counts_impl<counts_res>(beg + q.start, beg + q.stop);
-  return res;
+    res[i] = get_levels_impl<level_element_t>(beg + q.start, beg + q.stop);
+  return level_container<level_element_t>(std::move(res));
 }
 
 [[nodiscard]] auto
-methylome_data::total_counts_cov() const -> counts_res_cov {
-  m_count_t_accumulator n_meth{};
-  m_count_t_accumulator n_unmeth{};
-  m_count_t_accumulator n_covered{};
+methylome_data::global_levels_covered() const -> level_element_covered_t {
+  std::uint32_t n_meth{};
+  std::uint32_t n_unmeth{};
+  std::uint32_t n_covered{};
   for (const auto &cpg : cpgs) {
     n_meth += cpg.n_meth;
     n_unmeth += cpg.n_unmeth;
@@ -280,9 +279,9 @@ methylome_data::total_counts_cov() const -> counts_res_cov {
 }
 
 [[nodiscard]] auto
-methylome_data::total_counts() const -> counts_res {
-  m_count_t_accumulator n_meth{};
-  m_count_t_accumulator n_unmeth{};
+methylome_data::global_levels() const -> level_element_t {
+  std::uint32_t n_meth{};
+  std::uint32_t n_unmeth{};
   for (const auto &cpg : cpgs) {
     n_meth += cpg.n_meth;
     n_unmeth += cpg.n_unmeth;
@@ -292,7 +291,7 @@ methylome_data::total_counts() const -> counts_res {
 
 template <typename T>
 static auto
-bin_counts_impl(cpg_index_data::vec::const_iterator &posn_itr,
+bin_levels_impl(cpg_index_data::vec::const_iterator &posn_itr,
                 const cpg_index_data::vec::const_iterator posn_end,
                 const std::uint32_t bin_end,
                 methylome_data::vec::const_iterator &cpg_itr) -> T {
@@ -300,7 +299,7 @@ bin_counts_impl(cpg_index_data::vec::const_iterator &posn_itr,
   while (posn_itr != posn_end && *posn_itr < bin_end) {
     t.n_meth += cpg_itr->n_meth;
     t.n_unmeth += cpg_itr->n_unmeth;
-    if constexpr (std::is_same<T, counts_res_cov>::value)
+    if constexpr (std::is_same<T, level_element_covered_t>::value)
       t.n_covered += (*cpg_itr == m_count_p{});
     ++cpg_itr;
     ++posn_itr;
@@ -310,8 +309,8 @@ bin_counts_impl(cpg_index_data::vec::const_iterator &posn_itr,
 
 template <typename T>
 [[nodiscard]] static auto
-get_bins_impl(const std::uint32_t bin_size, const cpg_index &index,
-              const methylome_data::vec &cpgs) -> std::vector<T> {
+get_levels_impl(const std::uint32_t bin_size, const cpg_index &index,
+                const methylome_data::vec &cpgs) -> level_container<T> {
   std::vector<T> results;  // ADS TODO: reserve n_bins
 
   const auto zipped = std::views::zip(
@@ -323,23 +322,23 @@ get_bins_impl(const std::uint32_t bin_size, const cpg_index &index,
     for (std::uint32_t i = 0; i < chrom_size; i += bin_size) {
       const auto bin_end = std::min(i + bin_size, chrom_size);
       results.emplace_back(
-        bin_counts_impl<T>(posn_itr, posn_end, bin_end, cpg_itr));
+        bin_levels_impl<T>(posn_itr, posn_end, bin_end, cpg_itr));
     }
   }
-  return results;
+  return level_container<T>(std::move(results));
 }
 
 [[nodiscard]] auto
-methylome_data::get_bins(const std::uint32_t bin_size, const cpg_index &index)
-  const -> std::vector<counts_res> {
-  return get_bins_impl<counts_res>(bin_size, index, cpgs);
+methylome_data::get_levels(const std::uint32_t bin_size,
+                           const cpg_index &index) const -> level_container<level_element_t> {
+  return get_levels_impl<level_element_t>(bin_size, index, cpgs);
 }
 
 [[nodiscard]] auto
-methylome_data::get_bins_cov(const std::uint32_t bin_size,
-                             const cpg_index &index) const
-  -> std::vector<counts_res_cov> {
-  return get_bins_impl<counts_res_cov>(bin_size, index, cpgs);
+methylome_data::get_levels_covered(const std::uint32_t bin_size,
+                                   const cpg_index &index) const
+  -> level_container<level_element_covered_t> {
+  return get_levels_impl<level_element_covered_t>(bin_size, index, cpgs);
 }
 
 [[nodiscard]] auto
