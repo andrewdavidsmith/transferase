@@ -24,11 +24,7 @@
 #ifndef SRC_QUERY_ELEMENT_HPP_
 #define SRC_QUERY_ELEMENT_HPP_
 
-#include <concepts>
-#include <cstddef>  // for std::size_t
 #include <cstdint>  // for std::uint32_t
-#include <utility>  // for std::pair
-#include <vector>
 
 namespace xfrase {
 
