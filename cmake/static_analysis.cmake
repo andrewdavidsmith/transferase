@@ -55,6 +55,7 @@ if(FOUND_CPPCHECK)
     --quiet
     --enable=all
     --check-level=exhaustive
+    --inline-suppr
     --suppressions-list=${PROJECT_SOURCE_DIR}/.cppcheck_suppress
   )
 endif()
