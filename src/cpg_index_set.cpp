@@ -49,16 +49,16 @@ cpg_index_set::get_cpg_index(const std::string &assembly, std::error_code &ec)
   return itr_index->second;
 }
 
-cpg_index_set::cpg_index_set(const std::string &cpg_index_directory,
+cpg_index_set::cpg_index_set(const std::string &directory,
                              std::error_code &ec) {
-  const auto genome_names = list_cpg_indexes(cpg_index_directory, ec);
+  const auto genome_names = cpg_index::list_cpg_indexes(directory, ec);
   if (ec)
     return;
   for (const auto &name : genome_names) {
-    const auto index = cpg_index::read(cpg_index_directory, name, ec);
+    const auto index = cpg_index::read(directory, name, ec);
     if (ec) {
-      logger::instance().error("Failed to read cpg index {} {}: {}",
-                               cpg_index_directory, name, ec);
+      logger::instance().error("Failed to read cpg index {} {}: {}", directory,
+                               name, ec);
       assembly_to_cpg_index.clear();
       return;
     }
