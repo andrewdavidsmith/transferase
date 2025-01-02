@@ -34,20 +34,20 @@
 namespace xfrase {
 
 enum class request_type_code : std::uint8_t {
-  counts = 0,
-  counts_cov = 1,
-  bin_counts = 2,
-  bin_counts_cov = 3,
+  intervals = 0,
+  intervals_covered = 1,
+  bins = 2,
+  bins_covered = 3,
   unknown = 4,
   n_request_types = 5,
 };
 
 static constexpr auto request_type_code_names = std::array{
   // clang-format off
-  "counts",
-  "counts_cov",
-  "bin_counts",
-  "bin_counts_cov",
+  "intervals",
+  "intervals_covered",
+  "bins",
+  "bins_covered",
   "unknown",
   // clang-format on
 };
