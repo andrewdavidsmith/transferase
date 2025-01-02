@@ -20,21 +20,25 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-# Add bindings files
-set(BINDINGS_OBJECTS
-  cpg_index_metadata
-  query
-)
-
-# Add bindings source files as targets
-foreach(OBJ ${BINDINGS_OBJECTS})
-  # Create the pybind11 module
-  pybind11_add_module(py_${OBJ} MODULE ${OBJ}_bindings.cpp)
-  target_link_libraries(py_${OBJ} PRIVATE xfrase_system)
-  # Must come after linking to any static libs
-  target_link_libraries(py_${OBJ} PRIVATE pybind11::module)
-  set_target_properties(py_${OBJ} PROPERTIES LIBRARY_OUTPUT_NAME "${OBJ}")
-endforeach()
-
 # ADS: Not sure how many times this is getting included
 include_directories(${PROJECT_SOURCE_DIR}/src)
+
+file(GLOB CPP_FILES "*.cpp")
+
+# Ensure all objects depend on both the cpp and hpp files
+set(LIBRARY_OBJECTS)
+foreach(CPP_FILE ${CPP_FILES})
+  get_filename_component(BASE_NAME ${CPP_FILE} NAME_WE)
+  set(HPP_PATH "${CMAKE_CURRENT_SOURCE_DIR}/${BASE_NAME}.hpp")
+  set(HPP_FILE "${BASE_NAME}.hpp")
+  if(EXISTS ${HPP_PATH})
+    add_library(${BASE_NAME} OBJECT ${CPP_FILE} ${HPP_FILE})
+    target_include_directories(${BASE_NAME} PRIVATE ${PROJECT_BINARY_DIR})
+    target_link_libraries(${BASE_NAME} PRIVATE pybind11::module)
+    list(APPEND LIBRARY_OBJECTS ${BASE_NAME})
+  endif()
+endforeach()
+
+# Create the final static library by linking the previous parts
+add_library(transferase_bindings STATIC)
+target_link_libraries(transferase_bindings PRIVATE ${LIBRARY_OBJECTS})
