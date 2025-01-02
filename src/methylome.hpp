@@ -26,7 +26,6 @@
 
 #include "methylome_data.hpp"
 #include "methylome_metadata.hpp"
-#include "methylome_results_types.hpp"
 
 #include <algorithm>
 #include <cctype>
@@ -84,39 +83,42 @@ struct methylome {
     data.add(rhs.data);
   }
 
-  // takes a vector of pairs of positions (endpoints; eps) within the
-  // methylome_data::vec and accumulates between each of those pairs of
-  // enpoints
+  /// get global methylation level
   [[nodiscard]] auto
-  get_counts_cov(const xfrase::query &qry) const {
-    return data.get_counts_cov(qry);
+  global_levels() const {
+    return data.global_levels();
   }
 
+  /// get global methylation level and sites covered
   [[nodiscard]] auto
-  get_counts(const xfrase::query &qry) const {
-    return data.get_counts(qry);
+  global_levels_covered() const {
+    return data.global_levels_covered();
   }
 
+  /// get methylation levels for query intervals
   [[nodiscard]] auto
-  total_counts() const {
-    return data.total_counts();
+  get_levels(const xfrase::query &qry) const {
+    return data.get_levels(qry);
   }
 
+  /// get methylation levels for query intervals and number for query
+  /// intervals covered
   [[nodiscard]] auto
-  total_counts_cov() const {
-    return data.total_counts_cov();
+  get_levels_covered(const xfrase::query &qry) const {
+    return data.get_levels_covered(qry);
   }
 
-  // takes a bins size and a cpg_index and calculates the counts in
-  // each bin along all chromosomes
+  /// get methylation levels for bins
   [[nodiscard]] auto
-  get_bins(const std::uint32_t bin_size, const cpg_index &index) const {
-    return data.get_bins(bin_size, index);
+  get_levels(const std::uint32_t bin_size, const cpg_index &index) const {
+    return data.get_levels(bin_size, index);
   }
 
+  /// get methylation levels for bins and number of bins covered
   [[nodiscard]] auto
-  get_bins_cov(const std::uint32_t bin_size, const cpg_index &index) const {
-    return data.get_bins_cov(bin_size, index);
+  get_levels_covered(const std::uint32_t bin_size,
+                     const cpg_index &index) const {
+    return data.get_levels_covered(bin_size, index);
   }
 
   [[nodiscard]] static auto
