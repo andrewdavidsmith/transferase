@@ -87,20 +87,20 @@ struct cpg_index_data {
   make_query(const cpg_index_metadata &meta,
              const std::vector<genomic_interval> &gis) const -> xfrase::query;
 
+  [[nodiscard]] static auto
+  compose_filename(auto wo_extension) {
+    wo_extension += filename_extension;
+    return wo_extension;
+  }
+
+  [[nodiscard]] static auto
+  compose_filename(const auto &directory, const auto &name) {
+    const auto wo_extn = (std::filesystem::path{directory} / name).string();
+    return std::format("{}{}", wo_extn, filename_extension);
+  }
+
   std::vector<cpg_index_data::vec> positions;
 };
-
-[[nodiscard]] inline auto
-compose_cpg_index_data_filename(auto wo_extension) {
-  wo_extension += cpg_index_data::filename_extension;
-  return wo_extension;
-}
-
-[[nodiscard]] inline auto
-compose_cpg_index_data_filename(const auto &directory, const auto &name) {
-  const auto wo_extn = (std::filesystem::path{directory} / name).string();
-  return std::format("{}{}", wo_extn, cpg_index_data::filename_extension);
-}
 
 }  // namespace xfrase
 
