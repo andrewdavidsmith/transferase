@@ -36,8 +36,6 @@
 
 namespace xfrase {
 
-struct methylome_data;
-
 struct methylome_metadata {
   static constexpr auto filename_extension{".m16.json"};
   std::string version;
