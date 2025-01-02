@@ -25,6 +25,7 @@
 #define SRC_CLIENT_HPP_
 
 #include "logger.hpp"
+#include "query.hpp"
 #include "request.hpp"
 #include "response.hpp"
 
@@ -45,7 +46,7 @@
 
 namespace xfrase {
 
-template <typename counts_type> class client {
+template <typename level_element> class client {
 public:
   client(const std::string &server, const std::string &port, const request &req,
          query &&qry);
@@ -59,16 +60,13 @@ public:
   }
 
   auto
-  get_counts() const -> const std::vector<counts_type> & {
-    return resp.counts;
+  get_levels() const -> const level_container<level_element> & {
+    return resp.levels;
   }
 
   auto
-  take_counts() -> std::vector<counts_type> {
-    // ADS: this function resets resp.counts and avoids copy
-    std::vector<counts_type> moved_out;
-    std::swap(moved_out, resp.counts);
-    return moved_out;
+  take_levels() -> level_container<level_element> && {
+    return std::move(resp.levels);
   }
 
 private:
@@ -93,10 +91,10 @@ private:
   auto
   prepare_to_read_response_payload() -> void;
   auto
-  get_counts_n_bytes() const -> std::uint32_t;
+  get_levels_n_bytes() const -> std::uint32_t;
   auto
-  resp_get_counts_data() -> char * {
-    return reinterpret_cast<char *>(resp.counts.data());
+  resp_get_levels_data() -> char * {
+    return reinterpret_cast<char *>(resp.levels.data());
   }
 
   boost::asio::io_context io_context;
@@ -111,21 +109,21 @@ private:
 
   response_header_buffer resp_hdr_buf;
   response_header resp_hdr;
-  response<counts_type> resp;
+  response<level_element> resp;
 
   std::error_code status;
   logger &lgr;
   std::chrono::seconds read_timeout_seconds{3};
 
-  // These help keep track of where we are in the incoming counts;
+  // These help keep track of where we are in the incoming levels;
   // they might best be associated with the response.
-  std::size_t counts_byte{};
-  std::size_t counts_remaining{};
+  std::size_t levels_bytes_received{};
+  std::size_t levels_bytes_remaining{};
 };  // class client
 
-template <typename counts_type>
-client<counts_type>::client(const std::string &server, const std::string &port,
-                            const request &req, query &&qry) :
+template <typename level_element>
+client<level_element>::client(const std::string &server, const std::string &port,
+                           const request &req, query &&qry) :
   resolver(io_context), socket(io_context), deadline{socket.get_executor()},
   req{req}, qry{std::move(qry)},  // move b/c req can be big
   lgr{logger::instance()} {
@@ -149,9 +147,9 @@ client<counts_type>::client(const std::string &server, const std::string &port,
   deadline.async_wait([this](auto) { check_deadline(); });
 }
 
-template <typename counts_type>
-client<counts_type>::client(const std::string &server, const std::string &port,
-                            const request &req, const std::uint32_t bin_size) :
+template <typename level_element>
+client<level_element>::client(const std::string &server, const std::string &port,
+                           const request &req, const std::uint32_t bin_size) :
   resolver(io_context), socket(io_context), deadline{socket.get_executor()},
   req{req}, bin_size{bin_size}, lgr{logger::instance()} {
   // (1) call async, (2) set deadline, (3) register check_deadline
@@ -174,9 +172,9 @@ client<counts_type>::client(const std::string &server, const std::string &port,
   deadline.async_wait([this](auto) { check_deadline(); });
 }
 
-template <typename counts_type>
+template <typename level_element>
 auto
-client<counts_type>::handle_resolve(
+client<level_element>::handle_resolve(
   const std::error_code err,
   const boost::asio::ip::tcp::resolver::results_type &endpoints) {
   if (!err) {
@@ -191,9 +189,9 @@ client<counts_type>::handle_resolve(
   }
 }
 
-template <typename counts_type>
+template <typename level_element>
 auto
-client<counts_type>::handle_connect(const std::error_code err) {
+client<level_element>::handle_connect(const std::error_code err) {
   deadline.expires_at(boost::asio::steady_timer::time_point::max());
   if (!err) {
     lgr.debug("Connected to server: {}",
@@ -235,9 +233,9 @@ client<counts_type>::handle_connect(const std::error_code err) {
   }
 }
 
-template <typename counts_type>
+template <typename level_element>
 auto
-client<counts_type>::handle_write_request(const std::error_code err) {
+client<level_element>::handle_write_request(const std::error_code err) {
   deadline.expires_at(boost::asio::steady_timer::time_point::max());
   if (!err) {
     boost::asio::async_read(
@@ -257,25 +255,25 @@ client<counts_type>::handle_write_request(const std::error_code err) {
   }
 }
 
-template <typename counts_type>
+template <typename level_element>
 auto
-client<counts_type>::get_counts_n_bytes() const -> std::uint32_t {
-  return sizeof(counts_type) * resp_hdr.response_size;
+client<level_element>::get_levels_n_bytes() const -> std::uint32_t {
+  return sizeof(level_element) * resp_hdr.response_size;
 }
 
-template <typename counts_type>
+template <typename level_element>
 auto
-client<counts_type>::prepare_to_read_response_payload() -> void {
+client<level_element>::prepare_to_read_response_payload() -> void {
   // This function is needed because this can't be done in the
   // read_query() function as it is recursive
-  resp.counts.resize(resp_hdr.response_size);  // get space for query
-  counts_remaining = get_counts_n_bytes();     // init counters
-  counts_byte = 0;                             // should be init to this
+  resp.levels.resize(resp_hdr.response_size);     // get space for query
+  levels_bytes_remaining = get_levels_n_bytes();  // init counters
+  levels_bytes_received = 0;                      // should be init to this
 }
 
-template <typename counts_type>
+template <typename level_element>
 auto
-client<counts_type>::handle_read_response_header(const std::error_code err) {
+client<level_element>::handle_read_response_header(const std::error_code err) {
   // ADS: does this go here?
   deadline.expires_at(boost::asio::steady_timer::time_point::max());
   if (!err) {
@@ -300,18 +298,19 @@ client<counts_type>::handle_read_response_header(const std::error_code err) {
   }
 }
 
-template <typename counts_type>
+template <typename level_element>
 auto
-client<counts_type>::do_read_response_payload() -> void {
+client<level_element>::do_read_response_payload() -> void {
   socket.async_read_some(
-    boost::asio::buffer(resp_get_counts_data() + counts_byte, counts_remaining),
+    boost::asio::buffer(resp_get_levels_data() + levels_bytes_received,
+                        levels_bytes_remaining),
     [this](const boost::system::error_code ec,
            const std::size_t bytes_transferred) {
       deadline.expires_at(boost::asio::steady_timer::time_point::max());
       if (!ec) {
-        counts_remaining -= bytes_transferred;
-        counts_byte += bytes_transferred;
-        if (counts_remaining == 0) {
+        levels_bytes_remaining -= bytes_transferred;
+        levels_bytes_received += bytes_transferred;
+        if (levels_bytes_remaining == 0) {
           do_finish(ec);
         }
         else {
@@ -319,7 +318,7 @@ client<counts_type>::do_read_response_payload() -> void {
         }
       }
       else {
-        lgr.error("Error reading counts: {}", ec);
+        lgr.error("Error reading levels: {}", ec);
         // exiting the read loop -- no deadline for now
         do_finish(ec);
       }
@@ -327,9 +326,9 @@ client<counts_type>::do_read_response_payload() -> void {
   deadline.expires_after(read_timeout_seconds);
 }
 
-template <typename counts_type>
+template <typename level_element>
 auto
-client<counts_type>::handle_failure_explanation(const std::error_code err) {
+client<level_element>::handle_failure_explanation(const std::error_code err) {
   deadline.expires_at(boost::asio::steady_timer::time_point::max());
   if (!err) {
     const auto resp_hdr_parse_error = parse(resp_hdr_buf, resp_hdr);
@@ -348,9 +347,9 @@ client<counts_type>::handle_failure_explanation(const std::error_code err) {
   }
 }
 
-template <typename counts_type>
+template <typename level_element>
 auto
-client<counts_type>::do_finish(const std::error_code err) {
+client<level_element>::do_finish(const std::error_code err) {
   // same consequence as canceling
   deadline.expires_at(boost::asio::steady_timer::time_point::max());
   status = err;
@@ -360,9 +359,9 @@ client<counts_type>::do_finish(const std::error_code err) {
   socket.close(socket_close_ec);
 }
 
-template <typename counts_type>
+template <typename level_element>
 auto
-client<counts_type>::check_deadline() {
+client<level_element>::check_deadline() {
   if (!socket.is_open())  // ADS: when can this happen?
     return;
 
