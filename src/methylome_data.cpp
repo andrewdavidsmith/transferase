@@ -24,10 +24,12 @@
 #include "methylome_data.hpp"
 
 #include "cpg_index.hpp"
+#include "cpg_index_data.hpp"
 #include "cpg_index_metadata.hpp"
 #include "hash.hpp"
 #include "methylome_metadata.hpp"
 #include "query.hpp"
+#include "query_element.hpp"  // for xfrase::q_elem_t
 #include "zlib_adapter.hpp"
 
 #include <algorithm>
@@ -215,43 +217,13 @@ get_levels_impl(const methylome_data::vec &cpgs,
 }
 
 [[nodiscard]] auto
-methylome_data::get_levels_covered(
-  const cpg_index_data::vec &positions, const std::uint32_t offset,
-  const xfrase::q_elem_t start,
-  const xfrase::q_elem_t stop) const -> level_element_covered_t {
-  return get_levels_impl<level_element_covered_t>(cpgs, positions, offset, start, stop);
-}
-
-[[nodiscard]] auto
-methylome_data::get_levels(const cpg_index_data::vec &positions,
-                           const std::uint32_t offset,
-                           const xfrase::q_elem_t start,
-                           const xfrase::q_elem_t stop) const -> level_element_t {
-  return get_levels_impl<level_element_t>(cpgs, positions, offset, start, stop);
-}
-
-[[nodiscard]] auto
-methylome_data::get_levels_covered(const xfrase::q_elem_t start,
-                                   const xfrase::q_elem_t stop) const
-  -> level_element_covered_t {
-  return get_levels_impl<level_element_covered_t>(std::cbegin(cpgs) + start,
-                                      std::cbegin(cpgs) + stop);
-}
-
-[[nodiscard]] auto
-methylome_data::get_levels(const xfrase::q_elem_t start,
-                           const xfrase::q_elem_t stop) const -> level_element_t {
-  return get_levels_impl<level_element_t>(std::cbegin(cpgs) + start,
-                                  std::cbegin(cpgs) + stop);
-}
-
-[[nodiscard]] auto
 methylome_data::get_levels_covered(const xfrase::query &qry) const
   -> level_container<level_element_covered_t> {
   auto res = level_container<level_element_covered_t>(size(qry));
   const auto beg = std::cbegin(cpgs);
   for (const auto [i, q] : std::views::enumerate(qry))
-    res[i] = get_levels_impl<level_element_covered_t>(beg + q.start, beg + q.stop);
+    res[i] =
+      get_levels_impl<level_element_covered_t>(beg + q.start, beg + q.stop);
   return res;
 }
 
@@ -329,8 +301,8 @@ get_levels_impl(const std::uint32_t bin_size, const cpg_index &index,
 }
 
 [[nodiscard]] auto
-methylome_data::get_levels(const std::uint32_t bin_size,
-                           const cpg_index &index) const -> level_container<level_element_t> {
+methylome_data::get_levels(const std::uint32_t bin_size, const cpg_index &index)
+  const -> level_container<level_element_t> {
   return get_levels_impl<level_element_t>(bin_size, index, cpgs);
 }
 
