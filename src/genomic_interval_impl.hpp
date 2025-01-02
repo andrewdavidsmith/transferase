@@ -24,8 +24,6 @@
 #ifndef SRC_GENOMIC_INTERVAL_IMPL_HPP_
 #define SRC_GENOMIC_INTERVAL_IMPL_HPP_
 
-#include "genomic_interval.hpp"
-
 #ifdef UNIT_TEST
 #define STATIC
 #else
@@ -37,6 +35,7 @@
 
 namespace xfrase {
 
+struct genomic_interval;
 struct cpg_index_metadata;
 
 [[nodiscard]] STATIC auto

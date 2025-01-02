@@ -27,7 +27,6 @@
 #include <cstdlib>
 #include <limits>
 #include <new>
-#include <numeric>
 
 template <class T> struct aligned_allocator {
   static constexpr std::size_t align_at = 4096;

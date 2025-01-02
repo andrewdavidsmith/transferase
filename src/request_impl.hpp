@@ -32,10 +32,11 @@
 #define INLINE inline
 #endif
 
-#include "request.hpp"
 #include <system_error>
 
 namespace xfrase {
+
+struct request;
 
 [[nodiscard]] STATIC auto
 compose(char *first, char const *last, const request &req) -> std::error_code;

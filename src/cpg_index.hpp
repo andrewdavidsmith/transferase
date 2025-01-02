@@ -26,10 +26,8 @@
 
 #include "cpg_index_data.hpp"
 #include "cpg_index_metadata.hpp"
-#include "query.hpp"
 
 #include <cstdint>  // for std::uint32_t
-#include <format>   // for std::vector???
 #include <string>
 #include <system_error>
 #include <type_traits>  // for std::true_type
@@ -39,6 +37,7 @@
 namespace xfrase {
 
 struct genomic_interval;
+struct query;
 
 struct cpg_index {
   static constexpr auto data_extn = cpg_index_data::filename_extension;

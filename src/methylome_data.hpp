@@ -24,8 +24,6 @@
 #ifndef SRC_METHYLOME_DATA_HPP_
 #define SRC_METHYLOME_DATA_HPP_
 
-#include "level_container.hpp"
-#include "level_element.hpp"
 #if not defined(__APPLE__) && not defined(__MACH__)
 #include "aligned_allocator.hpp"
 #endif
@@ -45,6 +43,9 @@
 
 namespace xfrase {
 
+struct level_element_covered_t;
+struct level_element_t;
+template <typename level_element_type> struct level_container;
 struct cpg_index;
 struct methylome_metadata;
 struct query;

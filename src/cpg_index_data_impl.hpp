@@ -31,21 +31,18 @@
 #endif
 
 #include "cpg_index_data.hpp"
-#include "query.hpp"
-
-#include <cstddef>  // std::size_t
-#include <string>
-#include <system_error>
-#include <tuple>
 #include <vector>
 
 namespace xfrase {
+
+struct chrom_range_t;
+struct query;
 
 [[nodiscard]] STATIC auto
 make_query_within_chrom(const cpg_index_data::vec &positions,
                         const std::vector<chrom_range_t> &chrom_ranges)
   -> xfrase::query;
 
-}
+}  // namespace xfrase
 
 #endif  // SRC_CPG_INDEX_DATA_IMPL_HPP_

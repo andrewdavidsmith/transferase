@@ -24,14 +24,15 @@
 #ifndef SRC_ARGUMENTS_HPP_
 #define SRC_ARGUMENTS_HPP_
 
-#include "utilities.hpp"
-
 #include <boost/program_options.hpp>
 
+#include <cstdint>  // for std::uint8_t
 #include <iostream>
 #include <print>
 #include <string>
 #include <system_error>
+#include <type_traits>  // for std::true_type
+#include <utility>      // for std::to_underlying, std::unreachable
 
 enum class argument_error : std::uint8_t {
   ok = 0,

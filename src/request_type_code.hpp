@@ -28,7 +28,6 @@
 #include <cstdint>  // for std::uint32_t
 #include <format>
 #include <string>
-#include <string_view>
 #include <utility>  // for to_underlying, unreachable
 
 namespace xfrase {

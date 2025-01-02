@@ -24,8 +24,6 @@
 #ifndef SRC_METHYLOME_SET_HPP_
 #define SRC_METHYLOME_SET_HPP_
 
-#include "methylome.hpp"
-
 #include "ring_buffer.hpp"
 
 #include <cstdint>  // std::uint32_t
@@ -38,6 +36,8 @@
 #include <utility>
 
 namespace xfrase {
+
+struct methylome;
 
 struct methylome_set {
   methylome_set(const methylome_set &) = delete;

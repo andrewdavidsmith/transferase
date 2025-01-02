@@ -24,7 +24,6 @@
 #ifndef SRC_QUERY_ELEMENT_HPP_
 #define SRC_QUERY_ELEMENT_HPP_
 
-#include <compare>  // for std::strong_ordering
 #include <cstdint>  // for std::uint32_t
 
 namespace xfrase {

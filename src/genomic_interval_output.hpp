@@ -34,21 +34,19 @@
 #include <cassert>
 #include <cerrno>
 #include <charconv>
-#include <cstdint>  // for uint32_t
+#include <cstdint>  // for std::uint32_t
 #include <fstream>
-#include <iterator>  // for size, cbegin, cend, pair
-#include <ostream>
+#include <iterator>  // for std::size, std::cbegin, std::cend
 #include <ranges>
 #include <string>
 #include <system_error>
 #include <tuple>
-#include <type_traits>  // for is_same
-#include <utility>      // std::pair
+#include <type_traits>  // for std::is_same_v
+#include <utility>      // for std::pair
 #include <vector>
 
 namespace xfrase {
 
-struct level_element_t;
 struct level_element_covered_t;
 
 [[nodiscard]] auto
@@ -94,8 +92,7 @@ write_intervals(const std::string &outfile, const cpg_index_metadata &cim,
       tcr = std::to_chars(tcr.ptr, buf_end, single_result.n_meth);
       *tcr.ptr++ = delim;
       tcr = std::to_chars(tcr.ptr, buf_end, single_result.n_unmeth);
-      if constexpr (std::is_same<level_element,
-                                 level_element_covered_t>::value) {
+      if constexpr (std::is_same_v<level_element, level_element_covered_t>) {
         *tcr.ptr++ = delim;
         tcr = std::to_chars(tcr.ptr, buf_end, single_result.n_covered);
       }
@@ -207,8 +204,7 @@ write_bins(const std::string &outfile, const cpg_index_metadata &cim,
       tcr = std::to_chars(tcr.ptr, buf_end, results_itr->n_meth);
       *tcr.ptr++ = delim;
       tcr = std::to_chars(tcr.ptr, buf_end, results_itr->n_unmeth);
-      if constexpr (std::is_same<level_element,
-                                 level_element_covered_t>::value) {
+      if constexpr (std::is_same_v<level_element, level_element_covered_t>) {
         *tcr.ptr++ = delim;
         tcr = std::to_chars(tcr.ptr, buf_end, results_itr->n_covered);
       }

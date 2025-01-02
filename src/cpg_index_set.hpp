@@ -24,8 +24,6 @@
 #ifndef SRC_CPG_INDEX_SET_HPP_
 #define SRC_CPG_INDEX_SET_HPP_
 
-#include "cpg_index.hpp"
-
 #include <cstdint>  // for std::uint32_t
 #include <memory>
 #include <string>
@@ -35,6 +33,8 @@
 #include <utility>  // for std::to_underlying, std::unreachable
 
 namespace xfrase {
+
+struct cpg_index;
 
 struct cpg_index_set {
   cpg_index_set(const cpg_index_set &) = delete;

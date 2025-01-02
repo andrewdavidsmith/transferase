@@ -25,7 +25,6 @@
 #define SRC_CHROM_RANGE_HPP_
 
 #include <cstdint>  // for std::uint32_t
-#include <utility>  // for std::pair
 
 namespace xfrase {
 
@@ -37,7 +36,7 @@ struct chrom_range_t {
   chrom_range_t() = default;
   chrom_range_t(const chrom_pos_t start, const chrom_pos_t stop) :
     start{start}, stop{stop} {}
-  [[nodiscard]] auto
+  auto
   operator<=>(const chrom_range_t &) const = default;
 };
 

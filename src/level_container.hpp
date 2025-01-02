@@ -24,12 +24,11 @@
 #ifndef SRC_LEVEL_CONTAINER_HPP_
 #define SRC_LEVEL_CONTAINER_HPP_
 
-#include "level_element.hpp"
-
-#include <concepts>
-#include <cstdint>
-#include <format>
-#include <string>
+#include <concepts>          // for std::integral
+#include <cstddef>           // for std::size_t
+#include <initializer_list>  // for std::begin, std::end
+#include <iterator>          // for std::size, std::cbegin, std::cend
+#include <utility>           // for std::move
 #include <vector>
 
 namespace xfrase {

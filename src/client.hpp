@@ -24,15 +24,15 @@
 #ifndef SRC_CLIENT_HPP_
 #define SRC_CLIENT_HPP_
 
+#include "level_container.hpp"
 #include "logger.hpp"
 #include "query.hpp"
 #include "request.hpp"
 #include "response.hpp"
 
 #include <chrono>
-#include <compare>      // for operator<=, strong_ordering
-#include <cstddef>      // for size_t
-#include <type_traits>  // for is_same
+#include <compare>  // for std::strong_ordering
+#include <cstddef>  // for std::size_t
 
 #include <boost/asio.hpp>
 #include <boost/lexical_cast.hpp>

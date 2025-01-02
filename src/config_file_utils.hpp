@@ -25,15 +25,17 @@
 #define SRC_CONFIG_FILE_UTILS_HPP_
 
 #include <boost/describe.hpp>
-#include <boost/mp11.hpp>
+#include <boost/mp11/algorithm.hpp>  // for mp_for_each
 
 #include <algorithm>  // for std::ranges::replace
+#include <cerrno>
 #include <format>
 #include <fstream>
 #include <print>
-#include <ranges>
+#include <ranges>  // IWYU pragma: keep
 #include <string>
 #include <system_error>
+#include <type_traits>  // for std::remove_cvref_t
 
 namespace xfrase {
 

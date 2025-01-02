@@ -26,8 +26,10 @@
 
 #include "query_element.hpp"
 
-#include <cstddef>  // for std::size_t
-#include <cstdint>  // for std::uint32_t
+#include <cstddef>   // for std::size_t
+#include <cstdint>   // for std::uint32_t
+#include <iterator>  // for std::size, std::begin
+#include <utility>   // for std::move
 #include <vector>
 
 namespace xfrase {
