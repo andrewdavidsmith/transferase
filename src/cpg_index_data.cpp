@@ -23,9 +23,9 @@
 
 #include "cpg_index_data.hpp"
 
+#include "chrom_range.hpp"
 #include "cpg_index_data_impl.hpp"
 #include "cpg_index_metadata.hpp"
-#include "cpg_index_types.hpp"
 #include "genomic_interval.hpp"
 #include "hash.hpp"  // for update_adler
 #include "query_element.hpp"
