@@ -51,7 +51,6 @@ xfrase bins remote -x index_dir -g hg38 -s example.com -m SRX012345 -o output.be
 #include "logger.hpp"
 #include "methylome.hpp"
 #include "methylome_resource.hpp"
-#include "methylome_results_types.hpp"
 #include "request.hpp"
 #include "request_type_code.hpp"
 #include "utilities.hpp"
@@ -77,27 +76,27 @@ namespace xfrase {
 template <typename results_type>
 [[nodiscard]] static inline auto
 do_remote_bins(const request &req, const auto &resource,
-               std::error_code &ec) -> std::vector<results_type> {
+               std::error_code &ec) -> level_container<results_type> {
   client<results_type> cl(resource.host, resource.port, req, req.bin_size());
   ec = cl.run();
   if (ec) {
     logger::instance().error("Transaction status: {}", ec);
     return {};
   }
-  return cl.take_counts();
+  return cl.take_levels();
 }
 
 template <typename results_type>
 [[nodiscard]] static inline auto
 do_local_bins(const request &req, const auto &resource, const cpg_index &index,
-              std::error_code &ec) -> std::vector<results_type> {
+              std::error_code &ec) -> level_container<results_type> {
   const auto meth = methylome::read(resource.dir, req.accession, ec);
   if (ec)
     return {};
-  if constexpr (std::is_same_v<results_type, counts_res_cov>)
-    return meth.data.get_bins_cov(req.bin_size(), index);
+  if constexpr (std::is_same_v<results_type, level_element_covered_t>)
+    return meth.get_levels_covered(req.bin_size(), index);
   else
-    return meth.data.get_bins(req.bin_size(), index);
+    return meth.get_levels(req.bin_size(), index);
 }
 
 template <typename results_type>
@@ -105,7 +104,7 @@ template <typename results_type>
 do_bins(const request &req, const auto &resource, const auto &outmgr,
         const cpg_index &index) -> std::error_code {
   auto &lgr = logger::instance();
-  std::vector<results_type> results;
+  level_container<results_type> results;
   std::error_code ec;
 
   const auto bins_start{std::chrono::high_resolution_clock::now()};
@@ -145,9 +144,9 @@ command_bins_main(int argc, char *argv[]) -> int {
   static const auto description_msg =
     std::format("{}\n{}", strip(description), strip(examples));
 
-  using xfrase::counts_res;
-  using xfrase::counts_res_cov;
   using xfrase::cpg_index;
+  using xfrase::level_element_covered_t;
+  using xfrase::level_element_t;
   using xfrase::log_args;
   using xfrase::log_level_t;
   using xfrase::logger;
@@ -291,8 +290,8 @@ command_bins_main(int argc, char *argv[]) -> int {
   lgr.debug("Number of CpGs in index: {}", index.meta.n_cpgs);
 
   const auto request_type = count_covered
-                              ? xfrase::request_type_code::bin_counts_cov
-                              : xfrase::request_type_code::bin_counts;
+                              ? xfrase::request_type_code::bins_covered
+                              : xfrase::request_type_code::bins;
 
   const auto req =
     xfrase::request{methylome_name, request_type, index.get_hash(), bin_size};
@@ -306,10 +305,10 @@ command_bins_main(int argc, char *argv[]) -> int {
 
   const auto bins_err =
     count_covered
-      ? (remote_mode ? do_bins<counts_res_cov>(req, rmr, outmgr, index)
-                     : do_bins<counts_res_cov>(req, lmr, outmgr, index))
-      : (remote_mode ? do_bins<counts_res>(req, rmr, outmgr, index)
-                     : do_bins<counts_res>(req, lmr, outmgr, index));
+      ? (remote_mode ? do_bins<level_element_covered_t>(req, rmr, outmgr, index)
+                     : do_bins<level_element_covered_t>(req, lmr, outmgr, index))
+      : (remote_mode ? do_bins<level_element_t>(req, rmr, outmgr, index)
+                     : do_bins<level_element_t>(req, lmr, outmgr, index));
 
   if (bins_err) {
     lgr.error("Error: {}", bins_err);
