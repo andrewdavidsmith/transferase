@@ -89,7 +89,7 @@ methylome::write(const std::string &outdir,
                  const std::string &name) const -> std::error_code {
   // make filenames
   const auto fn_wo_extn = std::filesystem::path{outdir} / name;
-  const auto meta_filename = compose_methylome_metadata_filename(fn_wo_extn);
+  const auto meta_filename = methylome_metadata::compose_filename(fn_wo_extn);
   const auto meta_write_ec = meta.write(meta_filename);
   if (meta_write_ec) {
     std::error_code ec;
@@ -100,7 +100,7 @@ methylome::write(const std::string &outdir,
     }
     return meta_write_ec;
   }
-  const auto data_filename = compose_methylome_data_filename(fn_wo_extn);
+  const auto data_filename = methylome_data::compose_filename(fn_wo_extn);
   const auto data_write_ec = data.write(data_filename, meta.is_compressed);
   if (data_write_ec) {
     std::error_code ec;
@@ -119,21 +119,25 @@ methylome::write(const std::string &outdir,
 }
 
 [[nodiscard]] auto
-methylome_files_exist(const std::string &directory,
-                      const std::string &methylome_name) -> bool {
+methylome::files_exist(const std::string &directory,
+                       const std::string &methylome_name) -> bool {
   const auto fn_wo_extn = std::filesystem::path{directory} / methylome_name;
-  const auto meta_filename = compose_methylome_metadata_filename(fn_wo_extn);
-  const auto data_filename = compose_methylome_data_filename(fn_wo_extn);
-  return std::filesystem::exists(meta_filename) &&
-         std::filesystem::exists(data_filename);
+  const auto meta_filename = methylome_metadata::compose_filename(fn_wo_extn);
+  const auto data_filename = methylome_data::compose_filename(fn_wo_extn);
+
+  std::error_code ec;
+  const auto meta_exists = std::filesystem::exists(meta_filename, ec);
+  if (ec || !meta_exists)
+    return false;
+  const auto data_exists = std::filesystem::exists(data_filename, ec);
+  if (ec || !data_exists)
+    return false;
+  return true;
 }
 
 [[nodiscard]] auto
-list_methylomes(const std::string &dirname,
+methylome::list(const std::string &dirname,
                 std::error_code &ec) -> std::vector<std::string> {
-  static constexpr auto data_extn = methylome::data_extn;
-  static constexpr auto meta_extn = methylome::meta_extn;
-
   using dir_itr_type = std::filesystem::directory_iterator;
   auto dir_itr = dir_itr_type(dirname, ec);
   if (ec)
@@ -173,7 +177,7 @@ list_methylomes(const std::string &dirname,
 }
 
 [[nodiscard]] auto
-get_methylome_name_from_filename(const std::string &filename) -> std::string {
+methylome::parse_methylome_name(const std::string &filename) -> std::string {
   auto s = std::filesystem::path{filename}.filename().string();
   const auto dot = s.find('.');
   return dot == std::string::npos ? s : s.replace(dot, std::string::npos, "");

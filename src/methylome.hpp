@@ -82,29 +82,24 @@ struct methylome {
   add(const methylome &rhs) -> void {
     data.add(rhs.data);
   }
+
+  [[nodiscard]] static auto
+  files_exist(const std::string &directory,
+              const std::string &methylome_name) -> bool;
+
+  [[nodiscard]] static auto
+  list(const std::string &dirname,
+       std::error_code &ec) -> std::vector<std::string>;
+
+  [[nodiscard]] static auto
+  parse_methylome_name(const std::string &filename) -> std::string;
+
+  [[nodiscard]] static auto
+  is_valid_name(const std::string &methylome_name) -> bool {
+    return std::ranges::all_of(
+      methylome_name, [](const auto c) { return std::isalnum(c) || c == '_'; });
+  }
 };
-
-[[nodiscard]] inline auto
-size(const methylome &m) -> std::size_t {
-  return size(m.data);
-}
-
-[[nodiscard]] auto
-methylome_files_exist(const std::string &directory,
-                      const std::string &methylome_name) -> bool;
-
-[[nodiscard]] auto
-list_methylomes(const std::string &dirname,
-                std::error_code &ec) -> std::vector<std::string>;
-
-[[nodiscard]] auto
-get_methylome_name_from_filename(const std::string &filename) -> std::string;
-
-[[nodiscard]] inline auto
-is_valid_accession(const std::string &accession) -> bool {
-  return std::ranges::all_of(
-    accession, [](const auto c) { return std::isalnum(c) || c == '_'; });
-}
 
 }  // namespace xfrase
 
