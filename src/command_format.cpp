@@ -367,7 +367,6 @@ command_format_main(int argc, char *argv[]) -> int {
   using xfrase::counts_format;
   using xfrase::cpg_index;
   using xfrase::get_meth_file_format;
-  using xfrase::get_methylome_name_from_filename;
   using xfrase::log_level_t;
   using xfrase::logger;
   using xfrase::methylome;
@@ -423,7 +422,7 @@ command_format_main(int argc, char *argv[]) -> int {
   }
 
   const auto methylome_name =
-    get_methylome_name_from_filename(methylation_input);
+    methylome::parse_methylome_name(methylation_input);
 
   std::vector<std::tuple<std::string, std::string>> args_to_log{
     // clang-format off

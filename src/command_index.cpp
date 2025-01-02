@@ -128,15 +128,16 @@ command_index_main(int argc, char *argv[]) -> int {
   xfrase::log_args<xfrase::log_level_t::info>(args_to_log);
 
   std::error_code ec;
-  const auto assembly = xfrase::get_assembly_from_filename(genome_filename, ec);
+  const auto genome_name =
+    xfrase::cpg_index::parse_genome_name(genome_filename, ec);
   if (ec) {
-    lgr.error("Failed to parse assembly name from: {}", genome_filename);
+    lgr.error("Failed to parse genome name from: {}", genome_filename);
     return EXIT_FAILURE;
   }
-  lgr.info("Identified genome/assembly name: {}", assembly);
+  lgr.info("Identified genome name: {}", genome_name);
 
   const auto constr_start = std::chrono::high_resolution_clock::now();
-  const auto index = xfrase::make_cpg_index(genome_filename, ec);
+  const auto index = xfrase::cpg_index::make_cpg_index(genome_filename, ec);
   const auto constr_stop = std::chrono::high_resolution_clock::now();
   if (ec) {
     if (ec == std::errc::no_such_file_or_directory)
@@ -148,9 +149,9 @@ command_index_main(int argc, char *argv[]) -> int {
   lgr.debug("Index construction time: {:.3}s",
             duration(constr_start, constr_stop));
 
-  ec = index.write(index_directory, assembly);
+  ec = index.write(index_directory, genome_name);
   if (ec) {
-    lgr.error("Error writing cpg index {} {}: {}", index_directory, assembly,
+    lgr.error("Error writing cpg index {} {}: {}", index_directory, genome_name,
               ec);
     return EXIT_FAILURE;
   }
