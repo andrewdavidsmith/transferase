@@ -47,11 +47,10 @@ xfrase check -x index_dir -d methylome_dir -g hg38 -m SRX012345 SRX612345
 )";
 
 #include "cpg_index.hpp"
+#include "level_element.hpp"
 #include "logger.hpp"
 #include "metadata_is_consistent.hpp"
 #include "methylome.hpp"
-#include "methylome_data.hpp"
-#include "methylome_results_types.hpp"  // IWYU pragma: keep
 #include "utilities.hpp"
 #include "xfrase_error.hpp"  // IWYU pragma: keep
 
@@ -162,9 +161,8 @@ command_check_main(int argc, char *argv[]) -> int {
       return EXIT_FAILURE;
     }
 
-    lgr.info("Methylome total counts: {}", meth.data.total_counts());
-    lgr.info("Methylome total counts covered: {}",
-             meth.data.total_counts_cov());
+    lgr.info("Methylome global levels: {}", meth.global_levels());
+    lgr.info("Methylome sites covered: {}", meth.global_levels_covered());
 
     const auto methylome_consistency = meth.is_consistent();
     lgr.info("Methylome data and metadata are consistent: {}",
