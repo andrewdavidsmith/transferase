@@ -23,8 +23,8 @@
 
 #include <cpg_index_data.hpp>
 
+#include <chrom_range.hpp>
 #include <cpg_index.hpp>
-#include <cpg_index_metadata.hpp>  // IWYU pragma: keep
 #include <utilities.hpp>
 
 #include <gtest/gtest.h>
@@ -120,12 +120,12 @@ TEST(cpg_index_data_test, invalid_read) {
 TEST(cpg_index_data_test, valid_make_query_within_chrom) {
   cpg_index_data index;
   index.positions.push_back({1, 2, 3, 4, 5});
-  std::vector<chrom_range_t> queries = {
+  std::vector<chrom_range_t> queries{
     {1, 3},
     {4, 5},
   };
   const auto qry = index.make_query_within_chrom(0, queries);
-  const auto expected = xfrase::query({
+  const auto expected = xfrase::query(std::vector<query_element>{
     {0, 2},
     {3, 4},
   });
