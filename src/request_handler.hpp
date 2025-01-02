@@ -54,13 +54,15 @@ struct request_handler {
   auto
   handle_request(const request &req, response_header &resp_hdr) -> void;
 
+  /// handle a request to get levels for query intervals
   auto
-  handle_get_counts(const request &req, const xfrase::query &qry,
+  handle_get_levels(const request &req, const xfrase::query &qry,
                     response_header &resp_hdr, response_payload &resp) -> void;
 
+  /// handle a request to get levels for genomic bins
   auto
-  handle_get_bins(const request &req, response_header &resp_hdr,
-                  response_payload &resp) -> void;
+  handle_get_levels(const request &req, response_header &resp_hdr,
+                    response_payload &resp) -> void;
 
   auto
   add_response_size(const request &req, response_header &resp_hdr) -> void;

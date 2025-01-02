@@ -29,9 +29,8 @@
 #include "methylome.hpp"
 #include "methylome_data.hpp"
 #include "methylome_metadata.hpp"
-#include "methylome_results_types.hpp"  // IWYU pragma: keep
-#include "methylome_set.hpp"            // for is_valid_accession
-#include "query.hpp"                    // IWYU pragma: keep
+#include "methylome_set.hpp"  // for is_valid_accession
+#include "query.hpp"          // IWYU pragma: keep
 #include "request.hpp"
 #include "request_type_code.hpp"
 #include "response.hpp"
@@ -130,18 +129,19 @@ request_handler::handle_request(const request &req,
 }
 
 [[nodiscard]] static inline auto
-counts_to_payload(const auto &counts) -> response_payload {
-  using counts_res_type =
-    typename std::remove_cvref_t<decltype(counts)>::value_type;
-  const auto counts_n_bytes = sizeof(counts_res_type) * size(counts);
+levels_to_payload(auto &&levels) -> response_payload {
+  // ADS: copy happening here is not needed
+  using levels_res_type =
+    typename std::remove_cvref_t<decltype(levels)>::value_type;
+  const auto levels_n_bytes = sizeof(levels_res_type) * size(levels);
   response_payload r;
-  r.payload.resize(counts_n_bytes);
-  std::memcpy(r.payload.data(), counts.data(), counts_n_bytes);
+  r.payload.resize(levels_n_bytes);
+  std::memcpy(r.payload.data(), levels.data(), levels_n_bytes);
   return r;
 }
 
 auto
-request_handler::handle_get_counts(const request &req, const xfrase::query &qry,
+request_handler::handle_get_levels(const request &req, const xfrase::query &qry,
                                    response_header &resp_hdr,
                                    response_payload &resp_data) -> void {
   auto &lgr = logger::instance();
@@ -155,14 +155,14 @@ request_handler::handle_get_counts(const request &req, const xfrase::query &qry,
     return;
   }
 
-  lgr.debug("Computing counts for methylome: {}", req.accession);
+  lgr.debug("Computing levels for methylome: {}", req.accession);
 
-  if (req.request_type == request_type_code::counts) {
-    resp_data = counts_to_payload(meth->data.get_counts(qry));
+  if (req.request_type == request_type_code::intervals) {
+    resp_data = levels_to_payload(meth->data.get_levels(qry));
     return;
   }
-  if (req.request_type == request_type_code::counts_cov) {
-    resp_data = counts_to_payload(meth->data.get_counts_cov(qry));
+  if (req.request_type == request_type_code::intervals_covered) {
+    resp_data = levels_to_payload(meth->data.get_levels_covered(qry));
     return;
   }
 
@@ -171,8 +171,9 @@ request_handler::handle_get_counts(const request &req, const xfrase::query &qry,
 }
 
 auto
-request_handler::handle_get_bins(const request &req, response_header &resp_hdr,
-                                 response_payload &resp_data) -> void {
+request_handler::handle_get_levels(const request &req,
+                                   response_header &resp_hdr,
+                                   response_payload &resp_data) -> void {
   auto &lgr = logger::instance();
 
   // assume methylome availability has been determined
@@ -194,14 +195,14 @@ request_handler::handle_get_bins(const request &req, response_header &resp_hdr,
     return;
   }
 
-  if (req.request_type == request_type_code::bin_counts) {
-    resp_data = counts_to_payload(meth->data.get_bins(req.bin_size(), *index));
+  if (req.request_type == request_type_code::bins) {
+    resp_data = levels_to_payload(meth->get_levels(req.bin_size(), *index));
     return;
   }
 
-  if (req.request_type == request_type_code::bin_counts_cov) {
+  if (req.request_type == request_type_code::bins_covered) {
     resp_data =
-      counts_to_payload(meth->data.get_bins_cov(req.bin_size(), *index));
+      levels_to_payload(meth->get_levels_covered(req.bin_size(), *index));
     return;
   }
 
