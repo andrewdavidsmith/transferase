@@ -52,7 +52,6 @@ xfrase intervals remote -x index_dir -g hg38 -s example.com -m methylome_name -o
 #include "logger.hpp"
 #include "methylome.hpp"
 #include "methylome_resource.hpp"
-#include "methylome_results_types.hpp"
 #include "query.hpp"
 #include "request.hpp"
 #include "request_type_code.hpp"
@@ -80,27 +79,27 @@ namespace xfrase {
 template <typename results_type>
 [[nodiscard]] static inline auto
 do_intervals(const request &req, query &&qry, const auto &resource,
-             std::error_code &ec) -> std::vector<results_type> {
+             std::error_code &ec) -> level_container<results_type> {
   client<results_type> cl(resource.host, resource.port, req, std::move(qry));
   ec = cl.run();
   if (ec) {
     logger::instance().error("Transaction status: {}", ec);
     return {};
   }
-  return cl.take_counts();
+  return cl.take_levels();
 }
 
 template <typename results_type>
 [[nodiscard]] static inline auto
 do_intervals(const request &req, const query &qry, const auto &resource,
-             std::error_code &ec) -> std::vector<results_type> {
+             std::error_code &ec) -> level_container<results_type> {
   const auto meth = methylome::read(resource.dir, req.accession, ec);
   if (ec)
     return {};
-  if constexpr (std::is_same_v<results_type, counts_res_cov>)
-    return meth.data.get_counts_cov(qry);
+  if constexpr (std::is_same_v<results_type, level_element_covered_t>)
+    return meth.get_levels_covered(qry);
   else
-    return meth.data.get_counts(qry);
+    return meth.get_levels(qry);
 }
 
 template <typename results_type>
@@ -108,7 +107,7 @@ template <typename results_type>
 do_intervals(const request &req, query &&qry, const auto &resource,
              const auto &outmgr) -> std::error_code {
   auto &lgr = logger::instance();
-  std::vector<results_type> results;
+  level_container<results_type> results;
   std::error_code ec;
 
   const auto intervals_start{std::chrono::high_resolution_clock::now()};
@@ -148,11 +147,11 @@ command_intervals_main(int argc, char *argv[]) -> int {
 
   static constexpr auto default_port = "5000";
 
-  using xfrase::counts_res;
-  using xfrase::counts_res_cov;
   using xfrase::cpg_index;
   using xfrase::do_intervals;
   using xfrase::genomic_interval;
+  using xfrase::level_element_covered_t;
+  using xfrase::level_element_t;
   using xfrase::log_args;
   using xfrase::log_level_t;
   using xfrase::logger;
@@ -310,8 +309,8 @@ command_intervals_main(int argc, char *argv[]) -> int {
   lgr.info("Number of intervals: {}", std::size(intervals));
 
   const auto request_type = count_covered
-                              ? xfrase::request_type_code::counts_cov
-                              : xfrase::request_type_code::counts;
+                              ? xfrase::request_type_code::intervals_covered
+                              : xfrase::request_type_code::intervals;
 
   // Convert intervals into query
   const auto format_query_start{std::chrono::high_resolution_clock::now()};
@@ -330,14 +329,14 @@ command_intervals_main(int argc, char *argv[]) -> int {
   xfrase::local_methylome_resource lmr{methylome_directory};
   xfrase::remote_methylome_resource rmr{hostname, port};
 
+  // NOLINTNEXTLINE
   const auto intervals_err =
     count_covered
       ? (remote_mode
-           ? do_intervals<counts_res_cov>(req, std::move(qry), rmr, outmgr)
-           : do_intervals<counts_res_cov>(req, std::move(qry), lmr, outmgr))
-      : (remote_mode
-           ? do_intervals<counts_res>(req, std::move(qry), rmr, outmgr)
-           : do_intervals<counts_res>(req, std::move(qry), lmr, outmgr));
+           ? do_intervals<level_element_covered_t>(req, std::move(qry), rmr, outmgr)
+           : do_intervals<level_element_covered_t>(req, std::move(qry), lmr, outmgr))
+      : (remote_mode ? do_intervals<level_element_t>(req, std::move(qry), rmr, outmgr)
+                     : do_intervals<level_element_t>(req, std::move(qry), lmr, outmgr));
 
   if (intervals_err) {
     lgr.error("Error: {}", intervals_err);
