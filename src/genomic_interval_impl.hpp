@@ -37,8 +37,10 @@
 
 namespace xfrase {
 
+struct cpg_index_metadata;
+
 [[nodiscard]] STATIC auto
-parse(const cpg_index_metadata &cim, const std::string &line,
+parse(const cpg_index_metadata &meta, const std::string &line,
       std::error_code &ec) -> genomic_interval;
 
 }  // namespace xfrase
