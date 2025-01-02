@@ -268,7 +268,7 @@ auto
 client<level_element>::prepare_to_read_response_payload() -> void {
   // This function is needed because this can't be done in the
   // read_query() function as it is recursive
-  resp.levels.resize(resp_hdr.response_size);     // get space for query_container
+  resp.levels.resize(resp_hdr.response_size);  // get space for query_container
   levels_bytes_remaining = get_levels_n_bytes();  // init counters
   levels_bytes_received = 0;                      // should be init to this
 }

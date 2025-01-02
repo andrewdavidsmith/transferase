@@ -84,7 +84,8 @@ struct cpg_index_data {
 
   [[nodiscard]] auto
   make_query(const cpg_index_metadata &meta,
-             const std::vector<genomic_interval> &gis) const -> xfrase::query_container;
+             const std::vector<genomic_interval> &gis) const
+    -> xfrase::query_container;
 
   [[nodiscard]] static auto
   compose_filename(auto wo_extension) {

@@ -68,7 +68,8 @@ struct cpg_index {
         const std::string &name) const -> std::error_code;
 
   [[nodiscard]] auto
-  make_query(const std::vector<genomic_interval> &gis) const -> xfrase::query_container;
+  make_query(const std::vector<genomic_interval> &gis) const
+    -> xfrase::query_container;
 
   [[nodiscard]] auto
   get_n_cpgs_chrom() const {

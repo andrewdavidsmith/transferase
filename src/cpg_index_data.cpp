@@ -140,17 +140,18 @@ make_query_within_chrom(const cpg_index_data::vec &positions,
 // within the chrom, get the query in the form of CpG site identities
 [[nodiscard]] auto
 cpg_index_data::make_query_within_chrom(
-  const std::int32_t ch_id,
-  const std::vector<chrom_range_t> &chrom_ranges) const -> xfrase::query_container {
+  const std::int32_t ch_id, const std::vector<chrom_range_t> &chrom_ranges)
+  const -> xfrase::query_container {
   assert(std::ranges::is_sorted(chrom_ranges) && ch_id >= 0 &&
          ch_id < std::ranges::ssize(positions));
   return xfrase::make_query_within_chrom(positions[ch_id], chrom_ranges);
 }
 
 [[nodiscard]] auto
-cpg_index_data::make_query_chrom(
-  const std::int32_t ch_id, const cpg_index_metadata &meta,
-  const std::vector<chrom_range_t> &chrom_ranges) const -> xfrase::query_container {
+cpg_index_data::make_query_chrom(const std::int32_t ch_id,
+                                 const cpg_index_metadata &meta,
+                                 const std::vector<chrom_range_t> &chrom_ranges)
+  const -> xfrase::query_container {
   assert(std::ranges::is_sorted(chrom_ranges) && ch_id >= 0 &&
          ch_id < std::ranges::ssize(positions));
   const auto offset = meta.chrom_offset[ch_id];

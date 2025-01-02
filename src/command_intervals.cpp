@@ -92,7 +92,8 @@ do_intervals(const request &req, query_container &&qry, const auto &resource,
 
 template <typename results_type>
 [[nodiscard]] static inline auto
-do_intervals(const request &req, const query_container &qry, const auto &resource,
+do_intervals(const request &req, const query_container &qry,
+             const auto &resource,
              std::error_code &ec) -> level_container<results_type> {
   const auto meth = methylome::read(resource.dir, req.accession, ec);
   if (ec)
