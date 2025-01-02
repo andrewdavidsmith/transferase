@@ -53,7 +53,7 @@ xfrase intervals remote -x index_dir -g hg38 -s example.com -m methylome_name -o
 #include "methylome.hpp"
 #include "methylome_resource.hpp"
 #include "methylome_results_types.hpp"
-#include "query.hpp"  // for query_element
+#include "query.hpp"
 #include "request.hpp"
 #include "request_type_code.hpp"
 #include "utilities.hpp"
@@ -293,19 +293,17 @@ command_intervals_main(int argc, char *argv[]) -> int {
     return EXIT_FAILURE;
   }
 
-  lgr.debug("Number of CpGs in index: {}", index.meta.n_cpgs);
-
   // Read query intervals and validate them
-  const auto intervals = genomic_interval::read(index.meta, intervals_file, ec);
+  const auto intervals = genomic_interval::read(index, intervals_file, ec);
   if (ec) {
     lgr.error("Error reading intervals file: {} ({})", intervals_file, ec);
     return EXIT_FAILURE;
   }
-  if (!intervals_sorted(index.meta, intervals)) {
+  if (!genomic_interval::are_sorted(intervals)) {
     lgr.error("Intervals not sorted: {}", intervals_file);
     return EXIT_FAILURE;
   }
-  if (!intervals_valid(intervals)) {
+  if (!genomic_interval::are_valid(intervals)) {
     lgr.error("Intervals not valid: {} (negative size found)", intervals_file);
     return EXIT_FAILURE;
   }
