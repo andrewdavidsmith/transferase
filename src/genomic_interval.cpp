@@ -24,7 +24,8 @@
 #include "genomic_interval.hpp"
 #include "genomic_interval_impl.hpp"
 
-#include "cpg_index_metadata.hpp"  // for cpg_index_metadata
+#include "cpg_index.hpp"  // just passing cpg_index_metadata
+#include "cpg_index_metadata.hpp"
 
 #include <algorithm>
 #include <cerrno>
@@ -84,9 +85,9 @@ parse(const cpg_index_metadata &meta, const std::string &line,
 }
 
 [[nodiscard]] auto
-genomic_interval::read(const cpg_index_metadata &meta,
-                       const std::string &filename,
+genomic_interval::read(const cpg_index &index, const std::string &filename,
                        std::error_code &ec) -> std::vector<genomic_interval> {
+  const cpg_index_metadata &meta = index.meta;
   ec = std::error_code{};
   std::ifstream in{filename};
   if (!in) {
@@ -106,12 +107,16 @@ genomic_interval::read(const cpg_index_metadata &meta,
 }
 
 [[nodiscard]] auto
-intervals_sorted(const cpg_index_metadata &meta,
-                 const std::vector<genomic_interval> &gis) -> bool {
+genomic_interval::are_sorted(const std::vector<genomic_interval> &intervals)
+  -> bool {
+  static constexpr auto initial_n_chroms = 64;
   // check that chroms appear consecutively
-  std::vector<std::uint32_t> chroms_seen(std::size(meta.chrom_order), 0);
+  std::vector<std::uint32_t> chroms_seen(initial_n_chroms, 0);
   std::int32_t prev_ch_id{genomic_interval::not_a_chrom};
-  for (const auto &i : gis) {
+  for (const auto &i : intervals) {
+    // ADS: double the size of we need more space
+    if (i.ch_id >= static_cast<std::int64_t>(std::size(chroms_seen)))
+      chroms_seen.resize(2 * std::size(chroms_seen));
     chroms_seen[i.ch_id] += (i.ch_id != prev_ch_id);
     prev_ch_id = i.ch_id;
   }
@@ -123,8 +128,9 @@ intervals_sorted(const cpg_index_metadata &meta,
   };
 
   bool is_sorted = true;
-  for (const auto &gis_for_chrom : gis | std::views::chunk_by(same_chrom)) {
-    for (std::uint32_t prev_start{0}; const auto g : gis_for_chrom) {
+  for (const auto &intervals_for_chrom :
+       intervals | std::views::chunk_by(same_chrom)) {
+    for (std::uint32_t prev_start{0}; const auto g : intervals_for_chrom) {
       is_sorted = is_sorted && (prev_start <= g.start);
       prev_start = g.start;
     }

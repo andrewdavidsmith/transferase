@@ -38,7 +38,7 @@
 
 namespace xfrase {
 
-struct cpg_index_metadata;
+struct cpg_index;
 
 struct genomic_interval {
   static constexpr auto not_a_chrom{-1};
@@ -50,20 +50,20 @@ struct genomic_interval {
   operator<=>(const genomic_interval &) const = default;
 
   [[nodiscard]] static auto
-  read(const cpg_index_metadata &index, const std::string &filename,
+  read(const cpg_index &index, const std::string &filename,
        std::error_code &ec) -> std::vector<genomic_interval>;
-};
 
-// ADS: Sorted intervals have chromosomes together but the order on
-// chroms is arbitrary; then they are ordered by first coord position
-// and second position is not relevant.
-[[nodiscard]] auto
-intervals_sorted(const cpg_index_metadata &cim,
-                 const std::vector<genomic_interval> &gis) -> bool;
+  // ADS: Sorted intervals have chromosomes together but the order on
+  // chroms is arbitrary; then they are ordered by first coord position
+  // and second position is not relevant.
+  [[nodiscard]] static auto
+  are_sorted(const std::vector<genomic_interval> &gis) -> bool;
 
-[[nodiscard]] inline auto
-intervals_valid(const auto &g) -> bool {
-  return std::ranges::all_of(g, [](const auto x) { return x.start <= x.stop; });
+  [[nodiscard]] static auto
+  are_valid(const auto &g) -> bool {
+    return std::ranges::all_of(g,
+                               [](const auto x) { return x.start <= x.stop; });
+  }
 };
 
 }  // namespace xfrase
