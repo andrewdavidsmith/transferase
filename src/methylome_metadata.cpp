@@ -23,11 +23,8 @@
 
 #include "methylome_metadata.hpp"
 
-// #include "automatic_json.hpp"  // for tag_invoke
 #include "environment_utilities.hpp"
 
-// ADS: this one seems not needed
-// #include <boost/container_hash/hash.hpp>  // for boost::hash_range
 #include <boost/json.hpp>
 
 #include <cerrno>
@@ -116,12 +113,6 @@ methylome_metadata::tostring() const -> std::string {
   if (!(o << boost::json::value_from(*this)))
     o.clear();
   return o.str();
-}
-
-[[nodiscard]] auto
-get_default_methylome_metadata_filename(const std::string &methfile)
-  -> std::string {
-  return std::format("{}.json", methfile);
 }
 
 }  // namespace xfrase

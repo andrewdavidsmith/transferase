@@ -87,6 +87,18 @@ struct methylome_metadata {
 
   [[nodiscard]] auto
   tostring() const -> std::string;
+
+  [[nodiscard]] static auto
+  compose_filename(auto wo_extension) {
+    wo_extension += filename_extension;
+    return wo_extension;
+  }
+
+  [[nodiscard]] static auto
+  compose_filename(const auto &directory, const auto &name) {
+    const auto wo_extn = (std::filesystem::path{directory} / name).string();
+    return std::format("{}{}", wo_extn, filename_extension);
+  }
 };
 
 // clang-format off
@@ -103,22 +115,6 @@ BOOST_DESCRIBE_STRUCT(methylome_metadata, (),
  is_compressed
 ))
 // clang-format on
-
-[[nodiscard]] inline auto
-compose_methylome_metadata_filename(auto wo_extension) {
-  wo_extension += methylome_metadata::filename_extension;
-  return wo_extension;
-}
-
-[[nodiscard]] inline auto
-compose_methylome_metadata_filename(const auto &directory, const auto &name) {
-  const auto wo_extn = (std::filesystem::path{directory} / name).string();
-  return std::format("{}{}", wo_extn, methylome_metadata::filename_extension);
-}
-
-auto
-get_default_methylome_metadata_filename(const std::string &methfile)
-  -> std::string;
 
 }  // namespace xfrase
 
