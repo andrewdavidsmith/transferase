@@ -176,7 +176,7 @@ verify_header_line(const cpg_index_metadata &cim,
 }
 
 static auto
-process_cpg_sites(const std::string &infile, const cpg_index &index)
+process_cpg_sites_xcounts(const std::string &infile, const cpg_index &index)
   -> std::tuple<methylome_data, std::error_code> {
   auto &lgr = xfrase::logger::instance();
 
@@ -453,7 +453,7 @@ command_format_main(int argc, char *argv[]) -> int {
 
   auto [meth_data, meth_data_err] =
     (format_id == counts_format::xcounts)
-      ? process_cpg_sites(methylation_input, index)
+      ? process_cpg_sites_xcounts(methylation_input, index)
       : process_cpg_sites_counts(methylation_input, index);
 
   if (meth_data_err) {
