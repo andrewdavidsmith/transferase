@@ -24,6 +24,7 @@
 #ifndef SRC_QUERY_HPP_
 #define SRC_QUERY_HPP_
 
+#include <concepts>
 #include <cstddef>  // for std::size_t
 #include <cstdint>  // for std::uint32_t
 #include <utility>  // for std::pair
@@ -32,20 +33,29 @@
 namespace xfrase {
 
 typedef std::uint32_t q_elem_t;
-// struct query_element {
-//   q_elem_t start{};
-//   q_elem_t stop{};
-// };
-typedef std::pair<q_elem_t, q_elem_t> query_element;
+
+struct query_element {
+  q_elem_t start{};
+  q_elem_t stop{};
+  auto
+  operator<=>(const query_element &) const = default;
+};
 
 struct query {
   std::vector<query_element> v;
   typedef std::vector<query_element>::size_type size_type;
+
   query() = default;
   explicit query(const std::uint64_t data_size) : v(data_size) {}
-  // ADS: below, for pass-through to v
   explicit query(std::vector<query_element> &&elements) :
     v{std::move(elements)} {}
+  query(query &&) noexcept = default;
+
+  // prevent copying
+  query(const query &) = delete;
+  query &
+  operator=(const query &) = delete;
+
   auto
   resize(const auto new_size) {
     v.resize(new_size);
