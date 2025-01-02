@@ -60,7 +60,7 @@ methylome_data::get_n_cpgs_from_file(const std::string &filename,
   const auto filesize = std::filesystem::file_size(filename, ec);
   if (ec)
     return 0;
-  return filesize / sizeof(m_count_elem);
+  return filesize / sizeof(m_count_p);
 }
 
 [[nodiscard]] auto
@@ -174,8 +174,10 @@ methylome_data::add(const methylome_data &rhs) -> void {
   // this follows the operator+= pattern
   assert(std::size(cpgs) == std::size(rhs.cpgs));
   std::ranges::transform(cpgs, rhs.cpgs, std::begin(cpgs),
-                         [](const auto &l, const auto &r) -> m_elem {
-                           return {l.first + r.first, l.second + r.second};
+                         [](const auto &l, const auto &r) -> m_count_p {
+                           return {
+                             static_cast<m_count_t>(l.n_meth + r.n_meth),
+                             static_cast<m_count_t>(l.n_unmeth + r.n_unmeth)};
                          });
 }
 
@@ -184,10 +186,10 @@ template <typename U, typename T>
 get_counts_impl(const T b, const T e) -> U {
   U u;
   for (auto cursor = b; cursor != e; ++cursor) {
-    u.n_meth += cursor->first;
-    u.n_unmeth += cursor->second;
+    u.n_meth += cursor->n_meth;
+    u.n_unmeth += cursor->n_unmeth;
     if constexpr (std::is_same<U, counts_res_cov>::value)
-      u.n_covered += *cursor != std::pair<std::uint16_t, std::uint16_t>{};
+      u.n_covered += (*cursor != m_count_p{});
   }
   return u;
 }
@@ -250,7 +252,7 @@ methylome_data::get_counts_cov(const xfrase::query &qry) const
   std::vector<counts_res_cov> res(size(qry));
   const auto beg = std::cbegin(cpgs);
   for (const auto [i, q] : std::views::enumerate(qry))
-    res[i] = get_counts_impl<counts_res_cov>(beg + q.first, beg + q.second);
+    res[i] = get_counts_impl<counts_res_cov>(beg + q.start, beg + q.stop);
   return res;
 }
 
@@ -260,30 +262,30 @@ methylome_data::get_counts(const xfrase::query &qry) const
   std::vector<counts_res> res(size(qry));
   const auto beg = std::cbegin(cpgs);
   for (const auto [i, q] : std::views::enumerate(qry))
-    res[i] = get_counts_impl<counts_res>(beg + q.first, beg + q.second);
+    res[i] = get_counts_impl<counts_res>(beg + q.start, beg + q.stop);
   return res;
 }
 
 [[nodiscard]] auto
 methylome_data::total_counts_cov() const -> counts_res_cov {
-  m_count_acc_t n_meth{};
-  m_count_acc_t n_unmeth{};
-  std::uint32_t n_covered{};
+  m_count_t_accumulator n_meth{};
+  m_count_t_accumulator n_unmeth{};
+  m_count_t_accumulator n_covered{};
   for (const auto &cpg : cpgs) {
-    n_meth += cpg.first;
-    n_unmeth += cpg.second;
-    n_covered += cpg != std::pair<std::uint16_t, std::uint16_t>{};
+    n_meth += cpg.n_meth;
+    n_unmeth += cpg.n_unmeth;
+    n_covered += (cpg != m_count_p{});
   }
   return {n_meth, n_unmeth, n_covered};
 }
 
 [[nodiscard]] auto
 methylome_data::total_counts() const -> counts_res {
-  m_count_acc_t n_meth{};
-  m_count_acc_t n_unmeth{};
+  m_count_t_accumulator n_meth{};
+  m_count_t_accumulator n_unmeth{};
   for (const auto &cpg : cpgs) {
-    n_meth += cpg.first;
-    n_unmeth += cpg.second;
+    n_meth += cpg.n_meth;
+    n_unmeth += cpg.n_unmeth;
   }
   return {n_meth, n_unmeth};
 }
@@ -296,10 +298,10 @@ bin_counts_impl(cpg_index_data::vec::const_iterator &posn_itr,
                 methylome_data::vec::const_iterator &cpg_itr) -> T {
   T t{};
   while (posn_itr != posn_end && *posn_itr < bin_end) {
-    t.n_meth += cpg_itr->first;
-    t.n_unmeth += cpg_itr->second;
+    t.n_meth += cpg_itr->n_meth;
+    t.n_unmeth += cpg_itr->n_unmeth;
     if constexpr (std::is_same<T, counts_res_cov>::value)
-      t.n_covered += (*cpg_itr == m_count_elem{});
+      t.n_covered += (*cpg_itr == m_count_p{});
     ++cpg_itr;
     ++posn_itr;
   }

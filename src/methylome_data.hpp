@@ -52,22 +52,23 @@ struct methylome_metadata;
 struct query;
 
 typedef std::uint16_t m_count_t;
-// struct m_count_elem {
-//   m_count_t n_meth{};
-//   m_count_t n_unmeth{};
-// };
-typedef std::pair<m_count_t, m_count_t> m_count_elem;
-// ADS: allow for accumulation
-typedef std::uint32_t m_count_acc_t;
+struct m_count_p {
+  m_count_t n_meth{};
+  m_count_t n_unmeth{};
+  // ADS: need spaceship here because of constness
+  [[nodiscard]] auto
+  operator<=>(const m_count_p &) const = default;
+};
+
+typedef std::uint32_t m_count_t_accumulator;
 
 struct methylome_data {
   static constexpr auto filename_extension{".m16"};
 
-  typedef std::pair<m_count_t, m_count_t> m_elem;
 #if not defined(__APPLE__) && not defined(__MACH__)
-  typedef std::vector<m_elem, aligned_allocator<m_elem>> vec;
+  typedef std::vector<m_count_p, aligned_allocator<m_count_p>> vec;
 #else
-  typedef std::vector<m_elem> vec;
+  typedef std::vector<m_count_p> vec;
 #endif
 
   [[nodiscard]] static auto
@@ -137,26 +138,21 @@ struct methylome_data {
   get_bins_cov(const std::uint32_t bin_size,
                const cpg_index &index) const -> std::vector<counts_res_cov>;
 
+  [[nodiscard]] static auto
+  compose_filename(auto wo_extension) {
+    wo_extension += filename_extension;
+    return wo_extension;
+  }
+
+  [[nodiscard]] static auto
+  compose_filename(const auto &directory, const auto &name) {
+    const auto wo_extn = (std::filesystem::path{directory} / name).string();
+    return std::format("{}{}", wo_extn, filename_extension);
+  }
+
   methylome_data::vec cpgs{};
-  static constexpr auto record_size = sizeof(m_elem);
+  static constexpr auto record_size = sizeof(m_count_p);
 };
-
-[[nodiscard]] inline auto
-compose_methylome_data_filename(auto wo_extension) {
-  wo_extension += methylome_data::filename_extension;
-  return wo_extension;
-}
-
-[[nodiscard]] inline auto
-compose_methylome_data_filename(const auto &directory, const auto &name) {
-  const auto wo_extn = (std::filesystem::path{directory} / name).string();
-  return std::format("{}{}", wo_extn, methylome_data::filename_extension);
-}
-
-[[nodiscard]] inline auto
-size(const methylome_data &m) -> std::size_t {
-  return std::size(m.cpgs);
-}
 
 template <typename T, typename U>
 inline auto
@@ -178,6 +174,11 @@ conditional_round_to_fit(U &a, U &b) -> void {
   // ADS: optimization possible here?
   if (std::max(a, b) > std::numeric_limits<T>::max())
     round_to_fit<T>(a, b);
+}
+
+[[nodiscard]] inline auto
+size(const methylome_data &data) {
+  return std::size(data.cpgs);
 }
 
 }  // namespace xfrase
