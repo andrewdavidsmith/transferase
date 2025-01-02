@@ -21,7 +21,9 @@
  * SOFTWARE.
  */
 
-#include "cpg_index_metadata.hpp"
+#include "cpg_index_metadata_bindings.hpp"
+
+#include <cpg_index_metadata.hpp>
 
 #include <pybind11/chrono.h>
 #include <pybind11/functional.h>
@@ -35,49 +37,22 @@
 
 namespace py = pybind11;
 
-PYBIND11_MODULE(cpg_index_metadata, m) {
-  // Expose std::error_code as 'ErrorCode'
-  py::class_<std::error_code>(m, "ErrorCode")
-    .def(py::init<>())                          // Default constructor
-    .def("value", &std::error_code::value)      // Get the error code value
-    .def("message", &std::error_code::message)  // Get the error message
-    .def("__repr__", [](const std::error_code &self) {
-      return "<ErrorCode value: " + std::to_string(self.value()) +
-             ", message: " + self.message() + ">";
-    });
-
-  py::class_<xfrase::cpg_index_metadata>(m, "CpgIndexMetadata")
-    .def(py::init<>())  // Default constructor (if needed)
-
-    .def_static("read",
-                py::overload_cast<const std::string &, std::error_code &>(
-                  &xfrase::cpg_index_metadata::read),
-                py::arg("json_filename"), py::arg("ec"))
-    .def_static(
-      "read",
-      py::overload_cast<const std::string &, const std::string &,
-                        std::error_code &>(&xfrase::cpg_index_metadata::read),
-      py::arg("dirname"), py::arg("genome_name"), py::arg("ec"))
-    .def("write", &xfrase::cpg_index_metadata::write, py::arg("json_filename"))
+auto
+cpg_index_metadata_bindings(pybind11::module_ &m) -> void {
+  using namespace pybind11::literals;
+  py::class_<xfrase::cpg_index_metadata>(m, "CpgIndexMetadata",
+                                         "Metadata part of a CpG index")
+    .def(py::init<>())
     .def("init_env", &xfrase::cpg_index_metadata::init_env)
-    .def("tostring", &xfrase::cpg_index_metadata::tostring)
+    .def("__repr__", &xfrase::cpg_index_metadata::tostring)
     .def("get_n_cpgs_chrom", &xfrase::cpg_index_metadata::get_n_cpgs_chrom)
-    .def("get_n_bins", &xfrase::cpg_index_metadata::get_n_bins,
-         py::arg("bin_size"))
-
-    // Bindings for the member variables
+    .def("get_n_bins", &xfrase::cpg_index_metadata::get_n_bins, "bin_size"_a)
+    // bindings for the member variables
     .def_readwrite("version", &xfrase::cpg_index_metadata::version)
     .def_readwrite("host", &xfrase::cpg_index_metadata::host)
     .def_readwrite("user", &xfrase::cpg_index_metadata::user)
     .def_readwrite("creation_time", &xfrase::cpg_index_metadata::creation_time)
     .def_readwrite("index_hash", &xfrase::cpg_index_metadata::index_hash)
     .def_readwrite("assembly", &xfrase::cpg_index_metadata::assembly)
-    .def_readwrite("n_cpgs", &xfrase::cpg_index_metadata::n_cpgs)
-    .def_readwrite("chrom_index", &xfrase::cpg_index_metadata::chrom_index)
-    .def_readwrite("chrom_order", &xfrase::cpg_index_metadata::chrom_order)
-    .def_readwrite("chrom_size", &xfrase::cpg_index_metadata::chrom_size)
-    .def_readwrite("chrom_offset", &xfrase::cpg_index_metadata::chrom_offset)
-    .def_property_readonly_static("filename_extension", [](py::object) {
-      return xfrase::cpg_index_metadata::filename_extension;
-    });
+    .def_readwrite("n_cpgs", &xfrase::cpg_index_metadata::n_cpgs);
 }
