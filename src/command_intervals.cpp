@@ -46,9 +46,10 @@ xfrase intervals remote -x index_dir -g hg38 -s example.com -m methylome_name -o
 
 #include "client.hpp"
 #include "cpg_index.hpp"
-#include "cpg_index_metadata.hpp"
 #include "genomic_interval.hpp"
 #include "genomic_interval_output.hpp"
+#include "level_container.hpp"
+#include "level_element.hpp"
 #include "logger.hpp"
 #include "methylome.hpp"
 #include "methylome_resource.hpp"
@@ -329,14 +330,17 @@ command_intervals_main(int argc, char *argv[]) -> int {
   xfrase::local_methylome_resource lmr{methylome_directory};
   xfrase::remote_methylome_resource rmr{hostname, port};
 
-  // NOLINTNEXTLINE
+  // cppcheck-suppress-begin accessMoved
   const auto intervals_err =
     count_covered
-      ? (remote_mode
-           ? do_intervals<level_element_covered_t>(req, std::move(qry), rmr, outmgr)
-           : do_intervals<level_element_covered_t>(req, std::move(qry), lmr, outmgr))
-      : (remote_mode ? do_intervals<level_element_t>(req, std::move(qry), rmr, outmgr)
-                     : do_intervals<level_element_t>(req, std::move(qry), lmr, outmgr));
+      ? (remote_mode ? do_intervals<level_element_covered_t>(
+                         req, std::move(qry), rmr, outmgr)
+                     : do_intervals<level_element_covered_t>(
+                         req, std::move(qry), lmr, outmgr))
+      : (remote_mode
+           ? do_intervals<level_element_t>(req, std::move(qry), rmr, outmgr)
+           : do_intervals<level_element_t>(req, std::move(qry), lmr, outmgr));
+  // cppcheck-suppress-end accessMoved
 
   if (intervals_err) {
     lgr.error("Error: {}", intervals_err);

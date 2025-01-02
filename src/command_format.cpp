@@ -199,7 +199,9 @@ process_cpg_sites_xcounts(const std::string &infile, const cpg_index &index)
   // avoid a copy later
   std::vector<methylome_data::vec> cpgs;
   for (const auto n_cpgs_chrom : index_meta.get_n_cpgs_chrom())
+    // cppcheck-suppress useStlAlgorithm
     cpgs.push_back(methylome_data::vec(n_cpgs_chrom));
+
   std::uint32_t cpg_idx_out{};
 
   methylome_data::vec::iterator cpgs_itr;
@@ -291,7 +293,9 @@ process_cpg_sites_counts(const std::string &infile, const cpg_index &index)
   // avoid a copy later
   std::vector<methylome_data::vec> cpgs;
   for (const auto n_cpgs_chrom : index_meta.get_n_cpgs_chrom())
+    // cppcheck-suppress useStlAlgorithm
     cpgs.push_back(methylome_data::vec(n_cpgs_chrom));
+
   std::uint32_t cpg_idx_out{};
 
   methylome_data::vec::iterator cpgs_itr;

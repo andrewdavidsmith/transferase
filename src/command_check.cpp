@@ -47,7 +47,6 @@ xfrase check -x index_dir -d methylome_dir -g hg38 -m SRX012345 SRX612345
 )";
 
 #include "cpg_index.hpp"
-#include "level_element.hpp"
 #include "logger.hpp"
 #include "metadata_is_consistent.hpp"
 #include "methylome.hpp"

@@ -46,8 +46,9 @@ xfrase bins remote -x index_dir -g hg38 -s example.com -m SRX012345 -o output.be
 
 #include "client.hpp"
 #include "cpg_index.hpp"
-#include "cpg_index_metadata.hpp"
 #include "genomic_interval_output.hpp"
+#include "level_container.hpp"
+#include "level_element.hpp"
 #include "logger.hpp"
 #include "methylome.hpp"
 #include "methylome_resource.hpp"
@@ -287,8 +288,6 @@ command_bins_main(int argc, char *argv[]) -> int {
     return EXIT_FAILURE;
   }
 
-  lgr.debug("Number of CpGs in index: {}", index.meta.n_cpgs);
-
   const auto request_type = count_covered
                               ? xfrase::request_type_code::bins_covered
                               : xfrase::request_type_code::bins;
@@ -305,8 +304,9 @@ command_bins_main(int argc, char *argv[]) -> int {
 
   const auto bins_err =
     count_covered
-      ? (remote_mode ? do_bins<level_element_covered_t>(req, rmr, outmgr, index)
-                     : do_bins<level_element_covered_t>(req, lmr, outmgr, index))
+      ? (remote_mode
+           ? do_bins<level_element_covered_t>(req, rmr, outmgr, index)
+           : do_bins<level_element_covered_t>(req, lmr, outmgr, index))
       : (remote_mode ? do_bins<level_element_t>(req, rmr, outmgr, index)
                      : do_bins<level_element_t>(req, lmr, outmgr, index));
 
