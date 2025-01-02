@@ -87,11 +87,11 @@ struct connection : public std::enable_shared_from_this<connection> {
   compute_bins() -> void;  // do the computation for bins
 
   auto
-  respond_with_header() -> void;  // write good header
+  respond_with_header() -> void;  // send success header
   auto
-  respond_with_error() -> void;  // write error header
+  respond_with_error() -> void;  // send error header
   auto
-  respond_with_counts() -> void;  // write counts
+  respond_with_levels() -> void;  // send levels
 
   auto
   check_deadline() -> void;
