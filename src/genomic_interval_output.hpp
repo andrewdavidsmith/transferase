@@ -48,7 +48,8 @@
 
 namespace xfrase {
 
-struct counts_res_cov;
+struct level_element_t;
+struct level_element_covered_t;
 
 [[nodiscard]] auto
 write_intervals(const std::string &outfile, const cpg_index_metadata &cim,
@@ -63,9 +64,9 @@ write_intervals(const std::string &outfile, const cpg_index_metadata &cim,
   std::array<char, buf_size> buf{};
   const auto buf_end = buf.data() + modified_buf_size;
 
-  using counts_res_type =
+  using level_element =
     typename std::remove_cvref_t<decltype(results)>::value_type;
-  using gis_res = std::pair<const genomic_interval &, counts_res_type>;
+  using gis_res = std::pair<const genomic_interval &, level_element>;
   const auto same_chrom = [](const gis_res &a, const gis_res &b) {
     return a.first.ch_id == b.first.ch_id;
   };
@@ -93,7 +94,7 @@ write_intervals(const std::string &outfile, const cpg_index_metadata &cim,
       tcr = std::to_chars(tcr.ptr, buf_end, single_result.n_meth);
       *tcr.ptr++ = delim;
       tcr = std::to_chars(tcr.ptr, buf_end, single_result.n_unmeth);
-      if constexpr (std::is_same<counts_res_type, counts_res_cov>::value) {
+      if constexpr (std::is_same<level_element, level_element_covered_t>::value) {
         *tcr.ptr++ = delim;
         tcr = std::to_chars(tcr.ptr, buf_end, single_result.n_covered);
       }
@@ -174,7 +175,7 @@ write_bins(const std::string &outfile, const cpg_index_metadata &cim,
   static constexpr auto modified_buf_size{buf_size - 5};
   static constexpr auto delim{'\t'};
 
-  using counts_res_type =
+  using level_element =
     typename std::remove_cvref_t<decltype(results)>::value_type;
 
   std::array<char, buf_size> buf{};
@@ -205,7 +206,7 @@ write_bins(const std::string &outfile, const cpg_index_metadata &cim,
       tcr = std::to_chars(tcr.ptr, buf_end, results_itr->n_meth);
       *tcr.ptr++ = delim;
       tcr = std::to_chars(tcr.ptr, buf_end, results_itr->n_unmeth);
-      if constexpr (std::is_same<counts_res_type, counts_res_cov>::value) {
+      if constexpr (std::is_same<level_element, level_element_covered_t>::value) {
         *tcr.ptr++ = delim;
         tcr = std::to_chars(tcr.ptr, buf_end, results_itr->n_covered);
       }
