@@ -21,23 +21,38 @@
 # SOFTWARE.
 
 # Find Python 3 and its necessary components
-find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
-find_package(pybind11 REQUIRED)
-
 message(STATUS "Configuring to build Python API")
+find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
 message(STATUS "Python3 include dir: ${Python3_INCLUDE_DIRS}")
 message(STATUS "Python3 libraries: ${Python3_LIBRARIES}")
 message(STATUS "Python3 version: ${Python3_VERSION}")
+find_package(pybind11 REQUIRED)
 
-# The Python include and lib directories
+# Setup the Python include and lib directories
 include_directories(${Python3_INCLUDE_DIRS})
 link_directories(${Python3_LIBRARIES})
 
-# Set the Python package name
-set(PYTHON_PACKAGE_NAME "transferase")
-
-# Add the subdirectory for your actual Python bindings
+# Recurse into the subdirectory with the Python bindings
 add_subdirectory(transferase)
+
+# Set the Python package and library name
+set(PYTHON_PACKAGE_NAME "transferase")
+set(LIBRARY_NAME "transferase")
+
+# Make the package shared library by applying the bindings functions
+pybind11_add_module(py_${LIBRARY_NAME} MODULE transferase_bindings.cpp)
+
+target_include_directories(py_${LIBRARY_NAME} PRIVATE transferase)
+target_link_libraries(py_${LIBRARY_NAME} PRIVATE
+  transferase_bindings
+  xfrase_system
+  pybind11::module
+)
+set_target_properties(py_${LIBRARY_NAME}
+  PROPERTIES LIBRARY_OUTPUT_NAME "${LIBRARY_NAME}"
+)
+
+# Configure the tests if requested
 if(ENABLE_PYTHON_UNIT_TESTS)
   add_subdirectory(test)
 endif()
