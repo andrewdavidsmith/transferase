@@ -124,12 +124,14 @@ make_query_within_chrom(const cpg_index_data::vec &positions,
   -> xfrase::query {
   xfrase::query qry(std::size(chrom_ranges));
   auto cursor = std::cbegin(positions);
-  for (const auto [i, q] : std::views::enumerate(chrom_ranges)) {
-    cursor = std::ranges::lower_bound(cursor, std::cend(positions), q.first);
+  for (const auto [i, cr] : std::views::enumerate(chrom_ranges)) {
+    cursor = std::ranges::lower_bound(cursor, std::cend(positions), cr.start);
     const auto cursor_stop =
-      std::ranges::lower_bound(cursor, std::cend(positions), q.second);
-    qry[i] = {std::ranges::distance(std::cbegin(positions), cursor),
-              std::ranges::distance(std::cbegin(positions), cursor_stop)};
+      std::ranges::lower_bound(cursor, std::cend(positions), cr.stop);
+    qry[i] = {static_cast<q_elem_t>(
+                std::ranges::distance(std::cbegin(positions), cursor)),
+              static_cast<q_elem_t>(
+                std::ranges::distance(std::cbegin(positions), cursor_stop))};
   }
   return qry;
 }
@@ -151,20 +153,18 @@ cpg_index_data::make_query_chrom(
   const std::vector<chrom_range_t> &chrom_ranges) const -> xfrase::query {
   assert(std::ranges::is_sorted(chrom_ranges) && ch_id >= 0 &&
          ch_id < std::ranges::ssize(positions));
-
   const auto offset = meta.chrom_offset[ch_id];
-
-  auto q = xfrase::make_query_within_chrom(positions[ch_id], chrom_ranges) |
-           std::views::transform([&](const auto &x) -> xfrase::query_element {
-             return {offset + x.first, offset + x.second};
-           }) |
-           std::ranges::to<std::vector>();
-  return xfrase::query{std::move(q)};
+  auto qry = xfrase::make_query_within_chrom(positions[ch_id], chrom_ranges);
+  std::ranges::for_each(qry, [&](auto &x) {
+    x.start += offset;
+    x.stop += offset;
+  });
+  return qry;
 }
 
 [[nodiscard]] auto
 cpg_index_data::make_query(const cpg_index_metadata &meta,
-                           const std::vector<genomic_interval> &gis) const
+                           const std::vector<genomic_interval> &intervals) const
   -> xfrase::query {
   const auto same_chrom = [](const genomic_interval &a,
                              const genomic_interval &b) {
@@ -176,11 +176,12 @@ cpg_index_data::make_query(const cpg_index_metadata &meta,
   };
 
   xfrase::query qry;
-  qry.reserve(std::size(gis));
-  for (const auto &gis_for_chrom : gis | std::views::chunk_by(same_chrom)) {
-    std::vector<chrom_range_t> tmp(std::size(gis_for_chrom));
-    std::ranges::transform(gis_for_chrom, std::begin(tmp), start_stop);
-    const auto ch_id = gis_for_chrom.front().ch_id;
+  qry.reserve(std::size(intervals));
+  for (const auto &intervals_for_chrom :
+       intervals | std::views::chunk_by(same_chrom)) {
+    std::vector<chrom_range_t> tmp(std::size(intervals_for_chrom));
+    std::ranges::transform(intervals_for_chrom, std::begin(tmp), start_stop);
+    const auto ch_id = intervals_for_chrom.front().ch_id;
     std::ranges::copy(make_query_chrom(ch_id, meta, tmp),
                       std::back_inserter(qry.v));
   }
