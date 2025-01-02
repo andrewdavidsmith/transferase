@@ -68,14 +68,14 @@ struct request {
 
   [[nodiscard]] auto
   is_intervals_request() const -> bool {
-    return request_type == request_type_code::counts ||
-           request_type == request_type_code::counts_cov;
+    return request_type == request_type_code::intervals ||
+           request_type == request_type_code::intervals_covered;
   }
 
   [[nodiscard]] auto
   is_bins_request() const -> bool {
-    return request_type == request_type_code::bin_counts ||
-           request_type == request_type_code::bin_counts_cov;
+    return request_type == request_type_code::bins ||
+           request_type == request_type_code::bins_covered;
   }
 };
 
