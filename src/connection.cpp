@@ -107,6 +107,8 @@ connection::read_request() -> void {
 
 auto
 connection::read_query() -> void {
+  // ADS: I think there's a pattern I'm missing in terms of
+  // consistency for setting and clearing the timeouts
   auto self(shared_from_this());
   socket.async_read_some(
     boost::asio::buffer(qry.data() + query_byte, query_remaining),
@@ -119,7 +121,7 @@ connection::read_query() -> void {
         query_byte += bytes_transferred;
         if (query_remaining == 0) {
           lgr.debug("{} Finished reading query ({}B)", conn_id, query_byte);
-          handler.handle_get_counts(req, qry, resp_hdr, resp);
+          handler.handle_get_levels(req, qry, resp_hdr, resp);
           lgr.debug("{} Finished computing levels in intervals", conn_id);
           // exiting the read loop -- no deadline for now
           respond_with_header();
@@ -140,7 +142,7 @@ connection::read_query() -> void {
 auto
 connection::compute_bins() -> void {
   deadline.expires_at(boost::asio::steady_timer::time_point::max());
-  handler.handle_get_bins(req, resp_hdr, resp);
+  handler.handle_get_levels(req, resp_hdr, resp);
   lgr.debug("{} Finished computing levels in bins", conn_id);
   respond_with_header();
 }
@@ -180,7 +182,7 @@ connection::respond_with_header() -> void {
                    [[maybe_unused]] const std::size_t bytes_transferred) {
         deadline.expires_at(boost::asio::steady_timer::time_point::max());
         if (!ec)
-          respond_with_counts();
+          respond_with_levels();
         else {
           lgr.warning("{} Error sending response header: {}", conn_id, ec);
           stop();
@@ -195,7 +197,7 @@ connection::respond_with_header() -> void {
 }
 
 auto
-connection::respond_with_counts() -> void {
+connection::respond_with_levels() -> void {
   auto self(shared_from_this());
   boost::asio::async_write(
     socket, boost::asio::buffer(resp.payload),
@@ -203,7 +205,7 @@ connection::respond_with_counts() -> void {
                  const std::size_t bytes_transferred) {
       deadline.expires_at(boost::asio::steady_timer::time_point::max());
       if (!ec) {
-        lgr.info("{} Responded with counts ({}B)", conn_id, bytes_transferred);
+        lgr.info("{} Responded with levels ({}B)", conn_id, bytes_transferred);
         stop();
 
         /* ADS: closing here but not sure it makes sense; RAII? See comment in
@@ -214,7 +216,7 @@ connection::respond_with_counts() -> void {
           lgr.warning("{} Socket close error: {}", conn_id, socket_close_ec);
       }
       else
-        lgr.warning("{} Error sending counts: {}", conn_id, ec);
+        lgr.warning("{} Error sending levels: {}", conn_id, ec);
     });
   deadline.expires_after(std::chrono::seconds(read_timeout_seconds));
 }
@@ -236,7 +238,7 @@ connection::check_deadline() -> void {
     deadline.expires_at(boost::asio::steady_timer::time_point::max());
 
     /* ADS: closing here but not sure it makes sense; RAII? see comment in
-     * respond_with_counts */
+     * respond_with_levels */
     boost::system::error_code socket_close_ec;  // for non-throwing
     socket.close(socket_close_ec);
     if (socket_close_ec)
