@@ -83,7 +83,7 @@ TEST(command_merge_test, basic_local_test) {
   std::error_code ec;
 
   const auto output_meta_fn =
-    compose_methylome_metadata_filename(output_directory, merged_name);
+    methylome_metadata::compose_filename(output_directory, merged_name);
   const auto meta_exists = std::filesystem::exists(output_meta_fn, ec);
   EXPECT_FALSE(ec);
   EXPECT_TRUE(meta_exists);
@@ -92,7 +92,7 @@ TEST(command_merge_test, basic_local_test) {
   EXPECT_FALSE(ec);
 
   const auto output_data_fn =
-    compose_methylome_data_filename(output_directory, merged_name);
+    methylome_data::compose_filename(output_directory, merged_name);
   const auto data_exists = std::filesystem::exists(output_data_fn, ec);
   EXPECT_FALSE(ec);
   EXPECT_TRUE(data_exists);

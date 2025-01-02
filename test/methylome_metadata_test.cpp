@@ -126,7 +126,7 @@ TEST(methylome_metadata_test, successful_read) {
   static constexpr auto methylome_directory = "data/lutions/methylomes";
   static constexpr auto methylome_name = "eFlareon_brain";
   const auto json_filename =
-    compose_methylome_metadata_filename(methylome_directory, methylome_name);
+    methylome_metadata::compose_filename(methylome_directory, methylome_name);
   std::error_code ec;
   const auto meta = methylome_metadata::read(json_filename, ec);
   EXPECT_FALSE(ec);
@@ -137,7 +137,7 @@ TEST(methylome_metadata_test, failing_read) {
   static constexpr auto methylome_directory = "data/lutions/methylomes";
   static constexpr auto methylome_name = "eFlareon_brainZZZ";
   const auto json_filename =
-    compose_methylome_metadata_filename(methylome_directory, methylome_name);
+    methylome_metadata::compose_filename(methylome_directory, methylome_name);
   std::error_code ec;
   const auto meta = methylome_metadata::read(json_filename, ec);
   EXPECT_TRUE(ec);
@@ -150,7 +150,7 @@ TEST(methylome_metadata_test, compose_methylome_metadata_filename_test) {
   static constexpr auto expected_filename =
     "data/lutions/methylomes/eFlareon_brain.m16.json";
   const auto filename =
-    compose_methylome_metadata_filename(methylome_directory, methylome_name);
+    methylome_metadata::compose_filename(methylome_directory, methylome_name);
   EXPECT_EQ(filename, expected_filename);
 }
 

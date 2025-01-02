@@ -42,7 +42,7 @@ TEST(genomic_interval_test, basic_assertions) {
   std::error_code ec;
   const auto index = cpg_index::read(index_dir, assembly, ec);
   EXPECT_FALSE(ec);
-  const auto intervals = genomic_interval::read(index.meta, intervals_file, ec);
+  const auto intervals = genomic_interval::read(index, intervals_file, ec);
   EXPECT_FALSE(ec);
   EXPECT_EQ(std::size(intervals), 20);
   EXPECT_EQ(intervals[0].start, 6595);

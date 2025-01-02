@@ -67,7 +67,7 @@ TEST(command_index_test, basic_test) {
     command_index_main(command_argc, const_cast<char **>(command_argv));
 
   const auto data_outfile =
-    compose_cpg_index_data_filename(output_directory, genome_name);
+    cpg_index_data::compose_filename(output_directory, genome_name);
   // Check that the output file is created
   EXPECT_EQ(result, EXIT_SUCCESS);
   std::error_code ec;
@@ -76,7 +76,7 @@ TEST(command_index_test, basic_test) {
   EXPECT_TRUE(data_outfile_exists);
 
   const auto expected_data_outfile =
-    compose_cpg_index_data_filename(index_directory, genome_name);
+    cpg_index_data::compose_filename(index_directory, genome_name);
   EXPECT_TRUE(files_are_identical(data_outfile, expected_data_outfile));
 
   if (std::filesystem::exists(data_outfile, ec))
@@ -84,7 +84,7 @@ TEST(command_index_test, basic_test) {
   EXPECT_EQ(ec, std::error_code{});
 
   const auto meta_outfile =
-    compose_cpg_index_metadata_filename(output_directory, genome_name);
+    cpg_index_metadata::compose_filename(output_directory, genome_name);
   if (std::filesystem::exists(meta_outfile, ec))
     std::filesystem::remove(meta_outfile, ec);
   EXPECT_EQ(ec, std::error_code{});

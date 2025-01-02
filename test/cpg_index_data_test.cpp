@@ -48,7 +48,7 @@ TEST(cpg_index_data_test, compose_cpg_index_data_filename_test) {
   static constexpr auto expected_filename =
     "data/lutions/methylomes/eFlareon.cpg_idx";
   const auto filename =
-    compose_cpg_index_data_filename(index_directory, genome_name);
+    cpg_index_data::compose_filename(index_directory, genome_name);
   EXPECT_EQ(filename, expected_filename);
 }
 
@@ -120,7 +120,7 @@ TEST(cpg_index_data_test, invalid_read) {
 TEST(cpg_index_data_test, valid_make_query_within_chrom) {
   cpg_index_data index;
   index.positions.push_back({1, 2, 3, 4, 5});
-  std::vector<std::pair<std::uint32_t, std::uint32_t>> queries = {
+  std::vector<chrom_range_t> queries = {
     {1, 3},
     {4, 5},
   };

@@ -69,14 +69,14 @@ TEST(command_format_test, basic_test) {
   EXPECT_EQ(result, EXIT_SUCCESS);
 
   const auto data_outfile =
-    compose_methylome_data_filename(output_directory, methylome_name);
+    methylome_data::compose_filename(output_directory, methylome_name);
   std::error_code ec;
   const auto data_outfile_exists = std::filesystem::exists(data_outfile, ec);
   EXPECT_EQ(ec, std::error_code{});
   EXPECT_TRUE(data_outfile_exists);
 
   const auto expected_data_outfile =
-    compose_methylome_data_filename(methylome_directory, methylome_name);
+    methylome_data::compose_filename(methylome_directory, methylome_name);
   EXPECT_TRUE(files_are_identical(data_outfile, expected_data_outfile));
 
   if (std::filesystem::exists(data_outfile, ec))
@@ -84,7 +84,7 @@ TEST(command_format_test, basic_test) {
   EXPECT_EQ(ec, std::error_code{});
 
   const auto meta_outfile =
-    compose_methylome_metadata_filename(output_directory, methylome_name);
+    methylome_metadata::compose_filename(output_directory, methylome_name);
   if (std::filesystem::exists(meta_outfile, ec))
     std::filesystem::remove(meta_outfile, ec);
   EXPECT_EQ(ec, std::error_code{});

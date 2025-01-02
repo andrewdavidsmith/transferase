@@ -42,12 +42,12 @@ TEST(cpg_index_test, filename_functions) {
   static constexpr auto filename1 = "asdf";
 
   std::error_code ec;
-  auto assembly = get_assembly_from_filename(filename1, ec);
+  auto assembly = cpg_index::parse_genome_name(filename1, ec);
   EXPECT_EQ(ec, std::errc::invalid_argument);
   EXPECT_EQ(assembly, std::string{});
 
   static constexpr auto valid_ref_genome = "asdf.faa.gz";
-  assembly = get_assembly_from_filename(valid_ref_genome, ec);
+  assembly = cpg_index::parse_genome_name(valid_ref_genome, ec);
   EXPECT_FALSE(ec);
   EXPECT_EQ(assembly, "asdf");
 }
@@ -190,7 +190,7 @@ TEST(cpg_index_test, get_chroms_valid_data) {
 
 TEST(cpg_index_test, make_cpg_index_valid_genome_file) {
   std::error_code ec;
-  const auto index = make_cpg_index("data/tProrsus1.fa", ec);
+  const auto index = cpg_index::make_cpg_index("data/tProrsus1.fa", ec);
   EXPECT_FALSE(ec);
   EXPECT_GT(std::size(index.meta.chrom_order), 0);
   EXPECT_GT(std::size(index.meta.chrom_size), 0);
@@ -199,7 +199,7 @@ TEST(cpg_index_test, make_cpg_index_valid_genome_file) {
 
 TEST(cpg_index_test, initialize_cpg_index_invalid_genome_file) {
   std::error_code ec;
-  const auto index = make_cpg_index("data/intervals.bed", ec);
+  const auto index = cpg_index::make_cpg_index("data/intervals.bed", ec);
   EXPECT_TRUE(ec);
   EXPECT_EQ(std::size(index.meta.chrom_order), 0);
   EXPECT_EQ(std::size(index.meta.chrom_size), 0);

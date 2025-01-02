@@ -97,8 +97,7 @@ TEST_F(request_handler_mock, add_response_size_for_bins_success) {
   static constexpr auto bin_size = 100;
   // (below) comes from eFlareon chrom sizes and the given bin_size
   static constexpr auto expected_response_size_n_bins = 37;
-  request req{"eFlareon_brain", request_type_code::bin_counts, index_hash,
-              bin_size};
+  request req{"eFlareon_brain", request_type_code::bins, index_hash, bin_size};
   response_header resp_hdr;
 
   mock_request_handler->add_response_size(req, resp_hdr);
@@ -110,7 +109,7 @@ TEST_F(request_handler_mock, add_response_size_for_bins_success) {
 TEST_F(request_handler_mock, add_response_size_for_bins_methylome_error) {
   static constexpr auto non_existent_methylome_accession = "eFlareon_brainZZZ";
   static constexpr auto index_hash = 0;
-  static constexpr auto rq_type = request_type_code::bin_counts;
+  static constexpr auto rq_type = request_type_code::bins;
   static constexpr auto bin_size = 100;
   request req{non_existent_methylome_accession, rq_type, index_hash, bin_size};
   response_header resp_hdr;
@@ -123,7 +122,7 @@ TEST_F(request_handler_mock, add_response_size_for_bins_bad_assembly) {
   static constexpr auto real_accession = "eFlareon_brain";
   static constexpr auto fake_accession = "eFlareon_brainZZZ";
   static constexpr auto index_hash = 0;
-  static constexpr auto rq_type = request_type_code::bin_counts;
+  static constexpr auto rq_type = request_type_code::bins;
   static constexpr auto bin_size = 100;
 
   const auto get_mm_json_path = [&](const auto &acc) {
@@ -140,9 +139,9 @@ TEST_F(request_handler_mock, add_response_size_for_bins_bad_assembly) {
   EXPECT_FALSE(ec);
 
   const std::string real_methylome_file =
-    compose_methylome_data_filename(methylome_dir, real_accession);
+    methylome_data::compose_filename(methylome_dir, real_accession);
   const std::string fake_methylome_file =
-    compose_methylome_data_filename(methylome_dir, fake_accession);
+    methylome_data::compose_filename(methylome_dir, fake_accession);
 
   std::filesystem::copy(real_methylome_file, fake_methylome_file, ec);
   EXPECT_FALSE(ec);
@@ -160,7 +159,7 @@ TEST_F(request_handler_mock, add_response_size_for_bins_bad_assembly) {
 }
 
 TEST_F(request_handler_mock, add_response_size_for_intervals_success) {
-  static constexpr auto rq_type = request_type_code::counts;
+  static constexpr auto rq_type = request_type_code::intervals;
   static constexpr auto index_hash = 0;
   static constexpr auto n_intervals = 100;
   static constexpr auto expected_response_size_n_intervals = n_intervals;
@@ -175,7 +174,7 @@ TEST_F(request_handler_mock, add_response_size_for_intervals_success) {
 }
 
 TEST_F(request_handler_mock, handle_request_success) {
-  static constexpr auto rq_type = request_type_code::counts;
+  static constexpr auto rq_type = request_type_code::intervals;
   static constexpr auto n_intervals = 100;
   static constexpr auto index_hash = 0;
   static constexpr auto expected_response_size_n_intervals = n_intervals;
@@ -198,7 +197,7 @@ TEST_F(request_handler_mock, handle_request_bad_state) {
   static constexpr auto index_hash = 0;
   static constexpr auto ok_accession = "eFlareon_brain";
   static constexpr auto malformed_accession = "eFlareon_..brain";
-  static constexpr auto valid_rq_type = request_type_code::counts;
+  static constexpr auto valid_rq_type = request_type_code::intervals;
   // ADS: (below) not a valid type
   static constexpr auto invalid_rq_type = static_cast<request_type_code>(5);
   static constexpr auto n_intervals = 100;
@@ -219,7 +218,7 @@ TEST_F(request_handler_mock, handle_request_bad_state) {
 TEST_F(request_handler_mock, handle_request_failure) {
   static constexpr auto index_hash = 0;
   static constexpr auto non_existent_accession{"eFlareon_brainZZZ"};
-  static constexpr auto rq_type = request_type_code::counts;
+  static constexpr auto rq_type = request_type_code::intervals;
   static constexpr auto n_intervals = 100;
   static constexpr auto expected_response_size_n_intervals = n_intervals;
   const auto offsets = std::vector<xfrase::query_element>(n_intervals);
@@ -240,9 +239,9 @@ TEST_F(request_handler_mock, handle_request_failure) {
   EXPECT_EQ(resp_hdr.status, server_response_code::methylome_not_found);
 }
 
-TEST_F(request_handler_mock, handle_get_counts_success) {
+TEST_F(request_handler_mock, handle_get_levels_intervals_success) {
   static constexpr auto index_hash = 0;
-  static constexpr auto rq_type = request_type_code::counts;
+  static constexpr auto rq_type = request_type_code::intervals;
   static constexpr auto assembly = "eFlareon";
   static constexpr auto tissue = "brain";
   const auto methylome_name = std::format("{}_{}", assembly, tissue);
@@ -257,7 +256,7 @@ TEST_F(request_handler_mock, handle_get_counts_success) {
   const auto index = cpg_index::read(index_file_dir, assembly, ec);
   EXPECT_FALSE(ec);
 
-  const auto intervals = genomic_interval::read(index.meta, intervals_path, ec);
+  const auto intervals = genomic_interval::read(index, intervals_path, ec);
   EXPECT_FALSE(ec);
 
   const auto qry = index.make_query(intervals);
@@ -270,17 +269,17 @@ TEST_F(request_handler_mock, handle_get_counts_success) {
 
   // ADS: payload stays on server side
   response_payload resp_data;
-  mock_request_handler->handle_get_counts(req, qry, resp_hdr, resp_data);
+  mock_request_handler->handle_get_levels(req, qry, resp_hdr, resp_data);
 
   const auto req_offset_elem_size = sizeof(xfrase::query_element);
   const auto expected_payload_size = req_offset_elem_size * size(qry);
   EXPECT_EQ(std::size(resp_data.payload), expected_payload_size);
 }
 
-TEST_F(request_handler_mock, handle_get_bins_success) {
+TEST_F(request_handler_mock, handle_get_levels_bins_success) {
   static constexpr auto index_hash = 0;
   static constexpr auto bin_size = 100;
-  static constexpr auto rq_type = request_type_code::bin_counts;
+  static constexpr auto rq_type = request_type_code::bins;
   static constexpr auto assembly = "eFlareon";
   static constexpr auto tissue = "brain";
   const auto methylome_name = std::format("{}_{}", assembly, tissue);
@@ -298,9 +297,9 @@ TEST_F(request_handler_mock, handle_get_bins_success) {
   mock_request_handler->handle_request(req, resp_hdr);
 
   response_payload resp_data;
-  mock_request_handler->handle_get_bins(req, resp_hdr, resp_data);
+  mock_request_handler->handle_get_levels(req, resp_hdr, resp_data);
 
-  const auto expected_n_bins = index.meta.get_n_bins(bin_size);
+  const auto expected_n_bins = index.get_n_bins(bin_size);
 
   const auto req_offset_elem_size = sizeof(xfrase::query_element);
   const auto expected_payload_size = req_offset_elem_size * expected_n_bins;

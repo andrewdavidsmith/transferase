@@ -90,16 +90,16 @@ write_should_fail(const std::filesystem::path &dir,
 }
 
 TEST(methylome_test, invalid_accession) {
-  auto res = is_valid_accession("invalid.accession");
+  auto res = methylome::is_valid_name("invalid.accession");
   EXPECT_FALSE(res);
-  res = is_valid_accession("invalid/accession");
+  res = methylome::is_valid_name("invalid/accession");
   EXPECT_FALSE(res);
 }
 
 TEST(methylome_test, valid_accessions) {
-  auto res = is_valid_accession("eFlareon_brain");
+  auto res = methylome::is_valid_name("eFlareon_brain");
   EXPECT_TRUE(res);
-  res = is_valid_accession("SRX012345");
+  res = methylome::is_valid_name("SRX012345");
   EXPECT_TRUE(res);
 }
 
@@ -142,7 +142,7 @@ TEST(methylome_test, valid_write) {
   EXPECT_FALSE(ec);
 
   const auto meta_filename =
-    compose_methylome_metadata_filename(output_directory, methylome_name);
+    methylome_metadata::compose_filename(output_directory, methylome_name);
   const auto meta_file_exists = std::filesystem::exists(meta_filename, ec);
   EXPECT_FALSE(ec);
   EXPECT_TRUE(meta_file_exists);
@@ -152,7 +152,7 @@ TEST(methylome_test, valid_write) {
   }
 
   const auto data_filename =
-    compose_methylome_data_filename(output_directory, methylome_name);
+    methylome_data::compose_filename(output_directory, methylome_name);
   const auto data_file_exists = std::filesystem::exists(data_filename, ec);
   EXPECT_FALSE(ec);
   EXPECT_TRUE(data_file_exists);
@@ -187,7 +187,7 @@ TEST(methylome_test, invalid_write) {
   EXPECT_EQ(ec, std::errc::permission_denied);
 
   const auto meta_filename =
-    compose_methylome_metadata_filename(output_directory, methylome_name);
+    methylome_metadata::compose_filename(output_directory, methylome_name);
   const auto meta_file_exists = std::filesystem::exists(meta_filename, ec);
   EXPECT_FALSE(ec);
 
@@ -198,7 +198,7 @@ TEST(methylome_test, invalid_write) {
   }
 
   const auto data_filename =
-    compose_methylome_data_filename(output_directory, methylome_name);
+    methylome_data::compose_filename(output_directory, methylome_name);
   const auto data_file_exists = std::filesystem::exists(data_filename, ec);
   EXPECT_FALSE(ec);
   EXPECT_FALSE(data_file_exists);

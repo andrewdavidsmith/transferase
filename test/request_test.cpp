@@ -35,13 +35,13 @@ TEST(request_test, basic_assertions) {
   request req;
   EXPECT_EQ(req, request{});
 
-  const auto rq_type = request_type_code::counts;
+  const auto rq_type = request_type_code::intervals;
   req = request{"SRX012345", rq_type, 0, 0};
   EXPECT_TRUE(req.is_valid_type());
 }
 
 TEST(request_test, valid_compose) {
-  static constexpr auto rq_type = request_type_code::counts;
+  static constexpr auto rq_type = request_type_code::intervals;
   static constexpr auto accession = "SRX012345";
   request_buffer buf;
   const request req{accession, rq_type, 0, 0};
@@ -51,6 +51,6 @@ TEST(request_test, valid_compose) {
 }
 
 TEST(request_test, basic_assertions_bins) {
-  const request req{"SRX12345", request_type_code::bin_counts, 0, 100};
+  const request req{"SRX12345", request_type_code::bins, 0, 100};
   EXPECT_EQ(req.bin_size(), 100);
 }
