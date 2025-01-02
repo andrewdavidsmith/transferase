@@ -21,7 +21,9 @@
  * SOFTWARE.
  */
 
-#include "query.hpp"
+#include "query_bindings.hpp"
+
+#include <query.hpp>
 
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
