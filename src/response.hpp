@@ -24,7 +24,7 @@
 #ifndef SRC_RESPONSE_HPP_
 #define SRC_RESPONSE_HPP_
 
-#include "methylome_data.hpp"  // for counts_res_cov
+#include "level_container.hpp"
 
 #include "xfrase_error.hpp"
 
@@ -69,19 +69,34 @@ parse(const response_header_buffer &buf,
 
 struct response_payload {
   std::vector<std::byte> payload;
+
+  response_payload() = default;
+  // ADS: update this to prevent a copy
+  explicit response_payload(std::vector<std::byte> &&payload) noexcept :
+    payload{std::move(payload)} {}
+
+  // prevent copying and allow moving
+  // clang-format off
+  response_payload(const response_payload &) = delete;
+  response_payload &operator=(const response_payload &) = delete;
+  response_payload(response_payload &&) noexcept = default;
+  response_payload &operator=(response_payload &&) noexcept = default;
+  // clang-format on
+
   [[nodiscard]] auto
   n_bytes() const -> std::uint32_t {
     return std::size(payload);
   }
 };
 
-template <typename counts_type> struct response {
-  std::vector<counts_type> counts;  // counts_type is from methylome_data.hpp
+template <typename level_element> struct response {
+  level_container<level_element> levels;
   [[nodiscard]] auto
-  get_counts_n_bytes() const -> std::uint32_t {
-    return sizeof(counts_type) * size(counts);
+  get_levels_n_bytes() const -> std::uint32_t {
+    return sizeof(level_element) * size(levels);
   }
 };
 
 }  // namespace xfrase
+
 #endif  // SRC_RESPONSE_HPP_
