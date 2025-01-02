@@ -127,7 +127,7 @@ template <typename counts_type>
 client<counts_type>::client(const std::string &server, const std::string &port,
                             const request &req, query &&qry) :
   resolver(io_context), socket(io_context), deadline{socket.get_executor()},
-  req{req}, qry{qry},  // move b/c req can be big
+  req{req}, qry{std::move(qry)},  // move b/c req can be big
   lgr{logger::instance()} {
   // (1) call async, (2) set deadline, (3) register check_deadline
   const auto token = [this](const auto &error, const auto &results) {
