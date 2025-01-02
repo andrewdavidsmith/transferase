@@ -69,23 +69,23 @@ struct cpg_index {
 
   [[nodiscard]] auto
   make_query(const std::vector<genomic_interval> &gis) const -> xfrase::query;
+
+  [[nodiscard]] static auto
+  make_cpg_index(const std::string &genome_file,
+                 std::error_code &ec) -> cpg_index;
+
+  [[nodiscard]] static auto
+  files_exist(const std::string &directory,
+              const std::string &genome_name) -> bool;
+
+  [[nodiscard]] static auto
+  parse_genome_name(const std::string &filename,
+                    std::error_code &ec) -> std::string;
+
+  [[nodiscard]] static auto
+  list_cpg_indexes(const std::string &dirname,
+                   std::error_code &ec) -> std::vector<std::string>;
 };
-
-[[nodiscard]] auto
-make_cpg_index(const std::string &genome_file,
-               std::error_code &ec) -> cpg_index;
-
-[[nodiscard]] auto
-cpg_index_files_exist(const std::string &directory,
-                      const std::string &cpg_index_name) -> bool;
-
-[[nodiscard]] auto
-get_assembly_from_filename(const std::string &filename,
-                           std::error_code &ec) -> std::string;
-
-[[nodiscard]] auto
-list_cpg_indexes(const std::string &dirname,
-                 std::error_code &ec) -> std::vector<std::string>;
 
 }  // namespace xfrase
 

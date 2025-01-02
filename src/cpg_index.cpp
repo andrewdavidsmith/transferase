@@ -98,8 +98,8 @@ cpg_index::read(const std::string &dirname, const std::string &genome_name,
 }
 
 [[nodiscard]] auto
-cpg_index_files_exist(const std::string &directory,
-                      const std::string &cpg_index_name) -> bool {
+cpg_index::files_exist(const std::string &directory,
+                       const std::string &cpg_index_name) -> bool {
   const auto fn_wo_extn = std::filesystem::path{directory} / cpg_index_name;
   const auto meta_filename = compose_cpg_index_metadata_filename(fn_wo_extn);
   const auto data_filename = compose_cpg_index_data_filename(fn_wo_extn);
@@ -108,8 +108,8 @@ cpg_index_files_exist(const std::string &directory,
 }
 
 [[nodiscard]] auto
-get_assembly_from_filename(const std::string &filename,
-                           std::error_code &ec) -> std::string {
+cpg_index::parse_genome_name(const std::string &filename,
+                             std::error_code &ec) -> std::string {
   using std::string_literals::operator""s;
   using std::literals::string_view_literals::operator""sv;
   // clang-format off
@@ -304,7 +304,7 @@ make_cpg_index_plain(const std::string &genome_filename,
 
   meta.index_hash = data.hash();
 
-  meta.assembly = get_assembly_from_filename(genome_filename, ec);
+  meta.assembly = cpg_index::parse_genome_name(genome_filename, ec);
   if (ec)
     return {};
 
@@ -387,7 +387,7 @@ make_cpg_index_gzip(const std::string &genome_filename,
 
   meta.index_hash = data.hash();
 
-  meta.assembly = get_assembly_from_filename(genome_filename, ec);
+  meta.assembly = cpg_index::parse_genome_name(genome_filename, ec);
   if (ec)
     return {};
 
@@ -396,16 +396,16 @@ make_cpg_index_gzip(const std::string &genome_filename,
 }
 
 [[nodiscard]] auto
-make_cpg_index(const std::string &genome_filename,
-               std::error_code &ec) -> cpg_index {
+cpg_index::make_cpg_index(const std::string &genome_filename,
+                          std::error_code &ec) -> cpg_index {
   return is_gzip_file(genome_filename)
            ? make_cpg_index_gzip(genome_filename, ec)
            : make_cpg_index_plain(genome_filename, ec);
 }
 
 [[nodiscard]] auto
-list_cpg_indexes(const std::string &dirname,
-                 std::error_code &ec) -> std::vector<std::string> {
+cpg_index::list_cpg_indexes(const std::string &dirname,
+                            std::error_code &ec) -> std::vector<std::string> {
   static constexpr auto data_extn = cpg_index::data_extn;
   static constexpr auto meta_extn = cpg_index::meta_extn;
 
