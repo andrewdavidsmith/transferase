@@ -39,9 +39,11 @@ add_subdirectory(transferase)
 set(PYTHON_PACKAGE_NAME "transferase")
 set(LIBRARY_NAME "transferase")
 
+# The bindings source at this level needs to see the project headers
+include_directories(${PROJECT_SOURCE_DIR}/src)
+
 # Make the package shared library by applying the bindings functions
 pybind11_add_module(py_${LIBRARY_NAME} MODULE transferase_bindings.cpp)
-
 target_include_directories(py_${LIBRARY_NAME} PRIVATE transferase)
 target_link_libraries(py_${LIBRARY_NAME} PRIVATE
   transferase_bindings
