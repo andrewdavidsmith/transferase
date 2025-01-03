@@ -28,7 +28,7 @@
 #include "logger.hpp"  // ADS: so we can setup the logger
 #include "methylome_data.hpp"
 #include "methylome_metadata.hpp"
-#include "query.hpp"
+#include "query_container.hpp"
 #include "query_element.hpp"
 #include "request.hpp"
 #include "request_type_code.hpp"
