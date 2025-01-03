@@ -23,6 +23,8 @@
 
 #include <pybind11/pybind11.h>
 
+#include <error_code_bindings.hpp>
+
 #include <cpg_index_bindings.hpp>
 #include <cpg_index_data_bindings.hpp>
 #include <cpg_index_metadata_bindings.hpp>
@@ -33,7 +35,6 @@
 
 #include <genomic_interval_bindings.hpp>
 #include <query_container_bindings.hpp>
-#include <std_other_bindings.hpp>
 
 #include <level_container_bindings.hpp>
 #include <level_element_bindings.hpp>
