@@ -33,7 +33,7 @@ namespace py = pybind11;
 
 auto
 cpg_index_bindings(py::class_<xfrase::cpg_index> &cls) -> void {
-  using namespace pybind11::literals;
+  using namespace pybind11::literals;  // NOLINT
   cls.def(py::init<>())
     .def_readonly("data", &xfrase::cpg_index::data)
     .def_readonly("meta", &xfrase::cpg_index::meta)

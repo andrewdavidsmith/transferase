@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef PYTHON_LEVEL_ELEMENT_BINDINGS_HPP_
-#define PYTHON_LEVEL_ELEMENT_BINDINGS_HPP_
+#ifndef PYTHON_TRANSFERASE_LEVEL_ELEMENT_BINDINGS_HPP_
+#define PYTHON_TRANSFERASE_LEVEL_ELEMENT_BINDINGS_HPP_
 
 #include <pybind11/pybind11.h>
 
@@ -35,4 +35,4 @@ auto
 level_element_covered_bindings(
   pybind11::class_<xfrase::level_element_covered_t> &cls) -> void;
 
-#endif  // PYTHON_LEVEL_ELEMENT_BINDINGS_HPP_
+#endif  // PYTHON_TRANSFERASE_LEVEL_ELEMENT_BINDINGS_HPP_

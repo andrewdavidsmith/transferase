@@ -34,7 +34,7 @@ namespace py = pybind11;
 auto
 methylome_metadata_bindings(py::class_<xfrase::methylome_metadata> &cls)
   -> void {
-  using namespace pybind11::literals;
+  using namespace pybind11::literals;  // NOLINT
   cls.def(py::init<>())
     .def("__repr__", &xfrase::methylome_metadata::tostring)
 

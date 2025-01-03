@@ -32,6 +32,5 @@ namespace py = pybind11;
 
 auto
 methylome_data_bindings(py::class_<xfrase::methylome_data> &cls) -> void {
-  using namespace pybind11::literals;
   cls.def(py::init<>());
 }

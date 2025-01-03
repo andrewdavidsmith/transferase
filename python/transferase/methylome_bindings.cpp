@@ -41,7 +41,7 @@ namespace py = pybind11;
 
 auto
 methylome_bindings(py::class_<xfrase::methylome> &cls) -> void {
-  using namespace pybind11::literals;
+  using namespace pybind11::literals;  // NOLINT
   cls.def(py::init<>())
     .def_static("read", &xfrase::methylome::read, "directory"_a,
                 "methylome_name"_a, "error_code"_a)

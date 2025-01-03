@@ -43,7 +43,7 @@ namespace py = pybind11;
 auto
 genomic_interval_bindings(pybind11::class_<xfrase::genomic_interval> &cls)
   -> void {
-  using namespace pybind11::literals;
+  using namespace pybind11::literals;  // NOLINT
   // clang-format off
   cls.def(py::init<>())
     // instance variables

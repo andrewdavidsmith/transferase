@@ -42,7 +42,6 @@
 namespace py = pybind11;
 
 PYBIND11_MODULE(transferase, m) {
-
   m.doc() = "Python API for transferase";  // optional module docstring
 
   auto ErrorCode = py::class_<std::error_code>(

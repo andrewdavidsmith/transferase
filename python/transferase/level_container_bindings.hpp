@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef PYTHON_LEVEL_CONTAINER_BINDINGS_HPP_
-#define PYTHON_LEVEL_CONTAINER_BINDINGS_HPP_
+#ifndef PYTHON_TRANSFERASE_LEVEL_CONTAINER_BINDINGS_HPP_
+#define PYTHON_TRANSFERASE_LEVEL_CONTAINER_BINDINGS_HPP_
 
 #include <level_container.hpp>
 #include <level_element.hpp>
@@ -40,4 +40,4 @@ level_container_covered_bindings(
   py::class_<xfrase::level_container<xfrase::level_element_covered_t>> &cls)
   -> void;
 
-#endif  // PYTHON_LEVEL_CONTAINER_BINDINGS_HPP_
+#endif  // PYTHON_TRANSFERASE_LEVEL_CONTAINER_BINDINGS_HPP_

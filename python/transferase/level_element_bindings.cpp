@@ -34,7 +34,6 @@ namespace py = pybind11;
 
 auto
 level_element_bindings(py::class_<xfrase::level_element_t> &cls) -> void {
-  using namespace pybind11::literals;
   cls.def(py::init<>())
     .def("__repr__",
          [](const xfrase::level_element_t &self) {
@@ -51,7 +50,6 @@ level_element_bindings(py::class_<xfrase::level_element_t> &cls) -> void {
 auto
 level_element_covered_bindings(py::class_<xfrase::level_element_covered_t> &cls)
   -> void {
-  using namespace pybind11::literals;
   cls.def(py::init<>())
     .def("__repr__",
          [](const xfrase::level_element_covered_t &self) {
