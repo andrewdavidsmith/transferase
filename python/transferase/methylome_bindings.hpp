@@ -21,15 +21,14 @@
  * SOFTWARE.
  */
 
-#ifndef PYTHON_TRANSFERASE_QUERY_CONTAINER_BINDINGS_HPP_
-#define PYTHON_TRANSFERASE_QUERY_CONTAINER_BINDINGS_HPP_
+#ifndef PYTHON_TRANSFERASE_METHYLOME_BINDINGS_HPP_
+#define PYTHON_TRANSFERASE_METHYLOME_BINDINGS_HPP_
+
+#include <methylome.hpp>
 
 #include <pybind11/pybind11.h>
 
-#include <query_container.hpp>
-
 auto
-query_container_bindings(pybind11::class_<xfrase::query_container> &cls)
-  -> void;
+methylome_bindings(pybind11::class_<xfrase::methylome> &cls) -> void;
 
-#endif  // PYTHON_TRANSFERASE_QUERY_CONTAINER_BINDINGS_HPP_
+#endif  // PYTHON_TRANSFERASE_METHYLOME_BINDINGS_HPP_

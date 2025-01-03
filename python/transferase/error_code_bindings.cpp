@@ -21,15 +21,23 @@
  * SOFTWARE.
  */
 
-#ifndef PYTHON_TRANSFERASE_QUERY_CONTAINER_BINDINGS_HPP_
-#define PYTHON_TRANSFERASE_QUERY_CONTAINER_BINDINGS_HPP_
+#include "error_code_bindings.hpp"
 
 #include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
 
-#include <query_container.hpp>
+#include <format>
+#include <system_error>
+
+namespace py = pybind11;
 
 auto
-query_container_bindings(pybind11::class_<xfrase::query_container> &cls)
-  -> void;
-
-#endif  // PYTHON_TRANSFERASE_QUERY_CONTAINER_BINDINGS_HPP_
+error_code_bindings(py::class_<std::error_code> &cls) -> void {
+  cls.def(py::init<>())
+    .def("value", &std::error_code::value)
+    .def("message", &std::error_code::message)
+    .def("__repr__", [](const std::error_code &self) {
+      return std::format("<ErrorCode value: {}, message: {}>", self.value(),
+                         self.message());
+    });
+}

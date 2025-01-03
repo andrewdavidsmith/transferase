@@ -24,9 +24,12 @@
 #ifndef PYTHON_TRANSFERASE_CPG_INDEX_METADATA_BINDINGS_HPP_
 #define PYTHON_TRANSFERASE_CPG_INDEX_METADATA_BINDINGS_HPP_
 
+#include <cpg_index_metadata.hpp>
+
 #include <pybind11/pybind11.h>
 
 auto
-cpg_index_metadata_bindings(pybind11::module_ &m) -> void;
+cpg_index_metadata_bindings(pybind11::class_<xfrase::cpg_index_metadata> &cls)
+  -> void;
 
 #endif  // PYTHON_TRANSFERASE_CPG_INDEX_METADATA_BINDINGS_HPP_

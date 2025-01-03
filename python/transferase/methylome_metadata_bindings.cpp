@@ -21,15 +21,33 @@
  * SOFTWARE.
  */
 
-#ifndef PYTHON_TRANSFERASE_QUERY_CONTAINER_BINDINGS_HPP_
-#define PYTHON_TRANSFERASE_QUERY_CONTAINER_BINDINGS_HPP_
+#include "methylome_metadata_bindings.hpp"
 
+#include <methylome_metadata.hpp>
+
+#include <pybind11/functional.h>
 #include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
 
-#include <query_container.hpp>
+namespace py = pybind11;
 
 auto
-query_container_bindings(pybind11::class_<xfrase::query_container> &cls)
-  -> void;
+methylome_metadata_bindings(py::class_<xfrase::methylome_metadata> &cls)
+  -> void {
+  using namespace pybind11::literals;
+  cls.def(py::init<>())
+    .def("__repr__", &xfrase::methylome_metadata::tostring)
 
-#endif  // PYTHON_TRANSFERASE_QUERY_CONTAINER_BINDINGS_HPP_
+    // bind member variables
+    .def_readwrite("version", &xfrase::methylome_metadata::version)
+    .def_readwrite("host", &xfrase::methylome_metadata::host)
+    .def_readwrite("user", &xfrase::methylome_metadata::user)
+    .def_readwrite("creation_time", &xfrase::methylome_metadata::creation_time)
+    .def_readwrite("methylome_hash",
+                   &xfrase::methylome_metadata::methylome_hash)
+    .def_readwrite("index_hash", &xfrase::methylome_metadata::index_hash)
+    .def_readwrite("assembly", &xfrase::methylome_metadata::assembly)
+    .def_readwrite("n_cpgs", &xfrase::methylome_metadata::n_cpgs)
+    // done
+    ;
+}

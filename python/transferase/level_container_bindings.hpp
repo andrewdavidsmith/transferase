@@ -21,15 +21,23 @@
  * SOFTWARE.
  */
 
-#ifndef PYTHON_TRANSFERASE_QUERY_CONTAINER_BINDINGS_HPP_
-#define PYTHON_TRANSFERASE_QUERY_CONTAINER_BINDINGS_HPP_
+#ifndef PYTHON_LEVEL_CONTAINER_BINDINGS_HPP_
+#define PYTHON_LEVEL_CONTAINER_BINDINGS_HPP_
+
+#include <level_container.hpp>
+#include <level_element.hpp>
 
 #include <pybind11/pybind11.h>
 
-#include <query_container.hpp>
+namespace py = pybind11;
 
 auto
-query_container_bindings(pybind11::class_<xfrase::query_container> &cls)
+level_container_bindings(
+  py::class_<xfrase::level_container<xfrase::level_element_t>> &cls) -> void;
+
+auto
+level_container_covered_bindings(
+  py::class_<xfrase::level_container<xfrase::level_element_covered_t>> &cls)
   -> void;
 
-#endif  // PYTHON_TRANSFERASE_QUERY_CONTAINER_BINDINGS_HPP_
+#endif  // PYTHON_LEVEL_CONTAINER_BINDINGS_HPP_

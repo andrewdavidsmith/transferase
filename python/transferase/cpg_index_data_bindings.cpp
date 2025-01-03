@@ -21,15 +21,16 @@
  * SOFTWARE.
  */
 
-#ifndef PYTHON_TRANSFERASE_QUERY_CONTAINER_BINDINGS_HPP_
-#define PYTHON_TRANSFERASE_QUERY_CONTAINER_BINDINGS_HPP_
+#include "cpg_index_data_bindings.hpp"
+
+#include <cpg_index_data.hpp>
 
 #include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
 
-#include <query_container.hpp>
+namespace py = pybind11;
 
 auto
-query_container_bindings(pybind11::class_<xfrase::query_container> &cls)
-  -> void;
-
-#endif  // PYTHON_TRANSFERASE_QUERY_CONTAINER_BINDINGS_HPP_
+cpg_index_data_bindings(py::class_<xfrase::cpg_index_data> &cls) -> void {
+  cls.def(py::init<>());
+}

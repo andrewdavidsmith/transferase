@@ -38,11 +38,10 @@
 namespace py = pybind11;
 
 auto
-cpg_index_metadata_bindings(pybind11::module_ &m) -> void {
-  using namespace pybind11::literals;
-  py::class_<xfrase::cpg_index_metadata>(m, "CpgIndexMetadata",
-                                         "Metadata part of a CpG index")
-    .def(py::init<>())
+cpg_index_metadata_bindings(py::class_<xfrase::cpg_index_metadata> &cls)
+  -> void {
+  using namespace pybind11::literals;  // NOLINT
+  cls.def(py::init<>())
     .def("init_env", &xfrase::cpg_index_metadata::init_env)
     .def("__repr__", &xfrase::cpg_index_metadata::tostring)
     .def("get_n_cpgs_chrom", &xfrase::cpg_index_metadata::get_n_cpgs_chrom)
@@ -54,5 +53,7 @@ cpg_index_metadata_bindings(pybind11::module_ &m) -> void {
     .def_readwrite("creation_time", &xfrase::cpg_index_metadata::creation_time)
     .def_readwrite("index_hash", &xfrase::cpg_index_metadata::index_hash)
     .def_readwrite("assembly", &xfrase::cpg_index_metadata::assembly)
-    .def_readwrite("n_cpgs", &xfrase::cpg_index_metadata::n_cpgs);
+    .def_readwrite("n_cpgs", &xfrase::cpg_index_metadata::n_cpgs)
+    // done
+    ;
 }

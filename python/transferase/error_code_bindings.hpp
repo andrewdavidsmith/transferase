@@ -21,15 +21,14 @@
  * SOFTWARE.
  */
 
-#ifndef PYTHON_TRANSFERASE_QUERY_CONTAINER_BINDINGS_HPP_
-#define PYTHON_TRANSFERASE_QUERY_CONTAINER_BINDINGS_HPP_
+#ifndef PYTHON_TRANSFERASE_ERROR_CODE_BINDINGS_HPP_
+#define PYTHON_TRANSFERASE_ERROR_CODE_BINDINGS_HPP_
+
+#include <system_error>
 
 #include <pybind11/pybind11.h>
 
-#include <query_container.hpp>
-
 auto
-query_container_bindings(pybind11::class_<xfrase::query_container> &cls)
-  -> void;
+error_code_bindings(pybind11::class_<std::error_code> &cls) -> void;
 
-#endif  // PYTHON_TRANSFERASE_QUERY_CONTAINER_BINDINGS_HPP_
+#endif  // PYTHON_TRANSFERASE_ERROR_CODE_BINDINGS_HPP_

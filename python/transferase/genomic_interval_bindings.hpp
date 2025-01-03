@@ -21,15 +21,15 @@
  * SOFTWARE.
  */
 
-#ifndef PYTHON_TRANSFERASE_QUERY_CONTAINER_BINDINGS_HPP_
-#define PYTHON_TRANSFERASE_QUERY_CONTAINER_BINDINGS_HPP_
+#ifndef PYTHON_TRANSFERASE_GENOMIC_INTERVAL_BINDINGS_HPP_
+#define PYTHON_TRANSFERASE_GENOMIC_INTERVAL_BINDINGS_HPP_
+
+#include <genomic_interval.hpp>
 
 #include <pybind11/pybind11.h>
 
-#include <query_container.hpp>
-
 auto
-query_container_bindings(pybind11::class_<xfrase::query_container> &cls)
+genomic_interval_bindings(pybind11::class_<xfrase::genomic_interval> &cls)
   -> void;
 
-#endif  // PYTHON_TRANSFERASE_QUERY_CONTAINER_BINDINGS_HPP_
+#endif  // PYTHON_TRANSFERASE_GENOMIC_INTERVAL_BINDINGS_HPP_

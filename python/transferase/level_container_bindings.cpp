@@ -21,9 +21,10 @@
  * SOFTWARE.
  */
 
-#include "query_container_bindings.hpp"
+#include "level_container_bindings.hpp"
 
-#include <query_container.hpp>
+#include <level_container.hpp>
+#include <level_element.hpp>
 
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
@@ -33,19 +34,33 @@
 namespace py = pybind11;
 
 auto
-query_container_bindings(py::class_<xfrase::query_container> &cls) -> void {
+level_container_bindings(
+  py::class_<xfrase::level_container<xfrase::level_element_t>> &cls) -> void {
+  using namespace pybind11::literals;
   cls.def(py::init<>())
-    .def("__len__",
-         [](const xfrase::query_container &self) { return xfrase::size(self); })
-    // define equality operator explicitly as returning a bool
+    .def("__getitem__",
+         [](const xfrase::level_container<xfrase::level_element_t> &self,
+            const std::size_t pos) { return self[pos]; })
+    .def("__setitem__",
+         [](xfrase::level_container<xfrase::level_element_t> &self,
+            const std::size_t pos) { return self[pos]; })
+    //
+    ;
+}
+
+auto
+level_container_covered_bindings(
+  py::class_<xfrase::level_container<xfrase::level_element_covered_t>> &cls)
+  -> void {
+  using namespace pybind11::literals;
+  cls.def(py::init<>())
     .def(
-      "__eq__",
-      [](const xfrase::query_container &self,
-         const xfrase::query_container &other) {
-        return (self <=> other) == std::strong_ordering::equal;
-      },
-      py::is_operator())
-    .def("__repr__", [](const xfrase::query_container &self) {
-      return std::format("<Query size={}>", self.v.size());
-    });
+      "__getitem__",
+      [](const xfrase::level_container<xfrase::level_element_covered_t> &self,
+         const std::size_t pos) { return self[pos]; })
+    .def("__setitem__",
+         [](xfrase::level_container<xfrase::level_element_covered_t> &self,
+            const std::size_t pos) { return self[pos]; })
+    //
+    ;
 }

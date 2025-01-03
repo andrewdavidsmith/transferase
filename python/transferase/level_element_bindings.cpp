@@ -21,9 +21,9 @@
  * SOFTWARE.
  */
 
-#include "query_container_bindings.hpp"
+#include "level_element_bindings.hpp"
 
-#include <query_container.hpp>
+#include <level_element.hpp>
 
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
@@ -33,19 +33,36 @@
 namespace py = pybind11;
 
 auto
-query_container_bindings(py::class_<xfrase::query_container> &cls) -> void {
+level_element_bindings(py::class_<xfrase::level_element_t> &cls) -> void {
+  using namespace pybind11::literals;
   cls.def(py::init<>())
-    .def("__len__",
-         [](const xfrase::query_container &self) { return xfrase::size(self); })
-    // define equality operator explicitly as returning a bool
-    .def(
-      "__eq__",
-      [](const xfrase::query_container &self,
-         const xfrase::query_container &other) {
-        return (self <=> other) == std::strong_ordering::equal;
-      },
-      py::is_operator())
-    .def("__repr__", [](const xfrase::query_container &self) {
-      return std::format("<Query size={}>", self.v.size());
-    });
+    .def("__repr__",
+         [](const xfrase::level_element_t &self) {
+           return std::format("{}", self);
+         })
+    .def_readwrite("n_meth", &xfrase::level_element_t::n_meth,
+                   "Number of methylated observations")
+    .def_readwrite("n_unmeth", &xfrase::level_element_t::n_unmeth,
+                   "Number of unmethylated observations")
+    //
+    ;
+}
+
+auto
+level_element_covered_bindings(py::class_<xfrase::level_element_covered_t> &cls)
+  -> void {
+  using namespace pybind11::literals;
+  cls.def(py::init<>())
+    .def("__repr__",
+         [](const xfrase::level_element_covered_t &self) {
+           return std::format("{}", self);
+         })
+    .def_readwrite("n_meth", &xfrase::level_element_covered_t::n_meth,
+                   "Number of methylated observations")
+    .def_readwrite("n_unmeth", &xfrase::level_element_covered_t::n_unmeth,
+                   "Number of unmethylated observations")
+    .def_readwrite("n_covered", &xfrase::level_element_covered_t::n_covered,
+                   "Number of sites covered")
+    //
+    ;
 }
