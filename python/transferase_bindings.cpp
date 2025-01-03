@@ -91,7 +91,7 @@ PYBIND11_MODULE(transferase, m) {
   auto QueryContainer = py::class_<xfrase::query_container>(
     m, "QueryContainer", "A container for a methylome query");
 
-  std_other_bindings(m);
+  error_code_bindings(ErrorCode);
 
   genomic_interval_bindings(GenomicInterval);
 
