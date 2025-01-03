@@ -26,7 +26,7 @@
 
 #include "level_container.hpp"
 #include "logger.hpp"
-#include "query.hpp"
+#include "query_container.hpp"
 #include "request.hpp"
 #include "response.hpp"
 

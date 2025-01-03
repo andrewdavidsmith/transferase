@@ -23,7 +23,7 @@
 
 #include "connection.hpp"
 
-#include "query.hpp"
+#include "query_container.hpp"
 #include "request_handler.hpp"
 #include "response.hpp"
 

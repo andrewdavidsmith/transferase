@@ -30,8 +30,8 @@
 #include "methylome.hpp"
 #include "methylome_data.hpp"
 #include "methylome_metadata.hpp"
-#include "methylome_set.hpp"  // for is_valid_accession
-#include "query.hpp"          // IWYU pragma: keep
+#include "methylome_set.hpp"    // for is_valid_accession
+#include "query_container.hpp"  // IWYU pragma: keep
 #include "request.hpp"
 #include "request_type_code.hpp"
 #include "response.hpp"

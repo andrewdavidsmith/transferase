@@ -28,7 +28,7 @@
 #include "cpg_index_metadata.hpp"
 #include "hash.hpp"
 #include "methylome_metadata.hpp"
-#include "query.hpp"
+#include "query_container.hpp"
 #include "query_element.hpp"  // for xfrase::q_elem_t
 #include "zlib_adapter.hpp"
 

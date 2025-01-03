@@ -26,7 +26,7 @@
 
 #include "cpg_index_data.hpp"
 #include "cpg_index_metadata.hpp"
-#include "query.hpp"
+#include "query_container.hpp"
 
 #include <cstdint>  // for std::uint32_t
 #include <format>   // for std::vector(??)

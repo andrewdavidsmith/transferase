@@ -53,7 +53,7 @@ xfrase intervals remote -x index_dir -g hg38 -s example.com -m methylome_name -o
 #include "logger.hpp"
 #include "methylome.hpp"
 #include "methylome_resource.hpp"
-#include "query.hpp"
+#include "query_container.hpp"
 #include "request.hpp"
 #include "request_type_code.hpp"
 #include "utilities.hpp"

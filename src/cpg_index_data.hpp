@@ -27,7 +27,7 @@
 #if not defined(__APPLE__) && not defined(__MACH__)
 #include "aligned_allocator.hpp"
 #endif
-#include "query.hpp"
+#include "query_container.hpp"
 
 #include <cstdint>  // for std::uint32_t, std::int32_t, std::uint64_t
 #include <filesystem>
