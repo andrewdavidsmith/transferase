@@ -24,9 +24,11 @@
 #ifndef PYTHON_TRANSFERASE_CPG_INDEX_BINDINGS_HPP_
 #define PYTHON_TRANSFERASE_CPG_INDEX_BINDINGS_HPP_
 
-#include <cpg_index.hpp>
-
 #include <pybind11/pybind11.h>
+
+namespace xfrase {
+struct cpg_index;
+};  // namespace xfrase
 
 auto
 cpg_index_bindings(pybind11::class_<xfrase::cpg_index> &cls) -> void;

@@ -24,10 +24,13 @@
 #ifndef PYTHON_TRANSFERASE_LEVEL_CONTAINER_BINDINGS_HPP_
 #define PYTHON_TRANSFERASE_LEVEL_CONTAINER_BINDINGS_HPP_
 
-#include <level_container.hpp>
-#include <level_element.hpp>
-
 #include <pybind11/pybind11.h>
+
+namespace xfrase {
+struct level_element_covered_t;
+struct level_element_t;
+template <typename level_element_type> struct level_container;
+}  // namespace xfrase
 
 namespace py = pybind11;
 

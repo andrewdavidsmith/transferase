@@ -24,10 +24,11 @@
 #include "cpg_index_bindings.hpp"
 
 #include <cpg_index.hpp>
-#include <genomic_interval.hpp>
+
+#include <cpg_index_data.hpp>
+#include <cpg_index_metadata.hpp>
 
 #include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
 
 namespace py = pybind11;
 

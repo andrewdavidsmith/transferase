@@ -24,11 +24,14 @@
 #include "query_container_bindings.hpp"
 
 #include <query_container.hpp>
+#include <query_element.hpp>
 
 #include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
 
+#include <compare>
 #include <format>
+#include <string>
+#include <vector>
 
 namespace py = pybind11;
 

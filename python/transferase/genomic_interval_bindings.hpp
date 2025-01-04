@@ -24,9 +24,11 @@
 #ifndef PYTHON_TRANSFERASE_GENOMIC_INTERVAL_BINDINGS_HPP_
 #define PYTHON_TRANSFERASE_GENOMIC_INTERVAL_BINDINGS_HPP_
 
-#include <genomic_interval.hpp>
-
 #include <pybind11/pybind11.h>
+
+namespace xfrase {
+struct genomic_interval;
+}
 
 auto
 genomic_interval_bindings(pybind11::class_<xfrase::genomic_interval> &cls)

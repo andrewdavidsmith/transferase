@@ -25,17 +25,13 @@
 
 #include <cpg_index.hpp>
 #include <cpg_index_metadata.hpp>
-#include <genomic_interval.hpp>
 
 #include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
 
-#include <algorithm>  // for std::ranges::all_of
-#include <cstdint>
+#include <format>
 #include <functional>
-#include <iostream>
+#include <genomic_interval.hpp>
 #include <string>
-#include <system_error>  // for std::error_code
 #include <vector>
 
 namespace py = pybind11;

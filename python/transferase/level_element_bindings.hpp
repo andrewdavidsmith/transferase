@@ -26,7 +26,10 @@
 
 #include <pybind11/pybind11.h>
 
-#include <level_element.hpp>
+namespace xfrase {
+struct level_element_covered_t;
+struct level_element_t;
+}  // namespace xfrase
 
 auto
 level_element_bindings(pybind11::class_<xfrase::level_element_t> &cls) -> void;

@@ -27,9 +27,9 @@
 #include <level_element.hpp>
 
 #include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
+#include <pybind11/stl.h>  // IWYU pragma: keep
 
-#include <format>
+#include <cstddef>  // for std::size_t
 
 namespace py = pybind11;
 
@@ -41,10 +41,14 @@ level_container_bindings(
     // Need to raise key error somehow
     .def("__getitem__",
          [](const xfrase::level_container<xfrase::level_element_t> &self,
-            const std::size_t pos) { return self[pos]; })
+            const std::size_t pos) -> xfrase::level_element_t const & {
+           return self[pos];
+         })
+    // cppcheck-suppress-begin constParameterReference
     .def("__setitem__",
          [](xfrase::level_container<xfrase::level_element_t> &self,
             const std::size_t pos) { return self[pos]; })
+    // cppcheck-suppress-end constParameterReference
     //
     ;
 }
@@ -59,10 +63,14 @@ level_container_covered_bindings(
     .def(
       "__getitem__",
       [](const xfrase::level_container<xfrase::level_element_covered_t> &self,
-         const std::size_t pos) { return self[pos]; })
+         const std::size_t pos) -> xfrase::level_element_covered_t const & {
+        return self[pos];
+      })
+    // cppcheck-suppress-begin constParameterReference
     .def("__setitem__",
          [](xfrase::level_container<xfrase::level_element_covered_t> &self,
             const std::size_t pos) { return self[pos]; })
+    // cppcheck-suppress-end constParameterReference
     //
     ;
 }

@@ -23,19 +23,19 @@
 
 #include "methylome_bindings.hpp"
 
-#include <cpg_index.hpp>
+#include <cpg_index.hpp>  // IWYU pragma: keep
 #include <methylome.hpp>
-#include <methylome_data.hpp>
-#include <methylome_metadata.hpp>
-#include <query_container.hpp>
 
 #include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
 
-#include <ranges>
-#include <string>
-#include <system_error>
-#include <vector>
+#include <cstdint>
+
+namespace xfrase {
+struct level_element_covered_t;
+struct level_element_t;
+struct query_container;
+template <typename level_element_type> struct level_container;
+}  // namespace xfrase
 
 namespace py = pybind11;
 

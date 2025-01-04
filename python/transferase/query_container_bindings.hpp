@@ -26,7 +26,9 @@
 
 #include <pybind11/pybind11.h>
 
-#include <query_container.hpp>
+namespace xfrase {
+struct query_container;
+}
 
 auto
 query_container_bindings(pybind11::class_<xfrase::query_container> &cls)

@@ -26,9 +26,9 @@
 #include <level_element.hpp>
 
 #include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
 
 #include <format>
+#include <string>
 
 namespace py = pybind11;
 

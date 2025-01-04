@@ -21,29 +21,45 @@
  * SOFTWARE.
  */
 
-#include <pybind11/pybind11.h>
+#include <cpg_index.hpp>
+#include <cpg_index_data.hpp>
+#include <cpg_index_metadata.hpp>
+#include <level_container.hpp>
+#include <level_element.hpp>
+#include <methylome.hpp>
+#include <methylome_data.hpp>
+#include <methylome_metadata.hpp>
+#include <methylome_resource.hpp>
+#include <query_container.hpp>
+#include <request.hpp>
 
+#include <genomic_interval.hpp>
 #include <logger.hpp>
-
-#include <error_code_bindings.hpp>
 
 #include <cpg_index_bindings.hpp>
 #include <cpg_index_data_bindings.hpp>
 #include <cpg_index_metadata_bindings.hpp>
-
+#include <error_code_bindings.hpp>
+#include <genomic_interval_bindings.hpp>
+#include <level_container_bindings.hpp>
+#include <level_element_bindings.hpp>
 #include <methylome_bindings.hpp>
 #include <methylome_data_bindings.hpp>
 #include <methylome_metadata_bindings.hpp>
-
-#include <genomic_interval_bindings.hpp>
-#include <query_container_bindings.hpp>
-
-#include <level_container_bindings.hpp>
-#include <level_element_bindings.hpp>
-
 #include <methylome_resource_bindings.hpp>
-
+#include <query_container_bindings.hpp>
 #include <request_bindings.hpp>
+
+#include <moduleobject.h>
+#include <pybind11/pybind11.h>
+
+#include <cstdint>
+#include <string>
+#include <system_error>
+
+namespace xfrase {
+enum class request_type_code : std::uint8_t;
+}
 
 namespace py = pybind11;
 

@@ -24,9 +24,9 @@
 #include "error_code_bindings.hpp"
 
 #include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
 
 #include <format>
+#include <string>
 #include <system_error>
 
 namespace py = pybind11;
