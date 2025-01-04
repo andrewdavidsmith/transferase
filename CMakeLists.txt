@@ -54,7 +54,7 @@ if(ENABLE_STATIC_ANALYSIS)
   include(cmake/static_analysis.cmake)
 endif()
 
-if(ENABLE_UNIT_TESTS)
+if(ENABLE_UNIT_TESTS OR ENABLE_PYTHON_UNIT_TESTS)
   include(cmake/unit_tests.cmake)
   if(ENABLE_CODE_COVERAGE)
     include(cmake/code_coverage.cmake)
