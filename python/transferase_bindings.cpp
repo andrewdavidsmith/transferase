@@ -23,6 +23,8 @@
 
 #include <pybind11/pybind11.h>
 
+#include <logger.hpp>
+
 #include <error_code_bindings.hpp>
 
 #include <cpg_index_bindings.hpp>
@@ -39,9 +41,22 @@
 #include <level_container_bindings.hpp>
 #include <level_element_bindings.hpp>
 
+#include <methylome_resource_bindings.hpp>
+
+#include <request_bindings.hpp>
+
 namespace py = pybind11;
 
+auto
+initialize_transferase() -> void {
+  xfrase::logger::instance(xfrase::shared_from_cout(), "Transferase",
+                           xfrase::log_level_t::debug);
+  // Your C++ initialization code here, such as setting up resources or data
+}
+
 PYBIND11_MODULE(transferase, m) {
+  initialize_transferase();
+
   m.doc() = "Python API for transferase";  // optional module docstring
 
   auto ErrorCode = py::class_<std::error_code>(
@@ -82,13 +97,26 @@ PYBIND11_MODULE(transferase, m) {
     py::class_<xfrase::level_container<xfrase::level_element_t>>(
       m, "LevelContainer", "A container for methylation levels");
 
-  auto LevelContainerCovered = py::class_<
-    xfrase::level_container<xfrase::level_element_covered_t>>(
-    m, "LevelContainerCovered",
-    "A container for methylation levels with information about covered sites");
+  auto LevelContainerCovered =
+    py::class_<xfrase::level_container<xfrase::level_element_covered_t>>(
+      m, "LevelContainerCovered",
+      "A container for methylation levels with information about covered "
+      "sites");
 
   auto QueryContainer = py::class_<xfrase::query_container>(
     m, "QueryContainer", "A container for a methylome query");
+
+  auto LocalMethylomeResource = py::class_<xfrase::local_methylome_resource>(
+    m, "LocalMethylomeResource", "Interface for locally available methylomes");
+
+  auto RemoteMethylomeResource = py::class_<xfrase::remote_methylome_resource>(
+    m, "RemoteMethylomeResource",
+    "An interface for remotely available methylomes");
+
+  auto RequestTypeCode = py::enum_<xfrase::request_type_code>(
+    m, "RequestTypeCode", "Codes for the various request types");
+
+  auto Request = py::class_<xfrase::request>(m, "Request", "A request");
 
   error_code_bindings(ErrorCode);
 
@@ -107,4 +135,10 @@ PYBIND11_MODULE(transferase, m) {
   level_container_bindings(LevelContainer);
   level_container_covered_bindings(LevelContainerCovered);
   query_container_bindings(QueryContainer);
+
+  request_type_code_bindings(RequestTypeCode);
+  request_bindings(Request);
+
+  local_methylome_resource_bindings(LocalMethylomeResource);
+  remote_methylome_resource_bindings(RemoteMethylomeResource);
 }
