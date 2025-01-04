@@ -376,8 +376,7 @@ template <typename lvl>
 class bins_client : public client_base<bins_client<lvl>, lvl> {
 public:
   bins_client(const std::string &hostname, const std::string &port_number,
-              const request &req, const std::uint32_t bin_size) :
-    base_class_t(hostname, port_number, req), bin_size{bin_size} {}
+              const request &req) : base_class_t(hostname, port_number, req) {}
 
   auto
   handle_connect_impl() {
@@ -388,8 +387,6 @@ public:
 
 private:
   using base_class_t = client_base<bins_client<lvl>, lvl>;
-
-  std::uint32_t bin_size{};
 };  // class bins_client
 
 }  // namespace xfrase
