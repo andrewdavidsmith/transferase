@@ -122,18 +122,18 @@ cpg_index_data::write(const std::string &index_file) const -> std::error_code {
 make_query_within_chrom(const cpg_index_data::vec &positions,
                         const std::vector<chrom_range_t> &chrom_ranges)
   -> xfrase::query_container {
-  xfrase::query_container qry(std::size(chrom_ranges));
+  xfrase::query_container query(std::size(chrom_ranges));
   auto cursor = std::cbegin(positions);
   for (const auto [i, cr] : std::views::enumerate(chrom_ranges)) {
     cursor = std::ranges::lower_bound(cursor, std::cend(positions), cr.start);
     const auto cursor_stop =
       std::ranges::lower_bound(cursor, std::cend(positions), cr.stop);
-    qry[i] = {static_cast<q_elem_t>(
+    query[i] = {static_cast<q_elem_t>(
                 std::ranges::distance(std::cbegin(positions), cursor)),
               static_cast<q_elem_t>(
                 std::ranges::distance(std::cbegin(positions), cursor_stop))};
   }
-  return qry;
+  return query;
 }
 
 // given the chromosome id (from chrom_index) and a set of ranges
@@ -155,12 +155,12 @@ cpg_index_data::make_query_chrom(const std::int32_t ch_id,
   assert(std::ranges::is_sorted(chrom_ranges) && ch_id >= 0 &&
          ch_id < std::ranges::ssize(positions));
   const auto offset = meta.chrom_offset[ch_id];
-  auto qry = xfrase::make_query_within_chrom(positions[ch_id], chrom_ranges);
-  std::ranges::for_each(qry, [&](auto &x) {
+  auto query = xfrase::make_query_within_chrom(positions[ch_id], chrom_ranges);
+  std::ranges::for_each(query, [&](auto &x) {
     x.start += offset;
     x.stop += offset;
   });
-  return qry;
+  return query;
 }
 
 [[nodiscard]] auto
@@ -176,17 +176,17 @@ cpg_index_data::make_query(const cpg_index_metadata &meta,
     return chrom_range_t{x.start, x.stop};
   };
 
-  xfrase::query_container qry;
-  qry.reserve(std::size(intervals));
+  xfrase::query_container query;
+  query.reserve(std::size(intervals));
   for (const auto &intervals_for_chrom :
        intervals | std::views::chunk_by(same_chrom)) {
     std::vector<chrom_range_t> tmp(std::size(intervals_for_chrom));
     std::ranges::transform(intervals_for_chrom, std::begin(tmp), start_stop);
     const auto ch_id = intervals_for_chrom.front().ch_id;
     std::ranges::copy(make_query_chrom(ch_id, meta, tmp),
-                      std::back_inserter(qry.v));
+                      std::back_inserter(query.v));
   }
-  return qry;
+  return query;
 }
 
 [[nodiscard]] auto
