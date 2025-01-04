@@ -126,10 +126,10 @@ TEST(cpg_index_data_test, valid_make_query_within_chrom) {
     {1, 3},
     {4, 5},
   };
-  const auto qry = index.make_query_within_chrom(0, queries);
+  const auto query = index.make_query_within_chrom(0, queries);
   const auto expected = xfrase::query_container(std::vector<query_element>{
     {0, 2},
     {3, 4},
   });
-  EXPECT_EQ(qry, expected);
+  EXPECT_EQ(query, expected);
 }
