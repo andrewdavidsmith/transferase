@@ -44,16 +44,13 @@ xfrase intervals local -x index_dir -g hg38 -d methylome_dir -m methylome_name -
 xfrase intervals remote -x index_dir -g hg38 -s example.com -m methylome_name -o output.bed -i input.bed
 )";
 
-#include "client.hpp"
 #include "cpg_index.hpp"
 #include "genomic_interval.hpp"
 #include "genomic_interval_output.hpp"
 #include "level_container.hpp"
 #include "level_element.hpp"
 #include "logger.hpp"
-#include "methylome.hpp"
 #include "methylome_resource.hpp"
-#include "query_container.hpp"
 #include "request.hpp"
 #include "request_type_code.hpp"
 #include "utilities.hpp"
@@ -70,72 +67,9 @@ xfrase intervals remote -x index_dir -g hg38 -s example.com -m methylome_name -o
 #include <string_view>
 #include <system_error>
 #include <tuple>
-#include <type_traits>  // for std::is_same
 #include <utility>
 #include <variant>
 #include <vector>
-
-namespace xfrase {
-
-template <typename results_type>
-[[nodiscard]] static inline auto
-do_intervals(const request &req, query_container &&qry, const auto &resource,
-             std::error_code &ec) -> level_container<results_type> {
-  client<results_type> cl(resource.host, resource.port, req, std::move(qry));
-  ec = cl.run();
-  if (ec) {
-    logger::instance().error("Transaction status: {}", ec);
-    return {};
-  }
-  return cl.take_levels();
-}
-
-template <typename results_type>
-[[nodiscard]] static inline auto
-do_intervals(const request &req, const query_container &qry,
-             const auto &resource,
-             std::error_code &ec) -> level_container<results_type> {
-  const auto meth = methylome::read(resource.dir, req.accession, ec);
-  if (ec)
-    return {};
-  if constexpr (std::is_same_v<results_type, level_element_covered_t>)
-    return meth.get_levels_covered(qry);
-  else
-    return meth.get_levels(qry);
-}
-
-template <typename results_type>
-[[nodiscard]] auto
-do_intervals(const request &req, query_container &&qry, const auto &resource,
-             const auto &outmgr) -> std::error_code {
-  auto &lgr = logger::instance();
-  level_container<results_type> results;
-  std::error_code ec;
-
-  const auto intervals_start{std::chrono::high_resolution_clock::now()};
-
-  using given_type = std::remove_cvref_t<decltype(resource)>;
-  using local_type = local_methylome_resource;
-  if constexpr (std::is_same_v<given_type, local_type>)
-    results = do_intervals<results_type>(req, qry, resource, ec);
-  else
-    results = do_intervals<results_type>(req, std::move(qry), resource, ec);
-
-  const auto intervals_stop{std::chrono::high_resolution_clock::now()};
-  lgr.debug("Elapsed time for query: {:.3}s",
-            duration(intervals_start, intervals_stop));
-  if (ec)
-    return ec;
-
-  const auto output_start{std::chrono::high_resolution_clock::now()};
-  const auto write_err = write_output(outmgr, results);
-  const auto output_stop{std::chrono::high_resolution_clock::now()};
-  lgr.debug("Elapsed time for output: {:.3}s",
-            duration(output_start, output_stop));
-  return write_err;
-}
-
-}  // namespace xfrase
 
 auto
 command_intervals_main(int argc, char *argv[]) -> int {
@@ -150,7 +84,7 @@ command_intervals_main(int argc, char *argv[]) -> int {
   static constexpr auto default_port = "5000";
 
   using xfrase::cpg_index;
-  using xfrase::do_intervals;
+  // using xfrase::do_intervals;
   using xfrase::genomic_interval;
   using xfrase::level_element_covered_t;
   using xfrase::level_element_t;
@@ -316,35 +250,44 @@ command_intervals_main(int argc, char *argv[]) -> int {
 
   // Convert intervals into query
   const auto format_query_start{std::chrono::high_resolution_clock::now()};
-  auto qry = index.make_query(intervals);
+  auto query = index.make_query(intervals);
   const auto format_query_stop{std::chrono::high_resolution_clock::now()};
-  lgr.debug("Elapsed time to get format query: {:.3}s",
+  lgr.debug("Elapsed time to prepare query: {:.3}s",
             duration(format_query_start, format_query_stop));
 
   const auto req = xfrase::request{methylome_name, request_type,
                                    index.get_hash(), std::size(intervals)};
 
+  const auto resource = xfrase::methylome_resource{
+    .directory = methylome_directory,
+    .hostname = hostname,
+    .port_number = port,
+  };
+
+  const auto intervals_start{std::chrono::high_resolution_clock::now()};
+
+  const auto results =
+    count_covered ? resource.get_levels<level_element_covered_t>(req, query, ec)
+                  : resource.get_levels<level_element_t>(req, query, ec);
+  if (ec) {
+    lgr.error("Error obtaining levels: {}", ec);
+    return EXIT_FAILURE;
+  }
+
+  const auto intervals_stop{std::chrono::high_resolution_clock::now()};
+  lgr.debug("Elapsed time for query: {:.3}s",
+            duration(intervals_start, intervals_stop));
+
   const auto outmgr =
     xfrase::intervals_output_mgr{outfile, intervals, index, write_scores};
 
-  // ADS: only one of these will get used
-  xfrase::local_methylome_resource lmr{methylome_directory};
-  xfrase::remote_methylome_resource rmr{hostname, port};
-
-  // cppcheck-suppress-begin accessMoved
-  const auto intervals_err =
-    count_covered
-      ? (remote_mode ? do_intervals<level_element_covered_t>(
-                         req, std::move(qry), rmr, outmgr)
-                     : do_intervals<level_element_covered_t>(
-                         req, std::move(qry), lmr, outmgr))
-      : (remote_mode
-           ? do_intervals<level_element_t>(req, std::move(qry), rmr, outmgr)
-           : do_intervals<level_element_t>(req, std::move(qry), lmr, outmgr));
-  // cppcheck-suppress-end accessMoved
-
-  if (intervals_err) {
-    lgr.error("Error: {}", intervals_err);
+  const auto output_start{std::chrono::high_resolution_clock::now()};
+  ec = write_output(outmgr, results);
+  const auto output_stop{std::chrono::high_resolution_clock::now()};
+  lgr.debug("Elapsed time for output: {:.3}s",
+            duration(output_start, output_stop));
+  if (ec) {
+    lgr.error("Error writing output: {}", ec);
     return EXIT_FAILURE;
   }
 

@@ -44,13 +44,11 @@ xfrase bins local -x index_dir -g hg38 -d methylome_dir -m methylome_name  -o ou
 xfrase bins remote -x index_dir -g hg38 -s example.com -m SRX012345 -o output.bed -b 1000
 )";
 
-#include "client.hpp"
 #include "cpg_index.hpp"
 #include "genomic_interval_output.hpp"
 #include "level_container.hpp"
 #include "level_element.hpp"
 #include "logger.hpp"
-#include "methylome.hpp"
 #include "methylome_resource.hpp"
 #include "request.hpp"
 #include "request_type_code.hpp"
@@ -68,71 +66,8 @@ xfrase bins remote -x index_dir -g hg38 -s example.com -m SRX012345 -o output.be
 #include <string_view>
 #include <system_error>
 #include <tuple>
-#include <type_traits>  // for std::is_same
-#include <variant>      // for std::tuple
+#include <variant>  // for std::tuple
 #include <vector>
-
-namespace xfrase {
-
-template <typename results_type>
-[[nodiscard]] static inline auto
-do_remote_bins(const request &req, const auto &resource,
-               std::error_code &ec) -> level_container<results_type> {
-  client<results_type> cl(resource.host, resource.port, req, req.bin_size());
-  ec = cl.run();
-  if (ec) {
-    logger::instance().error("Transaction status: {}", ec);
-    return {};
-  }
-  return cl.take_levels();
-}
-
-template <typename results_type>
-[[nodiscard]] static inline auto
-do_local_bins(const request &req, const auto &resource, const cpg_index &index,
-              std::error_code &ec) -> level_container<results_type> {
-  const auto meth = methylome::read(resource.dir, req.accession, ec);
-  if (ec)
-    return {};
-  if constexpr (std::is_same_v<results_type, level_element_covered_t>)
-    return meth.get_levels_covered(req.bin_size(), index);
-  else
-    return meth.get_levels(req.bin_size(), index);
-}
-
-template <typename results_type>
-[[nodiscard]] auto
-do_bins(const request &req, const auto &resource, const auto &outmgr,
-        const cpg_index &index) -> std::error_code {
-  auto &lgr = logger::instance();
-  level_container<results_type> results;
-  std::error_code ec;
-
-  const auto bins_start{std::chrono::high_resolution_clock::now()};
-
-  using given_type = std::remove_cvref_t<decltype(resource)>;
-  using local_type = local_methylome_resource;
-  if constexpr (std::is_same_v<given_type, local_type>)
-    results = do_local_bins<results_type>(req, resource, index, ec);
-  else
-    results = do_remote_bins<results_type>(req, resource, ec);
-
-  const auto bins_stop{std::chrono::high_resolution_clock::now()};
-  lgr.debug("Elapsed time for bins query: {:.3}s",
-            duration(bins_start, bins_stop));
-  if (ec)
-    return ec;
-
-  const auto output_start{std::chrono::high_resolution_clock::now()};
-  ec = write_output(outmgr, results);
-  const auto output_stop{std::chrono::high_resolution_clock::now()};
-  // ADS: elapsed time for output will include conversion to scores
-  lgr.debug("Elapsed time for output: {:.3}s",
-            duration(output_start, output_stop));
-  return ec;
-}
-
-}  // namespace xfrase
 
 auto
 command_bins_main(int argc, char *argv[]) -> int {
@@ -280,11 +215,11 @@ command_bins_main(int argc, char *argv[]) -> int {
   log_args<log_level_t::info>(args_to_log);
   log_args<log_level_t::info>(remote_mode ? remote_args : local_args);
 
-  std::error_code index_ec;
-  const auto index = cpg_index::read(index_directory, genome_name, index_ec);
-  if (index_ec) {
+  std::error_code ec;
+  const auto index = cpg_index::read(index_directory, genome_name, ec);
+  if (ec) {
     lgr.error("Failed to read cpg index {} {}: {}", index_directory,
-              genome_name, index_ec);
+              genome_name, ec);
     return EXIT_FAILURE;
   }
 
@@ -295,24 +230,35 @@ command_bins_main(int argc, char *argv[]) -> int {
   const auto req =
     xfrase::request{methylome_name, request_type, index.get_hash(), bin_size};
 
+  const auto resource = xfrase::methylome_resource{
+    .directory = methylome_directory,
+    .hostname = hostname,
+    .port_number = port,
+  };
+
+  const auto bins_start{std::chrono::high_resolution_clock::now()};
+
+  const auto results =
+    count_covered ? resource.get_levels<level_element_covered_t>(req, index, ec)
+                  : resource.get_levels<level_element_t>(req, index, ec);
+
+  const auto bins_stop{std::chrono::high_resolution_clock::now()};
+  lgr.debug("Elapsed time for bins query: {:.3}s",
+            duration(bins_start, bins_stop));
+
+  if (ec) {
+    lgr.error("Error: {}", ec);
+    return EXIT_FAILURE;
+  }
+
   const auto outmgr =
     xfrase::bins_output_mgr{outfile, bin_size, index, write_scores};
 
-  // ADS: only one of these will get used
-  xfrase::local_methylome_resource lmr{methylome_directory};
-  xfrase::remote_methylome_resource rmr{hostname, port};
-
-  const auto bins_err =
-    count_covered
-      ? (remote_mode
-           ? do_bins<level_element_covered_t>(req, rmr, outmgr, index)
-           : do_bins<level_element_covered_t>(req, lmr, outmgr, index))
-      : (remote_mode ? do_bins<level_element_t>(req, rmr, outmgr, index)
-                     : do_bins<level_element_t>(req, lmr, outmgr, index));
-
-  if (bins_err) {
-    lgr.error("Error: {}", bins_err);
-    return EXIT_FAILURE;
-  }
+  const auto output_start{std::chrono::high_resolution_clock::now()};
+  ec = write_output(outmgr, results);
+  const auto output_stop{std::chrono::high_resolution_clock::now()};
+  // ADS: elapsed time for output will include conversion to scores
+  lgr.debug("Elapsed time for output: {:.3}s",
+            duration(output_start, output_stop));
   return EXIT_SUCCESS;
 }
