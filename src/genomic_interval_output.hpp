@@ -43,6 +43,7 @@
 #include <tuple>
 #include <type_traits>  // for std::is_same_v
 #include <utility>      // for std::pair
+#include <variant>
 #include <vector>
 
 namespace xfrase {
@@ -343,6 +344,13 @@ write_output(const bins_output_mgr &m, const LevelsInputRange auto &levels) {
   lgr.debug("Number of bins without reads: {}", zero_coverage);
   const auto scores = std::views::transform(levels, to_score);
   return write_bins_bedgraph(m.outfile, m.index.meta, m.bin_size, scores);
+}
+
+[[nodiscard]] inline auto
+write_output(const auto &outmgr, const auto &results) -> std::error_code {
+  std::error_code ec;
+  std::visit([&](const auto &arg) { ec = write_output(outmgr, arg); }, results);
+  return ec;
 }
 
 }  // namespace xfrase
