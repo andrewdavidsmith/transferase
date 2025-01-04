@@ -29,9 +29,6 @@ file(GLOB PYTHON_TEST_FILES ${CMAKE_CURRENT_SOURCE_DIR}/*_test.py)
 # Specify the additional path for Python to find modules:
 set(PYTHONPATH "${CMAKE_BINARY_DIR}/python" ${PYTHONPATH})
 
-# Enable testing with CTest:
-enable_testing()
-
 # Copy the matched .py files to the build directory and add a test for
 # each of them
 foreach(TEST_FILE ${PYTHON_TEST_FILES})
