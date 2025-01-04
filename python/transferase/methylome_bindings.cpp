@@ -61,12 +61,12 @@ methylome_bindings(py::class_<xfrase::methylome> &cls) -> void {
     .def("add", &xfrase::methylome::add, "other"_a)
     .def("__repr__", &xfrase::methylome::tostring)
     .def("get_levels",
-         [](const xfrase::methylome &self, const xfrase::query_container &qry) {
-           return self.get_levels(qry);
+         [](const xfrase::methylome &self, const xfrase::query_container &query) {
+           return self.get_levels(query);
          })
     .def("get_levels_covered",
-         [](const xfrase::methylome &self, const xfrase::query_container &qry) {
-           return self.get_levels_covered(qry);
+         [](const xfrase::methylome &self, const xfrase::query_container &query) {
+           return self.get_levels_covered(query);
          })
     .def("get_levels",
          [](const xfrase::methylome &self, const std::uint32_t bin_size,
