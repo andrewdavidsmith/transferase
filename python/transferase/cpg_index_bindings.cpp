@@ -38,7 +38,7 @@ cpg_index_bindings(py::class_<xfrase::cpg_index> &cls) -> void {
     .def_readonly("data", &xfrase::cpg_index::data)
     .def_readonly("meta", &xfrase::cpg_index::meta)
     .def("is_consistent", &xfrase::cpg_index::is_consistent)
-    .def("get_hash", &xfrase::cpg_index::get_hash)
+    .def("__hash__", &xfrase::cpg_index::get_hash)
     .def_static("read", &xfrase::cpg_index::read, py::arg("dirname"),
                 py::arg("genome_name"), py::arg("error"))
     .def("write", &xfrase::cpg_index::write, py::arg("outdir"), py::arg("name"))
