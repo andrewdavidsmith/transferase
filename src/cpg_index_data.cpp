@@ -129,9 +129,9 @@ make_query_within_chrom(const cpg_index_data::vec &positions,
     const auto cursor_stop =
       std::ranges::lower_bound(cursor, std::cend(positions), cr.stop);
     query[i] = {static_cast<q_elem_t>(
-                std::ranges::distance(std::cbegin(positions), cursor)),
-              static_cast<q_elem_t>(
-                std::ranges::distance(std::cbegin(positions), cursor_stop))};
+                  std::ranges::distance(std::cbegin(positions), cursor)),
+                static_cast<q_elem_t>(
+                  std::ranges::distance(std::cbegin(positions), cursor_stop))};
   }
   return query;
 }
