@@ -271,7 +271,7 @@ BOOST_DESCRIBE_STRUCT(remote_methylome_resource, (),
 (
  hostname,
  port_number,
- index_hash,
+ index_hash
  ))
 // clang-format on
 
