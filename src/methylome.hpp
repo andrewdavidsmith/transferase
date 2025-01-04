@@ -97,15 +97,15 @@ struct methylome {
 
   /// get methylation levels for query intervals
   [[nodiscard]] auto
-  get_levels(const xfrase::query_container &qry) const {
-    return data.get_levels(qry);
+  get_levels(const xfrase::query_container &query) const {
+    return data.get_levels(query);
   }
 
   /// get methylation levels for query intervals and number for query
   /// intervals covered
   [[nodiscard]] auto
-  get_levels_covered(const xfrase::query_container &qry) const {
-    return data.get_levels_covered(qry);
+  get_levels_covered(const xfrase::query_container &query) const {
+    return data.get_levels_covered(query);
   }
 
   /// get methylation levels for bins
