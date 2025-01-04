@@ -37,6 +37,10 @@ level_element_bindings(py::class_<xfrase::level_element_t> &cls) -> void {
   cls.def(py::init<>())
     .def("__repr__",
          [](const xfrase::level_element_t &self) {
+           return std::format("{} {}", self.n_meth, self.n_unmeth);
+         })
+    .def("json",
+         [](const xfrase::level_element_t &self) {
            return std::format("{}", self);
          })
     .def_readwrite("n_meth", &xfrase::level_element_t::n_meth,
@@ -52,6 +56,11 @@ level_element_covered_bindings(py::class_<xfrase::level_element_covered_t> &cls)
   -> void {
   cls.def(py::init<>())
     .def("__repr__",
+         [](const xfrase::level_element_covered_t &self) {
+           return std::format("{} {} {}", self.n_meth, self.n_unmeth,
+                              self.n_covered);
+         })
+    .def("json",
          [](const xfrase::level_element_covered_t &self) {
            return std::format("{}", self);
          })
