@@ -110,7 +110,7 @@ struct connection : public std::enable_shared_from_this<connection> {
 
   // These help keep track of where we are in the incoming offsets;
   // they might best be associated with the request.
-  xfrase::query_container qry;
+  xfrase::query_container query;
   std::size_t query_byte{};
   std::size_t query_remaining{};
 };

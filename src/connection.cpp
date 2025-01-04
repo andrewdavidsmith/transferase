@@ -50,9 +50,9 @@ connection::prepare_to_read_query() -> void {
   // ADS: This can't be done in read_query() function as it is
   // recursive. If intervals request, then 'aux_value' is size of
   // query
-  qry.resize(req.aux_value);
+  query.resize(req.aux_value);
   // ADS: initialize the counters used while reading the query
-  query_remaining = qry.get_n_bytes();
+  query_remaining = query.get_n_bytes();
   query_byte = 0;
 }
 
@@ -111,7 +111,7 @@ connection::read_query() -> void {
   // consistency for setting and clearing the timeouts
   auto self(shared_from_this());
   socket.async_read_some(
-    boost::asio::buffer(qry.data() + query_byte, query_remaining),
+    boost::asio::buffer(query.data() + query_byte, query_remaining),
     [this, self](const boost::system::error_code ec,
                  const std::size_t bytes_transferred) {
       // remove deadline while doing computation
@@ -121,7 +121,7 @@ connection::read_query() -> void {
         query_byte += bytes_transferred;
         if (query_remaining == 0) {
           lgr.debug("{} Finished reading query ({}B)", conn_id, query_byte);
-          handler.handle_get_levels(req, qry, resp_hdr, resp);
+          handler.handle_get_levels(req, query, resp_hdr, resp);
           lgr.debug("{} Finished computing levels in intervals", conn_id);
           // exiting the read loop -- no deadline for now
           respond_with_header();
