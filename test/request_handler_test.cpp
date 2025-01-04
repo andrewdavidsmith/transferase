@@ -262,7 +262,7 @@ TEST_F(request_handler_mock, handle_get_levels_intervals_success) {
   const auto intervals = genomic_interval::read(index, intervals_path, ec);
   EXPECT_FALSE(ec);
 
-  const auto qry = index.make_query(intervals);
+  const auto query = index.make_query(intervals);
 
   request req{methylome_name, rq_type, index_hash, std::size(intervals)};
   response_header resp_hdr;
@@ -272,10 +272,10 @@ TEST_F(request_handler_mock, handle_get_levels_intervals_success) {
 
   // ADS: payload stays on server side
   response_payload resp_data;
-  mock_request_handler->handle_get_levels(req, qry, resp_hdr, resp_data);
+  mock_request_handler->handle_get_levels(req, query, resp_hdr, resp_data);
 
   const auto req_offset_elem_size = sizeof(xfrase::query_element);
-  const auto expected_payload_size = req_offset_elem_size * size(qry);
+  const auto expected_payload_size = req_offset_elem_size * size(query);
   EXPECT_EQ(std::size(resp_data.payload), expected_payload_size);
 }
 
