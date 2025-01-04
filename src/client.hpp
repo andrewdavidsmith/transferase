@@ -46,12 +46,10 @@
 
 namespace xfrase {
 
-template <typename level_element> class client {
+template <typename derived, typename level_element> class client_base {
 public:
-  client(const std::string &server, const std::string &port, const request &req,
-         query_container &&qry);
-  client(const std::string &server, const std::string &port, const request &req,
-         const std::uint32_t bin_size);
+  client_base(const std::string &hostname, const std::string &port_number,
+              const request &req);
 
   auto
   run() -> std::error_code {
@@ -69,177 +67,155 @@ public:
     return std::move(resp.levels);
   }
 
+protected:
+  auto
+  handle_write_request(const std::error_code ec) -> void;
+
 private:
   auto
-  handle_resolve(const std::error_code err,
-                 const boost::asio::ip::tcp::resolver::results_type &endpoints);
-  auto
-  handle_connect(const std::error_code err);
-  auto
-  handle_write_request(const std::error_code err);
-  auto
-  handle_read_response_header(const std::error_code err);
-  auto
-  do_read_response_payload() -> void;
-  auto
-  handle_failure_explanation(const std::error_code err);
-  auto
-  do_finish(const std::error_code err);
-  auto
-  check_deadline();
+  handle_resolve(const std::error_code ec,
+                 const boost::asio::ip::tcp::resolver::results_type &endpoints)
+    -> void;
 
   auto
-  prepare_to_read_response_payload() -> void;
+  handle_connect(const std::error_code ec) -> void;
+
   auto
-  get_levels_n_bytes() const -> std::uint32_t;
+  handle_read_response_header(std::error_code ec) -> void;
+
+  auto
+  do_read_response_payload() -> void;
+
+  auto
+  handle_failure_explanation(const std::error_code ec) -> void;
+
+  auto
+  do_finish(const std::error_code ec) -> void;
+
+  auto
+  check_deadline() -> void;
+
+  auto
+  prepare_to_read_response_payload() -> void {
+    // get space for query_container
+    resp.levels.resize(resp_hdr.response_size);
+    levels_bytes_remaining = get_levels_n_bytes();  // init counters
+    levels_bytes_received = 0;
+  }
+
+  auto
+  get_levels_n_bytes() const -> std::uint32_t {
+    return sizeof(level_element) * resp_hdr.response_size;
+  }
+
   auto
   resp_get_levels_data() -> char * {
     return reinterpret_cast<char *>(resp.levels.data());
   }
 
+private:
   boost::asio::io_context io_context;
   boost::asio::ip::tcp::resolver resolver;
+
+protected:
   boost::asio::ip::tcp::socket socket;
+
+private:
   boost::asio::steady_timer deadline;
 
-  request_buffer req_buf;
-  request req;
-  query_container qry;
-  std::uint32_t bin_size{};
+protected:
+  request_buffer req_buf{};
 
-  response_header_buffer resp_hdr_buf;
-  response_header resp_hdr;
-  response<level_element> resp;
+private:
+  request req{};
 
-  std::error_code status;
+  response_header_buffer resp_hdr_buf{};
+  response_header resp_hdr{};
+  response<level_element> resp{};
+
+  std::error_code status{};
   logger &lgr;
+  /// This is the timeout for individual read operations, not the
+  /// time to read entire messages
   std::chrono::seconds read_timeout_seconds{3};
 
   // These help keep track of where we are in the incoming levels;
   // they might best be associated with the response.
   std::size_t levels_bytes_received{};
   std::size_t levels_bytes_remaining{};
-};  // class client
+};  // class client_base
 
-template <typename level_element>
-client<level_element>::client(const std::string &server,
-                              const std::string &port, const request &req,
-                              query_container &&qry) :
+template <typename D, typename L>
+client_base<D, L>::client_base(const std::string &hostname,
+                               const std::string &port_number,
+                               const request &req) :
   resolver(io_context), socket(io_context), deadline{socket.get_executor()},
-  req{req}, qry{std::move(qry)},  // move b/c req can be big
-  lgr{logger::instance()} {
+  req{req}, lgr{logger::instance()} {
   // (1) call async, (2) set deadline, (3) register check_deadline
   const auto token = [this](const auto &error, const auto &results) {
     handle_resolve(error, results);
   };
   boost::system::error_code ec;
   boost::asio::ip::address addr{};
-  addr.from_string(server, ec);
-  if (ec) {  // server not an IP address
-    lgr.debug("Resolving address for hostname: {}", server);
-    resolver.async_resolve(server, port, token);
+  addr.from_string(hostname, ec);
+  if (ec) {  // hostname not an IP address
+    lgr.debug("Resolving address for hostname: {}", hostname);
+    resolver.async_resolve(hostname, port_number, token);
   }
-  else {  // server given as IP address
-    lgr.debug("Avoiding address resolution (ip: {})", server);
+  else {  // hostname given as IP address
+    lgr.debug("Avoiding address resolution (ip: {})", hostname);
     const auto ns = boost::asio::ip::resolver_query_base::numeric_service;
-    resolver.async_resolve(server, port, ns, token);
+    resolver.async_resolve(hostname, port_number, ns, token);
   }
   deadline.expires_after(read_timeout_seconds);
   deadline.async_wait([this](auto) { check_deadline(); });
 }
 
-template <typename level_element>
-client<level_element>::client(const std::string &server,
-                              const std::string &port, const request &req,
-                              const std::uint32_t bin_size) :
-  resolver(io_context), socket(io_context), deadline{socket.get_executor()},
-  req{req}, bin_size{bin_size}, lgr{logger::instance()} {
-  // (1) call async, (2) set deadline, (3) register check_deadline
-  const auto token = [this](const auto &error, const auto &results) {
-    handle_resolve(error, results);
-  };
-  boost::system::error_code ec;
-  boost::asio::ip::address addr{};
-  addr.from_string(server, ec);
-  if (ec) {  // server not an IP address
-    lgr.debug("Resolving address for hostname: {}", server);
-    resolver.async_resolve(server, port, token);
-  }
-  else {  // server given as IP address
-    lgr.debug("Avoiding address resolution (ip: {})", server);
-    const auto ns = boost::asio::ip::resolver_query_base::numeric_service;
-    resolver.async_resolve(server, port, ns, token);
-  }
-  deadline.expires_after(read_timeout_seconds);
-  deadline.async_wait([this](auto) { check_deadline(); });
-}
-
-template <typename level_element>
+template <typename D, typename L>
 auto
-client<level_element>::handle_resolve(
-  const std::error_code err,
-  const boost::asio::ip::tcp::resolver::results_type &endpoints) {
-  if (!err) {
+client_base<D, L>::handle_resolve(
+  const std::error_code ec,
+  const boost::asio::ip::tcp::resolver::results_type &endpoints) -> void {
+  if (!ec) {
     boost::asio::async_connect(
       socket, endpoints,
       [this](const auto &error, auto) { handle_connect(error); });
     deadline.expires_after(read_timeout_seconds);
   }
   else {
-    lgr.debug("Error resolving server: {}", err);
-    do_finish(err);
+    lgr.debug("Error resolving server: {}", ec);
+    do_finish(ec);
   }
 }
 
-template <typename level_element>
+template <typename D, typename L>
 auto
-client<level_element>::handle_connect(const std::error_code err) {
+client_base<D, L>::handle_connect(std::error_code ec) -> void {
   deadline.expires_at(boost::asio::steady_timer::time_point::max());
-  if (!err) {
+  if (!ec) {
     lgr.debug("Connected to server: {}",
               boost::lexical_cast<std::string>(socket.remote_endpoint()));
-    const auto req_compose_error = compose(req_buf, req);
-    if (!req_compose_error) {
-      if (bin_size > 0 && size(qry) == 0) {
-        boost::asio::async_write(
-          socket,
-          std::vector<boost::asio::const_buffer>{
-            boost::asio::buffer(req_buf),
-          },
-          [this](auto error, auto) { handle_write_request(error); });
-      }
-      else if (bin_size == 0) {
-        boost::asio::async_write(
-          socket,
-          std::vector<boost::asio::const_buffer>{
-            boost::asio::buffer(req_buf),
-            boost::asio::buffer(qry.v),
-          },
-          [this](auto error, auto) { handle_write_request(error); });
-      }
-      else {
-        lgr.debug("Invalid request: bin_size={} and query_size={}", bin_size,
-                  size(qry));
-        do_finish(std::make_error_code(std::errc::invalid_argument));
-      }
+    ec = compose(req_buf, req);
+    if (!ec) {
+      static_cast<D *>(this)->handle_connect_impl();
       deadline.expires_after(read_timeout_seconds);
     }
     else {
-      lgr.debug("Error forming request: {}", req_compose_error);
-      do_finish(req_compose_error);
+      lgr.debug("Error forming request: {}", ec);
+      do_finish(ec);
     }
   }
   else {
-    lgr.debug("Error connecting: {}", err);
-    do_finish(err);
+    lgr.debug("Error connecting: {}", ec);
+    do_finish(ec);
   }
 }
 
-template <typename level_element>
+template <typename D, typename L>
 auto
-client<level_element>::handle_write_request(const std::error_code err) {
+client_base<D, L>::handle_write_request(const std::error_code ec) -> void {
   deadline.expires_at(boost::asio::steady_timer::time_point::max());
-  if (!err) {
+  if (!ec) {
     boost::asio::async_read(
       socket, boost::asio::buffer(resp_hdr_buf),
       boost::asio::transfer_exactly(response_header_buffer_size),
@@ -247,7 +223,7 @@ client<level_element>::handle_write_request(const std::error_code err) {
     deadline.expires_after(read_timeout_seconds);
   }
   else {
-    lgr.debug("Error writing request: {}", err);
+    lgr.debug("Error writing request: {}", ec);
     deadline.expires_after(read_timeout_seconds);
     // wait for an explanation of the problem
     boost::asio::async_read(
@@ -257,30 +233,14 @@ client<level_element>::handle_write_request(const std::error_code err) {
   }
 }
 
-template <typename level_element>
+template <typename D, typename L>
 auto
-client<level_element>::get_levels_n_bytes() const -> std::uint32_t {
-  return sizeof(level_element) * resp_hdr.response_size;
-}
-
-template <typename level_element>
-auto
-client<level_element>::prepare_to_read_response_payload() -> void {
-  // This function is needed because this can't be done in the
-  // read_query() function as it is recursive
-  resp.levels.resize(resp_hdr.response_size);  // get space for query_container
-  levels_bytes_remaining = get_levels_n_bytes();  // init counters
-  levels_bytes_received = 0;                      // should be init to this
-}
-
-template <typename level_element>
-auto
-client<level_element>::handle_read_response_header(const std::error_code err) {
+client_base<D, L>::handle_read_response_header(std::error_code ec) -> void {
   // ADS: does this go here?
   deadline.expires_at(boost::asio::steady_timer::time_point::max());
-  if (!err) {
-    const auto resp_hdr_parse_error = parse(resp_hdr_buf, resp_hdr);
-    if (!resp_hdr_parse_error) {
+  if (!ec) {
+    ec = parse(resp_hdr_buf, resp_hdr);
+    if (!ec) {
       lgr.debug("Response header: {}", resp_hdr.summary());
       if (resp_hdr.status)
         do_finish(resp_hdr.status);
@@ -290,19 +250,19 @@ client<level_element>::handle_read_response_header(const std::error_code err) {
       }
     }
     else {
-      lgr.debug("Error: {}", resp_hdr_parse_error);
-      do_finish(resp_hdr_parse_error);
+      lgr.debug("Error: {}", ec);
+      do_finish(ec);
     }
   }
   else {
-    lgr.debug("Error reading response header: {}", err);
-    do_finish(err);
+    lgr.debug("Error reading response header: {}", ec);
+    do_finish(ec);
   }
 }
 
-template <typename level_element>
+template <typename D, typename L>
 auto
-client<level_element>::do_read_response_payload() -> void {
+client_base<D, L>::do_read_response_payload() -> void {
   socket.async_read_some(
     boost::asio::buffer(resp_get_levels_data() + levels_bytes_received,
                         levels_bytes_remaining),
@@ -328,42 +288,42 @@ client<level_element>::do_read_response_payload() -> void {
   deadline.expires_after(read_timeout_seconds);
 }
 
-template <typename level_element>
+template <typename D, typename L>
 auto
-client<level_element>::handle_failure_explanation(const std::error_code err) {
+client_base<D, L>::handle_failure_explanation(std::error_code ec) -> void {
   deadline.expires_at(boost::asio::steady_timer::time_point::max());
-  if (!err) {
-    const auto resp_hdr_parse_error = parse(resp_hdr_buf, resp_hdr);
-    if (!resp_hdr_parse_error) {
+  if (!ec) {
+    ec = parse(resp_hdr_buf, resp_hdr);
+    if (!ec) {
       lgr.debug("Response header: {}", resp_hdr.summary());
       do_finish(resp_hdr.status);
     }
     else {
-      lgr.debug("Error: {}", resp_hdr_parse_error);
-      do_finish(resp_hdr_parse_error);
+      lgr.debug("Error: {}", ec);
+      do_finish(ec);
     }
   }
   else {
-    lgr.debug("Error reading response header: {}", err);
-    do_finish(err);
+    lgr.debug("Error reading response header: {}", ec);
+    do_finish(ec);
   }
 }
 
-template <typename level_element>
+template <typename D, typename L>
 auto
-client<level_element>::do_finish(const std::error_code err) {
+client_base<D, L>::do_finish(const std::error_code ec) -> void {
   // same consequence as canceling
   deadline.expires_at(boost::asio::steady_timer::time_point::max());
-  status = err;
+  status = ec;
   boost::system::error_code shutdown_ec;  // for non-throwing
   socket.shutdown(boost::asio::ip::tcp::socket::shutdown_both, shutdown_ec);
   boost::system::error_code socket_close_ec;  // for non-throwing
   socket.close(socket_close_ec);
 }
 
-template <typename level_element>
+template <typename D, typename L>
 auto
-client<level_element>::check_deadline() {
+client_base<D, L>::check_deadline() -> void {
   if (!socket.is_open())  // ADS: when can this happen?
     return;
 
@@ -385,9 +345,53 @@ client<level_element>::check_deadline() {
   }
 
   // wait again
-  deadline.async_wait([this](auto) { this->check_deadline(); });
+  deadline.async_wait([this](auto) { check_deadline(); });
 }
+
+template <typename lvl>
+class intervals_client : public client_base<intervals_client<lvl>, lvl> {
+public:
+  intervals_client(const std::string &hostname, const std::string &port_number,
+                   const request &req, const query_container &query) :
+    base_class_t(hostname, port_number, req), query{query} {}
+
+  auto
+  handle_connect_impl() {
+    boost::asio::async_write(
+      base_class_t::socket,
+      std::vector<boost::asio::const_buffer>{
+        boost::asio::buffer(base_class_t::req_buf),
+        boost::asio::buffer(query.v),
+      },
+      [this](auto error, auto) { base_class_t::handle_write_request(error); });
+  }
+
+private:
+  using base_class_t = client_base<intervals_client<lvl>, lvl>;
+
+  const query_container &query;
+};  // class intervals_client
+
+template <typename lvl>
+class bins_client : public client_base<bins_client<lvl>, lvl> {
+public:
+  bins_client(const std::string &hostname, const std::string &port_number,
+              const request &req, const std::uint32_t bin_size) :
+    base_class_t(hostname, port_number, req), bin_size{bin_size} {}
+
+  auto
+  handle_connect_impl() {
+    boost::asio::async_write(
+      base_class_t::socket, boost::asio::buffer(base_class_t::req_buf),
+      [this](auto error, auto) { base_class_t::handle_write_request(error); });
+  }
+
+private:
+  using base_class_t = client_base<bins_client<lvl>, lvl>;
+
+  std::uint32_t bin_size{};
+};  // class bins_client
 
 }  // namespace xfrase
 
-#endif  // SRC_CLIENT_HPP_
+#endif  // SRC_CLIENT_BASE_HPP_
