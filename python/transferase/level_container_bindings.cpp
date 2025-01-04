@@ -36,7 +36,9 @@ namespace py = pybind11;
 auto
 level_container_bindings(
   py::class_<xfrase::level_container<xfrase::level_element_t>> &cls) -> void {
-  cls.def(py::init<>())
+  cls
+    .def(py::init<>())
+    // Need to raise key error somehow
     .def("__getitem__",
          [](const xfrase::level_container<xfrase::level_element_t> &self,
             const std::size_t pos) { return self[pos]; })
@@ -51,7 +53,9 @@ auto
 level_container_covered_bindings(
   py::class_<xfrase::level_container<xfrase::level_element_covered_t>> &cls)
   -> void {
-  cls.def(py::init<>())
+  cls
+    .def(py::init<>())
+    // Need to raise key error somehow
     .def(
       "__getitem__",
       [](const xfrase::level_container<xfrase::level_element_covered_t> &self,
