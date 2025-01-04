@@ -217,22 +217,22 @@ get_levels_impl(const methylome_data::vec &cpgs,
 }
 
 [[nodiscard]] auto
-methylome_data::get_levels_covered(const xfrase::query_container &qry) const
+methylome_data::get_levels_covered(const xfrase::query_container &query) const
   -> level_container<level_element_covered_t> {
-  auto res = level_container<level_element_covered_t>(size(qry));
+  auto res = level_container<level_element_covered_t>(size(query));
   const auto beg = std::cbegin(cpgs);
-  for (const auto [i, q] : std::views::enumerate(qry))
+  for (const auto [i, q] : std::views::enumerate(query))
     res[i] =
       get_levels_impl<level_element_covered_t>(beg + q.start, beg + q.stop);
   return res;
 }
 
 [[nodiscard]] auto
-methylome_data::get_levels(const xfrase::query_container &qry) const
+methylome_data::get_levels(const xfrase::query_container &query) const
   -> level_container<level_element_t> {
-  std::vector<level_element_t> res(size(qry));
+  std::vector<level_element_t> res(size(query));
   const auto beg = std::cbegin(cpgs);
-  for (const auto [i, q] : std::views::enumerate(qry))
+  for (const auto [i, q] : std::views::enumerate(query))
     res[i] = get_levels_impl<level_element_t>(beg + q.start, beg + q.stop);
   return level_container<level_element_t>(std::move(res));
 }

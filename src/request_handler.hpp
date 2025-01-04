@@ -56,7 +56,7 @@ struct request_handler {
 
   /// handle a request to get levels for query intervals
   auto
-  handle_get_levels(const request &req, const xfrase::query_container &qry,
+  handle_get_levels(const request &req, const xfrase::query_container &query,
                     response_header &resp_hdr, response_payload &resp) -> void;
 
   /// handle a request to get levels for genomic bins

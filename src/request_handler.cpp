@@ -142,7 +142,7 @@ levels_to_payload(auto &&levels) -> response_payload {
 
 auto
 request_handler::handle_get_levels(const request &req,
-                                   const xfrase::query_container &qry,
+                                   const xfrase::query_container &query,
                                    response_header &resp_hdr,
                                    response_payload &resp_data) -> void {
   auto &lgr = logger::instance();
@@ -159,11 +159,11 @@ request_handler::handle_get_levels(const request &req,
   lgr.debug("Computing levels for methylome: {}", req.accession);
 
   if (req.request_type == request_type_code::intervals) {
-    resp_data = levels_to_payload(meth->data.get_levels(qry));
+    resp_data = levels_to_payload(meth->data.get_levels(query));
     return;
   }
   if (req.request_type == request_type_code::intervals_covered) {
-    resp_data = levels_to_payload(meth->data.get_levels_covered(qry));
+    resp_data = levels_to_payload(meth->data.get_levels_covered(query));
     return;
   }
 

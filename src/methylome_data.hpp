@@ -98,12 +98,12 @@ struct methylome_data {
   /// get methylation levels for query intervals and number for query
   /// intervals covered
   [[nodiscard]] auto
-  get_levels_covered(const xfrase::query_container &qry) const
+  get_levels_covered(const xfrase::query_container &query) const
     -> level_container<level_element_covered_t>;
 
   /// get methylation levels for query intervals
   [[nodiscard]] auto
-  get_levels(const xfrase::query_container &qry) const
+  get_levels(const xfrase::query_container &query) const
     -> level_container<level_element_t>;
 
   /// get global methylation level

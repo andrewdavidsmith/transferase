@@ -81,8 +81,8 @@ struct query_container {
 };
 
 [[nodiscard]] inline auto
-size(const query_container &qry) {
-  return std::size(qry.v);
+size(const query_container &query) {
+  return std::size(query.v);
 }
 
 }  // namespace xfrase
