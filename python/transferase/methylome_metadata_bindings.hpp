@@ -24,9 +24,11 @@
 #ifndef PYTHON_TRANSFERASE_METHYLOME_METADATA_BINDINGS_HPP_
 #define PYTHON_TRANSFERASE_METHYLOME_METADATA_BINDINGS_HPP_
 
-#include <methylome_metadata.hpp>
-
 #include <pybind11/pybind11.h>
+
+namespace xfrase {
+struct methylome_metadata;
+}  // namespace xfrase
 
 auto
 methylome_metadata_bindings(pybind11::class_<xfrase::methylome_metadata> &cls)
