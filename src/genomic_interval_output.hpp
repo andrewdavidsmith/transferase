@@ -48,11 +48,12 @@
 namespace xfrase {
 
 struct level_element_covered_t;
+struct level_element_t;
 
 [[nodiscard]] auto
 write_intervals(const std::string &outfile, const cpg_index_metadata &cim,
-                const std::vector<genomic_interval> &gis,
-                std::ranges::input_range auto &&results) -> std::error_code {
+                const std::vector<genomic_interval> &intervals,
+                std::ranges::input_range auto &&levels) -> std::error_code {
   static constexpr auto buf_size{512};
   // ADS: modified_buf_size is to ensure we can't go past the end of
   // the actual buffer with the (*tcr.ptr++) below
@@ -63,9 +64,10 @@ write_intervals(const std::string &outfile, const cpg_index_metadata &cim,
   const auto buf_end = buf.data() + modified_buf_size;
 
   using level_element =
-    typename std::remove_cvref_t<decltype(results)>::value_type;
-  using gis_res = std::pair<const genomic_interval &, level_element>;
-  const auto same_chrom = [](const gis_res &a, const gis_res &b) {
+    typename std::remove_cvref_t<decltype(levels)>::value_type;
+  using intervals_level = std::pair<const genomic_interval &, level_element>;
+  const auto same_chrom = [](const intervals_level &a,
+                             const intervals_level &b) {
     return a.first.ch_id == b.first.ch_id;
   };
 
@@ -74,7 +76,7 @@ write_intervals(const std::string &outfile, const cpg_index_metadata &cim,
     return std::make_error_code(std::errc(errno));
 
   for (const auto &chunk :
-       std::views::zip(gis, results) | std::views::chunk_by(same_chrom)) {
+       std::views::zip(intervals, levels) | std::views::chunk_by(same_chrom)) {
     const auto ch_id = get<0>(chunk.front()).ch_id;
     const std::string chrom{cim.chrom_order[ch_id]};
     std::ranges::copy(chrom, buf.data());
@@ -111,7 +113,7 @@ write_intervals(const std::string &outfile, const cpg_index_metadata &cim,
 [[nodiscard]] auto
 write_intervals_bedgraph(
   const std::string &outfile, const cpg_index_metadata &cim,
-  const std::vector<genomic_interval> &gis,
+  const std::vector<genomic_interval> &intervals,
   std::ranges::input_range auto &&scores) -> std::error_code {
   static constexpr auto score_precision{6};
   static constexpr auto buf_size{512};
@@ -123,8 +125,9 @@ write_intervals_bedgraph(
   std::array<char, buf_size> buf{};
   const auto buf_end = buf.data() + modified_buf_size;
 
-  using gis_score = std::pair<const genomic_interval &, const double>;
-  const auto same_chrom = [](const gis_score &a, const gis_score &b) {
+  using intervals_score = std::pair<const genomic_interval &, const double>;
+  const auto same_chrom = [](const intervals_score &a,
+                             const intervals_score &b) {
     return a.first.ch_id == b.first.ch_id;
   };
 
@@ -133,7 +136,7 @@ write_intervals_bedgraph(
     return std::make_error_code(std::errc(errno));
 
   for (const auto &chunk :
-       std::views::zip(gis, scores) | std::views::chunk_by(same_chrom)) {
+       std::views::zip(intervals, scores) | std::views::chunk_by(same_chrom)) {
     const auto ch_id = get<0>(chunk.front()).ch_id;
     const std::string chrom{cim.chrom_order[ch_id]};
     std::ranges::copy(chrom, buf.data());
@@ -166,7 +169,7 @@ write_intervals_bedgraph(
 [[nodiscard]] auto
 write_bins(const std::string &outfile, const cpg_index_metadata &cim,
            const std::uint32_t bin_size,
-           const auto &results) -> std::error_code {
+           const auto &levels) -> std::error_code {
   static constexpr auto buf_size{512};
   // ADS: modified_buf_size is to ensure we can't go past the end of
   // the actual buffer with the (*tcr.ptr++) below
@@ -174,7 +177,7 @@ write_bins(const std::string &outfile, const cpg_index_metadata &cim,
   static constexpr auto delim{'\t'};
 
   using level_element =
-    typename std::remove_cvref_t<decltype(results)>::value_type;
+    typename std::remove_cvref_t<decltype(levels)>::value_type;
 
   std::array<char, buf_size> buf{};
   const auto buf_end = buf.data() + modified_buf_size;
@@ -183,7 +186,7 @@ write_bins(const std::string &outfile, const cpg_index_metadata &cim,
   if (!out)
     return std::make_error_code(std::errc(errno));
 
-  auto results_itr = std::cbegin(results);
+  auto levels_itr = std::cbegin(levels);
 
   const auto zipped = std::views::zip(cim.chrom_size, cim.chrom_order);
   for (const auto [chrom_size, chrom_name] : zipped) {
@@ -201,12 +204,12 @@ write_bins(const std::string &outfile, const cpg_index_metadata &cim,
       *tcr.ptr++ = delim;
       tcr = std::to_chars(tcr.ptr, buf_end, bin_end);
       *tcr.ptr++ = delim;
-      tcr = std::to_chars(tcr.ptr, buf_end, results_itr->n_meth);
+      tcr = std::to_chars(tcr.ptr, buf_end, levels_itr->n_meth);
       *tcr.ptr++ = delim;
-      tcr = std::to_chars(tcr.ptr, buf_end, results_itr->n_unmeth);
+      tcr = std::to_chars(tcr.ptr, buf_end, levels_itr->n_unmeth);
       if constexpr (std::is_same_v<level_element, level_element_covered_t>) {
         *tcr.ptr++ = delim;
-        tcr = std::to_chars(tcr.ptr, buf_end, results_itr->n_covered);
+        tcr = std::to_chars(tcr.ptr, buf_end, levels_itr->n_covered);
       }
       *tcr.ptr++ = '\n';
 #if defined(__GNUG__) and not defined(__clang__)
@@ -215,10 +218,10 @@ write_bins(const std::string &outfile, const cpg_index_metadata &cim,
       out.write(buf.data(), std::ranges::distance(buf.data(), tcr.ptr));
       if (!out)
         return std::make_error_code(std::errc(errno));
-      ++results_itr;
+      ++levels_itr;
     }
   }
-  assert(results_itr == std::cend(results));
+  assert(levels_itr == std::cend(levels));
   return {};
 }
 
@@ -287,22 +290,6 @@ struct intervals_output_mgr {
     write_scores{write_scores} {}
 };
 
-[[nodiscard]] inline auto
-write_output(const intervals_output_mgr &m, const auto &results) {
-  auto &lgr = xfrase::logger::instance();
-  if (!m.write_scores)
-    return write_intervals(m.outfile, m.index.meta, m.intervals, results);
-  // ADS: counting intervals that have no reads
-  std::uint32_t zero_coverage = 0;
-  const auto to_score = [&zero_coverage](const auto &x) {
-    zero_coverage += (x.n_meth + x.n_unmeth == 0);
-    return x.n_meth / std::max(1.0, static_cast<double>(x.n_meth + x.n_unmeth));
-  };
-  lgr.debug("Number of intervals without reads: {}", zero_coverage);
-  return write_intervals_bedgraph(m.outfile, m.index.meta, m.intervals,
-                                  std::views::transform(results, to_score));
-}
-
 struct bins_output_mgr {
   const std::string &outfile;
   const std::uint32_t &bin_size;
@@ -314,11 +301,39 @@ struct bins_output_mgr {
     write_scores{write_scores} {}
 };
 
+template <typename T>
+concept LevelsInputRange =
+  std::ranges::input_range<T> &&
+  (std::same_as<std::ranges::range_value_t<T>, level_element_t> ||
+   std::same_as<std::ranges::range_value_t<T>, level_element_covered_t>);
+
+static_assert(LevelsInputRange<std::vector<level_element_t>>);
+static_assert(LevelsInputRange<std::vector<level_element_t> &>);
+static_assert(LevelsInputRange<std::vector<level_element_covered_t>>);
+static_assert(LevelsInputRange<std::vector<level_element_covered_t> &>);
+
 [[nodiscard]] inline auto
-write_output(const bins_output_mgr &m, const auto &results) {
+write_output(const intervals_output_mgr &m,
+             const LevelsInputRange auto &levels) {
   auto &lgr = xfrase::logger::instance();
   if (!m.write_scores)
-    return write_bins(m.outfile, m.index.meta, m.bin_size, results);
+    return write_intervals(m.outfile, m.index.meta, m.intervals, levels);
+  // ADS: counting intervals that have no reads
+  std::uint32_t zero_coverage = 0;
+  const auto to_score = [&zero_coverage](const auto &x) {
+    zero_coverage += (x.n_meth + x.n_unmeth == 0);
+    return x.n_meth / std::max(1.0, static_cast<double>(x.n_meth + x.n_unmeth));
+  };
+  lgr.debug("Number of intervals without reads: {}", zero_coverage);
+  return write_intervals_bedgraph(m.outfile, m.index.meta, m.intervals,
+                                  std::views::transform(levels, to_score));
+}
+
+[[nodiscard]] inline auto
+write_output(const bins_output_mgr &m, const LevelsInputRange auto &levels) {
+  auto &lgr = xfrase::logger::instance();
+  if (!m.write_scores)
+    return write_bins(m.outfile, m.index.meta, m.bin_size, levels);
   // ADS: counting intervals that have no reads
   std::uint32_t zero_coverage = 0;
   const auto to_score = [&zero_coverage](const auto &x) {
@@ -326,7 +341,7 @@ write_output(const bins_output_mgr &m, const auto &results) {
     return x.n_meth / std::max(1.0, static_cast<double>(x.n_meth + x.n_unmeth));
   };
   lgr.debug("Number of bins without reads: {}", zero_coverage);
-  const auto scores = std::views::transform(results, to_score);
+  const auto scores = std::views::transform(levels, to_score);
   return write_bins_bedgraph(m.outfile, m.index.meta, m.bin_size, scores);
 }
 
