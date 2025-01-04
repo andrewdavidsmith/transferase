@@ -391,4 +391,4 @@ private:
 
 }  // namespace xfrase
 
-#endif  // SRC_CLIENT_BASE_HPP_
+#endif  // SRC_CLIENT_HPP_
