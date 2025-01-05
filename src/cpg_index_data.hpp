@@ -55,6 +55,11 @@ struct cpg_index_data {
   typedef std::vector<cpg_pos_t> vec;
 #endif
 
+  [[nodiscard]] auto
+  tostring() const -> std::string {
+    return std::format(R"json({{"size": {}}})json", get_n_cpgs());
+  }
+
   [[nodiscard]] static auto
   read(const std::string &filename, const cpg_index_metadata &meta,
        std::error_code &ec) -> cpg_index_data;
@@ -103,6 +108,14 @@ struct cpg_index_data {
 };
 
 }  // namespace xfrase
+
+template <>
+struct std::formatter<xfrase::cpg_index_data> : std::formatter<std::string> {
+  auto
+  format(const xfrase::cpg_index_data &data, std::format_context &ctx) const {
+    return std::formatter<std::string>::format(data.tostring(), ctx);
+  }
+};
 
 // cpg_index_data errors
 

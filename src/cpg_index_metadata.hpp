@@ -112,8 +112,9 @@ template <>
 struct std::formatter<xfrase::cpg_index_metadata>
   : std::formatter<std::string> {
   auto
-  format(const xfrase::cpg_index_metadata &cm, std::format_context &ctx) const {
-    return std::formatter<std::string>::format(cm.tostring(), ctx);
+  format(const xfrase::cpg_index_metadata &meta,
+         std::format_context &ctx) const {
+    return std::formatter<std::string>::format(meta.tostring(), ctx);
   }
 };
 

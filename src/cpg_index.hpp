@@ -47,6 +47,11 @@ struct cpg_index {
   cpg_index_data data;
   cpg_index_metadata meta;
 
+  [[nodiscard]] auto
+  tostring() const -> std::string {
+    return std::format(R"json({{"meta"={}, "data"={}}})json", meta, data);
+  }
+
   [[nodiscard]] static auto
   read(const std::string &dirname, const std::string &genome_name,
        std::error_code &ec) -> cpg_index;
