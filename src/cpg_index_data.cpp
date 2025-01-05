@@ -73,7 +73,7 @@ cpg_index_data::read(const std::string &index_file,
       const auto read_ok = static_cast<bool>(in);
       const auto n_bytes = in.gcount();
       if (!read_ok || n_bytes != n_bytes_expected) {
-        ec = std::error_code(cpg_index_data_code::failure_reading_index_data);
+        ec = cpg_index_data_code::failure_reading_index_data;
         return {};
       }
     }
