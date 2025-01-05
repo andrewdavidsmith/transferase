@@ -25,8 +25,8 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --coverage")
 
 add_custom_target(code_coverage
   COMMENT "Running lcov and cleaning using exclusion patterns"
-  COMMAND lcov --directory ${CMAKE_BINARY_DIR} --capture --output-file coverage-full.info
-  COMMAND lcov --remove coverage-full.info '*_test.cpp' '*/include/*' '*automatic_json.hpp' --output-file ${CMAKE_BINARY_DIR}/coverage.info
+  COMMAND lcov --directory ${PROJECT_BINARY_DIR} --capture --output-file coverage-full.info
+  COMMAND lcov --remove coverage-full.info '*_test.cpp' '*/include/*' '*automatic_json.hpp' --output-file ${PROJECT_BINARY_DIR}/coverage.info
   COMMAND ${CMAKE_COMMAND} -E remove coverage-full.info
-  COMMAND genhtml ${CMAKE_BINARY_DIR}/coverage.info --output-directory ${CMAKE_BINARY_DIR}/lcov
+  COMMAND genhtml ${PROJECT_BINARY_DIR}/coverage.info --output-directory ${PROJECT_BINARY_DIR}/lcov
 )

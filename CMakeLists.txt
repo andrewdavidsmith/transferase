@@ -83,7 +83,7 @@ endif()
 
 # Configure this dir and JSON file for any build. They are always
 # needed in the right place with the version in the filename
-set(BUILD_DATA_DIR "${CMAKE_BINARY_DIR}/${DATADIR}/transferase")
+set(BUILD_DATA_DIR "${PROJECT_BINARY_DIR}/${DATADIR}/transferase")
 file(MAKE_DIRECTORY ${BUILD_DATA_DIR})
 configure_file(${CMAKE_SOURCE_DIR}/data/transferase_data.json
   ${BUILD_DATA_DIR}/transferase_data_${PROJECT_VERSION}.json

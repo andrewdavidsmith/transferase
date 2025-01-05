@@ -34,7 +34,7 @@ install(PROGRAMS $<TARGET_FILE:xfrase>
 
 # Install the versioned JSON file to the appropriate share directory
 # (e.g., /usr/local/share/transferase)
-install(FILES ${CMAKE_BINARY_DIR}/share/transferase/transferase_data_${PROJECT_VERSION}.json
+install(FILES ${PROJECT_BINARY_DIR}/share/transferase/transferase_data_${PROJECT_VERSION}.json
   DESTINATION ${CMAKE_INSTALL_DATADIR}/transferase
 )
 
