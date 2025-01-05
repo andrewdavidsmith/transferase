@@ -21,19 +21,19 @@
  * SOFTWARE.
  */
 
-#include "request_handler.hpp"
+#include <request_handler.hpp>
 
-#include "cpg_index.hpp"
-#include "genomic_interval.hpp"
-#include "logger.hpp"  // ADS: so we can setup the logger
-#include "methylome_data.hpp"
-#include "methylome_metadata.hpp"
-#include "query_container.hpp"
-#include "query_element.hpp"
-#include "request.hpp"
-#include "request_type_code.hpp"
-#include "response.hpp"
-#include "xfrase_error.hpp"
+#include <cpg_index.hpp>
+#include <genomic_interval.hpp>
+#include <logger.hpp>  // ADS: so we can setup the logger
+#include <methylome_data.hpp>
+#include <methylome_metadata.hpp>
+#include <query_container.hpp>
+#include <query_element.hpp>
+#include <request.hpp>
+#include <request_type_code.hpp>
+#include <response.hpp>
+#include <xfrase_error.hpp>
 
 #include <gtest/gtest.h>
 
