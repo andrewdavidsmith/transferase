@@ -34,7 +34,7 @@
 
 #include <string>
 
-namespace xfrase {
+namespace transferase {
 
 [[nodiscard]] STATIC auto
 is_counts_format(const std::string &filename) -> bool;
@@ -42,6 +42,6 @@ is_counts_format(const std::string &filename) -> bool;
 [[nodiscard]] STATIC auto
 is_xcounts_format(const std::string &filename) -> bool;
 
-}  // namespace xfrase
+}  // namespace transferase
 
 #endif  // SRC_COUNTS_FILE_FORMAT_IMPL_HPP_

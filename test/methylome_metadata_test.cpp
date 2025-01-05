@@ -32,7 +32,7 @@
 #include <string>
 #include <system_error>
 
-using namespace xfrase;  // NOLINT
+using namespace transferase;  // NOLINT
 
 // clang-format off
 /* Functions to test:

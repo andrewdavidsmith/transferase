@@ -26,12 +26,12 @@
 
 #include <pybind11/pybind11.h>
 
-namespace xfrase {
+namespace transferase {
 struct genomic_interval;
 }
 
 auto
-genomic_interval_bindings(pybind11::class_<xfrase::genomic_interval> &cls)
+genomic_interval_bindings(pybind11::class_<transferase::genomic_interval> &cls)
   -> void;
 
 #endif  // PYTHON_TRANSFERASE_GENOMIC_INTERVAL_BINDINGS_HPP_

@@ -33,7 +33,7 @@
 
 #include <string>
 
-namespace xfrase {
+namespace transferase {
 
 template <typename lvl_elem_type>
 [[nodiscard]] static inline auto
@@ -153,9 +153,9 @@ public:
   [[nodiscard]] auto
   get_levels(const std::string &methylome_name, const query_container &query,
              std::error_code &ec) const -> level_container<level_element_t> {
-    static constexpr auto REQUEST_TYPE = xfrase::request_type_code::intervals;
-    const auto req = xfrase::request{methylome_name, REQUEST_TYPE, index_hash,
-                                     xfrase::size(query)};
+    static constexpr auto REQUEST_TYPE = transferase::request_type_code::intervals;
+    const auto req = transferase::request{methylome_name, REQUEST_TYPE, index_hash,
+                                     transferase::size(query)};
     return get_levels_local_impl<level_element_t>(*this, req, query, ec);
   }
 
@@ -165,9 +165,9 @@ public:
                      const query_container &query, std::error_code &ec) const
     -> level_container<level_element_covered_t> {
     static constexpr auto REQUEST_TYPE =
-      xfrase::request_type_code::intervals_covered;
-    const auto req = xfrase::request{methylome_name, REQUEST_TYPE, index_hash,
-                                     xfrase::size(query)};
+      transferase::request_type_code::intervals_covered;
+    const auto req = transferase::request{methylome_name, REQUEST_TYPE, index_hash,
+                                     transferase::size(query)};
     return get_levels_local_impl<level_element_covered_t>(*this, req, query,
                                                           ec);
   }
@@ -177,9 +177,9 @@ public:
   get_levels(const std::string &methylome_name, const std::uint32_t bin_size,
              const cpg_index &index,
              std::error_code &ec) const -> level_container<level_element_t> {
-    static constexpr auto REQUEST_TYPE = xfrase::request_type_code::intervals;
+    static constexpr auto REQUEST_TYPE = transferase::request_type_code::intervals;
     const auto req =
-      xfrase::request{methylome_name, REQUEST_TYPE, index_hash, bin_size};
+      transferase::request{methylome_name, REQUEST_TYPE, index_hash, bin_size};
     return get_levels_local_impl<level_element_t>(*this, req, index, ec);
   }
 
@@ -190,9 +190,9 @@ public:
                      std::error_code &ec) const
     -> level_container<level_element_covered_t> {
     static constexpr auto REQUEST_TYPE =
-      xfrase::request_type_code::intervals_covered;
+      transferase::request_type_code::intervals_covered;
     const auto req =
-      xfrase::request{methylome_name, REQUEST_TYPE, index_hash, bin_size};
+      transferase::request{methylome_name, REQUEST_TYPE, index_hash, bin_size};
     return get_levels_local_impl<level_element_covered_t>(*this, req, index,
                                                           ec);
   }
@@ -224,9 +224,9 @@ public:
   [[nodiscard]] auto
   get_levels(const std::string &methylome_name, const query_container &query,
              std::error_code &ec) const -> level_container<level_element_t> {
-    static constexpr auto REQUEST_TYPE = xfrase::request_type_code::intervals;
-    const auto req = xfrase::request{methylome_name, REQUEST_TYPE, index_hash,
-                                     xfrase::size(query)};
+    static constexpr auto REQUEST_TYPE = transferase::request_type_code::intervals;
+    const auto req = transferase::request{methylome_name, REQUEST_TYPE, index_hash,
+                                     transferase::size(query)};
     return get_levels_remote_impl<level_element_t>(*this, req, query, ec);
   }
 
@@ -236,9 +236,9 @@ public:
                      const query_container &query, std::error_code &ec) const
     -> level_container<level_element_covered_t> {
     static constexpr auto REQUEST_TYPE =
-      xfrase::request_type_code::intervals_covered;
-    const auto req = xfrase::request{methylome_name, REQUEST_TYPE, index_hash,
-                                     xfrase::size(query)};
+      transferase::request_type_code::intervals_covered;
+    const auto req = transferase::request{methylome_name, REQUEST_TYPE, index_hash,
+                                     transferase::size(query)};
     return get_levels_remote_impl<level_element_covered_t>(*this, req, query,
                                                            ec);
   }
@@ -247,9 +247,9 @@ public:
   [[nodiscard]] auto
   get_levels(const std::string &methylome_name, const std::uint32_t bin_size,
              std::error_code &ec) const -> level_container<level_element_t> {
-    static constexpr auto REQUEST_TYPE = xfrase::request_type_code::bins;
+    static constexpr auto REQUEST_TYPE = transferase::request_type_code::bins;
     const auto req =
-      xfrase::request{methylome_name, REQUEST_TYPE, index_hash, bin_size};
+      transferase::request{methylome_name, REQUEST_TYPE, index_hash, bin_size};
     return get_levels_remote_impl<level_element_t>(*this, req, ec);
   }
 
@@ -259,9 +259,9 @@ public:
                      const std::uint32_t bin_size, std::error_code &ec) const
     -> level_container<level_element_covered_t> {
     static constexpr auto REQUEST_TYPE =
-      xfrase::request_type_code::bins_covered;
+      transferase::request_type_code::bins_covered;
     const auto req =
-      xfrase::request{methylome_name, REQUEST_TYPE, index_hash, bin_size};
+      transferase::request{methylome_name, REQUEST_TYPE, index_hash, bin_size};
     return get_levels_remote_impl<level_element_covered_t>(*this, req, ec);
   }
 };
@@ -275,6 +275,6 @@ BOOST_DESCRIBE_STRUCT(remote_methylome_resource, (),
  ))
 // clang-format on
 
-}  // namespace xfrase
+}  // namespace transferase
 
 #endif  // SRC_METHYLOME_RESOURCE_HPP_

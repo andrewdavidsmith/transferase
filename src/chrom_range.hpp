@@ -26,7 +26,7 @@
 
 #include <cstdint>  // for std::uint32_t
 
-namespace xfrase {
+namespace transferase {
 
 typedef std::uint32_t chrom_pos_t;
 
@@ -40,6 +40,6 @@ struct chrom_range_t {
   operator<=>(const chrom_range_t &) const = default;
 };
 
-}  // namespace xfrase
+}  // namespace transferase
 
 #endif  // SRC_CHROM_RANGE_HPP_

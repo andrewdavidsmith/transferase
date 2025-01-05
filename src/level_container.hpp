@@ -31,7 +31,7 @@
 #include <utility>           // for std::move
 #include <vector>
 
-namespace xfrase {
+namespace transferase {
 
 template <typename level_element_type> struct level_container {
   std::vector<level_element_type> v;
@@ -92,6 +92,6 @@ size(const level_container<level_element_type> &l) {
   return std::size(l.v);
 }
 
-}  // namespace xfrase
+}  // namespace transferase
 
 #endif  // SRC_LEVEL_CONTAINER_HPP_

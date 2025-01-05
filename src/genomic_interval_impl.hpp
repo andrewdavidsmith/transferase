@@ -33,7 +33,7 @@
 #include <string>
 #include <system_error>
 
-namespace xfrase {
+namespace transferase {
 
 struct genomic_interval;
 struct cpg_index_metadata;
@@ -42,6 +42,6 @@ struct cpg_index_metadata;
 parse(const cpg_index_metadata &meta, const std::string &line,
       std::error_code &ec) -> genomic_interval;
 
-}  // namespace xfrase
+}  // namespace transferase
 
 #endif  // SRC_GENOMIC_INTERVAL_IMPL_HPP_

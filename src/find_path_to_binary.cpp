@@ -38,7 +38,7 @@
 #include <string>
 #include <sys/types.h>  // for ssize_t
 
-namespace xfrase {
+namespace transferase {
 
 [[nodiscard]] auto
 find_path_to_binary() -> std::string {
@@ -67,4 +67,4 @@ find_path_to_binary() -> std::string {
   return std::string{};
 }
 
-}  // namespace xfrase
+}  // namespace transferase

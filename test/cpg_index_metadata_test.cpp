@@ -35,7 +35,7 @@
 #include <string>
 #include <vector>
 
-using namespace xfrase;  // NOLINT  // NOLINT
+using namespace transferase;  // NOLINT  // NOLINT
 
 TEST(cpg_index_metadata_test, basic_assertions) {
   cpg_index_metadata meta;

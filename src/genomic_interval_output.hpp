@@ -46,7 +46,7 @@
 #include <variant>
 #include <vector>
 
-namespace xfrase {
+namespace transferase {
 
 struct level_element_covered_t;
 struct level_element_t;
@@ -316,7 +316,7 @@ static_assert(LevelsInputRange<std::vector<level_element_covered_t> &>);
 [[nodiscard]] inline auto
 write_output(const intervals_output_mgr &m,
              const LevelsInputRange auto &levels) {
-  auto &lgr = xfrase::logger::instance();
+  auto &lgr = transferase::logger::instance();
   if (!m.write_scores)
     return write_intervals(m.outfile, m.index.meta, m.intervals, levels);
   // ADS: counting intervals that have no reads
@@ -332,7 +332,7 @@ write_output(const intervals_output_mgr &m,
 
 [[nodiscard]] inline auto
 write_output(const bins_output_mgr &m, const LevelsInputRange auto &levels) {
-  auto &lgr = xfrase::logger::instance();
+  auto &lgr = transferase::logger::instance();
   if (!m.write_scores)
     return write_bins(m.outfile, m.index.meta, m.bin_size, levels);
   // ADS: counting intervals that have no reads
@@ -353,6 +353,6 @@ write_output(const auto &outmgr, const auto &results) -> std::error_code {
   return ec;
 }
 
-}  // namespace xfrase
+}  // namespace transferase
 
 #endif  // SRC_GENOMIC_INTERVAL_OUTPUT_HPP_

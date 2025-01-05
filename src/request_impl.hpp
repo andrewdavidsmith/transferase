@@ -34,13 +34,13 @@
 
 #include <system_error>
 
-namespace xfrase {
+namespace transferase {
 
 struct request;
 
 [[nodiscard]] STATIC auto
 compose(char *first, char const *last, const request &req) -> std::error_code;
 
-}  // namespace xfrase
+}  // namespace transferase
 
 #endif  // SRC_REQUEST_IMPL_HPP_

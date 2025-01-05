@@ -36,7 +36,7 @@
 #include <unordered_set>
 #include <vector>
 
-namespace xfrase {
+namespace transferase {
 
 [[nodiscard]] auto
 methylome::init_metadata(const cpg_index &index) -> std::error_code {
@@ -183,4 +183,4 @@ methylome::parse_methylome_name(const std::string &filename) -> std::string {
   return dot == std::string::npos ? s : s.replace(dot, std::string::npos, "");
 }
 
-}  // namespace xfrase
+}  // namespace transferase

@@ -30,6 +30,6 @@
 namespace py = pybind11;
 
 auto
-cpg_index_data_bindings(py::class_<xfrase::cpg_index_data> &cls) -> void {
+cpg_index_data_bindings(py::class_<transferase::cpg_index_data> &cls) -> void {
   cls.def(py::init<>());
 }

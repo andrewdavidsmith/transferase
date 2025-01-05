@@ -29,7 +29,7 @@
 #include "methylome_metadata.hpp"
 #include <string>
 
-namespace xfrase {
+namespace transferase {
 
 [[nodiscard]] auto
 metadata_is_consistent(const methylome &meth, const cpg_index &index) -> bool {
@@ -42,4 +42,4 @@ metadata_is_consistent(const methylome &meth, const cpg_index &index) -> bool {
          n_cpgs_match;
 }
 
-}  // namespace xfrase
+}  // namespace transferase

@@ -37,7 +37,7 @@
 #include <string_view>
 #include <system_error>
 
-namespace xfrase {
+using namespace transferase;  // NOLINT
 
 TEST(command_merge_test, basic_local_test) {
   // Input files for test
@@ -101,5 +101,3 @@ TEST(command_merge_test, basic_local_test) {
     std::filesystem::remove(output_meta_fn, ec);
   EXPECT_FALSE(ec);
 }
-
-}  // namespace xfrase

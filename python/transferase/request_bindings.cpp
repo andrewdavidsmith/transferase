@@ -33,37 +33,37 @@
 namespace py = pybind11;
 
 auto
-request_type_code_bindings(py::enum_<xfrase::request_type_code> &en) -> void {
+request_type_code_bindings(py::enum_<transferase::request_type_code> &en) -> void {
   using namespace pybind11::literals;  // NOLINT
   // Enum binding for request_type_code
-  en.value("intervals", xfrase::request_type_code::intervals)
-    .value("intervals_covered", xfrase::request_type_code::intervals_covered)
-    .value("bins", xfrase::request_type_code::bins)
-    .value("bins_covered", xfrase::request_type_code::bins_covered)
-    .value("n_request_types", xfrase::request_type_code::n_request_types)
+  en.value("intervals", transferase::request_type_code::intervals)
+    .value("intervals_covered", transferase::request_type_code::intervals_covered)
+    .value("bins", transferase::request_type_code::bins)
+    .value("bins_covered", transferase::request_type_code::bins_covered)
+    .value("n_request_types", transferase::request_type_code::n_request_types)
     .export_values();
 }
 
 auto
-request_bindings(py::class_<xfrase::request> &cls) -> void {
+request_bindings(py::class_<transferase::request> &cls) -> void {
   using namespace pybind11::literals;  // NOLINT
   // Binding for request struct
   cls
     .def(py::init<>())  // Default constructor
-    .def(py::init<std::string, xfrase::request_type_code, std::uint64_t,
+    .def(py::init<std::string, transferase::request_type_code, std::uint64_t,
                   std::uint32_t>(),
          py::arg("methylome_name"), py::arg("request_type"),
          py::arg("index_hash"), py::arg("aux_value"))
-    .def_readwrite("accession", &xfrase::request::accession)
-    .def_readwrite("request_type", &xfrase::request::request_type)
-    .def_readwrite("index_hash", &xfrase::request::index_hash)
-    .def_readwrite("aux_value", &xfrase::request::aux_value)
-    .def("n_intervals", &xfrase::request::n_intervals)
-    .def("bin_size", &xfrase::request::bin_size)
-    .def("__repr__", &xfrase::request::summary)
-    .def("is_valid_type", &xfrase::request::is_valid_type)
-    .def("is_intervals_request", &xfrase::request::is_intervals_request)
-    .def("is_bins_request", &xfrase::request::is_bins_request)
+    .def_readwrite("accession", &transferase::request::accession)
+    .def_readwrite("request_type", &transferase::request::request_type)
+    .def_readwrite("index_hash", &transferase::request::index_hash)
+    .def_readwrite("aux_value", &transferase::request::aux_value)
+    .def("n_intervals", &transferase::request::n_intervals)
+    .def("bin_size", &transferase::request::bin_size)
+    .def("__repr__", &transferase::request::summary)
+    .def("is_valid_type", &transferase::request::is_valid_type)
+    .def("is_intervals_request", &transferase::request::is_intervals_request)
+    .def("is_bins_request", &transferase::request::is_bins_request)
     //
     ;
 }

@@ -33,7 +33,7 @@
 #include <string>
 #include <system_error>
 
-namespace xfrase {
+namespace transferase {
 
 class logger;
 
@@ -70,6 +70,6 @@ struct server {
   std::atomic_uint32_t connection_id{};  // incremented per thread
 };
 
-}  // namespace xfrase
+}  // namespace transferase
 
 #endif  // SRC_SERVER_HPP_

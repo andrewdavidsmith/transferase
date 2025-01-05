@@ -36,7 +36,7 @@
 #include <utility>  // for to_underlying, unreachable
 #include <vector>
 
-namespace xfrase {
+namespace transferase {
 
 struct cpg_index_metadata {
   static constexpr auto filename_extension{".cpg_idx.json"};
@@ -106,13 +106,13 @@ BOOST_DESCRIBE_STRUCT(cpg_index_metadata, (),
 ))
 // clang-format on
 
-}  // namespace xfrase
+}  // namespace transferase
 
 template <>
-struct std::formatter<xfrase::cpg_index_metadata>
+struct std::formatter<transferase::cpg_index_metadata>
   : std::formatter<std::string> {
   auto
-  format(const xfrase::cpg_index_metadata &meta,
+  format(const transferase::cpg_index_metadata &meta,
          std::format_context &ctx) const {
     return std::formatter<std::string>::format(meta.tostring(), ctx);
   }

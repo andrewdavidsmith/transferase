@@ -36,7 +36,7 @@
 #include <system_error>
 #include <tuple>  // for std::tie
 
-namespace xfrase {
+namespace transferase {
 
 [[nodiscard]] auto
 methylome_metadata::init_env() -> std::error_code {
@@ -115,4 +115,4 @@ methylome_metadata::tostring() const -> std::string {
   return o.str();
 }
 
-}  // namespace xfrase
+}  // namespace transferase

@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#include <counts_file_formats.hpp>
-#include <counts_file_formats_impl.hpp>
+#include <counts_file_format.hpp>
+#include <counts_file_format_impl.hpp>
 
 #include <gtest/gtest.h>
 
@@ -31,7 +31,7 @@
 #include <fstream>
 #include <string>
 
-using namespace xfrase;  // NOLINT
+using namespace transferase;  // NOLINT
 
 TEST(counts_file_format_test, parse_counts_line) {
   const std::string line{"chr1 202 + CG 0.963302752293578 109"};
@@ -131,7 +131,7 @@ TEST(get_meth_file_format_tests, counts_format_test) {
   outfile << "#comment\nchr1 100 + CG 0.5 10\n";
   outfile.close();
   const auto [format, ec] = get_meth_file_format(filename);
-  EXPECT_EQ(format, counts_format::counts);
+  EXPECT_EQ(format, counts_file_format::counts);
   EXPECT_FALSE(ec);
   std::filesystem::remove(filename);
 }
@@ -142,7 +142,7 @@ TEST(get_meth_file_format_tests, xcounts_format_test) {
   outfile << "#comment\nchr\n1 5 5\n";
   outfile.close();
   const auto [format, ec] = get_meth_file_format(filename);
-  EXPECT_EQ(format, counts_format::xcounts);
+  EXPECT_EQ(format, counts_file_format::xcounts);
   EXPECT_FALSE(ec);
   std::filesystem::remove(filename);
 }
@@ -153,7 +153,7 @@ TEST(get_meth_file_format_tests, none_format_test) {
   outfile << "#comment\ninvalid_line\n";
   outfile.close();
   const auto [format, ec] = get_meth_file_format(filename);
-  EXPECT_EQ(format, counts_format::none);
+  EXPECT_EQ(format, counts_file_format::none);
   EXPECT_FALSE(ec);
   std::filesystem::remove(filename);
 }

@@ -35,7 +35,7 @@
 #include <utility>  // for std::move, std::pair
 #include <vector>
 
-namespace xfrase {
+namespace transferase {
 
 [[nodiscard]] auto
 cpg_index_set::get_cpg_index(const std::string &assembly, std::error_code &ec)
@@ -66,4 +66,4 @@ cpg_index_set::cpg_index_set(const std::string &directory,
   }
 }
 
-}  // namespace xfrase
+}  // namespace transferase

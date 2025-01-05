@@ -31,7 +31,7 @@
 #include <system_error>
 #include <utility>
 
-using namespace xfrase;  // NOLINT
+using namespace transferase;  // NOLINT
 
 TEST(methylome_data_test, basic_assertions) {
   std::uint32_t n_meth{65536};

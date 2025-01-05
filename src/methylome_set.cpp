@@ -32,7 +32,7 @@
 #include <unordered_map>
 #include <utility>  // for std::move, std::pair
 
-namespace xfrase {
+namespace transferase {
 
 [[nodiscard]] auto
 methylome_set::get_methylome(const std::string &accession, std::error_code &ec)
@@ -92,4 +92,4 @@ methylome_set::get_methylome(const std::string &accession, std::error_code &ec)
   return insertion_result.first->second;
 }
 
-}  // namespace xfrase
+}  // namespace transferase

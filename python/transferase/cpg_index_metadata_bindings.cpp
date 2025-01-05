@@ -32,22 +32,22 @@
 namespace py = pybind11;
 
 auto
-cpg_index_metadata_bindings(py::class_<xfrase::cpg_index_metadata> &cls)
+cpg_index_metadata_bindings(py::class_<transferase::cpg_index_metadata> &cls)
   -> void {
   using namespace pybind11::literals;  // NOLINT
   cls.def(py::init<>())
-    .def("init_env", &xfrase::cpg_index_metadata::init_env)
-    .def("__repr__", &xfrase::cpg_index_metadata::tostring)
-    .def("get_n_cpgs_chrom", &xfrase::cpg_index_metadata::get_n_cpgs_chrom)
-    .def("get_n_bins", &xfrase::cpg_index_metadata::get_n_bins, "bin_size"_a)
+    .def("init_env", &transferase::cpg_index_metadata::init_env)
+    .def("__repr__", &transferase::cpg_index_metadata::tostring)
+    .def("get_n_cpgs_chrom", &transferase::cpg_index_metadata::get_n_cpgs_chrom)
+    .def("get_n_bins", &transferase::cpg_index_metadata::get_n_bins, "bin_size"_a)
     // bindings for the member variables
-    .def_readwrite("version", &xfrase::cpg_index_metadata::version)
-    .def_readwrite("host", &xfrase::cpg_index_metadata::host)
-    .def_readwrite("user", &xfrase::cpg_index_metadata::user)
-    .def_readwrite("creation_time", &xfrase::cpg_index_metadata::creation_time)
-    .def_readwrite("index_hash", &xfrase::cpg_index_metadata::index_hash)
-    .def_readwrite("assembly", &xfrase::cpg_index_metadata::assembly)
-    .def_readwrite("n_cpgs", &xfrase::cpg_index_metadata::n_cpgs)
+    .def_readwrite("version", &transferase::cpg_index_metadata::version)
+    .def_readwrite("host", &transferase::cpg_index_metadata::host)
+    .def_readwrite("user", &transferase::cpg_index_metadata::user)
+    .def_readwrite("creation_time", &transferase::cpg_index_metadata::creation_time)
+    .def_readwrite("index_hash", &transferase::cpg_index_metadata::index_hash)
+    .def_readwrite("assembly", &transferase::cpg_index_metadata::assembly)
+    .def_readwrite("n_cpgs", &transferase::cpg_index_metadata::n_cpgs)
     // done
     ;
 }

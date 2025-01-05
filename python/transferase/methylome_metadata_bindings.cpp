@@ -32,22 +32,22 @@
 namespace py = pybind11;
 
 auto
-methylome_metadata_bindings(py::class_<xfrase::methylome_metadata> &cls)
+methylome_metadata_bindings(py::class_<transferase::methylome_metadata> &cls)
   -> void {
   using namespace pybind11::literals;  // NOLINT
   cls.def(py::init<>())
-    .def("__repr__", &xfrase::methylome_metadata::tostring)
+    .def("__repr__", &transferase::methylome_metadata::tostring)
 
     // bind member variables
-    .def_readwrite("version", &xfrase::methylome_metadata::version)
-    .def_readwrite("host", &xfrase::methylome_metadata::host)
-    .def_readwrite("user", &xfrase::methylome_metadata::user)
-    .def_readwrite("creation_time", &xfrase::methylome_metadata::creation_time)
+    .def_readwrite("version", &transferase::methylome_metadata::version)
+    .def_readwrite("host", &transferase::methylome_metadata::host)
+    .def_readwrite("user", &transferase::methylome_metadata::user)
+    .def_readwrite("creation_time", &transferase::methylome_metadata::creation_time)
     .def_readwrite("methylome_hash",
-                   &xfrase::methylome_metadata::methylome_hash)
-    .def_readwrite("index_hash", &xfrase::methylome_metadata::index_hash)
-    .def_readwrite("assembly", &xfrase::methylome_metadata::assembly)
-    .def_readwrite("n_cpgs", &xfrase::methylome_metadata::n_cpgs)
+                   &transferase::methylome_metadata::methylome_hash)
+    .def_readwrite("index_hash", &transferase::methylome_metadata::index_hash)
+    .def_readwrite("assembly", &transferase::methylome_metadata::assembly)
+    .def_readwrite("n_cpgs", &transferase::methylome_metadata::n_cpgs)
     // done
     ;
 }

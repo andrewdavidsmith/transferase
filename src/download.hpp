@@ -31,7 +31,7 @@
 #include <unordered_map>
 #include <variant>  // for std::tuple
 
-namespace xfrase {
+namespace transferase {
 
 template <typename T>
 concept chrono_duration = requires(T t) {
@@ -106,6 +106,6 @@ auto
 download(const download_request &dr)
   -> std::tuple<std::unordered_map<std::string, std::string>, std::error_code>;
 
-}  // namespace xfrase
+}  // namespace transferase
 
 #endif  // SRC_DOWNLOAD_HPP_

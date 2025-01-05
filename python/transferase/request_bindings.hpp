@@ -28,16 +28,16 @@
 
 #include <cstdint>
 
-namespace xfrase {
+namespace transferase {
 enum class request_type_code : std::uint8_t;
 struct request;
-}  // namespace xfrase
+}  // namespace transferase
 
 auto
-request_bindings(pybind11::class_<xfrase::request> &cls) -> void;
+request_bindings(pybind11::class_<transferase::request> &cls) -> void;
 
 auto
-request_type_code_bindings(pybind11::enum_<xfrase::request_type_code> &en)
+request_type_code_bindings(pybind11::enum_<transferase::request_type_code> &en)
   -> void;
 
 #endif  // PYTHON_TRANSFERASE_REQUEST_BINDINGS_HPP_

@@ -49,7 +49,7 @@
 #include <utility>  // for std::move
 #include <vector>
 
-namespace xfrase {
+namespace transferase {
 
 struct genomic_interval;
 
@@ -81,7 +81,7 @@ cpg_index::write(const std::string &outdir,
 
 [[nodiscard]] auto
 cpg_index::make_query(const std::vector<genomic_interval> &gis) const
-  -> xfrase::query_container {
+  -> transferase::query_container {
   return data.make_query(meta, gis);
 }
 
@@ -454,4 +454,4 @@ cpg_index::list_cpg_indexes(const std::string &dirname,
   return meta_names;
 }
 
-}  // namespace xfrase
+}  // namespace transferase

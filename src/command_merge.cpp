@@ -75,11 +75,11 @@ command_merge_main(int argc, char *argv[]) -> int {
   static const auto description_msg =
     std::format("{}\n{}", strip(description), strip(examples));
 
-  using xfrase::log_args;
-  using xfrase::log_level_t;
-  using xfrase::logger;
-  using xfrase::methylome;
-  using xfrase::shared_from_cout;
+  using transferase::log_args;
+  using transferase::log_level_t;
+  using transferase::logger;
+  using transferase::methylome;
+  using transferase::shared_from_cout;
 
   log_level_t log_level{};
   std::string methylome_directory{};

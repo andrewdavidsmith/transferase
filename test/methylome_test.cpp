@@ -35,7 +35,7 @@
 #include <random>
 #include <string>
 
-using namespace xfrase;  // NOLINT
+using namespace transferase;  // NOLINT
 
 [[nodiscard]] auto
 generate_unique_dir_name() -> std::string {

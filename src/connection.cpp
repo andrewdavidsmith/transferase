@@ -34,7 +34,7 @@
 #include <compare>  // for operator<=
 #include <system_error>
 
-namespace xfrase {
+namespace transferase {
 
 auto
 connection::stop() -> void {
@@ -252,4 +252,4 @@ connection::check_deadline() -> void {
   }
 }
 
-}  // namespace xfrase
+}  // namespace transferase

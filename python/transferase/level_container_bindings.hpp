@@ -26,21 +26,21 @@
 
 #include <pybind11/pybind11.h>
 
-namespace xfrase {
+namespace transferase {
 struct level_element_covered_t;
 struct level_element_t;
 template <typename level_element_type> struct level_container;
-}  // namespace xfrase
+}  // namespace transferase
 
 namespace py = pybind11;
 
 auto
 level_container_bindings(
-  py::class_<xfrase::level_container<xfrase::level_element_t>> &cls) -> void;
+  py::class_<transferase::level_container<transferase::level_element_t>> &cls) -> void;
 
 auto
 level_container_covered_bindings(
-  py::class_<xfrase::level_container<xfrase::level_element_covered_t>> &cls)
+  py::class_<transferase::level_container<transferase::level_element_covered_t>> &cls)
   -> void;
 
 #endif  // PYTHON_TRANSFERASE_LEVEL_CONTAINER_BINDINGS_HPP_

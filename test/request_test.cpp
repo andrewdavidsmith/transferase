@@ -29,7 +29,7 @@
 #include <cstring>
 #include <string>
 
-using namespace xfrase;  // NOLINT
+using namespace transferase;  // NOLINT
 
 TEST(request_test, basic_assertions) {
   request req;

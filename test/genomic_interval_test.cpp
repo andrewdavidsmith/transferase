@@ -33,7 +33,7 @@
 #include <string>
 #include <unordered_map>
 
-using namespace xfrase;  // NOLINT
+using namespace transferase;  // NOLINT
 
 TEST(genomic_interval_test, basic_assertions) {
   static constexpr auto index_dir{"data"};
@@ -95,7 +95,7 @@ TEST(genomic_interval_test, missing_chromosome_name) {
   std::error_code ec;
   [[maybe_unused]] const auto result = parse(cim, "100 200", ec);
   EXPECT_TRUE(ec);
-  EXPECT_EQ(ec, genomic_interval_code::error_parsing_bed_line);
+  EXPECT_EQ(ec, genomic_interval_error_code::error_parsing_bed_line);
 }
 
 TEST(genomic_interval_test, invalid_start_position) {
@@ -103,7 +103,7 @@ TEST(genomic_interval_test, invalid_start_position) {
   std::error_code ec;
   [[maybe_unused]] const auto result = parse(cim, "chr1 abc 200", ec);
   EXPECT_TRUE(ec);
-  EXPECT_EQ(ec, genomic_interval_code::error_parsing_bed_line);
+  EXPECT_EQ(ec, genomic_interval_error_code::error_parsing_bed_line);
 }
 
 TEST(genomic_interval_test, non_existent_chromosome_name) {
@@ -111,7 +111,7 @@ TEST(genomic_interval_test, non_existent_chromosome_name) {
   std::error_code ec;
   [[maybe_unused]] const auto result = parse(cim, "chr2 100 200", ec);
   EXPECT_TRUE(ec);
-  EXPECT_EQ(ec, genomic_interval_code::chrom_name_not_found_in_index);
+  EXPECT_EQ(ec, genomic_interval_error_code::chrom_name_not_found_in_index);
 }
 
 TEST(genomic_interval_test, stop_position_exceeds_chromosome_size) {
@@ -121,7 +121,7 @@ TEST(genomic_interval_test, stop_position_exceeds_chromosome_size) {
   std::error_code ec;
   auto result = parse(cim, "chr1 100 200000", ec);
   EXPECT_TRUE(ec);
-  EXPECT_EQ(ec, genomic_interval_code::interval_past_chrom_end_in_index);
+  EXPECT_EQ(ec, genomic_interval_error_code::interval_past_chrom_end_in_index);
   EXPECT_EQ(result.ch_id, genomic_interval::not_a_chrom);
   EXPECT_EQ(result.start, 0);
   EXPECT_EQ(result.stop, 0);

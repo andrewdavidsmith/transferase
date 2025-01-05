@@ -52,12 +52,12 @@
 #include <syslog.h>
 #include <unistd.h>
 
-namespace xfrase {
+namespace transferase {
 
 static auto
 write_pid_to_file(std::error_code &ec) -> void {
   static const auto pid_file_rhs =
-    std::filesystem::path(".config") / "xfrase" / "XFRASE_PID_FILE";
+    std::filesystem::path(".config") / "transferase" / "XFRASE_PID_FILE";
 
   auto &lgr = logger::instance();
 
@@ -81,14 +81,14 @@ write_pid_to_file(std::error_code &ec) -> void {
     return;
   }
   const auto pid = getpid();
-  lgr.info("xfrase daemon pid: {}", pid);
+  lgr.info("transferase daemon pid: {}", pid);
   std::ofstream out(pid_file);
   if (!out) {
     ec = std::make_error_code(std::errc{errno});
     lgr.error("Error writing pid file {}: {}", pid_file, ec);
     return;
   }
-  lgr.info("xfrase daemon pid file: {}", pid_file);
+  lgr.info("transferase daemon pid file: {}", pid_file);
   const auto pid_str = std::format("{}", pid);
   out.write(pid_str.data(), std::size(pid_str));
   if (!out) {
@@ -394,4 +394,4 @@ server::do_daemon_await_stop() -> void {
     });
 }
 
-}  // namespace xfrase
+}  // namespace transferase

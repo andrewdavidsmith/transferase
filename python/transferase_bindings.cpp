@@ -57,7 +57,7 @@
 #include <string>
 #include <system_error>
 
-namespace xfrase {
+namespace transferase {
 enum class request_type_code : std::uint8_t;
 }
 
@@ -65,8 +65,8 @@ namespace py = pybind11;
 
 auto
 initialize_transferase() -> void {
-  xfrase::logger::instance(xfrase::shared_from_cout(), "Transferase",
-                           xfrase::log_level_t::debug);
+  transferase::logger::instance(transferase::shared_from_cout(), "Transferase",
+                           transferase::log_level_t::debug);
   // Your C++ initialization code here, such as setting up resources or data
 }
 
@@ -79,60 +79,60 @@ PYBIND11_MODULE(transferase, m) {
     m, "ErrorCode",
     "Error code object used by several functions in transferase");
 
-  auto GenomicInterval = py::class_<xfrase::genomic_interval>(
+  auto GenomicInterval = py::class_<transferase::genomic_interval>(
     m, "GenomicInterval",
     "Representation of a genomic interval as chrom, start, stop (zero-based, "
     "half-open)");
 
-  auto CpgIndexData = py::class_<xfrase::cpg_index_data>(
+  auto CpgIndexData = py::class_<transferase::cpg_index_data>(
     m, "CpgIndexData", "Data part of a CpG index");
 
-  auto CpgIndexMetadata = py::class_<xfrase::cpg_index_metadata>(
+  auto CpgIndexMetadata = py::class_<transferase::cpg_index_metadata>(
     m, "CpgIndexMetadata", "Metadata part of a CpG index");
 
-  auto CpgIndex = py::class_<xfrase::cpg_index>(
+  auto CpgIndex = py::class_<transferase::cpg_index>(
     m, "CpgIndex", "An index of CpG sites in a genome");
 
-  auto MethylomeMetadata = py::class_<xfrase::methylome_metadata>(
+  auto MethylomeMetadata = py::class_<transferase::methylome_metadata>(
     m, "MethylomeMetadata", "Metadata part of a methylome");
 
-  auto MethylomeData = py::class_<xfrase::methylome_data>(
+  auto MethylomeData = py::class_<transferase::methylome_data>(
     m, "MethylomeData", "Data part of a methylome");
 
-  auto Methylome = py::class_<xfrase::methylome>(
+  auto Methylome = py::class_<transferase::methylome>(
     m, "Methylome", "Representation of a methylome");
 
-  auto LevelElement = py::class_<xfrase::level_element_t>(
+  auto LevelElement = py::class_<transferase::level_element_t>(
     m, "LevelElement", "Methylation level for a genomic interval");
 
-  auto LevelElementCovered = py::class_<xfrase::level_element_covered_t>(
+  auto LevelElementCovered = py::class_<transferase::level_element_covered_t>(
     m, "LevelElementCovered",
     "Methylation level for a genomic interval with number of sites covered");
 
   auto LevelContainer =
-    py::class_<xfrase::level_container<xfrase::level_element_t>>(
+    py::class_<transferase::level_container<transferase::level_element_t>>(
       m, "LevelContainer", "A container for methylation levels");
 
   auto LevelContainerCovered =
-    py::class_<xfrase::level_container<xfrase::level_element_covered_t>>(
+    py::class_<transferase::level_container<transferase::level_element_covered_t>>(
       m, "LevelContainerCovered",
       "A container for methylation levels with information about covered "
       "sites");
 
-  auto QueryContainer = py::class_<xfrase::query_container>(
+  auto QueryContainer = py::class_<transferase::query_container>(
     m, "QueryContainer", "A container for a methylome query");
 
-  auto LocalMethylomeResource = py::class_<xfrase::local_methylome_resource>(
+  auto LocalMethylomeResource = py::class_<transferase::local_methylome_resource>(
     m, "LocalMethylomeResource", "Interface for locally available methylomes");
 
-  auto RemoteMethylomeResource = py::class_<xfrase::remote_methylome_resource>(
+  auto RemoteMethylomeResource = py::class_<transferase::remote_methylome_resource>(
     m, "RemoteMethylomeResource",
     "An interface for remotely available methylomes");
 
-  auto RequestTypeCode = py::enum_<xfrase::request_type_code>(
+  auto RequestTypeCode = py::enum_<transferase::request_type_code>(
     m, "RequestTypeCode", "Codes for the various request types");
 
-  auto Request = py::class_<xfrase::request>(m, "Request", "A request");
+  auto Request = py::class_<transferase::request>(m, "Request", "A request");
 
   error_code_bindings(ErrorCode);
 

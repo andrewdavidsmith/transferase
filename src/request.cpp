@@ -35,7 +35,7 @@
 #include <ranges>    // IWYU pragma: keep
 #include <string>
 
-namespace xfrase {
+namespace transferase {
 
 [[nodiscard]] STATIC INLINE auto
 compose(char *first, char const *last, const request &req) -> std::error_code {
@@ -133,4 +133,4 @@ request::summary() const -> std::string {
                      accession, request_type, index_hash, aux_value);
 }
 
-}  // namespace xfrase
+}  // namespace transferase

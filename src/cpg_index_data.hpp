@@ -38,7 +38,7 @@
 #include <utility>      // for std::pair
 #include <vector>
 
-namespace xfrase {
+namespace transferase {
 
 struct genomic_interval;
 struct cpg_index_metadata;
@@ -80,17 +80,17 @@ struct cpg_index_data {
   [[nodiscard]] auto
   make_query_within_chrom(const std::int32_t ch_id,
                           const std::vector<chrom_range_t> &pos) const
-    -> xfrase::query_container;
+    -> transferase::query_container;
 
   [[nodiscard]] auto
   make_query_chrom(const std::int32_t ch_id, const cpg_index_metadata &meta,
                    const std::vector<chrom_range_t> &pos) const
-    -> xfrase::query_container;
+    -> transferase::query_container;
 
   [[nodiscard]] auto
   make_query(const cpg_index_metadata &meta,
              const std::vector<genomic_interval> &gis) const
-    -> xfrase::query_container;
+    -> transferase::query_container;
 
   [[nodiscard]] static auto
   compose_filename(auto wo_extension) {
@@ -107,12 +107,12 @@ struct cpg_index_data {
   std::vector<cpg_index_data::vec> positions;
 };
 
-}  // namespace xfrase
+}  // namespace transferase
 
 template <>
-struct std::formatter<xfrase::cpg_index_data> : std::formatter<std::string> {
+struct std::formatter<transferase::cpg_index_data> : std::formatter<std::string> {
   auto
-  format(const xfrase::cpg_index_data &data, std::format_context &ctx) const {
+  format(const transferase::cpg_index_data &data, std::format_context &ctx) const {
     return std::formatter<std::string>::format(data.tostring(), ctx);
   }
 };

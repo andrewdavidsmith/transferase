@@ -30,7 +30,7 @@
 #include <string>
 #include <utility>  // for to_underlying, unreachable
 
-namespace xfrase {
+namespace transferase {
 
 enum class request_type_code : std::uint8_t {
   intervals = 0,
@@ -51,12 +51,12 @@ static constexpr auto request_type_code_names = std::array{
   // clang-format on
 };
 
-}  // namespace xfrase
+}  // namespace transferase
 
 template <>
-struct std::formatter<xfrase::request_type_code> : std::formatter<std::string> {
+struct std::formatter<transferase::request_type_code> : std::formatter<std::string> {
   auto
-  format(const xfrase::request_type_code &rtc, std::format_context &ctx) const {
+  format(const transferase::request_type_code &rtc, std::format_context &ctx) const {
     return std::format_to(ctx.out(), "{}", std::to_underlying(rtc));
   }
 };

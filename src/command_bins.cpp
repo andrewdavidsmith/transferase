@@ -80,12 +80,12 @@ command_bins_main(int argc, char *argv[]) -> int {
   static const auto description_msg =
     std::format("{}\n{}", strip(description), strip(examples));
 
-  using xfrase::cpg_index;
-  using xfrase::level_element_covered_t;
-  using xfrase::level_element_t;
-  using xfrase::log_args;
-  using xfrase::log_level_t;
-  using xfrase::logger;
+  using transferase::cpg_index;
+  using transferase::level_element_covered_t;
+  using transferase::level_element_t;
+  using transferase::log_args;
+  using transferase::log_level_t;
+  using transferase::logger;
 
   bool write_scores{};
   bool count_covered{};
@@ -190,7 +190,8 @@ command_bins_main(int argc, char *argv[]) -> int {
 
   const bool remote_mode = (subcmd == "remote");
 
-  auto &lgr = logger::instance(xfrase::shared_from_cout(), command, log_level);
+  auto &lgr =
+    logger::instance(transferase::shared_from_cout(), command, log_level);
   if (!lgr) {
     std::println("Failure initializing logging: {}.", lgr.get_status());
     return EXIT_FAILURE;
@@ -224,13 +225,13 @@ command_bins_main(int argc, char *argv[]) -> int {
   }
 
   const auto request_type = count_covered
-                              ? xfrase::request_type_code::bins_covered
-                              : xfrase::request_type_code::bins;
+                              ? transferase::request_type_code::bins_covered
+                              : transferase::request_type_code::bins;
 
-  const auto req =
-    xfrase::request{methylome_name, request_type, index.get_hash(), bin_size};
+  const auto req = transferase::request{methylome_name, request_type,
+                                        index.get_hash(), bin_size};
 
-  const auto resource = xfrase::methylome_resource{
+  const auto resource = transferase::methylome_resource{
     .directory = methylome_directory,
     .hostname = hostname,
     .port_number = port,
@@ -252,7 +253,7 @@ command_bins_main(int argc, char *argv[]) -> int {
   }
 
   const auto outmgr =
-    xfrase::bins_output_mgr{outfile, bin_size, index, write_scores};
+    transferase::bins_output_mgr{outfile, bin_size, index, write_scores};
 
   const auto output_start{std::chrono::high_resolution_clock::now()};
   ec = write_output(outmgr, results);

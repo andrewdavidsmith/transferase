@@ -82,14 +82,14 @@ command_intervals_main(int argc, char *argv[]) -> int {
 
   static constexpr auto default_port = "5000";
 
-  using xfrase::cpg_index;
-  // using xfrase::do_intervals;
-  using xfrase::genomic_interval;
-  using xfrase::level_element_covered_t;
-  using xfrase::level_element_t;
-  using xfrase::log_args;
-  using xfrase::log_level_t;
-  using xfrase::logger;
+  using transferase::cpg_index;
+  // using transferase::do_intervals;
+  using transferase::genomic_interval;
+  using transferase::level_element_covered_t;
+  using transferase::level_element_t;
+  using transferase::log_args;
+  using transferase::log_level_t;
+  using transferase::logger;
 
   bool write_scores{};
   bool count_covered{};
@@ -194,7 +194,8 @@ command_intervals_main(int argc, char *argv[]) -> int {
 
   const bool remote_mode = (subcmd == "remote");
 
-  auto &lgr = logger::instance(xfrase::shared_from_cout(), command, log_level);
+  auto &lgr =
+    logger::instance(transferase::shared_from_cout(), command, log_level);
   if (!lgr) {
     std::println("Failure initializing logging: {}.", lgr.get_status());
     return EXIT_FAILURE;
@@ -243,9 +244,9 @@ command_intervals_main(int argc, char *argv[]) -> int {
   }
   lgr.info("Number of intervals: {}", std::size(intervals));
 
-  const auto request_type = count_covered
-                              ? xfrase::request_type_code::intervals_covered
-                              : xfrase::request_type_code::intervals;
+  const auto request_type =
+    count_covered ? transferase::request_type_code::intervals_covered
+                  : transferase::request_type_code::intervals;
 
   // Convert intervals into query
   const auto format_query_start{std::chrono::high_resolution_clock::now()};
@@ -254,10 +255,10 @@ command_intervals_main(int argc, char *argv[]) -> int {
   lgr.debug("Elapsed time to prepare query: {:.3}s",
             duration(format_query_start, format_query_stop));
 
-  const auto req = xfrase::request{methylome_name, request_type,
-                                   index.get_hash(), std::size(intervals)};
+  const auto req = transferase::request{methylome_name, request_type,
+                                        index.get_hash(), std::size(intervals)};
 
-  const auto resource = xfrase::methylome_resource{
+  const auto resource = transferase::methylome_resource{
     .directory = methylome_directory,
     .hostname = hostname,
     .port_number = port,
@@ -278,7 +279,7 @@ command_intervals_main(int argc, char *argv[]) -> int {
             duration(intervals_start, intervals_stop));
 
   const auto outmgr =
-    xfrase::intervals_output_mgr{outfile, intervals, index, write_scores};
+    transferase::intervals_output_mgr{outfile, intervals, index, write_scores};
 
   const auto output_start{std::chrono::high_resolution_clock::now()};
   ec = write_output(outmgr, results);

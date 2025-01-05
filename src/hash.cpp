@@ -33,7 +33,7 @@
 #include <system_error>
 #include <vector>
 
-namespace xfrase {
+namespace transferase {
 
 // ADS: this function should be replaced by one that can operate on a
 // the data as though it were serealized but without reading the file
@@ -68,4 +68,4 @@ get_adler(const std::string &filename, std::error_code &ec) -> std::uint64_t {
   return adler32_z(0, reinterpret_cast<std::uint8_t *>(buf.data()), filesize);
 }
 
-}  // namespace xfrase
+}  // namespace transferase

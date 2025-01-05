@@ -32,7 +32,7 @@
 #include <unordered_map>
 #include <utility>  // for std::to_underlying, std::unreachable
 
-namespace xfrase {
+namespace transferase {
 
 struct cpg_index;
 
@@ -54,7 +54,7 @@ struct cpg_index_set {
     assembly_to_cpg_index;
 };
 
-}  // namespace xfrase
+}  // namespace transferase
 
 // error code for cpg_index_set
 enum class cpg_index_set_error : std::uint8_t {

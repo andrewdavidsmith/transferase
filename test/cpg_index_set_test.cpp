@@ -34,7 +34,7 @@
 #include <system_error>
 #include <tuple>  // for std::get
 
-using namespace xfrase;  // NOLINT
+using namespace transferase;  // NOLINT
 
 TEST(cpg_index_set_test, valid_cpg_index_set) {
   static constexpr auto cpg_index_directory = "data";

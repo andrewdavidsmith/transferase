@@ -26,11 +26,11 @@
 
 #include <pybind11/pybind11.h>
 
-namespace xfrase {
+namespace transferase {
 struct cpg_index_data;
 }
 
 auto
-cpg_index_data_bindings(pybind11::class_<xfrase::cpg_index_data> &cls) -> void;
+cpg_index_data_bindings(pybind11::class_<transferase::cpg_index_data> &cls) -> void;
 
 #endif  // PYTHON_TRANSFERASE_CPG_INDEX_DATA_BINDINGS_HPP_

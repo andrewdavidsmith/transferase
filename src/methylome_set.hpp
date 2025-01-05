@@ -35,7 +35,7 @@
 #include <unordered_map>
 #include <utility>
 
-namespace xfrase {
+namespace transferase {
 
 struct methylome;
 
@@ -65,7 +65,7 @@ struct methylome_set {
     accession_to_methylome;
 };
 
-}  // namespace xfrase
+}  // namespace transferase
 
 // methylome_set errors
 enum class methylome_set_code : std::uint8_t {

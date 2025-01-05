@@ -37,7 +37,7 @@
 #include <utility>  // for std::move
 #include <vector>
 
-namespace xfrase {
+namespace transferase {
 
 static constexpr std::uint32_t response_header_buffer_size = 256;
 typedef std::array<char, response_header_buffer_size> response_header_buffer;
@@ -98,6 +98,6 @@ template <typename level_element> struct response {
   }
 };
 
-}  // namespace xfrase
+}  // namespace transferase
 
 #endif  // SRC_RESPONSE_HPP_

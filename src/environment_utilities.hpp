@@ -28,7 +28,7 @@
 #include <system_error>
 #include <tuple>
 
-namespace xfrase {
+namespace transferase {
 
 [[nodiscard]] auto
 get_username() -> std::tuple<std::string, std::error_code>;
@@ -42,6 +42,6 @@ get_hostname() -> std::tuple<std::string, std::error_code>;
 [[nodiscard]] auto
 get_version() -> std::string;
 
-}  // namespace xfrase
+}  // namespace transferase
 
 #endif  // SRC_ENVIRONMENT_UTILITIES_HPP_

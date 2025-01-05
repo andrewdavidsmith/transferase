@@ -44,7 +44,7 @@
 #include <utility>  // for std::pair
 #include <vector>
 
-namespace xfrase {
+namespace transferase {
 
 struct cpg_index;
 struct methylome_metadata;
@@ -98,12 +98,12 @@ struct methylome_data {
   /// get methylation levels for query intervals and number for query
   /// intervals covered
   [[nodiscard]] auto
-  get_levels_covered(const xfrase::query_container &query) const
+  get_levels_covered(const transferase::query_container &query) const
     -> level_container<level_element_covered_t>;
 
   /// get methylation levels for query intervals
   [[nodiscard]] auto
-  get_levels(const xfrase::query_container &query) const
+  get_levels(const transferase::query_container &query) const
     -> level_container<level_element_t>;
 
   /// get global methylation level
@@ -167,7 +167,7 @@ size(const methylome_data &data) {
   return std::size(data.cpgs);
 }
 
-}  // namespace xfrase
+}  // namespace transferase
 
 // methylome_data errors
 enum class methylome_data_code : std::uint8_t {

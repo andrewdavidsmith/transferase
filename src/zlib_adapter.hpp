@@ -93,7 +93,7 @@ make_error_code(zlib_adapter_error e) {
   return std::error_code(std::to_underlying(e), category);
 }
 
-namespace xfrase {
+namespace transferase {
 
 struct gzinfile {
   gzinfile(const gzinfile &other) = delete;
@@ -245,6 +245,6 @@ auto
 read_gzfile_into_buffer(const std::string &filename)
   -> std::tuple<std::vector<char>, std::error_code>;
 
-}  // namespace xfrase
+}  // namespace transferase
 
 #endif  // SRC_ZLIB_ADAPTER_HPP_

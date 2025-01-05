@@ -37,7 +37,7 @@
 #include <utility>
 #include <vector>
 
-namespace xfrase {
+namespace transferase {
 
 struct cpg_index;
 struct query_container;
@@ -97,14 +97,14 @@ struct methylome {
 
   /// get methylation levels for query intervals
   [[nodiscard]] auto
-  get_levels(const xfrase::query_container &query) const {
+  get_levels(const transferase::query_container &query) const {
     return data.get_levels(query);
   }
 
   /// get methylation levels for query intervals and number for query
   /// intervals covered
   [[nodiscard]] auto
-  get_levels_covered(const xfrase::query_container &query) const {
+  get_levels_covered(const transferase::query_container &query) const {
     return data.get_levels_covered(query);
   }
 
@@ -139,7 +139,7 @@ struct methylome {
   }
 };
 
-}  // namespace xfrase
+}  // namespace transferase
 
 // methylome error codes
 enum class methylome_code : std::uint8_t {

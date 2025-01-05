@@ -30,7 +30,7 @@
 #include <string>
 #include <system_error>
 
-namespace xfrase {
+namespace transferase {
 
 [[nodiscard]] inline auto
 get_adler(const auto &data, const auto data_size) -> std::uint64_t {
@@ -55,6 +55,6 @@ get_adler(const std::string &filename) -> std::uint64_t;
 [[nodiscard]] auto
 get_adler(const std::string &filename, std::error_code &ec) -> std::uint64_t;
 
-}  // namespace xfrase
+}  // namespace transferase
 
 #endif  // SRC_HASH_HPP_

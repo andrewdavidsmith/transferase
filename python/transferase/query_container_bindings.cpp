@@ -36,19 +36,19 @@
 namespace py = pybind11;
 
 auto
-query_container_bindings(py::class_<xfrase::query_container> &cls) -> void {
+query_container_bindings(py::class_<transferase::query_container> &cls) -> void {
   cls.def(py::init<>())
     .def("__len__",
-         [](const xfrase::query_container &self) { return xfrase::size(self); })
+         [](const transferase::query_container &self) { return transferase::size(self); })
     // define equality operator explicitly as returning a bool
     .def(
       "__eq__",
-      [](const xfrase::query_container &self,
-         const xfrase::query_container &other) {
+      [](const transferase::query_container &self,
+         const transferase::query_container &other) {
         return (self <=> other) == std::strong_ordering::equal;
       },
       py::is_operator())
-    .def("__repr__", [](const xfrase::query_container &self) {
+    .def("__repr__", [](const transferase::query_container &self) {
       return std::format("<QueryContainer size={}>", self.v.size());
     });
 }

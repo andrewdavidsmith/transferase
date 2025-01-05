@@ -55,7 +55,7 @@
 #include <thread>
 #include <utility>  // std::to_underlying
 
-namespace xfrase {
+namespace transferase {
 /*
   - date (YYYY-MM-DD)
   - time (HH:MM:SS)
@@ -315,14 +315,14 @@ log_args(std::ranges::input_range auto &&key_value_pairs) {
     lgr.log<lvl>("{}: {}", k, v);
 }
 
-}  // namespace xfrase
+}  // namespace transferase
 
 template <>
-struct std::formatter<xfrase::log_level_t> : std::formatter<std::string> {
+struct std::formatter<transferase::log_level_t> : std::formatter<std::string> {
   auto
-  format(const xfrase::log_level_t &l, std::format_context &ctx) const {
+  format(const transferase::log_level_t &l, std::format_context &ctx) const {
     return std::formatter<std::string>::format(
-      xfrase::level_name[std::to_underlying(l)], ctx);
+      transferase::level_name[std::to_underlying(l)], ctx);
   }
 };
 

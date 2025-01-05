@@ -34,7 +34,7 @@
 #include <type_traits>  // for true_type
 #include <utility>      // for to_underlying, pair, unreachable
 
-namespace xfrase {
+namespace transferase {
 
 static constexpr std::uint32_t request_buffer_size{256};
 typedef std::array<char, request_buffer_size> request_buffer;
@@ -85,7 +85,7 @@ compose(request_buffer &buf, const request &req) -> std::error_code;
 [[nodiscard]] auto
 parse(const request_buffer &buf, request &req) -> std::error_code;
 
-}  // namespace xfrase
+}  // namespace transferase
 
 // request error code
 enum class request_error : std::uint8_t {
@@ -124,9 +124,9 @@ make_error_code(request_error e) -> std::error_code {
 }
 
 template <>
-struct std::formatter<xfrase::request> : std::formatter<std::string> {
+struct std::formatter<transferase::request> : std::formatter<std::string> {
   auto
-  format(const xfrase::request &r, std::format_context &ctx) const {
+  format(const transferase::request &r, std::format_context &ctx) const {
     return std::format_to(ctx.out(), "{}\t{}\t{}\t{}", r.accession,
                           r.request_type, r.index_hash, r.aux_value);
   }

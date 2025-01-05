@@ -87,7 +87,7 @@ struct std::formatter<std::filesystem::path> : std::formatter<std::string> {
   }
 };
 
-namespace xfrase {
+namespace transferase {
 
 struct remote_indexes_resources {
   std::string host;
@@ -188,16 +188,16 @@ get_index_files(const bool quiet, const remote_indexes_resources &remote,
   for (const auto assembly : std::views::split(assemblies, ',')) {
     const auto assem = std::string{std::cbegin(assembly), std::cend(assembly)};
     const auto stem = remote.form_target_stem(assem);
-    const auto data_file =
-      std::format("{}{}", stem, xfrase::cpg_index_data::filename_extension);
+    const auto data_file = std::format(
+      "{}{}", stem, transferase::cpg_index_data::filename_extension);
     if (!quiet)
       std::println("Download: {}", remote.form_url(data_file));
     const auto [data_hdr, data_err] =
       download({remote.host, remote.port, data_file, dirname});
     if (data_err)
       dl_err(data_hdr, data_err, remote.form_url(data_file));
-    const auto meta_file =
-      std::format("{}{}", stem, xfrase::cpg_index_metadata::filename_extension);
+    const auto meta_file = std::format(
+      "{}{}", stem, transferase::cpg_index_metadata::filename_extension);
     if (!quiet)
       std::println("Download: {}", remote.form_url(meta_file));
     const auto [meta_hdr, meta_err] =
@@ -208,13 +208,13 @@ get_index_files(const bool quiet, const remote_indexes_resources &remote,
   return {};
 }
 
-}  // namespace xfrase
+}  // namespace transferase
 
 template <>
-struct std::formatter<xfrase::remote_indexes_resources>
+struct std::formatter<transferase::remote_indexes_resources>
   : std::formatter<std::string> {
   auto
-  format(const xfrase::remote_indexes_resources &r,
+  format(const transferase::remote_indexes_resources &r,
          std::format_context &ctx) const {
     return std::format_to(ctx.out(), "{}:{}{}", r.host, r.port, r.path);
   }
@@ -230,7 +230,7 @@ command_config_main(int argc, char *argv[]) -> int {
   static const auto description_msg =
     std::format("{}\n{}", strip(description), strip(examples));
 
-  xfrase::command_config_argset args;
+  transferase::command_config_argset args;
   auto ec = args.parse(argc, argv, usage, about_msg, description_msg);
   if (ec == argument_error::help_requested)
     return EXIT_SUCCESS;
@@ -293,7 +293,8 @@ command_config_main(int argc, char *argv[]) -> int {
     return EXIT_FAILURE;
   }
 
-  const auto [remotes, remote_err] = xfrase::get_remote_indexes_resources();
+  const auto [remotes, remote_err] =
+    transferase::get_remote_indexes_resources();
   if (remote_err) {
     std::println("Error identifying remote server: {}", remote_err);
     return EXIT_FAILURE;

@@ -44,7 +44,7 @@
 #include <type_traits>  // for std::remove_cvref_t
 #include <vector>
 
-namespace xfrase {
+namespace transferase {
 
 auto
 request_handler::add_response_size(const request &req,
@@ -142,7 +142,7 @@ levels_to_payload(auto &&levels) -> response_payload {
 
 auto
 request_handler::handle_get_levels(const request &req,
-                                   const xfrase::query_container &query,
+                                   const transferase::query_container &query,
                                    response_header &resp_hdr,
                                    response_payload &resp_data) -> void {
   auto &lgr = logger::instance();
@@ -211,4 +211,4 @@ request_handler::handle_get_levels(const request &req,
   resp_hdr.status = server_error_code::bad_request;
 }
 
-}  // namespace xfrase
+}  // namespace transferase

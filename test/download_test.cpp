@@ -33,7 +33,7 @@
 #include <string>
 #include <utility>
 
-using namespace xfrase;  // NOLINT
+using namespace transferase;  // NOLINT
 
 TEST(download_test, send_request_timeout) {
   const auto target = std::filesystem::path{"/delay/1"};

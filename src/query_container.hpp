@@ -32,7 +32,7 @@
 #include <utility>   // for std::move
 #include <vector>
 
-namespace xfrase {
+namespace transferase {
 
 struct query_container {
   std::vector<query_element> v;
@@ -85,6 +85,6 @@ size(const query_container &query) {
   return std::size(query.v);
 }
 
-}  // namespace xfrase
+}  // namespace transferase
 
 #endif  // SRC_QUERY_CONTAINER_HPP_

@@ -40,7 +40,7 @@
 #include <system_error>
 #include <tuple>
 
-namespace xfrase {
+namespace transferase {
 
 [[nodiscard]] auto
 get_username() -> std::tuple<std::string, std::error_code> {
@@ -83,4 +83,4 @@ get_version() -> std::string {
   return VERSION;
 }
 
-}  // namespace xfrase
+}  // namespace transferase

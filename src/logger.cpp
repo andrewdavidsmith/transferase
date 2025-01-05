@@ -31,7 +31,7 @@
 #include <string_view>
 #include <system_error>
 
-namespace xfrase {
+namespace transferase {
 
 [[nodiscard]] auto
 logger::set_attributes(const std::string_view appname) -> std::error_code {
@@ -81,4 +81,4 @@ logger::set_attributes(const std::string_view appname) -> std::error_code {
   return std::make_error_code(std::errc{});
 };
 
-}  // namespace xfrase
+}  // namespace transferase

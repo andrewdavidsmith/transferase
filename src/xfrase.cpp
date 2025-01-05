@@ -21,7 +21,7 @@
  * SOFTWARE.
  */
 
-/* xfrase: methylome transfer engine
+/* transferase: methylome transfer engine
  */
 
 #include "command_bins.hpp"
@@ -60,8 +60,8 @@ const std::tuple<std::string_view, main_fun, std::string_view> commands[] = {
   {"format", command_format_main, "format a methylome file"},
   {"check", command_check_main, "perform checks on methylome and index files"},
   {"intervals", command_intervals_main, "get methylation levels in each interval"},
-  {"merge", command_merge_main, "merge a set of xfrase format methylomes"},
-  {"compress", command_compress_main, "make an xfrase format methylome smaller"},
+  {"merge", command_merge_main, "merge a set of transferase format methylomes"},
+  {"compress", command_compress_main, "make an transferase format methylome smaller"},
   {"bins", command_bins_main, "get methylation levels in each bin"},
   {"server", command_server_main, "run a server to respond to lookup queries"},
   // clang-format on
@@ -89,7 +89,7 @@ format_help(const std::string &description,
 
 int
 main(int argc, char *argv[]) {
-  static constexpr auto program = "xfrase";
+  static constexpr auto program = "transferase";
 
   std::string command;
   namespace po = boost::program_options;

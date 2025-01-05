@@ -34,46 +34,46 @@
 namespace py = pybind11;
 
 auto
-level_element_bindings(py::class_<xfrase::level_element_t> &cls) -> void {
+level_element_bindings(py::class_<transferase::level_element_t> &cls) -> void {
   cls.def(py::init<>())
     .def("__repr__",
-         [](const xfrase::level_element_t &self) {
+         [](const transferase::level_element_t &self) {
            return std::format("{} {}", self.n_meth, self.n_unmeth);
          })
     .def("json",
-         [](const xfrase::level_element_t &self) {
+         [](const transferase::level_element_t &self) {
            return std::format("{}", self);
          })
-    .def("__eq__", std::equal_to<xfrase::level_element_t>{})
-    .def("__ne__", std::not_equal_to<xfrase::level_element_t>{})
-    .def_readwrite("n_meth", &xfrase::level_element_t::n_meth,
+    .def("__eq__", std::equal_to<transferase::level_element_t>{})
+    .def("__ne__", std::not_equal_to<transferase::level_element_t>{})
+    .def_readwrite("n_meth", &transferase::level_element_t::n_meth,
                    "Number of methylated observations")
-    .def_readwrite("n_unmeth", &xfrase::level_element_t::n_unmeth,
+    .def_readwrite("n_unmeth", &transferase::level_element_t::n_unmeth,
                    "Number of unmethylated observations")
     //
     ;
 }
 
 auto
-level_element_covered_bindings(py::class_<xfrase::level_element_covered_t> &cls)
+level_element_covered_bindings(py::class_<transferase::level_element_covered_t> &cls)
   -> void {
   cls.def(py::init<>())
     .def("__repr__",
-         [](const xfrase::level_element_covered_t &self) {
+         [](const transferase::level_element_covered_t &self) {
            return std::format("{} {} {}", self.n_meth, self.n_unmeth,
                               self.n_covered);
          })
     .def("json",
-         [](const xfrase::level_element_covered_t &self) {
+         [](const transferase::level_element_covered_t &self) {
            return std::format("{}", self);
          })
-    .def("__eq__", std::equal_to<xfrase::level_element_covered_t>{})
-    .def("__ne__", std::not_equal_to<xfrase::level_element_covered_t>{})
-    .def_readwrite("n_meth", &xfrase::level_element_covered_t::n_meth,
+    .def("__eq__", std::equal_to<transferase::level_element_covered_t>{})
+    .def("__ne__", std::not_equal_to<transferase::level_element_covered_t>{})
+    .def_readwrite("n_meth", &transferase::level_element_covered_t::n_meth,
                    "Number of methylated observations")
-    .def_readwrite("n_unmeth", &xfrase::level_element_covered_t::n_unmeth,
+    .def_readwrite("n_unmeth", &transferase::level_element_covered_t::n_unmeth,
                    "Number of unmethylated observations")
-    .def_readwrite("n_covered", &xfrase::level_element_covered_t::n_covered,
+    .def_readwrite("n_covered", &transferase::level_element_covered_t::n_covered,
                    "Number of sites covered")
     //
     ;

@@ -29,7 +29,7 @@
 #include <iterator>
 #include <vector>
 
-namespace xfrase {
+namespace transferase {
 
 template <typename T> struct ring_buffer {
   // support queue ops and be iterable
@@ -59,6 +59,6 @@ template <typename T> struct ring_buffer {
   std::vector<T> buf;
 };
 
-}  // namespace xfrase
+}  // namespace transferase
 
 #endif  // SRC_RING_BUFFER_HPP_

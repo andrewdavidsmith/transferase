@@ -32,7 +32,7 @@
 #include <string>
 #include <system_error>
 
-namespace xfrase {
+namespace transferase {
 
 struct methylome_metadata {
   static constexpr auto filename_extension{".m16.json"};
@@ -112,13 +112,13 @@ BOOST_DESCRIBE_STRUCT(methylome_metadata, (),
 ))
 // clang-format on
 
-}  // namespace xfrase
+}  // namespace transferase
 
 template <>
-struct std::formatter<xfrase::methylome_metadata>
+struct std::formatter<transferase::methylome_metadata>
   : std::formatter<std::string> {
   auto
-  format(const xfrase::methylome_metadata &mm, std::format_context &ctx) const {
+  format(const transferase::methylome_metadata &mm, std::format_context &ctx) const {
     return std::format_to(ctx.out(), "{}", mm.tostring());
   }
 };

@@ -26,12 +26,12 @@
 
 #include <pybind11/pybind11.h>
 
-namespace xfrase {
+namespace transferase {
 struct methylome_metadata;
-}  // namespace xfrase
+}  // namespace transferase
 
 auto
-methylome_metadata_bindings(pybind11::class_<xfrase::methylome_metadata> &cls)
+methylome_metadata_bindings(pybind11::class_<transferase::methylome_metadata> &cls)
   -> void;
 
 #endif  // PYTHON_TRANSFERASE_METHYLOME_METADATA_BINDINGS_HPP_

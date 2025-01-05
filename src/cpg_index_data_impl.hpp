@@ -33,7 +33,7 @@
 #include "cpg_index_data.hpp"
 #include <vector>
 
-namespace xfrase {
+namespace transferase {
 
 struct chrom_range_t;
 struct query_container;
@@ -41,8 +41,8 @@ struct query_container;
 [[nodiscard]] STATIC auto
 make_query_within_chrom(const cpg_index_data::vec &positions,
                         const std::vector<chrom_range_t> &chrom_ranges)
-  -> xfrase::query_container;
+  -> transferase::query_container;
 
-}  // namespace xfrase
+}  // namespace transferase
 
 #endif  // SRC_CPG_INDEX_DATA_IMPL_HPP_

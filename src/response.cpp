@@ -32,7 +32,7 @@
 #include <string>
 #include <type_traits>  // for std::underlying_type_t
 
-namespace xfrase {
+namespace transferase {
 
 [[nodiscard]] auto
 compose(char *first, const char *last,
@@ -103,4 +103,4 @@ response_header::summary() const -> std::string {
   return std::format(fmt, status.category().name(), status, response_size);
 }
 
-}  // namespace xfrase
+}  // namespace transferase

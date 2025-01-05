@@ -34,7 +34,7 @@
 #include <tuple>
 #include <utility>  // std::unreachable
 
-namespace xfrase {
+namespace transferase {
 
 enum class counts_file_format : std::uint8_t {
   none = 0,
@@ -63,6 +63,6 @@ parse_counts_line(const std::string &line, std::uint32_t &pos,
 get_meth_file_format(const std::string &filename)
   -> std::tuple<counts_file_format, std::error_code>;
 
-}  // namespace xfrase
+}  // namespace transferase
 
 #endif  // SRC_COUNTS_FILE_FORMAT_HPP_

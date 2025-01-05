@@ -48,7 +48,7 @@
 #include <tuple>     // for std::ignore
 #include <unordered_map>
 
-using namespace xfrase;  // NOLINT
+using namespace transferase;  // NOLINT
 
 TEST(request_handler_test, basic_assertions) {
   std::error_code ec;
@@ -164,7 +164,7 @@ TEST_F(request_handler_mock, add_response_size_for_intervals_success) {
   static constexpr auto n_intervals = 100;
   static constexpr auto expected_response_size_n_intervals = n_intervals;
   [[maybe_unused]] const auto offsets =
-    std::vector<xfrase::query_element>(n_intervals);
+    std::vector<transferase::query_element>(n_intervals);
 
   const request req{"eFlareon_brain", rq_type, index_hash, n_intervals};
   response_header resp_hdr;
@@ -181,7 +181,7 @@ TEST_F(request_handler_mock, handle_request_success) {
   static constexpr auto expected_response_size_n_intervals = n_intervals;
 
   [[maybe_unused]] const auto offsets =
-    std::vector<xfrase::query_element>(n_intervals);
+    std::vector<transferase::query_element>(n_intervals);
   const request req{"eFlareon_brain", rq_type, index_hash, n_intervals};
   response_header resp_hdr;
 
@@ -224,7 +224,7 @@ TEST_F(request_handler_mock, handle_request_failure) {
   static constexpr auto n_intervals = 100;
   static constexpr auto expected_response_size_n_intervals = n_intervals;
   [[maybe_unused]] const auto offsets =
-    std::vector<xfrase::query_element>(n_intervals);
+    std::vector<transferase::query_element>(n_intervals);
 
   request req{"eFlareon_brain", rq_type, index_hash, n_intervals};
 
@@ -274,7 +274,7 @@ TEST_F(request_handler_mock, handle_get_levels_intervals_success) {
   response_payload resp_data;
   mock_request_handler->handle_get_levels(req, query, resp_hdr, resp_data);
 
-  const auto req_offset_elem_size = sizeof(xfrase::query_element);
+  const auto req_offset_elem_size = sizeof(transferase::query_element);
   const auto expected_payload_size = req_offset_elem_size * size(query);
   EXPECT_EQ(std::size(resp_data.payload), expected_payload_size);
 }
@@ -304,7 +304,7 @@ TEST_F(request_handler_mock, handle_get_levels_bins_success) {
 
   const auto expected_n_bins = index.get_n_bins(bin_size);
 
-  const auto req_offset_elem_size = sizeof(xfrase::query_element);
+  const auto req_offset_elem_size = sizeof(transferase::query_element);
   const auto expected_payload_size = req_offset_elem_size * expected_n_bins;
   EXPECT_EQ(std::size(resp_data.payload), expected_payload_size);
 }

@@ -38,7 +38,7 @@
 #include <system_error>
 #include <vector>
 
-namespace xfrase {
+namespace transferase {
 
 struct genome_file {
   std::error_code ec{};
@@ -69,6 +69,6 @@ get_chroms(const char *data, const std::size_t sz,
            const std::vector<std::size_t> &name_stops)
   -> std::vector<std::string_view>;
 
-}  // namespace xfrase
+}  // namespace transferase
 
 #endif  // SRC_CPG_INDEX_IMPL_HPP_

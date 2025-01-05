@@ -30,56 +30,56 @@
 
 #include <cstdint>
 
-namespace xfrase {
+namespace transferase {
 struct level_element_covered_t;
 struct level_element_t;
 struct query_container;
 template <typename level_element_type> struct level_container;
-}  // namespace xfrase
+}  // namespace transferase
 
 namespace py = pybind11;
 
 auto
-methylome_bindings(py::class_<xfrase::methylome> &cls) -> void {
+methylome_bindings(py::class_<transferase::methylome> &cls) -> void {
   using namespace pybind11::literals;  // NOLINT
   cls.def(py::init<>())
-    .def_static("read", &xfrase::methylome::read, "directory"_a,
+    .def_static("read", &transferase::methylome::read, "directory"_a,
                 "methylome_name"_a, "error_code"_a)
     .def("is_consistent",
-         [](const xfrase::methylome &self) -> bool {
+         [](const transferase::methylome &self) -> bool {
            return self.is_consistent();
          })
     .def(
       "is_consistent",
-      [](const xfrase::methylome &self, const xfrase::methylome &other) {
+      [](const transferase::methylome &self, const transferase::methylome &other) {
         return self.is_consistent(other);
       },
       "other"_a)
-    .def("write", &xfrase::methylome::write, "output_directory"_a, "name"_a)
-    .def("init_metadata", &xfrase::methylome::init_metadata, "index"_a)
-    .def("update_metadata", &xfrase::methylome::update_metadata)
-    .def("add", &xfrase::methylome::add, "other"_a)
-    .def("__repr__", &xfrase::methylome::tostring)
+    .def("write", &transferase::methylome::write, "output_directory"_a, "name"_a)
+    .def("init_metadata", &transferase::methylome::init_metadata, "index"_a)
+    .def("update_metadata", &transferase::methylome::update_metadata)
+    .def("add", &transferase::methylome::add, "other"_a)
+    .def("__repr__", &transferase::methylome::tostring)
     .def(
       "get_levels",
-      [](const xfrase::methylome &self, const xfrase::query_container &query) {
+      [](const transferase::methylome &self, const transferase::query_container &query) {
         return self.get_levels(query);
       })
     .def(
       "get_levels_covered",
-      [](const xfrase::methylome &self, const xfrase::query_container &query) {
+      [](const transferase::methylome &self, const transferase::query_container &query) {
         return self.get_levels_covered(query);
       })
     .def("get_levels",
-         [](const xfrase::methylome &self, const std::uint32_t bin_size,
-            const xfrase::cpg_index &index) {
+         [](const transferase::methylome &self, const std::uint32_t bin_size,
+            const transferase::cpg_index &index) {
            return self.get_levels(bin_size, index);
          })
     .def("get_levels_covered",
-         [](const xfrase::methylome &self, const std::uint32_t bin_size,
-            const xfrase::cpg_index &index) {
+         [](const transferase::methylome &self, const std::uint32_t bin_size,
+            const transferase::cpg_index &index) {
            return self.get_levels_covered(bin_size, index);
          })
-    .def("global_levels", &xfrase::methylome::global_levels)
-    .def("global_levels_covered", &xfrase::methylome::global_levels_covered);
+    .def("global_levels", &transferase::methylome::global_levels)
+    .def("global_levels_covered", &transferase::methylome::global_levels_covered);
 }

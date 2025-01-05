@@ -37,7 +37,7 @@
 #include <system_error>
 #include <type_traits>  // for std::remove_cvref_t
 
-namespace xfrase {
+namespace transferase {
 
 [[nodiscard]] inline auto
 format_as_config(const auto &t) -> std::string {
@@ -100,6 +100,6 @@ write_client_config_file(const auto &args,
   return {};
 }
 
-}  // namespace xfrase
+}  // namespace transferase
 
 #endif  // SRC_CONFIG_FILE_UTILS_HPP_

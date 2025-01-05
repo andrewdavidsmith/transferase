@@ -128,7 +128,7 @@ command_list_main(int argc, char *argv[]) -> int {
     if (!show_only_methylomes) {
       if (verbose && !show_only_indexes)
         std::println("indexes:");
-      const auto index_names = xfrase::cpg_index::list_cpg_indexes(dirname, ec);
+      const auto index_names = transferase::cpg_index::list_cpg_indexes(dirname, ec);
       if (ec) {
         std::println("Error {}: {}", dirname, ec);
         return EXIT_FAILURE;
@@ -140,7 +140,7 @@ command_list_main(int argc, char *argv[]) -> int {
     if (!show_only_indexes) {
       if (verbose && !show_only_methylomes)
         std::println("methylomes:");
-      const auto methylome_names = xfrase::methylome::list(dirname, ec);
+      const auto methylome_names = transferase::methylome::list(dirname, ec);
       if (ec) {
         std::println("Error {}: {}", dirname, ec);
         return EXIT_FAILURE;

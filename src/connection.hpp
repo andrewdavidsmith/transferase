@@ -39,7 +39,7 @@
 #include <string>
 #include <utility>  // for std::move
 
-namespace xfrase {
+namespace transferase {
 
 struct request_handler;
 
@@ -110,11 +110,11 @@ struct connection : public std::enable_shared_from_this<connection> {
 
   // These help keep track of where we are in the incoming offsets;
   // they might best be associated with the request.
-  xfrase::query_container query;
+  transferase::query_container query;
   std::size_t query_byte{};
   std::size_t query_remaining{};
 };
 
-}  // namespace xfrase
+}  // namespace transferase
 
 #endif  // SRC_CONNECTION_HPP_

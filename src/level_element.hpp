@@ -28,7 +28,7 @@
 #include <format>
 #include <string>
 
-namespace xfrase {
+namespace transferase {
 
 struct level_element_t {
   std::uint32_t n_meth{};
@@ -45,22 +45,22 @@ struct level_element_covered_t {
   operator<=>(const level_element_covered_t &) const = default;
 };
 
-}  // namespace xfrase
+}  // namespace transferase
 
 template <>
-struct std::formatter<xfrase::level_element_t> : std::formatter<std::string> {
+struct std::formatter<transferase::level_element_t> : std::formatter<std::string> {
   auto
-  format(const xfrase::level_element_t &l, std::format_context &ctx) const {
+  format(const transferase::level_element_t &l, std::format_context &ctx) const {
     return std::format_to(ctx.out(), R"({{"n_meth": {}, "n_unmeth": {}}})",
                           l.n_meth, l.n_unmeth);
   }
 };
 
 template <>
-struct std::formatter<xfrase::level_element_covered_t>
+struct std::formatter<transferase::level_element_covered_t>
   : std::formatter<std::string> {
   auto
-  format(const xfrase::level_element_covered_t &l,
+  format(const transferase::level_element_covered_t &l,
          std::format_context &ctx) const {
     return std::format_to(
       ctx.out(), R"({{"n_meth": {}, "n_unmeth": {}, "n_covered": {}}})",

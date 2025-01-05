@@ -26,17 +26,17 @@
 
 #include <pybind11/pybind11.h>
 
-namespace xfrase {
+namespace transferase {
 class local_methylome_resource;
 class remote_methylome_resource;
-}  // namespace xfrase
+}  // namespace transferase
 
 auto
 local_methylome_resource_bindings(
-  pybind11::class_<xfrase::local_methylome_resource> &cls) -> void;
+  pybind11::class_<transferase::local_methylome_resource> &cls) -> void;
 
 auto
 remote_methylome_resource_bindings(
-  pybind11::class_<xfrase::remote_methylome_resource> &cls) -> void;
+  pybind11::class_<transferase::remote_methylome_resource> &cls) -> void;
 
 #endif  // PYTHON_TRANSFERASE_METHYLOME_RESOURCE_BINDINGS_HPP_

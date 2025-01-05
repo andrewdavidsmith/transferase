@@ -35,7 +35,7 @@
 #include <string>
 #include <system_error>
 
-namespace xfrase {
+namespace transferase {
 
 struct command_config_argset : argset_base<command_config_argset> {
   static constexpr auto default_config_filename = "xfrase_client_config.toml";
@@ -104,6 +104,6 @@ BOOST_DESCRIBE_STRUCT(command_config_argset, (), (
 ))
 // clang-format on
 
-}  // namespace xfrase
+}  // namespace transferase
 
 #endif  // SRC_COMMAND_CONFIG_ARGSET_HPP_

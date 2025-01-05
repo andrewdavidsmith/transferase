@@ -31,7 +31,7 @@
 #include <string>
 #include <system_error>
 
-namespace xfrase {
+namespace transferase {
 
 struct request;
 struct response_header;
@@ -56,7 +56,7 @@ struct request_handler {
 
   /// handle a request to get levels for query intervals
   auto
-  handle_get_levels(const request &req, const xfrase::query_container &query,
+  handle_get_levels(const request &req, const transferase::query_container &query,
                     response_header &resp_hdr, response_payload &resp) -> void;
 
   /// handle a request to get levels for genomic bins
@@ -73,6 +73,6 @@ struct request_handler {
   cpg_index_set indexes;
 };
 
-}  // namespace xfrase
+}  // namespace transferase
 
 #endif  // SRC_REQUEST_HANDLER_HPP_

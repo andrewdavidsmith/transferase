@@ -44,7 +44,7 @@
 #include <utility>  // std::swap std::move
 #include <vector>
 
-namespace xfrase {
+namespace transferase {
 
 template <typename derived, typename level_element> class client_base {
 public:
@@ -389,6 +389,6 @@ private:
   using base_class_t = client_base<bins_client<lvl>, lvl>;
 };  // class bins_client
 
-}  // namespace xfrase
+}  // namespace transferase
 
 #endif  // SRC_CLIENT_HPP_

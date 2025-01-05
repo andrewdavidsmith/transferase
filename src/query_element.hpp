@@ -27,7 +27,7 @@
 #include <compare>
 #include <cstdint>  // for std::uint32_t
 
-namespace xfrase {
+namespace transferase {
 
 typedef std::uint32_t q_elem_t;
 
@@ -38,6 +38,6 @@ struct query_element {
   operator<=>(const query_element &) const = default;
 };
 
-}  // namespace xfrase
+}  // namespace transferase
 
 #endif  // SRC_QUERY_ELEMENT_HPP_

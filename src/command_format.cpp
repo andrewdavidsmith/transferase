@@ -119,7 +119,7 @@ make_error_code(counts_file_format_error e) -> std::error_code {
   return std::error_code(std::to_underlying(e), category);
 }
 
-namespace xfrase {
+namespace transferase {
 
 static inline auto
 skip_absent_cpgs(const std::uint64_t end_pos, const cpg_index_data::vec &idx,
@@ -158,13 +158,13 @@ verify_header_line(const cpg_index_metadata &cim,
   chrom = chrom.substr(1);  // remove leading '#'
 
   // validate the chromosome order is consistent between the index and
-  // methylome xfrase file
+  // methylome transferase file
   const auto order_itr = cim.chrom_index.find(chrom);
   if (order_itr == cend(cim.chrom_index))
     return counts_file_format_error::xcounts_file_chromosome_not_found;
 
   // validate that the chromosome size is the same between the index
-  // and the methylome xfrase file
+  // and the methylome transferase file
   const auto size_itr = cim.chrom_size[order_itr->second];
   if (chrom_size != size_itr)
     return counts_file_format_error::xcounts_file_incorrect_chromosome_size;
@@ -175,7 +175,7 @@ verify_header_line(const cpg_index_metadata &cim,
 static auto
 process_cpg_sites_xcounts(const std::string &infile, const cpg_index &index)
   -> std::tuple<methylome_data, std::error_code> {
-  auto &lgr = xfrase::logger::instance();
+  auto &lgr = transferase::logger::instance();
 
   const cpg_index_metadata &index_meta = index.meta;
   const auto begin_positions = std::cbegin(index.data.positions);
@@ -269,7 +269,7 @@ process_cpg_sites_xcounts(const std::string &infile, const cpg_index &index)
 static auto
 process_cpg_sites_counts(const std::string &infile, const cpg_index &index)
   -> std::tuple<methylome_data, std::error_code> {
-  auto &lgr = xfrase::logger::instance();
+  auto &lgr = transferase::logger::instance();
 
   const cpg_index_metadata &index_meta = index.meta;
   const auto begin_positions = std::cbegin(index.data.positions);
@@ -351,7 +351,7 @@ process_cpg_sites_counts(const std::string &infile, const cpg_index &index)
   return {methylome_data{std::move(cpgs_flat)}, std::error_code{}};
 }
 
-}  // namespace xfrase
+}  // namespace transferase
 
 auto
 command_format_main(int argc, char *argv[]) -> int {
@@ -365,13 +365,13 @@ command_format_main(int argc, char *argv[]) -> int {
   static const auto description_msg =
     std::format("{}\n{}", strip(description), strip(examples));
 
-  using xfrase::counts_file_format;
-  using xfrase::cpg_index;
-  using xfrase::get_meth_file_format;
-  using xfrase::log_level_t;
-  using xfrase::logger;
-  using xfrase::methylome;
-  using xfrase::methylome_metadata;
+  using transferase::counts_file_format;
+  using transferase::cpg_index;
+  using transferase::get_meth_file_format;
+  using transferase::log_level_t;
+  using transferase::logger;
+  using transferase::methylome;
+  using transferase::methylome_metadata;
 
   std::string index_directory{};
   std::string genome_name{};
@@ -416,7 +416,8 @@ command_format_main(int argc, char *argv[]) -> int {
     return EXIT_FAILURE;
   }
 
-  auto &lgr = logger::instance(xfrase::shared_from_cout(), command, log_level);
+  auto &lgr =
+    logger::instance(transferase::shared_from_cout(), command, log_level);
   if (!lgr) {
     std::println("Failure initializing logging: {}.", lgr.get_status());
     return EXIT_FAILURE;
@@ -435,7 +436,7 @@ command_format_main(int argc, char *argv[]) -> int {
     {"Zip", std::format("{}", zip)},
     // clang-format on
   };
-  xfrase::log_args<log_level_t::info>(args_to_log);
+  transferase::log_args<log_level_t::info>(args_to_log);
 
   std::error_code index_ec;
   const auto index = cpg_index::read(index_directory, genome_name, index_ec);

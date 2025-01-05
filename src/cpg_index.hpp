@@ -36,7 +36,7 @@
 #include <utility>      // for std::to_underlying, std::unreachable
 #include <vector>
 
-namespace xfrase {
+namespace transferase {
 
 struct genomic_interval;
 
@@ -74,7 +74,7 @@ struct cpg_index {
 
   [[nodiscard]] auto
   make_query(const std::vector<genomic_interval> &gis) const
-    -> xfrase::query_container;
+    -> transferase::query_container;
 
   [[nodiscard]] auto
   get_n_cpgs_chrom() const {
@@ -103,7 +103,7 @@ struct cpg_index {
                    std::error_code &ec) -> std::vector<std::string>;
 };
 
-}  // namespace xfrase
+}  // namespace transferase
 
 // cpg_index errors
 

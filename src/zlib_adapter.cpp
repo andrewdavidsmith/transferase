@@ -37,7 +37,7 @@
 #include <utility>  // std::move
 #include <vector>
 
-namespace xfrase {
+namespace transferase {
 
 [[nodiscard]] auto
 is_gzip_file(const std::string &filename) -> bool {
@@ -127,4 +127,4 @@ read_gzfile_into_buffer(const std::string &filename)
   return std::make_tuple(std::move(buffer), std::error_code{});
 }
 
-}  // namespace xfrase
+}  // namespace transferase

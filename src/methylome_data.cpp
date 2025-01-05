@@ -53,7 +53,7 @@
 #include <print>
 #endif
 
-namespace xfrase {
+namespace transferase {
 
 [[nodiscard]] auto
 methylome_data::get_n_cpgs_from_file(const std::string &filename,
@@ -199,8 +199,8 @@ template <typename U>
 [[nodiscard]] static inline auto
 get_levels_impl(const methylome_data::vec &cpgs,
                 const cpg_index_data::vec &positions,
-                const std::uint32_t offset, const xfrase::q_elem_t start,
-                const xfrase::q_elem_t stop) -> U {
+                const std::uint32_t offset, const transferase::q_elem_t start,
+                const transferase::q_elem_t stop) -> U {
   // ADS: it is possible that the intervals requested are past the cpg
   // sites since they might be in the genome, but past the final cpg
   // site location. This code *should* be able to handle such a
@@ -217,7 +217,7 @@ get_levels_impl(const methylome_data::vec &cpgs,
 }
 
 [[nodiscard]] auto
-methylome_data::get_levels_covered(const xfrase::query_container &query) const
+methylome_data::get_levels_covered(const transferase::query_container &query) const
   -> level_container<level_element_covered_t> {
   auto res = level_container<level_element_covered_t>(size(query));
   const auto beg = std::cbegin(cpgs);
@@ -228,7 +228,7 @@ methylome_data::get_levels_covered(const xfrase::query_container &query) const
 }
 
 [[nodiscard]] auto
-methylome_data::get_levels(const xfrase::query_container &query) const
+methylome_data::get_levels(const transferase::query_container &query) const
   -> level_container<level_element_t> {
   std::vector<level_element_t> res(size(query));
   const auto beg = std::cbegin(cpgs);
@@ -323,4 +323,4 @@ methylome_data::get_n_cpgs() const -> std::uint32_t {
   return std::size(cpgs);
 }
 
-}  // namespace xfrase
+}  // namespace transferase

@@ -50,7 +50,7 @@
 #include <unordered_map>
 #include <utility>  // for std::move
 
-namespace xfrase {
+namespace transferase {
 
 auto
 do_download(const download_request &dr, const std::string &outfile,
@@ -206,4 +206,4 @@ download(const download_request &dr)
   return {header, ec};
 }
 
-}  // namespace xfrase
+}  // namespace transferase

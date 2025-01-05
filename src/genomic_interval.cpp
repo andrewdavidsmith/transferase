@@ -38,7 +38,7 @@
 #include <utility>  // for std::move, std::pair
 #include <vector>
 
-namespace xfrase {
+namespace transferase {
 
 [[nodiscard]] STATIC auto
 parse(const cpg_index_metadata &meta, const std::string &line,
@@ -137,4 +137,4 @@ genomic_interval::are_sorted(const std::vector<genomic_interval> &intervals)
   return is_sorted;
 }
 
-}  // namespace xfrase
+}  // namespace transferase

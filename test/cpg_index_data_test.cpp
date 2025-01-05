@@ -36,7 +36,7 @@
 #include <string>
 #include <vector>
 
-using namespace xfrase;  // NOLINT
+using namespace transferase;  // NOLINT
 
 TEST(cpg_index_data_test, basic_assertions) {
   cpg_index_data data;
@@ -127,7 +127,7 @@ TEST(cpg_index_data_test, valid_make_query_within_chrom) {
     {4, 5},
   };
   const auto query = index.make_query_within_chrom(0, queries);
-  const auto expected = xfrase::query_container(std::vector<query_element>{
+  const auto expected = transferase::query_container(std::vector<query_element>{
     {0, 2},
     {3, 4},
   });

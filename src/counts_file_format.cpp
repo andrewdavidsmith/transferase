@@ -37,7 +37,7 @@
 #include <string>
 #include <tuple>
 
-namespace xfrase {
+namespace transferase {
 
 [[nodiscard]] auto
 parse_counts_line(const std::string &line, std::uint32_t &pos,
@@ -168,4 +168,4 @@ get_meth_file_format(const std::string &filename)
   return {counts_file_format::none, {}};
 }
 
-}  // namespace xfrase
+}  // namespace transferase
