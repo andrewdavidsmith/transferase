@@ -24,30 +24,81 @@
 #ifndef SRC_DOWNLOAD_HPP_
 #define SRC_DOWNLOAD_HPP_
 
-#include <cstdint>
+#include <chrono>
 #include <string>
 #include <system_error>
 #include <tuple>
 #include <unordered_map>
+#include <variant>  // for std::tuple
 
 namespace xfrase {
+
+template <typename T>
+concept chrono_duration = requires(T t) {
+  typename T::rep;
+  typename T::period;
+};
 
 struct download_request {
   std::string host;
   std::string port;
   std::string target;
   std::string outdir;
-  std::uint32_t connect_timeout{10};    // seconds
-  std::uint32_t download_timeout{240};  // seconds
   download_request(const std::string &host, const std::string &port,
                    const std::string &target, const std::string &outdir) :
     host{host}, port{port}, target{target}, outdir{outdir} {}
+
   download_request(const std::string &host, const std::string &port,
                    const std::string &target, const std::string &outdir,
-                   const std::uint32_t connect_timeout,
-                   const std::uint32_t download_timeout) :
+                   const std::chrono::milliseconds connect_timeout_in_millis,
+                   const std::chrono::milliseconds download_timeout_in_millis) :
     host{host}, port{port}, target{target}, outdir{outdir},
-    connect_timeout{connect_timeout}, download_timeout{download_timeout} {}
+    connect_timeout{connect_timeout_in_millis},
+    download_timeout{download_timeout_in_millis} {}
+
+  template <typename T>
+  auto
+  set_connect_timeout(T const d) -> void
+    requires chrono_duration<T>
+  {
+    // cppcheck-suppress missingReturn
+    connect_timeout = std::chrono::duration_cast<std::chrono::milliseconds>(d);
+  }
+
+  template <typename T>
+  auto
+  set_download_timeout(T const d) -> void
+    requires chrono_duration<T>
+  {
+    // cppcheck-suppress missingReturn
+    download_timeout = std::chrono::duration_cast<std::chrono::milliseconds>(d);
+  }
+
+  auto
+  set_connect_timeout(auto const d) -> void {
+    connect_timeout = std::chrono::duration_cast<std::chrono::milliseconds>(
+      std::chrono::seconds(d));
+  }
+
+  auto
+  set_download_timeout(auto const d) -> void {
+    download_timeout = std::chrono::duration_cast<std::chrono::milliseconds>(
+      std::chrono::seconds(d));
+  }
+
+  auto
+  get_connect_timeout() const -> std::chrono::milliseconds {
+    return connect_timeout;
+  }
+
+  auto
+  get_download_timeout() const -> std::chrono::milliseconds {
+    return download_timeout;
+  }
+
+private:
+  std::chrono::milliseconds connect_timeout{10'000'000};    // milliseconds
+  std::chrono::milliseconds download_timeout{240'000'000};  // milliseconds
 };
 
 [[nodiscard]]

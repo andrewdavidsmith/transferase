@@ -35,7 +35,6 @@
 #include <boost/beast.hpp>
 
 #include <cerrno>
-#include <chrono>
 #include <cstdint>    // for std::uint64_t
 #include <exception>  // for std::exception_ptr
 #include <filesystem>
@@ -81,7 +80,7 @@ do_download(const download_request &dr, const std::string &outfile,
   }
 
   // set the timeout for connecting
-  stream.expires_after(std::chrono::seconds(dr.connect_timeout));
+  stream.expires_after(dr.get_connect_timeout());
 
   // connect to server
   stream.async_connect(results, yield[ec]);
@@ -97,7 +96,7 @@ do_download(const download_request &dr, const std::string &outfile,
   req.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
 
   // set the timeout for download (need a message for this)
-  stream.expires_after(std::chrono::seconds(dr.download_timeout));
+  stream.expires_after(dr.get_download_timeout());
 
   // send request to server
   boost::beast::http::async_write(stream, req, yield[ec]);
