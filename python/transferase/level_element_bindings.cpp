@@ -43,6 +43,8 @@ level_element_bindings(py::class_<xfrase::level_element_t> &cls) -> void {
          [](const xfrase::level_element_t &self) {
            return std::format("{}", self);
          })
+    .def("__eq__", std::equal_to<xfrase::level_element_t>{})
+    .def("__ne__", std::not_equal_to<xfrase::level_element_t>{})
     .def_readwrite("n_meth", &xfrase::level_element_t::n_meth,
                    "Number of methylated observations")
     .def_readwrite("n_unmeth", &xfrase::level_element_t::n_unmeth,
@@ -64,6 +66,8 @@ level_element_covered_bindings(py::class_<xfrase::level_element_covered_t> &cls)
          [](const xfrase::level_element_covered_t &self) {
            return std::format("{}", self);
          })
+    .def("__eq__", std::equal_to<xfrase::level_element_covered_t>{})
+    .def("__ne__", std::not_equal_to<xfrase::level_element_covered_t>{})
     .def_readwrite("n_meth", &xfrase::level_element_covered_t::n_meth,
                    "Number of methylated observations")
     .def_readwrite("n_unmeth", &xfrase::level_element_covered_t::n_unmeth,
