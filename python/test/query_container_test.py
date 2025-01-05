@@ -20,31 +20,30 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import unittest
-from transferase.query import Query
+import pytest
 
-class TestQuery(unittest.TestCase):
+from transferase import QueryContainer
 
-    def setUp(self):
-        """Set up initial data for tests"""
-        # Initialize a query object with some elements
-        self.query1 = Query()
-        self.query2 = Query()
+@pytest.fixture
+def query_containers():
+    """Fixture to set up initial data for tests"""
+    # Initialize QueryContainer objects
+    query_container1 = QueryContainer()
+    query_container2 = QueryContainer()
+    return query_container1, query_container2
 
-    def test_init_empty(self):
-        """Test default constructor"""
-        query = Query()
-        self.assertEqual(len(query), 0)
+def test_init_empty(query_containers):
+    """Test length zero"""
+    query_container1, _ = query_containers
+    assert len(query_container1) == 0
 
-    def test_repr(self):
-        """Test the __repr__ method"""
-        query = Query()
-        repr_str = repr(query)
-        self.assertIn("<Query size=0>", repr_str)
+def test_repr(query_containers):
+    """Test the __repr__ method"""
+    query_container1, _ = query_containers
+    repr_str = repr(query_container1)
+    assert "<QueryContainer size=0>" in repr_str
 
-    def test_eq(self):
-        """Test the equality operator"""
-        self.assertEqual(self.query1, self.query2)
-
-if __name__ == "__main__":
-    unittest.main()
+def test_eq(query_containers):
+    """Test the equality operator"""
+    query_container1, query_container2 = query_containers
+    assert query_container1 == query_container2
