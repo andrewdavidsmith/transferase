@@ -50,7 +50,7 @@ parse(const cpg_index_metadata &meta, const std::string &line,
   // Parse chromosome name
   auto first_space_pos = line.find_first_of(" \t");
   if (first_space_pos == std::string::npos) {
-    ec = genomic_interval_code::error_parsing_bed_line;
+    ec = genomic_interval_error_code::error_parsing_bed_line;
     first_space_pos = line_sz;
   }
   // ADS: consider string_view here
@@ -61,23 +61,23 @@ parse(const cpg_index_metadata &meta, const std::string &line,
   std::uint32_t start{};
   auto result = std::from_chars(std::min(cursor, line_end), line_end, start);
   if (!ec && static_cast<bool>(result.ec))
-    ec = genomic_interval_code::error_parsing_bed_line;
+    ec = genomic_interval_error_code::error_parsing_bed_line;
   cursor = result.ptr + 1;
 
   // Parse stop
   std::uint32_t stop{};
   result = std::from_chars(std::min(cursor, line_end), line_end, stop);
   if (!ec && static_cast<bool>(result.ec))
-    ec = genomic_interval_code::error_parsing_bed_line;
+    ec = genomic_interval_error_code::error_parsing_bed_line;
 
   // Find chromosome ID
   const auto ch_id_itr = meta.chrom_index.find(chrom_name);
   if (!ec && ch_id_itr == std::cend(meta.chrom_index))
-    ec = genomic_interval_code::chrom_name_not_found_in_index;
+    ec = genomic_interval_error_code::chrom_name_not_found_in_index;
 
   // Check interval
   if (!ec && stop > meta.chrom_size[ch_id_itr->second])
-    ec = genomic_interval_code::interval_past_chrom_end_in_index;
+    ec = genomic_interval_error_code::interval_past_chrom_end_in_index;
 
   return ec ? genomic_interval{}
             : genomic_interval{ch_id_itr->second, start, stop};
