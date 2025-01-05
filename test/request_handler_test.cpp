@@ -102,7 +102,7 @@ TEST_F(request_handler_mock, add_response_size_for_bins_success) {
 
   mock_request_handler->add_response_size(req, resp_hdr);
 
-  EXPECT_EQ(resp_hdr.status, server_response_code::ok);
+  EXPECT_EQ(resp_hdr.status, server_error_code::ok);
   EXPECT_EQ(resp_hdr.response_size, expected_response_size_n_bins);
 }
 
@@ -115,7 +115,7 @@ TEST_F(request_handler_mock, add_response_size_for_bins_methylome_error) {
   response_header resp_hdr;
   mock_request_handler->add_response_size(req, resp_hdr);
 
-  EXPECT_EQ(resp_hdr.status, server_response_code::methylome_not_found);
+  EXPECT_EQ(resp_hdr.status, server_error_code::methylome_not_found);
 }
 
 TEST_F(request_handler_mock, add_response_size_for_bins_bad_assembly) {
@@ -150,7 +150,7 @@ TEST_F(request_handler_mock, add_response_size_for_bins_bad_assembly) {
   response_header resp_hdr;
   mock_request_handler->add_response_size(req, resp_hdr);
 
-  EXPECT_EQ(resp_hdr.status, server_response_code::index_not_found);
+  EXPECT_EQ(resp_hdr.status, server_error_code::index_not_found);
 
   if (std::filesystem::exists(fake_methylome_file))
     std::filesystem::remove(fake_methylome_file);
@@ -170,7 +170,7 @@ TEST_F(request_handler_mock, add_response_size_for_intervals_success) {
   response_header resp_hdr;
   mock_request_handler->add_response_size(req, resp_hdr);
 
-  EXPECT_EQ(resp_hdr.status, server_response_code::ok);
+  EXPECT_EQ(resp_hdr.status, server_error_code::ok);
   EXPECT_EQ(resp_hdr.response_size, expected_response_size_n_intervals);
 }
 
@@ -187,7 +187,7 @@ TEST_F(request_handler_mock, handle_request_success) {
 
   mock_request_handler->add_response_size(req, resp_hdr);
 
-  EXPECT_EQ(resp_hdr.status, server_response_code::ok);
+  EXPECT_EQ(resp_hdr.status, server_error_code::ok);
   EXPECT_EQ(resp_hdr.response_size, expected_response_size_n_intervals);
 
   mock_request_handler->handle_request(req, resp_hdr);
@@ -209,12 +209,12 @@ TEST_F(request_handler_mock, handle_request_bad_state) {
   response_header resp_hdr;
   mock_request_handler->handle_request(req, resp_hdr);
 
-  EXPECT_EQ(resp_hdr.status, server_response_code::invalid_accession);
+  EXPECT_EQ(resp_hdr.status, server_error_code::invalid_accession);
 
   req = request{ok_accession, invalid_rq_type, index_hash, n_intervals};
   mock_request_handler->handle_request(req, resp_hdr);
 
-  EXPECT_EQ(resp_hdr.status, server_response_code::invalid_request_type);
+  EXPECT_EQ(resp_hdr.status, server_error_code::invalid_request_type);
 }
 
 TEST_F(request_handler_mock, handle_request_failure) {
@@ -231,7 +231,7 @@ TEST_F(request_handler_mock, handle_request_failure) {
   response_header resp_hdr;
   mock_request_handler->add_response_size(req, resp_hdr);
 
-  EXPECT_EQ(resp_hdr.status, server_response_code::ok);
+  EXPECT_EQ(resp_hdr.status, server_error_code::ok);
   EXPECT_EQ(resp_hdr.response_size, expected_response_size_n_intervals);
   EXPECT_EQ(std::size(mock_request_handler->ms.accession_to_methylome), 1);
 
@@ -239,7 +239,7 @@ TEST_F(request_handler_mock, handle_request_failure) {
   mock_request_handler->handle_request(req, resp_hdr);
 
   EXPECT_EQ(std::size(mock_request_handler->ms.accession_to_methylome), 1);
-  EXPECT_EQ(resp_hdr.status, server_response_code::methylome_not_found);
+  EXPECT_EQ(resp_hdr.status, server_error_code::methylome_not_found);
 }
 
 TEST_F(request_handler_mock, handle_get_levels_intervals_success) {

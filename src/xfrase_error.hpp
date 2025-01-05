@@ -33,7 +33,7 @@
 #include <type_traits>
 #include <utility>
 
-enum class server_response_code : std::uint8_t {
+enum class server_error_code : std::uint8_t {
   ok = 0,
   invalid_accession = 1,
   invalid_request_type = 2,
@@ -45,9 +45,9 @@ enum class server_response_code : std::uint8_t {
 };
 
 template <>
-struct std::is_error_code_enum<server_response_code> : public std::true_type {};
+struct std::is_error_code_enum<server_error_code> : public std::true_type {};
 
-struct server_response_category : std::error_category {
+struct server_error_category : std::error_category {
   // clang-format off
   auto name() const noexcept -> const char * override {return "server_response";}
   auto message(int code) const -> std::string override {
@@ -68,8 +68,8 @@ struct server_response_category : std::error_category {
 };
 
 inline auto
-make_error_code(server_response_code e) -> std::error_code {
-  static auto category = server_response_category{};
+make_error_code(server_error_code e) -> std::error_code {
+  static auto category = server_error_category{};
   return std::error_code(std::to_underlying(e), category);
 }
 

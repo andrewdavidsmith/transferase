@@ -60,20 +60,20 @@ request_handler::add_response_size(const request &req,
   const auto meth = ms.get_methylome(req.accession, ec);
   if (ec) {
     lgr.warning("Error loading methylome {}: {}", req.accession, ec);
-    resp_hdr.status = server_response_code::methylome_not_found;
+    resp_hdr.status = server_error_code::methylome_not_found;
     return;
   }
 
   const auto index = indexes.get_cpg_index(meth->meta.assembly, ec);
   if (ec) {
     lgr.error("Failed to load cpg index for {}: {}", meth->meta.assembly, ec);
-    resp_hdr.status = server_response_code::index_not_found;
+    resp_hdr.status = server_error_code::index_not_found;
     return;
   }
   resp_hdr.response_size = req.is_intervals_request()
                              ? req.n_intervals()
                              : index->meta.get_n_bins(req.bin_size());
-  resp_hdr.status = server_response_code::ok;
+  resp_hdr.status = server_error_code::ok;
 }
 
 auto
@@ -86,14 +86,14 @@ request_handler::handle_request(const request &req,
   // verify that the accession makes sense
   if (!methylome::is_valid_name(req.accession)) {
     lgr.warning("Malformed accession: {}", req.accession);
-    resp_hdr.status = server_response_code::invalid_accession;
+    resp_hdr.status = server_error_code::invalid_accession;
     return;
   }
 
   // verify that the request type makes sense
   if (!req.is_valid_type()) {
     lgr.warning("Request type not valid: {}", req.request_type);
-    resp_hdr.status = server_response_code::invalid_request_type;
+    resp_hdr.status = server_error_code::invalid_request_type;
     return;
   }
 
@@ -106,7 +106,7 @@ request_handler::handle_request(const request &req,
 
   if (ec) {
     lgr.warning("Error loading methylome {}: {}", req.accession, ec);
-    resp_hdr.status = server_response_code::methylome_not_found;
+    resp_hdr.status = server_error_code::methylome_not_found;
     return;
   }
 
@@ -114,7 +114,7 @@ request_handler::handle_request(const request &req,
   if (req.index_hash != meth->meta.index_hash) {
     lgr.warning("Incorrect index_hash (provided={}, expected={})",
                 req.index_hash, meth->meta.index_hash);
-    resp_hdr.status = server_response_code::invalid_index_hash;
+    resp_hdr.status = server_error_code::invalid_index_hash;
     return;
   }
 
@@ -168,7 +168,7 @@ request_handler::handle_get_levels(const request &req,
   }
 
   // ADS: if we arrive here, the request was bad
-  resp_hdr.status = server_response_code::bad_request;
+  resp_hdr.status = server_error_code::bad_request;
 }
 
 auto
@@ -208,7 +208,7 @@ request_handler::handle_get_levels(const request &req,
   }
 
   // ADS: if we arrive here, the request was bad
-  resp_hdr.status = server_response_code::bad_request;
+  resp_hdr.status = server_error_code::bad_request;
 }
 
 }  // namespace xfrase

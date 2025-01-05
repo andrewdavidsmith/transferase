@@ -56,33 +56,33 @@ parse(const char *first, const char *last,
   auto cursor = first;
 
   // status
-  std::underlying_type_t<server_response_code> tmp{};
+  std::underlying_type_t<server_error_code> tmp{};
   {
     const auto [ptr, ec] = std::from_chars(cursor, last, tmp);
     if (ec != std::errc{})
-      return server_response_code::server_failure;
+      return server_error_code::server_failure;
     cursor = ptr;
   }
-  hdr.status = static_cast<server_response_code>(tmp);
+  hdr.status = static_cast<server_error_code>(tmp);
 
   if (*cursor != delim)
-    return server_response_code::server_failure;
+    return server_error_code::server_failure;
   ++cursor;
 
   // response size
   {
     const auto [ptr, ec] = std::from_chars(cursor, last, hdr.response_size);
     if (ec != std::errc{})
-      return server_response_code::server_failure;
+      return server_error_code::server_failure;
     cursor = ptr;
   }
 
   // terminator
   if (*cursor != term)
-    return server_response_code::server_failure;
+    return server_error_code::server_failure;
   ++cursor;
 
-  return server_response_code::ok;
+  return server_error_code::ok;
 }
 
 [[nodiscard]] auto
