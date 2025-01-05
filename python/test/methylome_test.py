@@ -1,0 +1,257 @@
+# MIT License
+#
+# Copyright (c) 2024 Andrew D Smith
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+
+import pytest
+import shutil
+import tempfile
+import os
+
+from transferase import CpgIndex
+from transferase import Methylome
+from transferase import ErrorCode
+from transferase import GenomicInterval
+from transferase import LevelElement
+from transferase import LevelContainer
+from transferase import LevelElementCovered
+from transferase import LevelContainerCovered
+
+
+def get_valid_test_cpg_index(genome_name):
+    """
+    Fixture to load a valid CpgIndex object for testing
+    """
+    cpg_index_dirname = "data/lutions/indexes"
+    error = ErrorCode()
+    cpg_index = CpgIndex.read(cpg_index_dirname, genome_name, error)
+    assert not error, f"Failed to read CpgIndex: {index_dirname}, {genome_name}"
+    return cpg_index
+
+
+def get_valid_test_methylome(genome_name, tissue_name):
+    """
+    Fixture to load a valid Methylome object for testing
+    """
+    methylome_directory = "data/lutions/methylomes"
+    methylome_name = f"{genome_name}_{tissue_name}"
+    error = ErrorCode()
+    meth = Methylome.read(methylome_directory, methylome_name, error)
+    assert not error, f"Failed to read Methylome: {methylome_directory}, {methylome_name}"
+    return meth
+
+
+def get_valid_test_genomic_intervals(genome_name, tissue_name):
+    """
+    Fixture to load a valid list of GenomicInterval objects for testing
+    """
+    intervals_directory = "data/lutions/raw"
+    intervals_filename = os.path.join(
+        intervals_directory,
+        f"{genome_name}_{tissue_name}_hmr.bed",
+    )
+    cpg_index = get_valid_test_cpg_index(genome_name)
+    error = ErrorCode()
+    intervals = GenomicInterval.read(cpg_index, intervals_filename, error)
+    assert not error, f"Failed to read GenomicInterval: {intervals_file}"
+    return intervals
+
+
+def get_valid_test_query(genome_name, tissue_name):
+    """
+    Fixture to make a valid query for given CpgIndex and a
+    corresponding list of GenomicInterval objects
+    """
+    error = ErrorCode()
+    intervals = get_valid_test_genomic_intervals(genome_name, tissue_name)
+    cpg_index = get_valid_test_cpg_index(genome_name)
+    query = cpg_index.make_query(intervals)
+    assert query is not None, f"Failed to make query from fixture"
+    return query
+
+
+def create_temp_directory():
+    """Create a unique temporary directory in /tmp"""
+    temp_dir = tempfile.mkdtemp(dir="/tmp", prefix="my_test_")
+    return temp_dir
+
+
+def test_methylome_init():
+    """Test the default constructor"""
+    obj = Methylome()
+    assert obj is not None
+
+
+def test_methylome_read():
+    """Test the read static method"""
+    directory = "data/lutions/methylomes"
+    methylome_name = "eFlareon_brain"
+    error_code = ErrorCode()
+    meth = Methylome.read(directory, methylome_name, error_code)
+    assert meth is not None
+
+
+def test_methylome_is_consistent():
+    """Test the is_consistent method (empty Methylome)"""
+    meth = Methylome()
+    assert isinstance(meth.is_consistent(), bool)
+
+
+def test_methylome_is_consistent():
+    """Test the is_consistent method (non-empty Methylome)"""
+    directory = "data/lutions/methylomes"
+    methylome_name = "eFlareon_brain"
+    error_code = ErrorCode()
+    meth = Methylome.read(directory, methylome_name, error_code)
+    assert meth.is_consistent()
+
+
+def test_methylome_is_consistent_with_other():
+    """Test the is_consistent method (with another methylome object)"""
+    obj1 = Methylome()
+    obj2 = Methylome()
+    assert isinstance(obj1.is_consistent(obj2), bool)
+
+
+def test_methylome_write():
+    """Test the write method"""
+    genome_name = "eVaporeon"
+    tissue_name = "brain"
+    methylome_name = f"{genome_name}_{tissue_name}"
+    meth = get_valid_test_methylome(genome_name, tissue_name)
+    output_directory = create_temp_directory()
+    status = meth.write(output_directory, methylome_name)
+    assert not status
+    if os.path.isdir(output_directory):
+        shutil.rmtree(output_directory)
+
+
+def test_methylome_init_metadata_inconsistent():
+    """
+    Test init_metadata method when Methylome and CpgIndex are not consistent
+    """
+    genome_name1 = "eVaporeon"
+    genome_name2 = "eJolteon"
+    tissue_name = "ear"
+    index = get_valid_test_cpg_index(genome_name1)
+    meth = get_valid_test_methylome(genome_name2, tissue_name)
+    error = meth.init_metadata(index)
+    assert error
+
+
+def test_methylome_init_metadata_consistent():
+    """
+    Test init_metadata method when Methylome and CpgIndex are consistent
+    """
+    genome_name = "eFlareon"
+    tissue_name = "tail"
+    index = get_valid_test_cpg_index(genome_name)
+    meth = get_valid_test_methylome(genome_name, tissue_name)
+    error = meth.init_metadata(index)
+    assert not error
+
+
+def test_methylome_update_metadata_empty():
+    """Test update_metadata method for an empty Methylome"""
+    meth = Methylome()
+    error = meth.update_metadata()
+    assert not error
+
+
+def test_methylome_update_metadata():
+    """Test update_metadata method"""
+    genome_name = "eVaporeon"
+    tissue_name = "brain"
+    meth = get_valid_test_methylome("eVaporeon", "brain")
+    error = meth.update_metadata()
+    assert not error
+
+
+def test_methylome_add_empty():
+    """Test add method for two empty methylomes"""
+    meth1 = get_valid_test_methylome("eJolteon", "brain")
+    meth2 = get_valid_test_methylome("eJolteon", "ear")
+    meth1.add(meth2)
+    assert meth1 is not None
+
+
+def test_methylome_repr():
+    """Test __repr__ method"""
+    meth = Methylome()
+    repr_result = repr(meth)
+    assert isinstance(repr_result, str)
+    assert "version" in repr_result
+
+
+def test_methylome_get_levels_with_query_container():
+    """Test get_levels method (with query_container argument)"""
+    meth = get_valid_test_methylome("eFlareon", "brain")
+    query = get_valid_test_query("eFlareon", "brain")
+    levels = meth.get_levels(query)
+    assert isinstance(levels, LevelContainer)
+
+
+def test_methylome_get_levels_covered_with_query_container():
+    """Test get_levels_covered method (with query_container argument)"""
+    meth = get_valid_test_methylome("eJolteon", "ear")
+    query = get_valid_test_query("eJolteon", "ear")
+    levels = meth.get_levels_covered(query)
+    assert isinstance(levels, LevelContainerCovered)
+
+
+def test_methylome_get_levels_with_bin_size_and_cpg_index():
+    """Test get_levels method (with bin_size and cpg_index argument)"""
+    genome_name = "eJolteon"
+    tissue_name = "ear"
+    meth = get_valid_test_methylome(genome_name, tissue_name)
+    cpg_index = get_valid_test_cpg_index(genome_name)
+    bin_size = 100
+    levels = meth.get_levels(bin_size, cpg_index)
+    assert isinstance(levels, LevelContainer)
+
+
+def test_methylome_get_levels_covered_with_bin_size_and_cpg_index():
+    """Test get_levels_covered method (with bin_size and cpg_index argument)"""
+    genome_name = "eJolteon"
+    tissue_name = "ear"
+    meth = get_valid_test_methylome(genome_name, tissue_name)
+    cpg_index = get_valid_test_cpg_index(genome_name)
+    bin_size = 100
+    levels = meth.get_levels_covered(bin_size, cpg_index)
+    assert isinstance(levels, LevelContainerCovered)
+
+
+def test_methylome_global_levels():
+    """Test global_levels method"""
+    meth = Methylome()
+    result = meth.global_levels()
+    expected = LevelElement()
+    assert isinstance(result, LevelElement)
+    assert result.n_meth == expected.n_meth
+
+
+def test_methylome_global_levels_covered():
+    """Test global_levels_covered method"""
+    meth = Methylome()
+    result = meth.global_levels_covered()
+    expected = LevelElementCovered()
+    assert isinstance(result, LevelElementCovered)
+    assert result.n_covered == expected.n_covered
