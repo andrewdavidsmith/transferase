@@ -28,6 +28,7 @@
 #include <pybind11/pybind11.h>
 
 #include <format>
+#include <functional>
 #include <string>
 
 namespace py = pybind11;
