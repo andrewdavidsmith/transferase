@@ -37,9 +37,8 @@ foreach(TEST_FILE ${PYTHON_TEST_FILES})
   message(STATUS "${TEST_NAME}")
   add_test(
     NAME python_${TEST_NAME}
-    COMMAND ${Python3_EXECUTABLE} -m unittest discover
-    -s ${CMAKE_BINARY_DIR}/python/test
-    -p "${TEST_NAME}.py"
+    COMMAND ${Python3_EXECUTABLE} -m pytest
+    ${CMAKE_BINARY_DIR}/python/test
   )
 endforeach()
 
