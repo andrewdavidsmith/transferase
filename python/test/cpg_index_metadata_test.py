@@ -20,19 +20,20 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import unittest
-from transferase.cpg_index_metadata import CpgIndexMetadata
+import pytest
 
-class TestCpgIndexMetadata(unittest.TestCase):
+from transferase import CpgIndexMetadata
 
-    def test_tostring(self):
-        """
-        Test the tostring method
-        """
-        metadata = CpgIndexMetadata()
-        result = metadata.tostring()
-        self.assertIsInstance(result, str)
-        self.assertIn("version", result)
+@pytest.fixture
+def setup_cpg_index_metadata():
+    """Fixture to set up initial data for tests"""
+    meta = CpgIndexMetadata()
+    meta.init_env()
+    return meta
 
-if __name__ == "__main__":
-    unittest.main()
+def tests_repr(setup_cpg_index_metadata):
+    """Test the __repr__ function"""
+    meta = setup_cpg_index_metadata
+    repr_str = repr(meta)
+    assert isinstance(repr_str, str)
+    assert "version" in repr_str
