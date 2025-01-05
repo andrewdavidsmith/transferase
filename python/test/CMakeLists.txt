@@ -27,19 +27,20 @@ find_package(Python3 REQUIRED COMPONENTS Interpreter)
 file(GLOB PYTHON_TEST_FILES ${CMAKE_CURRENT_SOURCE_DIR}/*_test.py)
 
 # Specify the additional path for Python to find modules:
-set(PYTHONPATH "${CMAKE_BINARY_DIR}/python" ${PYTHONPATH})
+set(PYTHONPATH "${PROJECT_BINARY_DIR}/python" ${PYTHONPATH})
 
 # Copy the matched .py files to the build directory and add a test for
 # each of them
 foreach(TEST_FILE ${PYTHON_TEST_FILES})
-  file(COPY ${TEST_FILE} DESTINATION ${CMAKE_BINARY_DIR}/python/test)
+  file(COPY ${TEST_FILE} DESTINATION ${PROJECT_BINARY_DIR}/python/test)
   get_filename_component(TEST_NAME ${TEST_FILE} NAME_WE)
-  message(STATUS "${TEST_NAME}")
   add_test(
     NAME python_${TEST_NAME}
     COMMAND ${Python3_EXECUTABLE} -m pytest
-    ${CMAKE_BINARY_DIR}/python/test
+    ${PROJECT_BINARY_DIR}/python/test
   )
+  set_tests_properties(python_${TEST_NAME}
+    PROPERTIES ENVIRONMENT "PYTHONPATH=${PROJECT_BINARY_DIR}/python")
 endforeach()
 
 # Ensure test data dir is in the right place relative to ctest paths:
