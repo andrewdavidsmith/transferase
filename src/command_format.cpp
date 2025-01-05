@@ -47,7 +47,7 @@ Examples:
 xfrase format -x index_dir -g hg38 -o output_dir -m SRX012345.xsym.gz
 )";
 
-#include "counts_file_formats.hpp"
+#include "counts_file_format.hpp"
 #include "cpg_index.hpp"
 #include "cpg_index_data.hpp"
 #include "cpg_index_metadata.hpp"
@@ -82,24 +82,23 @@ xfrase format -x index_dir -g hg38 -o output_dir -m SRX012345.xsym.gz
 #include <variant>  // IWYU pragma: keep
 #include <vector>
 
-enum class format_err : std::uint8_t {
+enum class counts_file_format_error : std::uint8_t {
   // clang-format off
   ok                                         = 0,
   xcounts_file_open_failure                  = 1,
   xcounts_file_header_failure                = 2,
   xcounts_file_chromosome_not_found          = 3,
   xcounts_file_incorrect_chromosome_size     = 4,
-  methylome_format_failure                   = 5,
-  methylome_file_write_failure               = 6,
   // clang-format on
 };
 
 template <>
-struct std::is_error_code_enum<format_err> : public std::true_type {};
+struct std::is_error_code_enum<counts_file_format_error>
+  : public std::true_type {};
 
-struct format_err_cat : std::error_category {
+struct counts_file_format_error_category : std::error_category {
   // clang-format off
-  auto name() const noexcept -> const char * override { return "format_err"; }
+  auto name() const noexcept -> const char * override { return "counts_file_format_error"; }
   auto message(const int condition) const -> std::string override {
     using std::string_literals::operator""s;
     switch (condition) {
@@ -108,8 +107,6 @@ struct format_err_cat : std::error_category {
     case 2: return "failed to parse xcounts header"s;
     case 3: return "failed to find chromosome in xcounts header"s;
     case 4: return "incorrect chromosome size"s;
-    case 5: return "failed to generate methylome file"s;
-    case 6: return "failed to write methylome file"s;
     }
     std::unreachable();  // unreachable
   }
@@ -117,8 +114,8 @@ struct format_err_cat : std::error_category {
 };
 
 inline auto
-make_error_code(format_err e) -> std::error_code {
-  static auto category = format_err_cat{};
+make_error_code(counts_file_format_error e) -> std::error_code {
+  static auto category = counts_file_format_error_category{};
   return std::error_code(std::to_underlying(e), category);
 }
 
@@ -149,14 +146,14 @@ verify_header_line(const cpg_index_metadata &cim,
                    const std::string &line) -> std::error_code {
   // ignore the version line and the header end line
   if (line.substr(0, 9) == "#DNMTOOLS" || std::size(line) == 1)
-    return format_err::ok;
+    return counts_file_format_error::ok;
 
   // parse the chrom and its size
   std::string chrom;
   std::uint64_t chrom_size{};
   std::istringstream iss{line};
   if (!(iss >> chrom >> chrom_size))
-    return format_err::xcounts_file_header_failure;
+    return counts_file_format_error::xcounts_file_header_failure;
 
   chrom = chrom.substr(1);  // remove leading '#'
 
@@ -164,15 +161,15 @@ verify_header_line(const cpg_index_metadata &cim,
   // methylome xfrase file
   const auto order_itr = cim.chrom_index.find(chrom);
   if (order_itr == cend(cim.chrom_index))
-    return format_err::xcounts_file_chromosome_not_found;
+    return counts_file_format_error::xcounts_file_chromosome_not_found;
 
   // validate that the chromosome size is the same between the index
   // and the methylome xfrase file
   const auto size_itr = cim.chrom_size[order_itr->second];
   if (chrom_size != size_itr)
-    return format_err::xcounts_file_incorrect_chromosome_size;
+    return counts_file_format_error::xcounts_file_incorrect_chromosome_size;
 
-  return format_err::ok;
+  return counts_file_format_error::ok;
 }
 
 static auto
@@ -222,7 +219,7 @@ process_cpg_sites_xcounts(const std::string &infile, const cpg_index &index)
       if (ch_id < 0) {
         lgr.error("Failed to find chromosome in index: {}", line);
         return {methylome_data{},
-                format_err::xcounts_file_chromosome_not_found};
+                counts_file_format_error::xcounts_file_chromosome_not_found};
       }
       cpg_idx_out = 0;
 
@@ -313,7 +310,7 @@ process_cpg_sites_counts(const std::string &infile, const cpg_index &index)
       if (ch_id < 0) {
         lgr.error("Failed to find chromosome in index: {}", line);
         return {methylome_data{}, /* ADS: fix this */
-                format_err::xcounts_file_chromosome_not_found};
+                counts_file_format_error::xcounts_file_chromosome_not_found};
       }
       cpg_idx_out = 0;
 
@@ -368,7 +365,7 @@ command_format_main(int argc, char *argv[]) -> int {
   static const auto description_msg =
     std::format("{}\n{}", strip(description), strip(examples));
 
-  using xfrase::counts_format;
+  using xfrase::counts_file_format;
   using xfrase::cpg_index;
   using xfrase::get_meth_file_format;
   using xfrase::log_level_t;
@@ -449,14 +446,14 @@ command_format_main(int argc, char *argv[]) -> int {
   }
 
   const auto [format_id, format_err] = get_meth_file_format(methylation_input);
-  if (format_err || format_id == counts_format::none) {
+  if (format_err || format_id == counts_file_format::none) {
     lgr.error("Failed to identify file type for: {}", methylation_input);
     return EXIT_FAILURE;
   }
   lgr.info("Input file format: {}", message(format_id));
 
   auto [meth_data, meth_data_err] =
-    (format_id == counts_format::xcounts)
+    (format_id == counts_file_format::xcounts)
       ? process_cpg_sites_xcounts(methylation_input, index)
       : process_cpg_sites_counts(methylation_input, index);
 
