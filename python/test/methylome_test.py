@@ -90,7 +90,7 @@ def get_valid_test_query(genome_name, tissue_name):
 
 def create_temp_directory():
     """Create a unique temporary directory in /tmp"""
-    temp_dir = tempfile.mkdtemp(dir="/tmp", prefix="my_test_")
+    temp_dir = tempfile.mkdtemp(dir="/tmp", prefix="test_")
     return temp_dir
 
 
