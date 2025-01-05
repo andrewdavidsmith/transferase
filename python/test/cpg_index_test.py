@@ -24,6 +24,7 @@ import pytest
 import shutil
 import tempfile
 import os
+
 from transferase import CpgIndex
 from transferase import ErrorCode
 from transferase import GenomicInterval
@@ -65,9 +66,9 @@ def test_read():
     dirname = "data/lutions/indexes"
     genome_name = "eVaporeon"
     error = ErrorCode()
-    result = CpgIndex.read(dirname, genome_name, error)
+    index = CpgIndex.read(dirname, genome_name, error)
     assert not error
-    assert result is not None
+    assert index is not None
 
 def test_write(cpg_index):
     """Test the 'write' method"""
