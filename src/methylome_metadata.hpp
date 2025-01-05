@@ -118,7 +118,8 @@ template <>
 struct std::formatter<transferase::methylome_metadata>
   : std::formatter<std::string> {
   auto
-  format(const transferase::methylome_metadata &mm, std::format_context &ctx) const {
+  format(const transferase::methylome_metadata &mm,
+         std::format_context &ctx) const {
     return std::format_to(ctx.out(), "{}", mm.tostring());
   }
 };

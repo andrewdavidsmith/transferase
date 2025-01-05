@@ -66,7 +66,7 @@ namespace py = pybind11;
 auto
 initialize_transferase() -> void {
   transferase::logger::instance(transferase::shared_from_cout(), "Transferase",
-                           transferase::log_level_t::debug);
+                                transferase::log_level_t::debug);
   // Your C++ initialization code here, such as setting up resources or data
 }
 
@@ -113,21 +113,24 @@ PYBIND11_MODULE(transferase, m) {
     py::class_<transferase::level_container<transferase::level_element_t>>(
       m, "LevelContainer", "A container for methylation levels");
 
-  auto LevelContainerCovered =
-    py::class_<transferase::level_container<transferase::level_element_covered_t>>(
-      m, "LevelContainerCovered",
-      "A container for methylation levels with information about covered "
-      "sites");
+  auto LevelContainerCovered = py::class_<
+    transferase::level_container<transferase::level_element_covered_t>>(
+    m, "LevelContainerCovered",
+    "A container for methylation levels with information about covered "
+    "sites");
 
   auto QueryContainer = py::class_<transferase::query_container>(
     m, "QueryContainer", "A container for a methylome query");
 
-  auto LocalMethylomeResource = py::class_<transferase::local_methylome_resource>(
-    m, "LocalMethylomeResource", "Interface for locally available methylomes");
+  auto LocalMethylomeResource =
+    py::class_<transferase::local_methylome_resource>(
+      m, "LocalMethylomeResource",
+      "Interface for locally available methylomes");
 
-  auto RemoteMethylomeResource = py::class_<transferase::remote_methylome_resource>(
-    m, "RemoteMethylomeResource",
-    "An interface for remotely available methylomes");
+  auto RemoteMethylomeResource =
+    py::class_<transferase::remote_methylome_resource>(
+      m, "RemoteMethylomeResource",
+      "An interface for remotely available methylomes");
 
   auto RequestTypeCode = py::enum_<transferase::request_type_code>(
     m, "RequestTypeCode", "Codes for the various request types");

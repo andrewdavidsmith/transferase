@@ -31,7 +31,7 @@ struct cpg_index_metadata;
 }  // namespace transferase
 
 auto
-cpg_index_metadata_bindings(pybind11::class_<transferase::cpg_index_metadata> &cls)
-  -> void;
+cpg_index_metadata_bindings(
+  pybind11::class_<transferase::cpg_index_metadata> &cls) -> void;
 
 #endif  // PYTHON_TRANSFERASE_CPG_INDEX_METADATA_BINDINGS_HPP_

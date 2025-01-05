@@ -60,8 +60,10 @@ local_methylome_resource_bindings(
             const transferase::query_container &query, std::error_code &ec) {
            return self.get_levels_covered(methylome_name, query, ec);
          })
-    .def_readwrite("directory", &transferase::local_methylome_resource::directory)
-    .def_readwrite("index_hash", &transferase::local_methylome_resource::index_hash)
+    .def_readwrite("directory",
+                   &transferase::local_methylome_resource::directory)
+    .def_readwrite("index_hash",
+                   &transferase::local_methylome_resource::index_hash)
     //
     ;
 }
@@ -87,10 +89,12 @@ remote_methylome_resource_bindings(
             const transferase::query_container &query, std::error_code &ec) {
            return self.get_levels_covered(methylome_name, query, ec);
          })
-    .def_readwrite("hostname", &transferase::remote_methylome_resource::hostname)
+    .def_readwrite("hostname",
+                   &transferase::remote_methylome_resource::hostname)
     .def_readwrite("port_number",
                    &transferase::remote_methylome_resource::port_number)
-    .def_readwrite("index_hash", &transferase::remote_methylome_resource::index_hash)
+    .def_readwrite("index_hash",
+                   &transferase::remote_methylome_resource::index_hash)
     //
     ;
 }

@@ -35,7 +35,8 @@
 
 [[nodiscard]] auto
 get_xfrase_config_dir_default(std::error_code &ec) -> std::string {
-  static const auto config_dir_rhs = std::filesystem::path(".config/transferase");
+  static const auto config_dir_rhs =
+    std::filesystem::path(".config/transferase");
   static const auto env_home = std::getenv("HOME");
   if (!env_home) {
     ec = std::make_error_code(std::errc{errno});

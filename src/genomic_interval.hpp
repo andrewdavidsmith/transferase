@@ -67,9 +67,11 @@ struct genomic_interval {
 }  // namespace transferase
 
 template <>
-struct std::formatter<transferase::genomic_interval> : std::formatter<std::string> {
+struct std::formatter<transferase::genomic_interval>
+  : std::formatter<std::string> {
   auto
-  format(const transferase::genomic_interval &gi, std::format_context &ctx) const {
+  format(const transferase::genomic_interval &gi,
+         std::format_context &ctx) const {
     return std::format_to(ctx.out(), "{}\t{}\t{}", gi.ch_id, gi.start, gi.stop);
   }
 };

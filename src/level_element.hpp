@@ -48,9 +48,11 @@ struct level_element_covered_t {
 }  // namespace transferase
 
 template <>
-struct std::formatter<transferase::level_element_t> : std::formatter<std::string> {
+struct std::formatter<transferase::level_element_t>
+  : std::formatter<std::string> {
   auto
-  format(const transferase::level_element_t &l, std::format_context &ctx) const {
+  format(const transferase::level_element_t &l,
+         std::format_context &ctx) const {
     return std::format_to(ctx.out(), R"({{"n_meth": {}, "n_unmeth": {}}})",
                           l.n_meth, l.n_unmeth);
   }

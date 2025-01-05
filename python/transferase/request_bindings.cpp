@@ -33,11 +33,13 @@
 namespace py = pybind11;
 
 auto
-request_type_code_bindings(py::enum_<transferase::request_type_code> &en) -> void {
+request_type_code_bindings(py::enum_<transferase::request_type_code> &en)
+  -> void {
   using namespace pybind11::literals;  // NOLINT
   // Enum binding for request_type_code
   en.value("intervals", transferase::request_type_code::intervals)
-    .value("intervals_covered", transferase::request_type_code::intervals_covered)
+    .value("intervals_covered",
+           transferase::request_type_code::intervals_covered)
     .value("bins", transferase::request_type_code::bins)
     .value("bins_covered", transferase::request_type_code::bins_covered)
     .value("n_request_types", transferase::request_type_code::n_request_types)

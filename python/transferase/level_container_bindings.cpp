@@ -35,15 +35,17 @@ namespace py = pybind11;
 
 auto
 level_container_bindings(
-  py::class_<transferase::level_container<transferase::level_element_t>> &cls) -> void {
+  py::class_<transferase::level_container<transferase::level_element_t>> &cls)
+  -> void {
   cls
     .def(py::init<>())
     // Need to raise key error somehow
-    .def("__getitem__",
-         [](const transferase::level_container<transferase::level_element_t> &self,
-            const std::size_t pos) -> transferase::level_element_t const & {
-           return self[pos];
-         })
+    .def(
+      "__getitem__",
+      [](const transferase::level_container<transferase::level_element_t> &self,
+         const std::size_t pos) -> transferase::level_element_t const & {
+        return self[pos];
+      })
     // cppcheck-suppress-begin constParameterReference
     .def("__setitem__",
          [](transferase::level_container<transferase::level_element_t> &self,
@@ -55,20 +57,23 @@ level_container_bindings(
 
 auto
 level_container_covered_bindings(
-  py::class_<transferase::level_container<transferase::level_element_covered_t>> &cls)
-  -> void {
+  py::class_<transferase::level_container<transferase::level_element_covered_t>>
+    &cls) -> void {
   cls
     .def(py::init<>())
     // Need to raise key error somehow
     .def(
       "__getitem__",
-      [](const transferase::level_container<transferase::level_element_covered_t> &self,
-         const std::size_t pos) -> transferase::level_element_covered_t const & {
+      [](
+        const transferase::level_container<transferase::level_element_covered_t>
+          &self,
+        const std::size_t pos) -> transferase::level_element_covered_t const & {
         return self[pos];
       })
     // cppcheck-suppress-begin constParameterReference
     .def("__setitem__",
-         [](transferase::level_container<transferase::level_element_covered_t> &self,
+         [](transferase::level_container<transferase::level_element_covered_t>
+              &self,
             const std::size_t pos) { return self[pos]; })
     // cppcheck-suppress-end constParameterReference
     //

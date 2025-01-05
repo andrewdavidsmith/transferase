@@ -32,7 +32,8 @@ struct level_element_t;
 }  // namespace transferase
 
 auto
-level_element_bindings(pybind11::class_<transferase::level_element_t> &cls) -> void;
+level_element_bindings(pybind11::class_<transferase::level_element_t> &cls)
+  -> void;
 
 auto
 level_element_covered_bindings(

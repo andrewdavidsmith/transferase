@@ -55,8 +55,8 @@ level_element_bindings(py::class_<transferase::level_element_t> &cls) -> void {
 }
 
 auto
-level_element_covered_bindings(py::class_<transferase::level_element_covered_t> &cls)
-  -> void {
+level_element_covered_bindings(
+  py::class_<transferase::level_element_covered_t> &cls) -> void {
   cls.def(py::init<>())
     .def("__repr__",
          [](const transferase::level_element_covered_t &self) {
@@ -73,7 +73,8 @@ level_element_covered_bindings(py::class_<transferase::level_element_covered_t> 
                    "Number of methylated observations")
     .def_readwrite("n_unmeth", &transferase::level_element_covered_t::n_unmeth,
                    "Number of unmethylated observations")
-    .def_readwrite("n_covered", &transferase::level_element_covered_t::n_covered,
+    .def_readwrite("n_covered",
+                   &transferase::level_element_covered_t::n_covered,
                    "Number of sites covered")
     //
     ;

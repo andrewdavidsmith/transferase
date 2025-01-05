@@ -110,9 +110,11 @@ struct cpg_index_data {
 }  // namespace transferase
 
 template <>
-struct std::formatter<transferase::cpg_index_data> : std::formatter<std::string> {
+struct std::formatter<transferase::cpg_index_data>
+  : std::formatter<std::string> {
   auto
-  format(const transferase::cpg_index_data &data, std::format_context &ctx) const {
+  format(const transferase::cpg_index_data &data,
+         std::format_context &ctx) const {
     return std::formatter<std::string>::format(data.tostring(), ctx);
   }
 };

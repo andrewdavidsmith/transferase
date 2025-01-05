@@ -51,25 +51,27 @@ methylome_bindings(py::class_<transferase::methylome> &cls) -> void {
          })
     .def(
       "is_consistent",
-      [](const transferase::methylome &self, const transferase::methylome &other) {
+      [](const transferase::methylome &self,
+         const transferase::methylome &other) {
         return self.is_consistent(other);
       },
       "other"_a)
-    .def("write", &transferase::methylome::write, "output_directory"_a, "name"_a)
+    .def("write", &transferase::methylome::write, "output_directory"_a,
+         "name"_a)
     .def("init_metadata", &transferase::methylome::init_metadata, "index"_a)
     .def("update_metadata", &transferase::methylome::update_metadata)
     .def("add", &transferase::methylome::add, "other"_a)
     .def("__repr__", &transferase::methylome::tostring)
-    .def(
-      "get_levels",
-      [](const transferase::methylome &self, const transferase::query_container &query) {
-        return self.get_levels(query);
-      })
-    .def(
-      "get_levels_covered",
-      [](const transferase::methylome &self, const transferase::query_container &query) {
-        return self.get_levels_covered(query);
-      })
+    .def("get_levels",
+         [](const transferase::methylome &self,
+            const transferase::query_container &query) {
+           return self.get_levels(query);
+         })
+    .def("get_levels_covered",
+         [](const transferase::methylome &self,
+            const transferase::query_container &query) {
+           return self.get_levels_covered(query);
+         })
     .def("get_levels",
          [](const transferase::methylome &self, const std::uint32_t bin_size,
             const transferase::cpg_index &index) {
@@ -81,5 +83,6 @@ methylome_bindings(py::class_<transferase::methylome> &cls) -> void {
            return self.get_levels_covered(bin_size, index);
          })
     .def("global_levels", &transferase::methylome::global_levels)
-    .def("global_levels_covered", &transferase::methylome::global_levels_covered);
+    .def("global_levels_covered",
+         &transferase::methylome::global_levels_covered);
 }

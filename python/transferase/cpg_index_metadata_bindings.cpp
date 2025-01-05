@@ -39,12 +39,14 @@ cpg_index_metadata_bindings(py::class_<transferase::cpg_index_metadata> &cls)
     .def("init_env", &transferase::cpg_index_metadata::init_env)
     .def("__repr__", &transferase::cpg_index_metadata::tostring)
     .def("get_n_cpgs_chrom", &transferase::cpg_index_metadata::get_n_cpgs_chrom)
-    .def("get_n_bins", &transferase::cpg_index_metadata::get_n_bins, "bin_size"_a)
+    .def("get_n_bins", &transferase::cpg_index_metadata::get_n_bins,
+         "bin_size"_a)
     // bindings for the member variables
     .def_readwrite("version", &transferase::cpg_index_metadata::version)
     .def_readwrite("host", &transferase::cpg_index_metadata::host)
     .def_readwrite("user", &transferase::cpg_index_metadata::user)
-    .def_readwrite("creation_time", &transferase::cpg_index_metadata::creation_time)
+    .def_readwrite("creation_time",
+                   &transferase::cpg_index_metadata::creation_time)
     .def_readwrite("index_hash", &transferase::cpg_index_metadata::index_hash)
     .def_readwrite("assembly", &transferase::cpg_index_metadata::assembly)
     .def_readwrite("n_cpgs", &transferase::cpg_index_metadata::n_cpgs)

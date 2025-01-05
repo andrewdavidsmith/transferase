@@ -36,11 +36,12 @@ namespace py = pybind11;
 
 auto
 level_container_bindings(
-  py::class_<transferase::level_container<transferase::level_element_t>> &cls) -> void;
+  py::class_<transferase::level_container<transferase::level_element_t>> &cls)
+  -> void;
 
 auto
 level_container_covered_bindings(
-  py::class_<transferase::level_container<transferase::level_element_covered_t>> &cls)
-  -> void;
+  py::class_<transferase::level_container<transferase::level_element_covered_t>>
+    &cls) -> void;
 
 #endif  // PYTHON_TRANSFERASE_LEVEL_CONTAINER_BINDINGS_HPP_

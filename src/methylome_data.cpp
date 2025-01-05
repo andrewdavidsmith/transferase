@@ -217,8 +217,8 @@ get_levels_impl(const methylome_data::vec &cpgs,
 }
 
 [[nodiscard]] auto
-methylome_data::get_levels_covered(const transferase::query_container &query) const
-  -> level_container<level_element_covered_t> {
+methylome_data::get_levels_covered(const transferase::query_container &query)
+  const -> level_container<level_element_covered_t> {
   auto res = level_container<level_element_covered_t>(size(query));
   const auto beg = std::cbegin(cpgs);
   for (const auto [i, q] : std::views::enumerate(query))

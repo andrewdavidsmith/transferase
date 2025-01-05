@@ -42,7 +42,8 @@ methylome_metadata_bindings(py::class_<transferase::methylome_metadata> &cls)
     .def_readwrite("version", &transferase::methylome_metadata::version)
     .def_readwrite("host", &transferase::methylome_metadata::host)
     .def_readwrite("user", &transferase::methylome_metadata::user)
-    .def_readwrite("creation_time", &transferase::methylome_metadata::creation_time)
+    .def_readwrite("creation_time",
+                   &transferase::methylome_metadata::creation_time)
     .def_readwrite("methylome_hash",
                    &transferase::methylome_metadata::methylome_hash)
     .def_readwrite("index_hash", &transferase::methylome_metadata::index_hash)

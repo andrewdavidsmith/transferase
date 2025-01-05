@@ -155,7 +155,8 @@ cpg_index_data::make_query_chrom(const std::int32_t ch_id,
   assert(std::ranges::is_sorted(chrom_ranges) && ch_id >= 0 &&
          ch_id < std::ranges::ssize(positions));
   const auto offset = meta.chrom_offset[ch_id];
-  auto query = transferase::make_query_within_chrom(positions[ch_id], chrom_ranges);
+  auto query =
+    transferase::make_query_within_chrom(positions[ch_id], chrom_ranges);
   std::ranges::for_each(query, [&](auto &x) {
     x.start += offset;
     x.stop += offset;

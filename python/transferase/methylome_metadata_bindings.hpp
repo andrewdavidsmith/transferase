@@ -31,7 +31,7 @@ struct methylome_metadata;
 }  // namespace transferase
 
 auto
-methylome_metadata_bindings(pybind11::class_<transferase::methylome_metadata> &cls)
-  -> void;
+methylome_metadata_bindings(
+  pybind11::class_<transferase::methylome_metadata> &cls) -> void;
 
 #endif  // PYTHON_TRANSFERASE_METHYLOME_METADATA_BINDINGS_HPP_

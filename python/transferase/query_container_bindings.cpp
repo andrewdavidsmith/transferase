@@ -36,10 +36,13 @@
 namespace py = pybind11;
 
 auto
-query_container_bindings(py::class_<transferase::query_container> &cls) -> void {
+query_container_bindings(py::class_<transferase::query_container> &cls)
+  -> void {
   cls.def(py::init<>())
     .def("__len__",
-         [](const transferase::query_container &self) { return transferase::size(self); })
+         [](const transferase::query_container &self) {
+           return transferase::size(self);
+         })
     // define equality operator explicitly as returning a bool
     .def(
       "__eq__",

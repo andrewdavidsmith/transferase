@@ -45,7 +45,8 @@ cpg_index_bindings(py::class_<transferase::cpg_index> &cls) -> void {
     .def("__repr__", &transferase::cpg_index::tostring)
     .def_static("read", &transferase::cpg_index::read, py::arg("dirname"),
                 py::arg("genome_name"), py::arg("error"))
-    .def("write", &transferase::cpg_index::write, py::arg("outdir"), py::arg("name"))
+    .def("write", &transferase::cpg_index::write, py::arg("outdir"),
+         py::arg("name"))
     .def("make_query", &transferase::cpg_index::make_query, "intervals"_a)
     .def_static("make_cpg_index", &transferase::cpg_index::make_cpg_index,
                 "Create a CpG index from a reference genome", "genome_file"_a,

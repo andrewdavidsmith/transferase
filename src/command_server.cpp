@@ -261,9 +261,9 @@ command_server_main(int argc, char *argv[]) -> int {
     return EXIT_FAILURE;
 
   if (args.daemonize) {
-    auto s =
-      transferase::server(args.hostname, args.port, args.n_threads, methylome_dir,
-                     index_dir, args.max_resident, lgr, ec, args.daemonize);
+    auto s = transferase::server(args.hostname, args.port, args.n_threads,
+                                 methylome_dir, index_dir, args.max_resident,
+                                 lgr, ec, args.daemonize);
     if (ec) {
       lgr.error("Failure daemonizing server: {}", ec);
       return EXIT_FAILURE;
@@ -272,8 +272,8 @@ command_server_main(int argc, char *argv[]) -> int {
   }
   else {
     auto s =
-      transferase::server(args.hostname, args.port, args.n_threads, methylome_dir,
-                     index_dir, args.max_resident, lgr, ec);
+      transferase::server(args.hostname, args.port, args.n_threads,
+                          methylome_dir, index_dir, args.max_resident, lgr, ec);
     if (ec) {
       lgr.error("Failure initializing server: {}", ec);
       return EXIT_FAILURE;

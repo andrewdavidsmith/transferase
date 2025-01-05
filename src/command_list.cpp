@@ -128,7 +128,8 @@ command_list_main(int argc, char *argv[]) -> int {
     if (!show_only_methylomes) {
       if (verbose && !show_only_indexes)
         std::println("indexes:");
-      const auto index_names = transferase::cpg_index::list_cpg_indexes(dirname, ec);
+      const auto index_names =
+        transferase::cpg_index::list_cpg_indexes(dirname, ec);
       if (ec) {
         std::println("Error {}: {}", dirname, ec);
         return EXIT_FAILURE;
