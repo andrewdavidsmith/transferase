@@ -36,8 +36,13 @@ error_code_bindings(py::class_<std::error_code> &cls) -> void {
   cls.def(py::init<>())
     .def("value", &std::error_code::value)
     .def("message", &std::error_code::message)
-    .def("__repr__", [](const std::error_code &self) {
-      return std::format("<ErrorCode value: {}, message: {}>", self.value(),
-                         self.message());
-    });
+    .def("__repr__",
+         [](const std::error_code &self) {
+           return std::format("<ErrorCode value: {}, message: {}>",
+                              self.value(), self.message());
+         })
+    .def("__bool__",
+         [](const std::error_code &self) { return self != std::error_code{}; })
+    //
+    ;
 }
