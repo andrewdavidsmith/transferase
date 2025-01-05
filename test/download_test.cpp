@@ -28,6 +28,7 @@
 #include <boost/beast.hpp>
 #include <gtest/gtest.h>
 
+#include <chrono>
 #include <filesystem>
 #include <string>
 #include <utility>
@@ -37,8 +38,8 @@ using namespace xfrase;  // NOLINT
 TEST(download_test, send_request_timeout) {
   const auto target = std::filesystem::path{"/delay/1"};
   const auto outdir = std::filesystem::path{"/tmp"};
-  const std::uint32_t connect_timeout{0};
-  const std::uint32_t download_timeout{240};  // seconds
+  const std::chrono::milliseconds connect_timeout{0};
+  const std::chrono::milliseconds download_timeout{240'000};  // milliseconds
   // clang-format off
   const download_request dr{
     "httpbin.org",
@@ -63,8 +64,8 @@ TEST(download_test, send_request_timeout) {
 TEST(download_test, receive_download_timeout) {
   const auto target = std::filesystem::path{"/delay/1"};
   const auto outdir = std::filesystem::path{"/tmp"};
-  const std::uint32_t connect_timeout{10};  // seconds
-  const std::uint32_t download_timeout{1};
+  const std::chrono::milliseconds connect_timeout{10'000};  // seconds
+  const std::chrono::milliseconds download_timeout{10};
   // clang-format off
   const download_request dr{
     "httpbin.org",
