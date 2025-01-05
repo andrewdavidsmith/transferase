@@ -120,17 +120,7 @@ struct std::formatter<xfrase::cpg_index_metadata>
 
 enum class cpg_index_metadata_error : std::uint8_t {
   ok = 0,
-  version_not_found = 1,
-  host_not_found = 2,
-  user_not_found = 3,
-  creation_time_not_found = 4,
-  chrom_names_not_found = 5,
-  index_hash_not_found = 6,
-  assembly_not_found = 7,
-  n_cpgs_not_found = 8,
-  failure_parsing_json = 9,
-  inconsistent = 10,
-  n_values = 11,
+  failure_parsing_json = 1,
 };
 
 template <>
@@ -146,16 +136,7 @@ struct cpg_index_metadata_error_category : std::error_category {
     using std::string_literals::operator""s;
     switch (code) {
     case 0: return "ok"s;
-    case 1: return "verion not found"s;
-    case 2: return "host not found"s;
-    case 3: return "user not found"s;
-    case 4: return "creation_time not found"s;
-    case 5: return "chrom names not found"s;
-    case 6: return "index_hash not found"s;
-    case 7: return "assembly not found"s;
-    case 8: return "n_cpgs not found"s;
-    case 9: return "failure parsing methylome metadata json"s;
-    case 10: return "inconsistent metadata"s;
+    case 1: return "failure parsing methylome metadata json"s;
     }
     std::unreachable();
   }
