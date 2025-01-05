@@ -49,6 +49,6 @@ query_container_bindings(py::class_<xfrase::query_container> &cls) -> void {
       },
       py::is_operator())
     .def("__repr__", [](const xfrase::query_container &self) {
-      return std::format("<Query size={}>", self.v.size());
+      return std::format("<QueryContainer size={}>", self.v.size());
     });
 }
