@@ -109,12 +109,7 @@ struct cpg_index {
 
 enum class cpg_index_code : std::uint8_t {
   ok = 0,
-  wrong_identifier_in_header = 1,
-  error_parsing_index_header_line = 2,
-  failure_reading_index_header = 3,
-  failure_reading_index_body = 4,
-  inconsistent_chromosome_sizes = 5,
-  failure_processing_genome_file = 6,
+  failure_processing_genome_file = 1,
 };
 
 template <>
@@ -127,12 +122,7 @@ struct cpg_index_category : std::error_category {
     using std::string_literals::operator""s;
     switch (code) {
     case 0: return "ok"s;
-    case 1: return "wrong identifier in header"s;
-    case 2: return "error parsing index header line"s;
-    case 3: return "failure reading index header"s;
-    case 4: return "failure reading index body"s;
-    case 5: return "inconsistent chromosome sizes"s;
-    case 6: return "failure processing genome file"s;
+    case 1: return "failure processing genome file"s;
     }
     std::unreachable();
   }
