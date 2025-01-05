@@ -24,11 +24,13 @@
 #include "cpg_index_bindings.hpp"
 
 #include <cpg_index.hpp>
+#include <genomic_interval.hpp>
 
 #include <cpg_index_data.hpp>
 #include <cpg_index_metadata.hpp>
 
 #include <pybind11/pybind11.h>
+#include <pybind11/stl.h>  // IWYU pragma: keep
 
 namespace py = pybind11;
 
@@ -40,6 +42,7 @@ cpg_index_bindings(py::class_<xfrase::cpg_index> &cls) -> void {
     .def_readonly("meta", &xfrase::cpg_index::meta)
     .def("is_consistent", &xfrase::cpg_index::is_consistent)
     .def("__hash__", &xfrase::cpg_index::get_hash)
+    .def("__repr__", &xfrase::cpg_index::tostring)
     .def_static("read", &xfrase::cpg_index::read, py::arg("dirname"),
                 py::arg("genome_name"), py::arg("error"))
     .def("write", &xfrase::cpg_index::write, py::arg("outdir"), py::arg("name"))
@@ -51,7 +54,7 @@ cpg_index_bindings(py::class_<xfrase::cpg_index> &cls) -> void {
                 "Check if CpG index files exist in a directory.", "directory"_a,
                 "genome_name"_a)
     .def_static(
-      "parse_genome_name", &xfrase::cpg_index::files_exist,
+      "parse_genome_name", &xfrase::cpg_index::parse_genome_name,
       "Parse the genome name from a FASTA format reference genome file.",
       "filename"_a, "error_code"_a)
     .def_static("list_cpg_indexes", &xfrase::cpg_index::list_cpg_indexes,
