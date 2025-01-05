@@ -98,6 +98,7 @@ struct command_config_argset : argset_base<command_config_argset> {
 BOOST_DESCRIBE_STRUCT(command_config_argset, (), (
   hostname,
   port,
+  index_dir,
   log_filename,
   log_level
 ))
