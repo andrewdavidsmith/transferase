@@ -25,7 +25,7 @@
 cmake_minimum_required(VERSION 3.30)
 project(
   transferase
-  VERSION 0.2.0
+  VERSION 0.3.0
   DESCRIPTION "The transferase system for retrieving methylomes"
   HOMEPAGE_URL https://github.com/andrewdavidsmith/transferase
   LANGUAGES CXX)
@@ -54,14 +54,9 @@ if(ENABLE_STATIC_ANALYSIS)
   include(cmake/static_analysis.cmake)
 endif()
 
-if(ENABLE_UNIT_TESTS OR ENABLE_PYTHON_UNIT_TESTS)
-  include(cmake/unit_tests.cmake)
-  if(ENABLE_CODE_COVERAGE)
-    include(cmake/code_coverage.cmake)
-  endif()
-endif()
-
 if(NOT ENABLE_UNIT_TESTS)
+  # ADS: this should be turned on by Release and ENABLE_UNIT_TESTS
+  # turned off by Release
   include(cmake/packaging.cmake)
 endif()
 
@@ -72,6 +67,13 @@ endif()
 # Turn on LTO for Release builds
 if(ENABLE_LTO)
   set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+endif()
+
+if(ENABLE_UNIT_TESTS OR ENABLE_PYTHON_UNIT_TESTS)
+  include(cmake/unit_tests.cmake)
+  if(ENABLE_CODE_COVERAGE)
+    include(cmake/code_coverage.cmake)
+  endif()
 endif()
 
 include(cmake/third_party.cmake)
