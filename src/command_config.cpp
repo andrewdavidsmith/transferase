@@ -169,8 +169,8 @@ get_remote_indexes_resources()
 
 [[nodiscard]] static auto
 get_index_files(const bool quiet, const remote_indexes_resources &remote,
-                const std::string &assemblies, const std::string &dirname)
-  -> std::error_code {
+                const std::string &assemblies,
+                const std::string &dirname) -> std::error_code {
   const auto dl_err = [&](const auto &hdr, const auto &ec, const auto &url) {
     std::println("Error downloading {}: ", url);
     if (ec)
