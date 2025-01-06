@@ -35,8 +35,8 @@
 #include "request.hpp"
 #include "request_type_code.hpp"
 #include "response.hpp"
+#include "server.hpp"
 #include "utilities.hpp"
-#include "xfrase_error.hpp"
 
 #include <chrono>       // for std::chrono::high_resolution_clock
 #include <cstring>      // for std::memcpy
