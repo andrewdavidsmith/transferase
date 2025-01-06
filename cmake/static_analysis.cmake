@@ -26,12 +26,10 @@ message(STATUS "Static analysis enabled")
 find_program(FOUND_CPPLINT cpplint)
 if(FOUND_CPPLINT)
   message(STATUS "Enabling cpplint analysis")
-  set(CMAKE_CXX_CPPLINT
-    cpplint
-    --quiet
-  )
+  set(CMAKE_CXX_CPPLINT cpplint --quiet)
 endif()
 
+# include-what-you-use: config is a mappings file
 find_program(FOUND_IWYU include-what-you-use)
 if(FOUND_IWYU)
   message(STATUS "Enabling include-what-you-use analysis")
@@ -66,7 +64,9 @@ find_program(CLANG_TIDY_EXECUTABLE NAMES clang-tidy)
 set(MIN_CLANG_TIDY_VERSION "20.0.0")
 if(CLANG_TIDY_EXECUTABLE)
   execute_process(
-    COMMAND bash -c "${CLANG_TIDY_EXECUTABLE} --version | grep version | tr -cd '0-9.\n'"
+    COMMAND
+    bash -c
+    "${CLANG_TIDY_EXECUTABLE} --version | grep version | tr -cd '0-9.\n'"
     OUTPUT_VARIABLE CLANG_TIDY_VERSION
     OUTPUT_STRIP_TRAILING_WHITESPACE
   )
@@ -79,6 +79,6 @@ if(CLANG_TIDY_EXECUTABLE)
       -p Build
     )
   else()
-    message(STATUS "Not enabling clang-tidy (version not found")
+    message(STATUS "Not enabling clang-tidy (min version not found")
   endif()
 endif()
