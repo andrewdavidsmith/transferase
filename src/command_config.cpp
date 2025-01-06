@@ -44,7 +44,6 @@ xfrase config -c my_config_file.toml -s example.com -p 5009 --assemblies hg38,mm
 )";
 
 #include "arguments.hpp"
-#include "boost_json.hpp"
 #include "command_config_argset.hpp"
 #include "config_file_utils.hpp"  // write_client_config_file
 #include "cpg_index_data.hpp"
@@ -95,13 +94,11 @@ struct remote_indexes_resources {
   std::string port;
   std::string path;
 
-  [[nodiscard]]
-  auto
+  [[nodiscard]] auto
   form_target_stem(const auto &assembly) const {
     return (std::filesystem::path{path} / assembly).string();
   }
-  [[nodiscard]]
-  auto
+  [[nodiscard]] auto
   form_url(const auto &file) const {
     return std::format("{}:{}{}", host, port, file);
   }
@@ -170,11 +167,10 @@ get_remote_indexes_resources()
   return std::make_tuple(std::move(resources), std::error_code{});
 }
 
-[[nodiscard]]
-static auto
+[[nodiscard]] static auto
 get_index_files(const bool quiet, const remote_indexes_resources &remote,
-                const std::string &assemblies,
-                const std::string &dirname) -> std::error_code {
+                const std::string &assemblies, const std::string &dirname)
+  -> std::error_code {
   const auto dl_err = [&](const auto &hdr, const auto &ec, const auto &url) {
     std::println("Error downloading {}: ", url);
     if (ec)

@@ -24,7 +24,7 @@
 #include "boost_json.hpp"
 
 #ifdef BOOST_JSON_NO_LIB
-#include <boost/json/src.hpp>
+#include <boost/json/src.hpp>  // IWYU pragma: keep
 #endif
 
 auto

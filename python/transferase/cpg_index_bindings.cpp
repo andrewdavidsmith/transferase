@@ -24,7 +24,7 @@
 #include "cpg_index_bindings.hpp"
 
 #include <cpg_index.hpp>
-#include <genomic_interval.hpp>
+#include <genomic_interval.hpp>  // IWYU pragma: keep
 
 #include <cpg_index_data.hpp>
 #include <cpg_index_metadata.hpp>
@@ -43,11 +43,11 @@ cpg_index_bindings(py::class_<transferase::cpg_index> &cls) -> void {
     .def("is_consistent", &transferase::cpg_index::is_consistent)
     .def("__hash__", &transferase::cpg_index::get_hash)
     .def("__repr__", &transferase::cpg_index::tostring)
-    .def_static("read", &transferase::cpg_index::read, py::arg("dirname"),
-                py::arg("genome_name"), py::arg("error"))
-    .def("write", &transferase::cpg_index::write, py::arg("outdir"),
-         py::arg("name"))
-    .def("make_query", &transferase::cpg_index::make_query, "intervals"_a)
+    .def_static("read", &transferase::cpg_index::read, "dirname"_a,
+                "genome_name"_a, "error"_a)
+    .def("write", &transferase::cpg_index::write, "outdir"_a, "name"_a)
+    .def("make_query", &transferase::cpg_index::make_query,
+         py::arg("intervals").noconvert())
     .def_static("make_cpg_index", &transferase::cpg_index::make_cpg_index,
                 "Create a CpG index from a reference genome", "genome_file"_a,
                 "error_code"_a)

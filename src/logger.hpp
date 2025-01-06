@@ -24,7 +24,7 @@
 #ifndef SRC_LOGGER_HPP_
 #define SRC_LOGGER_HPP_
 
-#include "format_error_code.hpp"
+#include "format_error_code.hpp"  // IWYU pragma: keep
 
 #if not defined(__APPLE__) && not defined(__MACH__)
 #include <sys/syscall.h>
@@ -284,8 +284,7 @@ private:
   logger() {}
   ~logger() {}
 
-  [[nodiscard]]
-  auto
+  [[nodiscard]] auto
   fill_buffer(std::uint32_t thread_id, const char *const lvl,
               const std::uint32_t sz,
               const std::string_view message) -> char * {

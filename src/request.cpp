@@ -25,7 +25,6 @@
 
 #include "request_impl.hpp"
 #include "request_type_code.hpp"  // IWYU pragma: keep
-#include "server.hpp"
 
 #include <algorithm>
 #include <cassert>

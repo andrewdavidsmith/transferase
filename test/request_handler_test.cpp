@@ -24,7 +24,6 @@
 #include <request_handler.hpp>
 
 #include <cpg_index.hpp>
-#include <format_error_code.hpp>
 #include <genomic_interval.hpp>
 #include <logger.hpp>  // ADS: so we can setup the logger
 #include <methylome_data.hpp>
