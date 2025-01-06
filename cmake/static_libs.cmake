@@ -26,13 +26,9 @@ message(STATUS "Enabling static linkage for all non-system libraries")
 set(Boost_USE_STATIC_LIBS on)
 set(ZLIB_USE_STATIC_LIBS on)
 
-# Replace any home dir prefix in paths
-set(HOME_DIR $ENV{HOME}) # For Unix-like systems
-set(PREFIX_MAP "${HOME_DIR}/=/")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ffile-prefix-map=${PREFIX_MAP}")
-# Make sure compile command strips symbols
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s")
-
 # Set static for the compiler's libraries
-# ADS: this avoids the static linkage that aiso warns against
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libgcc -static-libstdc++")
+## ADS: using this instead of forcing static for everything avoids the
+## static linkage that aiso warns against, but also means it's not
+## 100% static linked
+set(CMAKE_EXE_LINKER_FLAGS
+  "${CMAKE_EXE_LINKER_FLAGS} -static-libgcc -static-libstdc++")
