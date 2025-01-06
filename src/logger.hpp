@@ -24,6 +24,8 @@
 #ifndef SRC_LOGGER_HPP_
 #define SRC_LOGGER_HPP_
 
+#include "format_error_code.hpp"
+
 #if not defined(__APPLE__) && not defined(__MACH__)
 #include <sys/syscall.h>
 #include <unistd.h>  // gettid
