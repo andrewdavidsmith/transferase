@@ -22,14 +22,14 @@
 
 # cmake --install build_dir --prefix /path/to/install/root
 
-install(TARGETS xfrase
+install(TARGETS transferase
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
-# Install an alias with the full project name
-install(PROGRAMS $<TARGET_FILE:xfrase>
+# Install an abbreviated alias
+install(PROGRAMS $<TARGET_FILE:transferase>
   DESTINATION ${CMAKE_INSTALL_BINDIR}
-  RENAME transferase
+  RENAME xfrase
 )
 
 # Install the versioned JSON file to the appropriate share directory
@@ -40,7 +40,7 @@ install(FILES ${PROJECT_BINARY_DIR}/share/transferase/transferase_data_${PROJECT
 
 # Install the bash completions script to the appropriate directory
 # (e.g., /usr/share/bash-completion/completions/)
-install(FILES ${CMAKE_SOURCE_DIR}/data/xfrase-bash-completion
+install(FILES ${CMAKE_SOURCE_DIR}/data/transferase-bash-completion
   DESTINATION ${CMAKE_INSTALL_DATADIR}/bash-completion/completions
-  RENAME xfrase
+  RENAME transferase
 )
