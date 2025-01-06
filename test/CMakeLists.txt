@@ -39,7 +39,7 @@ foreach(CPP_FILE ${CPP_FILES})
     GTest::GTest
     GTest::Main
     ZLIB::ZLIB
-    xfrase_system
+    transferase_system
   )
   target_include_directories(${BASE_NAME} PRIVATE ${PROJECT_BINARY_DIR})
   if(BASE_NAME MATCHES "^command_")
