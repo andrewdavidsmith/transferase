@@ -20,10 +20,24 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+message(STATUS "Locating required third-party packages")
+
 find_package(Threads REQUIRED)
+
+set(BOOST_COMPONENTS program_options context)
+## Building python lib needs -fPIC and Boost.json has an issue with
+## this so BOOST_JSON_NO_LIB will be passed to sources and turn on
+## header-only for Boost.json
+if(NOT BUILD_PYTHON)
+  list(APPEND BOOST_COMPONENTS json)
+else()
+  set(BOOST_JSON_NO_LIB on)
+endif()
 find_package(
   Boost
   1.85.0 REQUIRED
   COMPONENTS
-  program_options json context)
+  ${BOOST_COMPONENTS}
+)
+
 find_package(ZLIB REQUIRED)
