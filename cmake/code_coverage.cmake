@@ -23,24 +23,17 @@
 # Check for coverage support in the compiler
 include(CheckCXXCompilerFlag)
 
-set(COVERAGE_COMPILE_FLAGS "-coverage -fprofile-arcs -ftest-coverage")
-set(COVERAGE_LINK_FLAGS "-coverage -lgcov")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COVERAGE_COMPILE_FLAGS}")
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${COVERAGE_LINK_FLAGS}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --coverage")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --coverage")
 
 # Try to add the necessary flags for coverage
-# check_cxx_compiler_flag("--coveragefprofile-arcs" COVERAGE_SUPPORTED)
-# check_cxx_compiler_flag("-ftest-coverage" COVERAGE_SUPPORTED)
 check_cxx_compiler_flag("--coverage" COVERAGE_SUPPORTED)
 
 if(COVERAGE_SUPPORTED)
-  message(STATUS "Code coverage is supported by the compiler.")
+  message(STATUS "Code coverage is supported by the compiler")
 else()
-  message(FATAL_ERROR "Code coverage is NOT supported by the compiler.")
+  message(FATAL_ERROR "Code coverage is NOT supported by the compiler")
 endif()
-
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --coverage")
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --coverage")
 
 add_custom_target(code_coverage
   COMMENT "Running lcov and cleaning using exclusion patterns"
@@ -50,7 +43,7 @@ add_custom_target(code_coverage
   --output-file coverage-full.info
   COMMAND lcov
   --remove coverage-full.info '*_test.cpp' '*/include/*' '*automatic_json.hpp'
-  'unit_test_utils.cpp'
+  '*unit_test_utils.*pp'
   --output-file ${PROJECT_BINARY_DIR}/coverage.info
   COMMAND
   ${CMAKE_COMMAND} -E remove coverage-full.info
