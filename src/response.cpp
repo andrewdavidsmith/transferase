@@ -22,7 +22,8 @@
  */
 
 #include "response.hpp"
-#include "xfrase_error.hpp"
+
+#include "server.hpp"
 
 #include <algorithm>
 #include <cassert>
@@ -100,7 +101,8 @@ parse(const response_header_buffer &buf,
 [[nodiscard]] auto
 response_header::summary() const -> std::string {
   static constexpr auto fmt = R"({{"{}": "{}", "response_size": {}}})";
-  return std::format(fmt, status.category().name(), status, response_size);
+  return std::format(fmt, status.category().name(), status.message(),
+                     response_size);
 }
 
 }  // namespace transferase
