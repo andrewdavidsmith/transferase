@@ -32,6 +32,12 @@ find_package(pybind11 REQUIRED)
 include_directories(${Python3_INCLUDE_DIRS})
 link_directories(${Python3_LIBRARIES})
 
+# Strip any directories on header filenames
+foreach(dirname ${Python3_INCLUDE_DIRS})
+  set(CMAKE_CXX_FLAGS_RELEASE "-ffile-prefix-map=${dirname}/=/ ${CMAKE_CXX_FLAGS}")
+  message(STATUS "CMAKE_CXX_FLAGS: ${CMAKE_CXX_FLAGS}")
+endforeach()
+
 # Recurse into the subdirectory with the Python bindings
 add_subdirectory(transferase)
 
@@ -47,11 +53,14 @@ pybind11_add_module(py_${LIBRARY_NAME} MODULE transferase_bindings.cpp)
 target_include_directories(py_${LIBRARY_NAME} PRIVATE transferase)
 target_link_libraries(py_${LIBRARY_NAME} PRIVATE
   transferase_bindings
-  xfrase_system
+  transferase_system
   pybind11::module
+  ZLIB::ZLIB
 )
 set_target_properties(py_${LIBRARY_NAME}
-  PROPERTIES LIBRARY_OUTPUT_NAME "${LIBRARY_NAME}"
+  PROPERTIES
+  LIBRARY_OUTPUT_NAME "${LIBRARY_NAME}"
+  SKIP_BUILD_RPATH TRUE
 )
 
 # Configure the tests if requested
