@@ -46,11 +46,11 @@ xfrase compress -d methylome_dir -m methylome_name -o output_dir
 xfrase compress -u -d methylome_dir -m methylome_name -o output_dir
 )";
 
+#include "format_error_code.hpp"  // IWYU pragma: keep
 #include "logger.hpp"
 #include "methylome.hpp"
 #include "methylome_metadata.hpp"
-#include "utilities.hpp"     // duration()
-#include "xfrase_error.hpp"  // IWYU pragma: keep
+#include "utilities.hpp"  // duration()
 
 #include <boost/program_options.hpp>
 

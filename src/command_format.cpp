@@ -51,12 +51,12 @@ xfrase format -x index_dir -g hg38 -o output_dir -m SRX012345.xsym.gz
 #include "cpg_index.hpp"
 #include "cpg_index_data.hpp"
 #include "cpg_index_metadata.hpp"
+#include "format_error_code.hpp"  // IWYU pragma: keep
 #include "logger.hpp"
 #include "methylome.hpp"
 #include "methylome_data.hpp"
 #include "methylome_metadata.hpp"
 #include "utilities.hpp"
-#include "xfrase_error.hpp"  // IWYU pragma: keep
 #include "zlib_adapter.hpp"
 
 #include <boost/program_options.hpp>

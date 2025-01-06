@@ -51,10 +51,10 @@ xfrase server -s localhost -m methylomes -x indexes
 
 #include "arguments.hpp"
 #include "config_file_utils.hpp"  // write_config_file
+#include "format_error_code.hpp"  // IWYU pragma: keep
 #include "logger.hpp"
 #include "server.hpp"
 #include "utilities.hpp"
-#include "xfrase_error.hpp"  // IWYU pragma: keep
 
 #include <boost/describe.hpp>
 #include <boost/program_options.hpp>

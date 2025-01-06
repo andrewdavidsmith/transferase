@@ -39,9 +39,9 @@ xfrase list /path/to/some_directory ../relative/path
 )";
 
 #include "cpg_index.hpp"
+#include "format_error_code.hpp"  // IWYU pragma: keep
 #include "methylome.hpp"
 #include "utilities.hpp"
-#include "xfrase_error.hpp"  // IWYU pragma: keep
 
 #include <boost/program_options.hpp>
 
@@ -114,7 +114,7 @@ command_list_main(int argc, char *argv[]) -> int {
   for (auto const &given_dirname : directories) {
     const auto canonical = std::filesystem::canonical(given_dirname, ec);
     if (ec) {
-      std::println("Error {}: {}", given_dirname, ec);
+      std::println("Error {}: {}", given_dirname, ec.message());
       return EXIT_FAILURE;
     }
     canonical_directories.emplace_back(canonical);

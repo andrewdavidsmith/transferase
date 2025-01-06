@@ -48,9 +48,9 @@ xfrase index -v debug -x /path/to/index_directory -g hg38.fa
 )";
 
 #include "cpg_index.hpp"
+#include "format_error_code.hpp"  // IWYU pragma: keep
 #include "logger.hpp"
 #include "utilities.hpp"
-#include "xfrase_error.hpp"  // IWYU pragma: keep
 
 #include <boost/program_options.hpp>
 

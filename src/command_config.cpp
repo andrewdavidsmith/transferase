@@ -44,14 +44,15 @@ xfrase config -c my_config_file.toml -s example.com -p 5009 --assemblies hg38,mm
 )";
 
 #include "arguments.hpp"
+#include "boost_json.hpp"
 #include "command_config_argset.hpp"
 #include "config_file_utils.hpp"  // write_client_config_file
 #include "cpg_index_data.hpp"
 #include "cpg_index_metadata.hpp"
 #include "download.hpp"
 #include "find_path_to_binary.hpp"
+#include "format_error_code.hpp"  // IWYU pragma: keep
 #include "utilities.hpp"
-#include "xfrase_error.hpp"  // IWYU pragma: keep
 
 #include <config.h>  // for VERSION, DATADIR, PROJECT_NAME
 

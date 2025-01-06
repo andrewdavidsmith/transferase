@@ -44,10 +44,10 @@ Examples:
 xfrase merge -o merged.m16 -i SRX0123*.m16
 )";
 
+#include "format_error_code.hpp"  // IWYU pragma: keep
 #include "logger.hpp"
 #include "methylome.hpp"
 #include "utilities.hpp"
-#include "xfrase_error.hpp"  // IWYU pragma: keep
 
 #include <boost/program_options.hpp>
 
