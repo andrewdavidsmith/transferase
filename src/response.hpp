@@ -26,8 +26,6 @@
 
 #include "level_container.hpp"
 
-#include "xfrase_error.hpp"
-
 #include <array>
 #include <cstddef>  // for std::byte
 #include <cstdint>
@@ -43,7 +41,7 @@ static constexpr std::uint32_t response_header_buffer_size = 256;
 typedef std::array<char, response_header_buffer_size> response_header_buffer;
 
 struct response_header {
-  std::error_code status{server_error_code::ok};
+  std::error_code status{};
   std::uint32_t response_size{};
   // ADS: doing the strange stuff below for cpplint...
   // clang-format off
