@@ -72,4 +72,44 @@ struct server {
 
 }  // namespace transferase
 
+enum class server_error_code : std::uint8_t {
+  ok = 0,
+  invalid_accession = 1,
+  invalid_request_type = 2,
+  invalid_index_hash = 3,
+  methylome_not_found = 4,
+  index_not_found = 5,
+  server_failure = 6,
+  bad_request = 7,
+};
+
+template <>
+struct std::is_error_code_enum<server_error_code> : public std::true_type {};
+
+struct server_error_category : std::error_category {
+  // clang-format off
+  auto name() const noexcept -> const char * override {return "server_response";}
+  auto message(int code) const -> std::string override {
+    using std::string_literals::operator""s;
+    switch (code) {
+    case 0: return "ok"s;
+    case 1: return "invalid accession"s;
+    case 2: return "invalid request type"s;
+    case 3: return "invalid index hash"s;
+    case 4: return "methylome not found"s;
+    case 5: return "index not found"s;
+    case 6: return "server failure"s;
+    case 7: return "bad request"s;
+    }
+    std::unreachable();
+  }
+  // clang-format on
+};
+
+inline auto
+make_error_code(server_error_code e) -> std::error_code {
+  static auto category = server_error_category{};
+  return std::error_code(std::to_underlying(e), category);
+}
+
 #endif  // SRC_SERVER_HPP_
