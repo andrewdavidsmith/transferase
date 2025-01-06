@@ -24,37 +24,35 @@ file(GLOB CPP_FILES "*.cpp")
 
 # Ensure all objects depend on both the cpp and hpp files
 set(LIBRARY_OBJECTS)
-set(COMMAND_OBJECTS)
 foreach(CPP_FILE ${CPP_FILES})
   get_filename_component(BASE_NAME ${CPP_FILE} NAME_WE)
   set(HPP_PATH "${CMAKE_CURRENT_SOURCE_DIR}/${BASE_NAME}.hpp")
   set(HPP_FILE "${BASE_NAME}.hpp")
   if(EXISTS ${HPP_PATH})
     add_library(${BASE_NAME} OBJECT ${CPP_FILE} ${HPP_FILE})
+    ## below, make sure config.h is visible to include
     target_include_directories(${BASE_NAME} PRIVATE ${PROJECT_BINARY_DIR})
-    if(NOT BASE_NAME MATCHES "^command_")
-      list(APPEND LIBRARY_OBJECTS ${BASE_NAME})
-    else()
-      list(APPEND COMMAND_OBJECTS ${BASE_NAME})
-    endif()
+    list(APPEND LIBRARY_OBJECTS ${BASE_NAME})
   endif()
 endforeach()
 
+## Passing BOOST_JSON_NO_LIB to the boost_json library will turn on
+## header-only mode, which is required for -fPIC, which is required
+## for building the Python library.
+if(BOOST_JSON_NO_LIB)
+  target_compile_definitions(boost_json PRIVATE BOOST_JSON_NO_LIB)
+endif()
+
 # Create the final library by linking the previous parts
-add_library(xfrase_system STATIC)
-target_link_libraries(
-  xfrase_system PRIVATE
-  ${LIBRARY_OBJECTS}
+add_library(transferase_system STATIC)
+target_link_libraries(transferase_system PRIVATE ${LIBRARY_OBJECTS})
+
+add_executable(transferase transferase.cpp)
+target_include_directories(transferase PRIVATE "${PROJECT_BINARY_DIR}")
+target_link_libraries(transferase PRIVATE
+  ${COMMAND_OBJECTS}
+  transferase_system
   ZLIB::ZLIB
-  Boost::boost
-  Boost::program_options
-  Boost::json
-  Boost::context
+  ${Boost_LIBRARIES}
   Threads::Threads
 )
-
-if(NOT ENABLE_UNIT_TESTS)
-  add_executable(xfrase xfrase.cpp)
-  target_include_directories(xfrase PRIVATE "${PROJECT_BINARY_DIR}")
-  target_link_libraries(xfrase PRIVATE ${COMMAND_OBJECTS} xfrase_system)
-endif()
