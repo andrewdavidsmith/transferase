@@ -51,7 +51,6 @@ xfrase check -x index_dir -d methylome_dir -g hg38 -m SRX012345 SRX612345
 #include "metadata_is_consistent.hpp"
 #include "methylome.hpp"
 #include "utilities.hpp"
-#include "xfrase_error.hpp"  // IWYU pragma: keep
 
 #include <boost/program_options.hpp>
 
@@ -121,7 +120,8 @@ command_check_main(int argc, char *argv[]) -> int {
   auto &lgr = transferase::logger::instance(transferase::shared_from_cout(),
                                             command, log_level);
   if (!lgr) {
-    std::println("Failure initializing logging: {}.", lgr.get_status());
+    const auto status = lgr.get_status();
+    std::println("Failure initializing logging: {}.", status.message());
     return EXIT_FAILURE;
   }
 
