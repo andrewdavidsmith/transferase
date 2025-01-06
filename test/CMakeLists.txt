@@ -39,22 +39,17 @@ foreach(CPP_FILE ${CPP_FILES})
     GTest::GTest
     GTest::Main
     ZLIB::ZLIB
+    ${Boost_LIBRARIES}
+    Threads::Threads
     transferase_system
   )
   target_include_directories(${BASE_NAME} PRIVATE ${PROJECT_BINARY_DIR})
-  if(BASE_NAME MATCHES "^command_")
-    # Remove the substring from the filename
-    string(REPLACE "_test" "" COMMAND_LIBRARY ${BASE_NAME})
-    set(SOURCE_FILE "${PROJECT_SOURCE_DIR}/src/${COMMAND_LIBRARY}.cpp")
-    if(EXISTS ${SOURCE_FILE})
-      target_link_libraries(${BASE_NAME} PRIVATE ${COMMAND_LIBRARY})
-    endif()
-    target_link_libraries(${BASE_NAME} PRIVATE unit_test_utils)
-  endif()
+  target_link_libraries(${BASE_NAME} PRIVATE unit_test_utils)
   list(APPEND TEST_OBJECTS ${BASE_NAME})
 endforeach()
 
-# Define the UNIT_TEST macro for the test targets
+# Define the UNIT_TEST variable for the test targets, which exposes
+# static functions through impl headers.
 foreach(target ${TEST_OBJECTS})
   target_compile_definitions(${target} PRIVATE UNIT_TEST)
 endforeach()
