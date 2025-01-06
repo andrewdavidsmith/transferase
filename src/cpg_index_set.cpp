@@ -25,7 +25,6 @@
 
 #include "cpg_index.hpp"
 #include "logger.hpp"
-#include "xfrase_error.hpp"  // IWYU pragma: keep
 
 #include <iterator>  // for std::cend
 #include <memory>    // for std::make_shared
@@ -58,7 +57,7 @@ cpg_index_set::cpg_index_set(const std::string &directory,
     const auto index = cpg_index::read(directory, name, ec);
     if (ec) {
       logger::instance().error("Failed to read cpg index {} {}: {}", directory,
-                               name, ec);
+                               name, ec.message());
       assembly_to_cpg_index.clear();
       return;
     }
