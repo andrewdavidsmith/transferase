@@ -21,9 +21,9 @@
  * SOFTWARE.
  */
 
-#include "cpg_index.hpp"
+#include "genome_index.hpp"
 
-#include "cpg_index_impl.hpp"
+#include "genome_index_impl.hpp"
 #include "zlib_adapter.hpp"
 
 #include <fcntl.h>     // for open, O_RDONLY
@@ -54,11 +54,12 @@ namespace transferase {
 struct genomic_interval;
 
 [[nodiscard]] auto
-cpg_index::write(const std::string &outdir,
-                 const std::string &name) const -> std::error_code {
+genome_index::write(const std::string &outdir,
+                    const std::string &name) const -> std::error_code {
   // make filenames
   const auto fn_wo_extn = std::filesystem::path{outdir} / name;
-  const auto meta_filename = cpg_index_metadata::compose_filename(fn_wo_extn);
+  const auto meta_filename =
+    genome_index_metadata::compose_filename(fn_wo_extn);
   const auto meta_write_ec = meta.write(meta_filename);
   if (meta_write_ec) {
     if (std::filesystem::exists(meta_filename)) {
@@ -67,7 +68,7 @@ cpg_index::write(const std::string &outdir,
     }
     return meta_write_ec;
   }
-  const auto data_filename = cpg_index_data::compose_filename(fn_wo_extn);
+  const auto data_filename = genome_index_data::compose_filename(fn_wo_extn);
   const auto data_write_ec = data.write(data_filename);
   if (data_write_ec) {
     std::error_code remove_ec;
@@ -80,29 +81,30 @@ cpg_index::write(const std::string &outdir,
 }
 
 [[nodiscard]] auto
-cpg_index::make_query(const std::vector<genomic_interval> &gis) const
+genome_index::make_query(const std::vector<genomic_interval> &gis) const
   -> transferase::query_container {
   return data.make_query(meta, gis);
 }
 
 [[nodiscard]] auto
-cpg_index::read(const std::string &dirname, const std::string &genome_name,
-                std::error_code &ec) -> cpg_index {
-  auto meta = cpg_index_metadata::read(dirname, genome_name, ec);
+genome_index::read(const std::string &dirname, const std::string &genome_name,
+                   std::error_code &ec) -> genome_index {
+  auto meta = genome_index_metadata::read(dirname, genome_name, ec);
   if (ec)
     return {};
-  auto data = cpg_index_data::read(dirname, genome_name, meta, ec);
+  auto data = genome_index_data::read(dirname, genome_name, meta, ec);
   if (ec)
     return {};
-  return cpg_index{std::move(data), std::move(meta)};
+  return genome_index{std::move(data), std::move(meta)};
 }
 
 [[nodiscard]] auto
-cpg_index::files_exist(const std::string &directory,
-                       const std::string &cpg_index_name) -> bool {
-  const auto fn_wo_extn = std::filesystem::path{directory} / cpg_index_name;
-  const auto meta_filename = cpg_index_metadata::compose_filename(fn_wo_extn);
-  const auto data_filename = cpg_index_data::compose_filename(fn_wo_extn);
+genome_index::files_exist(const std::string &directory,
+                          const std::string &genome_index_name) -> bool {
+  const auto fn_wo_extn = std::filesystem::path{directory} / genome_index_name;
+  const auto meta_filename =
+    genome_index_metadata::compose_filename(fn_wo_extn);
+  const auto data_filename = genome_index_data::compose_filename(fn_wo_extn);
 
   std::error_code ec;
   const auto meta_exists = std::filesystem::exists(meta_filename, ec);
@@ -115,8 +117,8 @@ cpg_index::files_exist(const std::string &directory,
 }
 
 [[nodiscard]] auto
-cpg_index::parse_genome_name(const std::string &filename,
-                             std::error_code &ec) -> std::string {
+genome_index::parse_genome_name(const std::string &filename,
+                                std::error_code &ec) -> std::string {
   using std::string_literals::operator""s;
   using std::literals::string_view_literals::operator""sv;
   // clang-format off
@@ -172,11 +174,11 @@ cleanup_mmap_genome(genome_file &gf) -> std::error_code {
 }
 
 [[nodiscard]] STATIC auto
-get_cpgs(const std::string_view chrom) -> cpg_index_data::vec {
+get_cpgs(const std::string_view chrom) -> genome_index_data::vec {
   static constexpr auto expeced_max_cpg_density = 50;
 
   bool prev_is_c = false, curr_is_g = false;
-  cpg_index_data::vec cpgs;
+  genome_index_data::vec cpgs;
   cpgs.reserve(std::ranges::size(chrom) / expeced_max_cpg_density);
 
   std::uint32_t pos = 0;
@@ -233,8 +235,8 @@ get_chroms(const char *data, const std::size_t sz,
 }
 
 [[nodiscard]] STATIC auto
-make_cpg_index_plain(const std::string &genome_filename,
-                     std::error_code &ec) -> cpg_index {
+make_genome_index_plain(const std::string &genome_filename,
+                        std::error_code &ec) -> genome_index {
   genome_file gf = mmap_genome(genome_filename);  // memory map the genome file
   if (gf.ec) {
     ec = gf.ec;
@@ -245,7 +247,7 @@ make_cpg_index_plain(const std::string &genome_filename,
   const auto name_starts = get_chrom_name_starts(gf.data, gf.sz);
   const auto name_stops = get_chrom_name_stops(name_starts, gf.data, gf.sz);
   if (name_starts.empty() || name_stops.empty()) {
-    ec = cpg_index_code::failure_processing_genome_file;
+    ec = genome_index_code::failure_processing_genome_file;
     return {};
   }
 
@@ -261,7 +263,7 @@ make_cpg_index_plain(const std::string &genome_filename,
     return a.second < b.second;
   });
 
-  cpg_index_metadata meta;
+  genome_index_metadata meta;
   meta.chrom_order =
     chrom_sorter | std::views::elements<1> | std::ranges::to<std::vector>();
 
@@ -273,7 +275,7 @@ make_cpg_index_plain(const std::string &genome_filename,
                                  [&](const auto i) { return chroms[i]; }) |
            std::ranges::to<std::vector>();
 
-  cpg_index_data data;
+  genome_index_data data;
 
   // collect cpgs for each chrom; order must match chrom name order
   std::ranges::transform(chroms, std::back_inserter(data.positions), get_cpgs);
@@ -291,7 +293,7 @@ make_cpg_index_plain(const std::string &genome_filename,
 
   // initialize chrom offsets within the compressed files
   std::ranges::transform(data.positions, std::back_inserter(meta.chrom_offset),
-                         std::size<cpg_index_data::vec>);
+                         std::size<genome_index_data::vec>);
 
   meta.n_cpgs =
     std::reduce(std::cbegin(meta.chrom_offset), std::cend(meta.chrom_offset));
@@ -311,7 +313,7 @@ make_cpg_index_plain(const std::string &genome_filename,
 
   meta.index_hash = data.hash();
 
-  meta.assembly = cpg_index::parse_genome_name(genome_filename, ec);
+  meta.assembly = genome_index::parse_genome_name(genome_filename, ec);
   if (ec)
     return {};
 
@@ -320,11 +322,11 @@ make_cpg_index_plain(const std::string &genome_filename,
 }
 
 [[nodiscard]] STATIC auto
-make_cpg_index_gzip(const std::string &genome_filename,
-                    std::error_code &ec) -> cpg_index {
+make_genome_index_gzip(const std::string &genome_filename,
+                       std::error_code &ec) -> genome_index {
   const auto [raw, gz_err] = read_gzfile_into_buffer(genome_filename);
   if (gz_err) {
-    ec = cpg_index_code::failure_processing_genome_file;
+    ec = genome_index_code::failure_processing_genome_file;
     return {};
   }
 
@@ -333,7 +335,7 @@ make_cpg_index_gzip(const std::string &genome_filename,
   const auto name_stops =
     get_chrom_name_stops(name_starts, raw.data(), std::size(raw));
   if (name_starts.empty() || name_stops.empty()) {
-    ec = cpg_index_code::failure_processing_genome_file;
+    ec = genome_index_code::failure_processing_genome_file;
     return {};
   }
 
@@ -349,7 +351,7 @@ make_cpg_index_gzip(const std::string &genome_filename,
     return a.second < b.second;
   });
 
-  cpg_index_metadata meta;
+  genome_index_metadata meta;
   meta.chrom_order =
     chrom_sorter | std::views::elements<1> | std::ranges::to<std::vector>();
 
@@ -361,7 +363,7 @@ make_cpg_index_gzip(const std::string &genome_filename,
                                  [&](const auto i) { return chroms[i]; }) |
            std::ranges::to<std::vector>();
 
-  cpg_index_data data;
+  genome_index_data data;
 
   // collect cpgs for each chrom; order must match chrom name order
   std::ranges::transform(chroms, std::back_inserter(data.positions), get_cpgs);
@@ -374,7 +376,7 @@ make_cpg_index_gzip(const std::string &genome_filename,
 
   // initialize chrom offsets within the compressed files
   std::ranges::transform(data.positions, std::back_inserter(meta.chrom_offset),
-                         std::size<cpg_index_data::vec>);
+                         std::size<genome_index_data::vec>);
 
   meta.n_cpgs =
     std::reduce(std::cbegin(meta.chrom_offset), std::cend(meta.chrom_offset));
@@ -394,7 +396,7 @@ make_cpg_index_gzip(const std::string &genome_filename,
 
   meta.index_hash = data.hash();
 
-  meta.assembly = cpg_index::parse_genome_name(genome_filename, ec);
+  meta.assembly = genome_index::parse_genome_name(genome_filename, ec);
   if (ec)
     return {};
 
@@ -403,18 +405,18 @@ make_cpg_index_gzip(const std::string &genome_filename,
 }
 
 [[nodiscard]] auto
-cpg_index::make_cpg_index(const std::string &genome_filename,
-                          std::error_code &ec) -> cpg_index {
+genome_index::make_genome_index(const std::string &genome_filename,
+                                std::error_code &ec) -> genome_index {
   return is_gzip_file(genome_filename)
-           ? make_cpg_index_gzip(genome_filename, ec)
-           : make_cpg_index_plain(genome_filename, ec);
+           ? make_genome_index_gzip(genome_filename, ec)
+           : make_genome_index_plain(genome_filename, ec);
 }
 
 [[nodiscard]] auto
-cpg_index::list_cpg_indexes(const std::string &dirname,
-                            std::error_code &ec) -> std::vector<std::string> {
-  static constexpr auto data_extn = cpg_index::data_extn;
-  static constexpr auto meta_extn = cpg_index::meta_extn;
+genome_index::list_genome_indexes(
+  const std::string &dirname, std::error_code &ec) -> std::vector<std::string> {
+  static constexpr auto data_extn = genome_index::data_extn;
+  static constexpr auto meta_extn = genome_index::meta_extn;
 
   using dir_itr_type = std::filesystem::directory_iterator;
   auto dir_itr = dir_itr_type(dirname, ec);

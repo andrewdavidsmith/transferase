@@ -24,7 +24,7 @@
 #ifndef SRC_REQUEST_HANDLER_HPP_
 #define SRC_REQUEST_HANDLER_HPP_
 
-#include "cpg_index_set.hpp"
+#include "genome_index_set.hpp"
 #include "methylome_set.hpp"
 
 #include <cstdint>  // for std::uint32_t
@@ -71,7 +71,7 @@ struct request_handler {
   std::string methylome_dir;   // dir of available methylomes
   std::string index_file_dir;  // dir of cpg index files
   methylome_set ms;
-  cpg_index_set indexes;
+  genome_index_set indexes;
 };
 
 }  // namespace transferase

@@ -25,7 +25,7 @@
 #define SRC_METHYLOME_RESOURCE_HPP_
 
 #include "client.hpp"
-#include "cpg_index.hpp"
+#include "genome_index.hpp"
 #include "methylome.hpp"
 #include "request.hpp"
 
@@ -76,7 +76,7 @@ get_levels_remote_impl(auto const &resource, request const &req,
 template <typename lvl_elem_type>
 [[nodiscard]] static inline auto
 get_levels_local_impl(auto const &resource, const request &req,
-                      const cpg_index &index,
+                      const genome_index &index,
                       std::error_code &ec) -> level_container<lvl_elem_type> {
   const auto meth = methylome::read(resource.directory, req.accession, ec);
   if (ec)
@@ -117,7 +117,7 @@ public:
   /// bins: takes an index
   template <typename lvl_elem_type>
   [[nodiscard]] auto
-  get_levels(const request &req, const cpg_index &index, std::error_code &ec)
+  get_levels(const request &req, const genome_index &index, std::error_code &ec)
     const -> std::variant<level_container<level_element_t>,
                           level_container<level_element_covered_t>> {
     if (!directory.empty())
@@ -176,7 +176,7 @@ public:
   /// bins: takes an index
   [[nodiscard]] auto
   get_levels(const std::string &methylome_name, const std::uint32_t bin_size,
-             const cpg_index &index,
+             const genome_index &index,
              std::error_code &ec) const -> level_container<level_element_t> {
     static constexpr auto REQUEST_TYPE =
       transferase::request_type_code::intervals;
@@ -188,7 +188,7 @@ public:
   /// bins: takes an index
   [[nodiscard]] auto
   get_levels_covered(const std::string &methylome_name,
-                     const std::uint32_t bin_size, const cpg_index &index,
+                     const std::uint32_t bin_size, const genome_index &index,
                      std::error_code &ec) const
     -> level_container<level_element_covered_t> {
     static constexpr auto REQUEST_TYPE =

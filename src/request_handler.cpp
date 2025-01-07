@@ -23,8 +23,8 @@
 
 #include "request_handler.hpp"
 
-#include "cpg_index.hpp"
-#include "cpg_index_metadata.hpp"
+#include "genome_index.hpp"
+#include "genome_index_metadata.hpp"
 #include "level_container.hpp"  // for xfrase::size
 #include "logger.hpp"
 #include "methylome.hpp"
@@ -64,7 +64,7 @@ request_handler::add_response_size(const request &req,
     return;
   }
 
-  const auto index = indexes.get_cpg_index(meth->meta.assembly, ec);
+  const auto index = indexes.get_genome_index(meth->meta.assembly, ec);
   if (ec) {
     lgr.error("Failed to load cpg index for {}: {}", meth->meta.assembly, ec);
     resp_hdr.status = server_error_code::index_not_found;
@@ -189,7 +189,7 @@ request_handler::handle_get_levels(const request &req,
   lgr.debug("Computing bins for methylome: {}", req.accession);
 
   // need cpg index to know what is in each bin
-  const auto index = indexes.get_cpg_index(meth->meta.assembly, ec);
+  const auto index = indexes.get_genome_index(meth->meta.assembly, ec);
   if (ec) {
     lgr.error("Failed to load cpg index for {}: {}", meth->meta.assembly, ec);
     resp_hdr.status = ec;

@@ -22,18 +22,18 @@
 
 import pytest
 
-from transferase import CpgIndexMetadata
+from transferase import GenomeIndexMetadata
 
 @pytest.fixture
-def setup_cpg_index_metadata():
+def setup_genome_index_metadata():
     """Fixture to set up initial data for tests"""
-    meta = CpgIndexMetadata()
+    meta = GenomeIndexMetadata()
     meta.init_env()
     return meta
 
-def tests_repr(setup_cpg_index_metadata):
+def tests_repr(setup_genome_index_metadata):
     """Test the __repr__ function"""
-    meta = setup_cpg_index_metadata
+    meta = setup_genome_index_metadata
     repr_str = repr(meta)
     assert isinstance(repr_str, str)
     assert "version" in repr_str

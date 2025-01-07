@@ -23,7 +23,7 @@
 
 #include <request_handler.hpp>
 
-#include <cpg_index.hpp>
+#include <genome_index.hpp>
 #include <genomic_interval.hpp>
 #include <logger.hpp>  // ADS: so we can setup the logger
 #include <methylome_data.hpp>
@@ -73,8 +73,8 @@ protected:
     mock_methylome_set =
       std::make_unique<methylome_set>(methylome_dir, max_live_methylomes);
     std::error_code unused_ec;
-    mock_cpg_index_set =
-      std::make_unique<cpg_index_set>(index_file_dir, unused_ec);
+    mock_genome_index_set =
+      std::make_unique<genome_index_set>(index_file_dir, unused_ec);
     mock_request_handler = std::make_unique<request_handler>(
       methylome_dir, index_file_dir, max_live_methylomes, unused_ec);
     std::ignore = unused_ec;
@@ -88,7 +88,7 @@ protected:
   std::filesystem::path methylome_dir;
   std::filesystem::path index_file_dir;
   std::unique_ptr<methylome_set> mock_methylome_set;
-  std::unique_ptr<cpg_index_set> mock_cpg_index_set;
+  std::unique_ptr<genome_index_set> mock_genome_index_set;
   std::unique_ptr<request_handler> mock_request_handler;
 };
 
@@ -256,7 +256,7 @@ TEST_F(request_handler_mock, handle_get_levels_intervals_success) {
   EXPECT_TRUE(std::filesystem::exists(index_path));
 
   std::error_code ec;
-  const auto index = cpg_index::read(index_file_dir, assembly, ec);
+  const auto index = genome_index::read(index_file_dir, assembly, ec);
   EXPECT_FALSE(ec);
 
   const auto intervals = genomic_interval::read(index, intervals_path, ec);
@@ -291,7 +291,7 @@ TEST_F(request_handler_mock, handle_get_levels_bins_success) {
   EXPECT_TRUE(std::filesystem::exists(index_path));
 
   std::error_code ec;
-  const auto index = cpg_index::read(index_file_dir, assembly, ec);
+  const auto index = genome_index::read(index_file_dir, assembly, ec);
   EXPECT_FALSE(ec);
 
   request req{methylome_name, rq_type, index_hash, bin_size};

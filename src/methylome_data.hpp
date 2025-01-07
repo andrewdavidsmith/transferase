@@ -46,7 +46,7 @@
 
 namespace transferase {
 
-struct cpg_index;
+struct genome_index;
 struct methylome_metadata;
 struct query_container;
 
@@ -116,13 +116,13 @@ struct methylome_data {
 
   /// get methylation levels for bins
   [[nodiscard]] auto
-  get_levels(const std::uint32_t bin_size,
-             const cpg_index &index) const -> level_container<level_element_t>;
+  get_levels(const std::uint32_t bin_size, const genome_index &index) const
+    -> level_container<level_element_t>;
 
   /// get methylation levels for bins and number of bins covered
   [[nodiscard]] auto
-  get_levels_covered(const std::uint32_t bin_size, const cpg_index &index) const
-    -> level_container<level_element_covered_t>;
+  get_levels_covered(const std::uint32_t bin_size, const genome_index &index)
+    const -> level_container<level_element_covered_t>;
 
   [[nodiscard]] static auto
   compose_filename(auto wo_extension) {

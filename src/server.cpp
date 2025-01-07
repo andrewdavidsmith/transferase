@@ -100,7 +100,7 @@ write_pid_to_file(std::error_code &ec) -> void {
 
 server::server(const std::string &address, const std::string &port,
                const std::uint32_t n_threads, const std::string &methylome_dir,
-               const std::string &cpg_index_file_dir,
+               const std::string &genome_index_file_dir,
                const std::uint32_t max_live_methylomes, logger &lgr,
                std::error_code &ec) :
   // io_context ios uses default constructor
@@ -111,7 +111,7 @@ server::server(const std::string &address, const std::string &port,
   signals(ioc, SIGINT, SIGTERM),
 #endif
   acceptor(ioc),
-  handler(methylome_dir, cpg_index_file_dir, max_live_methylomes, ec),
+  handler(methylome_dir, genome_index_file_dir, max_live_methylomes, ec),
   lgr{lgr} {
   // first check for errors in initializing members
   if (ec)
@@ -173,7 +173,7 @@ server::server(const std::string &address, const std::string &port,
 
 server::server(const std::string &address, const std::string &port,
                const std::uint32_t n_threads, const std::string &methylome_dir,
-               const std::string &cpg_index_file_dir,
+               const std::string &genome_index_file_dir,
                const std::uint32_t max_live_methylomes, logger &lgr,
                std::error_code &ec, [[maybe_unused]] const bool daemonize) :
   // io_context ioc uses default constructor
@@ -185,7 +185,7 @@ server::server(const std::string &address, const std::string &port,
   signals(ioc, SIGINT, SIGTERM),
 #endif
   acceptor(ioc),
-  handler(methylome_dir, cpg_index_file_dir, max_live_methylomes, ec),
+  handler(methylome_dir, genome_index_file_dir, max_live_methylomes, ec),
   lgr{lgr} {
   // first check for errors in initializing members
   if (ec)

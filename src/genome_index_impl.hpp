@@ -21,48 +21,54 @@
  * SOFTWARE.
  */
 
-#include "cpg_index_set.hpp"
+#ifndef SRC_CPG_INDEX_IMPL_HPP_
+#define SRC_CPG_INDEX_IMPL_HPP_
 
-#include "cpg_index.hpp"
-#include "logger.hpp"
+#ifdef UNIT_TEST
+#define STATIC
+#else
+#define STATIC static
+#endif
 
-#include <iterator>  // for std::cend
-#include <memory>    // for std::make_shared
+#include "genome_index_data.hpp"
+
+#include <cstddef>  // std::size_t
 #include <string>
+#include <string_view>
 #include <system_error>
-#include <unordered_map>
-#include <utility>  // for std::move, std::pair
 #include <vector>
 
 namespace transferase {
 
-[[nodiscard]] auto
-cpg_index_set::get_cpg_index(const std::string &assembly, std::error_code &ec)
-  -> std::shared_ptr<cpg_index> {
-  const auto itr_index = assembly_to_cpg_index.find(assembly);
-  if (itr_index == std::cend(assembly_to_cpg_index)) {
-    ec = cpg_index_set_error::cpg_index_not_found;
-    return nullptr;
-  }
-  ec = cpg_index_set_error::ok;
-  return itr_index->second;
-}
+struct genome_file {
+  std::error_code ec{};
+  char *data{};
+  std::size_t sz{};
+};
 
-cpg_index_set::cpg_index_set(const std::string &directory,
-                             std::error_code &ec) {
-  const auto genome_names = cpg_index::list_cpg_indexes(directory, ec);
-  if (ec)
-    return;
-  for (const auto &name : genome_names) {
-    const auto index = cpg_index::read(directory, name, ec);
-    if (ec) {
-      logger::instance().error("Failed to read cpg index {} {}: {}", directory,
-                               name, ec.message());
-      assembly_to_cpg_index.clear();
-      return;
-    }
-    assembly_to_cpg_index.emplace(name, std::make_shared<cpg_index>(index));
-  }
-}
+[[nodiscard]] STATIC auto
+mmap_genome(const std::string &filename) -> genome_file;
+
+[[nodiscard]] STATIC auto
+cleanup_mmap_genome(genome_file &gf) -> std::error_code;
+
+[[nodiscard]] STATIC auto
+get_cpgs(const std::string_view chrom) -> genome_index_data::vec;
+
+[[nodiscard]] STATIC auto
+get_chrom_name_starts(const char *data,
+                      const std::size_t sz) -> std::vector<std::size_t>;
+
+[[nodiscard]] STATIC auto
+get_chrom_name_stops(std::vector<std::size_t> starts, const char *data,
+                     const std::size_t sz) -> std::vector<std::size_t>;
+
+[[nodiscard]] STATIC auto
+get_chroms(const char *data, const std::size_t sz,
+           const std::vector<std::size_t> &name_starts,
+           const std::vector<std::size_t> &name_stops)
+  -> std::vector<std::string_view>;
 
 }  // namespace transferase
+
+#endif  // SRC_CPG_INDEX_IMPL_HPP_

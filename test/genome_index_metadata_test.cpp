@@ -21,7 +21,7 @@
  * SOFTWARE.
  */
 
-#include <cpg_index_metadata.hpp>
+#include <genome_index_metadata.hpp>
 
 #include "unit_test_utils.hpp"
 
@@ -37,8 +37,8 @@
 
 using namespace transferase;  // NOLINT  // NOLINT
 
-TEST(cpg_index_metadata_test, basic_assertions) {
-  cpg_index_metadata meta;
+TEST(genome_index_metadata_test, basic_assertions) {
+  genome_index_metadata meta;
   EXPECT_EQ(meta.get_n_cpgs_chrom(), std::vector<std::uint32_t>());
   meta.chrom_offset = {0, 1000, 10000};
   meta.n_cpgs = 11000;
@@ -49,24 +49,25 @@ TEST(cpg_index_metadata_test, basic_assertions) {
   EXPECT_EQ(meta.get_n_cpgs_chrom(), std::vector<std::uint32_t>({0}));
 }
 
-class cpg_index_metadata_mock : public ::testing::Test {
+class genome_index_metadata_mock : public ::testing::Test {
 protected:
   auto
   SetUp() -> void override {
-    cpg_index_dir = "data/lutions/indexes";
+    genome_index_dir = "data/lutions/indexes";
     species_name = "eFlareon";
   }
 
   auto
   TearDown() -> void override {}
 
-  std::string cpg_index_dir;
+  std::string genome_index_dir;
   std::string species_name;
 };
 
-TEST_F(cpg_index_metadata_mock, read_existing_cpg_index_metadata) {
+TEST_F(genome_index_metadata_mock, read_existing_genome_index_metadata) {
   std::error_code ec;
-  const auto meta = cpg_index_metadata::read(cpg_index_dir, species_name, ec);
+  const auto meta =
+    genome_index_metadata::read(genome_index_dir, species_name, ec);
   EXPECT_FALSE(ec);
   EXPECT_EQ(std::size(meta.chrom_index), std::size(meta.chrom_order));
   EXPECT_EQ(std::size(meta.chrom_index), std::size(meta.chrom_size));
@@ -80,17 +81,18 @@ TEST_F(cpg_index_metadata_mock, read_existing_cpg_index_metadata) {
   EXPECT_EQ(meta.n_cpgs, total);
 }
 
-TEST_F(cpg_index_metadata_mock, cpg_index_metadata_read_write_read) {
+TEST_F(genome_index_metadata_mock, genome_index_metadata_read_write_read) {
   std::error_code ec;
-  const auto meta = cpg_index_metadata::read(cpg_index_dir, species_name, ec);
+  const auto meta =
+    genome_index_metadata::read(genome_index_dir, species_name, ec);
   EXPECT_EQ(ec, std::error_code{});
 
   const auto tmpfile =
-    generate_temp_filename("temp", cpg_index_metadata::filename_extension);
+    generate_temp_filename("temp", genome_index_metadata::filename_extension);
   ec = meta.write(tmpfile);
   EXPECT_EQ(ec, std::error_code{});
 
-  const auto meta_written = cpg_index_metadata::read(tmpfile, ec);
+  const auto meta_written = genome_index_metadata::read(tmpfile, ec);
   EXPECT_EQ(ec, std::error_code{});
 
   // ADS: gtest doesn't want to acknowledge my spaceships
@@ -105,23 +107,24 @@ TEST_F(cpg_index_metadata_mock, cpg_index_metadata_read_write_read) {
   EXPECT_TRUE(removed);
 }
 
-TEST_F(cpg_index_metadata_mock, cpg_index_metadata_get_n_bins) {
+TEST_F(genome_index_metadata_mock, genome_index_metadata_get_n_bins) {
   std::error_code ec;
-  const auto meta = cpg_index_metadata::read(cpg_index_dir, species_name, ec);
+  const auto meta =
+    genome_index_metadata::read(genome_index_dir, species_name, ec);
   EXPECT_EQ(ec, std::error_code{});
   const auto n_bins = meta.get_n_bins(1);
   EXPECT_GE(n_bins, meta.n_cpgs);
 }
 
-TEST_F(cpg_index_metadata_mock, cpg_index_metadata_init_env) {
-  cpg_index_metadata meta{};
+TEST_F(genome_index_metadata_mock, genome_index_metadata_init_env) {
+  genome_index_metadata meta{};
   const auto init_env_err = meta.init_env();
   EXPECT_FALSE(init_env_err);
   EXPECT_EQ(meta.version, VERSION);
 }
 
-TEST_F(cpg_index_metadata_mock, cpg_index_metadata_tostring) {
-  cpg_index_metadata meta{};
+TEST_F(genome_index_metadata_mock, genome_index_metadata_tostring) {
+  genome_index_metadata meta{};
   const auto meta_str = meta.tostring();
   EXPECT_GT(std::size(meta_str), 0);
 }

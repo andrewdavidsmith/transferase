@@ -48,10 +48,10 @@ xfrase format -x index_dir -g hg38 -o output_dir -m SRX012345.xsym.gz
 )";
 
 #include "counts_file_format.hpp"
-#include "cpg_index.hpp"
-#include "cpg_index_data.hpp"
-#include "cpg_index_metadata.hpp"
 #include "format_error_code.hpp"  // IWYU pragma: keep
+#include "genome_index.hpp"
+#include "genome_index_data.hpp"
+#include "genome_index_metadata.hpp"
 #include "logger.hpp"
 #include "methylome.hpp"
 #include "methylome_data.hpp"
@@ -122,7 +122,7 @@ make_error_code(counts_file_format_error e) -> std::error_code {
 namespace transferase {
 
 static inline auto
-skip_absent_cpgs(const std::uint64_t end_pos, const cpg_index_data::vec &idx,
+skip_absent_cpgs(const std::uint64_t end_pos, const genome_index_data::vec &idx,
                  std::uint32_t cpg_idx_in) -> std::uint32_t {
   const std::uint32_t first_idx = cpg_idx_in;
   while (cpg_idx_in < std::size(idx) && idx[cpg_idx_in] < end_pos)
@@ -131,10 +131,10 @@ skip_absent_cpgs(const std::uint64_t end_pos, const cpg_index_data::vec &idx,
 }
 
 static inline auto
-get_ch_id(const cpg_index_metadata &cim,
+get_ch_id(const genome_index_metadata &meta,
           const std::string &chrom_name) -> std::int32_t {
-  const auto ch_id = cim.chrom_index.find(chrom_name);
-  if (ch_id == cend(cim.chrom_index))
+  const auto ch_id = meta.chrom_index.find(chrom_name);
+  if (ch_id == cend(meta.chrom_index))
     return -1;
   return ch_id->second;
 }
@@ -142,7 +142,7 @@ get_ch_id(const cpg_index_metadata &cim,
 // ADS: this function is tied to the specifics of dnmtools::xcounts
 // code, and likely needs a review
 static auto
-verify_header_line(const cpg_index_metadata &cim,
+verify_header_line(const genome_index_metadata &meta,
                    const std::string &line) -> std::error_code {
   // ignore the version line and the header end line
   if (line.substr(0, 9) == "#DNMTOOLS" || std::size(line) == 1)
@@ -159,13 +159,13 @@ verify_header_line(const cpg_index_metadata &cim,
 
   // validate the chromosome order is consistent between the index and
   // methylome transferase file
-  const auto order_itr = cim.chrom_index.find(chrom);
-  if (order_itr == cend(cim.chrom_index))
+  const auto order_itr = meta.chrom_index.find(chrom);
+  if (order_itr == cend(meta.chrom_index))
     return counts_file_format_error::xcounts_file_chromosome_not_found;
 
   // validate that the chromosome size is the same between the index
   // and the methylome transferase file
-  const auto size_itr = cim.chrom_size[order_itr->second];
+  const auto size_itr = meta.chrom_size[order_itr->second];
   if (chrom_size != size_itr)
     return counts_file_format_error::xcounts_file_incorrect_chromosome_size;
 
@@ -173,11 +173,11 @@ verify_header_line(const cpg_index_metadata &cim,
 }
 
 static auto
-process_cpg_sites_xcounts(const std::string &infile, const cpg_index &index)
+process_cpg_sites_xcounts(const std::string &infile, const genome_index &index)
   -> std::tuple<methylome_data, std::error_code> {
   auto &lgr = transferase::logger::instance();
 
-  const cpg_index_metadata &index_meta = index.meta;
+  const genome_index_metadata &index_meta = index.meta;
   const auto begin_positions = std::cbegin(index.data.positions);
 
   std::error_code err;
@@ -190,7 +190,7 @@ process_cpg_sites_xcounts(const std::string &infile, const cpg_index &index)
   std::uint32_t cpg_idx_in{};  // index of current input cpg position
   std::uint64_t pos = std::numeric_limits<std::uint64_t>::max();
 
-  std::vector<cpg_index_data::vec>::const_iterator positions{};
+  std::vector<genome_index_data::vec>::const_iterator positions{};
 
   // ADS: if optimization is needed, this can be flattened here to
   // avoid a copy later
@@ -267,11 +267,11 @@ process_cpg_sites_xcounts(const std::string &infile, const cpg_index &index)
 }
 
 static auto
-process_cpg_sites_counts(const std::string &infile, const cpg_index &index)
+process_cpg_sites_counts(const std::string &infile, const genome_index &index)
   -> std::tuple<methylome_data, std::error_code> {
   auto &lgr = transferase::logger::instance();
 
-  const cpg_index_metadata &index_meta = index.meta;
+  const genome_index_metadata &index_meta = index.meta;
   const auto begin_positions = std::cbegin(index.data.positions);
 
   std::error_code err;
@@ -284,7 +284,7 @@ process_cpg_sites_counts(const std::string &infile, const cpg_index &index)
   std::uint32_t cpg_idx_in{};  // index of current input cpg position
   std::uint64_t pos = std::numeric_limits<std::uint64_t>::max();
 
-  std::vector<cpg_index_data::vec>::const_iterator positions{};
+  std::vector<genome_index_data::vec>::const_iterator positions{};
 
   // ADS: if optimization is needed, this can be flattened here to
   // avoid a copy later
@@ -366,7 +366,7 @@ command_format_main(int argc, char *argv[]) -> int {
     std::format("{}\n{}", rstrip(description), rstrip(examples));
 
   using transferase::counts_file_format;
-  using transferase::cpg_index;
+  using transferase::genome_index;
   using transferase::get_meth_file_format;
   using transferase::log_level_t;
   using transferase::logger;
@@ -439,7 +439,7 @@ command_format_main(int argc, char *argv[]) -> int {
   transferase::log_args<log_level_t::info>(args_to_log);
 
   std::error_code index_ec;
-  const auto index = cpg_index::read(index_directory, genome_name, index_ec);
+  const auto index = genome_index::read(index_directory, genome_name, index_ec);
   if (index_ec) {
     lgr.error("Failed to read cpg index {} {}: {}", index_directory,
               genome_name, index_ec);

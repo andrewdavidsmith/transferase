@@ -23,8 +23,8 @@
 
 #include "genomic_interval_bindings.hpp"
 
-#include <cpg_index.hpp>
-#include <cpg_index_metadata.hpp>
+#include <genome_index.hpp>
+#include <genome_index_metadata.hpp>
 
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>  // IWYU pragma: keep
@@ -60,14 +60,14 @@ genomic_interval_bindings(pybind11::class_<transferase::genomic_interval> &cls)
     .def("__repr__",
       [](const transferase::genomic_interval &gi) { return std::format("{}", gi); })
     .def("to_string", [](const transferase::genomic_interval &self,
-                         const transferase::cpg_index &index) {
+                         const transferase::genome_index &index) {
       return std::format("{}\t{}\t{}", index.meta.chrom_order.at(self.ch_id),
                          self.start, self.stop);},
          "Print a genomic interval with name of chromosome",
-         py::arg("cpg_index"))
+         py::arg("genome_index"))
     // static functions of genomic_interval class
     .def_static("read", &transferase::genomic_interval::read,
-                "Read a BED file of genomic intervals file", "cpg_index"_a,
+                "Read a BED file of genomic intervals file", "genome_index"_a,
                 "filename"_a, "error_code"_a)
     .def_static("are_sorted", &transferase::genomic_interval::are_sorted,
                 "Check if intervals are sorted", "intervals"_a)

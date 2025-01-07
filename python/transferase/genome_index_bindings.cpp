@@ -21,13 +21,13 @@
  * SOFTWARE.
  */
 
-#include "cpg_index_bindings.hpp"
+#include "genome_index_bindings.hpp"
 
-#include <cpg_index.hpp>
+#include <genome_index.hpp>
 #include <genomic_interval.hpp>  // IWYU pragma: keep
 
-#include <cpg_index_data.hpp>
-#include <cpg_index_metadata.hpp>
+#include <genome_index_data.hpp>
+#include <genome_index_metadata.hpp>
 
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>  // IWYU pragma: keep
@@ -35,30 +35,31 @@
 namespace py = pybind11;
 
 auto
-cpg_index_bindings(py::class_<transferase::cpg_index> &cls) -> void {
+genome_index_bindings(py::class_<transferase::genome_index> &cls) -> void {
   using namespace pybind11::literals;  // NOLINT
   cls.def(py::init<>())
-    .def_readonly("data", &transferase::cpg_index::data)
-    .def_readonly("meta", &transferase::cpg_index::meta)
-    .def("is_consistent", &transferase::cpg_index::is_consistent)
-    .def("__hash__", &transferase::cpg_index::get_hash)
-    .def("__repr__", &transferase::cpg_index::tostring)
-    .def_static("read", &transferase::cpg_index::read, "dirname"_a,
+    .def_readonly("data", &transferase::genome_index::data)
+    .def_readonly("meta", &transferase::genome_index::meta)
+    .def("is_consistent", &transferase::genome_index::is_consistent)
+    .def("__hash__", &transferase::genome_index::get_hash)
+    .def("__repr__", &transferase::genome_index::tostring)
+    .def_static("read", &transferase::genome_index::read, "dirname"_a,
                 "genome_name"_a, "error"_a)
-    .def("write", &transferase::cpg_index::write, "outdir"_a, "name"_a)
-    .def("make_query", &transferase::cpg_index::make_query,
+    .def("write", &transferase::genome_index::write, "outdir"_a, "name"_a)
+    .def("make_query", &transferase::genome_index::make_query,
          py::arg("intervals").noconvert())
-    .def_static("make_cpg_index", &transferase::cpg_index::make_cpg_index,
-                "Create a CpG index from a reference genome", "genome_file"_a,
-                "error_code"_a)
-    .def_static("files_exist", &transferase::cpg_index::files_exist,
-                "Check if CpG index files exist in a directory.", "directory"_a,
-                "genome_name"_a)
+    .def_static("make_genome_index",
+                &transferase::genome_index::make_genome_index,
+                "Create a genome index from a reference genome",
+                "genome_file"_a, "error_code"_a)
+    .def_static("files_exist", &transferase::genome_index::files_exist,
+                "Check if genome index files exist in a directory.",
+                "directory"_a, "genome_name"_a)
     .def_static(
-      "parse_genome_name", &transferase::cpg_index::parse_genome_name,
+      "parse_genome_name", &transferase::genome_index::parse_genome_name,
       "Parse the genome name from a FASTA format reference genome file.",
       "filename"_a, "error_code"_a)
-    .def_static("list_cpg_indexes", &transferase::cpg_index::list_cpg_indexes,
-                "List all CpG indexes in a directory.", "directory"_a,
-                "error_code"_a);
+    .def_static(
+      "list_genome_indexes", &transferase::genome_index::list_genome_indexes,
+      "List all CpG indexes in a directory.", "directory"_a, "error_code"_a);
 }

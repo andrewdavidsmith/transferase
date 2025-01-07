@@ -24,8 +24,8 @@
 #include "genomic_interval.hpp"
 #include "genomic_interval_impl.hpp"
 
-#include "cpg_index.hpp"  // just passing cpg_index_metadata
-#include "cpg_index_metadata.hpp"
+#include "genome_index.hpp"
+#include "genome_index_metadata.hpp"
 
 #include <algorithm>
 #include <cerrno>
@@ -41,7 +41,7 @@
 namespace transferase {
 
 [[nodiscard]] STATIC auto
-parse(const cpg_index_metadata &meta, const std::string &line,
+parse(const genome_index_metadata &meta, const std::string &line,
       std::error_code &ec) -> genomic_interval {
   auto cursor = line.data();
   const auto line_sz = std::size(line);
@@ -84,9 +84,9 @@ parse(const cpg_index_metadata &meta, const std::string &line,
 }
 
 [[nodiscard]] auto
-genomic_interval::read(const cpg_index &index, const std::string &filename,
+genomic_interval::read(const genome_index &index, const std::string &filename,
                        std::error_code &ec) -> std::vector<genomic_interval> {
-  const cpg_index_metadata &meta = index.meta;
+  const genome_index_metadata &meta = index.meta;
   ec = std::error_code{};
   std::ifstream in{filename};
   if (!in) {

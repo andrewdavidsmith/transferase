@@ -34,41 +34,43 @@
 
 namespace transferase {
 
-struct cpg_index;
+struct genome_index;
 
-struct cpg_index_set {
-  cpg_index_set(const cpg_index_set &) = delete;
-  cpg_index_set &
-  operator=(const cpg_index_set &) = delete;
+struct genome_index_set {
+  genome_index_set(const genome_index_set &) = delete;
+  genome_index_set &
+  operator=(const genome_index_set &) = delete;
 
-  // ADS: this cpg_index_set constructor always attempts to read files
+  // ADS: this genome_index_set constructor always attempts to read files
   // so the error code is needed here; this contrasts with
   // methylome_set, which does no such work until requested.
-  cpg_index_set(const std::string &cpg_index_directory, std::error_code &ec);
+  genome_index_set(const std::string &genome_index_directory,
+                   std::error_code &ec);
 
   [[nodiscard]] auto
-  get_cpg_index(const std::string &assembly,
-                std::error_code &ec) -> std::shared_ptr<cpg_index>;
+  get_genome_index(const std::string &assembly,
+                   std::error_code &ec) -> std::shared_ptr<genome_index>;
 
-  std::unordered_map<std::string, std::shared_ptr<cpg_index>>
-    assembly_to_cpg_index;
+  std::unordered_map<std::string, std::shared_ptr<genome_index>>
+    assembly_to_genome_index;
 };
 
 }  // namespace transferase
 
-// error code for cpg_index_set
-enum class cpg_index_set_error : std::uint8_t {
+// error code for genome_index_set
+enum class genome_index_set_error : std::uint8_t {
   ok = 0,
-  cpg_index_not_found = 1,
+  genome_index_not_found = 1,
 };
 
 template <>
-struct std::is_error_code_enum<cpg_index_set_error> : public std::true_type {};
+struct std::is_error_code_enum<genome_index_set_error> : public std::true_type {
+};
 
-struct cpg_index_set_category : std::error_category {
+struct genome_index_set_category : std::error_category {
   auto
   name() const noexcept -> const char * override {
-    return "cpg_index_set";
+    return "genome_index_set";
   }
   auto
   message(int code) const -> std::string override {
@@ -84,8 +86,8 @@ struct cpg_index_set_category : std::error_category {
 };
 
 inline auto
-make_error_code(cpg_index_set_error e) -> std::error_code {
-  static auto category = cpg_index_set_category{};
+make_error_code(genome_index_set_error e) -> std::error_code {
+  static auto category = genome_index_set_category{};
   return std::error_code(std::to_underlying(e), category);
 }
 

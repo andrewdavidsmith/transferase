@@ -23,7 +23,7 @@
 
 #include "methylome_bindings.hpp"
 
-#include <cpg_index.hpp>  // IWYU pragma: keep
+#include <genome_index.hpp>  // IWYU pragma: keep
 #include <methylome.hpp>
 
 #include <pybind11/pybind11.h>
@@ -74,12 +74,12 @@ methylome_bindings(py::class_<transferase::methylome> &cls) -> void {
          })
     .def("get_levels",
          [](const transferase::methylome &self, const std::uint32_t bin_size,
-            const transferase::cpg_index &index) {
+            const transferase::genome_index &index) {
            return self.get_levels(bin_size, index);
          })
     .def("get_levels_covered",
          [](const transferase::methylome &self, const std::uint32_t bin_size,
-            const transferase::cpg_index &index) {
+            const transferase::genome_index &index) {
            return self.get_levels_covered(bin_size, index);
          })
     .def("global_levels", &transferase::methylome::global_levels)

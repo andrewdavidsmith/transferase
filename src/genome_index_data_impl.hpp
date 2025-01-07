@@ -21,17 +21,28 @@
  * SOFTWARE.
  */
 
-#ifndef PYTHON_TRANSFERASE_CPG_INDEX_METADATA_BINDINGS_HPP_
-#define PYTHON_TRANSFERASE_CPG_INDEX_METADATA_BINDINGS_HPP_
+#ifndef SRC_GENOME_INDEX_DATA_IMPL_HPP_
+#define SRC_GENOME_INDEX_DATA_IMPL_HPP_
 
-#include <pybind11/pybind11.h>
+#ifdef UNIT_TEST
+#define STATIC
+#else
+#define STATIC static
+#endif
+
+#include "genome_index_data.hpp"
+#include <vector>
 
 namespace transferase {
-struct cpg_index_metadata;
+
+struct chrom_range_t;
+struct query_container;
+
+[[nodiscard]] STATIC auto
+make_query_within_chrom(const genome_index_data::vec &positions,
+                        const std::vector<chrom_range_t> &chrom_ranges)
+  -> transferase::query_container;
+
 }  // namespace transferase
 
-auto
-cpg_index_metadata_bindings(
-  pybind11::class_<transferase::cpg_index_metadata> &cls) -> void;
-
-#endif  // PYTHON_TRANSFERASE_CPG_INDEX_METADATA_BINDINGS_HPP_
+#endif  // SRC_GENOME_INDEX_DATA_IMPL_HPP_

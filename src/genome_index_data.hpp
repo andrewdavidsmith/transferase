@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_CPG_INDEX_DATA_HPP_
-#define SRC_CPG_INDEX_DATA_HPP_
+#ifndef SRC_GENOME_INDEX_DATA_HPP_
+#define SRC_GENOME_INDEX_DATA_HPP_
 
 #if not defined(__APPLE__) && not defined(__MACH__)
 #include "aligned_allocator.hpp"
@@ -41,10 +41,10 @@
 namespace transferase {
 
 struct genomic_interval;
-struct cpg_index_metadata;
+struct genome_index_metadata;
 struct chrom_range_t;
 
-struct cpg_index_data {
+struct genome_index_data {
   // includes the dot because that's how std::filesystem::path works
   static constexpr auto filename_extension{".cpg_idx"};
 
@@ -61,12 +61,13 @@ struct cpg_index_data {
   }
 
   [[nodiscard]] static auto
-  read(const std::string &filename, const cpg_index_metadata &meta,
-       std::error_code &ec) -> cpg_index_data;
+  read(const std::string &filename, const genome_index_metadata &meta,
+       std::error_code &ec) -> genome_index_data;
 
   [[nodiscard]] static auto
   read(const std::string &dirname, const std::string &genomic_name,
-       const cpg_index_metadata &meta, std::error_code &ec) -> cpg_index_data;
+       const genome_index_metadata &meta,
+       std::error_code &ec) -> genome_index_data;
 
   [[nodiscard]] auto
   write(const std::string &index_file) const -> std::error_code;
@@ -83,12 +84,12 @@ struct cpg_index_data {
     -> transferase::query_container;
 
   [[nodiscard]] auto
-  make_query_chrom(const std::int32_t ch_id, const cpg_index_metadata &meta,
+  make_query_chrom(const std::int32_t ch_id, const genome_index_metadata &meta,
                    const std::vector<chrom_range_t> &pos) const
     -> transferase::query_container;
 
   [[nodiscard]] auto
-  make_query(const cpg_index_metadata &meta,
+  make_query(const genome_index_metadata &meta,
              const std::vector<genomic_interval> &gis) const
     -> transferase::query_container;
 
@@ -104,34 +105,35 @@ struct cpg_index_data {
     return std::format("{}{}", wo_extn, filename_extension);
   }
 
-  std::vector<cpg_index_data::vec> positions;
+  std::vector<genome_index_data::vec> positions;
 };
 
 }  // namespace transferase
 
 template <>
-struct std::formatter<transferase::cpg_index_data>
+struct std::formatter<transferase::genome_index_data>
   : std::formatter<std::string> {
   auto
-  format(const transferase::cpg_index_data &data,
+  format(const transferase::genome_index_data &data,
          std::format_context &ctx) const {
     return std::formatter<std::string>::format(data.tostring(), ctx);
   }
 };
 
-// cpg_index_data errors
+// genome_index_data errors
 
-enum class cpg_index_data_code : std::uint8_t {
+enum class genome_index_data_code : std::uint8_t {
   ok = 0,
   failure_reading_index_data = 1,
 };
 
 template <>
-struct std::is_error_code_enum<cpg_index_data_code> : public std::true_type {};
+struct std::is_error_code_enum<genome_index_data_code> : public std::true_type {
+};
 
-struct cpg_index_data_category : std::error_category {
+struct genome_index_data_category : std::error_category {
   // clang-format off
-  auto name() const noexcept -> const char * override {return "cpg_index_data";}
+  auto name() const noexcept -> const char * override {return "genome_index_data";}
   auto message(int code) const -> std::string override {
     using std::string_literals::operator""s;
     switch (code) {
@@ -144,9 +146,9 @@ struct cpg_index_data_category : std::error_category {
 };
 
 inline auto
-make_error_code(cpg_index_data_code e) -> std::error_code {
-  static auto category = cpg_index_data_category{};
+make_error_code(genome_index_data_code e) -> std::error_code {
+  static auto category = genome_index_data_category{};
   return std::error_code(std::to_underlying(e), category);
 }
 
-#endif  // SRC_CPG_INDEX_DATA_HPP_
+#endif  // SRC_GENOME_INDEX_DATA_HPP_

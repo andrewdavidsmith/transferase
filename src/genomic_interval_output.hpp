@@ -24,8 +24,8 @@
 #ifndef SRC_GENOMIC_INTERVAL_OUTPUT_HPP_
 #define SRC_GENOMIC_INTERVAL_OUTPUT_HPP_
 
-#include "cpg_index.hpp"
-#include "cpg_index_metadata.hpp"
+#include "genome_index.hpp"
+#include "genome_index_metadata.hpp"
 #include "genomic_interval.hpp"
 #include "logger.hpp"
 
@@ -52,7 +52,7 @@ struct level_element_covered_t;
 struct level_element_t;
 
 [[nodiscard]] auto
-write_intervals(const std::string &outfile, const cpg_index_metadata &cim,
+write_intervals(const std::string &outfile, const genome_index_metadata &meta,
                 const std::vector<genomic_interval> &intervals,
                 std::ranges::input_range auto &&levels) -> std::error_code {
   static constexpr auto buf_size{512};
@@ -79,7 +79,7 @@ write_intervals(const std::string &outfile, const cpg_index_metadata &cim,
   for (const auto &chunk :
        std::views::zip(intervals, levels) | std::views::chunk_by(same_chrom)) {
     const auto ch_id = get<0>(chunk.front()).ch_id;
-    const std::string chrom{cim.chrom_order[ch_id]};
+    const std::string chrom{meta.chrom_order[ch_id]};
     std::ranges::copy(chrom, buf.data());
     buf[std::size(chrom)] = delim;
     for (const auto &[gi, single_result] : chunk) {
@@ -113,7 +113,7 @@ write_intervals(const std::string &outfile, const cpg_index_metadata &cim,
 
 [[nodiscard]] auto
 write_intervals_bedgraph(
-  const std::string &outfile, const cpg_index_metadata &cim,
+  const std::string &outfile, const genome_index_metadata &meta,
   const std::vector<genomic_interval> &intervals,
   std::ranges::input_range auto &&scores) -> std::error_code {
   static constexpr auto score_precision{6};
@@ -139,7 +139,7 @@ write_intervals_bedgraph(
   for (const auto &chunk :
        std::views::zip(intervals, scores) | std::views::chunk_by(same_chrom)) {
     const auto ch_id = get<0>(chunk.front()).ch_id;
-    const std::string chrom{cim.chrom_order[ch_id]};
+    const std::string chrom{meta.chrom_order[ch_id]};
     std::ranges::copy(chrom, buf.data());
     buf[std::size(chrom)] = delim;
     for (const auto &[gi, single_score] : chunk) {
@@ -168,7 +168,7 @@ write_intervals_bedgraph(
 }
 
 [[nodiscard]] auto
-write_bins(const std::string &outfile, const cpg_index_metadata &cim,
+write_bins(const std::string &outfile, const genome_index_metadata &meta,
            const std::uint32_t bin_size,
            const auto &levels) -> std::error_code {
   static constexpr auto buf_size{512};
@@ -189,7 +189,7 @@ write_bins(const std::string &outfile, const cpg_index_metadata &cim,
 
   auto levels_itr = std::cbegin(levels);
 
-  const auto zipped = std::views::zip(cim.chrom_size, cim.chrom_order);
+  const auto zipped = std::views::zip(meta.chrom_size, meta.chrom_order);
   for (const auto [chrom_size, chrom_name] : zipped) {
     std::ranges::copy(chrom_name, buf.data());
     buf[std::size(chrom_name)] = delim;
@@ -227,7 +227,8 @@ write_bins(const std::string &outfile, const cpg_index_metadata &cim,
 }
 
 [[nodiscard]] auto
-write_bins_bedgraph(const std::string &outfile, const cpg_index_metadata &cim,
+write_bins_bedgraph(const std::string &outfile,
+                    const genome_index_metadata &meta,
                     const std::uint32_t bin_size,
                     std::ranges::input_range auto &&scores) -> std::error_code {
   static constexpr auto score_precision{6};
@@ -246,7 +247,7 @@ write_bins_bedgraph(const std::string &outfile, const cpg_index_metadata &cim,
 
   auto scores_itr = std::cbegin(scores);
 
-  const auto zipped = std::views::zip(cim.chrom_size, cim.chrom_order);
+  const auto zipped = std::views::zip(meta.chrom_size, meta.chrom_order);
   for (const auto [chrom_size, chrom_name] : zipped) {
     std::ranges::copy(chrom_name, buf.data());
     buf[std::size(chrom_name)] = delim;
@@ -282,11 +283,11 @@ write_bins_bedgraph(const std::string &outfile, const cpg_index_metadata &cim,
 struct intervals_output_mgr {
   const std::string &outfile;
   const std::vector<genomic_interval> &intervals;
-  const cpg_index &index;
+  const genome_index &index;
   const bool &write_scores;
   intervals_output_mgr(const std::string &outfile,
                        const std::vector<genomic_interval> &intervals,
-                       const cpg_index &index, const bool &write_scores) :
+                       const genome_index &index, const bool &write_scores) :
     outfile{outfile}, intervals{intervals}, index{index},
     write_scores{write_scores} {}
 };
@@ -294,10 +295,10 @@ struct intervals_output_mgr {
 struct bins_output_mgr {
   const std::string &outfile;
   const std::uint32_t &bin_size;
-  const cpg_index &index;
+  const genome_index &index;
   const bool &write_scores;
   bins_output_mgr(const std::string &outfile, const std::uint32_t &bin_size,
-                  const cpg_index &index, const bool &write_scores) :
+                  const genome_index &index, const bool &write_scores) :
     outfile{outfile}, bin_size{bin_size}, index{index},
     write_scores{write_scores} {}
 };

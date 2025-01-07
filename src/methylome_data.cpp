@@ -23,9 +23,9 @@
 
 #include "methylome_data.hpp"
 
-#include "cpg_index.hpp"
-#include "cpg_index_data.hpp"
-#include "cpg_index_metadata.hpp"
+#include "genome_index.hpp"
+#include "genome_index_data.hpp"
+#include "genome_index_metadata.hpp"
 #include "hash.hpp"
 #include "methylome_metadata.hpp"
 #include "query_container.hpp"
@@ -198,7 +198,7 @@ get_levels_impl(const T b, const T e) -> U {
 template <typename U>
 [[nodiscard]] static inline auto
 get_levels_impl(const methylome_data::vec &cpgs,
-                const cpg_index_data::vec &positions,
+                const genome_index_data::vec &positions,
                 const std::uint32_t offset, const transferase::q_elem_t start,
                 const transferase::q_elem_t stop) -> U {
   // ADS: it is possible that the intervals requested are past the cpg
@@ -263,8 +263,8 @@ methylome_data::global_levels() const -> level_element_t {
 
 template <typename T>
 static auto
-bin_levels_impl(cpg_index_data::vec::const_iterator &posn_itr,
-                const cpg_index_data::vec::const_iterator posn_end,
+bin_levels_impl(genome_index_data::vec::const_iterator &posn_itr,
+                const genome_index_data::vec::const_iterator posn_end,
                 const std::uint32_t bin_end,
                 methylome_data::vec::const_iterator &cpg_itr) -> T {
   T t{};
@@ -281,7 +281,7 @@ bin_levels_impl(cpg_index_data::vec::const_iterator &posn_itr,
 
 template <typename T>
 [[nodiscard]] static auto
-get_levels_impl(const std::uint32_t bin_size, const cpg_index &index,
+get_levels_impl(const std::uint32_t bin_size, const genome_index &index,
                 const methylome_data::vec &cpgs) -> level_container<T> {
   std::vector<T> results;  // ADS TODO: reserve n_bins
 
@@ -301,14 +301,15 @@ get_levels_impl(const std::uint32_t bin_size, const cpg_index &index,
 }
 
 [[nodiscard]] auto
-methylome_data::get_levels(const std::uint32_t bin_size, const cpg_index &index)
-  const -> level_container<level_element_t> {
+methylome_data::get_levels(const std::uint32_t bin_size,
+                           const genome_index &index) const
+  -> level_container<level_element_t> {
   return get_levels_impl<level_element_t>(bin_size, index, cpgs);
 }
 
 [[nodiscard]] auto
 methylome_data::get_levels_covered(const std::uint32_t bin_size,
-                                   const cpg_index &index) const
+                                   const genome_index &index) const
   -> level_container<level_element_covered_t> {
   return get_levels_impl<level_element_covered_t>(bin_size, index, cpgs);
 }

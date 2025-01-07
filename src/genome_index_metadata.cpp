@@ -21,7 +21,7 @@
  * SOFTWARE.
  */
 
-#include "cpg_index_metadata.hpp"
+#include "genome_index_metadata.hpp"
 
 #include "environment_utilities.hpp"
 
@@ -44,7 +44,7 @@
 namespace transferase {
 
 [[nodiscard]] auto
-cpg_index_metadata::init_env() -> std::error_code {
+genome_index_metadata::init_env() -> std::error_code {
   version = get_version();
   creation_time = get_time_as_string();
   std::error_code ec;
@@ -56,7 +56,7 @@ cpg_index_metadata::init_env() -> std::error_code {
 }
 
 [[nodiscard]] auto
-cpg_index_metadata::get_n_bins(const std::uint32_t bin_size) const
+genome_index_metadata::get_n_bins(const std::uint32_t bin_size) const
   -> std::uint32_t {
   const auto get_n_bins_for_chrom = [&](const auto chrom_size) {
     return (chrom_size + bin_size) / bin_size;
@@ -67,7 +67,7 @@ cpg_index_metadata::get_n_bins(const std::uint32_t bin_size) const
 }
 
 [[nodiscard]] auto
-cpg_index_metadata::tostring() const -> std::string {
+genome_index_metadata::tostring() const -> std::string {
   std::ostringstream o;
   if (!(o << boost::json::value_from(*this)))
     o.clear();
@@ -75,7 +75,7 @@ cpg_index_metadata::tostring() const -> std::string {
 }
 
 [[nodiscard]] auto
-cpg_index_metadata::get_n_cpgs_chrom() const -> std::vector<std::uint32_t> {
+genome_index_metadata::get_n_cpgs_chrom() const -> std::vector<std::uint32_t> {
   std::vector<std::uint32_t> n_cpgs_chrom(chrom_offset);
   n_cpgs_chrom.push_back(n_cpgs);
   std::adjacent_difference(std::cbegin(n_cpgs_chrom), std::cend(n_cpgs_chrom),
@@ -86,8 +86,8 @@ cpg_index_metadata::get_n_cpgs_chrom() const -> std::vector<std::uint32_t> {
 }
 
 [[nodiscard]] auto
-cpg_index_metadata::read(const std::string &json_filename,
-                         std::error_code &ec) -> cpg_index_metadata {
+genome_index_metadata::read(const std::string &json_filename,
+                            std::error_code &ec) -> genome_index_metadata {
   std::ifstream in(json_filename);
   if (!in) {
     ec = std::make_error_code(std::errc(errno));
@@ -104,10 +104,10 @@ cpg_index_metadata::read(const std::string &json_filename,
     return {};
   }
 
-  cpg_index_metadata meta;
+  genome_index_metadata meta;
   boost::json::parse_into(meta, payload, ec);
   if (ec) {
-    ec = cpg_index_metadata_error::failure_parsing_json;
+    ec = genome_index_metadata_error::failure_parsing_json;
     return {};
   }
 
@@ -116,22 +116,22 @@ cpg_index_metadata::read(const std::string &json_filename,
 
 [[nodiscard]]
 static inline auto
-make_cpg_index_metadata_filename(const std::string &dirname,
-                                 const std::string &genome_name) {
+make_genome_index_metadata_filename(const std::string &dirname,
+                                    const std::string &genome_name) {
   const auto with_extension =
-    std::format("{}{}", genome_name, cpg_index_metadata::filename_extension);
+    std::format("{}{}", genome_name, genome_index_metadata::filename_extension);
   return (std::filesystem::path{dirname} / with_extension).string();
 }
 
 [[nodiscard]] auto
-cpg_index_metadata::read(const std::string &dirname,
-                         const std::string &genome_name,
-                         std::error_code &ec) -> cpg_index_metadata {
-  return read(make_cpg_index_metadata_filename(dirname, genome_name), ec);
+genome_index_metadata::read(const std::string &dirname,
+                            const std::string &genome_name,
+                            std::error_code &ec) -> genome_index_metadata {
+  return read(make_genome_index_metadata_filename(dirname, genome_name), ec);
 }
 
 [[nodiscard]] auto
-cpg_index_metadata::write(const std::string &json_filename) const
+genome_index_metadata::write(const std::string &json_filename) const
   -> std::error_code {
   std::ofstream out(json_filename);
   if (!out)

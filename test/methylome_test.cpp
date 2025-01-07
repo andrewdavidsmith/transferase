@@ -23,7 +23,7 @@
 
 #include <methylome.hpp>
 
-#include <cpg_index.hpp>
+#include <genome_index.hpp>
 #include <methylome_data.hpp>
 
 #include <gtest/gtest.h>
@@ -218,7 +218,7 @@ TEST(methylome_test, init_metadata) {
   static constexpr auto genome_name = "eVaporeon";
 
   std::error_code ec;
-  const auto index = cpg_index::read(indexdir, genome_name, ec);
+  const auto index = genome_index::read(indexdir, genome_name, ec);
   EXPECT_FALSE(ec);
 
   const auto meta = methylome_metadata::read(methdir, methylome_name, ec);

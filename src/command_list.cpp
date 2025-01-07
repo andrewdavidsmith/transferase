@@ -38,8 +38,8 @@ Examples:
 xfrase list /path/to/some_directory ../relative/path
 )";
 
-#include "cpg_index.hpp"
 #include "format_error_code.hpp"  // IWYU pragma: keep
+#include "genome_index.hpp"
 #include "methylome.hpp"
 #include "utilities.hpp"
 
@@ -129,7 +129,7 @@ command_list_main(int argc, char *argv[]) -> int {
       if (verbose && !show_only_indexes)
         std::println("indexes:");
       const auto index_names =
-        transferase::cpg_index::list_cpg_indexes(dirname, ec);
+        transferase::genome_index::list_genome_indexes(dirname, ec);
       if (ec) {
         std::println("Error {}: {}", dirname, ec);
         return EXIT_FAILURE;

@@ -46,7 +46,7 @@ Examples:
 xfrase check -x index_dir -d methylome_dir -g hg38 -m SRX012345 SRX612345
 )";
 
-#include "cpg_index.hpp"
+#include "genome_index.hpp"
 #include "logger.hpp"
 #include "metadata_is_consistent.hpp"
 #include "methylome.hpp"
@@ -139,15 +139,15 @@ command_check_main(int argc, char *argv[]) -> int {
   transferase::log_args<transferase::log_level_t::info>(args_to_log);
 
   std::error_code index_read_err;
-  const auto index =
-    transferase::cpg_index::read(index_directory, genome_name, index_read_err);
+  const auto index = transferase::genome_index::read(
+    index_directory, genome_name, index_read_err);
   if (index_read_err) {
     lgr.error("Failed to read cpg index {} {}: {}", index_directory,
               genome_name, index_read_err);
     return EXIT_FAILURE;
   }
-  const auto cpg_index_consistency = index.is_consistent();
-  lgr.info("Index data and metadata consistent: {}", cpg_index_consistency);
+  const auto genome_index_consistency = index.is_consistent();
+  lgr.info("Index data and metadata consistent: {}", genome_index_consistency);
 
   bool all_methylomes_consitent = true;
   bool all_methylomes_metadata_consitent = true;
@@ -180,7 +180,7 @@ command_check_main(int argc, char *argv[]) -> int {
   lgr.info("all methylome metadata consistent: {}",
            all_methylomes_metadata_consitent);
 
-  const auto ret_val = cpg_index_consistency && all_methylomes_consitent &&
+  const auto ret_val = genome_index_consistency && all_methylomes_consitent &&
                        all_methylomes_metadata_consitent;
 
   return ret_val ? EXIT_SUCCESS : EXIT_FAILURE;

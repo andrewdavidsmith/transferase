@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_CPG_INDEX_METADATA_HPP_
-#define SRC_CPG_INDEX_METADATA_HPP_
+#ifndef SRC_GENOME_INDEX_METADATA_HPP_
+#define SRC_GENOME_INDEX_METADATA_HPP_
 
 #include <boost/describe.hpp>  // for BOOST_DESCRIBE_STRUCT
 
@@ -38,7 +38,7 @@
 
 namespace transferase {
 
-struct cpg_index_metadata {
+struct genome_index_metadata {
   static constexpr auto filename_extension{".cpg_idx.json"};
 
   std::string version;
@@ -55,11 +55,11 @@ struct cpg_index_metadata {
 
   [[nodiscard]] static auto
   read(const std::string &json_filename,
-       std::error_code &ec) -> cpg_index_metadata;
+       std::error_code &ec) -> genome_index_metadata;
 
   [[nodiscard]] static auto
   read(const std::string &dirname, const std::string &genome_name,
-       std::error_code &ec) -> cpg_index_metadata;
+       std::error_code &ec) -> genome_index_metadata;
 
   [[nodiscard]] auto
   write(const std::string &json_filename) const -> std::error_code;
@@ -90,7 +90,7 @@ struct cpg_index_metadata {
 };
 
 // clang-format off
-BOOST_DESCRIBE_STRUCT(cpg_index_metadata, (),
+BOOST_DESCRIBE_STRUCT(genome_index_metadata, (),
 (
  version,
  host,
@@ -109,28 +109,28 @@ BOOST_DESCRIBE_STRUCT(cpg_index_metadata, (),
 }  // namespace transferase
 
 template <>
-struct std::formatter<transferase::cpg_index_metadata>
+struct std::formatter<transferase::genome_index_metadata>
   : std::formatter<std::string> {
   auto
-  format(const transferase::cpg_index_metadata &meta,
+  format(const transferase::genome_index_metadata &meta,
          std::format_context &ctx) const {
     return std::formatter<std::string>::format(meta.tostring(), ctx);
   }
 };
 
-enum class cpg_index_metadata_error : std::uint8_t {
+enum class genome_index_metadata_error : std::uint8_t {
   ok = 0,
   failure_parsing_json = 1,
 };
 
 template <>
-struct std::is_error_code_enum<cpg_index_metadata_error>
+struct std::is_error_code_enum<genome_index_metadata_error>
   : public std::true_type {};
 
-struct cpg_index_metadata_error_category : std::error_category {
+struct genome_index_metadata_error_category : std::error_category {
   // clang-format off
   auto name() const noexcept -> const char * override {
-    return "cpg_index_metadata_error";
+    return "genome_index_metadata_error";
   }
   auto message(int code) const -> std::string override {
     using std::string_literals::operator""s;
@@ -143,10 +143,10 @@ struct cpg_index_metadata_error_category : std::error_category {
   // clang-format on
 };
 
-inline std::error_code
-make_error_code(cpg_index_metadata_error e) {
-  static auto category = cpg_index_metadata_error_category{};
+inline auto
+make_error_code(genome_index_metadata_error e) -> std::error_code {
+  static auto category = genome_index_metadata_error_category{};
   return std::error_code(std::to_underlying(e), category);
 }
 
-#endif  // SRC_CPG_INDEX_METADATA_HPP_
+#endif  // SRC_GENOME_INDEX_METADATA_HPP_

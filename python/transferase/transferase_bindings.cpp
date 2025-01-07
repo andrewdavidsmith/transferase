@@ -21,10 +21,10 @@
  * SOFTWARE.
  */
 
-#include "cpg_index_bindings.hpp"
-#include "cpg_index_data_bindings.hpp"
-#include "cpg_index_metadata_bindings.hpp"
 #include "error_code_bindings.hpp"
+#include "genome_index_bindings.hpp"
+#include "genome_index_data_bindings.hpp"
+#include "genome_index_metadata_bindings.hpp"
 #include "genomic_interval_bindings.hpp"
 #include "level_container_bindings.hpp"
 #include "level_element_bindings.hpp"
@@ -35,9 +35,9 @@
 #include "query_container_bindings.hpp"
 #include "request_bindings.hpp"
 
-#include <cpg_index.hpp>
-#include <cpg_index_data.hpp>
-#include <cpg_index_metadata.hpp>
+#include <genome_index.hpp>
+#include <genome_index_data.hpp>
+#include <genome_index_metadata.hpp>
 #include <genomic_interval.hpp>
 #include <level_container.hpp>
 #include <level_element.hpp>
@@ -83,14 +83,14 @@ PYBIND11_MODULE(transferase, m) {
     "Representation of a genomic interval as chrom, start, stop (zero-based, "
     "half-open)");
 
-  auto CpgIndexData = py::class_<transferase::cpg_index_data>(
-    m, "CpgIndexData", "Data part of a CpG index");
+  auto GenomeIndexData = py::class_<transferase::genome_index_data>(
+    m, "GenomeIndexData", "Data part of a genome index");
 
-  auto CpgIndexMetadata = py::class_<transferase::cpg_index_metadata>(
-    m, "CpgIndexMetadata", "Metadata part of a CpG index");
+  auto GenomeIndexMetadata = py::class_<transferase::genome_index_metadata>(
+    m, "GenomeIndexMetadata", "Metadata part of a genome index");
 
-  auto CpgIndex = py::class_<transferase::cpg_index>(
-    m, "CpgIndex", "An index of CpG sites in a genome");
+  auto GenomeIndex = py::class_<transferase::genome_index>(
+    m, "GenomeIndex", "An index of CpG sites in a genome");
 
   auto MethylomeMetadata = py::class_<transferase::methylome_metadata>(
     m, "MethylomeMetadata", "Metadata part of a methylome");
@@ -140,9 +140,9 @@ PYBIND11_MODULE(transferase, m) {
 
   genomic_interval_bindings(GenomicInterval);
 
-  cpg_index_metadata_bindings(CpgIndexMetadata);
-  cpg_index_data_bindings(CpgIndexData);
-  cpg_index_bindings(CpgIndex);
+  genome_index_metadata_bindings(GenomeIndexMetadata);
+  genome_index_data_bindings(GenomeIndexData);
+  genome_index_bindings(GenomeIndex);
 
   methylome_metadata_bindings(MethylomeMetadata);
   methylome_data_bindings(MethylomeData);

@@ -44,7 +44,7 @@ xfrase bins local -x index_dir -g hg38 -d methylome_dir -m methylome_name  -o ou
 xfrase bins remote -x index_dir -g hg38 -s example.com -m SRX012345 -o output.bed -b 1000
 )";
 
-#include "cpg_index.hpp"
+#include "genome_index.hpp"
 #include "genomic_interval_output.hpp"
 #include "level_container.hpp"
 #include "level_element.hpp"
@@ -80,7 +80,7 @@ command_bins_main(int argc, char *argv[]) -> int {
   static const auto description_msg =
     std::format("{}\n{}", rstrip(description), rstrip(examples));
 
-  using transferase::cpg_index;
+  using transferase::genome_index;
   using transferase::level_element_covered_t;
   using transferase::level_element_t;
   using transferase::log_args;
@@ -217,7 +217,7 @@ command_bins_main(int argc, char *argv[]) -> int {
   log_args<log_level_t::info>(remote_mode ? remote_args : local_args);
 
   std::error_code ec;
-  const auto index = cpg_index::read(index_directory, genome_name, ec);
+  const auto index = genome_index::read(index_directory, genome_name, ec);
   if (ec) {
     lgr.error("Failed to read cpg index {} {}: {}", index_directory,
               genome_name, ec);

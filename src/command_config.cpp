@@ -46,11 +46,11 @@ xfrase config -c my_config_file.toml -s example.com -p 5009 --genomes hg38,mm39
 #include "arguments.hpp"
 #include "command_config_argset.hpp"
 #include "config_file_utils.hpp"  // write_client_config_file
-#include "cpg_index_data.hpp"
-#include "cpg_index_metadata.hpp"
 #include "download.hpp"
 #include "find_path_to_binary.hpp"
 #include "format_error_code.hpp"  // IWYU pragma: keep
+#include "genome_index_data.hpp"
+#include "genome_index_metadata.hpp"
 #include "utilities.hpp"
 
 #include <config.h>  // for VERSION, DATADIR, PROJECT_NAME
@@ -186,7 +186,7 @@ get_index_files(const bool quiet, const remote_indexes_resources &remote,
     const auto assem = std::string{std::cbegin(genome), std::cend(genome)};
     const auto stem = remote.form_target_stem(assem);
     const auto data_file = std::format(
-      "{}{}", stem, transferase::cpg_index_data::filename_extension);
+      "{}{}", stem, transferase::genome_index_data::filename_extension);
     if (!quiet)
       std::println("Download: {}", remote.form_url(data_file));
     const auto [data_hdr, data_err] =
@@ -194,7 +194,7 @@ get_index_files(const bool quiet, const remote_indexes_resources &remote,
     if (data_err)
       dl_err(data_hdr, data_err, remote.form_url(data_file));
     const auto meta_file = std::format(
-      "{}{}", stem, transferase::cpg_index_metadata::filename_extension);
+      "{}{}", stem, transferase::genome_index_metadata::filename_extension);
     if (!quiet)
       std::println("Download: {}", remote.form_url(meta_file));
     const auto [meta_hdr, meta_err] =

@@ -21,11 +21,11 @@
  * SOFTWARE.
  */
 
-#include "cpg_index_data.hpp"
+#include "genome_index_data.hpp"
 
 #include "chrom_range.hpp"
-#include "cpg_index_data_impl.hpp"
-#include "cpg_index_metadata.hpp"
+#include "genome_index_data_impl.hpp"
+#include "genome_index_metadata.hpp"
 #include "genomic_interval.hpp"
 #include "hash.hpp"  // for update_adler
 #include "query_element.hpp"
@@ -45,9 +45,9 @@
 namespace transferase {
 
 [[nodiscard]] auto
-cpg_index_data::read(const std::string &index_file,
-                     const cpg_index_metadata &meta,
-                     std::error_code &ec) -> cpg_index_data {
+genome_index_data::read(const std::string &index_file,
+                        const genome_index_metadata &meta,
+                        std::error_code &ec) -> genome_index_data {
   std::ifstream in(index_file, std::ios::binary);
   if (!in) {
     ec = std::make_error_code(std::errc(errno));
@@ -62,7 +62,7 @@ cpg_index_data::read(const std::string &index_file,
                              std::begin(n_cpgs));
   }
 
-  cpg_index_data data;
+  genome_index_data data;
   for (const auto n_cpgs_chrom : n_cpgs) {
     data.positions.push_back(vec(n_cpgs_chrom));
     {
@@ -73,7 +73,7 @@ cpg_index_data::read(const std::string &index_file,
       const auto read_ok = static_cast<bool>(in);
       const auto n_bytes = in.gcount();
       if (!read_ok || n_bytes != n_bytes_expected) {
-        ec = cpg_index_data_code::failure_reading_index_data;
+        ec = genome_index_data_code::failure_reading_index_data;
         return {};
       }
     }
@@ -85,23 +85,24 @@ cpg_index_data::read(const std::string &index_file,
 
 [[nodiscard]]
 static inline auto
-make_cpg_index_data_filename(const std::string &dirname,
-                             const std::string &genomic_name) {
+make_genome_index_data_filename(const std::string &dirname,
+                                const std::string &genomic_name) {
   const auto with_extension =
-    std::format("{}{}", genomic_name, cpg_index_data::filename_extension);
+    std::format("{}{}", genomic_name, genome_index_data::filename_extension);
   return (std::filesystem::path{dirname} / with_extension).string();
 }
 
 [[nodiscard]] auto
-cpg_index_data::read(const std::string &dirname,
-                     const std::string &genomic_name,
-                     const cpg_index_metadata &meta,
-                     std::error_code &ec) -> cpg_index_data {
-  return read(make_cpg_index_data_filename(dirname, genomic_name), meta, ec);
+genome_index_data::read(const std::string &dirname,
+                        const std::string &genomic_name,
+                        const genome_index_metadata &meta,
+                        std::error_code &ec) -> genome_index_data {
+  return read(make_genome_index_data_filename(dirname, genomic_name), meta, ec);
 }
 
 [[nodiscard]] auto
-cpg_index_data::write(const std::string &index_file) const -> std::error_code {
+genome_index_data::write(const std::string &index_file) const
+  -> std::error_code {
   std::ofstream out(index_file);
   if (!out)
     return std::make_error_code(std::errc(errno));
@@ -119,7 +120,7 @@ cpg_index_data::write(const std::string &index_file) const -> std::error_code {
 // within the chrom, get the query in the form of identity of CpG
 // sites using std::lower_bound
 [[nodiscard]] STATIC inline auto
-make_query_within_chrom(const cpg_index_data::vec &positions,
+make_query_within_chrom(const genome_index_data::vec &positions,
                         const std::vector<chrom_range_t> &chrom_ranges)
   -> transferase::query_container {
   transferase::query_container query(std::size(chrom_ranges));
@@ -139,7 +140,7 @@ make_query_within_chrom(const cpg_index_data::vec &positions,
 // given the chromosome id (from chrom_index) and a set of ranges
 // within the chrom, get the query in the form of CpG site identities
 [[nodiscard]] auto
-cpg_index_data::make_query_within_chrom(
+genome_index_data::make_query_within_chrom(
   const std::int32_t ch_id, const std::vector<chrom_range_t> &chrom_ranges)
   const -> transferase::query_container {
   assert(std::ranges::is_sorted(chrom_ranges) && ch_id >= 0 &&
@@ -148,10 +149,10 @@ cpg_index_data::make_query_within_chrom(
 }
 
 [[nodiscard]] auto
-cpg_index_data::make_query_chrom(const std::int32_t ch_id,
-                                 const cpg_index_metadata &meta,
-                                 const std::vector<chrom_range_t> &chrom_ranges)
-  const -> transferase::query_container {
+genome_index_data::make_query_chrom(
+  const std::int32_t ch_id, const genome_index_metadata &meta,
+  const std::vector<chrom_range_t> &chrom_ranges) const
+  -> transferase::query_container {
   assert(std::ranges::is_sorted(chrom_ranges) && ch_id >= 0 &&
          ch_id < std::ranges::ssize(positions));
   const auto offset = meta.chrom_offset[ch_id];
@@ -165,9 +166,9 @@ cpg_index_data::make_query_chrom(const std::int32_t ch_id,
 }
 
 [[nodiscard]] auto
-cpg_index_data::make_query(const cpg_index_metadata &meta,
-                           const std::vector<genomic_interval> &intervals) const
-  -> transferase::query_container {
+genome_index_data::make_query(const genome_index_metadata &meta,
+                              const std::vector<genomic_interval> &intervals)
+  const -> transferase::query_container {
   const auto same_chrom = [](const genomic_interval &a,
                              const genomic_interval &b) {
     return a.ch_id == b.ch_id;
@@ -191,7 +192,7 @@ cpg_index_data::make_query(const cpg_index_metadata &meta,
 }
 
 [[nodiscard]] auto
-cpg_index_data::hash() const -> std::uint64_t {
+genome_index_data::hash() const -> std::uint64_t {
   // ADS: plan to change this after positions is refactored into a single vec
   std::uint64_t combined = 1;  // from the zlib docs to init
   for (const auto &p : positions)
@@ -201,10 +202,10 @@ cpg_index_data::hash() const -> std::uint64_t {
 }
 
 [[nodiscard]] auto
-cpg_index_data::get_n_cpgs() const -> std::uint32_t {
+genome_index_data::get_n_cpgs() const -> std::uint32_t {
   return std::transform_reduce(std::cbegin(positions), std::cend(positions),
                                static_cast<std::uint32_t>(0), std::plus{},
-                               std::size<cpg_index_data::vec>);
+                               std::size<genome_index_data::vec>);
 }
 
 }  // namespace transferase

@@ -36,10 +36,10 @@
 namespace transferase {
 
 struct genomic_interval;
-struct cpg_index_metadata;
+struct genome_index_metadata;
 
 [[nodiscard]] STATIC auto
-parse(const cpg_index_metadata &meta, const std::string &line,
+parse(const genome_index_metadata &meta, const std::string &line,
       std::error_code &ec) -> genomic_interval;
 
 }  // namespace transferase

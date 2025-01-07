@@ -23,8 +23,8 @@
 
 #include "methylome.hpp"
 
-#include "cpg_index.hpp"
-#include "cpg_index_metadata.hpp"
+#include "genome_index.hpp"
+#include "genome_index_metadata.hpp"
 #include "methylome_data.hpp"
 #include "methylome_metadata.hpp"
 
@@ -39,7 +39,7 @@
 namespace transferase {
 
 [[nodiscard]] auto
-methylome::init_metadata(const cpg_index &index) -> std::error_code {
+methylome::init_metadata(const genome_index &index) -> std::error_code {
   static constexpr auto is_compressed_init = false;
   if (std::size(data.cpgs) != index.meta.n_cpgs)
     return std::error_code{methylome_code::invalid_methylome_data};
@@ -56,7 +56,7 @@ methylome::init_metadata(const cpg_index &index) -> std::error_code {
     is_compressed_init
     // clang-format on
   };
-  // ADS: take care of variables not dependent on cpg_index or
+  // ADS: take care of variables not dependent on genome_index or
   // methylome_data
   const auto ec = meta.init_env();
   return ec;

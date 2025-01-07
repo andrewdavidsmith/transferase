@@ -21,17 +21,17 @@
  * SOFTWARE.
  */
 
-#ifndef PYTHON_TRANSFERASE_CPG_INDEX_DATA_BINDINGS_HPP_
-#define PYTHON_TRANSFERASE_CPG_INDEX_DATA_BINDINGS_HPP_
+#ifndef PYTHON_TRANSFERASE_GENOME_INDEX_METADATA_BINDINGS_HPP_
+#define PYTHON_TRANSFERASE_GENOME_INDEX_METADATA_BINDINGS_HPP_
 
 #include <pybind11/pybind11.h>
 
 namespace transferase {
-struct cpg_index_data;
-}
+struct genome_index_metadata;
+}  // namespace transferase
 
 auto
-cpg_index_data_bindings(pybind11::class_<transferase::cpg_index_data> &cls)
-  -> void;
+genome_index_metadata_bindings(
+  pybind11::class_<transferase::genome_index_metadata> &cls) -> void;
 
-#endif  // PYTHON_TRANSFERASE_CPG_INDEX_DATA_BINDINGS_HPP_
+#endif  // PYTHON_TRANSFERASE_GENOME_INDEX_METADATA_BINDINGS_HPP_

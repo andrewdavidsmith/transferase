@@ -27,10 +27,11 @@
 namespace transferase {
 
 struct methylome;
-struct cpg_index;
+struct genome_index;
 
 [[nodiscard]] auto
-metadata_is_consistent(const methylome &meth, const cpg_index &index) -> bool;
+metadata_is_consistent(const methylome &meth,
+                       const genome_index &index) -> bool;
 
 }  // namespace transferase
 

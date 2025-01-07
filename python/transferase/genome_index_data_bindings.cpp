@@ -21,15 +21,16 @@
  * SOFTWARE.
  */
 
-#include "cpg_index_data_bindings.hpp"
+#include "genome_index_data_bindings.hpp"
 
-#include <cpg_index_data.hpp>
+#include <genome_index_data.hpp>
 
 #include <pybind11/pybind11.h>
 
 namespace py = pybind11;
 
 auto
-cpg_index_data_bindings(py::class_<transferase::cpg_index_data> &cls) -> void {
+genome_index_data_bindings(py::class_<transferase::genome_index_data> &cls)
+  -> void {
   cls.def(py::init<>());
 }

@@ -21,10 +21,10 @@
  * SOFTWARE.
  */
 
-#include "cpg_index.hpp"
-#include "cpg_index_set.hpp"
+#include "genome_index.hpp"
+#include "genome_index_set.hpp"
 
-#include "cpg_index_metadata.hpp"
+#include "genome_index_metadata.hpp"
 
 #include <gtest/gtest.h>
 
@@ -36,43 +36,43 @@
 
 using namespace transferase;  // NOLINT
 
-TEST(cpg_index_set_test, valid_cpg_index_set) {
-  static constexpr auto cpg_index_directory = "data";
+TEST(genome_index_set_test, valid_genome_index_set) {
+  static constexpr auto genome_index_directory = "data";
   std::error_code ec{};
-  const auto index = cpg_index_set(cpg_index_directory, ec);
+  const auto index = genome_index_set(genome_index_directory, ec);
   EXPECT_FALSE(ec);
-  EXPECT_GT(std::size(index.assembly_to_cpg_index), 0);
+  EXPECT_GT(std::size(index.assembly_to_genome_index), 0);
 }
 
-class cpg_index_set_mock : public ::testing::Test {
+class genome_index_set_mock : public ::testing::Test {
 protected:
   auto
   SetUp() -> void override {
-    cpg_index_directory = "data";
+    genome_index_directory = "data";
     std::error_code unused_ec{};
-    cpg_index_set_ptr =
-      std::make_unique<cpg_index_set>(cpg_index_directory, unused_ec);
+    genome_index_set_ptr =
+      std::make_unique<genome_index_set>(genome_index_directory, unused_ec);
   }
 
   auto
   TearDown() -> void override {}
 
-  std::string cpg_index_directory;
-  std::unique_ptr<cpg_index_set> cpg_index_set_ptr;
+  std::string genome_index_directory;
+  std::unique_ptr<genome_index_set> genome_index_set_ptr;
 };
 
-TEST_F(cpg_index_set_mock, get_cpg_index_metadata_assembly_name) {
+TEST_F(genome_index_set_mock, get_genome_index_metadata_assembly_name) {
   static constexpr auto species = "tProrsus1";
   std::error_code ec{};
-  const auto index_ptr = cpg_index_set_ptr->get_cpg_index(species, ec);
+  const auto index_ptr = genome_index_set_ptr->get_genome_index(species, ec);
   EXPECT_FALSE(ec);
   EXPECT_EQ(index_ptr->meta.assembly, species);
 }
 
-TEST_F(cpg_index_set_mock, get_cpg_index_set_assembly_not_found) {
+TEST_F(genome_index_set_mock, get_genome_index_set_assembly_not_found) {
   std::error_code ec;
   const auto index_ptr =
-    cpg_index_set_ptr->get_cpg_index("invalid.assembly", ec);
+    genome_index_set_ptr->get_genome_index("invalid.assembly", ec);
   std::ignore = index_ptr;
-  EXPECT_EQ(ec, cpg_index_set_error::cpg_index_not_found);
+  EXPECT_EQ(ec, genome_index_set_error::genome_index_not_found);
 }

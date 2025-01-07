@@ -26,7 +26,7 @@ import shutil
 import tempfile
 import os
 
-from transferase import CpgIndex
+from transferase import GenomeIndex
 from transferase import Methylome
 from transferase import ErrorCode
 from transferase import GenomicInterval
@@ -36,15 +36,15 @@ from transferase import LevelElementCovered
 from transferase import LevelContainerCovered
 
 
-def get_valid_test_cpg_index(genome_name):
+def get_valid_test_genome_index(genome_name):
     """
-    Fixture to load a valid CpgIndex object for testing
+    Fixture to load a valid GenomeIndex object for testing
     """
-    cpg_index_dirname = "data/lutions/indexes"
+    genome_index_dirname = "data/lutions/indexes"
     error = ErrorCode()
-    cpg_index = CpgIndex.read(cpg_index_dirname, genome_name, error)
-    assert not error, f"Failed to read CpgIndex: {index_dirname}, {genome_name}"
-    return cpg_index
+    genome_index = GenomeIndex.read(genome_index_dirname, genome_name, error)
+    assert not error, f"Failed to read GenomeIndex: {index_dirname}, {genome_name}"
+    return genome_index
 
 
 def get_valid_test_methylome(genome_name, tissue_name):
@@ -68,22 +68,22 @@ def get_valid_test_genomic_intervals(genome_name, tissue_name):
         intervals_directory,
         f"{genome_name}_{tissue_name}_hmr.bed",
     )
-    cpg_index = get_valid_test_cpg_index(genome_name)
+    genome_index = get_valid_test_genome_index(genome_name)
     error = ErrorCode()
-    intervals = GenomicInterval.read(cpg_index, intervals_filename, error)
+    intervals = GenomicInterval.read(genome_index, intervals_filename, error)
     assert not error, f"Failed to read GenomicInterval: {intervals_file}"
     return intervals
 
 
 def get_valid_test_query(genome_name, tissue_name):
     """
-    Fixture to make a valid query for given CpgIndex and a
+    Fixture to make a valid query for given GenomeIndex and a
     corresponding list of GenomicInterval objects
     """
     error = ErrorCode()
     intervals = get_valid_test_genomic_intervals(genome_name, tissue_name)
-    cpg_index = get_valid_test_cpg_index(genome_name)
-    query = cpg_index.make_query(intervals)
+    genome_index = get_valid_test_genome_index(genome_name)
+    query = genome_index.make_query(intervals)
     assert query is not None, f"Failed to make query from fixture"
     return query
 
@@ -146,12 +146,13 @@ def test_methylome_write():
 
 def test_methylome_init_metadata_inconsistent():
     """
-    Test init_metadata method when Methylome and CpgIndex are not consistent
+    Test init_metadata method when Methylome and GenomeIndex are not
+    consistent
     """
     genome_name1 = "eVaporeon"
     genome_name2 = "eJolteon"
     tissue_name = "ear"
-    index = get_valid_test_cpg_index(genome_name1)
+    index = get_valid_test_genome_index(genome_name1)
     meth = get_valid_test_methylome(genome_name2, tissue_name)
     error = meth.init_metadata(index)
     assert error
@@ -159,11 +160,12 @@ def test_methylome_init_metadata_inconsistent():
 
 def test_methylome_init_metadata_consistent():
     """
-    Test init_metadata method when Methylome and CpgIndex are consistent
+    Test init_metadata method when Methylome and GenomeIndex are
+    consistent
     """
     genome_name = "eFlareon"
     tissue_name = "tail"
-    index = get_valid_test_cpg_index(genome_name)
+    index = get_valid_test_genome_index(genome_name)
     meth = get_valid_test_methylome(genome_name, tissue_name)
     error = meth.init_metadata(index)
     assert not error
@@ -217,25 +219,25 @@ def test_methylome_get_levels_covered_with_query_container():
     assert isinstance(levels, LevelContainerCovered)
 
 
-def test_methylome_get_levels_with_bin_size_and_cpg_index():
-    """Test get_levels method (with bin_size and cpg_index argument)"""
+def test_methylome_get_levels_with_bin_size_and_genome_index():
+    """Test get_levels method (with bin_size and genome_index argument)"""
     genome_name = "eJolteon"
     tissue_name = "ear"
     meth = get_valid_test_methylome(genome_name, tissue_name)
-    cpg_index = get_valid_test_cpg_index(genome_name)
+    genome_index = get_valid_test_genome_index(genome_name)
     bin_size = 100
-    levels = meth.get_levels(bin_size, cpg_index)
+    levels = meth.get_levels(bin_size, genome_index)
     assert isinstance(levels, LevelContainer)
 
 
-def test_methylome_get_levels_covered_with_bin_size_and_cpg_index():
-    """Test get_levels_covered method (with bin_size and cpg_index argument)"""
+def test_methylome_get_levels_covered_with_bin_size_and_genome_index():
+    """Test get_levels_covered method (with bin_size and genome_index argument)"""
     genome_name = "eJolteon"
     tissue_name = "ear"
     meth = get_valid_test_methylome(genome_name, tissue_name)
-    cpg_index = get_valid_test_cpg_index(genome_name)
+    genome_index = get_valid_test_genome_index(genome_name)
     bin_size = 100
-    levels = meth.get_levels_covered(bin_size, cpg_index)
+    levels = meth.get_levels_covered(bin_size, genome_index)
     assert isinstance(levels, LevelContainerCovered)
 
 

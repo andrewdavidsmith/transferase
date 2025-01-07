@@ -39,7 +39,7 @@
 
 namespace transferase {
 
-struct cpg_index;
+struct genome_index;
 struct query_container;
 
 struct methylome {
@@ -68,7 +68,7 @@ struct methylome {
         const std::string &name) const -> std::error_code;
 
   [[nodiscard]] auto
-  init_metadata(const cpg_index &index) -> std::error_code;
+  init_metadata(const genome_index &index) -> std::error_code;
 
   [[nodiscard]] auto
   update_metadata() -> std::error_code;
@@ -110,14 +110,14 @@ struct methylome {
 
   /// get methylation levels for bins
   [[nodiscard]] auto
-  get_levels(const std::uint32_t bin_size, const cpg_index &index) const {
+  get_levels(const std::uint32_t bin_size, const genome_index &index) const {
     return data.get_levels(bin_size, index);
   }
 
   /// get methylation levels for bins and number of bins covered
   [[nodiscard]] auto
   get_levels_covered(const std::uint32_t bin_size,
-                     const cpg_index &index) const {
+                     const genome_index &index) const {
     return data.get_levels_covered(bin_size, index);
   }
 

@@ -44,7 +44,7 @@ xfrase intervals local -x index_dir -g hg38 -d methylome_dir -m methylome_name -
 xfrase intervals remote -x index_dir -g hg38 -s example.com -m methylome_name -o output.bed -i input.bed
 )";
 
-#include "cpg_index.hpp"
+#include "genome_index.hpp"
 #include "genomic_interval.hpp"
 #include "genomic_interval_output.hpp"
 #include "level_container.hpp"
@@ -82,7 +82,7 @@ command_intervals_main(int argc, char *argv[]) -> int {
 
   static constexpr auto default_port = "5000";
 
-  using transferase::cpg_index;
+  using transferase::genome_index;
   // using transferase::do_intervals;
   using transferase::genomic_interval;
   using transferase::level_element_covered_t;
@@ -221,7 +221,7 @@ command_intervals_main(int argc, char *argv[]) -> int {
   log_args<log_level_t::info>(remote_mode ? remote_args : local_args);
 
   std::error_code ec;
-  const auto index = cpg_index::read(index_directory, genome_name, ec);
+  const auto index = genome_index::read(index_directory, genome_name, ec);
   if (ec) {
     lgr.error("Failed to read cpg index {} {}: {}", index_directory,
               genome_name, ec);

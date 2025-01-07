@@ -23,8 +23,8 @@
 
 #include "metadata_is_consistent.hpp"
 
-#include "cpg_index.hpp"
-#include "cpg_index_metadata.hpp"
+#include "genome_index.hpp"
+#include "genome_index_metadata.hpp"
 #include "methylome.hpp"
 #include "methylome_metadata.hpp"
 #include <string>
@@ -32,7 +32,8 @@
 namespace transferase {
 
 [[nodiscard]] auto
-metadata_is_consistent(const methylome &meth, const cpg_index &index) -> bool {
+metadata_is_consistent(const methylome &meth,
+                       const genome_index &index) -> bool {
   const auto versions_match = (index.meta.version == meth.meta.version);
   const auto index_hashes_match =
     (index.meta.index_hash == meth.meta.index_hash);

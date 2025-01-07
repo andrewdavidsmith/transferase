@@ -27,10 +27,10 @@
 #include <pybind11/pybind11.h>
 
 namespace transferase {
-struct cpg_index;
+struct genome_index;
 };  // namespace transferase
 
 auto
-cpg_index_bindings(pybind11::class_<transferase::cpg_index> &cls) -> void;
+genome_index_bindings(pybind11::class_<transferase::genome_index> &cls) -> void;
 
 #endif  // PYTHON_TRANSFERASE_CPG_INDEX_BINDINGS_HPP_

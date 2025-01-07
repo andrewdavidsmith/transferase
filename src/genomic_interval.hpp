@@ -36,7 +36,7 @@
 
 namespace transferase {
 
-struct cpg_index;
+struct genome_index;
 
 struct genomic_interval {
   static constexpr auto not_a_chrom{-1};
@@ -48,7 +48,7 @@ struct genomic_interval {
   operator<=>(const genomic_interval &) const = default;
 
   [[nodiscard]] static auto
-  read(const cpg_index &index, const std::string &filename,
+  read(const genome_index &index, const std::string &filename,
        std::error_code &ec) -> std::vector<genomic_interval>;
 
   // ADS: Sorted intervals have chromosomes together but the order on

@@ -21,11 +21,11 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_CPG_INDEX_HPP_
-#define SRC_CPG_INDEX_HPP_
+#ifndef SRC_GENOME_INDEX_HPP_
+#define SRC_GENOME_INDEX_HPP_
 
-#include "cpg_index_data.hpp"
-#include "cpg_index_metadata.hpp"
+#include "genome_index_data.hpp"
+#include "genome_index_metadata.hpp"
 #include "query_container.hpp"
 
 #include <cstdint>  // for std::uint32_t
@@ -40,12 +40,12 @@ namespace transferase {
 
 struct genomic_interval;
 
-struct cpg_index {
-  static constexpr auto data_extn = cpg_index_data::filename_extension;
-  static constexpr auto meta_extn = cpg_index_metadata::filename_extension;
+struct genome_index {
+  static constexpr auto data_extn = genome_index_data::filename_extension;
+  static constexpr auto meta_extn = genome_index_metadata::filename_extension;
 
-  cpg_index_data data;
-  cpg_index_metadata meta;
+  genome_index_data data;
+  genome_index_metadata meta;
 
   [[nodiscard]] auto
   tostring() const -> std::string {
@@ -54,7 +54,7 @@ struct cpg_index {
 
   [[nodiscard]] static auto
   read(const std::string &dirname, const std::string &genome_name,
-       std::error_code &ec) -> cpg_index;
+       std::error_code &ec) -> genome_index;
 
   [[nodiscard]]
   auto
@@ -87,8 +87,8 @@ struct cpg_index {
   }
 
   [[nodiscard]] static auto
-  make_cpg_index(const std::string &genome_file,
-                 std::error_code &ec) -> cpg_index;
+  make_genome_index(const std::string &genome_file,
+                    std::error_code &ec) -> genome_index;
 
   [[nodiscard]] static auto
   files_exist(const std::string &directory,
@@ -99,25 +99,25 @@ struct cpg_index {
                     std::error_code &ec) -> std::string;
 
   [[nodiscard]] static auto
-  list_cpg_indexes(const std::string &dirname,
-                   std::error_code &ec) -> std::vector<std::string>;
+  list_genome_indexes(const std::string &dirname,
+                      std::error_code &ec) -> std::vector<std::string>;
 };
 
 }  // namespace transferase
 
-// cpg_index errors
+// genome_index errors
 
-enum class cpg_index_code : std::uint8_t {
+enum class genome_index_code : std::uint8_t {
   ok = 0,
   failure_processing_genome_file = 1,
 };
 
 template <>
-struct std::is_error_code_enum<cpg_index_code> : public std::true_type {};
+struct std::is_error_code_enum<genome_index_code> : public std::true_type {};
 
-struct cpg_index_category : std::error_category {
+struct genome_index_category : std::error_category {
   // clang-format off
-  auto name() const noexcept -> const char * override {return "cpg_index";}
+  auto name() const noexcept -> const char * override {return "genome_index";}
   auto message(int code) const -> std::string override {
     using std::string_literals::operator""s;
     switch (code) {
@@ -130,9 +130,9 @@ struct cpg_index_category : std::error_category {
 };
 
 inline auto
-make_error_code(cpg_index_code e) -> std::error_code {
-  static auto category = cpg_index_category{};
+make_error_code(genome_index_code e) -> std::error_code {
+  static auto category = genome_index_category{};
   return std::error_code(std::to_underlying(e), category);
 }
 
-#endif  // SRC_CPG_INDEX_HPP_
+#endif  // SRC_GENOME_INDEX_HPP_

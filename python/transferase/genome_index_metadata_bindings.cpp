@@ -21,9 +21,9 @@
  * SOFTWARE.
  */
 
-#include "cpg_index_metadata_bindings.hpp"
+#include "genome_index_metadata_bindings.hpp"
 
-#include <cpg_index_metadata.hpp>
+#include <genome_index_metadata.hpp>
 
 #include <pybind11/pybind11.h>
 
@@ -32,24 +32,26 @@
 namespace py = pybind11;
 
 auto
-cpg_index_metadata_bindings(py::class_<transferase::cpg_index_metadata> &cls)
-  -> void {
+genome_index_metadata_bindings(
+  py::class_<transferase::genome_index_metadata> &cls) -> void {
   using namespace pybind11::literals;  // NOLINT
   cls.def(py::init<>())
-    .def("init_env", &transferase::cpg_index_metadata::init_env)
-    .def("__repr__", &transferase::cpg_index_metadata::tostring)
-    .def("get_n_cpgs_chrom", &transferase::cpg_index_metadata::get_n_cpgs_chrom)
-    .def("get_n_bins", &transferase::cpg_index_metadata::get_n_bins,
+    .def("init_env", &transferase::genome_index_metadata::init_env)
+    .def("__repr__", &transferase::genome_index_metadata::tostring)
+    .def("get_n_cpgs_chrom",
+         &transferase::genome_index_metadata::get_n_cpgs_chrom)
+    .def("get_n_bins", &transferase::genome_index_metadata::get_n_bins,
          "bin_size"_a)
     // bindings for the member variables
-    .def_readwrite("version", &transferase::cpg_index_metadata::version)
-    .def_readwrite("host", &transferase::cpg_index_metadata::host)
-    .def_readwrite("user", &transferase::cpg_index_metadata::user)
+    .def_readwrite("version", &transferase::genome_index_metadata::version)
+    .def_readwrite("host", &transferase::genome_index_metadata::host)
+    .def_readwrite("user", &transferase::genome_index_metadata::user)
     .def_readwrite("creation_time",
-                   &transferase::cpg_index_metadata::creation_time)
-    .def_readwrite("index_hash", &transferase::cpg_index_metadata::index_hash)
-    .def_readwrite("assembly", &transferase::cpg_index_metadata::assembly)
-    .def_readwrite("n_cpgs", &transferase::cpg_index_metadata::n_cpgs)
+                   &transferase::genome_index_metadata::creation_time)
+    .def_readwrite("index_hash",
+                   &transferase::genome_index_metadata::index_hash)
+    .def_readwrite("assembly", &transferase::genome_index_metadata::assembly)
+    .def_readwrite("n_cpgs", &transferase::genome_index_metadata::n_cpgs)
     // done
     ;
 }

@@ -28,17 +28,15 @@ make an index for a given reference genome
 )";
 
 static constexpr auto description = R"(
-The index is used to accelerate searches within methylomes and must be
-created from the same reference genome that was used originally to map
-the reads and generate the single-CpG methylation levels. The order of
-chromosomes within the reference genome is not relevant as long as
-each chromosome is correct. The index is in two files. The index data
-is a binary file with size just over 100MB for the human genome and it
-should have the extension '.cpg_idx'. The index metadata is a small
-JSON format file (on a single line) that can easily be examined with
-any JSON formatter (e.g., jq or json_pp).  These two files should
-reside in the same directory and typically only the index data file is
-specified when it is used.
+The genome index is used to accelerate searches within methylomes and
+must be created from the same reference genome that was used
+originally to map the reads and generate the single-CpG methylation
+levels. The order of chromosomes within the reference genome is not
+relevant as long as each chromosome is correct. The index is in two
+files, one a binary file (size just over 100MB for hg38), and the
+other a metadata file in JSON format file that can be examined with
+any JSON formatter (e.g., jq or json_pp).  These two files must reside
+together in the same directory.
 )";
 
 static constexpr auto examples = R"(
@@ -47,8 +45,8 @@ Examples:
 xfrase index -v debug -x /path/to/index_directory -g hg38.fa
 )";
 
-#include "cpg_index.hpp"
 #include "format_error_code.hpp"  // IWYU pragma: keep
+#include "genome_index.hpp"
 #include "logger.hpp"
 #include "utilities.hpp"
 
@@ -129,7 +127,7 @@ command_index_main(int argc, char *argv[]) -> int {
 
   std::error_code ec;
   const auto genome_name =
-    transferase::cpg_index::parse_genome_name(genome_filename, ec);
+    transferase::genome_index::parse_genome_name(genome_filename, ec);
   if (ec) {
     lgr.error("Failed to parse genome name from: {}", genome_filename);
     return EXIT_FAILURE;
@@ -138,7 +136,7 @@ command_index_main(int argc, char *argv[]) -> int {
 
   const auto constr_start = std::chrono::high_resolution_clock::now();
   const auto index =
-    transferase::cpg_index::make_cpg_index(genome_filename, ec);
+    transferase::genome_index::make_genome_index(genome_filename, ec);
   const auto constr_stop = std::chrono::high_resolution_clock::now();
   if (ec) {
     if (ec == std::errc::no_such_file_or_directory)

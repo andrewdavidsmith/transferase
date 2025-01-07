@@ -25,7 +25,7 @@ import shutil
 import tempfile
 import os
 
-from transferase import CpgIndex
+from transferase import GenomeIndex
 from transferase import ErrorCode
 from transferase import GenomicInterval
 
@@ -35,29 +35,29 @@ def create_temp_directory():
     return temp_dir
 
 @pytest.fixture
-def cpg_index():
-    """Fixture to create a CpgIndex object for testing"""
-    return CpgIndex()
+def genome_index():
+    """Fixture to create a GenomeIndex object for testing"""
+    return GenomeIndex()
 
-def test_data_property(cpg_index):
+def test_data_property(genome_index):
     """Test the 'data' readonly property"""
-    assert hasattr(cpg_index, "data")
+    assert hasattr(genome_index, "data")
 
-def test_meta_property(cpg_index):
+def test_meta_property(genome_index):
     """Test the 'meta' readonly property"""
-    assert hasattr(cpg_index, "meta")
+    assert hasattr(genome_index, "meta")
 
-def test_is_consistent(cpg_index):
+def test_is_consistent(genome_index):
     """Test the 'is_consistent' method"""
-    assert isinstance(cpg_index.is_consistent(), bool)
+    assert isinstance(genome_index.is_consistent(), bool)
 
-def test_hash(cpg_index):
+def test_hash(genome_index):
     """Test the '__hash__' method"""
-    assert isinstance(hash(cpg_index), int)
+    assert isinstance(hash(genome_index), int)
 
-def test_repr(cpg_index):
+def test_repr(genome_index):
     """Test the '__repr__' method"""
-    repr_str = repr(cpg_index)
+    repr_str = repr(genome_index)
     assert isinstance(repr_str, str)
     assert len(repr_str) > 0
 
@@ -66,32 +66,32 @@ def test_read():
     dirname = "data/lutions/indexes"
     genome_name = "eVaporeon"
     error = ErrorCode()
-    index = CpgIndex.read(dirname, genome_name, error)
+    index = GenomeIndex.read(dirname, genome_name, error)
     assert not error
     assert index is not None
 
-def test_write(cpg_index):
+def test_write(genome_index):
     """Test the 'write' method"""
     outdir = create_temp_directory()
     name = "test_name"
-    status = cpg_index.write(outdir, name)
+    status = genome_index.write(outdir, name)
     assert not status
     if os.path.isdir(outdir):
         shutil.rmtree(outdir)
 
-def test_make_query(cpg_index):
+def test_make_query(genome_index):
     """Test the 'make_query' method"""
     error = ErrorCode()
     intervals_file = "data/lutions/raw/eVaporeon_ear_hmr.bed"
-    intervals = GenomicInterval.read(cpg_index, intervals_file, error)
-    result = cpg_index.make_query(intervals)
+    intervals = GenomicInterval.read(genome_index, intervals_file, error)
+    result = genome_index.make_query(intervals)
     assert result is not None  # Modify based on expected output
 
-def test_make_cpg_index():
-    """Test the static 'make_cpg_index' method"""
+def test_make_genome_index():
+    """Test the static 'make_genome_index' method"""
     genome_file = "data/lutions/raw/eJolteon.fa.gz"
     status = ErrorCode()
-    result = CpgIndex.make_cpg_index(genome_file, status)
+    result = GenomeIndex.make_genome_index(genome_file, status)
     assert not status
     assert result is not None
 
@@ -99,7 +99,7 @@ def test_files_exist():
     """Test the static 'files_exist' method"""
     directory = "data/lutions/indexes"
     genome_name = "eJolteon"
-    result = CpgIndex.files_exist(directory, genome_name)
+    result = GenomeIndex.files_exist(directory, genome_name)
     assert isinstance(result, bool)
     assert result
 
@@ -107,14 +107,14 @@ def test_parse_genome_name():
     """Test the static 'parse_genome_name' method"""
     filename = "eFlareon.fasta.gz"
     error_code = ErrorCode()
-    result = CpgIndex.parse_genome_name(filename, error_code)
+    result = GenomeIndex.parse_genome_name(filename, error_code)
     assert isinstance(result, str)
     assert result == "eFlareon"
 
-def test_list_cpg_indexes():
-    """Test the static 'list_cpg_indexes' method"""
+def test_list_genome_indexes():
+    """Test the static 'list_genome_indexes' method"""
     directory = "data/lutions/indexes"
     error_code = ErrorCode()
-    result = CpgIndex.list_cpg_indexes(directory, error_code)
+    result = GenomeIndex.list_genome_indexes(directory, error_code)
     assert isinstance(result, list)
     assert len(result) == 3
