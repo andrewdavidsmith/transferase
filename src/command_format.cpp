@@ -82,7 +82,7 @@ xfrase format -x index_dir -g hg38 -o output_dir -m SRX012345.xsym.gz
 #include <variant>  // IWYU pragma: keep
 #include <vector>
 
-enum class counts_file_format_error : std::uint8_t {
+enum class counts_file_format_error_code : std::uint8_t {
   // clang-format off
   ok                                         = 0,
   xcounts_file_open_failure                  = 1,
@@ -93,12 +93,12 @@ enum class counts_file_format_error : std::uint8_t {
 };
 
 template <>
-struct std::is_error_code_enum<counts_file_format_error>
+struct std::is_error_code_enum<counts_file_format_error_code>
   : public std::true_type {};
 
-struct counts_file_format_error_category : std::error_category {
+struct counts_file_format_error_code_category : std::error_category {
   // clang-format off
-  auto name() const noexcept -> const char * override { return "counts_file_format_error"; }
+  auto name() const noexcept -> const char * override { return "counts_file_format_error_code"; }
   auto message(const int condition) const -> std::string override {
     using std::string_literals::operator""s;
     switch (condition) {
@@ -114,8 +114,8 @@ struct counts_file_format_error_category : std::error_category {
 };
 
 inline auto
-make_error_code(counts_file_format_error e) -> std::error_code {
-  static auto category = counts_file_format_error_category{};
+make_error_code(counts_file_format_error_code e) -> std::error_code {
+  static auto category = counts_file_format_error_code_category{};
   return std::error_code(std::to_underlying(e), category);
 }
 
@@ -146,14 +146,14 @@ verify_header_line(const genome_index_metadata &meta,
                    const std::string &line) -> std::error_code {
   // ignore the version line and the header end line
   if (line.substr(0, 9) == "#DNMTOOLS" || std::size(line) == 1)
-    return counts_file_format_error::ok;
+    return counts_file_format_error_code::ok;
 
   // parse the chrom and its size
   std::string chrom;
   std::uint64_t chrom_size{};
   std::istringstream iss{line};
   if (!(iss >> chrom >> chrom_size))
-    return counts_file_format_error::xcounts_file_header_failure;
+    return counts_file_format_error_code::xcounts_file_header_failure;
 
   chrom = chrom.substr(1);  // remove leading '#'
 
@@ -161,15 +161,15 @@ verify_header_line(const genome_index_metadata &meta,
   // methylome transferase file
   const auto order_itr = meta.chrom_index.find(chrom);
   if (order_itr == cend(meta.chrom_index))
-    return counts_file_format_error::xcounts_file_chromosome_not_found;
+    return counts_file_format_error_code::xcounts_file_chromosome_not_found;
 
   // validate that the chromosome size is the same between the index
   // and the methylome transferase file
   const auto size_itr = meta.chrom_size[order_itr->second];
   if (chrom_size != size_itr)
-    return counts_file_format_error::xcounts_file_incorrect_chromosome_size;
+    return counts_file_format_error_code::xcounts_file_incorrect_chromosome_size;
 
-  return counts_file_format_error::ok;
+  return counts_file_format_error_code::ok;
 }
 
 static auto
@@ -219,7 +219,7 @@ process_cpg_sites_xcounts(const std::string &infile, const genome_index &index)
       if (ch_id < 0) {
         lgr.error("Failed to find chromosome in index: {}", line);
         return {methylome_data{},
-                counts_file_format_error::xcounts_file_chromosome_not_found};
+                counts_file_format_error_code::xcounts_file_chromosome_not_found};
       }
       cpg_idx_out = 0;
 
@@ -310,7 +310,7 @@ process_cpg_sites_counts(const std::string &infile, const genome_index &index)
       if (ch_id < 0) {
         lgr.error("Failed to find chromosome in index: {}", line);
         return {methylome_data{}, /* ADS: fix this */
-                counts_file_format_error::xcounts_file_chromosome_not_found};
+                counts_file_format_error_code::xcounts_file_chromosome_not_found};
       }
       cpg_idx_out = 0;
 
