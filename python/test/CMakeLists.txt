@@ -40,7 +40,8 @@ foreach(TEST_FILE ${PYTHON_TEST_FILES})
     ${PROJECT_BINARY_DIR}/python/test
   )
   set_tests_properties(python_${TEST_NAME}
-    PROPERTIES ENVIRONMENT "PYTHONPATH=${PROJECT_BINARY_DIR}/python")
+    PROPERTIES ENVIRONMENT
+    "PYTHONPATH=${PROJECT_BINARY_DIR}/python/transferase")
 endforeach()
 
 # Ensure test data dir is in the right place relative to ctest paths:
