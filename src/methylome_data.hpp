@@ -68,6 +68,17 @@ struct methylome_data {
   typedef std::vector<m_count_p> vec;
 #endif
 
+  methylome_data() = default;
+  methylome_data(methylome_data::vec &&cpgs) : cpgs{std::move(cpgs)} {}
+
+  // prevent copy, allow move
+  // clang-format off
+  methylome_data(const methylome_data &) = delete;
+  methylome_data &operator=(const methylome_data &) = delete;
+  methylome_data(methylome_data &&) noexcept = default;
+  methylome_data &operator=(methylome_data &&) noexcept = default;
+  // clang-format on
+
   [[nodiscard]] static auto
   read(const std::string &filename, const methylome_metadata &meta,
        std::error_code &ec) -> methylome_data;
@@ -170,7 +181,7 @@ size(const methylome_data &data) {
 }  // namespace transferase
 
 // methylome_data errors
-enum class methylome_data_code : std::uint8_t {
+enum class methylome_data_error_code : std::uint8_t {
   ok = 0,
   error_reading = 1,
   error_writing = 2,
@@ -178,9 +189,10 @@ enum class methylome_data_code : std::uint8_t {
 };
 
 template <>
-struct std::is_error_code_enum<methylome_data_code> : public std::true_type {};
+struct std::is_error_code_enum<methylome_data_error_code>
+  : public std::true_type {};
 
-struct methylome_data_category : std::error_category {
+struct methylome_data_error_category : std::error_category {
   // clang-format off
   auto name() const noexcept -> const char * override {return "methylome_data";}
   auto message(int code) const -> std::string override {
@@ -197,8 +209,8 @@ struct methylome_data_category : std::error_category {
 };
 
 inline auto
-make_error_code(methylome_data_code e) -> std::error_code {
-  static auto category = methylome_data_category{};
+make_error_code(methylome_data_error_code e) -> std::error_code {
+  static auto category = methylome_data_error_category{};
   return std::error_code(std::to_underlying(e), category);
 }
 
