@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_CPG_INDEX_IMPL_HPP_
-#define SRC_CPG_INDEX_IMPL_HPP_
+#ifndef SRC_GENOME_INDEX_IMPL_HPP_
+#define SRC_GENOME_INDEX_IMPL_HPP_
 
 #ifdef UNIT_TEST
 #define STATIC
@@ -71,4 +71,4 @@ get_chroms(const char *data, const std::size_t sz,
 
 }  // namespace transferase
 
-#endif  // SRC_CPG_INDEX_IMPL_HPP_
+#endif  // SRC_GENOME_INDEX_IMPL_HPP_

@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_CPG_INDEX_SET_HPP_
-#define SRC_CPG_INDEX_SET_HPP_
+#ifndef SRC_GENOME_INDEX_SET_HPP_
+#define SRC_GENOME_INDEX_SET_HPP_
 
 #include <cstdint>  // for std::uint32_t
 #include <memory>
@@ -91,4 +91,4 @@ make_error_code(genome_index_set_error e) -> std::error_code {
   return std::error_code(std::to_underlying(e), category);
 }
 
-#endif  // SRC_CPG_INDEX_SET_HPP_
+#endif  // SRC_GENOME_INDEX_SET_HPP_
