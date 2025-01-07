@@ -70,11 +70,11 @@ auto
 command_index_main(int argc, char *argv[]) -> int {
   static constexpr auto command = "index";
   static const auto usage =
-    std::format("Usage: xfrase {} [options]\n", strip(command));
+    std::format("Usage: xfrase {} [options]\n", rstrip(command));
   static const auto about_msg =
-    std::format("xfrase {}: {}", strip(command), strip(about));
+    std::format("xfrase {}: {}", rstrip(command), rstrip(about));
   static const auto description_msg =
-    std::format("{}\n{}", strip(description), strip(examples));
+    std::format("{}\n{}", rstrip(description), rstrip(examples));
 
   std::string genome_filename{};
   std::string index_file{};

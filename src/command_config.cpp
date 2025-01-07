@@ -221,11 +221,11 @@ auto
 command_config_main(int argc, char *argv[]) -> int {
   static constexpr auto command = "config";
   static const auto usage =
-    std::format("Usage: xfrase {} [options]\n", strip(command));
+    std::format("Usage: xfrase {} [options]\n", rstrip(command));
   static const auto about_msg =
-    std::format("xfrase {}: {}", strip(command), strip(about));
+    std::format("xfrase {}: {}", rstrip(command), rstrip(about));
   static const auto description_msg =
-    std::format("{}\n{}", strip(description), strip(examples));
+    std::format("{}\n{}", rstrip(description), rstrip(examples));
 
   transferase::command_config_argset args;
   auto ec = args.parse(argc, argv, usage, about_msg, description_msg);

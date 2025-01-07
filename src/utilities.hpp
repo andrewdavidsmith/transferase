@@ -47,7 +47,7 @@ duration(const auto start, const auto stop) {
 get_transferase_config_dir_default(std::error_code &ec) -> std::string;
 
 [[nodiscard]] inline auto
-strip(char const *const x) -> const std::string_view {
+rstrip(char const *const x) -> const std::string_view {
   const std::string s{x};
   const auto start = s.find_first_not_of("\n\r");
   return std::string_view(x + start, x + std::size(s));

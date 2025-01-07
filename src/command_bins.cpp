@@ -76,9 +76,9 @@ command_bins_main(int argc, char *argv[]) -> int {
   static const auto usage =
     std::format("Usage: xfrase bins [local|remote] [options]\n");
   static const auto about_msg =
-    std::format("xfrase {}: {}", strip(command), strip(about));
+    std::format("xfrase {}: {}", rstrip(command), rstrip(about));
   static const auto description_msg =
-    std::format("{}\n{}", strip(description), strip(examples));
+    std::format("{}\n{}", rstrip(description), rstrip(examples));
 
   using transferase::cpg_index;
   using transferase::level_element_covered_t;
