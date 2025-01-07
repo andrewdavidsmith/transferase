@@ -232,7 +232,7 @@ command_server_main(int argc, char *argv[]) -> int {
 
   transferase::server_argset args;
   auto ec = args.parse(argc, argv, usage, about_msg, description_msg);
-  if (ec == argument_error::help_requested)
+  if (ec == argument_error_code::help_requested)
     return EXIT_SUCCESS;
   if (ec)
     return EXIT_FAILURE;

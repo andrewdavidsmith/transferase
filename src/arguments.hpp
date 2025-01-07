@@ -34,20 +34,20 @@
 #include <type_traits>  // for std::true_type
 #include <utility>      // for std::to_underlying, std::unreachable
 
-enum class argument_error : std::uint8_t {
+enum class argument_error_code : std::uint8_t {
   ok = 0,
   help_requested = 1,
   failure = 2,
 };
 
 template <>
-struct std::is_error_code_enum<argument_error> : public std::true_type {};
+struct std::is_error_code_enum<argument_error_code> : public std::true_type {};
 
-struct argument_error_category : std::error_category {
+struct argument_error_code_category : std::error_category {
   // clang-format off
   auto
   name() const noexcept -> const char * override  {
-    return "argument_error";
+    return "argument_error_code";
   }
   auto
   message(int code) const -> std::string override {
@@ -63,8 +63,8 @@ struct argument_error_category : std::error_category {
 };
 
 inline auto
-make_error_code(argument_error e) -> std::error_code {
-  static auto category = argument_error_category{};
+make_error_code(argument_error_code e) -> std::error_code {
+  static auto category = argument_error_code_category{};
   return std::error_code(std::to_underlying(e), category);
 }
 
@@ -108,7 +108,7 @@ template <typename T> struct argset_base {
         std::println("{}\n{}", about_msg, usage);
         help_opts.print(std::cout);
         std::println("\n{}", description_msg);
-        return argument_error::help_requested;
+        return argument_error_code::help_requested;
       }
       boost::program_options::notify(vm_cli_only);
       boost::program_options::variables_map vm_common;
@@ -131,9 +131,9 @@ template <typename T> struct argset_base {
       std::println("{}\n{}", about_msg, usage);
       help_opts.print(std::cout);
       std::println("\n{}", description_msg);
-      return argument_error::failure;
+      return argument_error_code::failure;
     }
-    return argument_error::ok;
+    return argument_error_code::ok;
   }
 
   auto
