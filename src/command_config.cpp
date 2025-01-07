@@ -40,7 +40,7 @@ be downloaded separately. The default config directory is
 static constexpr auto examples = R"(
 Examples:
 
-xfrase config -c my_config_file.toml -s example.com -p 5009 --assemblies hg38,mm39
+xfrase config -c my_config_file.toml -s example.com -p 5009 --genomes hg38,mm39
 )";
 
 #include "arguments.hpp"
@@ -95,8 +95,8 @@ struct remote_indexes_resources {
   std::string path;
 
   [[nodiscard]] auto
-  form_target_stem(const auto &assembly) const {
-    return (std::filesystem::path{path} / assembly).string();
+  form_target_stem(const auto &genome) const {
+    return (std::filesystem::path{path} / genome).string();
   }
   [[nodiscard]] auto
   form_url(const auto &file) const {
@@ -169,7 +169,7 @@ get_remote_indexes_resources()
 
 [[nodiscard]] static auto
 get_index_files(const bool quiet, const remote_indexes_resources &remote,
-                const std::string &assemblies,
+                const std::string &genomes,
                 const std::string &dirname) -> std::error_code {
   const auto dl_err = [&](const auto &hdr, const auto &ec, const auto &url) {
     std::println("Error downloading {}: ", url);
@@ -182,8 +182,8 @@ get_index_files(const bool quiet, const remote_indexes_resources &remote,
                    reason_itr->second);
   };
 
-  for (const auto assembly : std::views::split(assemblies, ',')) {
-    const auto assem = std::string{std::cbegin(assembly), std::cend(assembly)};
+  for (const auto genome : std::views::split(genomes, ',')) {
+    const auto assem = std::string{std::cbegin(genome), std::cend(genome)};
     const auto stem = remote.form_target_stem(assem);
     const auto data_file = std::format(
       "{}{}", stem, transferase::cpg_index_data::filename_extension);
@@ -302,7 +302,7 @@ command_config_main(int argc, char *argv[]) -> int {
     if (!args.quiet)
       std::println("Host for index files: {}:{}", remote.host, remote.port);
     const auto index_err =
-      get_index_files(args.quiet, remote, args.assemblies, config_dir);
+      get_index_files(args.quiet, remote, args.genomes, config_dir);
     if (index_err) {
       std::println("Error obtaining cpg index files: {}", index_err);
       return EXIT_FAILURE;
