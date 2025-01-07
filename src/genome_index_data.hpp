@@ -89,15 +89,15 @@ struct genome_index_data {
     -> transferase::query_container;
 
   [[nodiscard]] static auto
-  compose_filename(auto wo_extension) {
-    wo_extension += filename_extension;
-    return wo_extension;
+  compose_filename(auto originally_without_extension) {
+    originally_without_extension += filename_extension;
+    return originally_without_extension;
   }
 
   [[nodiscard]] static auto
   compose_filename(const auto &directory, const auto &name) {
-    const auto wo_extn = (std::filesystem::path{directory} / name).string();
-    return std::format("{}{}", wo_extn, filename_extension);
+    const auto withou_ext = (std::filesystem::path{directory} / name).string();
+    return std::format("{}{}", withou_ext, filename_extension);
   }
 
   std::vector<genome_index_data::vec> positions;
