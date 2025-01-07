@@ -55,6 +55,15 @@ struct genome_index_data {
   typedef std::vector<genome_pos_t> vec;
 #endif
 
+  // prevent copying and allow moving
+  // clang-format off
+  genome_index_data() = default;
+  genome_index_data(const genome_index_data &) = delete;
+  genome_index_data &operator=(const genome_index_data &) = delete;
+  genome_index_data(genome_index_data &&) noexcept = default;
+  genome_index_data &operator=(genome_index_data &&) noexcept = default;
+  // clang-format on
+
   [[nodiscard]] auto
   tostring() const -> std::string {
     return std::format(R"json({{"size": {}}})json", get_n_cpgs());
@@ -111,7 +120,7 @@ struct std::formatter<transferase::genome_index_data>
   auto
   format(const transferase::genome_index_data &data,
          std::format_context &ctx) const {
-    return std::formatter<std::string>::format(data.tostring(), ctx);
+    return std::format_to(ctx.out(), "{}", data.tostring());
   }
 };
 
