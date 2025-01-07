@@ -55,27 +55,24 @@ genome_index_data::read(const std::string &index_file,
   }
 
   std::vector<std::uint32_t> n_cpgs(meta.chrom_offset);
-  {
-    n_cpgs.front() = meta.n_cpgs;
-    std::ranges::rotate(n_cpgs, std::begin(n_cpgs) + 1);
-    std::adjacent_difference(std::cbegin(n_cpgs), std::cend(n_cpgs),
-                             std::begin(n_cpgs));
-  }
+  n_cpgs.front() = meta.n_cpgs;
+  std::ranges::rotate(n_cpgs, std::begin(n_cpgs) + 1);
+  std::adjacent_difference(std::cbegin(n_cpgs), std::cend(n_cpgs),
+                           std::begin(n_cpgs));
 
   genome_index_data data;
   for (const auto n_cpgs_chrom : n_cpgs) {
     data.positions.push_back(vec(n_cpgs_chrom));
-    {
-      const std::streamsize n_bytes_expected =
-        n_cpgs_chrom * sizeof(std::uint32_t);
-      in.read(reinterpret_cast<char *>(data.positions.back().data()),
-              n_bytes_expected);
-      const auto read_ok = static_cast<bool>(in);
-      const auto n_bytes = in.gcount();
-      if (!read_ok || n_bytes != n_bytes_expected) {
-        ec = genome_index_data_code::failure_reading_index_data;
-        return {};
-      }
+
+    const std::streamsize n_bytes_expected =
+      n_cpgs_chrom * sizeof(std::uint32_t);
+    in.read(reinterpret_cast<char *>(data.positions.back().data()),
+            n_bytes_expected);
+    const auto read_ok = static_cast<bool>(in);
+    const auto n_bytes = in.gcount();
+    if (!read_ok || n_bytes != n_bytes_expected) {
+      ec = genome_index_data_error_code::failure_reading_file;
+      return {};
     }
   }
 
@@ -86,18 +83,18 @@ genome_index_data::read(const std::string &index_file,
 [[nodiscard]]
 static inline auto
 make_genome_index_data_filename(const std::string &dirname,
-                                const std::string &genomic_name) {
+                                const std::string &genome_name) {
   const auto with_extension =
-    std::format("{}{}", genomic_name, genome_index_data::filename_extension);
+    std::format("{}{}", genome_name, genome_index_data::filename_extension);
   return (std::filesystem::path{dirname} / with_extension).string();
 }
 
 [[nodiscard]] auto
 genome_index_data::read(const std::string &dirname,
-                        const std::string &genomic_name,
+                        const std::string &genome_name,
                         const genome_index_metadata &meta,
                         std::error_code &ec) -> genome_index_data {
-  return read(make_genome_index_data_filename(dirname, genomic_name), meta, ec);
+  return read(make_genome_index_data_filename(dirname, genome_name), meta, ec);
 }
 
 [[nodiscard]] auto
@@ -125,27 +122,17 @@ make_query_within_chrom(const genome_index_data::vec &positions,
   -> transferase::query_container {
   transferase::query_container query(std::size(chrom_ranges));
   auto cursor = std::cbegin(positions);
-  for (const auto [i, cr] : std::views::enumerate(chrom_ranges)) {
-    cursor = std::ranges::lower_bound(cursor, std::cend(positions), cr.start);
-    const auto cursor_stop =
-      std::ranges::lower_bound(cursor, std::cend(positions), cr.stop);
-    query[i] = {static_cast<q_elem_t>(
-                  std::ranges::distance(std::cbegin(positions), cursor)),
-                static_cast<q_elem_t>(
-                  std::ranges::distance(std::cbegin(positions), cursor_stop))};
+  for (const auto [idx, cr] : std::views::enumerate(chrom_ranges)) {
+    namespace rg = std::ranges;
+    cursor = rg::lower_bound(cursor, std::cend(positions), cr.start);
+    const auto pos_stop =
+      rg::lower_bound(cursor, std::cend(positions), cr.stop);
+    query[idx] = {
+      static_cast<q_elem_t>(rg::distance(std::cbegin(positions), cursor)),
+      static_cast<q_elem_t>(rg::distance(std::cbegin(positions), pos_stop)),
+    };
   }
   return query;
-}
-
-// given the chromosome id (from chrom_index) and a set of ranges
-// within the chrom, get the query in the form of CpG site identities
-[[nodiscard]] auto
-genome_index_data::make_query_within_chrom(
-  const std::int32_t ch_id, const std::vector<chrom_range_t> &chrom_ranges)
-  const -> transferase::query_container {
-  assert(std::ranges::is_sorted(chrom_ranges) && ch_id >= 0 &&
-         ch_id < std::ranges::ssize(positions));
-  return transferase::make_query_within_chrom(positions[ch_id], chrom_ranges);
 }
 
 [[nodiscard]] auto
@@ -156,8 +143,7 @@ genome_index_data::make_query_chrom(
   assert(std::ranges::is_sorted(chrom_ranges) && ch_id >= 0 &&
          ch_id < std::ranges::ssize(positions));
   const auto offset = meta.chrom_offset[ch_id];
-  auto query =
-    transferase::make_query_within_chrom(positions[ch_id], chrom_ranges);
+  auto query = make_query_within_chrom(positions[ch_id], chrom_ranges);
   std::ranges::for_each(query, [&](auto &x) {
     x.start += offset;
     x.stop += offset;
@@ -197,7 +183,7 @@ genome_index_data::hash() const -> std::uint64_t {
   std::uint64_t combined = 1;  // from the zlib docs to init
   for (const auto &p : positions)
     combined =
-      update_adler(combined, p.data(), std::size(p) * sizeof(cpg_pos_t));
+      update_adler(combined, p.data(), std::size(p) * sizeof(genome_pos_t));
   return combined;
 }
 

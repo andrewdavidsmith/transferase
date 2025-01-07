@@ -48,11 +48,11 @@ struct genome_index_data {
   // includes the dot because that's how std::filesystem::path works
   static constexpr auto filename_extension{".cpg_idx"};
 
-  typedef std::uint32_t cpg_pos_t;
+  typedef std::uint32_t genome_pos_t;
 #if not defined(__APPLE__) && not defined(__MACH__)
-  typedef std::vector<cpg_pos_t, aligned_allocator<cpg_pos_t>> vec;
+  typedef std::vector<genome_pos_t, aligned_allocator<genome_pos_t>> vec;
 #else
-  typedef std::vector<cpg_pos_t> vec;
+  typedef std::vector<genome_pos_t> vec;
 #endif
 
   [[nodiscard]] auto
@@ -77,11 +77,6 @@ struct genome_index_data {
 
   [[nodiscard]] auto
   get_n_cpgs() const -> std::uint32_t;
-
-  [[nodiscard]] auto
-  make_query_within_chrom(const std::int32_t ch_id,
-                          const std::vector<chrom_range_t> &pos) const
-    -> transferase::query_container;
 
   [[nodiscard]] auto
   make_query_chrom(const std::int32_t ch_id, const genome_index_metadata &meta,
@@ -121,24 +116,23 @@ struct std::formatter<transferase::genome_index_data>
 };
 
 // genome_index_data errors
-
-enum class genome_index_data_code : std::uint8_t {
+enum class genome_index_data_error_code : std::uint8_t {
   ok = 0,
-  failure_reading_index_data = 1,
+  failure_reading_file = 1,
 };
 
 template <>
-struct std::is_error_code_enum<genome_index_data_code> : public std::true_type {
-};
+struct std::is_error_code_enum<genome_index_data_error_code>
+  : public std::true_type {};
 
-struct genome_index_data_category : std::error_category {
+struct genome_index_data_error_category : std::error_category {
   // clang-format off
   auto name() const noexcept -> const char * override {return "genome_index_data";}
   auto message(int code) const -> std::string override {
     using std::string_literals::operator""s;
     switch (code) {
     case 0: return "ok"s;
-    case 1: return "failure reading index data"s;
+    case 1: return "failure reading file"s;
     }
     std::unreachable();
   }
@@ -146,8 +140,8 @@ struct genome_index_data_category : std::error_category {
 };
 
 inline auto
-make_error_code(genome_index_data_code e) -> std::error_code {
-  static auto category = genome_index_data_category{};
+make_error_code(genome_index_data_error_code e) -> std::error_code {
+  static auto category = genome_index_data_error_category{};
   return std::error_code(std::to_underlying(e), category);
 }
 
