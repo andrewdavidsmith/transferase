@@ -44,27 +44,26 @@ template <>
 struct std::is_error_code_enum<argument_error> : public std::true_type {};
 
 struct argument_error_category : std::error_category {
-  const char *
-  name() const noexcept override {
+  // clang-format off
+  auto
+  name() const noexcept -> const char * override  {
     return "argument_error";
   }
-  std::string
-  message(int code) const override {
+  auto
+  message(int code) const -> std::string override {
     using std::string_literals::operator""s;
     switch (code) {
-    case 0:
-      return "ok"s;
-    case 1:
-      return "help requested"s;
-    case 2:
-      return "failure parsing options"s;
+    case 0: return "ok"s;
+    case 1: return "help requested"s;
+    case 2: return "failure parsing options"s;
     }
     std::unreachable();
   }
+  // clang-format on
 };
 
-inline std::error_code
-make_error_code(argument_error e) {
+inline auto
+make_error_code(argument_error e) -> std::error_code {
   static auto category = argument_error_category{};
   return std::error_code(std::to_underlying(e), category);
 }
