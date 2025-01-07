@@ -49,7 +49,7 @@
 // #define Z_BUF_ERROR    (-5)
 // #define Z_VERSION_ERROR (-6)
 // clang-format on
-enum class zlib_adapter_error : std::uint8_t {
+enum class zlib_adapter_error_code : std::uint8_t {
   ok = 0,
   z_stream_end = 1,
   z_need_dict = 2,
@@ -63,11 +63,12 @@ enum class zlib_adapter_error : std::uint8_t {
 };
 
 template <>
-struct std::is_error_code_enum<zlib_adapter_error> : public std::true_type {};
+struct std::is_error_code_enum<zlib_adapter_error_code>
+  : public std::true_type {};
 
 struct zlib_adapter_error_category : std::error_category {
   // clang-format off
-  auto name() const noexcept -> const char * override {return "zlib_adapter_error";}
+  auto name() const noexcept -> const char * override {return "zlib_adapter_error_code";}
   auto message(int code) const -> std::string override {
     using std::string_literals::operator""s;
     switch (code) {
@@ -88,7 +89,7 @@ struct zlib_adapter_error_category : std::error_category {
 };
 
 inline std::error_code
-make_error_code(zlib_adapter_error e) {
+make_error_code(zlib_adapter_error_code e) {
   static auto category = zlib_adapter_error_category{};
   return std::error_code(std::to_underlying(e), category);
 }
@@ -136,9 +137,9 @@ compress(const T &in, std::vector<std::uint8_t> &out) -> std::error_code {
                                  MAX_MEM_LEVEL, Z_RLE);
     switch (ret) {
     case Z_VERSION_ERROR:
-      return zlib_adapter_error::z_version_error;
+      return zlib_adapter_error_code::z_version_error;
     case Z_STREAM_ERROR:
-      return zlib_adapter_error::z_stream_error;
+      return zlib_adapter_error_code::z_stream_error;
     }
     assert(ret == Z_OK);
   }
@@ -161,8 +162,8 @@ compress(const T &in, std::vector<std::uint8_t> &out) -> std::error_code {
     const int ret = deflate(&strm, Z_FINISH);
     // clang-format off
     switch (ret) {
-    case Z_STREAM_ERROR: return zlib_adapter_error::z_stream_error;
-    case Z_BUF_ERROR: return zlib_adapter_error::z_buf_error;
+    case Z_STREAM_ERROR: return zlib_adapter_error_code::z_stream_error;
+    case Z_BUF_ERROR: return zlib_adapter_error_code::z_buf_error;
     }
     // clang-format on
     assert(ret == Z_STREAM_END);
@@ -172,8 +173,8 @@ compress(const T &in, std::vector<std::uint8_t> &out) -> std::error_code {
     const int ret = deflateEnd(&strm);
     // clang-format off
     switch (ret) {
-    case Z_STREAM_ERROR: return zlib_adapter_error::z_stream_error;
-    case Z_DATA_ERROR: return zlib_adapter_error::z_data_error;
+    case Z_STREAM_ERROR: return zlib_adapter_error_code::z_stream_error;
+    case Z_DATA_ERROR: return zlib_adapter_error_code::z_data_error;
     }
     // clang-format on
     assert(ret == Z_OK);  // what about STREAM_END?
@@ -182,7 +183,7 @@ compress(const T &in, std::vector<std::uint8_t> &out) -> std::error_code {
 
   out.resize(strm.total_out);
 
-  return zlib_adapter_error::ok;
+  return zlib_adapter_error_code::ok;
 }
 
 template <typename T>
@@ -193,9 +194,9 @@ decompress(std::vector<std::uint8_t> &in, T &out) -> std::error_code {
     const int ret = inflateInit(&strm);
     // clang-format off
     switch (ret) {
-    case Z_VERSION_ERROR: return zlib_adapter_error::z_version_error;
-    case Z_STREAM_ERROR: return zlib_adapter_error::z_stream_error;
-    case Z_MEM_ERROR: return zlib_adapter_error::z_mem_error;
+    case Z_VERSION_ERROR: return zlib_adapter_error_code::z_version_error;
+    case Z_STREAM_ERROR: return zlib_adapter_error_code::z_stream_error;
+    case Z_MEM_ERROR: return zlib_adapter_error_code::z_mem_error;
     }
     // clang-format on
     assert(ret == Z_OK);
@@ -216,11 +217,11 @@ decompress(std::vector<std::uint8_t> &in, T &out) -> std::error_code {
       inflateEnd(&strm);
     // clang-format off
     switch (ret) {
-    case Z_STREAM_ERROR: return zlib_adapter_error::z_stream_error;
-    case Z_NEED_DICT: return zlib_adapter_error::z_need_dict;
-    case Z_MEM_ERROR: return zlib_adapter_error::z_mem_error;
-    case Z_DATA_ERROR: return zlib_adapter_error::z_data_error;
-    case Z_BUF_ERROR: return zlib_adapter_error::z_buf_error;
+    case Z_STREAM_ERROR: return zlib_adapter_error_code::z_stream_error;
+    case Z_NEED_DICT: return zlib_adapter_error_code::z_need_dict;
+    case Z_MEM_ERROR: return zlib_adapter_error_code::z_mem_error;
+    case Z_DATA_ERROR: return zlib_adapter_error_code::z_data_error;
+    case Z_BUF_ERROR: return zlib_adapter_error_code::z_buf_error;
     }
     // clang-format on
     assert(ret == Z_STREAM_END);
@@ -228,13 +229,13 @@ decompress(std::vector<std::uint8_t> &in, T &out) -> std::error_code {
   }
 
   if (inflateEnd(&strm) == Z_STREAM_ERROR)
-    return zlib_adapter_error::z_stream_error;
+    return zlib_adapter_error_code::z_stream_error;
 
   // assume size(out) is an exact fit
   // out.resize(strm.total_out);
   // ret == Z_STREAM_END ? Z_OK : Z_DATA_ERROR;
 
-  return zlib_adapter_error::ok;
+  return zlib_adapter_error_code::ok;
 }
 
 [[nodiscard]] auto

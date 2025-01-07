@@ -42,7 +42,7 @@ namespace transferase {
 methylome::init_metadata(const genome_index &index) -> std::error_code {
   static constexpr auto is_compressed_init = false;
   if (std::size(data.cpgs) != index.meta.n_cpgs)
-    return std::error_code{methylome_code::invalid_methylome_data};
+    return std::error_code{methylome_error_code::invalid_methylome_data};
   meta = {
     // clang-format off
     "",  // version

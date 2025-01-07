@@ -49,6 +49,10 @@ struct methylome {
   methylome_data data;
   methylome_metadata meta;
 
+  methylome() = default;
+  methylome(methylome_data &&data, methylome_metadata &&meta) :
+    data{std::move(data)}, meta{std::move(meta)} {}
+
   [[nodiscard]] static auto
   read(const std::string &dirname, const std::string &methylome_name,
        std::error_code &ec) -> methylome;
@@ -142,16 +146,16 @@ struct methylome {
 }  // namespace transferase
 
 // methylome error codes
-enum class methylome_code : std::uint8_t {
+enum class methylome_error_code : std::uint8_t {
   ok = 0,
   invalid_accession = 1,
   invalid_methylome_data = 2,
 };
 
 template <>
-struct std::is_error_code_enum<methylome_code> : public std::true_type {};
+struct std::is_error_code_enum<methylome_error_code> : public std::true_type {};
 
-struct methylome_category : std::error_category {
+struct methylome_error_category : std::error_category {
   // clang-format off
   auto name() const noexcept -> const char * override { return "methylome"; }
   auto message(int code) const -> std::string override {
@@ -167,8 +171,8 @@ struct methylome_category : std::error_category {
 };
 
 inline auto
-make_error_code(methylome_code e) -> std::error_code {
-  static auto category = methylome_category{};
+make_error_code(methylome_error_code e) -> std::error_code {
+  static auto category = methylome_error_category{};
   return std::error_code(std::to_underlying(e), category);
 }
 

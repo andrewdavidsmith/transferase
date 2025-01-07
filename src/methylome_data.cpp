@@ -91,7 +91,7 @@ methylome_data::read(const std::string &filename,
       in.read(reinterpret_cast<char *>(buf.data()), filesize));
     const auto n_bytes = in.gcount();
     if (!read_ok || n_bytes != static_cast<std::streamsize>(filesize)) {
-      ec = methylome_data_code::error_reading;
+      ec = methylome_data_error_code::error_reading;
       return {};
     }
     meth.cpgs.resize(metadata.n_cpgs);
@@ -111,7 +111,7 @@ methylome_data::read(const std::string &filename,
     in.read(reinterpret_cast<char *>(meth.cpgs.data()), filesize));
   const auto n_bytes = in.gcount();
   if (!read_ok || n_bytes != static_cast<std::streamsize>(filesize)) {
-    ec = methylome_data_code::error_reading;
+    ec = methylome_data_error_code::error_reading;
     return {};
   }
 
@@ -160,12 +160,12 @@ methylome_data::write(const std::string &filename,
 
   if (zip) {
     if (!out.write(reinterpret_cast<const char *>(buf.data()), std::size(buf)))
-      return methylome_data_code::error_writing;
+      return methylome_data_error_code::error_writing;
   }
   else {
     if (!out.write(reinterpret_cast<const char *>(cpgs.data()),
                    std::size(cpgs) * record_size))
-      return methylome_data_code::error_writing;
+      return methylome_data_error_code::error_writing;
   }
   return std::error_code{};
 }

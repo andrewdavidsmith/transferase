@@ -23,8 +23,10 @@
 
 #include <genome_index_data.hpp>
 
-#include "genome_index_metadata.hpp"
-#include "query_element.hpp"
+#include <genome_index_data_impl.hpp>
+#include <genome_index_metadata.hpp>
+#include <query_element.hpp>
+
 #include "unit_test_utils.hpp"
 
 #include <chrom_range.hpp>
@@ -126,7 +128,8 @@ TEST(genome_index_data_test, valid_make_query_within_chrom) {
     {1, 3},
     {4, 5},
   };
-  const auto query = index.make_query_within_chrom(0, queries);
+  const auto query =
+    transferase::make_query_within_chrom(index.positions[0], queries);
   const auto expected = transferase::query_container(std::vector<query_element>{
     {0, 2},
     {3, 4},

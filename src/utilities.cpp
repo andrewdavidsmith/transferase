@@ -59,7 +59,7 @@ check_output_file(const std::string &filename) -> std::error_code {
     if (ec)
       return ec;
     if (is_dir)
-      return std::error_code{output_file_error::is_a_directory};
+      return std::error_code{output_file_error_code::is_a_directory};
     return {};
   }
 
@@ -68,7 +68,7 @@ check_output_file(const std::string &filename) -> std::error_code {
   {
     std::ofstream out_test(canonical);
     if (!out_test)
-      ec = output_file_error::failed_to_open;
+      ec = output_file_error_code::failed_to_open;
     [[maybe_unused]] std::error_code unused{};
     const bool out_test_exits = std::filesystem::exists(canonical, unused);
     if (out_test_exits) {

@@ -131,7 +131,7 @@ connection::read_query() -> void {
       }
       else {
         lgr.warning("{} Error reading query: {}", conn_id, ec);
-        resp_hdr = {request_error::error_reading_query, 0};
+        resp_hdr = {request_error_code::error_reading_query, 0};
         // exiting the read loop -- no deadline for now
         respond_with_error();
       }

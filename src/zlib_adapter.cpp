@@ -60,7 +60,8 @@ is_gzip_file(const std::string &filename) -> bool {
 gzinfile::gzinfile(const std::string &filename, std::error_code &ec) :
   in{gzopen(filename.data(), "rb")} {
   // ADS: need to check errnum by gzerror
-  ec = (in == nullptr) ? zlib_adapter_error::z_errno : zlib_adapter_error::ok;
+  ec = (in == nullptr) ? zlib_adapter_error_code::z_errno
+                       : zlib_adapter_error_code::ok;
 }
 
 gzinfile::~gzinfile() {
@@ -73,7 +74,7 @@ gzinfile::~gzinfile() {
 [[nodiscard]] auto
 gzinfile::read() -> int {
   len = gzread(in, buf.data(), buf_size);
-  // ADS: check errnum from gzerror and use zlib_adapter_error;
+  // ADS: check errnum from gzerror and use zlib_adapter_error_code;
   pos = 0;
   return len;
 }
@@ -122,7 +123,8 @@ read_gzfile_into_buffer(const std::string &filename)
   gzclose(gz);
 
   if (n_bytes < 0)
-    return {{}, std::error_code{zlib_adapter_error::unexpected_return_code}};
+    return {{},
+            std::error_code{zlib_adapter_error_code::unexpected_return_code}};
 
   return std::make_tuple(std::move(buffer), std::error_code{});
 }

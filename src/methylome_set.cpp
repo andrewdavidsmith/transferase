@@ -41,7 +41,7 @@ methylome_set::get_methylome(const std::string &accession, std::error_code &ec)
   ec = std::error_code{};
 
   if (!methylome::is_valid_name(accession)) {
-    ec = methylome_code::invalid_accession;
+    ec = methylome_error_code::invalid_accession;
     return nullptr;
   }
 
@@ -56,7 +56,7 @@ methylome_set::get_methylome(const std::string &accession, std::error_code &ec)
   // ADS: we need to load a methylome; make sure the file exists;
   // probably should check the directory in batch
   if (!methylome::files_exist(methylome_directory, accession)) {
-    ec = methylome_set_code::methylome_not_found;
+    ec = methylome_set_error_code::methylome_not_found;
     return nullptr;
   }
 
@@ -70,7 +70,7 @@ methylome_set::get_methylome(const std::string &accession, std::error_code &ec)
   if (accessions.full()) {
     const auto to_eject_itr = accession_to_methylome.find(accessions.front());
     if (to_eject_itr == std::cend(accession_to_methylome)) {
-      ec = methylome_set_code::error_loading_methylome;
+      ec = methylome_set_error_code::error_loading_methylome;
       return nullptr;
     }
     accession_to_methylome.erase(to_eject_itr);
@@ -81,7 +81,7 @@ methylome_set::get_methylome(const std::string &accession, std::error_code &ec)
   const auto insertion_result = accession_to_methylome.emplace(
     accession, std::make_shared<methylome>(std::move(loaded_meth)));
   if (!insertion_result.second) {
-    ec = methylome_set_code::unknown_error;
+    ec = methylome_set_error_code::unknown_error;
     return nullptr;
   }
 

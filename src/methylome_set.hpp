@@ -40,6 +40,8 @@ namespace transferase {
 struct methylome;
 
 struct methylome_set {
+
+  // prevent copy; move disallowed because of std::mutex member
   methylome_set(const methylome_set &) = delete;
   methylome_set &
   operator=(const methylome_set &) = delete;
@@ -68,7 +70,7 @@ struct methylome_set {
 }  // namespace transferase
 
 // methylome_set errors
-enum class methylome_set_code : std::uint8_t {
+enum class methylome_set_error_code : std::uint8_t {
   ok = 0,
   error_loading_methylome = 1,
   methylome_not_found = 2,
@@ -76,9 +78,10 @@ enum class methylome_set_code : std::uint8_t {
 };
 
 template <>
-struct std::is_error_code_enum<methylome_set_code> : public std::true_type {};
+struct std::is_error_code_enum<methylome_set_error_code>
+  : public std::true_type {};
 
-struct methylome_set_category : std::error_category {
+struct methylome_set_error_category : std::error_category {
   // clang-format off
   auto name() const noexcept -> const char * override {return "methylome_set";}
   auto message(int code) const -> std::string override {
@@ -93,10 +96,10 @@ struct methylome_set_category : std::error_category {
   }
   // clang-format on
 };
-inline auto
 
-make_error_code(methylome_set_code e) -> std::error_code {
-  static auto category = methylome_set_category{};
+inline auto
+make_error_code(methylome_set_error_code e) -> std::error_code {
+  static auto category = methylome_set_error_category{};
   return std::error_code(std::to_underlying(e), category);
 }
 

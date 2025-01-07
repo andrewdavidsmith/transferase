@@ -87,8 +87,17 @@ parse(const request_buffer &buf, request &req) -> std::error_code;
 
 }  // namespace transferase
 
+template <>
+struct std::formatter<transferase::request> : std::formatter<std::string> {
+  auto
+  format(const transferase::request &r, std::format_context &ctx) const {
+    return std::format_to(ctx.out(), "{}\t{}\t{}\t{}", r.accession,
+                          r.request_type, r.index_hash, r.aux_value);
+  }
+};
+
 // request error code
-enum class request_error : std::uint8_t {
+enum class request_error_code : std::uint8_t {
   ok = 0,
   parse_error_accession = 1,
   parse_error_request_type = 2,
@@ -98,10 +107,10 @@ enum class request_error : std::uint8_t {
 };
 
 template <>
-struct std::is_error_code_enum<request_error> : public std::true_type {};
+struct std::is_error_code_enum<request_error_code> : public std::true_type {};
 struct request_error_category : std::error_category {
   // clang-format off
-  auto name() const noexcept -> const char * override {return "request_error";}
+  auto name() const noexcept -> const char * override {return "request_error_code";}
   auto message(int code) const -> std::string override {
     using std::string_literals::operator""s;
     switch (code) {
@@ -118,18 +127,9 @@ struct request_error_category : std::error_category {
 };
 
 inline auto
-make_error_code(request_error e) -> std::error_code {
+make_error_code(request_error_code e) -> std::error_code {
   static auto category = request_error_category{};
   return std::error_code(std::to_underlying(e), category);
 }
-
-template <>
-struct std::formatter<transferase::request> : std::formatter<std::string> {
-  auto
-  format(const transferase::request &r, std::format_context &ctx) const {
-    return std::format_to(ctx.out(), "{}\t{}\t{}\t{}", r.accession,
-                          r.request_type, r.index_hash, r.aux_value);
-  }
-};
 
 #endif  // SRC_REQUEST_HPP_

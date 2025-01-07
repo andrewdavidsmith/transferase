@@ -37,9 +37,14 @@ namespace transferase {
 struct genome_index;
 
 struct genome_index_set {
+  // prevent copying and allow moving
+  // clang-format off
+  genome_index_set() = default;
   genome_index_set(const genome_index_set &) = delete;
-  genome_index_set &
-  operator=(const genome_index_set &) = delete;
+  genome_index_set &operator=(const genome_index_set &) = delete;
+  genome_index_set(genome_index_set &&) noexcept = default;
+  genome_index_set &operator=(genome_index_set &&) noexcept = default;
+  // clang-format on
 
   // ADS: this genome_index_set constructor always attempts to read files
   // so the error code is needed here; this contrasts with
@@ -58,16 +63,16 @@ struct genome_index_set {
 }  // namespace transferase
 
 // error code for genome_index_set
-enum class genome_index_set_error : std::uint8_t {
+enum class genome_index_set_error_code : std::uint8_t {
   ok = 0,
   genome_index_not_found = 1,
 };
 
 template <>
-struct std::is_error_code_enum<genome_index_set_error> : public std::true_type {
-};
+struct std::is_error_code_enum<genome_index_set_error_code>
+  : public std::true_type {};
 
-struct genome_index_set_category : std::error_category {
+struct genome_index_set_error_category : std::error_category {
   auto
   name() const noexcept -> const char * override {
     return "genome_index_set";
@@ -86,8 +91,8 @@ struct genome_index_set_category : std::error_category {
 };
 
 inline auto
-make_error_code(genome_index_set_error e) -> std::error_code {
-  static auto category = genome_index_set_category{};
+make_error_code(genome_index_set_error_code e) -> std::error_code {
+  static auto category = genome_index_set_error_category{};
   return std::error_code(std::to_underlying(e), category);
 }
 

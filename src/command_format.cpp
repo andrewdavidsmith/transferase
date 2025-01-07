@@ -167,7 +167,8 @@ verify_header_line(const genome_index_metadata &meta,
   // and the methylome transferase file
   const auto size_itr = meta.chrom_size[order_itr->second];
   if (chrom_size != size_itr)
-    return counts_file_format_error_code::xcounts_file_incorrect_chromosome_size;
+    return counts_file_format_error_code::
+      xcounts_file_incorrect_chromosome_size;
 
   return counts_file_format_error_code::ok;
 }
@@ -182,9 +183,9 @@ process_cpg_sites_xcounts(const std::string &infile, const genome_index &index)
 
   std::error_code err;
   gzinfile mf(infile, err);
-  if (err != zlib_adapter_error::ok) {
+  if (err != zlib_adapter_error_code::ok) {
     lgr.error("Error reading xcounts file: {}", infile);
-    return {{}, err};
+    return {methylome_data{}, err};
   }
 
   std::uint32_t cpg_idx_in{};  // index of current input cpg position
@@ -210,7 +211,7 @@ process_cpg_sites_xcounts(const std::string &infile, const genome_index &index)
       // reference used for the methylome
       if (err = verify_header_line(index_meta, line); err) {
         lgr.error("Error parsing xcounts header line: {} ({})", line, err);
-        return {{}, err};
+        return {methylome_data{}, err};
       }
       continue;  // ADS: early loop exit
     }
@@ -218,8 +219,9 @@ process_cpg_sites_xcounts(const std::string &infile, const genome_index &index)
       const std::int32_t ch_id = get_ch_id(index_meta, line);
       if (ch_id < 0) {
         lgr.error("Failed to find chromosome in index: {}", line);
-        return {methylome_data{},
-                counts_file_format_error_code::xcounts_file_chromosome_not_found};
+        return {
+          methylome_data{},
+          counts_file_format_error_code::xcounts_file_chromosome_not_found};
       }
       cpg_idx_out = 0;
 
@@ -276,9 +278,9 @@ process_cpg_sites_counts(const std::string &infile, const genome_index &index)
 
   std::error_code err;
   gzinfile mf(infile, err);
-  if (err != zlib_adapter_error::ok) {
+  if (err != zlib_adapter_error_code::ok) {
     lgr.error("Error reading counts file: {}", infile);
-    return {{}, err};
+    return {methylome_data{}, err};
   }
 
   std::uint32_t cpg_idx_in{};  // index of current input cpg position
@@ -309,8 +311,9 @@ process_cpg_sites_counts(const std::string &infile, const genome_index &index)
       const std::int32_t ch_id = get_ch_id(index_meta, chrom);
       if (ch_id < 0) {
         lgr.error("Failed to find chromosome in index: {}", line);
-        return {methylome_data{}, /* ADS: fix this */
-                counts_file_format_error_code::xcounts_file_chromosome_not_found};
+        return {
+          methylome_data{}, /* ADS: fix this */
+          counts_file_format_error_code::xcounts_file_chromosome_not_found};
       }
       cpg_idx_out = 0;
 

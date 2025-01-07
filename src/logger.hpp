@@ -322,8 +322,8 @@ template <>
 struct std::formatter<transferase::log_level_t> : std::formatter<std::string> {
   auto
   format(const transferase::log_level_t &l, std::format_context &ctx) const {
-    return std::formatter<std::string>::format(
-      transferase::level_name[std::to_underlying(l)], ctx);
+    return std::format_to(ctx.out(), "{}",
+                          transferase::level_name[std::to_underlying(l)]);
   }
 };
 

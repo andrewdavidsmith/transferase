@@ -221,13 +221,13 @@ TEST(methylome_test, init_metadata) {
   const auto index = genome_index::read(indexdir, genome_name, ec);
   EXPECT_FALSE(ec);
 
-  const auto meta = methylome_metadata::read(methdir, methylome_name, ec);
+  auto meta = methylome_metadata::read(methdir, methylome_name, ec);
   EXPECT_FALSE(ec);
 
-  const auto data = methylome_data::read(methdir, methylome_name, meta, ec);
+  auto data = methylome_data::read(methdir, methylome_name, meta, ec);
   EXPECT_FALSE(ec);
 
-  methylome meth{data, meta};
+  methylome meth{std::move(data), std::move(meta)};
 
   ec = meth.init_metadata(index);
   EXPECT_FALSE(ec);
@@ -239,13 +239,13 @@ TEST(methylome_test, update_metadata) {
   static constexpr auto methylome_name = "eVaporeon_tail";
 
   std::error_code ec;
-  const auto meta = methylome_metadata::read(methdir, methylome_name, ec);
+  auto meta = methylome_metadata::read(methdir, methylome_name, ec);
   EXPECT_FALSE(ec);
 
-  const auto data = methylome_data::read(methdir, methylome_name, meta, ec);
+  auto data = methylome_data::read(methdir, methylome_name, meta, ec);
   EXPECT_FALSE(ec);
 
-  methylome meth{data, meta};
+  methylome meth{std::move(data), std::move(meta)};
 
   ec = meth.update_metadata();
   EXPECT_FALSE(ec);

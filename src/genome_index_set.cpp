@@ -42,10 +42,10 @@ genome_index_set::get_genome_index(const std::string &assembly,
   -> std::shared_ptr<genome_index> {
   const auto itr_index = assembly_to_genome_index.find(assembly);
   if (itr_index == std::cend(assembly_to_genome_index)) {
-    ec = genome_index_set_error::genome_index_not_found;
+    ec = genome_index_set_error_code::genome_index_not_found;
     return nullptr;
   }
-  ec = genome_index_set_error::ok;
+  ec = genome_index_set_error_code::ok;
   return itr_index->second;
 }
 
@@ -55,15 +55,15 @@ genome_index_set::genome_index_set(const std::string &directory,
   if (ec)
     return;
   for (const auto &name : genome_names) {
-    const auto index = genome_index::read(directory, name, ec);
+    auto index = genome_index::read(directory, name, ec);
     if (ec) {
       logger::instance().error("Failed to read cpg index {} {}: {}", directory,
                                name, ec.message());
       assembly_to_genome_index.clear();
       return;
     }
-    assembly_to_genome_index.emplace(name,
-                                     std::make_shared<genome_index>(index));
+    assembly_to_genome_index.emplace(
+      name, std::make_shared<genome_index>(std::move(index)));
   }
 }
 

@@ -107,7 +107,7 @@ genome_index_metadata::read(const std::string &json_filename,
   genome_index_metadata meta;
   boost::json::parse_into(meta, payload, ec);
   if (ec) {
-    ec = genome_index_metadata_error::failure_parsing_json;
+    ec = genome_index_metadata_error_code::failure_parsing_json;
     return {};
   }
 

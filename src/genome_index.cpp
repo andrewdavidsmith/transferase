@@ -247,7 +247,7 @@ make_genome_index_plain(const std::string &genome_filename,
   const auto name_starts = get_chrom_name_starts(gf.data, gf.sz);
   const auto name_stops = get_chrom_name_stops(name_starts, gf.data, gf.sz);
   if (name_starts.empty() || name_stops.empty()) {
-    ec = genome_index_code::failure_processing_genome_file;
+    ec = genome_index_error_code::failure_processing_fasta_file;
     return {};
   }
 
@@ -326,7 +326,7 @@ make_genome_index_gzip(const std::string &genome_filename,
                        std::error_code &ec) -> genome_index {
   const auto [raw, gz_err] = read_gzfile_into_buffer(genome_filename);
   if (gz_err) {
-    ec = genome_index_code::failure_processing_genome_file;
+    ec = genome_index_error_code::failure_processing_fasta_file;
     return {};
   }
 
@@ -335,7 +335,7 @@ make_genome_index_gzip(const std::string &genome_filename,
   const auto name_stops =
     get_chrom_name_stops(name_starts, raw.data(), std::size(raw));
   if (name_starts.empty() || name_stops.empty()) {
-    ec = genome_index_code::failure_processing_genome_file;
+    ec = genome_index_error_code::failure_processing_fasta_file;
     return {};
   }
 

@@ -57,18 +57,19 @@ rstrip(char const *const x) -> const std::string_view {
 auto
 check_output_file(const std::string &filename) -> std::error_code;
 
-enum class output_file_error : std::uint8_t {
+enum class output_file_error_code : std::uint8_t {
   ok = 0,
   is_a_directory = 1,
   failed_to_open = 2,
 };
 
 template <>
-struct std::is_error_code_enum<output_file_error> : public std::true_type {};
+struct std::is_error_code_enum<output_file_error_code> : public std::true_type {
+};
 
-struct output_file_category : std::error_category {
+struct output_file_error_category : std::error_category {
   // clang-format off
-  auto name() const noexcept -> const char * override {return "output_file_error";}
+  auto name() const noexcept -> const char * override {return "output_file_error_code";}
   auto message(int code) const -> std::string override {
     using std::string_literals::operator""s;
     switch (code) {
@@ -82,8 +83,8 @@ struct output_file_category : std::error_category {
 };
 
 inline auto
-make_error_code(output_file_error e) -> std::error_code {
-  static auto category = output_file_category{};
+make_error_code(output_file_error_code e) -> std::error_code {
+  static auto category = output_file_error_category{};
   return std::error_code(std::to_underlying(e), category);
 }
 

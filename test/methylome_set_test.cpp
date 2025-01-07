@@ -69,14 +69,14 @@ TEST_F(methylome_set_mock, get_methylome_invalid_accession) {
   const auto meth_ptr =
     methylome_set_ptr->get_methylome("invalid.accession", ec);
   EXPECT_EQ(meth_ptr, nullptr);
-  EXPECT_EQ(ec, methylome_code::invalid_accession);
+  EXPECT_EQ(ec, methylome_error_code::invalid_accession);
 }
 
 TEST_F(methylome_set_mock, methylome_file_not_found) {
   std::error_code ec;
   const auto meth_ptr = methylome_set_ptr->get_methylome("DRX000000", ec);
   EXPECT_EQ(meth_ptr, nullptr);
-  EXPECT_EQ(ec, methylome_set_code::methylome_not_found);
+  EXPECT_EQ(ec, methylome_set_error_code::methylome_not_found);
 }
 
 class methylome_set_lutions : public ::testing::Test {

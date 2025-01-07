@@ -114,23 +114,23 @@ struct std::formatter<transferase::genome_index_metadata>
   auto
   format(const transferase::genome_index_metadata &meta,
          std::format_context &ctx) const {
-    return std::formatter<std::string>::format(meta.tostring(), ctx);
+    return std::format_to(ctx.out(), "{}", meta.tostring());
   }
 };
 
-enum class genome_index_metadata_error : std::uint8_t {
+enum class genome_index_metadata_error_code : std::uint8_t {
   ok = 0,
   failure_parsing_json = 1,
 };
 
 template <>
-struct std::is_error_code_enum<genome_index_metadata_error>
+struct std::is_error_code_enum<genome_index_metadata_error_code>
   : public std::true_type {};
 
 struct genome_index_metadata_error_category : std::error_category {
   // clang-format off
   auto name() const noexcept -> const char * override {
-    return "genome_index_metadata_error";
+    return "genome_index_metadata_error_code";
   }
   auto message(int code) const -> std::string override {
     using std::string_literals::operator""s;
@@ -144,7 +144,7 @@ struct genome_index_metadata_error_category : std::error_category {
 };
 
 inline auto
-make_error_code(genome_index_metadata_error e) -> std::error_code {
+make_error_code(genome_index_metadata_error_code e) -> std::error_code {
   static auto category = genome_index_metadata_error_category{};
   return std::error_code(std::to_underlying(e), category);
 }

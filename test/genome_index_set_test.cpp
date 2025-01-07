@@ -74,5 +74,5 @@ TEST_F(genome_index_set_mock, get_genome_index_set_assembly_not_found) {
   const auto index_ptr =
     genome_index_set_ptr->get_genome_index("invalid.assembly", ec);
   std::ignore = index_ptr;
-  EXPECT_EQ(ec, genome_index_set_error::genome_index_not_found);
+  EXPECT_EQ(ec, genome_index_set_error_code::genome_index_not_found);
 }
