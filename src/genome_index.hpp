@@ -47,6 +47,18 @@ struct genome_index {
   genome_index_data data;
   genome_index_metadata meta;
 
+  genome_index() = default;
+  genome_index(genome_index_data &&data, genome_index_metadata &&meta) :
+    data{std::move(data)}, meta{std::move(meta)} {}
+
+  // prevent copy, allow move
+  // clang-format off
+  genome_index(const genome_index &) = delete;
+  genome_index &operator=(const genome_index &) = delete;
+  genome_index(genome_index &&) noexcept = default;
+  genome_index &operator=(genome_index &&) noexcept = default;
+  // clang-format on
+
   [[nodiscard]] auto
   tostring() const -> std::string {
     return std::format(R"json({{"meta"={}, "data"={}}})json", meta, data);
@@ -107,22 +119,23 @@ struct genome_index {
 
 // genome_index errors
 
-enum class genome_index_code : std::uint8_t {
+enum class genome_index_error_code : std::uint8_t {
   ok = 0,
-  failure_processing_genome_file = 1,
+  failure_processing_fasta_file = 1,
 };
 
 template <>
-struct std::is_error_code_enum<genome_index_code> : public std::true_type {};
+struct std::is_error_code_enum<genome_index_error_code>
+  : public std::true_type {};
 
-struct genome_index_category : std::error_category {
+struct genome_index_error_category : std::error_category {
   // clang-format off
   auto name() const noexcept -> const char * override {return "genome_index";}
   auto message(int code) const -> std::string override {
     using std::string_literals::operator""s;
     switch (code) {
     case 0: return "ok"s;
-    case 1: return "failure processing genome file"s;
+    case 1: return "failure processing FASTA file"s;
     }
     std::unreachable();
   }
@@ -130,8 +143,8 @@ struct genome_index_category : std::error_category {
 };
 
 inline auto
-make_error_code(genome_index_code e) -> std::error_code {
-  static auto category = genome_index_category{};
+make_error_code(genome_index_error_code e) -> std::error_code {
+  static auto category = genome_index_error_category{};
   return std::error_code(std::to_underlying(e), category);
 }
 
