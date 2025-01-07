@@ -64,6 +64,7 @@ TEST(command_config_argset_test, run_success) {
 }
 
 TEST(command_config_argset_test, default_client_config_file) {
+  using std::string_literals::operator""s;
   // clang-format off
   std::vector<const char *> argv = {
     "config",
@@ -83,12 +84,11 @@ TEST(command_config_argset_test, default_client_config_file) {
   EXPECT_EQ(argv[0], "config");
 
   command_config_argset args;
-  std::error_code ec =
-    args.parse(argc, const_cast<char **>(argv.data()), std::string("usage"),
-               std::string("about"), std::string("description"));
+  std::error_code ec = args.parse(argc, const_cast<char **>(argv.data()),
+                                  "usage"s, "about"s, "description"s);
   EXPECT_FALSE(ec);
 
-  const auto default_config_dir = get_xfrase_config_dir_default(ec);
+  const auto default_config_dir = get_transferase_config_dir_default(ec);
   EXPECT_FALSE(ec);
 
   const auto default_config_file_path =

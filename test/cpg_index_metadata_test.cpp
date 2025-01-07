@@ -23,7 +23,7 @@
 
 #include <cpg_index_metadata.hpp>
 
-#include <utilities.hpp>
+#include "unit_test_utils.hpp"
 
 #include <config.h>  // for VERSION
 #include <gtest/gtest.h>

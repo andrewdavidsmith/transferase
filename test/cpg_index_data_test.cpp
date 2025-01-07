@@ -25,10 +25,10 @@
 
 #include "cpg_index_metadata.hpp"
 #include "query_element.hpp"
+#include "unit_test_utils.hpp"
 
 #include <chrom_range.hpp>
 #include <cpg_index.hpp>
-#include <utilities.hpp>
 
 #include <gtest/gtest.h>
 

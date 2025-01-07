@@ -23,7 +23,7 @@
 
 #include <methylome_metadata.hpp>
 
-#include <utilities.hpp>
+#include "unit_test_utils.hpp"
 
 #include <config.h>
 
@@ -33,19 +33,6 @@
 #include <system_error>
 
 using namespace transferase;  // NOLINT
-
-// clang-format off
-/* Functions to test:
-- valid() const -> bool;
-- consistent(const methylome_metadata &rhs) const -> bool;
-- read(const std::string &, std::error_code &) -> methylome_metadata;
-- read(const std::string &, const std::string &, std::error_code &) -> methylome_metadata;
-- write(const std::string &) const -> std::error_code;
-- init_env() -> std::error_code;
-- tostring() const -> std::string;
-- update(const methylome_data &meth) -> std::error_code;
-*/
-// clang-format on
 
 [[nodiscard]] static inline auto
 mock_get_username() -> std::string {

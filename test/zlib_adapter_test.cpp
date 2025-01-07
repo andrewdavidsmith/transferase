@@ -23,7 +23,7 @@
 
 #include <zlib_adapter.hpp>
 
-#include <utilities.hpp>
+#include "unit_test_utils.hpp"
 
 #include <gtest/gtest.h>
 #include <zlib.h>
