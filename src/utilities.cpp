@@ -82,15 +82,3 @@ check_output_file(const std::string &filename) -> std::error_code {
 
   return {};
 }
-
-[[nodiscard]] auto
-generate_temp_filename(const std::string &prefix,
-                       const std::string &suffix) -> std::string {
-  const auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(
-                        std::chrono::system_clock::now().time_since_epoch())
-                        .count();
-  const auto filename =
-    std::format("{}_{}{}", prefix, millis,
-                (suffix.empty() || suffix[0] == '.') ? suffix : "." + suffix);
-  return (std::filesystem::temp_directory_path() / filename).string();
-}
