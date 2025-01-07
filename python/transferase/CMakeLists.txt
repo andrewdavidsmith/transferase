@@ -42,3 +42,18 @@ endforeach()
 # Create the final static library by linking the previous parts
 add_library(transferase_bindings STATIC)
 target_link_libraries(transferase_bindings PRIVATE ${LIBRARY_OBJECTS})
+
+# Make the package shared library by applying the bindings functions
+pybind11_add_module(py_${LIBRARY_NAME} MODULE transferase_bindings.cpp)
+target_link_libraries(py_${LIBRARY_NAME} PRIVATE
+  transferase_bindings
+  transferase_system
+  pybind11::module
+  ZLIB::ZLIB
+)
+
+set_target_properties(py_${LIBRARY_NAME}
+  PROPERTIES
+  LIBRARY_OUTPUT_NAME "${LIBRARY_NAME}"
+  SKIP_BUILD_RPATH TRUE
+)
