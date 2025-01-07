@@ -56,7 +56,7 @@ struct command_config_argset : argset_base<command_config_argset> {
   std::string port{};
   std::string index_dir{};
   std::string log_filename{};
-  std::string assemblies{};
+  std::string genomes{};
   log_level_t log_level{};
   std::string client_config_file{};
   bool quiet{};
@@ -79,12 +79,14 @@ struct command_config_argset : argset_base<command_config_argset> {
       ("help,h", "print this message and exit")
       ("config-file,c", value(&client_config_file)
        ->value_name("[arg]")->default_value(get_default_config_file(), ""),
-       "config file; see help for default")
-      ("hostname,s", value(&hostname)->required(), "server hostname")
-      ("port,p", value(&port)->default_value(port_default), "server port")
-      ("assemblies,a", value(&assemblies),
-       "get index files for these assemblies (comma sep, e.g., hg38,mm39)")
-      ("log-level,v", value(&log_level)->default_value(log_level_default),
+       "name of configuration file; see help for default")
+      ("hostname,s", value(&hostname)->required(), "transferase server hostname")
+      ("port,p", value(&port)->default_value(port_default), "transferase server port")
+      ("genomes,g", value(&genomes),
+       "attept to download index files for these genomes (comma separated list, e.g. hg38,mm39)")
+      ("index-dir,x", value(&index_dir),
+       "name of a directory to store genome index files (default: configuration directory)")
+      ("log-level,v", value(&log_level)->default_value(log_level_default, ""),
        "log level {debug,info,warning,error,critical}")
       ("log-file,l", value(&log_filename)->value_name("console"),
        "log file name")
