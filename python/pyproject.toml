@@ -1,0 +1,14 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "transferase"
+description = "Transferase"
+authors = [{name = "Andrew D Smith", email = "andrewds@usc.edu"}]
+readme = "README.md"
+license = {text = "MIT"}
+dynamic = ["version"]
+
+[tool.hatch.version]
+path = "version.py"
