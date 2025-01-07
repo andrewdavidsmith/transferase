@@ -29,4 +29,8 @@
 [[nodiscard]] auto
 files_are_identical(const std::string &, const std::string &) -> bool;
 
+[[nodiscard]] auto
+generate_temp_filename(const std::string &prefix,
+                       const std::string &suffix = "") -> std::string;
+
 #endif  // TEST_UNIT_TEST_UTILS_HPP_

@@ -24,6 +24,8 @@
 #include "unit_test_utils.hpp"
 
 #include <algorithm>
+#include <chrono>
+#include <filesystem>
 #include <fstream>
 #include <iterator>
 #include <string>
@@ -38,4 +40,16 @@ files_are_identical(const std::string &fn1, const std::string &fn2) -> bool {
     return false;
   return std::equal(std::istreambuf_iterator<char>(f1), {},
                     std::istreambuf_iterator<char>(f2));
+}
+
+[[nodiscard]] auto
+generate_temp_filename(const std::string &prefix,
+                       const std::string &suffix) -> std::string {
+  const auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(
+                        std::chrono::system_clock::now().time_since_epoch())
+                        .count();
+  const auto filename =
+    std::format("{}_{}{}", prefix, millis,
+                (suffix.empty() || suffix[0] == '.') ? suffix : "." + suffix);
+  return (std::filesystem::temp_directory_path() / filename).string();
 }
