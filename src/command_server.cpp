@@ -24,14 +24,14 @@
 #include "command_server.hpp"
 
 static constexpr auto about = R"(
-start an xfrase server
+start an transferase server
 )";
 
 static constexpr auto description = R"(
-An xfrase server transfers methylation features to clients. The server
-must be provided with one directory for methylomes and one directory
-for cpg indexes. The methylome directory must include pairs of
-methylome data and metadata files as produced by the 'format'
+A transferase server transfers methylation features to clients. The
+server must be provided with one directory for methylomes and one
+directory for cpg indexes. The methylome directory must include pairs
+of methylome data and metadata files as produced by the 'format'
 command. The indexes directory must include pairs of cpg index data
 and metadata files as produced by the 'index' command. For each
 methylome in the methylomes directory, the corresponding index must be
@@ -86,12 +86,13 @@ struct std::formatter<std::filesystem::path> : std::formatter<std::string> {
 namespace transferase {
 
 struct server_argset : argset_base<server_argset> {
-  static constexpr auto default_config_filename = "xfrase_server_config.toml";
+  static constexpr auto default_config_filename =
+    "transferase_server_config.toml";
 
   static auto
   get_default_config_file_impl() -> std::string {
     std::error_code ec;
-    const auto config_dir = get_xfrase_config_dir_default(ec);
+    const auto config_dir = get_transferase_config_dir_default(ec);
     if (ec)
       return {};
     return std::filesystem::path{config_dir} / default_config_filename;

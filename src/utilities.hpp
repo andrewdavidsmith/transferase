@@ -44,7 +44,7 @@ duration(const auto start, const auto stop) {
 }
 
 [[nodiscard]] auto
-get_xfrase_config_dir_default(std::error_code &ec) -> std::string;
+get_transferase_config_dir_default(std::error_code &ec) -> std::string;
 
 [[nodiscard]] inline auto
 strip(char const *const x) -> const std::string_view {

@@ -38,12 +38,13 @@
 namespace transferase {
 
 struct command_config_argset : argset_base<command_config_argset> {
-  static constexpr auto default_config_filename = "xfrase_client_config.toml";
+  static constexpr auto default_config_filename =
+    "transferase_client_config.toml";
 
   [[nodiscard]] static auto
   get_default_config_file_impl() -> std::string {
     std::error_code ec;
-    const auto config_dir = get_xfrase_config_dir_default(ec);
+    const auto config_dir = get_transferase_config_dir_default(ec);
     if (ec)
       return {};
     return std::filesystem::path(config_dir) / default_config_filename;
