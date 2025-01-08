@@ -1,6 +1,6 @@
 /* MIT License
  *
- * Copyright (c) 2024 Andrew D Smith
+ * Copyright (c) 2025 Andrew D Smith
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,6 +24,8 @@
 #ifndef SRC_GENOME_INDEX_SET_HPP_
 #define SRC_GENOME_INDEX_SET_HPP_
 
+#include "ring_buffer.hpp"
+
 #include <cstdint>  // for std::uint32_t
 #include <memory>
 #include <string>
@@ -37,27 +39,31 @@ namespace transferase {
 struct genome_index;
 
 struct genome_index_set {
-  // prevent copying and allow moving
-  // clang-format off
-  genome_index_set() = default;
-  genome_index_set(const genome_index_set &) = delete;
-  genome_index_set &operator=(const genome_index_set &) = delete;
-  genome_index_set(genome_index_set &&) noexcept = default;
-  genome_index_set &operator=(genome_index_set &&) noexcept = default;
-  // clang-format on
 
-  // ADS: this genome_index_set constructor always attempts to read files
-  // so the error code is needed here; this contrasts with
-  // methylome_set, which does no such work until requested.
-  genome_index_set(const std::string &genome_index_directory,
-                   std::error_code &ec);
+  // prevent copy; move disallowed because of std::mutex member
+  genome_index_set(const genome_index_set &) = delete;
+  genome_index_set &
+  operator=(const genome_index_set &) = delete;
+
+  explicit genome_index_set(const std::string &genome_index_directory,
+                            const std::uint32_t max_live_genome_indexes =
+                              default_max_live_genome_indexes) :
+    genome_index_directory{genome_index_directory},
+    max_live_genome_indexes{max_live_genome_indexes},
+    genome_names{max_live_genome_indexes} {}
 
   [[nodiscard]] auto
-  get_genome_index(const std::string &assembly,
+  get_genome_index(const std::string &genome_name,
                    std::error_code &ec) -> std::shared_ptr<genome_index>;
 
-  std::unordered_map<std::string, std::shared_ptr<genome_index>>
-    assembly_to_genome_index;
+  static constexpr std::uint32_t default_max_live_genome_indexes{8};
+
+  std::mutex mtx;
+  std::string genome_index_directory;
+  std::uint32_t max_live_genome_indexes{};
+
+  ring_buffer<std::string> genome_names;
+  std::unordered_map<std::string, std::shared_ptr<genome_index>> name_to_index;
 };
 
 }  // namespace transferase
@@ -65,7 +71,9 @@ struct genome_index_set {
 // error code for genome_index_set
 enum class genome_index_set_error_code : std::uint8_t {
   ok = 0,
-  genome_index_not_found = 1,
+  error_loading_genome_index = 1,
+  genome_index_not_found = 2,
+  unknown_error = 3,
 };
 
 template <>
@@ -73,21 +81,19 @@ struct std::is_error_code_enum<genome_index_set_error_code>
   : public std::true_type {};
 
 struct genome_index_set_error_category : std::error_category {
-  auto
-  name() const noexcept -> const char * override {
-    return "genome_index_set";
-  }
-  auto
-  message(int code) const -> std::string override {
+  // clang-format off
+  auto name() const noexcept -> const char * override {return "genome_index_set";}
+  auto message(int code) const -> std::string override {
     using std::string_literals::operator""s;
-    // clang-format off
     switch (code) {
     case 0: return "ok"s;
-    case 1: return "cpg index not found"s;
+    case 1: return "error loading genome index"s;
+    case 2: return "genome index not found"s;
+    case 3: return "genome index unknown error"s;
     }
-    // clang-format on
-    std::unreachable();  // hopefully
+    std::unreachable();
   }
+  // clang-format on
 };
 
 inline auto

@@ -25,46 +25,75 @@
 
 #include "genome_index.hpp"
 #include "logger.hpp"
+#include "ring_buffer.hpp"
 
 #include <iterator>  // for std::cend
-#include <memory>    // for std::make_shared
+#include <memory>    // for std::shared_ptr, std::make_shared
+#include <mutex>     // for std::scoped_lock
 #include <string>
-#include <system_error>
 #include <unordered_map>
 #include <utility>  // for std::move, std::pair
-#include <vector>
 
 namespace transferase {
 
 [[nodiscard]] auto
-genome_index_set::get_genome_index(const std::string &assembly,
+genome_index_set::get_genome_index(const std::string &genome_name,
                                    std::error_code &ec)
   -> std::shared_ptr<genome_index> {
-  const auto itr_index = assembly_to_genome_index.find(assembly);
-  if (itr_index == std::cend(assembly_to_genome_index)) {
+  // ADS: error code passed by reference; make sure it starts out ok
+  ec = std::error_code{};
+
+  if (!genome_index::is_valid_name(genome_name)) {
+    ec = genome_index_error_code::invalid_genome_name;
+    return nullptr;
+  }
+
+  std::scoped_lock lock{mtx};
+
+  // Easy case: genome index is already loaded
+  const auto index_itr = name_to_index.find(genome_name);
+  if (index_itr != std::cend(name_to_index))
+    return index_itr->second;
+
+  // ADS: we need to load a genome index; make sure the file exists
+  if (!genome_index::files_exist(genome_index_directory, genome_name)) {
     ec = genome_index_set_error_code::genome_index_not_found;
     return nullptr;
   }
-  ec = genome_index_set_error_code::ok;
-  return itr_index->second;
-}
 
-genome_index_set::genome_index_set(const std::string &directory,
-                                   std::error_code &ec) {
-  const auto genome_names = genome_index::list_genome_indexes(directory, ec);
-  if (ec)
-    return;
-  for (const auto &name : genome_names) {
-    auto index = genome_index::read(directory, name, ec);
-    if (ec) {
-      logger::instance().error("Failed to read cpg index {} {}: {}", directory,
-                               name, ec.message());
-      assembly_to_genome_index.clear();
-      return;
-    }
-    assembly_to_genome_index.emplace(
-      name, std::make_shared<genome_index>(std::move(index)));
+  auto loaded_genome_index =
+    genome_index::read(genome_index_directory, genome_name, ec);
+  if (ec) {
+    // ADS: the error code passed back will have come from genome_index::read
+    return nullptr;
   }
+
+  // ADS: remove a loaded genome index from the FIFO if we need to
+  // make room
+  if (genome_names.full()) {
+    const auto to_eject_itr = name_to_index.find(genome_names.front());
+    if (to_eject_itr == std::cend(name_to_index)) {
+      ec = genome_index_set_error_code::error_loading_genome_index;
+      return nullptr;
+    }
+    name_to_index.erase(to_eject_itr);
+    // ADS: no need to pop from the genome_names FIFO as it will
+    // happen below on push since genome_names was full.
+  }
+
+  const auto insertion_result = name_to_index.emplace(
+    genome_name,
+    std::make_shared<genome_index>(std::move(loaded_genome_index)));
+  if (!insertion_result.second) {
+    ec = genome_index_set_error_code::unknown_error;
+    return nullptr;
+  }
+
+  // ADS: if we are here, then everything went ok and we can insert
+  // the genome name into the FIFO
+  genome_names.push_back(genome_name);
+
+  return insertion_result.first->second;
 }
 
 }  // namespace transferase
