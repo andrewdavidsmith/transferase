@@ -55,21 +55,23 @@
 namespace transferase {
 
 static auto
-write_pid_to_file(std::error_code &ec) -> void {
+get_pid_filename(std::error_code &ec) -> std::string {
   static const auto pid_file_rhs =
-    std::filesystem::path(".config") / "transferase" / "XFRASE_PID_FILE";
-
-  auto &lgr = logger::instance();
-
-  // write the pid of the daemon to a file
+    std::filesystem::path(".config") / "transferase" / "TRANSFERASE_PID_FILE";
   const auto env_home = std::getenv("HOME");
   if (!env_home) {
     ec = std::make_error_code(std::errc(errno));
-    lgr.error("Error forming config dir: {}", ec);
-    return;
+    return {};
   }
-  const std::string pid_file = std::filesystem::path(env_home) / pid_file_rhs;
-  const auto pid_file_exists = std::filesystem::exists(pid_file, ec);
+  return (std::filesystem::path(env_home) / pid_file_rhs).string();
+}
+
+static auto
+write_pid_to_file(std::error_code &ec) -> void {
+  const auto pid_filename = get_pid_filename(ec);
+
+  auto &lgr = logger::instance();
+  const auto pid_file_exists = std::filesystem::exists(pid_filename, ec);
   if (ec) {
     lgr.error("Error: {}", ec);
     return;
@@ -77,23 +79,23 @@ write_pid_to_file(std::error_code &ec) -> void {
 
   if (pid_file_exists) {
     ec = std::make_error_code(std::errc::file_exists);
-    lgr.error("Error: pid file {} exists ({})", pid_file, ec);
+    lgr.error("Error: pid file {} exists ({})", pid_filename, ec);
     return;
   }
   const auto pid = getpid();
   lgr.info("transferase daemon pid: {}", pid);
-  std::ofstream out(pid_file);
+  std::ofstream out(pid_filename);
   if (!out) {
     ec = std::make_error_code(std::errc{errno});
-    lgr.error("Error writing pid file {}: {}", pid_file, ec);
+    lgr.error("Error writing pid file {}: {}", pid_filename, ec);
     return;
   }
-  lgr.info("transferase daemon pid file: {}", pid_file);
+  lgr.info("transferase daemon pid file: {}", pid_filename);
   const auto pid_str = std::format("{}", pid);
   out.write(pid_str.data(), std::size(pid_str));
   if (!out) {
     ec = std::make_error_code(std::errc{errno});
-    lgr.error("Error writing pid file {}: {}", pid_file, ec);
+    lgr.error("Error writing pid file {}: {}", pid_filename, ec);
     return;
   }
 }
@@ -111,60 +113,56 @@ server::server(const std::string &address, const std::string &port,
   signals(ioc, SIGINT, SIGTERM),
 #endif
   acceptor(ioc),
-  handler(methylome_dir, genome_index_file_dir, max_live_methylomes, ec),
-  lgr{lgr} {
-  // first check for errors in initializing members
-  if (ec)
-    return;
-
-  // ADS: after this line we need to raise signal
+  handler(methylome_dir, genome_index_file_dir, max_live_methylomes), lgr{lgr} {
+  // ADS: after calling do_await_stop, must raise signal before any return
   do_await_stop();  // start waiting for signals
 
   boost::asio::ip::tcp::resolver resolver(ioc);
-  boost::system::error_code resolver_ec;
-  const auto resolved = resolver.resolve(address, port, resolver_ec);
-  if (resolver_ec) {
-    lgr.error("{} {}:{}", resolver_ec, address, port);
+  boost::system::error_code boost_ec;
+  const auto resolved = resolver.resolve(address, port, boost_ec);
+  if (boost_ec) {
+    ec = boost_ec;
+    lgr.error("{} {}:{}", ec, address, port);
     std::raise(SIGTERM);
     return;  // don't wait for signal handler
   }
 
   assert(!resolved.empty());
   const boost::asio::ip::tcp::endpoint endpoint = *resolved.begin();
-  lgr.info("Resolved endpoint {}", boost::lexical_cast<std::string>(endpoint));
+  const auto endpoint_str = boost::lexical_cast<std::string>(endpoint);
+  lgr.info("Resolved endpoint {}", endpoint_str);
 
   // open acceptor...
-  boost::system::error_code acceptor_ec;
-  acceptor.open(endpoint.protocol(), acceptor_ec);
-  if (acceptor_ec) {
-    lgr.error("Error opening endpoint {}: {}",
-              boost::lexical_cast<std::string>(endpoint), acceptor_ec);
+  acceptor.open(endpoint.protocol(), boost_ec);
+  if (boost_ec) {
+    ec = boost_ec;
+    lgr.error("Error opening endpoint {}: {}", endpoint_str, ec);
     std::raise(SIGTERM);
     return;  // don't wait for signal handler
   }
 
   // ...with option to reuse the address (SO_REUSEADDR)
   acceptor.set_option(boost::asio::ip::tcp::acceptor::reuse_address(true),
-                      acceptor_ec);
-  if (acceptor_ec) {
-    lgr.error("Error setting SO_REUSEADDR: {}", acceptor_ec);
+                      boost_ec);
+  if (boost_ec) {
+    ec = boost_ec;
+    lgr.error("Error setting SO_REUSEADDR: {}", ec);
     std::raise(SIGTERM);
     return;  // don't wait for signal handler
   }
 
-  acceptor.bind(endpoint, acceptor_ec);
-  if (acceptor_ec) {
-    lgr.error("Error binding endpoint {}: {}",
-              boost::lexical_cast<std::string>(endpoint), acceptor_ec);
+  acceptor.bind(endpoint, boost_ec);
+  if (boost_ec) {
+    ec = boost_ec;
+    lgr.error("Error binding endpoint {}: {}", endpoint_str, ec);
     std::raise(SIGTERM);
     return;  // don't wait for signal handler
   }
 
-  acceptor.listen(boost::asio::socket_base::max_listen_connections,
-                  acceptor_ec);
-  if (acceptor_ec) {
-    lgr.error("Error listening  on endpoint {}: {}",
-              boost::lexical_cast<std::string>(endpoint), acceptor_ec);
+  acceptor.listen(boost::asio::socket_base::max_listen_connections, boost_ec);
+  if (boost_ec) {
+    ec = boost_ec;
+    lgr.error("Error listening  on endpoint {}: {}", endpoint_str, ec);
     std::raise(SIGTERM);
     return;  // don't wait for signal handler
   }
@@ -185,13 +183,8 @@ server::server(const std::string &address, const std::string &port,
   signals(ioc, SIGINT, SIGTERM),
 #endif
   acceptor(ioc),
-  handler(methylome_dir, genome_index_file_dir, max_live_methylomes, ec),
-  lgr{lgr} {
-  // first check for errors in initializing members
-  if (ec)
-    return;
-
-  // ADS: after this line we need to raise signal
+  handler(methylome_dir, genome_index_file_dir, max_live_methylomes), lgr{lgr} {
+  // ADS: standard workflow for daemonizing
   do_daemon_await_stop();  // signals setup; start waiting for them
 
   // ADS: we are about to fork; clean up threads (what else?)
@@ -228,7 +221,7 @@ server::server(const std::string &address, const std::string &port,
   // A second fork ensures the process cannot acquire a controlling
   // terminal.
   // ioc.notify_fork(boost::asio::io_context::fork_prepare);
-  if (pid_t pid = fork()) {
+  if (const pid_t pid = fork()) {
     if (pid > 0) {
       std::exit(EXIT_SUCCESS);
     }
@@ -242,8 +235,10 @@ server::server(const std::string &address, const std::string &port,
   // write the pid of the daemon to a file
   write_pid_to_file(ec);
   // error reporting within the above function
-  if (ec)
+  if (ec) {
+    // ec value already set if we are here
     return;
+  }
 
   // close standard streams to decouple the daemon from the terminal
   // that started it
@@ -285,50 +280,51 @@ server::server(const std::string &address, const std::string &port,
   lgr.info("Daemon started (pid: {})", getpid());
 
   boost::asio::ip::tcp::resolver resolver(ioc);
-  boost::system::error_code resolver_ec;
-  const auto resolved = resolver.resolve(address, port, resolver_ec);
-  if (resolver_ec) {
-    lgr.error("{} {}:{}", resolver_ec, address, port);
+  boost::system::error_code boost_ec;
+  const auto resolved = resolver.resolve(address, port, boost_ec);
+  if (boost_ec) {
+    ec = boost_ec;
+    lgr.error("{} {}:{}", ec, address, port);
     std::raise(SIGTERM);
     return;  // don't wait for signal handler
   }
 
   assert(!resolved.empty());
   const boost::asio::ip::tcp::endpoint endpoint = *resolved.begin();
-  lgr.info("Resolved endpoint {}", boost::lexical_cast<std::string>(endpoint));
+  const auto endpoint_str = boost::lexical_cast<std::string>(endpoint);
+  lgr.info("Resolved endpoint {}", endpoint_str);
 
   // open acceptor...
-  boost::system::error_code acceptor_ec;
-  acceptor.open(endpoint.protocol(), acceptor_ec);
-  if (acceptor_ec) {
-    lgr.error("Error opening endpoint {}: {}",
-              boost::lexical_cast<std::string>(endpoint), acceptor_ec);
+  acceptor.open(endpoint.protocol(), boost_ec);
+  if (boost_ec) {
+    ec = boost_ec;
+    lgr.error("Error opening endpoint {}: {}", endpoint_str, ec);
     std::raise(SIGTERM);
     return;  // don't wait for signal handler
   }
 
   // ...with option to reuse the address (SO_REUSEADDR)
   acceptor.set_option(boost::asio::ip::tcp::acceptor::reuse_address(true),
-                      acceptor_ec);
-  if (acceptor_ec) {
-    lgr.error("Error setting SO_REUSEADDR: {}", acceptor_ec);
+                      boost_ec);
+  if (boost_ec) {
+    ec = boost_ec;
+    lgr.error("Error setting SO_REUSEADDR: {}", ec);
     std::raise(SIGTERM);
     return;  // don't wait for signal handler
   }
 
-  acceptor.bind(endpoint, acceptor_ec);
-  if (acceptor_ec) {
-    lgr.error("Error binding endpoint {}: {}",
-              boost::lexical_cast<std::string>(endpoint), acceptor_ec);
+  acceptor.bind(endpoint, boost_ec);
+  if (boost_ec) {
+    ec = boost_ec;
+    lgr.error("Error binding endpoint {}: {}", endpoint_str, ec);
     std::raise(SIGTERM);
     return;  // don't wait for signal handler
   }
 
-  acceptor.listen(boost::asio::socket_base::max_listen_connections,
-                  acceptor_ec);
-  if (acceptor_ec) {
-    lgr.error("Error listening  on endpoint {}: {}",
-              boost::lexical_cast<std::string>(endpoint), acceptor_ec);
+  acceptor.listen(boost::asio::socket_base::max_listen_connections, boost_ec);
+  if (boost_ec) {
+    ec = boost_ec;
+    lgr.error("Error listening  on endpoint {}: {}", endpoint_str, ec);
     std::raise(SIGTERM);
     return;  // don't wait for signal handler
   }
@@ -383,11 +379,23 @@ auto
 server::do_daemon_await_stop() -> void {
   // capture brings 'this' into search for names
   signals.async_wait(
-    [this](const boost::system::error_code ec, const int signo) {
-      lgr.warning("Received signal {} ({})", strsignal(signo), ec);
+    [this](const boost::system::error_code boost_ec, const int signo) {
+      lgr.warning("Received signal {} ({})", strsignal(signo), boost_ec);
       const auto message = std::format("Daemon stopped (pid: {})", getpid());
       syslog(LOG_INFO | LOG_USER, "%s", message.data());
       lgr.info(message);
+      std::error_code ec;
+      const auto pid_file = get_pid_filename(ec);
+      if (ec)
+        lgr.info("Failed to get pid file: {}", ec);
+      const auto pid_file_exists = std::filesystem::exists(pid_file, ec);
+      if (ec)
+        lgr.info("Error identifying pid file: {}", ec);
+      if (pid_file_exists) {
+        const bool remove_ok = std::filesystem::remove(pid_file, ec);
+        if (remove_ok)
+          lgr.info("Removed pid file: {}", pid_file);
+      }
       // stop server by cancelling all outstanding async ops; when all
       // have finished, the call to io_context::run() will finish
       ioc.stop();
