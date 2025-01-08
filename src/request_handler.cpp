@@ -57,7 +57,7 @@ request_handler::add_response_size(const request &req,
   std::error_code ec;
 
   // assume methylome availability has been determined
-  const auto meth = ms.get_methylome(req.accession, ec);
+  const auto meth = methylomes.get_methylome(req.accession, ec);
   if (ec) {
     lgr.warning("Error loading methylome {}: {}", req.accession, ec);
     resp_hdr.status = server_error_code::methylome_not_found;
@@ -99,7 +99,7 @@ request_handler::handle_request(const request &req,
 
   std::error_code ec;
   const auto start_time{std::chrono::high_resolution_clock::now()};
-  const auto meth = ms.get_methylome(req.accession, ec);
+  const auto meth = methylomes.get_methylome(req.accession, ec);
   const auto stop_time{std::chrono::high_resolution_clock::now()};
   lgr.debug("Elapsed time for get_methylome: {:.3}s",
             duration(start_time, stop_time));
@@ -149,7 +149,7 @@ request_handler::handle_get_levels(const request &req,
 
   // assume methylome availability has been determined
   std::error_code ec;
-  const auto meth = ms.get_methylome(req.accession, ec);
+  const auto meth = methylomes.get_methylome(req.accession, ec);
   if (ec) {
     lgr.error("Failed to load methylome {}: {}", req.accession, ec);
     resp_hdr.status = ec;
@@ -179,7 +179,7 @@ request_handler::handle_get_levels(const request &req,
 
   // assume methylome availability has been determined
   std::error_code ec;
-  const auto meth = ms.get_methylome(req.accession, ec);
+  const auto meth = methylomes.get_methylome(req.accession, ec);
   if (ec) {
     lgr.error("Failed to load methylome {}: {}", req.accession, ec);
     resp_hdr.status = ec;

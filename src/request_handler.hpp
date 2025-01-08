@@ -46,10 +46,9 @@ struct request_handler {
 
   request_handler(const std::string &methylome_dir,
                   const std::string &index_file_dir,
-                  const std::uint32_t max_live_methylomes,
-                  std::error_code &ec) :
+                  const std::uint32_t max_live_methylomes) :
     methylome_dir{methylome_dir}, index_file_dir{index_file_dir},
-    ms(methylome_dir, max_live_methylomes), indexes(index_file_dir, ec) {}
+    methylomes(methylome_dir, max_live_methylomes), indexes(index_file_dir) {}
 
   auto
   handle_request(const request &req, response_header &resp_hdr) -> void;
@@ -70,7 +69,7 @@ struct request_handler {
 
   std::string methylome_dir;   // dir of available methylomes
   std::string index_file_dir;  // dir of cpg index files
-  methylome_set ms;
+  methylome_set methylomes;
   genome_index_set indexes;
 };
 
