@@ -28,8 +28,10 @@
 #include "genome_index_metadata.hpp"
 #include "query_container.hpp"
 
+#include <algorithm>
 #include <cstdint>  // for std::uint32_t
 #include <format>   // for std::vector(??)
+#include <ranges>
 #include <string>
 #include <system_error>
 #include <type_traits>  // for std::true_type
@@ -111,6 +113,12 @@ struct genome_index {
                     std::error_code &ec) -> std::string;
 
   [[nodiscard]] static auto
+  is_valid_name(const std::string &genome_name) -> bool {
+    return std::ranges::all_of(
+      genome_name, [](const auto c) { return std::isalnum(c) || c == '_'; });
+  }
+
+  [[nodiscard]] static auto
   list_genome_indexes(const std::string &dirname,
                       std::error_code &ec) -> std::vector<std::string>;
 };
@@ -121,7 +129,8 @@ struct genome_index {
 
 enum class genome_index_error_code : std::uint8_t {
   ok = 0,
-  failure_processing_fasta_file = 1,
+  invalid_genome_name = 1,
+  failure_processing_fasta_file = 2,
 };
 
 template <>
@@ -135,7 +144,8 @@ struct genome_index_error_category : std::error_category {
     using std::string_literals::operator""s;
     switch (code) {
     case 0: return "ok"s;
-    case 1: return "failure processing FASTA file"s;
+    case 1: return "invalid genome name"s;
+    case 2: return "failure processing FASTA file"s;
     }
     std::unreachable();
   }
