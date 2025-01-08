@@ -37,7 +37,7 @@ namespace transferase {
 [[nodiscard]] auto
 methylome_set::get_methylome(const std::string &accession, std::error_code &ec)
   -> std::shared_ptr<methylome> {
-  // ADS: make sure the error code starts out ok
+  // ADS: error code passed by reference; make sure it starts out ok
   ec = std::error_code{};
 
   if (!methylome::is_valid_name(accession)) {
@@ -47,11 +47,10 @@ methylome_set::get_methylome(const std::string &accession, std::error_code &ec)
 
   std::scoped_lock lock{mtx};
 
-  // check if methylome is loaded
+  // Easy case: methylome is already loaded
   const auto meth_itr = accession_to_methylome.find(accession);
-  if (meth_itr != std::cend(accession_to_methylome)) {
+  if (meth_itr != std::cend(accession_to_methylome))
     return meth_itr->second;
-  }
 
   // ADS: we need to load a methylome; make sure the file exists;
   // probably should check the directory in batch
