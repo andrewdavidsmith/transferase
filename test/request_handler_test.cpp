@@ -52,7 +52,7 @@ using namespace transferase;  // NOLINT
 
 TEST(request_handler_test, basic_assertions) {
   std::error_code ec;
-  request_handler rh("data", "data", 8, ec);
+  request_handler rh("data", "data", 8);
   EXPECT_EQ(rh.methylome_dir, "data");
   EXPECT_EQ(rh.index_file_dir, "data");
 }
@@ -72,12 +72,9 @@ protected:
 
     mock_methylome_set =
       std::make_unique<methylome_set>(methylome_dir, max_live_methylomes);
-    std::error_code unused_ec;
-    mock_genome_index_set =
-      std::make_unique<genome_index_set>(index_file_dir, unused_ec);
+    mock_genome_index_set = std::make_unique<genome_index_set>(index_file_dir);
     mock_request_handler = std::make_unique<request_handler>(
-      methylome_dir, index_file_dir, max_live_methylomes, unused_ec);
-    std::ignore = unused_ec;
+      methylome_dir, index_file_dir, max_live_methylomes);
   }
 
   void
@@ -192,7 +189,8 @@ TEST_F(request_handler_mock, handle_request_success) {
 
   mock_request_handler->handle_request(req, resp_hdr);
 
-  EXPECT_EQ(std::size(mock_request_handler->ms.accession_to_methylome), 1);
+  EXPECT_EQ(std::size(mock_request_handler->methylomes.accession_to_methylome),
+            1);
 }
 
 TEST_F(request_handler_mock, handle_request_bad_state) {
@@ -233,12 +231,14 @@ TEST_F(request_handler_mock, handle_request_failure) {
 
   EXPECT_EQ(resp_hdr.status, server_error_code::ok);
   EXPECT_EQ(resp_hdr.response_size, expected_response_size_n_intervals);
-  EXPECT_EQ(std::size(mock_request_handler->ms.accession_to_methylome), 1);
+  EXPECT_EQ(std::size(mock_request_handler->methylomes.accession_to_methylome),
+            1);
 
   req.accession = non_existent_accession;
   mock_request_handler->handle_request(req, resp_hdr);
 
-  EXPECT_EQ(std::size(mock_request_handler->ms.accession_to_methylome), 1);
+  EXPECT_EQ(std::size(mock_request_handler->methylomes.accession_to_methylome),
+            1);
   EXPECT_EQ(resp_hdr.status, server_error_code::methylome_not_found);
 }
 

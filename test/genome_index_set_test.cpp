@@ -38,10 +38,8 @@ using namespace transferase;  // NOLINT
 
 TEST(genome_index_set_test, valid_genome_index_set) {
   static constexpr auto genome_index_directory = "data";
-  std::error_code ec{};
-  const auto index = genome_index_set(genome_index_directory, ec);
-  EXPECT_FALSE(ec);
-  EXPECT_GT(std::size(index.assembly_to_genome_index), 0);
+  const auto index = genome_index_set(genome_index_directory);
+  EXPECT_EQ(std::size(index.name_to_index), 0);
 }
 
 class genome_index_set_mock : public ::testing::Test {
@@ -49,9 +47,8 @@ protected:
   auto
   SetUp() -> void override {
     genome_index_directory = "data";
-    std::error_code unused_ec{};
     genome_index_set_ptr =
-      std::make_unique<genome_index_set>(genome_index_directory, unused_ec);
+      std::make_unique<genome_index_set>(genome_index_directory);
   }
 
   auto
@@ -74,5 +71,5 @@ TEST_F(genome_index_set_mock, get_genome_index_set_assembly_not_found) {
   const auto index_ptr =
     genome_index_set_ptr->get_genome_index("invalid.assembly", ec);
   std::ignore = index_ptr;
-  EXPECT_EQ(ec, genome_index_set_error_code::genome_index_not_found);
+  EXPECT_EQ(ec, genome_index_error_code::invalid_genome_name);
 }
