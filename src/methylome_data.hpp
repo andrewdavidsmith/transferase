@@ -69,7 +69,7 @@ struct methylome_data {
 #endif
 
   methylome_data() = default;
-  methylome_data(methylome_data::vec &&cpgs) : cpgs{std::move(cpgs)} {}
+  explicit methylome_data(methylome_data::vec &&cpgs) : cpgs{std::move(cpgs)} {}
 
   // prevent copy, allow move
   // clang-format off

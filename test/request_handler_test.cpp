@@ -45,13 +45,11 @@
 #include <filesystem>
 #include <format>
 #include <iterator>  // for std::size
-#include <tuple>     // for std::ignore
 #include <unordered_map>
 
 using namespace transferase;  // NOLINT
 
 TEST(request_handler_test, basic_assertions) {
-  std::error_code ec;
   request_handler rh("data", "data", 8);
   EXPECT_EQ(rh.methylome_dir, "data");
   EXPECT_EQ(rh.index_file_dir, "data");

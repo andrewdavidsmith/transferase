@@ -24,7 +24,6 @@
 #include "genome_index_set.hpp"
 
 #include "genome_index.hpp"
-#include "logger.hpp"
 #include "ring_buffer.hpp"
 
 #include <iterator>  // for std::cend

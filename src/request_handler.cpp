@@ -38,9 +38,10 @@
 #include "server.hpp"
 #include "utilities.hpp"
 
-#include <chrono>       // for std::chrono::high_resolution_clock
-#include <cstring>      // for std::memcpy
-#include <memory>       // for std::shared_ptr
+#include <chrono>   // for std::chrono::high_resolution_clock
+#include <cstring>  // for std::memcpy
+#include <memory>   // for std::shared_ptr
+#include <system_error>
 #include <type_traits>  // for std::remove_cvref_t
 #include <vector>
 

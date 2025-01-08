@@ -29,7 +29,6 @@
 
 #include <cstdint>  // for std::uint32_t
 #include <string>
-#include <system_error>
 
 namespace transferase {
 

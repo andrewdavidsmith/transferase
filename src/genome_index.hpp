@@ -29,9 +29,10 @@
 #include "query_container.hpp"
 
 #include <algorithm>
+#include <cctype>   // for std::isalnum
 #include <cstdint>  // for std::uint32_t
 #include <format>   // for std::vector(??)
-#include <ranges>
+#include <ranges>   // IWYU pragma: keep
 #include <string>
 #include <system_error>
 #include <type_traits>  // for std::true_type

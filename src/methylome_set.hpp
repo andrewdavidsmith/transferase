@@ -40,7 +40,6 @@ namespace transferase {
 struct methylome;
 
 struct methylome_set {
-
   // prevent copy; move disallowed because of std::mutex member
   methylome_set(const methylome_set &) = delete;
   methylome_set &

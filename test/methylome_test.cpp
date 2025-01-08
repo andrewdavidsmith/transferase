@@ -34,6 +34,7 @@
 #include <fstream>
 #include <random>
 #include <string>
+#include <utility>  // for std::move
 
 using namespace transferase;  // NOLINT
 

@@ -28,6 +28,7 @@
 
 #include <cstdint>  // for std::uint32_t
 #include <memory>
+#include <mutex>
 #include <string>
 #include <system_error>
 #include <type_traits>  // for std::true_type
@@ -39,7 +40,6 @@ namespace transferase {
 struct genome_index;
 
 struct genome_index_set {
-
   // prevent copy; move disallowed because of std::mutex member
   genome_index_set(const genome_index_set &) = delete;
   genome_index_set &
