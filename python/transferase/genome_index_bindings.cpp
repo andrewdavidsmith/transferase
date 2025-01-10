@@ -34,6 +34,17 @@
 
 namespace py = pybind11;
 
+[[nodiscard]] inline auto
+transferase_genome_index_read(const std::string &dirname,
+                              const std::string &genome_name)
+  -> transferase::genome_index {
+  std::error_code ec;
+  auto index = transferase::genome_index::read(dirname, genome_name, ec);
+  if (ec)
+    throw std::system_error(ec);
+  return index;
+}
+
 auto
 genome_index_bindings(py::class_<transferase::genome_index> &cls) -> void {
   using namespace pybind11::literals;  // NOLINT
@@ -43,8 +54,8 @@ genome_index_bindings(py::class_<transferase::genome_index> &cls) -> void {
     .def("is_consistent", &transferase::genome_index::is_consistent)
     .def("__hash__", &transferase::genome_index::get_hash)
     .def("__repr__", &transferase::genome_index::tostring)
-    .def_static("read", &transferase::genome_index::read, "dirname"_a,
-                "genome_name"_a, "error"_a)
+    .def_static("read", &transferase_genome_index_read, "dirname"_a,
+                "genome_name"_a)
     .def("write", &transferase::genome_index::write, "outdir"_a, "name"_a)
     .def("make_query", &transferase::genome_index::make_query,
          py::arg("intervals").noconvert())
