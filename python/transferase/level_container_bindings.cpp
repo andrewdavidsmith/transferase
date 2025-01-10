@@ -30,6 +30,7 @@
 #include <pybind11/stl.h>  // IWYU pragma: keep
 
 #include <cstddef>  // for std::size_t
+#include <stdexcept>
 
 namespace py = pybind11;
 
@@ -44,12 +45,18 @@ level_container_bindings(
       "__getitem__",
       [](const transferase::level_container<transferase::level_element_t> &self,
          const std::size_t pos) -> transferase::level_element_t const & {
+        if (pos >= transferase::size(self))
+          throw std::out_of_range("Index out of range");
         return self[pos];
       })
     // cppcheck-suppress-begin constParameterReference
     .def("__setitem__",
          [](transferase::level_container<transferase::level_element_t> &self,
-            const std::size_t pos) { return self[pos]; })
+            const std::size_t pos) {
+           if (pos >= transferase::size(self))
+             throw std::out_of_range("Index out of range");
+           return self[pos];
+         })
     // cppcheck-suppress-end constParameterReference
     //
     ;
@@ -68,13 +75,19 @@ level_container_covered_bindings(
         const transferase::level_container<transferase::level_element_covered_t>
           &self,
         const std::size_t pos) -> transferase::level_element_covered_t const & {
-        return self[pos];
+        if (pos < transferase::size(self))
+          return self[pos];
+        throw std::out_of_range("Index out of range");
       })
     // cppcheck-suppress-begin constParameterReference
     .def("__setitem__",
          [](transferase::level_container<transferase::level_element_covered_t>
               &self,
-            const std::size_t pos) { return self[pos]; })
+            const std::size_t pos) {
+           if (pos < transferase::size(self))
+             return self[pos];
+           throw std::out_of_range("Index out of range");
+         })
     // cppcheck-suppress-end constParameterReference
     //
     ;
