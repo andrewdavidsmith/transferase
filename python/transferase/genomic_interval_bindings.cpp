@@ -26,6 +26,7 @@
 #include <genome_index.hpp>
 #include <genome_index_metadata.hpp>
 
+#include <pybind11/operators.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>  // IWYU pragma: keep
 
@@ -37,12 +38,23 @@
 
 namespace py = pybind11;
 
+[[nodiscard]] inline auto
+transferase_genomic_interval_read(const transferase::genome_index &index,
+                                  const std::string &filename)
+  -> std::vector<transferase::genomic_interval> {
+  std::error_code ec;
+  auto intervals = transferase::genomic_interval::read(index, filename, ec);
+  if (ec)
+    throw std::system_error(ec);
+  return intervals;
+}
+
 auto
 genomic_interval_bindings(pybind11::class_<transferase::genomic_interval> &cls)
   -> void {
   using namespace pybind11::literals;  // NOLINT
-  // clang-format off
-  cls.def(py::init<>())
+  cls
+    .def(py::init<>())
     // instance variables
     .def_readwrite("ch_id", &transferase::genomic_interval::ch_id,
                    "Identifier for this interval's chromosome")
@@ -50,31 +62,41 @@ genomic_interval_bindings(pybind11::class_<transferase::genomic_interval> &cls)
                    "Start position of this interval in the chromosome")
     .def_readwrite("stop", &transferase::genomic_interval::stop,
                    "Stop position of this interval in the chromosome")
-    // comparators all derived from operator<=> (should be easier)
-    .def("__eq__", std::equal_to<transferase::genomic_interval>{})
-    .def("__ne__", std::not_equal_to<transferase::genomic_interval>{})
-    .def("__lt__", std::less<transferase::genomic_interval>{})
-    .def("__le__", std::less_equal<transferase::genomic_interval>{})
-    .def("__gt__", std::greater<transferase::genomic_interval>{})
-    .def("__ge__", std::greater_equal<transferase::genomic_interval>{})
+    // comparators all derived from operator<=> (allows different
+    // types to be compared for equality or non-equality)
+    // clang-format off
+    .def(pybind11::self == pybind11::self)
+    .def(pybind11::self != pybind11::self)
+    .def(pybind11::self <  pybind11::self)
+    .def(pybind11::self <= pybind11::self)
+    .def(pybind11::self >  pybind11::self)
+    .def(pybind11::self >= pybind11::self)
+    // clang-format on
     .def("__repr__",
-      [](const transferase::genomic_interval &gi) { return std::format("{}", gi); })
-    .def("to_string", [](const transferase::genomic_interval &self,
-                         const transferase::genome_index &index) {
-      return std::format("{}\t{}\t{}", index.meta.chrom_order.at(self.ch_id),
-                         self.start, self.stop);},
-         "Print a genomic interval with name of chromosome",
-         py::arg("genome_index"))
+         [](const transferase::genomic_interval &gi) {
+           return std::format("{}", gi);
+         })
+    .def(
+      "to_string",
+      [](const transferase::genomic_interval &self,
+         const transferase::genome_index &index) {
+        return std::format("{}\t{}\t{}", index.meta.chrom_order.at(self.ch_id),
+                           self.start, self.stop);
+      },
+      "Print a genomic interval with name of chromosome",
+      py::arg("genome_index"))
     // static functions of genomic_interval class
-    .def_static("read", &transferase::genomic_interval::read,
+    .def_static("read", &transferase_genomic_interval_read,
+                // &transferase::genomic_interval::read,
                 "Read a BED file of genomic intervals file", "genome_index"_a,
-                "filename"_a, "error_code"_a)
+                "filename"_a)
     .def_static("are_sorted", &transferase::genomic_interval::are_sorted,
                 "Check if intervals are sorted", "intervals"_a)
     .def_static("are_valid",
-                &transferase::genomic_interval::are_valid<std::vector<transferase::genomic_interval>>,
+                &transferase::genomic_interval::are_valid<
+                  std::vector<transferase::genomic_interval>>,
                 "Check if all intervals are valid (start <= stop)",
                 "intervals"_a)
-    // clang-format on
+    //
     ;
 }
