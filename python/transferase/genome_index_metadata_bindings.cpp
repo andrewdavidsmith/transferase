@@ -36,7 +36,12 @@ genome_index_metadata_bindings(
   py::class_<transferase::genome_index_metadata> &cls) -> void {
   using namespace pybind11::literals;  // NOLINT
   cls.def(py::init<>())
-    .def("init_env", &transferase::genome_index_metadata::init_env)
+    .def("init_env",
+         [](transferase::genome_index_metadata &self) {
+           const std::error_code ec = self.init_env();
+           if (ec)
+             throw std::system_error(ec);
+         })
     .def("__repr__", &transferase::genome_index_metadata::tostring)
     .def("get_n_cpgs_chrom",
          &transferase::genome_index_metadata::get_n_cpgs_chrom)

@@ -21,7 +21,6 @@
  * SOFTWARE.
  */
 
-#include "error_code_bindings.hpp"
 #include "genome_index_bindings.hpp"
 #include "genome_index_data_bindings.hpp"
 #include "genome_index_metadata_bindings.hpp"
@@ -54,7 +53,6 @@
 
 #include <cstdint>
 #include <string>
-#include <system_error>
 
 namespace transferase {
 enum class request_type_code : std::uint8_t;
@@ -66,17 +64,12 @@ auto
 initialize_transferase() -> void {
   transferase::logger::instance(transferase::shared_from_cout(), "Transferase",
                                 transferase::log_level_t::debug);
-  // Your C++ initialization code here, such as setting up resources or data
 }
 
 PYBIND11_MODULE(transferase, m) {
   initialize_transferase();
 
   m.doc() = "Python API for transferase";  // optional module docstring
-
-  auto ErrorCode = py::class_<std::error_code>(
-    m, "ErrorCode",
-    "Error code object used by several functions in transferase");
 
   auto GenomicInterval = py::class_<transferase::genomic_interval>(
     m, "GenomicInterval",
@@ -135,8 +128,6 @@ PYBIND11_MODULE(transferase, m) {
     m, "RequestTypeCode", "Codes for the various request types");
 
   auto Request = py::class_<transferase::request>(m, "Request", "A request");
-
-  error_code_bindings(ErrorCode);
 
   genomic_interval_bindings(GenomicInterval);
 
