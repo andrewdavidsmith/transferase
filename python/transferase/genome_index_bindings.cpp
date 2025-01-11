@@ -37,47 +37,38 @@
 
 namespace py = pybind11;
 
+namespace transferase {
+
 [[nodiscard]] inline auto
-transferase_genome_index_read(const std::string &dirname,
-                              const std::string &genome_name)
-  -> transferase::genome_index {
-  std::error_code ec;
-  auto index = transferase::genome_index::read(dirname, genome_name, ec);
-  if (ec)
-    throw std::system_error(ec);
-  return index;
+genome_index_parse_genome_name(const std::string &filename) -> std::string {
+  return transferase::genome_index::parse_genome_name(filename);
 }
 
 [[nodiscard]] inline auto
-transferase_genome_index_make_genome_index(const std::string &genome_file)
-  -> transferase::genome_index {
-  std::error_code ec;
-  auto index = transferase::genome_index::make_genome_index(genome_file, ec);
-  if (ec)
-    throw std::system_error(ec);
-  return index;
-}
-
-[[nodiscard]] inline auto
-transferase_genome_index_parse_genome_name(const std::string &filename)
-  -> std::string {
-  std::error_code ec;
-  auto genome_name = transferase::genome_index::parse_genome_name(filename, ec);
-  if (ec)
-    throw std::system_error(ec);
-  return genome_name;
-}
-
-[[nodiscard]] inline auto
-transferase_genome_index_list_genome_indexes(const std::string &directory)
+genome_index_list_genome_indexes(const std::string &directory)
   -> std::vector<std::string> {
-  std::error_code ec;
-  auto genome_indexes =
-    transferase::genome_index::list_genome_indexes(directory, ec);
-  if (ec)
-    throw std::system_error(ec);
-  return genome_indexes;
+  return transferase::genome_index::list_genome_indexes(directory);
 }
+
+[[nodiscard]] inline auto
+genome_index_make_genome_index(const std::string &genome_file)
+  -> transferase::genome_index {
+  return transferase::genome_index::make_genome_index(genome_file);
+}
+
+inline auto
+genome_index_write(const transferase::genome_index &self,
+                   const std::string &outdir, const std::string &genome_name) {
+  self.write(outdir, genome_name);
+}
+
+[[nodiscard]] inline auto
+genome_index_read(const std::string &dirname,
+                  const std::string &genome_name) -> genome_index {
+  return genome_index::read(dirname, genome_name);
+}
+
+};  // namespace transferase
 
 auto
 genome_index_bindings(py::class_<transferase::genome_index> &cls) -> void {
@@ -88,31 +79,25 @@ genome_index_bindings(py::class_<transferase::genome_index> &cls) -> void {
     .def("is_consistent", &transferase::genome_index::is_consistent)
     .def("__hash__", &transferase::genome_index::get_hash)
     .def("__repr__", &transferase::genome_index::tostring)
-    .def_static("read", &transferase_genome_index_read, "dirname"_a,
+    .def_static("read", &transferase::genome_index_read, "dirname"_a,
                 "genome_name"_a)
-    .def(
-      "write",
-      [](const transferase::genome_index &self, const std::string &outdir,
-         const std::string &name) -> void {
-        const std::error_code ec = self.write(outdir, name);
-        if (ec)
-          throw std::system_error(ec);
-      },
-      "outdir"_a, "name"_a)
+    .def("write", &transferase::genome_index_write, "outdir"_a, "name"_a)
     .def("make_query", &transferase::genome_index::make_query,
          py::arg("intervals").noconvert())
-    .def_static(
-      "make_genome_index", &transferase_genome_index_make_genome_index,
-      "Create a genome index from a reference genome", "genome_file"_a)
+    .def_static("make_genome_index",
+                py::overload_cast<const std::string &>(
+                  &transferase::genome_index::make_genome_index),
+                "Create a genome index from a reference genome",
+                "genome_file"_a)
     .def_static("files_exist", &transferase::genome_index::files_exist,
                 "Check if genome index files exist in a directory.",
                 "directory"_a, "genome_name"_a)
     .def_static(
-      "parse_genome_name", &transferase_genome_index_parse_genome_name,
+      "parse_genome_name", &transferase::genome_index_parse_genome_name,
       "Parse the genome name from a FASTA format reference genome file.",
       "filename"_a)
     .def_static("list_genome_indexes",
-                &transferase_genome_index_list_genome_indexes,
+                &transferase::genome_index_list_genome_indexes,
                 "List all CpG indexes in a directory.", "directory"_a)
     //
     ;
