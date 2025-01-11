@@ -29,13 +29,12 @@
 
 #include <cstdint>
 #include <string>
-#include <system_error>
-
-#include <level_container.hpp>
-#include <level_element.hpp>
 
 namespace transferase {
 struct query_container;
+struct level_element_covered_t;
+struct level_element_t;
+template <typename level_element_type> struct level_container;
 }  // namespace transferase
 
 namespace py = pybind11;
@@ -52,21 +51,13 @@ local_methylome_resource_bindings(
          [](const transferase::local_methylome_resource &self,
             const std::string &methylome_name,
             const transferase::query_container &query) {
-           std::error_code ec;
-           auto lvls = self.get_levels(methylome_name, query, ec);
-           if (ec)
-             throw std::system_error(ec);
-           return lvls;
+           return self.get_levels(methylome_name, query);
          })
     .def("get_levels_covered",
          [](const transferase::local_methylome_resource &self,
             const std::string &methylome_name,
             const transferase::query_container &query) {
-           std::error_code ec;
-           auto lvls = self.get_levels_covered(methylome_name, query, ec);
-           if (ec)
-             throw std::system_error(ec);
-           return lvls;
+           return self.get_levels_covered(methylome_name, query);
          })
     .def_readwrite("directory",
                    &transferase::local_methylome_resource::directory)
@@ -89,21 +80,13 @@ remote_methylome_resource_bindings(
          [](const transferase::remote_methylome_resource &self,
             const std::string &methylome_name,
             const transferase::query_container &query) {
-           std::error_code ec;
-           auto lvls = self.get_levels(methylome_name, query, ec);
-           if (ec)
-             throw std::system_error(ec);
-           return lvls;
+           return self.get_levels(methylome_name, query);
          })
     .def("get_levels_covered",
          [](const transferase::remote_methylome_resource &self,
             const std::string &methylome_name,
             const transferase::query_container &query) {
-           std::error_code ec;
-           auto lvls = self.get_levels(methylome_name, query, ec);
-           if (ec)
-             throw std::system_error(ec);
-           return lvls;
+           return self.get_levels(methylome_name, query);
          })
     .def_readwrite("hostname",
                    &transferase::remote_methylome_resource::hostname)
