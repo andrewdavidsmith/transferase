@@ -27,9 +27,11 @@
 #include <methylome.hpp>
 
 #include <pybind11/pybind11.h>
+#include <pybind11/stl.h>  // IWYU pragma: keep
 
 #include <cstdint>
 #include <string>
+#include <tuple>
 
 namespace transferase {
 
@@ -115,7 +117,19 @@ methylome_bindings(py::class_<transferase::methylome> &cls) -> void {
             const transferase::genome_index &index) {
            return self.get_levels_covered(bin_size, index);
          })
-    .def("global_levels", &transferase::methylome::global_levels)
+    .def("global_levels",
+         [](transferase::methylome &self)
+           -> std::tuple<std::uint32_t, std::uint32_t> {
+           const auto result = self.global_levels();
+           return std::make_tuple(result.n_meth, result.n_unmeth);
+         })
     .def("global_levels_covered",
-         &transferase::methylome::global_levels_covered);
+         [](transferase::methylome &self)
+           -> std::tuple<std::uint32_t, std::uint32_t, std::uint32_t> {
+           const auto result = self.global_levels_covered();
+           return std::make_tuple(result.n_meth, result.n_unmeth,
+                                  result.n_covered);
+         })
+    //
+    ;
 }
