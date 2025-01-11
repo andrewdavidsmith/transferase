@@ -27,4 +27,4 @@ jobs:
       - name: Check that it runs
         run: |
           export LD_LIBRARY_PATH=/usr/local/lib
-          ./Release/src/xfrase
+          ./Release/src/transferase
