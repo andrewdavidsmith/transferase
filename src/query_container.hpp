@@ -35,8 +35,10 @@
 namespace transferase {
 
 struct query_container {
-  std::vector<query_element> v;
   typedef std::vector<query_element>::size_type size_type;
+
+  /// @brief v the underlying container of query_element objects
+  std::vector<query_element> v;
 
   query_container() = default;
   explicit query_container(const std::uint64_t data_size) : v(data_size) {}
@@ -51,18 +53,25 @@ struct query_container {
   query_container &operator=(query_container &&) noexcept = default;
   // clang-format on
 
+  /// @brief Resize the container.
   auto
   resize(const auto new_size) {
     v.resize(new_size);
   }
+
+  /// @brief Reserve space in the container.
   auto
   reserve(const auto new_capacity) {
     v.reserve(new_capacity);
   }
+
+  /// @brief Get the number of bytes used by this container.
   [[nodiscard]] auto
   get_n_bytes() const -> std::size_t {
     return sizeof(query_element) * std::size(v);
   }
+
+  /// @brief Get a pointer to the underlying memory used by this container.
   [[nodiscard]] auto
   data() -> char * {
     return reinterpret_cast<char *>(v.data());
