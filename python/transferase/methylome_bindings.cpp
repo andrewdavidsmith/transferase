@@ -32,10 +32,18 @@
 #include <string>
 
 namespace transferase {
+
 struct level_element_covered_t;
 struct level_element_t;
 struct query_container;
 template <typename level_element_type> struct level_container;
+
+inline auto
+methylome_write(const methylome &self, const std::string &directory,
+                const std::string &methylome_name) {
+  self.write(directory, methylome_name);
+}
+
 }  // namespace transferase
 
 namespace py = pybind11;
@@ -69,15 +77,7 @@ methylome_bindings(py::class_<transferase::methylome> &cls) -> void {
         return self.is_consistent(other);
       },
       "other"_a)
-    .def(
-      "write",
-      [](const transferase::methylome &self, const std::string &directory,
-         const std::string &name) -> void {
-        const std::error_code ec = self.write(directory, name);
-        if (ec)
-          throw std::system_error(ec);
-      },
-      "directory"_a, "name"_a)
+    .def("write", &transferase::methylome_write, "directory"_a, "name"_a)
     .def(
       "init_metadata",
       [](transferase::methylome &self,

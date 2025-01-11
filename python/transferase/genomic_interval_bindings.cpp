@@ -38,16 +38,15 @@
 
 namespace py = pybind11;
 
+namespace transferase {
+
 [[nodiscard]] inline auto
-transferase_genomic_interval_read(const transferase::genome_index &index,
-                                  const std::string &filename)
-  -> std::vector<transferase::genomic_interval> {
-  std::error_code ec;
-  auto intervals = transferase::genomic_interval::read(index, filename, ec);
-  if (ec)
-    throw std::system_error(ec);
-  return intervals;
+genomic_interval_read(const genome_index &index, const std::string &filename)
+  -> std::vector<genomic_interval> {
+  return genomic_interval::read(index, filename);
 }
+
+}  // namespace transferase
 
 auto
 genomic_interval_bindings(pybind11::class_<transferase::genomic_interval> &cls)
@@ -57,7 +56,7 @@ genomic_interval_bindings(pybind11::class_<transferase::genomic_interval> &cls)
     .def(py::init<>())
     // instance variables
     .def_readwrite("ch_id", &transferase::genomic_interval::ch_id,
-                   "Identifier for this interval's chromosome")
+                   "Numerical identifier for the chromosome")
     .def_readwrite("start", &transferase::genomic_interval::start,
                    "Start position of this interval in the chromosome")
     .def_readwrite("stop", &transferase::genomic_interval::stop,
@@ -72,10 +71,12 @@ genomic_interval_bindings(pybind11::class_<transferase::genomic_interval> &cls)
     .def(pybind11::self >  pybind11::self)
     .def(pybind11::self >= pybind11::self)
     // clang-format on
-    .def("__repr__",
-         [](const transferase::genomic_interval &gi) {
-           return std::format("{}", gi);
-         })
+    .def(
+      "__repr__",
+      [](const transferase::genomic_interval &gi) {
+        return std::format("{}", gi);
+      },
+      "Print a genomic interval with the numeric code for chromosome name")
     .def(
       "to_string",
       [](const transferase::genomic_interval &self,
@@ -86,8 +87,7 @@ genomic_interval_bindings(pybind11::class_<transferase::genomic_interval> &cls)
       "Print a genomic interval with name of chromosome",
       py::arg("genome_index"))
     // static functions of genomic_interval class
-    .def_static("read", &transferase_genomic_interval_read,
-                // &transferase::genomic_interval::read,
+    .def_static("read", &transferase::genomic_interval_read,
                 "Read a BED file of genomic intervals file", "genome_index"_a,
                 "filename"_a)
     .def_static("are_sorted", &transferase::genomic_interval::are_sorted,
