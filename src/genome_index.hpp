@@ -30,6 +30,7 @@
 
 #include <algorithm>
 #include <cctype>   // for std::isalnum
+#include <cstddef>  // for std::size_t
 #include <cstdint>  // for std::uint32_t
 #include <format>   // for std::vector(??)
 #include <ranges>   // IWYU pragma: keep
@@ -37,6 +38,7 @@
 #include <system_error>
 #include <type_traits>  // for std::true_type
 #include <utility>      // for std::to_underlying, std::unreachable
+#include <variant>      // for std::hash
 #include <vector>
 
 namespace transferase {
