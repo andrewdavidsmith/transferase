@@ -35,7 +35,6 @@ When in doubt, consult the module reference at the location listed above.
 #include "genome_index_metadata_bindings.hpp"
 #include "genomic_interval_bindings.hpp"
 #include "level_container_bindings.hpp"
-#include "level_element_bindings.hpp"
 #include "methylome_bindings.hpp"
 #include "methylome_data_bindings.hpp"
 #include "methylome_metadata_bindings.hpp"
@@ -47,7 +46,6 @@ When in doubt, consult the module reference at the location listed above.
 #include <genome_index_metadata.hpp>
 #include <genomic_interval.hpp>
 #include <level_container.hpp>
-#include <level_element.hpp>
 #include <logger.hpp>
 #include <methylome.hpp>
 #include <methylome_data.hpp>
@@ -107,13 +105,6 @@ PYBIND11_MODULE(transferase, the_module) {
   auto Methylome = py::class_<transferase::methylome>(
     the_module, "Methylome", "Representation of a methylome");
 
-  auto LevelElement = py::class_<transferase::level_element_t>(
-    the_module, "LevelElement", "Methylation level for a genomic interval");
-
-  auto LevelElementCovered = py::class_<transferase::level_element_covered_t>(
-    the_module, "LevelElementCovered",
-    "Methylation level for a genomic interval with number of sites covered");
-
   auto LevelContainer =
     py::class_<transferase::level_container<transferase::level_element_t>>(
       the_module, "LevelContainer", "A container for methylation levels");
@@ -147,8 +138,6 @@ PYBIND11_MODULE(transferase, the_module) {
   methylome_data_bindings(MethylomeData);
   methylome_bindings(Methylome);
 
-  level_element_bindings(LevelElement);
-  level_element_covered_bindings(LevelElementCovered);
   level_container_bindings(LevelContainer);
   level_container_covered_bindings(LevelContainerCovered);
   query_container_bindings(QueryContainer);
