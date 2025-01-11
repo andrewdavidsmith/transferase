@@ -31,25 +31,17 @@ When in doubt, consult the module reference at the location listed above.
 )";
 
 #include "genome_index_bindings.hpp"
-#include "genome_index_data_bindings.hpp"
-#include "genome_index_metadata_bindings.hpp"
 #include "genomic_interval_bindings.hpp"
 #include "level_container_bindings.hpp"
 #include "methylome_bindings.hpp"
-#include "methylome_data_bindings.hpp"
-#include "methylome_metadata_bindings.hpp"
 #include "methylome_resource_bindings.hpp"
 #include "query_container_bindings.hpp"
 
 #include <genome_index.hpp>
-#include <genome_index_data.hpp>
-#include <genome_index_metadata.hpp>
 #include <genomic_interval.hpp>
 #include <level_container.hpp>
 #include <logger.hpp>
 #include <methylome.hpp>
-#include <methylome_data.hpp>
-#include <methylome_metadata.hpp>
 #include <methylome_resource.hpp>
 #include <query_container.hpp>
 #include <request.hpp>
@@ -74,9 +66,6 @@ initialize_transferase() -> void {
 }
 
 PYBIND11_MODULE(transferase, the_module) {
-  py::options options;
-  options.disable_function_signatures();
-  options.enable_user_defined_docstrings();
 
   initialize_transferase();
 
@@ -87,23 +76,14 @@ PYBIND11_MODULE(transferase, the_module) {
     "Representation of a genomic interval as chrom, start, stop (zero-based, "
     "half-open)");
 
-  auto GenomeIndexData = py::class_<transferase::genome_index_data>(
-    the_module, "GenomeIndexData", "Data part of a genome index");
-
-  auto GenomeIndexMetadata = py::class_<transferase::genome_index_metadata>(
-    the_module, "GenomeIndexMetadata", "Metadata part of a genome index");
-
   auto GenomeIndex = py::class_<transferase::genome_index>(
     the_module, "GenomeIndex", "An index of CpG sites in a genome");
 
-  auto MethylomeMetadata = py::class_<transferase::methylome_metadata>(
-    the_module, "MethylomeMetadata", "Metadata part of a methylome");
-
-  auto MethylomeData = py::class_<transferase::methylome_data>(
-    the_module, "MethylomeData", "Data part of a methylome");
-
   auto Methylome = py::class_<transferase::methylome>(
     the_module, "Methylome", "Representation of a methylome");
+
+  auto QueryContainer = py::class_<transferase::query_container>(
+    the_module, "QueryContainer", "A container for a methylome query");
 
   auto LevelContainer =
     py::class_<transferase::level_container<transferase::level_element_t>>(
@@ -112,11 +92,7 @@ PYBIND11_MODULE(transferase, the_module) {
   auto LevelContainerCovered = py::class_<
     transferase::level_container<transferase::level_element_covered_t>>(
     the_module, "LevelContainerCovered",
-    "A container for methylation levels with information about covered "
-    "sites");
-
-  auto QueryContainer = py::class_<transferase::query_container>(
-    the_module, "QueryContainer", "A container for a methylome query");
+    "A container for methylation levels with information about covered sites");
 
   auto LocalMethylomeResource =
     py::class_<transferase::local_methylome_resource>(
@@ -129,18 +105,12 @@ PYBIND11_MODULE(transferase, the_module) {
       "An interface for remotely available methylomes");
 
   genomic_interval_bindings(GenomicInterval);
-
-  genome_index_metadata_bindings(GenomeIndexMetadata);
-  genome_index_data_bindings(GenomeIndexData);
   genome_index_bindings(GenomeIndex);
-
-  methylome_metadata_bindings(MethylomeMetadata);
-  methylome_data_bindings(MethylomeData);
   methylome_bindings(Methylome);
+  query_container_bindings(QueryContainer);
 
   level_container_bindings(LevelContainer);
   level_container_covered_bindings(LevelContainerCovered);
-  query_container_bindings(QueryContainer);
 
   local_methylome_resource_bindings(LocalMethylomeResource);
   remote_methylome_resource_bindings(RemoteMethylomeResource);
