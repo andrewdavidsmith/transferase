@@ -139,7 +139,7 @@ TEST(methylome_test, valid_write) {
   const auto meth = methylome::read(methylome_directory, methylome_name, ec);
   EXPECT_FALSE(ec);
 
-  ec = meth.write(output_directory, methylome_name);
+  meth.write(output_directory, methylome_name, ec);
   EXPECT_FALSE(ec);
 
   const auto meta_filename =
@@ -184,7 +184,7 @@ TEST(methylome_test, invalid_write) {
   const auto meth = methylome::read(methylome_directory, methylome_name, ec);
   EXPECT_FALSE(ec);
 
-  ec = meth.write(output_directory, methylome_name);
+  meth.write(output_directory, methylome_name, ec);
   EXPECT_EQ(ec, std::errc::permission_denied);
 
   const auto meta_filename =
