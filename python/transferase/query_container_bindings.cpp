@@ -24,14 +24,13 @@
 #include "query_container_bindings.hpp"
 
 #include <query_container.hpp>
-#include <query_element.hpp>
 
+#include <pybind11/operators.h>
 #include <pybind11/pybind11.h>
+#include <pybind11/stl.h>  // IWYU pragma: keep
 
-#include <compare>
 #include <format>
 #include <string>
-#include <vector>
 
 namespace py = pybind11;
 
@@ -40,18 +39,13 @@ query_container_bindings(py::class_<transferase::query_container> &cls)
   -> void {
   cls.def(py::init<>())
     .def("__len__",
-         [](const transferase::query_container &self) {
+         [](const transferase::query_container &self) -> std::uint32_t {
            return transferase::size(self);
          })
-    // define equality operator explicitly as returning a bool
+    .def(pybind11::self == pybind11::self)
+    .def(pybind11::self != pybind11::self)
     .def(
-      "__eq__",
-      [](const transferase::query_container &self,
-         const transferase::query_container &other) {
-        return (self <=> other) == std::strong_ordering::equal;
-      },
-      py::is_operator())
-    .def("__repr__", [](const transferase::query_container &self) {
-      return std::format("<QueryContainer size={}>", self.v.size());
-    });
+      "__repr__", [](const transferase::query_container &self) -> std::string {
+        return std::format("<QueryContainer size={}>", transferase::size(self));
+      });
 }
