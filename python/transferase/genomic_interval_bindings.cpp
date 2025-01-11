@@ -53,17 +53,13 @@ auto
 genomic_interval_bindings(pybind11::class_<transferase::genomic_interval> &cls)
   -> void {
   using namespace pybind11::literals;  // NOLINT
-  cls
-    .def(py::init<>())
-    // instance variables
+  cls.def(py::init<>())
     .def_readwrite("ch_id", &transferase::genomic_interval::ch_id,
                    "Numerical identifier for the chromosome")
     .def_readwrite("start", &transferase::genomic_interval::start,
                    "Start position of this interval in the chromosome")
     .def_readwrite("stop", &transferase::genomic_interval::stop,
                    "Stop position of this interval in the chromosome")
-    // comparators all derived from operator<=> (allows different
-    // types to be compared for equality or non-equality)
     .def(pybind11::self == pybind11::self)
     .def(pybind11::self != pybind11::self)
     .def(pybind11::self < pybind11::self)
@@ -75,8 +71,7 @@ genomic_interval_bindings(pybind11::class_<transferase::genomic_interval> &cls)
       [](const transferase::genomic_interval &gi) {
         return std::format("{}", gi);
       },
-      R"doc(Print a genomic interval with the numeric code for chromosome
-name)doc")
+      "Print a genomic interval with the numeric code for chromosome name")
     .def(
       "to_string",
       [](const transferase::genomic_interval &self,
@@ -88,8 +83,7 @@ name)doc")
         return std::format("{}\t{}\t{}", index.meta.chrom_order[self.ch_id],
                            self.start, self.stop);
       },
-      R"doc(Print a genomic interval with name of chromosome)doc",
-      "genome_index"_a)
+      "Print a genomic interval with name of chromosome", "genome_index"_a)
     // static functions of genomic_interval class
     .def_static("read", &transferase::genomic_interval_read,
                 "Read a BED file of genomic intervals file", "genome_index"_a,
