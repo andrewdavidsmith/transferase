@@ -56,41 +56,40 @@ level_container_bindings(
   py::class_<transferase::level_container<transferase::level_element_t>> &cls)
   -> void {
   using namespace pybind11::literals;  // NOLINT
-  cls
-    .def(py::init<>())
-    // Need to raise key error somehow
+  namespace tra = transferase;
+  cls.def(py::init<>())
     .def(
       "__getitem__",
-      [](const transferase::level_container<transferase::level_element_t> &self,
+      [](const tra::level_container<tra::level_element_t> &self,
          const std::size_t pos) -> std::tuple<std::uint32_t, std::uint32_t> {
-        if (pos >= transferase::size(self))
+        if (pos >= tra::size(self))
           throw std::out_of_range("Index out of range");
-        return transferase::level_element_t_to_tuple(self[pos]);
+        return tra::level_element_t_to_tuple(self[pos]);
       },
-      R"doc(Access element at position 'pos' in this container by copying it
-into a tuple of the values [n_meth, n_unmeth])doc",
+      "Access element at position 'pos' in this container by copying it into a "
+      "tuple of the values [n_meth, n_unmeth]",
       "pos"_a)
     .def(
       "get_n_meth",
-      [](const transferase::level_container<transferase::level_element_t> &self,
+      [](const tra::level_container<tra::level_element_t> &self,
          const std::size_t pos) -> std::uint32_t {
-        if (pos >= transferase::size(self))
+        if (pos >= tra::size(self))
           throw std::out_of_range("Index out of range");
         return self[pos].n_meth;
       },
-      R"doc(Access the 'n_meth' value via copy for the element at position
-'pos' in this container)doc",
+      "Access the 'n_meth' value via copy for the element at position 'pos' in "
+      "this container",
       "pos"_a)
     .def(
       "get_n_unmeth",
-      [](const transferase::level_container<transferase::level_element_t> &self,
+      [](const tra::level_container<tra::level_element_t> &self,
          const std::size_t pos) -> std::uint32_t {
-        if (pos >= transferase::size(self))
+        if (pos >= tra::size(self))
           throw std::out_of_range("Index out of range");
         return self[pos].n_unmeth;
       },
-      R"doc(Access the 'n_unmeth' value via copy for the element at position
-'pos' in this container)doc",
+      "Access the 'n_unmeth' value via copy for the element at position 'pos' "
+      "in this container",
       "pos"_a)
     //
     ;
@@ -101,61 +100,52 @@ level_container_covered_bindings(
   py::class_<transferase::level_container<transferase::level_element_covered_t>>
     &cls) -> void {
   using namespace pybind11::literals;  // NOLINT
-  cls
-    .def(py::init<>())
-    // Need to raise key error somehow
+  namespace tra = transferase;
+  cls.def(py::init<>())
     .def(
       "__getitem__",
-      [](
-        const transferase::level_container<transferase::level_element_covered_t>
-          &self,
-        const std::size_t pos)
+      [](const tra::level_container<tra::level_element_covered_t> &self,
+         const std::size_t pos)
         -> std::tuple<std::uint32_t, std::uint32_t, std::uint32_t> {
-        if (pos >= transferase::size(self))
+        if (pos >= tra::size(self))
           throw std::out_of_range("Index out of range");
-        return transferase::level_element_covered_t_to_tuple(self[pos]);
+        return tra::level_element_covered_t_to_tuple(self[pos]);
       },
-      R"doc(Access element at position 'pos' in this container by copying it
-into a tuple of the values [n_meth, n_unmeth])doc",
+      "Access element at position 'pos' in this container by copying it into a "
+      "tuple of the values [n_meth, n_unmeth]",
       "pos"_a)
     .def(
       "get_n_meth",
-      [](
-        const transferase::level_container<transferase::level_element_covered_t>
-          &self,
-        const std::size_t pos) -> std::uint32_t {
-        if (pos >= transferase::size(self))
+      [](const tra::level_container<tra::level_element_covered_t> &self,
+         const std::size_t pos) -> std::uint32_t {
+        if (pos >= tra::size(self))
           throw std::out_of_range("Index out of range");
         return self[pos].n_meth;
       },
-      R"doc(Access the 'n_meth' value via copy for the element at position
-'pos' in this container)doc",
+      "Access the 'n_meth' value via copy for the element at position 'pos' in "
+      "this container",
       "pos"_a)
     .def(
       "get_n_unmeth",
-      [](
-        const transferase::level_container<transferase::level_element_covered_t>
-          &self,
-        const std::size_t pos) -> std::uint32_t {
-        if (pos >= transferase::size(self))
+      [](const tra::level_container<tra::level_element_covered_t> &self,
+         const std::size_t pos) -> std::uint32_t {
+        if (pos >= tra::size(self))
           throw std::out_of_range("Index out of range");
         return self[pos].n_unmeth;
       },
-      R"doc(Access the 'n_unmeth' value via copy for the element at position
-'pos' in this container)doc",
+      "Access the 'n_unmeth' value via copy for the element at position 'pos' "
+      "in this container",
       "pos"_a)
     .def(
       "get_n_covered",
-      [](
-        const transferase::level_container<transferase::level_element_covered_t>
-          &self,
-        const std::size_t pos) -> std::uint32_t {
-        if (pos >= transferase::size(self))
+      [](const tra::level_container<tra::level_element_covered_t> &self,
+         const std::size_t pos) -> std::uint32_t {
+        if (pos >= tra::size(self))
           throw std::out_of_range("Index out of range");
         return self[pos].n_covered;
       },
-      R"doc(Access the 'n_covered' value via copy for the element at position
-'pos' in this container)doc",
+      "Access the 'n_covered' value via copy for the element at position 'pos' "
+      "in this container ",
       "pos"_a)
     //
     ;
