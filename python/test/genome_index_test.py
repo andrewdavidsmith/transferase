@@ -26,7 +26,6 @@ import tempfile
 import os
 
 from transferase import GenomeIndex
-from transferase import ErrorCode
 from transferase import GenomicInterval
 
 def create_temp_directory():
@@ -65,9 +64,7 @@ def test_read():
     """Test the static 'read' method"""
     dirname = "data/lutions/indexes"
     genome_name = "eVaporeon"
-    error = ErrorCode()
-    index = GenomeIndex.read(dirname, genome_name, error)
-    assert not error
+    index = GenomeIndex.read(dirname, genome_name)
     assert index is not None
 
 def test_write(genome_index):
@@ -81,18 +78,16 @@ def test_write(genome_index):
 
 def test_make_query(genome_index):
     """Test the 'make_query' method"""
-    error = ErrorCode()
     intervals_file = "data/lutions/raw/eVaporeon_ear_hmr.bed"
-    intervals = GenomicInterval.read(genome_index, intervals_file, error)
-    result = genome_index.make_query(intervals)
-    assert result is not None  # Modify based on expected output
+    with pytest.raises(RuntimeError, match="chrom name not found in index"):
+        intervals = GenomicInterval.read(genome_index, intervals_file)
+        result = genome_index.make_query(intervals)
+        assert result is not None  # Modify based on expected output
 
 def test_make_genome_index():
     """Test the static 'make_genome_index' method"""
     genome_file = "data/lutions/raw/eJolteon.fa.gz"
-    status = ErrorCode()
-    result = GenomeIndex.make_genome_index(genome_file, status)
-    assert not status
+    result = GenomeIndex.make_genome_index(genome_file)
     assert result is not None
 
 def test_files_exist():
@@ -106,15 +101,13 @@ def test_files_exist():
 def test_parse_genome_name():
     """Test the static 'parse_genome_name' method"""
     filename = "eFlareon.fasta.gz"
-    error_code = ErrorCode()
-    result = GenomeIndex.parse_genome_name(filename, error_code)
+    result = GenomeIndex.parse_genome_name(filename)
     assert isinstance(result, str)
     assert result == "eFlareon"
 
 def test_list_genome_indexes():
     """Test the static 'list_genome_indexes' method"""
     directory = "data/lutions/indexes"
-    error_code = ErrorCode()
-    result = GenomeIndex.list_genome_indexes(directory, error_code)
+    result = GenomeIndex.list_genome_indexes(directory)
     assert isinstance(result, list)
     assert len(result) == 3

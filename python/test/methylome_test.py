@@ -28,7 +28,6 @@ import os
 
 from transferase import GenomeIndex
 from transferase import Methylome
-from transferase import ErrorCode
 from transferase import GenomicInterval
 from transferase import LevelElement
 from transferase import LevelContainer
@@ -41,9 +40,7 @@ def get_valid_test_genome_index(genome_name):
     Fixture to load a valid GenomeIndex object for testing
     """
     genome_index_dirname = "data/lutions/indexes"
-    error = ErrorCode()
-    genome_index = GenomeIndex.read(genome_index_dirname, genome_name, error)
-    assert not error, f"Failed to read GenomeIndex: {index_dirname}, {genome_name}"
+    genome_index = GenomeIndex.read(genome_index_dirname, genome_name)
     return genome_index
 
 
@@ -53,9 +50,7 @@ def get_valid_test_methylome(genome_name, tissue_name):
     """
     methylome_directory = "data/lutions/methylomes"
     methylome_name = f"{genome_name}_{tissue_name}"
-    error = ErrorCode()
-    meth = Methylome.read(methylome_directory, methylome_name, error)
-    assert not error, f"Failed to read Methylome: {methylome_directory}, {methylome_name}"
+    meth = Methylome.read(methylome_directory, methylome_name)
     return meth
 
 
@@ -69,9 +64,7 @@ def get_valid_test_genomic_intervals(genome_name, tissue_name):
         f"{genome_name}_{tissue_name}_hmr.bed",
     )
     genome_index = get_valid_test_genome_index(genome_name)
-    error = ErrorCode()
-    intervals = GenomicInterval.read(genome_index, intervals_filename, error)
-    assert not error, f"Failed to read GenomicInterval: {intervals_file}"
+    intervals = GenomicInterval.read(genome_index, intervals_filename)
     return intervals
 
 
@@ -80,7 +73,6 @@ def get_valid_test_query(genome_name, tissue_name):
     Fixture to make a valid query for given GenomeIndex and a
     corresponding list of GenomicInterval objects
     """
-    error = ErrorCode()
     intervals = get_valid_test_genomic_intervals(genome_name, tissue_name)
     genome_index = get_valid_test_genome_index(genome_name)
     query = genome_index.make_query(intervals)
@@ -104,8 +96,7 @@ def test_methylome_read():
     """Test the read static method"""
     directory = "data/lutions/methylomes"
     methylome_name = "eFlareon_brain"
-    error_code = ErrorCode()
-    meth = Methylome.read(directory, methylome_name, error_code)
+    meth = Methylome.read(directory, methylome_name)
     assert meth is not None
 
 
@@ -119,8 +110,7 @@ def test_methylome_is_consistent():
     """Test the is_consistent method (non-empty Methylome)"""
     directory = "data/lutions/methylomes"
     methylome_name = "eFlareon_brain"
-    error_code = ErrorCode()
-    meth = Methylome.read(directory, methylome_name, error_code)
+    meth = Methylome.read(directory, methylome_name)
     assert meth.is_consistent()
 
 
@@ -138,8 +128,7 @@ def test_methylome_write():
     methylome_name = f"{genome_name}_{tissue_name}"
     meth = get_valid_test_methylome(genome_name, tissue_name)
     output_directory = create_temp_directory()
-    status = meth.write(output_directory, methylome_name)
-    assert not status
+    meth.write(output_directory, methylome_name)
     if os.path.isdir(output_directory):
         shutil.rmtree(output_directory)
 
@@ -154,8 +143,8 @@ def test_methylome_init_metadata_inconsistent():
     tissue_name = "ear"
     index = get_valid_test_genome_index(genome_name1)
     meth = get_valid_test_methylome(genome_name2, tissue_name)
-    error = meth.init_metadata(index)
-    assert error
+    with pytest.raises(RuntimeError, match="invalid methylome data"):
+        meth.init_metadata(index)
 
 
 def test_methylome_init_metadata_consistent():
@@ -167,15 +156,19 @@ def test_methylome_init_metadata_consistent():
     tissue_name = "tail"
     index = get_valid_test_genome_index(genome_name)
     meth = get_valid_test_methylome(genome_name, tissue_name)
-    error = meth.init_metadata(index)
-    assert not error
+    try:
+        meth.init_metadata(index)
+    except RuntimeError as run_err:
+        pytest.fail(f"Unexpected exception raised: {run_err}")
 
 
 def test_methylome_update_metadata_empty():
     """Test update_metadata method for an empty Methylome"""
     meth = Methylome()
-    error = meth.update_metadata()
-    assert not error
+    try:
+        meth.update_metadata()
+    except RuntimeError as run_err:
+        pytest.fail(f"Unexpected exception raised: {run_err}")
 
 
 def test_methylome_update_metadata():
@@ -183,8 +176,10 @@ def test_methylome_update_metadata():
     genome_name = "eVaporeon"
     tissue_name = "brain"
     meth = get_valid_test_methylome("eVaporeon", "brain")
-    error = meth.update_metadata()
-    assert not error
+    try:
+        meth.update_metadata()
+    except RuntimeError as run_err:
+        pytest.fail(f"Unexpected exception raised: {run_err}")
 
 
 def test_methylome_add_empty():
