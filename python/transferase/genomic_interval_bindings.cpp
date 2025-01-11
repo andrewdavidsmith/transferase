@@ -26,14 +26,14 @@
 #include <genome_index.hpp>
 #include <genome_index_metadata.hpp>
 
-#include <pybind11/operators.h>
+#include <pybind11/operators.h>  // IWYU pragma: keep
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>  // IWYU pragma: keep
 
 #include <format>
-#include <functional>
 #include <genomic_interval.hpp>
-#include <iterator>  // for std::ssize
+#include <iterator>   // for std::ssize
+#include <stdexcept>  // for std::out_of_range
 #include <string>
 #include <vector>
 
@@ -60,12 +60,14 @@ genomic_interval_bindings(pybind11::class_<transferase::genomic_interval> &cls)
                    "Start position of this interval in the chromosome")
     .def_readwrite("stop", &transferase::genomic_interval::stop,
                    "Stop position of this interval in the chromosome")
+    // cppcheck-suppress-begin duplicateExpression
     .def(pybind11::self == pybind11::self)
     .def(pybind11::self != pybind11::self)
     .def(pybind11::self < pybind11::self)
     .def(pybind11::self <= pybind11::self)
     .def(pybind11::self > pybind11::self)
     .def(pybind11::self >= pybind11::self)
+    // cppcheck-suppress-end duplicateExpression
     .def(
       "__repr__",
       [](const transferase::genomic_interval &gi) {

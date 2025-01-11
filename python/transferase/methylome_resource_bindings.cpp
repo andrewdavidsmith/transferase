@@ -28,15 +28,14 @@
 #include <pybind11/pybind11.h>
 
 #include <cstdint>
-#include <print>
 #include <string>
 #include <system_error>
 
+#include <level_container.hpp>
+#include <level_element.hpp>
+
 namespace transferase {
-struct level_element_covered_t;
-struct level_element_t;
 struct query_container;
-template <typename level_element_type> struct level_container;
 }  // namespace transferase
 
 namespace py = pybind11;
