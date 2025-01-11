@@ -54,10 +54,10 @@ namespace transferase {
 struct genomic_interval;
 
 auto
-genome_index::write(const std::string &outdir, const std::string &name,
-                    std::error_code &ec) const noexcept -> void {
+genome_index::write(const std::string &directory, const std::string &name,
+                    std::error_code &error) const noexcept -> void {
   // make filenames
-  const auto fn_wo_extn = std::filesystem::path{outdir} / name;
+  const auto fn_wo_extn = std::filesystem::path{directory} / name;
   const auto meta_filename =
     genome_index_metadata::compose_filename(fn_wo_extn);
   const auto meta_write_ec = meta.write(meta_filename);
@@ -66,7 +66,7 @@ genome_index::write(const std::string &outdir, const std::string &name,
       std::error_code remove_ec;
       std::filesystem::remove(meta_filename, remove_ec);
     }
-    ec = meta_write_ec;
+    error = meta_write_ec;
     return;
   }
   const auto data_filename = genome_index_data::compose_filename(fn_wo_extn);
@@ -78,7 +78,7 @@ genome_index::write(const std::string &outdir, const std::string &name,
     if (std::filesystem::exists(meta_filename))
       std::filesystem::remove(meta_filename, remove_ec);
   }
-  ec = data_write_ec;
+  error = data_write_ec;
   return;
 }
 
@@ -89,13 +89,13 @@ genome_index::make_query(const std::vector<genomic_interval> &gis)
 }
 
 [[nodiscard]] auto
-genome_index::read(const std::string &dirname, const std::string &genome_name,
-                   std::error_code &ec) noexcept -> genome_index {
-  auto meta = genome_index_metadata::read(dirname, genome_name, ec);
-  if (ec)
+genome_index::read(const std::string &directory, const std::string &genome_name,
+                   std::error_code &error) noexcept -> genome_index {
+  auto meta = genome_index_metadata::read(directory, genome_name, error);
+  if (error)
     return {};
-  auto data = genome_index_data::read(dirname, genome_name, meta, ec);
-  if (ec)
+  auto data = genome_index_data::read(directory, genome_name, meta, error);
+  if (error)
     return {};
   return genome_index{std::move(data), std::move(meta)};
 }
@@ -120,8 +120,8 @@ genome_index::files_exist(const std::string &directory,
 }
 
 [[nodiscard]] auto
-genome_index::parse_genome_name(const std::string &filename,
-                                std::error_code &ec) noexcept -> std::string {
+genome_index::parse_genome_name(
+  const std::string &filename, std::error_code &error) noexcept -> std::string {
   using std::string_literals::operator""s;
   using std::literals::string_view_literals::operator""sv;
   // clang-format off
@@ -140,10 +140,10 @@ genome_index::parse_genome_name(const std::string &filename,
   std::smatch base_match;
   const std::string name = std::filesystem::path(filename).filename();
   if (std::regex_search(name, base_match, suffix_re)) {
-    ec = std::error_code{};
+    error = std::error_code{};
     return base_match.prefix().str();
   }
-  ec = std::make_error_code(std::errc::invalid_argument);
+  error = std::make_error_code(std::errc::invalid_argument);
   return {};
 }
 
@@ -240,10 +240,10 @@ get_chroms(const char *data, const std::size_t sz,
 
 [[nodiscard]] STATIC auto
 make_genome_index_plain(const std::string &genome_filename,
-                        std::error_code &ec) noexcept -> genome_index {
+                        std::error_code &error) noexcept -> genome_index {
   genome_file gf = mmap_genome(genome_filename);  // memory map the genome file
   if (gf.ec) {
-    ec = gf.ec;
+    error = gf.ec;
     return {};
   }
 
@@ -251,7 +251,7 @@ make_genome_index_plain(const std::string &genome_filename,
   const auto name_starts = get_chrom_name_starts(gf.data, gf.sz);
   const auto name_stops = get_chrom_name_stops(name_starts, gf.data, gf.sz);
   if (name_starts.empty() || name_stops.empty()) {
-    ec = genome_index_error_code::failure_processing_fasta_file;
+    error = genome_index_error_code::failure_processing_fasta_file;
     return {};
   }
 
@@ -291,8 +291,8 @@ make_genome_index_plain(const std::string &genome_filename,
     });
 
   // finished with any views that look into 'data' so cleanup
-  ec = cleanup_mmap_genome(gf);
-  if (ec)
+  error = cleanup_mmap_genome(gf);
+  if (error)
     return {};
 
   // initialize chrom offsets within the compressed files
@@ -311,26 +311,26 @@ make_genome_index_plain(const std::string &genome_filename,
   for (const auto [i, chrom_name] : std::views::enumerate(meta.chrom_order))
     meta.chrom_index.emplace(chrom_name, i);
 
-  ec = meta.init_env();
-  if (ec)
+  error = meta.init_env();
+  if (error)
     return {};
 
   meta.index_hash = data.hash();
 
-  meta.assembly = genome_index::parse_genome_name(genome_filename, ec);
-  if (ec)
+  meta.assembly = genome_index::parse_genome_name(genome_filename, error);
+  if (error)
     return {};
 
-  ec = std::error_code{};
+  error = std::error_code{};
   return {std::move(data), std::move(meta)};
 }
 
 [[nodiscard]] STATIC auto
 make_genome_index_gzip(const std::string &genome_filename,
-                       std::error_code &ec) noexcept -> genome_index {
+                       std::error_code &error) noexcept -> genome_index {
   const auto [raw, gz_err] = read_gzfile_into_buffer(genome_filename);
   if (gz_err) {
-    ec = genome_index_error_code::failure_processing_fasta_file;
+    error = genome_index_error_code::failure_processing_fasta_file;
     return {};
   }
 
@@ -339,7 +339,7 @@ make_genome_index_gzip(const std::string &genome_filename,
   const auto name_stops =
     get_chrom_name_stops(name_starts, raw.data(), std::size(raw));
   if (name_starts.empty() || name_stops.empty()) {
-    ec = genome_index_error_code::failure_processing_fasta_file;
+    error = genome_index_error_code::failure_processing_fasta_file;
     return {};
   }
 
@@ -394,38 +394,39 @@ make_genome_index_gzip(const std::string &genome_filename,
   for (const auto [i, chrom_name] : std::views::enumerate(meta.chrom_order))
     meta.chrom_index.emplace(chrom_name, i);
 
-  ec = meta.init_env();
-  if (ec)
+  error = meta.init_env();
+  if (error)
     return {};
 
   meta.index_hash = data.hash();
 
-  meta.assembly = genome_index::parse_genome_name(genome_filename, ec);
-  if (ec)
+  meta.assembly = genome_index::parse_genome_name(genome_filename, error);
+  if (error)
     return {};
 
-  ec = std::error_code{};
+  error = std::error_code{};
   return {std::move(data), std::move(meta)};
 }
 
 [[nodiscard]] auto
 genome_index::make_genome_index(const std::string &genome_filename,
-                                std::error_code &ec) noexcept -> genome_index {
+                                std::error_code &error) noexcept
+  -> genome_index {
   return is_gzip_file(genome_filename)
-           ? make_genome_index_gzip(genome_filename, ec)
-           : make_genome_index_plain(genome_filename, ec);
+           ? make_genome_index_gzip(genome_filename, error)
+           : make_genome_index_plain(genome_filename, error);
 }
 
 [[nodiscard]] auto
-genome_index::list_genome_indexes(const std::string &dirname,
-                                  std::error_code &ec) noexcept
+genome_index::list_genome_indexes(const std::string &directory,
+                                  std::error_code &error) noexcept
   -> std::vector<std::string> {
   static constexpr auto data_extn = genome_index::data_extn;
   static constexpr auto meta_extn = genome_index::meta_extn;
 
   using dir_itr_type = std::filesystem::directory_iterator;
-  auto dir_itr = dir_itr_type(dirname, ec);
-  if (ec)
+  auto dir_itr = dir_itr_type(directory, error);
+  if (error)
     return {};
 
   const auto data_files = std::ranges::subrange{dir_itr, dir_itr_type{}} |
@@ -452,7 +453,7 @@ genome_index::list_genome_indexes(const std::string &dirname,
     return dot == std::string::npos ? s : s.replace(dot, std::string::npos, "");
   };
 
-  for (const auto &d : dir_itr_type{dirname}) {
+  for (const auto &d : dir_itr_type{directory}) {
     const auto fn = d.path().filename().string();
     if (meta_names_lookup.contains(fn))
       meta_names.emplace_back(remove_all_suffixes(fn));
