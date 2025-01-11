@@ -62,7 +62,7 @@ level_container_bindings(
     .def(
       "__getitem__",
       [](const transferase::level_container<transferase::level_element_t> &self,
-         const std::size_t pos) {
+         const std::size_t pos) -> std::tuple<std::uint32_t, std::uint32_t> {
         if (pos >= transferase::size(self))
           throw std::out_of_range("Index out of range");
         return transferase::level_element_t_to_tuple(self[pos]);
@@ -73,7 +73,7 @@ into a tuple of the values [n_meth, n_unmeth])doc",
     .def(
       "get_n_meth",
       [](const transferase::level_container<transferase::level_element_t> &self,
-         const std::size_t pos) {
+         const std::size_t pos) -> std::uint32_t {
         if (pos >= transferase::size(self))
           throw std::out_of_range("Index out of range");
         return self[pos].n_meth;
@@ -84,7 +84,7 @@ into a tuple of the values [n_meth, n_unmeth])doc",
     .def(
       "get_n_unmeth",
       [](const transferase::level_container<transferase::level_element_t> &self,
-         const std::size_t pos) {
+         const std::size_t pos) -> std::uint32_t {
         if (pos >= transferase::size(self))
           throw std::out_of_range("Index out of range");
         return self[pos].n_unmeth;
@@ -109,7 +109,8 @@ level_container_covered_bindings(
       [](
         const transferase::level_container<transferase::level_element_covered_t>
           &self,
-        const std::size_t pos) {
+        const std::size_t pos)
+        -> std::tuple<std::uint32_t, std::uint32_t, std::uint32_t> {
         if (pos >= transferase::size(self))
           throw std::out_of_range("Index out of range");
         return transferase::level_element_covered_t_to_tuple(self[pos]);
@@ -122,7 +123,7 @@ into a tuple of the values [n_meth, n_unmeth])doc",
       [](
         const transferase::level_container<transferase::level_element_covered_t>
           &self,
-        const std::size_t pos) {
+        const std::size_t pos) -> std::uint32_t {
         if (pos >= transferase::size(self))
           throw std::out_of_range("Index out of range");
         return self[pos].n_meth;
@@ -135,7 +136,7 @@ into a tuple of the values [n_meth, n_unmeth])doc",
       [](
         const transferase::level_container<transferase::level_element_covered_t>
           &self,
-        const std::size_t pos) {
+        const std::size_t pos) -> std::uint32_t {
         if (pos >= transferase::size(self))
           throw std::out_of_range("Index out of range");
         return self[pos].n_unmeth;
@@ -148,7 +149,7 @@ into a tuple of the values [n_meth, n_unmeth])doc",
       [](
         const transferase::level_container<transferase::level_element_covered_t>
           &self,
-        const std::size_t pos) {
+        const std::size_t pos) -> std::uint32_t {
         if (pos >= transferase::size(self))
           throw std::out_of_range("Index out of range");
         return self[pos].n_covered;
