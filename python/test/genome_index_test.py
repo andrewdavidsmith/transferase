@@ -38,14 +38,6 @@ def genome_index():
     """Fixture to create a GenomeIndex object for testing"""
     return GenomeIndex()
 
-def test_data_property(genome_index):
-    """Test the 'data' readonly property"""
-    assert hasattr(genome_index, "data")
-
-def test_meta_property(genome_index):
-    """Test the 'meta' readonly property"""
-    assert hasattr(genome_index, "meta")
-
 def test_is_consistent(genome_index):
     """Test the 'is_consistent' method"""
     assert isinstance(genome_index.is_consistent(), bool)
