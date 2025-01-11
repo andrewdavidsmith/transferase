@@ -49,7 +49,6 @@ struct genomic_interval;
 /// genomic_interval is in the for of two files: one a binary data
 /// file and the other a JSON format metadata file.
 struct genome_index {
-
   /// @brief Filename extension that identifies genome index data files
   static constexpr auto data_extn = genome_index_data::filename_extension;
 
