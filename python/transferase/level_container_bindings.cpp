@@ -30,8 +30,10 @@
 #include <pybind11/stl.h>  // IWYU pragma: keep
 
 #include <cstddef>  // for std::size_t
+#include <cstdint>  // for std::uint32_t
 #include <stdexcept>
 #include <tuple>
+#include <variant>  // for std::tuple
 
 namespace py = pybind11;
 

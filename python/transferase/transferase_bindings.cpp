@@ -40,22 +40,19 @@ When in doubt, consult the module reference at the location listed above.
 #include <genome_index.hpp>
 #include <genomic_interval.hpp>
 #include <level_container.hpp>
+#include <level_element.hpp>
 #include <logger.hpp>
 #include <methylome.hpp>
 #include <methylome_resource.hpp>
 #include <query_container.hpp>
-#include <request.hpp>
 
 #include <moduleobject.h>
-#include <pybind11/options.h>
+// ADS: the header below has functions to control what is
+// auto-generated in the python docs
+#include <pybind11/options.h>  // IWYU pragma: keep
 #include <pybind11/pybind11.h>
 
-#include <cstdint>
 #include <string>
-
-namespace transferase {
-enum class request_type_code : std::uint8_t;
-}
 
 namespace py = pybind11;
 
@@ -66,7 +63,6 @@ initialize_transferase() -> void {
 }
 
 PYBIND11_MODULE(transferase, the_module) {
-
   initialize_transferase();
 
   the_module.doc() = warning_message;

@@ -25,10 +25,11 @@
 
 #include <query_container.hpp>
 
-#include <pybind11/operators.h>
+#include <pybind11/operators.h>  // IWYU pragma: keep
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>  // IWYU pragma: keep
 
+#include <cstdint>  // for std::uint32_t
 #include <format>
 #include <string>
 
