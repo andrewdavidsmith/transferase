@@ -29,6 +29,7 @@
 #endif
 #include "query_container.hpp"
 
+#include <cstddef>  // for std::size_t
 #include <cstdint>  // for std::uint32_t, std::int32_t, std::uint64_t
 #include <filesystem>
 #include <format>
@@ -36,6 +37,7 @@
 #include <system_error>
 #include <type_traits>  // for std::true_type
 #include <utility>      // for std::pair
+#include <variant>      // for std::hash
 #include <vector>
 
 namespace transferase {
