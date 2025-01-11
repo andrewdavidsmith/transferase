@@ -37,9 +37,9 @@ namespace transferase {
 
 template <typename lvl_elem_type>
 [[nodiscard]] static inline auto
-get_levels_remote_impl(auto const &resource, request const &req,
-                       query_container const &query,
-                       std::error_code &ec) -> level_container<lvl_elem_type> {
+get_levels_remote_impl(
+  auto const &resource, request const &req, query_container const &query,
+  std::error_code &ec) noexcept -> level_container<lvl_elem_type> {
   intervals_client<lvl_elem_type> cl(resource.hostname, resource.port_number,
                                      req, query);
   ec = cl.run();
@@ -50,9 +50,9 @@ get_levels_remote_impl(auto const &resource, request const &req,
 
 template <typename lvl_elem_type>
 [[nodiscard]] static inline auto
-get_levels_local_impl(auto const &resource, request const &req,
-                      query_container const &query,
-                      std::error_code &ec) -> level_container<lvl_elem_type> {
+get_levels_local_impl(
+  auto const &resource, request const &req, query_container const &query,
+  std::error_code &ec) noexcept -> level_container<lvl_elem_type> {
   const auto meth = methylome::read(resource.directory, req.accession, ec);
   if (ec)
     return {};
@@ -65,7 +65,8 @@ get_levels_local_impl(auto const &resource, request const &req,
 template <typename lvl_elem_type>
 [[nodiscard]] static inline auto
 get_levels_remote_impl(auto const &resource, request const &req,
-                       std::error_code &ec) -> level_container<lvl_elem_type> {
+                       std::error_code &ec) noexcept
+  -> level_container<lvl_elem_type> {
   bins_client<lvl_elem_type> cl(resource.hostname, resource.port_number, req);
   ec = cl.run();
   if (ec)
@@ -76,8 +77,8 @@ get_levels_remote_impl(auto const &resource, request const &req,
 template <typename lvl_elem_type>
 [[nodiscard]] static inline auto
 get_levels_local_impl(auto const &resource, const request &req,
-                      const genome_index &index,
-                      std::error_code &ec) -> level_container<lvl_elem_type> {
+                      const genome_index &index, std::error_code &ec) noexcept
+  -> level_container<lvl_elem_type> {
   const auto meth = methylome::read(resource.directory, req.accession, ec);
   if (ec)
     return {};
@@ -94,18 +95,18 @@ public:
   std::string port_number;
 
   [[nodiscard]] auto
-  tostring() const -> std::string {
+  tostring() const noexcept -> std::string {
     std::ostringstream o;
     if (!(o << boost::json::value_from(*this)))
       o.clear();
     return o.str();
   }
 
-  /// intervals: takes a query
+  // intervals: takes a query
   template <typename lvl_elem_type>
   [[nodiscard]] auto
   get_levels(const request &req, const query_container &query,
-             std::error_code &ec) const
+             std::error_code &ec) const noexcept
     -> std::variant<level_container<level_element_t>,
                     level_container<level_element_covered_t>> {
     if (!directory.empty())
@@ -114,12 +115,12 @@ public:
       return get_levels_remote_impl<lvl_elem_type>(*this, req, query, ec);
   }
 
-  /// bins: takes an index
+  // bins: takes an index
   template <typename lvl_elem_type>
   [[nodiscard]] auto
   get_levels(const request &req, const genome_index &index, std::error_code &ec)
-    const -> std::variant<level_container<level_element_t>,
-                          level_container<level_element_covered_t>> {
+    const noexcept -> std::variant<level_container<level_element_t>,
+                                   level_container<level_element_covered_t>> {
     if (!directory.empty())
       return get_levels_local_impl<lvl_elem_type>(*this, req, index, ec);
     else
@@ -142,17 +143,18 @@ public:
   std::uint64_t index_hash;
 
   [[nodiscard]] auto
-  tostring() const -> std::string {
+  tostring() const noexcept -> std::string {
     std::ostringstream o;
     if (!(o << boost::json::value_from(*this)))
       o.clear();
     return o.str();
   }
 
-  /// intervals: takes a query
+  // intervals: takes a query
   [[nodiscard]] auto
   get_levels(const std::string &methylome_name, const query_container &query,
-             std::error_code &ec) const -> level_container<level_element_t> {
+             std::error_code &ec) const noexcept
+    -> level_container<level_element_t> {
     static constexpr auto REQUEST_TYPE =
       transferase::request_type_code::intervals;
     const auto req = transferase::request{methylome_name, REQUEST_TYPE,
@@ -160,11 +162,24 @@ public:
     return get_levels_local_impl<level_element_t>(*this, req, query, ec);
   }
 
-  /// intervals: takes a query
+#ifndef TRANSFERASE_NOEXCEPT
+  // intervals: takes a query (without error_code)
+  [[nodiscard]] auto
+  get_levels(const std::string &methylome_name, const query_container &query)
+    const -> level_container<level_element_t> {
+    std::error_code ec;
+    auto result = get_levels(methylome_name, query, ec);
+    if (ec)
+      throw std::system_error(ec);
+    return result;
+  }
+#endif
+
+  // intervals: takes a query
   [[nodiscard]] auto
   get_levels_covered(const std::string &methylome_name,
-                     const query_container &query, std::error_code &ec) const
-    -> level_container<level_element_covered_t> {
+                     const query_container &query, std::error_code &ec)
+    const noexcept -> level_container<level_element_covered_t> {
     static constexpr auto REQUEST_TYPE =
       transferase::request_type_code::intervals_covered;
     const auto req = transferase::request{methylome_name, REQUEST_TYPE,
@@ -173,11 +188,25 @@ public:
                                                           ec);
   }
 
-  /// bins: takes an index
+#ifndef TRANSFERASE_NOEXCEPT
+  // intervals: takes a query (without error_code)
+  [[nodiscard]] auto
+  get_levels_covered(const std::string &methylome_name,
+                     const query_container &query) const
+    -> level_container<level_element_covered_t> {
+    std::error_code ec;
+    auto result = get_levels_covered(methylome_name, query, ec);
+    if (ec)
+      throw std::system_error(ec);
+    return result;
+  }
+#endif
+
+  // bins: takes an index
   [[nodiscard]] auto
   get_levels(const std::string &methylome_name, const std::uint32_t bin_size,
-             const genome_index &index,
-             std::error_code &ec) const -> level_container<level_element_t> {
+             const genome_index &index, std::error_code &ec) const noexcept
+    -> level_container<level_element_t> {
     static constexpr auto REQUEST_TYPE =
       transferase::request_type_code::intervals;
     const auto req =
@@ -185,11 +214,25 @@ public:
     return get_levels_local_impl<level_element_t>(*this, req, index, ec);
   }
 
-  /// bins: takes an index
+#ifndef TRANSFERASE_NOEXCEPT
+  // bins: takes an index (without error_code)
+  [[nodiscard]] auto
+  get_levels(const std::string &methylome_name, const std::uint32_t bin_size,
+             const genome_index &index) const
+    -> level_container<level_element_t> {
+    std::error_code ec;
+    auto result = get_levels(methylome_name, bin_size, index, ec);
+    if (ec)
+      throw std::system_error(ec);
+    return result;
+  }
+#endif
+
+  // bins: takes an index
   [[nodiscard]] auto
   get_levels_covered(const std::string &methylome_name,
                      const std::uint32_t bin_size, const genome_index &index,
-                     std::error_code &ec) const
+                     std::error_code &ec) const noexcept
     -> level_container<level_element_covered_t> {
     static constexpr auto REQUEST_TYPE =
       transferase::request_type_code::intervals_covered;
@@ -198,6 +241,20 @@ public:
     return get_levels_local_impl<level_element_covered_t>(*this, req, index,
                                                           ec);
   }
+
+#ifndef TRANSFERASE_NOEXCEPT
+  // bins: takes an index (without error_code)
+  [[nodiscard]] auto
+  get_levels_covered(const std::string &methylome_name,
+                     const std::uint32_t bin_size, const genome_index &index)
+    const -> level_container<level_element_covered_t> {
+    std::error_code ec;
+    auto result = get_levels_covered(methylome_name, bin_size, index, ec);
+    if (ec)
+      throw std::system_error(ec);
+    return result;
+  }
+#endif
 };
 
 // clang-format off
@@ -215,17 +272,18 @@ public:
   std::uint64_t index_hash;
 
   [[nodiscard]] auto
-  tostring() const -> std::string {
+  tostring() const noexcept -> std::string {
     std::ostringstream o;
     if (!(o << boost::json::value_from(*this)))
       o.clear();
     return o.str();
   }
 
-  /// intervals: takes a query
+  // intervals: takes a query
   [[nodiscard]] auto
   get_levels(const std::string &methylome_name, const query_container &query,
-             std::error_code &ec) const -> level_container<level_element_t> {
+             std::error_code &ec) const noexcept
+    -> level_container<level_element_t> {
     static constexpr auto REQUEST_TYPE =
       transferase::request_type_code::intervals;
     const auto req = transferase::request{methylome_name, REQUEST_TYPE,
@@ -233,11 +291,24 @@ public:
     return get_levels_remote_impl<level_element_t>(*this, req, query, ec);
   }
 
-  /// intervals: takes a query
+#ifndef TRANSFERASE_NOEXCEPT
+  // intervals: takes a query (without error_code)
+  auto
+  get_levels(const std::string &methylome_name, const query_container &query)
+    const -> level_container<level_element_t> {
+    std::error_code ec;
+    auto result = get_levels(methylome_name, query, ec);
+    if (ec)
+      throw std::system_error(ec);
+    return result;
+  }
+#endif
+
+  // intervals: takes a query
   [[nodiscard]] auto
   get_levels_covered(const std::string &methylome_name,
-                     const query_container &query, std::error_code &ec) const
-    -> level_container<level_element_covered_t> {
+                     const query_container &query, std::error_code &ec)
+    const noexcept -> level_container<level_element_covered_t> {
     static constexpr auto REQUEST_TYPE =
       transferase::request_type_code::intervals_covered;
     const auto req = transferase::request{methylome_name, REQUEST_TYPE,
@@ -246,27 +317,69 @@ public:
                                                            ec);
   }
 
-  /// bins: takes an index
+#ifndef TRANSFERASE_NOEXCEPT
+  // intervals: takes a query (without error_code)
+  auto
+  get_levels_covered(const std::string &methylome_name,
+                     const query_container &query) const
+    -> level_container<level_element_covered_t> {
+    std::error_code ec;
+    auto result = get_levels_covered(methylome_name, query, ec);
+    if (ec)
+      throw std::system_error(ec);
+    return result;
+  }
+#endif
+
+  // bins: takes an index
   [[nodiscard]] auto
   get_levels(const std::string &methylome_name, const std::uint32_t bin_size,
-             std::error_code &ec) const -> level_container<level_element_t> {
+             std::error_code &ec) const noexcept
+    -> level_container<level_element_t> {
     static constexpr auto REQUEST_TYPE = transferase::request_type_code::bins;
     const auto req =
       transferase::request{methylome_name, REQUEST_TYPE, index_hash, bin_size};
     return get_levels_remote_impl<level_element_t>(*this, req, ec);
   }
 
-  /// bins: takes an index
+#ifndef TRANSFERASE_NOEXCEPT
+  // bins: takes an index (without error_code)
+  auto
+  get_levels(const std::string &methylome_name, const std::uint32_t bin_size)
+    const -> level_container<level_element_t> {
+    std::error_code ec;
+    auto result = get_levels(methylome_name, bin_size, ec);
+    if (ec)
+      throw std::system_error(ec);
+    return result;
+  }
+#endif
+
+  // bins: takes an index
   [[nodiscard]] auto
   get_levels_covered(const std::string &methylome_name,
-                     const std::uint32_t bin_size, std::error_code &ec) const
-    -> level_container<level_element_covered_t> {
+                     const std::uint32_t bin_size, std::error_code &ec)
+    const noexcept -> level_container<level_element_covered_t> {
     static constexpr auto REQUEST_TYPE =
       transferase::request_type_code::bins_covered;
     const auto req =
       transferase::request{methylome_name, REQUEST_TYPE, index_hash, bin_size};
     return get_levels_remote_impl<level_element_covered_t>(*this, req, ec);
   }
+
+#ifndef TRANSFERASE_NOEXCEPT
+  // bins: takes an index (without error_code)
+  auto
+  get_levels_covered(const std::string &methylome_name,
+                     const std::uint32_t bin_size) const
+    -> level_container<level_element_covered_t> {
+    std::error_code ec;
+    auto result = get_levels_covered(methylome_name, bin_size, ec);
+    if (ec)
+      throw std::system_error(ec);
+    return result;
+  }
+#endif
 };
 
 // clang-format off
