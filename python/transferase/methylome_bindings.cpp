@@ -29,6 +29,7 @@
 #include <pybind11/pybind11.h>
 
 #include <cstdint>
+#include <string>
 
 namespace transferase {
 struct level_element_covered_t;

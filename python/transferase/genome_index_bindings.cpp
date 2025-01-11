@@ -32,6 +32,9 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>  // IWYU pragma: keep
 
+#include <string>
+#include <vector>
+
 namespace py = pybind11;
 
 [[nodiscard]] inline auto
