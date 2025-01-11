@@ -478,7 +478,8 @@ command_format_main(int argc, char *argv[]) -> int {
   // effected as data is written
   meth.meta.is_compressed = zip;
 
-  const auto write_err = meth.write(methylome_outdir, methylome_name);
+  std::error_code write_err;
+  meth.write(methylome_outdir, methylome_name, write_err);
   if (write_err) {
     lgr.error("Error writing methylome {} {}: {}", methylome_outdir,
               methylome_name, write_err);

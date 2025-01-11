@@ -44,7 +44,7 @@
 namespace transferase {
 
 [[nodiscard]] auto
-genome_index_metadata::init_env() -> std::error_code {
+genome_index_metadata::init_env() noexcept -> std::error_code {
   version = get_version();
   creation_time = get_time_as_string();
   std::error_code ec;
@@ -56,7 +56,7 @@ genome_index_metadata::init_env() -> std::error_code {
 }
 
 [[nodiscard]] auto
-genome_index_metadata::get_n_bins(const std::uint32_t bin_size) const
+genome_index_metadata::get_n_bins(const std::uint32_t bin_size) const noexcept
   -> std::uint32_t {
   const auto get_n_bins_for_chrom = [&](const auto chrom_size) {
     return (chrom_size + bin_size) / bin_size;
@@ -67,7 +67,7 @@ genome_index_metadata::get_n_bins(const std::uint32_t bin_size) const
 }
 
 [[nodiscard]] auto
-genome_index_metadata::tostring() const -> std::string {
+genome_index_metadata::tostring() const noexcept -> std::string {
   std::ostringstream o;
   if (!(o << boost::json::value_from(*this)))
     o.clear();
@@ -75,7 +75,8 @@ genome_index_metadata::tostring() const -> std::string {
 }
 
 [[nodiscard]] auto
-genome_index_metadata::get_n_cpgs_chrom() const -> std::vector<std::uint32_t> {
+genome_index_metadata::get_n_cpgs_chrom() const noexcept
+  -> std::vector<std::uint32_t> {
   std::vector<std::uint32_t> n_cpgs_chrom(chrom_offset);
   n_cpgs_chrom.push_back(n_cpgs);
   std::adjacent_difference(std::cbegin(n_cpgs_chrom), std::cend(n_cpgs_chrom),
@@ -87,7 +88,8 @@ genome_index_metadata::get_n_cpgs_chrom() const -> std::vector<std::uint32_t> {
 
 [[nodiscard]] auto
 genome_index_metadata::read(const std::string &json_filename,
-                            std::error_code &ec) -> genome_index_metadata {
+                            std::error_code &ec) noexcept
+  -> genome_index_metadata {
   std::ifstream in(json_filename);
   if (!in) {
     ec = std::make_error_code(std::errc(errno));
@@ -124,14 +126,14 @@ make_genome_index_metadata_filename(const std::string &dirname,
 }
 
 [[nodiscard]] auto
-genome_index_metadata::read(const std::string &dirname,
-                            const std::string &genome_name,
-                            std::error_code &ec) -> genome_index_metadata {
+genome_index_metadata::read(
+  const std::string &dirname, const std::string &genome_name,
+  std::error_code &ec) noexcept -> genome_index_metadata {
   return read(make_genome_index_metadata_filename(dirname, genome_name), ec);
 }
 
 [[nodiscard]] auto
-genome_index_metadata::write(const std::string &json_filename) const
+genome_index_metadata::write(const std::string &json_filename) const noexcept
   -> std::error_code {
   std::ofstream out(json_filename);
   if (!out)

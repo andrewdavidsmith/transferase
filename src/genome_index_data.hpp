@@ -65,36 +65,36 @@ struct genome_index_data {
   // clang-format on
 
   [[nodiscard]] auto
-  tostring() const -> std::string {
+  tostring() const noexcept -> std::string {
     return std::format(R"json({{"size": {}}})json", get_n_cpgs());
   }
 
   [[nodiscard]] static auto
   read(const std::string &filename, const genome_index_metadata &meta,
-       std::error_code &ec) -> genome_index_data;
+       std::error_code &ec) noexcept -> genome_index_data;
 
   [[nodiscard]] static auto
   read(const std::string &dirname, const std::string &genomic_name,
        const genome_index_metadata &meta,
-       std::error_code &ec) -> genome_index_data;
+       std::error_code &ec) noexcept -> genome_index_data;
 
   [[nodiscard]] auto
-  write(const std::string &index_file) const -> std::error_code;
+  write(const std::string &index_file) const noexcept -> std::error_code;
 
   [[nodiscard]] auto
-  hash() const -> std::uint64_t;
+  hash() const noexcept -> std::uint64_t;
 
   [[nodiscard]] auto
-  get_n_cpgs() const -> std::uint32_t;
+  get_n_cpgs() const noexcept -> std::uint32_t;
 
   [[nodiscard]] auto
   make_query_chrom(const std::int32_t ch_id, const genome_index_metadata &meta,
-                   const std::vector<chrom_range_t> &pos) const
+                   const std::vector<chrom_range_t> &pos) const noexcept
     -> transferase::query_container;
 
   [[nodiscard]] auto
   make_query(const genome_index_metadata &meta,
-             const std::vector<genomic_interval> &gis) const
+             const std::vector<genomic_interval> &gis) const noexcept
     -> transferase::query_container;
 
   [[nodiscard]] static auto
@@ -114,12 +114,22 @@ struct genome_index_data {
 
 }  // namespace transferase
 
+/// Specialization of std::hash for genome_index_data
+template <> struct std::hash<transferase::genome_index_data> {
+  auto
+  operator()(const transferase::genome_index_data &data) const noexcept
+    -> std::size_t {
+    return data.hash();
+  }
+};
+
+/// Specialization of std::format for genome_index_data
 template <>
 struct std::formatter<transferase::genome_index_data>
   : std::formatter<std::string> {
   auto
   format(const transferase::genome_index_data &data,
-         std::format_context &ctx) const {
+         std::format_context &ctx) const noexcept {
     return std::format_to(ctx.out(), "{}", data.tostring());
   }
 };
@@ -137,7 +147,7 @@ struct std::is_error_code_enum<genome_index_data_error_code>
 struct genome_index_data_error_category : std::error_category {
   // clang-format off
   auto name() const noexcept -> const char * override {return "genome_index_data";}
-  auto message(int code) const -> std::string override {
+  auto message(int code) const noexcept -> std::string override {
     using std::string_literals::operator""s;
     switch (code) {
     case 0: return "ok"s;
@@ -149,7 +159,7 @@ struct genome_index_data_error_category : std::error_category {
 };
 
 inline auto
-make_error_code(genome_index_data_error_code e) -> std::error_code {
+make_error_code(genome_index_data_error_code e) noexcept -> std::error_code {
   static auto category = genome_index_data_error_category{};
   return std::error_code(std::to_underlying(e), category);
 }

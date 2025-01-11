@@ -43,11 +43,17 @@ namespace transferase {
 
 struct genomic_interval;
 
+/// Objects of the genome_index class are data structures that
+/// correspond to reference genomes and exist to accelerate retrieval
+/// of methylation levels for genomic intervals.
 struct genome_index {
   static constexpr auto data_extn = genome_index_data::filename_extension;
   static constexpr auto meta_extn = genome_index_metadata::filename_extension;
 
+  /// data: The offsets of CpG sites in each chromosome.
   genome_index_data data;
+  /// meta: A collection of metadata used to ensure this genome_index
+  /// is used properly across systems.
   genome_index_metadata meta;
 
   genome_index() = default;
@@ -62,69 +68,135 @@ struct genome_index {
   genome_index &operator=(genome_index &&) noexcept = default;
   // clang-format on
 
+  /// Generate
   [[nodiscard]] auto
-  tostring() const -> std::string {
+  tostring() const noexcept -> std::string {
     return std::format(R"json({{"meta"={}, "data"={}}})json", meta, data);
   }
 
   [[nodiscard]] static auto
   read(const std::string &dirname, const std::string &genome_name,
-       std::error_code &ec) -> genome_index;
+       std::error_code &ec) noexcept -> genome_index;
+
+#ifndef TRANSFERASE_NOEXCEPT
+  static auto
+  read(const std::string &dirname,
+       const std::string &genome_name) -> genome_index {
+    std::error_code ec;
+    auto index = read(dirname, genome_name, ec);
+    if (ec)
+      throw std::system_error(ec);
+    return index;
+  }
+#endif
 
   [[nodiscard]]
   auto
-  is_consistent() const -> bool {
+  is_consistent() const noexcept -> bool {
     return meta.index_hash == data.hash();
   }
 
   [[nodiscard]]
   auto
-  get_hash() const -> std::uint64_t {
+  get_hash() const noexcept -> std::uint64_t {
     return meta.index_hash;
   }
 
-  [[nodiscard]] auto
+  auto
+  write(const std::string &outdir, const std::string &genome_name,
+        std::error_code &ec) const noexcept -> void;
+
+#ifndef TRANSFERASE_NOEXCEPT
+  auto
   write(const std::string &outdir,
-        const std::string &name) const -> std::error_code;
+        const std::string &genome_name) const -> void {
+    std::error_code ec;
+    write(outdir, genome_name, ec);
+    if (ec)
+      throw std::system_error(ec);
+  }
+#endif
 
   [[nodiscard]] auto
-  make_query(const std::vector<genomic_interval> &gis) const
+  make_query(const std::vector<genomic_interval> &gis) const noexcept
     -> transferase::query_container;
 
   [[nodiscard]] auto
-  get_n_cpgs_chrom() const {
+  get_n_cpgs_chrom() const noexcept {
     return meta.get_n_cpgs_chrom();
   }
 
   [[nodiscard]] auto
-  get_n_bins(const std::uint32_t bin_size) const {
+  get_n_bins(const std::uint32_t bin_size) const noexcept {
     return meta.get_n_bins(bin_size);
   }
 
   [[nodiscard]] static auto
   make_genome_index(const std::string &genome_file,
-                    std::error_code &ec) -> genome_index;
+                    std::error_code &ec) noexcept -> genome_index;
+
+#ifndef TRANSFERASE_NOEXCEPT
+  [[nodiscard]] static auto
+  make_genome_index(const std::string &genome_file) -> genome_index {
+    std::error_code ec;
+    auto index = make_genome_index(genome_file, ec);
+    if (ec)
+      throw std::system_error(ec);
+    return index;
+  }
+#endif
 
   [[nodiscard]] static auto
   files_exist(const std::string &directory,
-              const std::string &genome_name) -> bool;
+              const std::string &genome_name) noexcept -> bool;
 
   [[nodiscard]] static auto
   parse_genome_name(const std::string &filename,
-                    std::error_code &ec) -> std::string;
+                    std::error_code &ec) noexcept -> std::string;
+
+#ifndef TRANSFERASE_NOEXCEPT
+  [[nodiscard]] static auto
+  parse_genome_name(const std::string &filename) -> std::string {
+    std::error_code ec;
+    auto genome_name = parse_genome_name(filename, ec);
+    if (ec)
+      throw std::error_code(ec);
+    return genome_name;
+  }
+#endif
 
   [[nodiscard]] static auto
-  is_valid_name(const std::string &genome_name) -> bool {
+  is_valid_name(const std::string &genome_name) noexcept -> bool {
     return std::ranges::all_of(
       genome_name, [](const auto c) { return std::isalnum(c) || c == '_'; });
   }
 
   [[nodiscard]] static auto
   list_genome_indexes(const std::string &dirname,
-                      std::error_code &ec) -> std::vector<std::string>;
+                      std::error_code &ec) noexcept -> std::vector<std::string>;
+
+#ifndef TRANSFERASE_NOEXCEPT
+  [[nodiscard]] static auto
+  list_genome_indexes(const std::string &dirname) -> std::vector<std::string> {
+    std::error_code ec;
+    auto indexes = list_genome_indexes(dirname, ec);
+    if (ec)
+      throw std::system_error(ec);
+    return indexes;
+  }
+#endif
 };
 
 }  // namespace transferase
+
+// Specialization of std::hash for genome_index
+template <> struct std::hash<transferase::genome_index> {
+  auto
+  operator()(const transferase::genome_index &index) const noexcept
+    -> std::size_t {
+    return index.get_hash();
+  }
+};
 
 // genome_index errors
 

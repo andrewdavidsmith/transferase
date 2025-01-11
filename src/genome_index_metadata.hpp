@@ -55,26 +55,26 @@ struct genome_index_metadata {
 
   [[nodiscard]] static auto
   read(const std::string &json_filename,
-       std::error_code &ec) -> genome_index_metadata;
+       std::error_code &ec) noexcept -> genome_index_metadata;
 
   [[nodiscard]] static auto
   read(const std::string &dirname, const std::string &genome_name,
-       std::error_code &ec) -> genome_index_metadata;
+       std::error_code &ec) noexcept -> genome_index_metadata;
 
   [[nodiscard]] auto
-  write(const std::string &json_filename) const -> std::error_code;
+  write(const std::string &json_filename) const noexcept -> std::error_code;
 
   [[nodiscard]] auto
-  init_env() -> std::error_code;
+  init_env() noexcept -> std::error_code;
 
   [[nodiscard]] auto
-  tostring() const -> std::string;
+  tostring() const noexcept -> std::string;
 
   [[nodiscard]] auto
-  get_n_cpgs_chrom() const -> std::vector<std::uint32_t>;
+  get_n_cpgs_chrom() const noexcept -> std::vector<std::uint32_t>;
 
   [[nodiscard]] auto
-  get_n_bins(const std::uint32_t bin_size) const -> std::uint32_t;
+  get_n_bins(const std::uint32_t bin_size) const noexcept -> std::uint32_t;
 
   [[nodiscard]] static auto
   compose_filename(auto wo_extension) {
@@ -132,7 +132,7 @@ struct genome_index_metadata_error_category : std::error_category {
   auto name() const noexcept -> const char * override {
     return "genome_index_metadata_error_code";
   }
-  auto message(int code) const -> std::string override {
+  auto message(int code) const noexcept -> std::string override {
     using std::string_literals::operator""s;
     switch (code) {
     case 0: return "ok"s;
@@ -144,7 +144,8 @@ struct genome_index_metadata_error_category : std::error_category {
 };
 
 inline auto
-make_error_code(genome_index_metadata_error_code e) -> std::error_code {
+make_error_code(genome_index_metadata_error_code e) noexcept
+  -> std::error_code {
   static auto category = genome_index_metadata_error_category{};
   return std::error_code(std::to_underlying(e), category);
 }

@@ -49,16 +49,28 @@ struct genomic_interval {
 
   [[nodiscard]] static auto
   read(const genome_index &index, const std::string &filename,
-       std::error_code &ec) -> std::vector<genomic_interval>;
+       std::error_code &ec) noexcept -> std::vector<genomic_interval>;
+
+#ifndef TRANSFERASE_NOEXCEPT
+  [[nodiscard]] static auto
+  read(const genome_index &index,
+       const std::string &filename) -> std::vector<genomic_interval> {
+    std::error_code ec;
+    auto intervals = read(index, filename, ec);
+    if (ec)
+      throw std::system_error(ec);
+    return intervals;
+  }
+#endif
 
   // ADS: Sorted intervals have chromosomes together but the order on
   // chroms is arbitrary; then they are ordered by first coord position
   // and second position is not relevant.
   [[nodiscard]] static auto
-  are_sorted(const std::vector<genomic_interval> &gis) -> bool;
+  are_sorted(const std::vector<genomic_interval> &intervals) noexcept -> bool;
 
   [[nodiscard]] static auto
-  are_valid(const auto &g) -> bool {
+  are_valid(const auto &g) noexcept -> bool {
     return std::ranges::all_of(g,
                                [](const auto x) { return x.start <= x.stop; });
   }
@@ -92,7 +104,7 @@ struct std::is_error_code_enum<genomic_interval_error_code>
 struct genomic_interval_error_category : std::error_category {
   // clang-format off
   auto name() const noexcept -> const char * override {return "genomic_interval";}
-  auto message(int code) const -> std::string override {
+  auto message(int code) const noexcept -> std::string override {
     using std::string_literals::operator""s;
     switch (code) {
     case 0: return "ok"s;
@@ -106,7 +118,7 @@ struct genomic_interval_error_category : std::error_category {
 };
 
 inline auto
-make_error_code(genomic_interval_error_code e) -> std::error_code {
+make_error_code(genomic_interval_error_code e) noexcept -> std::error_code {
   static auto category = genomic_interval_error_category{};
   return std::error_code(std::to_underlying(e), category);
 }

@@ -148,7 +148,7 @@ command_index_main(int argc, char *argv[]) -> int {
   lgr.debug("Index construction time: {:.3}s",
             duration(constr_start, constr_stop));
 
-  ec = index.write(index_directory, genome_name);
+  index.write(index_directory, genome_name, ec);
   if (ec) {
     lgr.error("Error writing cpg index {} {}: {}", index_directory, genome_name,
               ec);

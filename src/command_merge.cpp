@@ -195,7 +195,7 @@ command_merge_main(int argc, char *argv[]) -> int {
   }
 
   const auto write_start = std::chrono::high_resolution_clock::now();
-  ec = meth.write(methylome_outdir, merged_name);
+  meth.write(methylome_outdir, merged_name, ec);
   const auto write_stop = std::chrono::high_resolution_clock::now();
   if (ec) {
     lgr.error("Error writing methylome {} {}: {}", methylome_outdir,

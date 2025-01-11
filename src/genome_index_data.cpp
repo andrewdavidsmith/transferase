@@ -47,7 +47,7 @@ namespace transferase {
 [[nodiscard]] auto
 genome_index_data::read(const std::string &index_file,
                         const genome_index_metadata &meta,
-                        std::error_code &ec) -> genome_index_data {
+                        std::error_code &ec) noexcept -> genome_index_data {
   std::ifstream in(index_file, std::ios::binary);
   if (!in) {
     ec = std::make_error_code(std::errc(errno));
@@ -93,12 +93,12 @@ make_genome_index_data_filename(const std::string &dirname,
 genome_index_data::read(const std::string &dirname,
                         const std::string &genome_name,
                         const genome_index_metadata &meta,
-                        std::error_code &ec) -> genome_index_data {
+                        std::error_code &ec) noexcept -> genome_index_data {
   return read(make_genome_index_data_filename(dirname, genome_name), meta, ec);
 }
 
 [[nodiscard]] auto
-genome_index_data::write(const std::string &index_file) const
+genome_index_data::write(const std::string &index_file) const noexcept
   -> std::error_code {
   std::ofstream out(index_file);
   if (!out)
@@ -118,7 +118,7 @@ genome_index_data::write(const std::string &index_file) const
 // sites using std::lower_bound
 [[nodiscard]] STATIC inline auto
 make_query_within_chrom(const genome_index_data::vec &positions,
-                        const std::vector<chrom_range_t> &chrom_ranges)
+                        const std::vector<chrom_range_t> &chrom_ranges) noexcept
   -> transferase::query_container {
   transferase::query_container query(std::size(chrom_ranges));
   auto cursor = std::cbegin(positions);
@@ -138,7 +138,7 @@ make_query_within_chrom(const genome_index_data::vec &positions,
 [[nodiscard]] auto
 genome_index_data::make_query_chrom(
   const std::int32_t ch_id, const genome_index_metadata &meta,
-  const std::vector<chrom_range_t> &chrom_ranges) const
+  const std::vector<chrom_range_t> &chrom_ranges) const noexcept
   -> transferase::query_container {
   assert(std::ranges::is_sorted(chrom_ranges) && ch_id >= 0 &&
          ch_id < std::ranges::ssize(positions));
@@ -154,7 +154,7 @@ genome_index_data::make_query_chrom(
 [[nodiscard]] auto
 genome_index_data::make_query(const genome_index_metadata &meta,
                               const std::vector<genomic_interval> &intervals)
-  const -> transferase::query_container {
+  const noexcept -> transferase::query_container {
   const auto same_chrom = [](const genomic_interval &a,
                              const genomic_interval &b) {
     return a.ch_id == b.ch_id;
@@ -178,7 +178,7 @@ genome_index_data::make_query(const genome_index_metadata &meta,
 }
 
 [[nodiscard]] auto
-genome_index_data::hash() const -> std::uint64_t {
+genome_index_data::hash() const noexcept -> std::uint64_t {
   // ADS: plan to change this after positions is refactored into a single vec
   std::uint64_t combined = 1;  // from the zlib docs to init
   for (const auto &p : positions)
@@ -188,7 +188,7 @@ genome_index_data::hash() const -> std::uint64_t {
 }
 
 [[nodiscard]] auto
-genome_index_data::get_n_cpgs() const -> std::uint32_t {
+genome_index_data::get_n_cpgs() const noexcept -> std::uint32_t {
   return std::transform_reduce(std::cbegin(positions), std::cend(positions),
                                static_cast<std::uint32_t>(0), std::plus{},
                                std::size<genome_index_data::vec>);
