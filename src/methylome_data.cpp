@@ -56,8 +56,8 @@
 namespace transferase {
 
 [[nodiscard]] auto
-methylome_data::get_n_cpgs_from_file(const std::string &filename,
-                                     std::error_code &ec) -> std::uint32_t {
+methylome_data::get_n_cpgs_from_file(
+  const std::string &filename, std::error_code &ec) noexcept -> std::uint32_t {
   const auto filesize = std::filesystem::file_size(filename, ec);
   if (ec)
     return 0;
@@ -65,16 +65,16 @@ methylome_data::get_n_cpgs_from_file(const std::string &filename,
 }
 
 [[nodiscard]] auto
-methylome_data::get_n_cpgs_from_file(const std::string &filename)
+methylome_data::get_n_cpgs_from_file(const std::string &filename) noexcept
   -> std::uint32_t {
   std::error_code ec;
   return get_n_cpgs_from_file(filename, ec);
 }
 
 [[nodiscard]] auto
-methylome_data::read(const std::string &filename,
-                     const methylome_metadata &metadata,
-                     std::error_code &ec) -> methylome_data {
+methylome_data_read(const std::string &filename,
+                    const methylome_metadata &metadata,
+                    std::error_code &ec) noexcept -> methylome_data {
   const auto filesize = std::filesystem::file_size(filename, ec);
   if (ec)
     return {};
@@ -132,13 +132,14 @@ make_methylome_data_filename(const std::string &dirname,
 methylome_data::read(const std::string &dirname,
                      const std::string &methylome_name,
                      const methylome_metadata &meta,
-                     std::error_code &ec) -> methylome_data {
-  return read(make_methylome_data_filename(dirname, methylome_name), meta, ec);
+                     std::error_code &ec) noexcept -> methylome_data {
+  return methylome_data_read(
+    make_methylome_data_filename(dirname, methylome_name), meta, ec);
 }
 
 [[nodiscard]] auto
 methylome_data::write(const std::string &filename,
-                      const bool zip) const -> std::error_code {
+                      const bool zip) const noexcept -> std::error_code {
   std::vector<std::uint8_t> buf;
   if (zip) {
 #ifdef BENCHMARK
@@ -171,7 +172,7 @@ methylome_data::write(const std::string &filename,
 }
 
 auto
-methylome_data::add(const methylome_data &rhs) -> void {
+methylome_data::add(const methylome_data &rhs) noexcept -> void {
   // this follows the operator+= pattern
   assert(std::size(cpgs) == std::size(rhs.cpgs));
   std::ranges::transform(cpgs, rhs.cpgs, std::begin(cpgs),
@@ -184,7 +185,7 @@ methylome_data::add(const methylome_data &rhs) -> void {
 
 template <typename U, typename T>
 [[nodiscard]] static inline auto
-get_levels_impl(const T b, const T e) -> U {
+get_levels_impl(const T b, const T e) noexcept -> U {
   U u;
   for (auto cursor = b; cursor != e; ++cursor) {
     u.n_meth += cursor->n_meth;
@@ -200,7 +201,7 @@ template <typename U>
 get_levels_impl(const methylome_data::vec &cpgs,
                 const genome_index_data::vec &positions,
                 const std::uint32_t offset, const transferase::q_elem_t start,
-                const transferase::q_elem_t stop) -> U {
+                const transferase::q_elem_t stop) noexcept -> U {
   // ADS: it is possible that the intervals requested are past the cpg
   // sites since they might be in the genome, but past the final cpg
   // site location. This code *should* be able to handle such a
@@ -218,7 +219,7 @@ get_levels_impl(const methylome_data::vec &cpgs,
 
 [[nodiscard]] auto
 methylome_data::get_levels_covered(const transferase::query_container &query)
-  const -> level_container<level_element_covered_t> {
+  const noexcept -> level_container<level_element_covered_t> {
   auto res = level_container<level_element_covered_t>(size(query));
   const auto beg = std::cbegin(cpgs);
   for (const auto [i, q] : std::views::enumerate(query))
@@ -228,8 +229,8 @@ methylome_data::get_levels_covered(const transferase::query_container &query)
 }
 
 [[nodiscard]] auto
-methylome_data::get_levels(const transferase::query_container &query) const
-  -> level_container<level_element_t> {
+methylome_data::get_levels(const transferase::query_container &query)
+  const noexcept -> level_container<level_element_t> {
   std::vector<level_element_t> res(size(query));
   const auto beg = std::cbegin(cpgs);
   for (const auto [i, q] : std::views::enumerate(query))
@@ -238,7 +239,8 @@ methylome_data::get_levels(const transferase::query_container &query) const
 }
 
 [[nodiscard]] auto
-methylome_data::global_levels_covered() const -> level_element_covered_t {
+methylome_data::global_levels_covered() const noexcept
+  -> level_element_covered_t {
   std::uint32_t n_meth{};
   std::uint32_t n_unmeth{};
   std::uint32_t n_covered{};
@@ -251,7 +253,7 @@ methylome_data::global_levels_covered() const -> level_element_covered_t {
 }
 
 [[nodiscard]] auto
-methylome_data::global_levels() const -> level_element_t {
+methylome_data::global_levels() const noexcept -> level_element_t {
   std::uint32_t n_meth{};
   std::uint32_t n_unmeth{};
   for (const auto &cpg : cpgs) {
@@ -266,7 +268,7 @@ static auto
 bin_levels_impl(genome_index_data::vec::const_iterator &posn_itr,
                 const genome_index_data::vec::const_iterator posn_end,
                 const std::uint32_t bin_end,
-                methylome_data::vec::const_iterator &cpg_itr) -> T {
+                methylome_data::vec::const_iterator &cpg_itr) noexcept -> T {
   T t{};
   while (posn_itr != posn_end && *posn_itr < bin_end) {
     t.n_meth += cpg_itr->n_meth;
@@ -282,7 +284,8 @@ bin_levels_impl(genome_index_data::vec::const_iterator &posn_itr,
 template <typename T>
 [[nodiscard]] static auto
 get_levels_impl(const std::uint32_t bin_size, const genome_index &index,
-                const methylome_data::vec &cpgs) -> level_container<T> {
+                const methylome_data::vec &cpgs) noexcept
+  -> level_container<T> {
   std::vector<T> results;  // ADS TODO: reserve n_bins
 
   const auto zipped = std::views::zip(
@@ -302,25 +305,25 @@ get_levels_impl(const std::uint32_t bin_size, const genome_index &index,
 
 [[nodiscard]] auto
 methylome_data::get_levels(const std::uint32_t bin_size,
-                           const genome_index &index) const
+                           const genome_index &index) const noexcept
   -> level_container<level_element_t> {
   return get_levels_impl<level_element_t>(bin_size, index, cpgs);
 }
 
 [[nodiscard]] auto
 methylome_data::get_levels_covered(const std::uint32_t bin_size,
-                                   const genome_index &index) const
+                                   const genome_index &index) const noexcept
   -> level_container<level_element_covered_t> {
   return get_levels_impl<level_element_covered_t>(bin_size, index, cpgs);
 }
 
 [[nodiscard]] auto
-methylome_data::hash() const -> std::uint64_t {
+methylome_data::hash() const noexcept -> std::uint64_t {
   return get_adler(cpgs.data(), std::size(cpgs) * record_size);
 }
 
 [[nodiscard]] auto
-methylome_data::get_n_cpgs() const -> std::uint32_t {
+methylome_data::get_n_cpgs() const noexcept -> std::uint32_t {
   return std::size(cpgs);
 }
 

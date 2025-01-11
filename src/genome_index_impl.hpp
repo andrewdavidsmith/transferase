@@ -47,26 +47,26 @@ struct genome_file {
 };
 
 [[nodiscard]] STATIC auto
-mmap_genome(const std::string &filename) -> genome_file;
+mmap_genome(const std::string &filename) noexcept -> genome_file;
 
 [[nodiscard]] STATIC auto
-cleanup_mmap_genome(genome_file &gf) -> std::error_code;
+cleanup_mmap_genome(genome_file &gf) noexcept -> std::error_code;
 
 [[nodiscard]] STATIC auto
-get_cpgs(const std::string_view chrom) -> genome_index_data::vec;
+get_cpgs(const std::string_view chrom) noexcept -> genome_index_data::vec;
 
 [[nodiscard]] STATIC auto
-get_chrom_name_starts(const char *data,
-                      const std::size_t sz) -> std::vector<std::size_t>;
+get_chrom_name_starts(const char *data, const std::size_t sz) noexcept
+  -> std::vector<std::size_t>;
 
 [[nodiscard]] STATIC auto
 get_chrom_name_stops(std::vector<std::size_t> starts, const char *data,
-                     const std::size_t sz) -> std::vector<std::size_t>;
+                     const std::size_t sz) noexcept -> std::vector<std::size_t>;
 
 [[nodiscard]] STATIC auto
 get_chroms(const char *data, const std::size_t sz,
            const std::vector<std::size_t> &name_starts,
-           const std::vector<std::size_t> &name_stops)
+           const std::vector<std::size_t> &name_stops) noexcept
   -> std::vector<std::string_view>;
 
 }  // namespace transferase

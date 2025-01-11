@@ -158,7 +158,8 @@ command_compress_main(int argc, char *argv[]) -> int {
   meth.meta.is_compressed = !uncompress;
 
   const auto write_start = std::chrono::high_resolution_clock::now();
-  const auto write_err = meth.write(methylome_outdir, methylome_name);
+  std::error_code write_err;
+  meth.write(methylome_outdir, methylome_name, write_err);
   const auto write_stop = std::chrono::high_resolution_clock::now();
   if (write_err) {
     lgr.error("Error writing output {} {}: {}", methylome_outdir,

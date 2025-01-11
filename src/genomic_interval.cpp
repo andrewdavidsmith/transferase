@@ -42,7 +42,7 @@ namespace transferase {
 
 [[nodiscard]] STATIC auto
 parse(const genome_index_metadata &meta, const std::string &line,
-      std::error_code &ec) -> genomic_interval {
+      std::error_code &ec) noexcept -> genomic_interval {
   auto cursor = line.data();
   const auto line_sz = std::size(line);
   const auto line_end = line.data() + line_sz;
@@ -85,7 +85,8 @@ parse(const genome_index_metadata &meta, const std::string &line,
 
 [[nodiscard]] auto
 genomic_interval::read(const genome_index &index, const std::string &filename,
-                       std::error_code &ec) -> std::vector<genomic_interval> {
+                       std::error_code &ec) noexcept
+  -> std::vector<genomic_interval> {
   const genome_index_metadata &meta = index.meta;
   ec = std::error_code{};
   std::ifstream in{filename};
@@ -106,8 +107,8 @@ genomic_interval::read(const genome_index &index, const std::string &filename,
 }
 
 [[nodiscard]] auto
-genomic_interval::are_sorted(const std::vector<genomic_interval> &intervals)
-  -> bool {
+genomic_interval::are_sorted(
+  const std::vector<genomic_interval> &intervals) noexcept -> bool {
   static constexpr auto initial_n_chroms = 64;
   // check that chroms appear consecutively
   std::vector<std::uint32_t> chroms_seen(initial_n_chroms, 0);

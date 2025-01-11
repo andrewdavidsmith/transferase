@@ -79,61 +79,74 @@ struct methylome_data {
   methylome_data &operator=(methylome_data &&) noexcept = default;
   // clang-format on
 
-  [[nodiscard]] static auto
-  read(const std::string &filename, const methylome_metadata &meta,
-       std::error_code &ec) -> methylome_data;
+  // [[nodiscard]] static auto
+  // read(const std::string &filename, const methylome_metadata &meta,
+  //      std::error_code &ec) noexcept -> methylome_data;
 
   [[nodiscard]] static auto
   read(const std::string &dirname, const std::string &methylome_name,
-       const methylome_metadata &meta, std::error_code &ec) -> methylome_data;
+       const methylome_metadata &meta,
+       std::error_code &ec) noexcept -> methylome_data;
+
+#ifndef TRANSFERASE_NOEXCEPT
+  [[nodiscard]] static auto
+  read(const std::string &dirname, const std::string &methylome_name,
+       const methylome_metadata &meta) -> methylome_data {
+    std::error_code ec;
+    auto data = read(dirname, methylome_name, meta, ec);
+    if (ec)
+      throw std::system_error(ec);
+    return data;
+  }
+#endif
 
   [[nodiscard]] auto
   write(const std::string &filename,
-        const bool zip = false) const -> std::error_code;
+        const bool zip = false) const noexcept -> std::error_code;
 
   [[nodiscard]] static auto
-  get_n_cpgs_from_file(const std::string &filename) -> std::uint32_t;
+  get_n_cpgs_from_file(const std::string &filename) noexcept -> std::uint32_t;
   [[nodiscard]] static auto
   get_n_cpgs_from_file(const std::string &filename,
-                       std::error_code &ec) -> std::uint32_t;
+                       std::error_code &ec) noexcept -> std::uint32_t;
 
   [[nodiscard]] auto
-  get_n_cpgs() const -> std::uint32_t;
+  get_n_cpgs() const noexcept -> std::uint32_t;
 
   auto
-  add(const methylome_data &rhs) -> void;
+  add(const methylome_data &rhs) noexcept -> void;
 
   [[nodiscard]] auto
-  hash() const -> std::uint64_t;
+  hash() const noexcept -> std::uint64_t;
 
   /// get methylation levels for query intervals and number for query
   /// intervals covered
   [[nodiscard]] auto
-  get_levels_covered(const transferase::query_container &query) const
+  get_levels_covered(const transferase::query_container &query) const noexcept
     -> level_container<level_element_covered_t>;
 
   /// get methylation levels for query intervals
   [[nodiscard]] auto
-  get_levels(const transferase::query_container &query) const
+  get_levels(const transferase::query_container &query) const noexcept
     -> level_container<level_element_t>;
 
   /// get global methylation level
   [[nodiscard]] auto
-  global_levels() const -> level_element_t;
+  global_levels() const noexcept -> level_element_t;
 
   /// get global methylation level and sites covered
   [[nodiscard]] auto
-  global_levels_covered() const -> level_element_covered_t;
+  global_levels_covered() const noexcept -> level_element_covered_t;
 
   /// get methylation levels for bins
   [[nodiscard]] auto
-  get_levels(const std::uint32_t bin_size, const genome_index &index) const
-    -> level_container<level_element_t>;
+  get_levels(const std::uint32_t bin_size, const genome_index &index)
+    const noexcept -> level_container<level_element_t>;
 
   /// get methylation levels for bins and number of bins covered
   [[nodiscard]] auto
   get_levels_covered(const std::uint32_t bin_size, const genome_index &index)
-    const -> level_container<level_element_covered_t>;
+    const noexcept -> level_container<level_element_covered_t>;
 
   [[nodiscard]] static auto
   compose_filename(auto wo_extension) {
@@ -153,7 +166,7 @@ struct methylome_data {
 
 template <typename T, typename U>
 inline auto
-round_to_fit(U &a, U &b) -> void {
+round_to_fit(U &a, U &b) noexcept -> void {
   // ADS: assign the max of a and b to be the max possible value; the
   // other one gets a fractional value then multiplied by max possible
   const U c = std::max(a, b);
@@ -167,7 +180,7 @@ round_to_fit(U &a, U &b) -> void {
 
 template <typename T, typename U>
 inline auto
-conditional_round_to_fit(U &a, U &b) -> void {
+conditional_round_to_fit(U &a, U &b) noexcept -> void {
   // ADS: optimization possible here?
   if (std::max(a, b) > std::numeric_limits<T>::max())
     round_to_fit<T>(a, b);
@@ -179,6 +192,15 @@ size(const methylome_data &data) {
 }
 
 }  // namespace transferase
+
+// Specialization of std::hash for methylome_data
+template <> struct std::hash<transferase::methylome_data> {
+  auto
+  operator()(const transferase::methylome_data &data) const noexcept
+    -> std::size_t {
+    return data.hash();
+  }
+};
 
 // methylome_data errors
 enum class methylome_data_error_code : std::uint8_t {
@@ -195,7 +217,7 @@ struct std::is_error_code_enum<methylome_data_error_code>
 struct methylome_data_error_category : std::error_category {
   // clang-format off
   auto name() const noexcept -> const char * override {return "methylome_data";}
-  auto message(int code) const -> std::string override {
+  auto message(int code) const noexcept -> std::string override {
     using std::string_literals::operator""s;
     switch (code) {
     case 0: return "ok"s;
@@ -209,7 +231,7 @@ struct methylome_data_error_category : std::error_category {
 };
 
 inline auto
-make_error_code(methylome_data_error_code e) -> std::error_code {
+make_error_code(methylome_data_error_code e) noexcept -> std::error_code {
   static auto category = methylome_data_error_category{};
   return std::error_code(std::to_underlying(e), category);
 }

@@ -40,7 +40,7 @@ struct query_container;
 
 [[nodiscard]] STATIC auto
 make_query_within_chrom(const genome_index_data::vec &positions,
-                        const std::vector<chrom_range_t> &chrom_ranges)
+                        const std::vector<chrom_range_t> &chrom_ranges) noexcept
   -> transferase::query_container;
 
 }  // namespace transferase

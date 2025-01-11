@@ -39,7 +39,8 @@
 namespace transferase {
 
 [[nodiscard]] auto
-methylome::init_metadata(const genome_index &index) -> std::error_code {
+methylome::init_metadata(const genome_index &index) noexcept
+  -> std::error_code {
   static constexpr auto is_compressed_init = false;
   if (std::size(data.cpgs) != index.meta.n_cpgs)
     return std::error_code{methylome_error_code::invalid_methylome_data};
@@ -63,7 +64,7 @@ methylome::init_metadata(const genome_index &index) -> std::error_code {
 }
 
 [[nodiscard]] auto
-methylome::update_metadata() -> std::error_code {
+methylome::update_metadata() noexcept -> std::error_code {
   const std::error_code ec = meta.init_env();
   if (ec)
     return ec;
@@ -73,7 +74,7 @@ methylome::update_metadata() -> std::error_code {
 
 [[nodiscard]] auto
 methylome::read(const std::string &dirname, const std::string &methylome_name,
-                std::error_code &ec) -> methylome {
+                std::error_code &ec) noexcept -> methylome {
   methylome m;
   m.meta = methylome_metadata::read(dirname, methylome_name, ec);
   if (ec)
@@ -84,9 +85,9 @@ methylome::read(const std::string &dirname, const std::string &methylome_name,
   return m;
 }
 
-[[nodiscard]] auto
-methylome::write(const std::string &outdir,
-                 const std::string &name) const -> std::error_code {
+auto
+methylome::write(const std::string &outdir, const std::string &name,
+                 std::error_code &ec) const noexcept -> void {
   // make filenames
   const auto fn_wo_extn = std::filesystem::path{outdir} / name;
   const auto meta_filename = methylome_metadata::compose_filename(fn_wo_extn);
@@ -98,7 +99,8 @@ methylome::write(const std::string &outdir,
       std::error_code remove_ec;
       std::filesystem::remove(meta_filename, remove_ec);
     }
-    return meta_write_ec;
+    ec = meta_write_ec;
+    return;
   }
   const auto data_filename = methylome_data::compose_filename(fn_wo_extn);
   const auto data_write_ec = data.write(data_filename, meta.is_compressed);
@@ -115,12 +117,13 @@ methylome::write(const std::string &outdir,
       std::filesystem::remove(meta_filename, remove_ec);
     }
   }
-  return data_write_ec;
+  ec = data_write_ec;
+  return;
 }
 
 [[nodiscard]] auto
 methylome::files_exist(const std::string &directory,
-                       const std::string &methylome_name) -> bool {
+                       const std::string &methylome_name) noexcept -> bool {
   const auto fn_wo_extn = std::filesystem::path{directory} / methylome_name;
   const auto meta_filename = methylome_metadata::compose_filename(fn_wo_extn);
   const auto data_filename = methylome_data::compose_filename(fn_wo_extn);
@@ -137,7 +140,7 @@ methylome::files_exist(const std::string &directory,
 
 [[nodiscard]] auto
 methylome::list(const std::string &dirname,
-                std::error_code &ec) -> std::vector<std::string> {
+                std::error_code &ec) noexcept -> std::vector<std::string> {
   using dir_itr_type = std::filesystem::directory_iterator;
   auto dir_itr = dir_itr_type(dirname, ec);
   if (ec)
@@ -177,7 +180,8 @@ methylome::list(const std::string &dirname,
 }
 
 [[nodiscard]] auto
-methylome::parse_methylome_name(const std::string &filename) -> std::string {
+methylome::parse_methylome_name(const std::string &filename) noexcept
+  -> std::string {
   auto s = std::filesystem::path{filename}.filename().string();
   const auto dot = s.find('.');
   return dot == std::string::npos ? s : s.replace(dot, std::string::npos, "");

@@ -40,7 +40,7 @@ struct genome_index_metadata;
 
 [[nodiscard]] STATIC auto
 parse(const genome_index_metadata &meta, const std::string &line,
-      std::error_code &ec) -> genomic_interval;
+      std::error_code &ec) noexcept -> genomic_interval;
 
 }  // namespace transferase
 
