@@ -33,6 +33,7 @@
 #include <format>
 #include <functional>
 #include <genomic_interval.hpp>
+#include <iterator>  // for std::ssize
 #include <string>
 #include <vector>
 
@@ -63,29 +64,32 @@ genomic_interval_bindings(pybind11::class_<transferase::genomic_interval> &cls)
                    "Stop position of this interval in the chromosome")
     // comparators all derived from operator<=> (allows different
     // types to be compared for equality or non-equality)
-    // clang-format off
     .def(pybind11::self == pybind11::self)
     .def(pybind11::self != pybind11::self)
-    .def(pybind11::self <  pybind11::self)
+    .def(pybind11::self < pybind11::self)
     .def(pybind11::self <= pybind11::self)
-    .def(pybind11::self >  pybind11::self)
+    .def(pybind11::self > pybind11::self)
     .def(pybind11::self >= pybind11::self)
-    // clang-format on
     .def(
       "__repr__",
       [](const transferase::genomic_interval &gi) {
         return std::format("{}", gi);
       },
-      "Print a genomic interval with the numeric code for chromosome name")
+      R"doc("Print a genomic interval with the numeric code for chromosome
+name)doc")
     .def(
       "to_string",
       [](const transferase::genomic_interval &self,
          const transferase::genome_index &index) {
-        return std::format("{}\t{}\t{}", index.meta.chrom_order.at(self.ch_id),
+        const auto n_chroms = std::ssize(index.meta.chrom_order);
+        if (self.ch_id >= n_chroms)
+          throw std::out_of_range(std::format(
+            "Index out of range: ch_id={}, n_chroms={}", self.ch_id, n_chroms));
+        return std::format("{}\t{}\t{}", index.meta.chrom_order[self.ch_id],
                            self.start, self.stop);
       },
-      "Print a genomic interval with name of chromosome",
-      py::arg("genome_index"))
+      R"doc("Print a genomic interval with name of chromosome)doc",
+      "genome_index"_a)
     // static functions of genomic_interval class
     .def_static("read", &transferase::genomic_interval_read,
                 "Read a BED file of genomic intervals file", "genome_index"_a,
