@@ -75,7 +75,7 @@ genomic_interval_bindings(pybind11::class_<transferase::genomic_interval> &cls)
       [](const transferase::genomic_interval &gi) {
         return std::format("{}", gi);
       },
-      R"doc("Print a genomic interval with the numeric code for chromosome
+      R"doc(Print a genomic interval with the numeric code for chromosome
 name)doc")
     .def(
       "to_string",
@@ -88,7 +88,7 @@ name)doc")
         return std::format("{}\t{}\t{}", index.meta.chrom_order[self.ch_id],
                            self.start, self.stop);
       },
-      R"doc("Print a genomic interval with name of chromosome)doc",
+      R"doc(Print a genomic interval with name of chromosome)doc",
       "genome_index"_a)
     // static functions of genomic_interval class
     .def_static("read", &transferase::genomic_interval_read,
