@@ -29,9 +29,7 @@ import os
 from transferase import GenomeIndex
 from transferase import Methylome
 from transferase import GenomicInterval
-from transferase import LevelElement
 from transferase import LevelContainer
-from transferase import LevelElementCovered
 from transferase import LevelContainerCovered
 
 
@@ -240,15 +238,15 @@ def test_methylome_global_levels():
     """Test global_levels method"""
     meth = Methylome()
     result = meth.global_levels()
-    expected = LevelElement()
-    assert isinstance(result, LevelElement)
-    assert result.n_meth == expected.n_meth
+    assert isinstance(result, tuple), "result should be a tuple"
+    assert len(result) == 2, "result should have 2 elements"
+    assert result[0] == 0
 
 
 def test_methylome_global_levels_covered():
     """Test global_levels_covered method"""
     meth = Methylome()
     result = meth.global_levels_covered()
-    expected = LevelElementCovered()
-    assert isinstance(result, LevelElementCovered)
-    assert result.n_covered == expected.n_covered
+    assert isinstance(result, tuple), "result should be a tuple"
+    assert len(result) == 3, "result should have 3 elements"
+    assert result[2] == 0
