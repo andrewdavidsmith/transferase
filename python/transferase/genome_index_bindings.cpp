@@ -26,9 +26,6 @@
 #include <genome_index.hpp>
 #include <genomic_interval.hpp>  // IWYU pragma: keep
 
-#include <genome_index_data.hpp>
-#include <genome_index_metadata.hpp>
-
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>  // IWYU pragma: keep
 
@@ -74,8 +71,6 @@ auto
 genome_index_bindings(py::class_<transferase::genome_index> &cls) -> void {
   using namespace pybind11::literals;  // NOLINT
   cls.def(py::init<>())
-    .def_readonly("data", &transferase::genome_index::data)
-    .def_readonly("meta", &transferase::genome_index::meta)
     .def("is_consistent", &transferase::genome_index::is_consistent)
     .def("__hash__", &transferase::genome_index::get_hash)
     .def("__repr__", &transferase::genome_index::tostring)
