@@ -39,12 +39,24 @@ template <typename level_element_type> struct level_container;
 
 namespace py = pybind11;
 
+[[nodiscard]] static inline auto
+transferase_methylome_read(const std::string &directory,
+                           const std::string &methylome_name)
+  -> transferase::methylome {
+  std::error_code ec;
+  auto meth = transferase::methylome::read(directory, methylome_name, ec);
+  if (ec)
+    throw std::system_error(ec, std::format("directory={}, methylome_name={}",
+                                            directory, methylome_name));
+  return meth;
+}
+
 auto
 methylome_bindings(py::class_<transferase::methylome> &cls) -> void {
   using namespace pybind11::literals;  // NOLINT
   cls.def(py::init<>())
-    .def_static("read", &transferase::methylome::read, "directory"_a,
-                "methylome_name"_a, "error_code"_a)
+    .def_static("read", &transferase_methylome_read, "directory"_a,
+                "methylome_name"_a)
     .def("is_consistent",
          [](const transferase::methylome &self) -> bool {
            return self.is_consistent();
@@ -52,14 +64,34 @@ methylome_bindings(py::class_<transferase::methylome> &cls) -> void {
     .def(
       "is_consistent",
       [](const transferase::methylome &self,
-         const transferase::methylome &other) {
+         const transferase::methylome &other) -> bool {
         return self.is_consistent(other);
       },
       "other"_a)
-    .def("write", &transferase::methylome::write, "output_directory"_a,
-         "name"_a)
-    .def("init_metadata", &transferase::methylome::init_metadata, "index"_a)
-    .def("update_metadata", &transferase::methylome::update_metadata)
+    .def(
+      "write",
+      [](const transferase::methylome &self, const std::string &directory,
+         const std::string &name) -> void {
+        const std::error_code ec = self.write(directory, name);
+        if (ec)
+          throw std::system_error(ec);
+      },
+      "directory"_a, "name"_a)
+    .def(
+      "init_metadata",
+      [](transferase::methylome &self,
+         const transferase::genome_index &index) -> void {
+        const std::error_code ec = self.init_metadata(index);
+        if (ec)
+          throw std::system_error(ec);
+      },
+      "index"_a)
+    .def("update_metadata",
+         [](transferase::methylome &self) -> void {
+           const std::error_code ec = self.update_metadata();
+           if (ec)
+             throw std::system_error(ec);
+         })
     .def("add", &transferase::methylome::add, "other"_a)
     .def("__repr__", &transferase::methylome::tostring)
     .def("get_levels",
