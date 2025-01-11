@@ -33,6 +33,7 @@
 
 #include <algorithm>
 #include <cmath>    // for std::round
+#include <cstddef>  // for std::size_t
 #include <cstdint>  // for std::uint32_t
 #include <filesystem>
 #include <format>
@@ -42,6 +43,7 @@
 #include <system_error>
 #include <type_traits>
 #include <utility>  // for std::pair
+#include <variant>  // for std::hash
 #include <vector>
 
 namespace transferase {
@@ -78,10 +80,6 @@ struct methylome_data {
   methylome_data(methylome_data &&) noexcept = default;
   methylome_data &operator=(methylome_data &&) noexcept = default;
   // clang-format on
-
-  // [[nodiscard]] static auto
-  // read(const std::string &filename, const methylome_metadata &meta,
-  //      std::error_code &ec) noexcept -> methylome_data;
 
   [[nodiscard]] static auto
   read(const std::string &dirname, const std::string &methylome_name,
