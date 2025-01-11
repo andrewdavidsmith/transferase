@@ -30,11 +30,13 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cstddef>  // for std::size_t
 #include <cstdint>  // std::uint32_t
 #include <string>
 #include <system_error>
 #include <type_traits>
 #include <utility>
+#include <variant>  // for std::hash
 #include <vector>
 
 namespace transferase {

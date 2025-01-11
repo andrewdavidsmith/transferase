@@ -57,10 +57,7 @@ methylome::init_metadata(const genome_index &index) noexcept
     is_compressed_init
     // clang-format on
   };
-  // ADS: take care of variables not dependent on genome_index or
-  // methylome_data
-  const auto ec = meta.init_env();
-  return ec;
+  return meta.init_env();
 }
 
 [[nodiscard]] auto
@@ -93,31 +90,27 @@ methylome::write(const std::string &outdir, const std::string &name,
   const auto meta_filename = methylome_metadata::compose_filename(fn_wo_extn);
   const auto meta_write_ec = meta.write(meta_filename);
   if (meta_write_ec) {
-    std::error_code ec;
     const auto meta_exists = std::filesystem::exists(meta_filename, ec);
-    if (!ec && meta_exists) {
-      std::error_code remove_ec;
-      std::filesystem::remove(meta_filename, remove_ec);
-    }
-    ec = meta_write_ec;
+    if (!ec && meta_exists)
+      std::filesystem::remove(meta_filename, ec);
+    ec = meta_write_ec;  // 'ec' takes value from attempted write
     return;
   }
   const auto data_filename = methylome_data::compose_filename(fn_wo_extn);
   const auto data_write_ec = data.write(data_filename, meta.is_compressed);
   if (data_write_ec) {
-    std::error_code ec;
     const auto data_exists = std::filesystem::exists(data_filename, ec);
-    if (!ec && data_exists) {
-      std::error_code remove_ec;
-      std::filesystem::remove(data_filename, remove_ec);
-    }
+    if (!ec && data_exists)
+      std::filesystem::remove(data_filename, ec);
     const auto meta_exists = std::filesystem::exists(meta_filename, ec);
     if (!ec && meta_exists) {
       std::error_code remove_ec;
       std::filesystem::remove(meta_filename, remove_ec);
     }
+    ec = data_write_ec;  // 'ec' takes value from attempted write
+    return;
   }
-  ec = data_write_ec;
+  ec = std::error_code{};  // 'ec' passed by ref; clear it if ok here
   return;
 }
 
