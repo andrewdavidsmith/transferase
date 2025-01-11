@@ -39,7 +39,7 @@ TEST(download_test, send_request_timeout) {
   const auto target = std::filesystem::path{"/delay/1"};
   const auto outdir = std::filesystem::path{"/tmp"};
   const std::chrono::milliseconds connect_timeout{0};
-  const std::chrono::milliseconds download_timeout{240'000};  // milliseconds
+  const std::chrono::milliseconds download_timeout{0'500};  // 0.5s
   // clang-format off
   const download_request dr{
     "httpbin.org",
@@ -64,8 +64,8 @@ TEST(download_test, send_request_timeout) {
 TEST(download_test, receive_download_timeout) {
   const auto target = std::filesystem::path{"/delay/1"};
   const auto outdir = std::filesystem::path{"/tmp"};
-  const std::chrono::milliseconds connect_timeout{10'000};  // seconds
-  const std::chrono::milliseconds download_timeout{10};
+  const std::chrono::milliseconds connect_timeout{1'500};  // 1.5s
+  const std::chrono::milliseconds download_timeout{1};     // 0.001s
   // clang-format off
   const download_request dr{
     "httpbin.org",
