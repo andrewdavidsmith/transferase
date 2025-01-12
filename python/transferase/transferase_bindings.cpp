@@ -60,7 +60,7 @@ namespace py = pybind11;
 auto
 initialize_transferase() -> void {
   transferase::logger::instance(transferase::shared_from_cout(), "Transferase",
-                                transferase::log_level_t::debug);
+                                transferase::log_level_t::info);
 }
 
 PYBIND11_MODULE(transferase, the_module) {
