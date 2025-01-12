@@ -24,6 +24,7 @@
 #ifndef SRC_METHYLOME_HPP_
 #define SRC_METHYLOME_HPP_
 
+#include "level_container.hpp"
 #include "level_element.hpp"
 #include "methylome_data.hpp"
 #include "methylome_metadata.hpp"
@@ -32,6 +33,7 @@
 #include <cctype>
 #include <cstddef>  // for std::size_t
 #include <cstdint>  // std::uint32_t
+#include <format>
 #include <string>
 #include <system_error>
 #include <type_traits>

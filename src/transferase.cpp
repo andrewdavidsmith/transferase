@@ -41,8 +41,8 @@
 
 #include <algorithm>
 #include <array>
-#include <cstdlib>  // for EXIT_FAILURE
-#include <fstream>
+#include <cstdlib>     // for EXIT_FAILURE
+#include <exception>   // for std::set_terminate
 #include <functional>  // for function
 #include <iostream>
 #include <iterator>  // for cend, cbegin
@@ -51,6 +51,7 @@
 #include <string>
 #include <string_view>  // for string_view
 #include <tuple>
+#include <variant>  // for std::tuple
 #include <vector>
 
 typedef std::function<int(int, char **)> main_fun;
