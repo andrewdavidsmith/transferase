@@ -25,6 +25,8 @@
 #define SRC_COMMAND_INDEX_HPP_
 
 auto
-command_index_main(int argc, char *argv[]) -> int;
+command_index_main(int argc,
+                   char *argv[])  // NOLINT(cppcoreguidelines-avoid-c-arrays)
+  -> int;
 
 #endif  // SRC_COMMAND_INDEX_HPP_

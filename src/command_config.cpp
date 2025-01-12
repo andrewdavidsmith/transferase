@@ -79,14 +79,6 @@ xfrase config -c my_config_file.toml -s example.com -p 5009 --genomes hg38,mm39
 #include <variant>  // IWYU pragma: keep
 #include <vector>
 
-template <>
-struct std::formatter<std::filesystem::path> : std::formatter<std::string> {
-  auto
-  format(const std::filesystem::path &p, std::format_context &ctx) const {
-    return std::format_to(ctx.out(), "{}", p.string());
-  }
-};
-
 namespace transferase {
 
 struct remote_indexes_resources {
@@ -114,7 +106,7 @@ get_remote_indexes_resources()
 
   std::error_code ec;
   const auto exe_dir_parent =
-    std::filesystem::canonical(exe_path).parent_path().parent_path();
+    std::filesystem::canonical(exe_path).parent_path().parent_path().string();
   bool is_dir = std::filesystem::is_directory(exe_dir_parent, ec);
   if (ec) {
     std::println("Error: {} ({})", ec, exe_dir_parent);
@@ -131,11 +123,11 @@ get_remote_indexes_resources()
   const auto data_dir = exe_dir_parent / data_path / std::string(PROJECT_NAME);
   is_dir = std::filesystem::is_directory(data_dir, ec);
   if (ec) {
-    std::println("Error: {} ({})", ec, data_dir);
+    std::println("Error: {} ({})", ec, data_dir.string());
     return {{}, ec};
   }
   if (!is_dir) {
-    std::println("Not a directory: {}", data_dir);
+    std::println("Not a directory: {}", data_dir.string());
     return {{}, std::make_error_code(std::errc::not_a_directory)};
   }
 
@@ -146,22 +138,24 @@ get_remote_indexes_resources()
   if (!in)
     return {{}, std::make_error_code(std::errc(errno))};
 
-  const auto filesize = std::filesystem::file_size(json_file, ec);
+  const auto filesize =
+    static_cast<std::streamsize>(std::filesystem::file_size(json_file, ec));
   if (ec) {
-    std::println("Bad system config file: {}", json_file);
+    std::println("Bad system config file: {}", json_file.string());
     return {{}, ec};
   }
 
   std::string payload(filesize, '\0');
   if (!in.read(payload.data(), filesize)) {
-    std::println("Failure reading file: {}", json_file);
+    std::println("Failure reading file: {}", json_file.string());
     return {{}, std::make_error_code(std::errc(errno))};
   }
 
   std::vector<remote_indexes_resources> resources;
   boost::json::parse_into(resources, payload, ec);
   if (ec) {
-    std::println("Malformed JSON for remote resources {}: {}", json_file, ec);
+    std::println("Malformed JSON for remote resources {}: {}",
+                 json_file.string(), ec);
     return {{}, ec};
   }
   return std::make_tuple(std::move(resources), std::error_code{});
@@ -218,7 +212,9 @@ struct std::formatter<transferase::remote_indexes_resources>
 };
 
 auto
-command_config_main(int argc, char *argv[]) -> int {
+command_config_main(int argc,
+                    char *argv[])  // NOLINT(cppcoreguidelines-avoid-c-arrays)
+  -> int {
   static constexpr auto command = "config";
   static const auto usage =
     std::format("Usage: xfrase {} [options]\n", rstrip(command));
@@ -262,7 +258,7 @@ command_config_main(int argc, char *argv[]) -> int {
   }
 
   const auto config_dir =
-    std::filesystem::path(args.client_config_file).parent_path();
+    std::filesystem::path(args.client_config_file).parent_path().string();
   if (!args.quiet)
     std::println("Client config directory: {}", config_dir);
 

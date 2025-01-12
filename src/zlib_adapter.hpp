@@ -97,6 +97,7 @@ make_error_code(zlib_adapter_error_code e) {
 namespace transferase {
 
 struct gzinfile {
+  // no copy
   gzinfile(const gzinfile &other) = delete;
   gzinfile &
   operator=(const gzinfile &other) = delete;
@@ -118,7 +119,7 @@ struct gzinfile {
   gzFile in{};
   std::int32_t pos{};
   std::int32_t len{};
-  std::array<std::uint8_t, buf_size> buf;
+  std::array<std::uint8_t, buf_size> buf{};
 };
 
 // non-member for symmetry with std::getline(std::istream&, std::string&)

@@ -64,7 +64,9 @@ genome_index::write(const std::string &directory, const std::string &name,
   if (meta_write_ec) {
     if (std::filesystem::exists(meta_filename)) {
       std::error_code remove_ec;
-      std::filesystem::remove(meta_filename, remove_ec);
+      [[maybe_unused]] const bool remove_ok =
+        std::filesystem::remove(meta_filename, remove_ec);
+      assert(remove_ok);
     }
     error = meta_write_ec;
     return;
@@ -73,10 +75,16 @@ genome_index::write(const std::string &directory, const std::string &name,
   const auto data_write_ec = data.write(data_filename);
   if (data_write_ec) {
     std::error_code remove_ec;
-    if (std::filesystem::exists(data_filename))
-      std::filesystem::remove(meta_filename, remove_ec);
-    if (std::filesystem::exists(meta_filename))
-      std::filesystem::remove(meta_filename, remove_ec);
+    if (std::filesystem::exists(data_filename)) {
+      [[maybe_unused]]
+      const bool remove_ok = std::filesystem::remove(meta_filename, remove_ec);
+      assert(remove_ok);
+    }
+    if (std::filesystem::exists(meta_filename)) {
+      [[maybe_unused]]
+      const bool remove_ok = std::filesystem::remove(meta_filename, remove_ec);
+      assert(remove_ok);
+    }
   }
   error = data_write_ec;
   return;
@@ -198,11 +206,13 @@ get_cpgs(const std::string_view chrom) noexcept -> genome_index_data::vec {
 [[nodiscard]] STATIC auto
 get_chrom_name_starts(const char *data, const std::size_t sz) noexcept
   -> std::vector<std::size_t> {
+  // NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic)
   const auto g_end = data + sz;
   const char *g_itr = data;
   std::vector<std::size_t> starts;
   while ((g_itr = std::find(g_itr, g_end, '>')) != g_end)
     starts.push_back(std::distance(data, g_itr++));
+  // NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic)
   return starts;
 }
 
@@ -211,7 +221,9 @@ get_chrom_name_stops(std::vector<std::size_t> starts, const char *data,
                      const std::size_t sz) noexcept
   -> std::vector<std::size_t> {
   const auto next_stop = [&](const std::size_t start) -> std::size_t {
+    // NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic)
     return std::distance(data, std::find(data + start, data + sz, '\n'));
+    // NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic)
   };  // finds the stop position following each start position
   std::ranges::transform(starts, std::begin(starts), next_stop);
   return starts;
@@ -232,8 +244,11 @@ get_chroms(const char *data, const std::size_t sz,
 
   std::ranges::for_each(seq_starts, [](auto &x) { ++x; });
   std::vector<std::string_view> chroms;
-  for (const auto [sta, sto] : std::views::zip(seq_starts, seq_stops))
+  for (const auto [sta, sto] : std::views::zip(seq_starts, seq_stops)) {
+    // NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic)
     chroms.emplace_back(data + sta, sto - sta);
+    // NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+  }
 
   return chroms;
 }
@@ -255,6 +270,8 @@ make_genome_index_plain(const std::string &genome_filename,
     return {};
   }
 
+  // NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+
   // initialize the chromosome order
   std::vector<std::pair<std::uint32_t, std::string>> chrom_sorter;
   for (auto idx = 0;
@@ -273,6 +290,8 @@ make_genome_index_plain(const std::string &genome_filename,
 
   // chroms is a view into 'gf.data' so don't free gf.data too early
   auto chroms = get_chroms(gf.data, gf.sz, name_starts, name_stops);
+
+  // NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 
   // order chrom sequences by the sorted order of their names
   chroms = std::views::transform(chrom_sorter | std::views::elements<0>,
@@ -343,6 +362,8 @@ make_genome_index_gzip(const std::string &genome_filename,
     return {};
   }
 
+  // NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+
   // initialize the chromosome order
   std::vector<std::pair<std::uint32_t, std::string>> chrom_sorter;
   for (auto idx = 0;
@@ -354,6 +375,8 @@ make_genome_index_gzip(const std::string &genome_filename,
   std::ranges::sort(chrom_sorter, [](const auto &a, const auto &b) {
     return a.second < b.second;
   });
+
+  // NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 
   genome_index_metadata meta;
   meta.chrom_order =

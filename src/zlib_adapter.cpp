@@ -27,9 +27,11 @@
 
 #include <algorithm>  // for std::ranges::copy_n
 #include <cassert>
-#include <cerrno>  // for errno
-#include <cstdio>  // std::fread
+#include <cerrno>     // for errno
+#include <cstdio>     // std::fread
+#include <exception>  // for std::terminate
 #include <filesystem>
+#include <memory>  // for std::unique_ptr
 #include <ranges>  // IWYU pragma: keep
 #include <string>
 #include <system_error>
@@ -41,20 +43,26 @@ namespace transferase {
 
 [[nodiscard]] auto
 is_gzip_file(const std::string &filename) -> bool {
-  auto f = std::fopen(filename.data(), "rb");
+  static constexpr auto gz_magic0 = 0x1F;
+  static constexpr auto gz_magic1 = 0x8B;
+  const auto closer = [](FILE *fp) {
+    const auto r = std::fclose(fp);  // NOLINT(cppcoreguidelines-owning-memory)
+    if (r)
+      std::terminate();
+  };
+
+  std::unique_ptr<FILE, decltype(closer)> f(std::fopen(filename.data(), "rb"),
+                                            closer);
   if (f == nullptr)
     return false;
 
   // Read the first two bytes of the file
   std::array<std::uint8_t, 2> buf{};
-  if (std::fread(buf.data(), 1, 2, f) != 2) {
-    std::fclose(f);
+  if (std::fread(buf.data(), 1, 2, f.get()) != 2)
     return false;
-  }
-  std::fclose(f);
 
   // Check if the first two bytes match the gzip magic number
-  return (buf[0] == 0x1F && buf[1] == 0x8B);
+  return (buf[0] == gz_magic0 && buf[1] == gz_magic1);
 }
 
 gzinfile::gzinfile(const std::string &filename, std::error_code &ec) :
@@ -89,8 +97,9 @@ gzinfile::getline(std::string &line) -> gzinfile & {
     return *this;
   }
   line.clear();
+  // NOLINTBEGIN(cppcoreguidelines-pro-bounds-constant-array-index)
   while (buf[pos] != '\n') {
-    line += buf[pos++];
+    line += static_cast<char>(buf[pos++]);
     if (pos == len && !read()) {
       if (in) {
         gzclose(in);
@@ -99,6 +108,7 @@ gzinfile::getline(std::string &line) -> gzinfile & {
       return *this;
     }
   }
+  // NOLINTEND(cppcoreguidelines-pro-bounds-constant-array-index)
   assert(pos < buf_size);
   ++pos;  // if here, then hopefully pos < buf_size && buf[pos]=='\n'
   return *this;
@@ -114,7 +124,7 @@ read_gzfile_into_buffer(const std::string &filename)
   if (!gz)
     return {{}, std::make_error_code(std::errc(errno))};
 
-  std::array<char, buf_size> buf;
+  std::array<char, buf_size> buf{};
   std::vector<char> buffer;
   buffer.reserve(std::filesystem::file_size(filename));
   std::int32_t n_bytes{};

@@ -45,6 +45,8 @@ logger::set_attributes(const std::string_view appname) -> std::error_code {
 
   // ADS TODO: error conditions on buffer sizes
 
+  // NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+
   // fill the buffer (after the time fields)
   cursor = buf.data() + date_time_fmt_size;
   *cursor++ = delim;
@@ -72,6 +74,8 @@ logger::set_attributes(const std::string_view appname) -> std::error_code {
 #endif
   // ADS: no complaints from gcc because it can't find buff?
   *tcr.ptr++ = delim;
+
+  // NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 
   if (tcr.ec != std::errc{})
     return std::make_error_code(tcr.ec);

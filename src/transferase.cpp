@@ -40,10 +40,12 @@
 #include <boost/program_options.hpp>
 
 #include <algorithm>
+#include <array>
 #include <cstdlib>  // for EXIT_FAILURE
 #include <fstream>
 #include <functional>  // for function
-#include <iterator>    // for cend, cbegin
+#include <iostream>
+#include <iterator>  // for cend, cbegin
 #include <print>
 #include <ranges>
 #include <string>
@@ -52,7 +54,9 @@
 #include <vector>
 
 typedef std::function<int(int, char **)> main_fun;
-const std::tuple<std::string_view, main_fun, std::string_view> commands[] = {
+typedef std::tuple<std::string_view, main_fun, std::string_view> cmd_tuple;
+static constexpr auto n_commands = 10;
+const auto commands = std::array<cmd_tuple, n_commands>{{
   // clang-format off
   {"config", command_config_main, "configure a client for remote queries"},
   {"list", command_list_main, "list methylome or indexs in a directory"},
@@ -65,7 +69,7 @@ const std::tuple<std::string_view, main_fun, std::string_view> commands[] = {
   {"bins", command_bins_main, "get methylation levels in each bin"},
   {"server", command_server_main, "run a server to respond to lookup queries"},
   // clang-format on
-};
+}};
 
 static auto
 format_help(const std::string &description,
@@ -88,8 +92,14 @@ format_help(const std::string &description,
 }
 
 int
-main(int argc, char *argv[]) {
+main(int argc, char *argv[])  // NOLINT(cppcoreguidelines-avoid-c-arrays)
+{
   static constexpr auto program = "transferase";
+
+  std::set_terminate([]() {
+    std::println(std::cerr, "Terminating due to critical error");
+    std::abort();
+  });
 
   std::string command;
   namespace po = boost::program_options;

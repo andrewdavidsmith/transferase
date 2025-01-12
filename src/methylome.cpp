@@ -91,8 +91,10 @@ methylome::write(const std::string &outdir, const std::string &name,
   const auto meta_write_ec = meta.write(meta_filename);
   if (meta_write_ec) {
     const auto meta_exists = std::filesystem::exists(meta_filename, ec);
-    if (!ec && meta_exists)
-      std::filesystem::remove(meta_filename, ec);
+    if (!ec && meta_exists) {
+      [[maybe_unused]] const auto remove_ok =
+        std::filesystem::remove(meta_filename, ec);
+    }
     ec = meta_write_ec;  // 'ec' takes value from attempted write
     return;
   }
@@ -100,12 +102,15 @@ methylome::write(const std::string &outdir, const std::string &name,
   const auto data_write_ec = data.write(data_filename, meta.is_compressed);
   if (data_write_ec) {
     const auto data_exists = std::filesystem::exists(data_filename, ec);
-    if (!ec && data_exists)
-      std::filesystem::remove(data_filename, ec);
+    if (!ec && data_exists) {
+      [[maybe_unused]] const auto remove_ok =
+        std::filesystem::remove(data_filename, ec);
+    }
     const auto meta_exists = std::filesystem::exists(meta_filename, ec);
     if (!ec && meta_exists) {
       std::error_code remove_ec;
-      std::filesystem::remove(meta_filename, remove_ec);
+      [[maybe_unused]] const auto remove_ok =
+        std::filesystem::remove(meta_filename, remove_ec);
     }
     ec = data_write_ec;  // 'ec' takes value from attempted write
     return;

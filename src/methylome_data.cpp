@@ -75,7 +75,8 @@ methylome_data::get_n_cpgs_from_file(const std::string &filename) noexcept
 methylome_data_read(const std::string &filename,
                     const methylome_metadata &metadata,
                     std::error_code &ec) noexcept -> methylome_data {
-  const auto filesize = std::filesystem::file_size(filename, ec);
+  const auto filesize =
+    static_cast<std::streamsize>(std::filesystem::file_size(filename, ec));
   if (ec)
     return {};
   std::ifstream in(filename);
@@ -84,6 +85,7 @@ methylome_data_read(const std::string &filename,
     return {};
   }
 
+  // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
   methylome_data meth;
   if (metadata.is_compressed) {
     std::vector<std::uint8_t> buf(filesize);
@@ -114,6 +116,8 @@ methylome_data_read(const std::string &filename,
     ec = methylome_data_error_code::error_reading;
     return {};
   }
+
+  // NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)
 
   ec = std::error_code{};
   return meth;
@@ -159,15 +163,19 @@ methylome_data::write(const std::string &filename,
   if (!out)
     return std::make_error_code(std::errc(errno));
 
+  // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
   if (zip) {
-    if (!out.write(reinterpret_cast<const char *>(buf.data()), std::size(buf)))
+    const auto n_bytes = static_cast<std::streamsize>(std::size(buf));
+    if (!out.write(reinterpret_cast<const char *>(buf.data()), n_bytes))
       return methylome_data_error_code::error_writing;
   }
   else {
-    if (!out.write(reinterpret_cast<const char *>(cpgs.data()),
-                   std::size(cpgs) * record_size))
+    const auto n_bytes =
+      static_cast<std::streamsize>(std::size(cpgs) * record_size);
+    if (!out.write(reinterpret_cast<const char *>(cpgs.data()), n_bytes))
       return methylome_data_error_code::error_writing;
   }
+  // NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)
   return std::error_code{};
 }
 

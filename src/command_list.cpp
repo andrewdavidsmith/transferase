@@ -58,7 +58,9 @@ xfrase list /path/to/some_directory ../relative/path
 #include <vector>
 
 auto
-command_list_main(int argc, char *argv[]) -> int {
+command_list_main(int argc,
+                  char *argv[])  // NOLINT(cppcoreguidelines-avoid-c-arrays)
+  -> int {
   static constexpr auto command = "list";
   static const auto usage =
     std::format("Usage: xfrase {} [options]\n", rstrip(command));

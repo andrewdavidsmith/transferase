@@ -70,7 +70,9 @@ xfrase bins remote -x index_dir -g hg38 -s example.com -m SRX012345 -o output.be
 #include <vector>
 
 auto
-command_bins_main(int argc, char *argv[]) -> int {
+command_bins_main(int argc,
+                  char *argv[])  // NOLINT(cppcoreguidelines-avoid-c-arrays)
+  -> int {
   static constexpr auto command = "bins";
   static constexpr auto default_port = "5000";
   static const auto usage =

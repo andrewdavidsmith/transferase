@@ -25,6 +25,8 @@
 #define SRC_COMMAND_LIST_HPP_
 
 auto
-command_list_main(int argc, char *argv[]) -> int;
+command_list_main(int argc,
+                  char *argv[])  // NOLINT(cppcoreguidelines-avoid-c-arrays)
+  -> int;
 
 #endif  // SRC_COMMAND_LIST_HPP_

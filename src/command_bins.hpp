@@ -25,6 +25,8 @@
 #define SRC_COMMAND_BINS_HPP_
 
 auto
-command_bins_main(int argc, char *argv[]) -> int;
+command_bins_main(int argc,
+                  char *argv[])  // NOLINT(cppcoreguidelines-avoid-c-arrays)
+  -> int;
 
 #endif  // SRC_COMMAND_BINS_HPP_

@@ -92,7 +92,7 @@ write_pid_to_file(std::error_code &ec) -> void {
   }
   lgr.info("transferase daemon pid file: {}", pid_filename);
   const auto pid_str = std::format("{}", pid);
-  out.write(pid_str.data(), std::size(pid_str));
+  out.write(pid_str.data(), static_cast<std::streamsize>(std::size(pid_str)));
   if (!out) {
     ec = std::make_error_code(std::errc{errno});
     lgr.error("Error writing pid file {}: {}", pid_filename, ec);
@@ -123,7 +123,7 @@ server::server(const std::string &address, const std::string &port,
   if (boost_ec) {
     ec = boost_ec;
     lgr.error("{} {}:{}", ec, address, port);
-    std::raise(SIGTERM);
+    (void)std::raise(SIGTERM);
     return;  // don't wait for signal handler
   }
 
@@ -133,37 +133,38 @@ server::server(const std::string &address, const std::string &port,
   lgr.info("Resolved endpoint {}", endpoint_str);
 
   // open acceptor...
-  acceptor.open(endpoint.protocol(), boost_ec);
+  (void)acceptor.open(endpoint.protocol(), boost_ec);
   if (boost_ec) {
     ec = boost_ec;
     lgr.error("Error opening endpoint {}: {}", endpoint_str, ec);
-    std::raise(SIGTERM);
+    (void)std::raise(SIGTERM);
     return;  // don't wait for signal handler
   }
 
   // ...with option to reuse the address (SO_REUSEADDR)
-  acceptor.set_option(boost::asio::ip::tcp::acceptor::reuse_address(true),
-                      boost_ec);
+  (void)acceptor.set_option(boost::asio::ip::tcp::acceptor::reuse_address(true),
+                            boost_ec);
   if (boost_ec) {
     ec = boost_ec;
     lgr.error("Error setting SO_REUSEADDR: {}", ec);
-    std::raise(SIGTERM);
+    (void)std::raise(SIGTERM);
     return;  // don't wait for signal handler
   }
 
-  acceptor.bind(endpoint, boost_ec);
+  (void)acceptor.bind(endpoint, boost_ec);
   if (boost_ec) {
     ec = boost_ec;
     lgr.error("Error binding endpoint {}: {}", endpoint_str, ec);
-    std::raise(SIGTERM);
+    (void)std::raise(SIGTERM);
     return;  // don't wait for signal handler
   }
 
-  acceptor.listen(boost::asio::socket_base::max_listen_connections, boost_ec);
+  (void)acceptor.listen(boost::asio::socket_base::max_listen_connections,
+                        boost_ec);
   if (boost_ec) {
     ec = boost_ec;
     lgr.error("Error listening  on endpoint {}: {}", endpoint_str, ec);
-    std::raise(SIGTERM);
+    (void)std::raise(SIGTERM);
     return;  // don't wait for signal handler
   }
   do_accept();
@@ -246,9 +247,12 @@ server::server(const std::string &address, const std::string &port,
   close(STDOUT_FILENO);
   close(STDERR_FILENO);
 
+  // NOLINTBEGIN(cppcoreguidelines-pro-type-vararg)
+
   // We don't want the daemon to have any standard input.
   static constexpr auto dev_null = "/dev/null";
-  if (open(dev_null, O_RDONLY) < 0) {
+  auto open_value = open(dev_null, O_RDONLY);
+  if (open_value < 0) {
     ec = std::make_error_code(std::errc(errno));
     lgr.error("Unable to open {}: {}", dev_null, ec);
     return;
@@ -260,7 +264,8 @@ server::server(const std::string &address, const std::string &port,
   const auto output = "/tmp/xfrase_daemon.out";
   const int flags = O_WRONLY | O_CREAT | O_APPEND;
   const mode_t mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;  // 644
-  if (open(output, flags, mode) < 0) {
+  open_value = open(output, flags, mode);
+  if (open_value < 0) {
     ec = std::make_error_code(std::errc(errno));
     lgr.error("Unable to open output file {}: {}", output, ec);
     return;
@@ -278,6 +283,10 @@ server::server(const std::string &address, const std::string &port,
   // io_context 'ioc' can now be used normally
   syslog(LOG_INFO | LOG_USER, "Daemon started.");
   lgr.info("Daemon started (pid: {})", getpid());
+
+  // NOLINTEND(cppcoreguidelines-pro-type-vararg)
+
+  // NOLINTBEGIN(cert-err33-c)
 
   boost::asio::ip::tcp::resolver resolver(ioc);
   boost::system::error_code boost_ec;
@@ -328,6 +337,9 @@ server::server(const std::string &address, const std::string &port,
     std::raise(SIGTERM);
     return;  // don't wait for signal handler
   }
+
+  // NOLINTEND(cert-err33-c)
+
   do_accept();
 }
 
@@ -382,7 +394,9 @@ server::do_daemon_await_stop() -> void {
     [this](const boost::system::error_code boost_ec, const int signo) {
       lgr.warning("Received signal {} ({})", strsignal(signo), boost_ec);
       const auto message = std::format("Daemon stopped (pid: {})", getpid());
+      // NOLINTBEGIN(cppcoreguidelines-pro-type-vararg)
       syslog(LOG_INFO | LOG_USER, "%s", message.data());
+      // NOLINTEND(cppcoreguidelines-pro-type-vararg)
       lgr.info(message);
       std::error_code ec;
       const auto pid_file = get_pid_filename(ec);

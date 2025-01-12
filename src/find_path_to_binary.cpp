@@ -43,15 +43,13 @@ namespace transferase {
 [[nodiscard]] auto
 find_path_to_binary() -> std::string {
   static constexpr auto path_buf_len = 1024;
-  std::array<char, path_buf_len> path_buf;
+  std::array<char, path_buf_len> path_buf{0};  // init to zeros
 
 #if defined(__linux__)
   const ssize_t length =
     readlink("/proc/self/exe", path_buf.data(), path_buf_len - 1);
-  if (length != -1) {
-    path_buf[length] = '\0';
+  if (length != -1)
     return std::string{path_buf.data()};
-  }
 #elif defined(__APPLE__)
   const pid_t pid = getpid();
   const ssize_t length = proc_pidpath(pid, path_buf.data(), path_buf_len);

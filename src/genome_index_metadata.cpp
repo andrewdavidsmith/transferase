@@ -96,7 +96,8 @@ genome_index_metadata::read(const std::string &json_filename,
     return {};
   }
 
-  const auto filesize = std::filesystem::file_size(json_filename, ec);
+  const auto filesize =
+    static_cast<std::streamsize>(std::filesystem::file_size(json_filename, ec));
   if (ec)
     return {};
 
