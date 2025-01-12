@@ -23,7 +23,8 @@
 
 #include "methylome_bindings.hpp"
 
-#include <genome_index.hpp>  // IWYU pragma: keep
+#include <genome_index.hpp>   // IWYU pragma: keep
+#include <level_element.hpp>  // for level_element_covered_t (ptr only)
 #include <methylome.hpp>
 
 #include <pybind11/pybind11.h>
