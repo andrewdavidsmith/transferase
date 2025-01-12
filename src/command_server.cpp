@@ -70,18 +70,9 @@ xfrase server -s localhost -m methylomes -x indexes
 #include <string>
 #include <string_view>
 #include <system_error>
-#include <thread>  // apparently for std::formatter
 #include <tuple>
 #include <variant>
 #include <vector>
-
-template <>
-struct std::formatter<std::filesystem::path> : std::formatter<std::string> {
-  auto
-  format(const std::filesystem::path &p, std::format_context &ctx) const {
-    return std::format_to(ctx.out(), "{}", p.string());
-  }
-};
 
 namespace transferase {
 
@@ -103,16 +94,16 @@ struct server_argset : argset_base<server_argset> {
   static constexpr auto log_level_default{log_level_t::info};
   static constexpr auto n_threads_default{1};
   static constexpr auto max_resident_default = 32;
-  std::string hostname{};
-  std::string port{};
-  std::string methylome_dir{};
-  std::string index_dir{};
-  std::string log_filename{};
+  std::string hostname;
+  std::string port;
+  std::string methylome_dir;
+  std::string index_dir;
+  std::string log_filename;
   transferase::log_level_t log_level{};
   std::uint32_t n_threads{};
   std::uint32_t max_resident{};
   bool daemonize{};
-  std::string config_out{};
+  std::string config_out;
 
   auto
   log_options_impl() const {
@@ -203,12 +194,13 @@ check_directory(const auto &dirname, std::error_code &ec) -> std::string {
   }
   const auto is_dir = std::filesystem::is_directory(canonical_dir, ec);
   if (ec) {
-    lgr.error("Failed to identify directory {}: {}", canonical_dir, ec);
+    lgr.error("Failed to identify directory {}: {}", canonical_dir.string(),
+              ec);
     return {};
   }
   if (!is_dir) {
     ec = std::make_error_code(std::errc::not_a_directory);
-    lgr.error("{}: {}", canonical_dir, ec);
+    lgr.error("{}: {}", canonical_dir.string(), ec);
     return {};
   }
   return canonical_dir;
@@ -217,7 +209,9 @@ check_directory(const auto &dirname, std::error_code &ec) -> std::string {
 }  // namespace transferase
 
 auto
-command_server_main(int argc, char *argv[]) -> int {
+command_server_main(int argc,
+                    char *argv[])  // NOLINT(cppcoreguidelines-avoid-c-arrays)
+  -> int {
   static constexpr auto command = "server";
   static const auto usage =
     std::format("Usage: xfrase {} [options]\n", rstrip(command));

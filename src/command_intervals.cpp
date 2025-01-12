@@ -71,7 +71,9 @@ xfrase intervals remote -x index_dir -g hg38 -s example.com -m methylome_name -o
 #include <vector>
 
 auto
-command_intervals_main(int argc, char *argv[]) -> int {
+command_intervals_main(
+  int argc, char *argv[])  // NOLINT(cppcoreguidelines-avoid-c-arrays)
+  -> int {
   static constexpr auto command = "intervals";
   static const auto usage =
     std::format("Usage: xfrase intervals [local|remote] [options]\n");

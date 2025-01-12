@@ -40,7 +40,8 @@ auto
 connection::stop() -> void {
   lgr.debug("{} Initiating connection shutdown.", conn_id);
   boost::system::error_code shutdown_ec;  // for non-throwing
-  socket.shutdown(boost::asio::ip::tcp::socket::shutdown_both, shutdown_ec);
+  (void)socket.shutdown(boost::asio::ip::tcp::socket::shutdown_both,
+                        shutdown_ec);
   if (shutdown_ec)
     lgr.warning("{} Shutdown error: {}", conn_id, shutdown_ec);
 }
@@ -111,7 +112,7 @@ connection::read_query() -> void {
   // consistency for setting and clearing the timeouts
   auto self(shared_from_this());
   socket.async_read_some(
-    boost::asio::buffer(query.data() + query_byte, query_remaining),
+    boost::asio::buffer(query.data(query_byte), query_remaining),
     [this, self](const boost::system::error_code ec,
                  const std::size_t bytes_transferred) {
       // remove deadline while doing computation
@@ -211,7 +212,7 @@ connection::respond_with_levels() -> void {
         /* ADS: closing here but not sure it makes sense; RAII? See comment in
          * check_deadline */
         boost::system::error_code socket_close_ec;  // for non-throwing
-        socket.close(socket_close_ec);
+        (void)socket.close(socket_close_ec);
         if (socket_close_ec)
           lgr.warning("{} Socket close error: {}", conn_id, socket_close_ec);
       }
@@ -240,7 +241,7 @@ connection::check_deadline() -> void {
     /* ADS: closing here but not sure it makes sense; RAII? see comment in
      * respond_with_levels */
     boost::system::error_code socket_close_ec;  // for non-throwing
-    socket.close(socket_close_ec);
+    (void)socket.close(socket_close_ec);
     if (socket_close_ec)
       lgr.warning("{} Socket close error: {}", conn_id, socket_close_ec);
   }

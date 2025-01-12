@@ -68,7 +68,9 @@ xfrase check -x index_dir -d methylome_dir -g hg38 -m SRX012345 SRX612345
 #include <vector>
 
 auto
-command_check_main(int argc, char *argv[]) -> int {
+command_check_main(int argc,
+                   char *argv[])  // NOLINT(cppcoreguidelines-avoid-c-arrays)
+  -> int {
   static constexpr auto command = "check";
   static const auto usage =
     std::format("Usage: xfrase {} [options]\n", rstrip(command));

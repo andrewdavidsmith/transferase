@@ -66,7 +66,9 @@ xfrase merge -o merged.m16 -i SRX0123*.m16
 #include <vector>
 
 auto
-command_merge_main(int argc, char *argv[]) -> int {
+command_merge_main(int argc,
+                   char *argv[])  // NOLINT(cppcoreguidelines-avoid-c-arrays)
+  -> int {
   static constexpr auto command = "merge";
   static const auto usage =
     std::format("Usage: xfrase {} [options]\n", rstrip(command));

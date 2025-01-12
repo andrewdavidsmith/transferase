@@ -86,7 +86,7 @@ template <typename T> struct argset_base {
   }
 
   [[nodiscard]] auto
-  parse(int argc, char *argv[], const std::string &usage,
+  parse(int argc, char const *const argv[], const std::string &usage,
         const std::string &about_msg,
         const std::string &description_msg) -> std::error_code {
     boost::program_options::options_description cli_only_opts =

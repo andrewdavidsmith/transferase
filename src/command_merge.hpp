@@ -25,6 +25,8 @@
 #define SRC_COMMAND_MERGE_HPP_
 
 auto
-command_merge_main(int argc, char *argv[]) -> int;
+command_merge_main(int argc,
+                   char *argv[])  // NOLINT(cppcoreguidelines-avoid-c-arrays)
+  -> int;
 
 #endif  // SRC_COMMAND_MERGE_HPP_

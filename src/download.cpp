@@ -74,20 +74,16 @@ do_download(const download_request &dr, const std::string &outfile,
 
   // lookup server endpoint
   auto const results = resolver.async_resolve(dr.host, dr.port, yield[ec]);
-  if (ec) {
-    std::filesystem::remove(outfile);
+  if (ec)
     return;
-  }
 
   // set the timeout for connecting
   stream.expires_after(dr.get_connect_timeout());
 
   // connect to server
   stream.async_connect(results, yield[ec]);
-  if (ec) {
-    std::filesystem::remove(outfile);
+  if (ec)
     return;
-  }
 
   // Set up an HTTP GET request message
   boost::beast::http::request<boost::beast::http::string_body> req{
@@ -100,10 +96,8 @@ do_download(const download_request &dr, const std::string &outfile,
 
   // send request to server
   boost::beast::http::async_write(stream, req, yield[ec]);
-  if (ec) {
-    std::filesystem::remove(outfile);
+  if (ec)
     return;
-  }
 
   // make the response using the file-body
   boost::beast::http::response<boost::beast::http::file_body> res{
@@ -121,18 +115,16 @@ do_download(const download_request &dr, const std::string &outfile,
   boost::beast::flat_buffer buffer;
   // read the http response
   boost::beast::http::async_read(stream, buffer, p, yield[ec]);
-  if (ec) {
-    std::filesystem::remove(outfile);
+  if (ec)
     return;
-  }
+
   res = p.release();
 
-  stream.socket().shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
+  (void)stream.socket().shutdown(boost::asio::ip::tcp::socket::shutdown_both,
+                                 ec);
 
-  if (ec && ec != boost::beast::errc::not_connected) {
-    std::filesystem::remove(outfile);
+  if (ec && ec != boost::beast::errc::not_connected)
     return;
-  }
 
   const auto make_string = [](const auto &x) {
     return (std::ostringstream() << x).str();
@@ -173,8 +165,8 @@ download(const download_request &dr)
       std::println("{}: {}", outfile.string(), out_ec.message());
       return {{}, out_ec};
     }
-    const bool is_removed = std::filesystem::remove(outfile, out_ec);
-    if (!is_removed)
+    const bool remove_ok = std::filesystem::remove(outfile, out_ec);
+    if (!remove_ok)
       return {{}, out_ec};
   }
 
@@ -201,6 +193,12 @@ download(const download_request &dr)
     const auto reason_itr = header.find("Reason");
     if (status_itr == std::cend(header) || reason_itr == std::cend(header))
       ec = std::make_error_code(std::errc::invalid_argument);
+    std::error_code filesys_ec;
+    const bool outfile_exists = std::filesystem::exists(outfile, filesys_ec);
+    if (!filesys_ec && outfile_exists) {
+      [[maybe_unused]]
+      const bool remove_ok = std::filesystem::remove(outfile, filesys_ec);
+    }
   }
 
   return {header, ec};

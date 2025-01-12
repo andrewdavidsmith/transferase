@@ -25,6 +25,7 @@
 #define SRC_COMMAND_CONFIG_HPP_
 
 auto
-command_config_main(int argc, char *argv[]) -> int;
+command_config_main(int argc, char *argv[])
+  -> int;  // NOLINT(cppcoreguidelines-avoid-c-arrays)
 
 #endif  // SRC_COMMAND_CONFIG_HPP_

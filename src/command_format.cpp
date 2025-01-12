@@ -144,8 +144,10 @@ get_ch_id(const genome_index_metadata &meta,
 static auto
 verify_header_line(const genome_index_metadata &meta,
                    const std::string &line) -> std::error_code {
+  using namespace std::literals;  // NOLINT
+  static constexpr auto DNMTOOLS_IDENTIFIER = "#DNMTOOLS"sv;
   // ignore the version line and the header end line
-  if (line.substr(0, 9) == "#DNMTOOLS" || std::size(line) == 1)
+  if (line.starts_with(DNMTOOLS_IDENTIFIER) || std::size(line) == 1)
     return counts_file_format_error_code::ok;
 
   // parse the chrom and its size
@@ -233,10 +235,12 @@ process_cpg_sites_xcounts(const std::string &infile, const genome_index &index)
     }
     else {
       std::uint32_t pos_step = 0, n_meth = 0, n_unmeth = 0;
+      // NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic)
       const auto end_line = line.data() + std::size(line);
       auto res = std::from_chars(line.data(), end_line, pos_step);
       res = std::from_chars(res.ptr + 1, end_line, n_meth);
       res = std::from_chars(res.ptr + 1, end_line, n_unmeth);
+      // NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic)
       // ADS: check for errors here
 
       const auto curr_pos = pos + pos_step;
@@ -357,7 +361,9 @@ process_cpg_sites_counts(const std::string &infile, const genome_index &index)
 }  // namespace transferase
 
 auto
-command_format_main(int argc, char *argv[]) -> int {
+command_format_main(int argc,
+                    char *argv[])  // NOLINT(cppcoreguidelines-avoid-c-arrays)
+  -> int {
   const auto command_start = std::chrono::high_resolution_clock::now();
 
   static constexpr auto command = "format";

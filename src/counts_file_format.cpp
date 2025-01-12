@@ -36,6 +36,7 @@
 #include <sstream>
 #include <string>
 #include <tuple>
+#include <type_traits>
 
 namespace transferase {
 
@@ -44,6 +45,7 @@ parse_counts_line(const std::string &line, std::uint32_t &pos,
                   std::uint32_t &n_meth, uint32_t &n_unmeth) -> bool {
   constexpr auto is_sep = [](const char x) { return x == ' ' || x == '\t'; };
 
+  // NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic)
   const auto c_end = line.data() + std::size(line);
   auto field_s = line.data();
 
@@ -76,8 +78,10 @@ parse_counts_line(const std::string &line, std::uint32_t &pos,
   field_s = res.ptr + 1;
   res = std::from_chars(std::min(field_s, c_end), c_end, n_reads);
   failed = failed || (res.ec != std::errc{});
+  // NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 
-  n_meth = std::round(meth * n_reads);
+  n_meth = static_cast<std::remove_reference_t<decltype(n_meth)>>(
+    std::round(meth * n_reads));
   n_unmeth = n_reads - n_meth;
 
   return !failed;

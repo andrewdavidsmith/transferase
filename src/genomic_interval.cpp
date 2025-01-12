@@ -43,6 +43,8 @@ namespace transferase {
 [[nodiscard]] STATIC auto
 parse(const genome_index_metadata &meta, const std::string &line,
       std::error_code &ec) noexcept -> genomic_interval {
+  // NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+
   auto cursor = line.data();
   const auto line_sz = std::size(line);
   const auto line_end = line.data() + line_sz;
@@ -81,6 +83,7 @@ parse(const genome_index_metadata &meta, const std::string &line,
 
   return ec ? genomic_interval{}
             : genomic_interval{ch_id_itr->second, start, stop};
+  // NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 }
 
 [[nodiscard]] auto

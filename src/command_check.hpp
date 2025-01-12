@@ -25,6 +25,8 @@
 #define SRC_COMMAND_CHECK_HPP_
 
 auto
-command_check_main(int argc, char *argv[]) -> int;
+command_check_main(int argc,
+                   char *argv[])  // NOLINT(cppcoreguidelines-avoid-c-arrays)
+  -> int;
 
 #endif  // SRC_COMMAND_CHECK_HPP_

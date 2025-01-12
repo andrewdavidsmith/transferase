@@ -65,7 +65,9 @@ xfrase index -v debug -x /path/to/index_directory -g hg38.fa
 #include <vector>
 
 auto
-command_index_main(int argc, char *argv[]) -> int {
+command_index_main(int argc,
+                   char *argv[])  // NOLINT(cppcoreguidelines-avoid-c-arrays)
+  -> int {
   static constexpr auto command = "index";
   static const auto usage =
     std::format("Usage: xfrase {} [options]\n", rstrip(command));

@@ -73,8 +73,12 @@ struct query_container {
 
   /// @brief Get a pointer to the underlying memory used by this container.
   [[nodiscard]] auto
-  data() -> char * {
-    return reinterpret_cast<char *>(v.data());
+  data(std::uint32_t n_bytes = 0) -> char * {
+    // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
+    // NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+    return reinterpret_cast<char *>(v.data() + n_bytes);
+    // NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+    // NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)
   }
   // clang-format off
   [[nodiscard]] auto begin() {return std::begin(v);}

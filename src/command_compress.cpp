@@ -67,7 +67,9 @@ xfrase compress -u -d methylome_dir -m methylome_name -o output_dir
 #include <vector>
 
 auto
-command_compress_main(int argc, char *argv[]) -> int {
+command_compress_main(int argc,
+                      char *argv[])  // NOLINT(cppcoreguidelines-avoid-c-arrays)
+  -> int {
   static constexpr auto command = "compress";
   static const auto usage =
     std::format("Usage: xfrase {} [options]\n", rstrip(command));
