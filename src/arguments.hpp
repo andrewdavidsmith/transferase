@@ -94,47 +94,54 @@ template <typename T> struct argset_base {
   parse(int argc, char const *const argv[], const std::string &usage,
         const std::string &about_msg,
         const std::string &description_msg) -> std::error_code {
-    boost::program_options::options_description cli_only_opts =
-      set_cli_only_opts();
-    boost::program_options::options_description common_opts = set_common_opts();
-    boost::program_options::options_description help_opts("Options");
+    namespace po = boost::program_options;
+    auto cli_only_opts = set_cli_only_opts();
+    auto common_opts = set_common_opts();
+    po::options_description help_opts("Options");
     help_opts.add(cli_only_opts).add(common_opts);
     // first check if config file or help are specified
     try {
-      boost::program_options::variables_map vm_cli_only;
-      boost::program_options::store(
-        boost::program_options::command_line_parser(argc, argv)
-          .options(cli_only_opts)
-          .allow_unregistered()
-          .run(),
-        vm_cli_only);
+      // Command-line only options
+      po::variables_map vm_cli_only;
+      po::store(po::command_line_parser(argc, argv)
+                  .options(cli_only_opts)
+                  .allow_unregistered()
+                  .run(),
+                vm_cli_only);
+      // check if help has been seen
       if (vm_cli_only.count("help") || argc == 1) {
         // help output is for all options
         std::println("{}\n{}", about_msg, usage);
-        help_opts.print(std::cout);
+        cli_only_opts.print(std::cout);
+        std::println();
+        common_opts.print(std::cout);
         std::println("\n{}", description_msg);
         return argument_error_code::help_requested;
       }
-      boost::program_options::notify(vm_cli_only);
-      boost::program_options::variables_map vm_common;
-      const auto cli_parsed =
-        boost::program_options::command_line_parser(argc, argv)
-          .options(common_opts)
-          .allow_unregistered()
-          .run();
-      boost::program_options::store(cli_parsed, vm_common);
+      // do the parsing -- this might throw
+      po::notify(vm_cli_only);
 
+      // Common options
+      po::variables_map vm_common;
+      const auto cli_parsed = po::command_line_parser(argc, argv)
+                                .options(common_opts)
+                                .allow_unregistered()
+                                .run();
+      po::store(cli_parsed, vm_common);
+      // if we have a configuration file, parse it
       if (!config_file.empty()) {
-        const auto cfg_parsed = boost::program_options::parse_config_file(
-          config_file.data(), common_opts, true);
-        boost::program_options::store(cfg_parsed, vm_common);
+        const auto cfg_parsed =
+          po::parse_config_file(config_file.data(), common_opts, true);
+        po::store(cfg_parsed, vm_common);
       }
-      boost::program_options::notify(vm_common);
+      po::notify(vm_common);
     }
-    catch (boost::program_options::error &e) {
+    catch (po::error &e) {
       std::println("{}", e.what());
       std::println("{}\n{}", about_msg, usage);
-      help_opts.print(std::cout);
+      cli_only_opts.print(std::cout);
+      std::println();
+      common_opts.print(std::cout);
       std::println("\n{}", description_msg);
       return argument_error_code::failure;
     }
