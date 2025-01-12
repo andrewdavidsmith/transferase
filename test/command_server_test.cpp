@@ -33,6 +33,7 @@ TEST(command_server_test, failing_server_missing_directory) {
   static constexpr auto index_directory = "data/lutions/indexes_non_existant";
 
   // Define command line arguments
+  // NOLINT(cppcoreguidelines-avoid-c-arrays)
   const char *command_argv[] = {
     // clang-format off
     "server",
