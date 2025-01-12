@@ -1,6 +1,6 @@
 /* MIT License
  *
- * Copyright (c) 2024 Andrew D Smith
+ * Copyright (c) 2025 Andrew D Smith
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -137,7 +137,7 @@ BOOST_DESCRIBE_STRUCT(methylome_resource, (),
  ))
 // clang-format on
 
-class local_methylome_resource {
+class methylome_directory {
 public:
   std::string directory;
   std::uint64_t index_hash;
@@ -258,14 +258,14 @@ public:
 };
 
 // clang-format off
-BOOST_DESCRIBE_STRUCT(local_methylome_resource, (),
+BOOST_DESCRIBE_STRUCT(methylome_directory, (),
 (
  directory,
  index_hash
  ))
 // clang-format on
 
-class remote_methylome_resource {
+class methylome_server {
 public:
   std::string hostname;
   std::string port_number;
@@ -383,7 +383,7 @@ public:
 };
 
 // clang-format off
-BOOST_DESCRIBE_STRUCT(remote_methylome_resource, (),
+BOOST_DESCRIBE_STRUCT(methylome_server, (),
 (
  hostname,
  port_number,
