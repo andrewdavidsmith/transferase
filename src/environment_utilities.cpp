@@ -46,7 +46,7 @@ namespace transferase {
 get_username() -> std::tuple<std::string, std::error_code> {
   // ADS: long code here; static needs it for threadsafe
   constexpr auto bufsize{1024};
-  struct passwd pwd{};
+  struct passwd pwd;
   struct passwd *result = nullptr;
   std::array<char, bufsize> buf{};
   const auto s = getpwuid_r(getuid(), &pwd, buf.data(), bufsize, &result);
