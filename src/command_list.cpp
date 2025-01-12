@@ -130,8 +130,7 @@ command_list_main(int argc,
     if (!show_only_methylomes) {
       if (verbose && !show_only_indexes)
         std::println("indexes:");
-      const auto index_names =
-        transferase::genome_index::list_genome_indexes(dirname, ec);
+      const auto index_names = transferase::genome_index::list(dirname, ec);
       if (ec) {
         std::println("Error {}: {}", dirname, ec);
         return EXIT_FAILURE;
