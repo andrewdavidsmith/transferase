@@ -81,6 +81,11 @@ struct methylome_data {
   methylome_data &operator=(methylome_data &&) noexcept = default;
   // clang-format on
 
+  [[nodiscard]] auto
+  tostring() const noexcept -> std::string {
+    return std::format(R"json({{"size": {}}})json", get_n_cpgs());
+  }
+
   [[nodiscard]] static auto
   read(const std::string &dirname, const std::string &methylome_name,
        const methylome_metadata &meta,
