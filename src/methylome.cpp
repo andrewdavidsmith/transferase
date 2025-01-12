@@ -62,60 +62,60 @@ methylome::init_metadata(const genome_index &index) noexcept
 
 [[nodiscard]] auto
 methylome::update_metadata() noexcept -> std::error_code {
-  const std::error_code ec = meta.init_env();
-  if (ec)
-    return ec;
+  const std::error_code error = meta.init_env();
+  if (error)
+    return error;
   meta.methylome_hash = data.hash();
   return std::error_code{};
 }
 
 [[nodiscard]] auto
 methylome::read(const std::string &dirname, const std::string &methylome_name,
-                std::error_code &ec) noexcept -> methylome {
+                std::error_code &error) noexcept -> methylome {
   methylome m;
-  m.meta = methylome_metadata::read(dirname, methylome_name, ec);
-  if (ec)
+  m.meta = methylome_metadata::read(dirname, methylome_name, error);
+  if (error)
     return {};
-  m.data = methylome_data::read(dirname, methylome_name, m.meta, ec);
-  if (ec)
+  m.data = methylome_data::read(dirname, methylome_name, m.meta, error);
+  if (error)
     return {};
   return m;
 }
 
 auto
 methylome::write(const std::string &outdir, const std::string &name,
-                 std::error_code &ec) const noexcept -> void {
+                 std::error_code &error) const noexcept -> void {
   // make filenames
   const auto fn_wo_extn = std::filesystem::path{outdir} / name;
   const auto meta_filename = methylome_metadata::compose_filename(fn_wo_extn);
   const auto meta_write_ec = meta.write(meta_filename);
   if (meta_write_ec) {
-    const auto meta_exists = std::filesystem::exists(meta_filename, ec);
-    if (!ec && meta_exists) {
+    const auto meta_exists = std::filesystem::exists(meta_filename, error);
+    if (!error && meta_exists) {
       [[maybe_unused]] const auto remove_ok =
-        std::filesystem::remove(meta_filename, ec);
+        std::filesystem::remove(meta_filename, error);
     }
-    ec = meta_write_ec;  // 'ec' takes value from attempted write
+    error = meta_write_ec;  // 'error' takes value from attempted write
     return;
   }
   const auto data_filename = methylome_data::compose_filename(fn_wo_extn);
   const auto data_write_ec = data.write(data_filename, meta.is_compressed);
   if (data_write_ec) {
-    const auto data_exists = std::filesystem::exists(data_filename, ec);
-    if (!ec && data_exists) {
+    const auto data_exists = std::filesystem::exists(data_filename, error);
+    if (!error && data_exists) {
       [[maybe_unused]] const auto remove_ok =
-        std::filesystem::remove(data_filename, ec);
+        std::filesystem::remove(data_filename, error);
     }
-    const auto meta_exists = std::filesystem::exists(meta_filename, ec);
-    if (!ec && meta_exists) {
+    const auto meta_exists = std::filesystem::exists(meta_filename, error);
+    if (!error && meta_exists) {
       std::error_code remove_ec;
       [[maybe_unused]] const auto remove_ok =
         std::filesystem::remove(meta_filename, remove_ec);
     }
-    ec = data_write_ec;  // 'ec' takes value from attempted write
+    error = data_write_ec;  // 'error' takes value from attempted write
     return;
   }
-  ec = std::error_code{};  // 'ec' passed by ref; clear it if ok here
+  error = std::error_code{};  // 'error' passed by ref; clear it if ok here
   return;
 }
 
@@ -126,22 +126,22 @@ methylome::files_exist(const std::string &directory,
   const auto meta_filename = methylome_metadata::compose_filename(fn_wo_extn);
   const auto data_filename = methylome_data::compose_filename(fn_wo_extn);
 
-  std::error_code ec;
-  const auto meta_exists = std::filesystem::exists(meta_filename, ec);
-  if (ec || !meta_exists)
+  std::error_code error;
+  const auto meta_exists = std::filesystem::exists(meta_filename, error);
+  if (error || !meta_exists)
     return false;
-  const auto data_exists = std::filesystem::exists(data_filename, ec);
-  if (ec || !data_exists)
+  const auto data_exists = std::filesystem::exists(data_filename, error);
+  if (error || !data_exists)
     return false;
   return true;
 }
 
 [[nodiscard]] auto
 methylome::list(const std::string &dirname,
-                std::error_code &ec) noexcept -> std::vector<std::string> {
+                std::error_code &error) noexcept -> std::vector<std::string> {
   using dir_itr_type = std::filesystem::directory_iterator;
-  auto dir_itr = dir_itr_type(dirname, ec);
-  if (ec)
+  auto dir_itr = dir_itr_type(dirname, error);
+  if (error)
     return {};
 
   const auto data_files = std::ranges::subrange{dir_itr, dir_itr_type{}} |
