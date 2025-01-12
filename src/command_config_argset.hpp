@@ -50,11 +50,21 @@ struct command_config_argset : argset_base<command_config_argset> {
     return std::filesystem::path(config_dir) / default_config_filename;
   }
 
+  [[nodiscard]] static auto
+  get_default_config_dir_impl() -> std::string {
+    std::error_code ec;
+    const auto config_dir = get_transferase_config_dir_default(ec);
+    if (ec)
+      return {};
+    return config_dir;
+  }
+
   static constexpr auto port_default{"5000"};
   static constexpr auto log_level_default{log_level_t::info};
   std::string hostname{};
   std::string port{};
   std::string index_dir{};
+  std::string methylome_dir{};
   std::string log_filename{};
   std::string genomes{};
   log_level_t log_level{};
@@ -84,8 +94,10 @@ struct command_config_argset : argset_base<command_config_argset> {
       ("port,p", value(&port)->default_value(port_default), "transferase server port")
       ("genomes,g", value(&genomes),
        "attept to download index files for these genomes (comma separated list, e.g. hg38,mm39)")
-      ("index-dir,x", value(&index_dir),
+      ("index-dir,x", value(&index_dir)->default_value(get_default_config_dir(), ""),
        "name of a directory to store genome index files (default: configuration directory)")
+      ("methylome-dir,d", value(&methylome_dir),
+       "name of a directory to search for methylomes (default: not specified)")
       ("log-level,v", value(&log_level)->default_value(log_level_default, ""),
        "log level {debug,info,warning,error,critical}")
       ("log-file,l", value(&log_filename)->value_name("console"),
@@ -102,6 +114,7 @@ BOOST_DESCRIBE_STRUCT(command_config_argset, (), (
   hostname,
   port,
   index_dir,
+  methylome_dir,
   log_filename,
   log_level
 ))
