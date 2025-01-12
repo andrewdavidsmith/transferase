@@ -34,7 +34,8 @@ When in doubt, consult the module reference at the location listed above.
 #include "genomic_interval_bindings.hpp"
 #include "level_container_bindings.hpp"
 #include "methylome_bindings.hpp"
-#include "methylome_resource_bindings.hpp"
+#include "methylome_directory_bindings.hpp"
+#include "methylome_server_bindings.hpp"
 #include "query_container_bindings.hpp"
 
 #include <genome_index.hpp>
@@ -90,15 +91,13 @@ PYBIND11_MODULE(transferase, the_module) {
     the_module, "LevelContainerCovered",
     "A container for methylation levels with information about covered sites");
 
-  auto LocalMethylomeResource =
-    py::class_<transferase::local_methylome_resource>(
-      the_module, "LocalMethylomeResource",
-      "Interface for locally available methylomes");
+  auto MethylomeDirectory = py::class_<transferase::methylome_directory>(
+    the_module, "MethylomeDirectory",
+    "Directory on local system containing methylomes");
 
-  auto RemoteMethylomeResource =
-    py::class_<transferase::remote_methylome_resource>(
-      the_module, "RemoteMethylomeResource",
-      "An interface for remotely available methylomes");
+  auto MethylomeServer = py::class_<transferase::methylome_server>(
+    the_module, "MethylomeServer",
+    "Remote server that can serve methylome data");
 
   genomic_interval_bindings(GenomicInterval);
   genome_index_bindings(GenomeIndex);
@@ -108,6 +107,6 @@ PYBIND11_MODULE(transferase, the_module) {
   level_container_bindings(LevelContainer);
   level_container_covered_bindings(LevelContainerCovered);
 
-  local_methylome_resource_bindings(LocalMethylomeResource);
-  remote_methylome_resource_bindings(RemoteMethylomeResource);
+  methylome_directory_bindings(MethylomeDirectory);
+  methylome_server_bindings(MethylomeServer);
 }
