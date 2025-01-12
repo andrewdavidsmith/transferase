@@ -195,7 +195,7 @@ download(const download_request &dr)
       ec = std::make_error_code(std::errc::invalid_argument);
     std::error_code filesys_ec;
     const bool outfile_exists = std::filesystem::exists(outfile, filesys_ec);
-    if (!filesys_ec && outfile_exists) {
+    if (filesys_ec && outfile_exists) {
       [[maybe_unused]]
       const bool remove_ok = std::filesystem::remove(outfile, filesys_ec);
     }
