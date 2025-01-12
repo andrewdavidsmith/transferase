@@ -83,8 +83,7 @@ struct genome_index {
   genome_index &
   operator=(const genome_index &) = delete;
 
-  /// @brief Defaulted move constructor. Moves a `genome_index` object. This
-  /// constructor is defaulted and allows moving an object into a new one.
+  /// @brief Defaulted move constructor.
   genome_index(genome_index &&) noexcept = default;
 
   /// @brief Defaulted move assignment operator. Moves a `genome_index` object
@@ -139,7 +138,7 @@ struct genome_index {
     return meta.index_hash;
   }
 
-  /// @brief Write this genome_index to disk
+  /// @brief Write this genome_index to the filesystem.
   /// @param directory The directory in which to write the genome index
   /// @param genome_name The name of the genome; determines filenames written
   /// @param error An error code that is set for any error while writing
@@ -261,9 +260,8 @@ struct genome_index {
   /// directory.
   /// @return A vector of strings holding genome names.
   [[nodiscard]] static auto
-  list_genome_indexes(const std::string &directory,
-                      std::error_code &error) noexcept
-    -> std::vector<std::string>;
+  list(const std::string &directory,
+       std::error_code &error) noexcept -> std::vector<std::string>;
 
 #ifndef TRANSFERASE_NOEXCEPT
   /// @brief List the names of genomes for which genome_index objects can be
@@ -276,7 +274,7 @@ struct genome_index {
   list_genome_indexes(const std::string &directory)
     -> std::vector<std::string> {
     std::error_code ec;
-    auto indexes = list_genome_indexes(directory, ec);
+    auto indexes = list(directory, ec);
     if (ec)
       throw std::system_error(ec);
     return indexes;

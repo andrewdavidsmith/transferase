@@ -441,8 +441,8 @@ genome_index::make_genome_index(const std::string &genome_filename,
 }
 
 [[nodiscard]] auto
-genome_index::list_genome_indexes(const std::string &directory,
-                                  std::error_code &error) noexcept
+genome_index::list(const std::string &directory,
+                   std::error_code &error) noexcept
   -> std::vector<std::string> {
   static constexpr auto data_extn = genome_index::data_extn;
   static constexpr auto meta_extn = genome_index::meta_extn;
