@@ -85,6 +85,11 @@ template <typename T> struct argset_base {
     return T::get_default_config_file_impl();
   }
 
+  [[nodiscard]] static auto
+  get_default_config_dir() -> std::string {
+    return T::get_default_config_dir_impl();
+  }
+
   [[nodiscard]] auto
   parse(int argc, char const *const argv[], const std::string &usage,
         const std::string &about_msg,
