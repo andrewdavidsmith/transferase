@@ -42,6 +42,7 @@ TEST(command_check_test, basic_test) {
   };
 
   // Define command line arguments
+  // NOLINTBEGIN(cppcoreguidelines-avoid-c-arrays)
   const char *command_argv[] = {
     // clang-format off
     "check",
@@ -59,10 +60,13 @@ TEST(command_check_test, basic_test) {
     methylome_names[2].data(),
     // clang-format on
   };
+  // NOLINTEND(cppcoreguidelines-avoid-c-arrays)
   const int command_argc = sizeof(command_argv) / sizeof(command_argv[0]);
 
   // Run the main function
+  // NOLINTBEGIN(cppcoreguidelines-pro-type-const-cast)
   const int result =
     command_check_main(command_argc, const_cast<char **>(command_argv));
+  // NOLINTEND(cppcoreguidelines-pro-type-const-cast)
   EXPECT_EQ(result, EXIT_SUCCESS);
 }

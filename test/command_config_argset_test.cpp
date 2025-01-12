@@ -34,8 +34,9 @@
 using namespace transferase;  // NOLINT
 
 TEST(command_config_argset_test, run_success) {
-  // clang-format off
+  // NOLINTBEGIN(cppcoreguidelines-avoid-c-arrays)
   std::vector<const char *> argv = {
+    // clang-format off
     "config",
     "-v",
     "critical",
@@ -47,17 +48,20 @@ TEST(command_config_argset_test, run_success) {
     "5000",
     "--assemblies",
     "hg38,mm39",
+    // clang-format on
   };
-  // clang-format on
-  const int argc = std::size(argv);
+  // NOLINTEND(cppcoreguidelines-avoid-c-arrays)
+  const int argc = static_cast<int>(std::size(argv));
 
   EXPECT_EQ(argc, 11);
   EXPECT_EQ(argv[0], "config");
 
   command_config_argset args;
+  // NOLINTBEGIN(cppcoreguidelines-pro-type-const-cast)
   const auto ec =
     args.parse(argc, const_cast<char **>(argv.data()), std::string("usage"),
                std::string("about"), std::string("description"));
+  // NOLINTEND(cppcoreguidelines-pro-type-const-cast)
   const std::filesystem::path config_file{"config/xfrase_client_config.toml"};
   EXPECT_EQ(args.client_config_file, "config/xfrase_client_config.toml");
   EXPECT_FALSE(ec);
@@ -65,8 +69,8 @@ TEST(command_config_argset_test, run_success) {
 
 TEST(command_config_argset_test, default_client_config_file) {
   using std::string_literals::operator""s;
-  // clang-format off
   std::vector<const char *> argv = {
+    // clang-format off
     "config",
     "-v",
     "critical",
@@ -76,16 +80,18 @@ TEST(command_config_argset_test, default_client_config_file) {
     "5000",
     "--assemblies",
     "hg38,mm39",
+    // clang-format on
   };
-  // clang-format on
-  const int argc = std::size(argv);
+  const int argc = static_cast<int>(std::size(argv));
 
   EXPECT_EQ(argc, 9);
   EXPECT_EQ(argv[0], "config");
 
   command_config_argset args;
+  // NOLINTBEGIN(cppcoreguidelines-pro-type-const-cast)
   std::error_code ec = args.parse(argc, const_cast<char **>(argv.data()),
                                   "usage"s, "about"s, "description"s);
+  // NOLINTEND(cppcoreguidelines-pro-type-const-cast)
   EXPECT_FALSE(ec);
 
   const auto default_config_dir = get_transferase_config_dir_default(ec);

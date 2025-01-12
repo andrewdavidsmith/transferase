@@ -48,6 +48,7 @@ TEST(command_format_test, basic_test) {
     "data/lutions/raw/eFlareon_brain.sym.gz";
 
   // Define command line arguments
+  // NOLINTBEGIN(cppcoreguidelines-avoid-c-arrays)
   const char *command_argv[] = {
     // clang-format off
     "format",
@@ -61,11 +62,14 @@ TEST(command_format_test, basic_test) {
     methylation_file,
     // clang-format on
   };
+  // NOLINTEND(cppcoreguidelines-avoid-c-arrays)
   const int command_argc = sizeof(command_argv) / sizeof(command_argv[0]);
 
   // Run the main function
+  // NOLINTBEGIN(cppcoreguidelines-pro-type-const-cast)
   const int result =
     command_format_main(command_argc, const_cast<char **>(command_argv));
+  // NOLINTEND(cppcoreguidelines-pro-type-const-cast)
   EXPECT_EQ(result, EXIT_SUCCESS);
 
   const auto data_outfile =
@@ -79,13 +83,17 @@ TEST(command_format_test, basic_test) {
     methylome_data::compose_filename(methylome_directory, methylome_name);
   EXPECT_TRUE(files_are_identical(data_outfile, expected_data_outfile));
 
-  if (std::filesystem::exists(data_outfile, ec))
-    std::filesystem::remove(data_outfile, ec);
+  if (std::filesystem::exists(data_outfile, ec)) {
+    const auto remove_ok = std::filesystem::remove(data_outfile, ec);
+    EXPECT_TRUE(remove_ok);
+  }
   EXPECT_EQ(ec, std::error_code{});
 
   const auto meta_outfile =
     methylome_metadata::compose_filename(output_directory, methylome_name);
-  if (std::filesystem::exists(meta_outfile, ec))
-    std::filesystem::remove(meta_outfile, ec);
+  if (std::filesystem::exists(meta_outfile, ec)) {
+    const auto remove_ok = std::filesystem::remove(meta_outfile, ec);
+    EXPECT_TRUE(remove_ok);
+  }
   EXPECT_EQ(ec, std::error_code{});
 }

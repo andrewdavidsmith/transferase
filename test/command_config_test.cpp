@@ -45,8 +45,12 @@ TEST(command_config_test, run_success) {
   };
   EXPECT_EQ(std::size(argv), 9);
   EXPECT_EQ(argv[0], "config");
+  // NOLINTBEGIN(cppcoreguidelines-pro-type-const-cast)
+  // NOLINTBEGIN(cppcoreguidelines-narrowing-conversions)
   const int ret =
     command_config_main(std::size(argv), const_cast<char **>(argv.data()));
+  // NOLINTEND(cppcoreguidelines-narrowing-conversions)
+  // NOLINTEND(cppcoreguidelines-pro-type-const-cast)
   EXPECT_EQ(ret, EXIT_SUCCESS);
 
   const std::filesystem::path config_file{"config/xfrase_client_config.toml"};

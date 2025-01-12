@@ -44,6 +44,7 @@ TEST(command_bins_test, basic_local_test) {
     "data/SRX012346_bin100_local.bed";
 
   // Define command line arguments
+  // NOLINTBEGIN(cppcoreguidelines-avoid-c-arrays)
   const char *command_argv[] = {
     // clang-format off
     "bins",
@@ -62,11 +63,14 @@ TEST(command_bins_test, basic_local_test) {
     "100",
     // clang-format on
   };
+  // NOLINTEND(cppcoreguidelines-avoid-c-arrays)
   const int command_argc = sizeof(command_argv) / sizeof(command_argv[0]);
 
   // Run the main function
+  // NOLINTBEGIN(cppcoreguidelines-pro-type-const-cast)
   const int result =
     command_bins_main(command_argc, const_cast<char **>(command_argv));
+  // NOLINTEND(cppcoreguidelines-pro-type-const-cast)
 
   // Check that the output file is created
   EXPECT_EQ(result, EXIT_SUCCESS);
@@ -75,6 +79,8 @@ TEST(command_bins_test, basic_local_test) {
   EXPECT_TRUE(files_are_identical(output_file, expected_output_file));
 
   // Clean up: delete test files
-  if (std::filesystem::exists(output_file))
-    std::filesystem::remove(output_file);
+  if (std::filesystem::exists(output_file)) {
+    const auto remove_ok = std::filesystem::remove(output_file);
+    EXPECT_TRUE(remove_ok);
+  }
 }
