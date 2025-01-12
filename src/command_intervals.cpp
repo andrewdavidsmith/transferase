@@ -40,10 +40,17 @@ select, the options you must specify will differ.
 static constexpr auto examples = R"(
 Examples:
 
-xfrase intervals local -x index_dir -g hg38 -d methylome_dir -m methylome_name -o output.bed -i input.bed
-xfrase intervals remote -x index_dir -g hg38 -s example.com -m methylome_name -o output.bed -i input.bed
+xfrase intervals -s example.com -x index_dir -g hg38 -m methylome_name \
+    -o output.bed -i input.bed
+
+xfrase intervals -c config_file.toml -g hg38 -m methylome_name \
+    -o output.bed -i input.bed
+
+xfrase intervals --local -x index_dir -g hg38 -d methylome_dir \
+    -m methylome_name -o output.bed -i input.bed
 )";
 
+#include "arguments.hpp"
 #include "genome_index.hpp"
 #include "genomic_interval.hpp"
 #include "genomic_interval_output.hpp"
@@ -55,12 +62,13 @@ xfrase intervals remote -x index_dir -g hg38 -s example.com -m methylome_name -o
 #include "request_type_code.hpp"
 #include "utilities.hpp"
 
+#include <boost/describe.hpp>
 #include <boost/program_options.hpp>
 
 #include <chrono>
 #include <cstdlib>  // for EXIT_FAILURE, EXIT_SUCCESS
+#include <filesystem>
 #include <format>
-#include <iostream>
 #include <iterator>  // for std::size
 #include <print>
 #include <string>
@@ -70,185 +78,180 @@ xfrase intervals remote -x index_dir -g hg38 -s example.com -m methylome_name -o
 #include <variant>
 #include <vector>
 
+namespace transferase {
+
+struct intervals_argset : argset_base<intervals_argset> {
+  static constexpr auto default_config_filename =
+    "transferase_client_config.toml";
+
+  static auto
+  get_default_config_file_impl() -> std::string {
+    std::error_code ec;
+    const auto config_dir = get_transferase_config_dir_default(ec);
+    if (ec)
+      return {};
+    return std::filesystem::path{config_dir} / default_config_filename;
+  }
+
+  static constexpr auto hostname_default{""};
+  static constexpr auto port_default{"5000"};
+  static constexpr auto log_level_default{log_level_t::info};
+  std::string hostname;
+  std::string port;
+  std::string methylome_dir;
+  std::string index_dir;
+  std::string log_filename;
+  transferase::log_level_t log_level{};
+
+  bool local_mode{};
+  std::string intervals_file{};
+  std::string methylome_name{};
+  std::string genome_name{};
+  bool write_scores{};
+  bool count_covered{};
+  std::string output_file{};
+
+  auto
+  log_options_impl() const {
+    transferase::log_args<transferase::log_level_t::info>(
+      std::vector<std::tuple<std::string, std::string>>{
+        // clang-format off
+        {"hostname", std::format("{}", hostname)},
+        {"port", std::format("{}", port)},
+        {"methylome_dir", std::format("{}", methylome_dir)},
+        {"index_dir", std::format("{}", index_dir)},
+        {"log_filename", std::format("{}", log_filename)},
+        {"log_level", std::format("{}", log_level)},
+        {"local_mode", std::format("{}", local_mode)},
+        {"methylome_name", std::format("{}", methylome_name)},
+        {"intervals_file", std::format("{}", intervals_file)},
+        {"write_scores", std::format("{}", write_scores)},
+        {"count_covered", std::format("{}", count_covered)},
+        {"output_file", std::format("{}", output_file)},
+        // clang-format on
+      });
+  }
+
+  [[nodiscard]] auto
+  set_common_opts_impl() -> boost::program_options::options_description {
+    namespace po = boost::program_options;
+    using po::value;
+    po::options_description opts("Command line or config file options");
+    opts.add_options()
+      // clang-format off
+      ("hostname,s", value(&hostname)->default_value(hostname_default),
+       "server hostname")
+      ("port,p", value(&port)->default_value(port_default, ""), "server port")
+      ("methylome-dir,d", value(&methylome_dir)->required(),
+       "methylome directory (local mode only)")
+      ("index-dir,x", value(&index_dir)->required(),
+       "genome index directory")
+      ("log-level,v", value(&log_level)->default_value(log_level_default),
+       "log level {debug,info,warning,error,critical}")
+      ("log-file,l", value(&log_filename)->value_name("[arg]"),
+       "log file name (defaults: print to screen)")
+      // clang-format on
+      ;
+    return opts;
+  }
+
+  [[nodiscard]] auto
+  set_cli_only_opts_impl() -> boost::program_options::options_description {
+    boost::program_options::options_description opts("Command line options");
+    // clang-format off
+    opts.add_options()
+      ("help,h", "print this message and exit")
+      ("config-file,c",
+       boost::program_options::value(&config_file)
+       ->default_value(get_default_config_file(), ""),
+       "use specified config file")
+      ("local", boost::program_options::bool_switch(&local_mode),
+       "run in local mode")
+      ("intervals,i", boost::program_options::value(&intervals_file)->required(),
+       "intervals file")
+      ("genome,g", boost::program_options::value(&genome_name)->required(),
+       "genome name")
+      ("methylome,m", boost::program_options::value(&methylome_name)->required(),
+       "methylome name")
+      ("output,o", boost::program_options::value(&output_file)->required(),
+       "output file")
+      ("covered", boost::program_options::bool_switch(&count_covered),
+       "count covered sites for each interval")
+      ("score", boost::program_options::bool_switch(&write_scores),
+       "output weighted methylation in bedgraph format")
+      ;
+    // clang-format on
+    return opts;
+  }
+};
+
+// clang-format off
+BOOST_DESCRIBE_STRUCT(intervals_argset, (), (
+  hostname,
+  port,
+  methylome_dir,
+  index_dir,
+  log_filename,
+  log_level,
+)
+)
+// clang-format on
+
+}  // namespace transferase
+
 auto
 command_intervals_main(
   int argc, char *argv[])  // NOLINT(cppcoreguidelines-avoid-c-arrays)
   -> int {
   static constexpr auto command = "intervals";
-  static const auto usage =
-    std::format("Usage: xfrase intervals [local|remote] [options]\n");
+  static const auto usage = std::format("Usage: xfrase intervals [options]\n");
   static const auto about_msg =
     std::format("xfrase {}: {}", rstrip(command), rstrip(about));
   static const auto description_msg =
     std::format("{}\n{}", rstrip(description), rstrip(examples));
 
-  static constexpr auto default_port = "5000";
-
-  using transferase::genome_index;
-  // using transferase::do_intervals;
-  using transferase::genomic_interval;
-  using transferase::level_element_covered_t;
-  using transferase::level_element_t;
-  using transferase::log_args;
-  using transferase::log_level_t;
-  using transferase::logger;
-
-  bool write_scores{};
-  bool count_covered{};
-
-  std::string methylome_directory{};
-  std::string index_directory{};
-
-  std::string methylome_name{};
-  std::string genome_name{};
-
-  std::string intervals_file{};
-
-  std::string port{};
-  std::string hostname{};
-  std::string outfile{};
-  log_level_t log_level{};
-
-  std::string subcmd;
-
-  namespace po = boost::program_options;
-
-  po::options_description subcmds;
-  subcmds.add_options()
-    // clang-format off
-    ("subcmd", po::value(&subcmd))
-    ("subargs", po::value<std::vector<std::string>>())
-    // clang-format on
-    ;
-  // positional; one for "subcmd" and the rest else parser throws
-  po::positional_options_description p;
-  p.add("subcmd", 1).add("subargs", -1);
-
-  po::options_description general("General");
-  // clang-format off
-  general.add_options()
-    ("help,h", "print this message and exit")
-    ("methylome,m", po::value(&methylome_name)->required(), "methylome name/accession")
-    ("intervals,i", po::value(&intervals_file)->required(), "intervals file")
-    ("genome,g", po::value(&genome_name)->required(), "genome name/assembly")
-    ("indexdir,x", po::value(&index_directory)->required(), "local cpg index directory")
-    ("log-level,v", po::value(&log_level)->default_value(logger::default_level),
-     "log level {debug,info,warning,error,critical}")
-    ;
-  po::options_description output("Output");
-  output.add_options()
-    ("output,o", po::value(&outfile)->required(), "output file")
-    ("covered", po::bool_switch(&count_covered), "count covered sites per interval")
-    ("score", po::bool_switch(&write_scores), "weighted methylation bedgraph format")
-    ;
-  po::options_description remote("Remote");
-  remote.add_options()
-    ("hostname,s", po::value(&hostname)->required(), "server hostname")
-    ("port,p", po::value(&port)->default_value(default_port), "port")
-    ;
-  po::options_description local("Local");
-  local.add_options()
-    ("methdir,d", po::value(&methylome_directory)->required(), "local methylome directory")
-    ;
-  // clang-format on
-
-  po::variables_map vm_subcmd;
-  po::store(po::command_line_parser(argc, argv)
-              .options(subcmds)
-              .positional(p)
-              .allow_unregistered()
-              .run(),
-            vm_subcmd);
-  po::notify(vm_subcmd);
-
-  bool force_help_message{};
-  po::options_description all("Options");
-  if (subcmd == "local")
-    all.add(general).add(output).add(local);
-  else if (subcmd == "remote")
-    all.add(general).add(output).add(remote);
-  else {
-    force_help_message = true;
-    all.add(general).add(output).add(local).add(remote);
-  }
-
-  try {
-    po::variables_map vm;
-    po::store(po::parse_command_line(argc - 1, argv + 1, all), vm);
-    if (force_help_message || vm.count("help") || argc == 1 ||
-        (argc == 2 && !subcmd.empty())) {
-      if (!subcmd.empty() && subcmd != "local" && subcmd != "remote")
-        std::println("One of local or remote must be specified\n");
-      std::println("{}\n{}", about_msg, usage);
-      all.print(std::cout);
-      std::println("\n{}", description_msg);
-      return EXIT_SUCCESS;
-    }
-    po::notify(vm);
-  }
-  catch (po::error &e) {
-    std::println("{}", e.what());
-    std::println("{}\n{}", about_msg, usage);
-    all.print(std::cout);
-    std::println("\n{}", description_msg);
+  transferase::intervals_argset args;
+  const auto ecc = args.parse(argc, argv, usage, about_msg, description_msg);
+  if (ecc == argument_error_code::help_requested)
+    return EXIT_SUCCESS;
+  if (ecc)
     return EXIT_FAILURE;
-  }
 
-  const bool remote_mode = (subcmd == "remote");
-
-  auto &lgr =
-    logger::instance(transferase::shared_from_cout(), command, log_level);
+  auto &lgr = transferase::logger::instance(transferase::shared_from_cout(),
+                                            command, args.log_level);
   if (!lgr) {
     std::println("Failure initializing logging: {}.", lgr.get_status());
     return EXIT_FAILURE;
   }
 
-  // ADS: log the command line arguments (assuming right log level)
-  std::vector<std::tuple<std::string, std::string>> args_to_log{
-    {"Methylome", methylome_name},
-    {"Intervals", intervals_file},
-    {"Genome", genome_name},
-    {"Index directory", index_directory},
-    {"Output", outfile},
-    {"Covered", std::format("{}", count_covered)},
-    {"Bedgraph", std::format("{}", write_scores)},
-  };
-  std::vector<std::tuple<std::string, std::string>> remote_args{
-    {"Hostname:port", std::format("{}:{}", hostname, port)},
-  };
-  std::vector<std::tuple<std::string, std::string>> local_args{
-    {"Methylome directory", methylome_directory},
-  };
-  log_args<log_level_t::info>(args_to_log);
-  log_args<log_level_t::info>(remote_mode ? remote_args : local_args);
+  args.log_options();
 
   std::error_code ec;
-  const auto index = genome_index::read(index_directory, genome_name, ec);
+  const auto index =
+    transferase::genome_index::read(args.index_dir, args.genome_name, ec);
   if (ec) {
-    lgr.error("Failed to read cpg index {} {}: {}", index_directory,
-              genome_name, ec);
+    lgr.error("Failed to read genome index {} {}: {}", args.index_dir,
+              args.genome_name, ec);
     return EXIT_FAILURE;
   }
 
   // Read query intervals and validate them
-  const auto intervals = genomic_interval::read(index, intervals_file, ec);
+  const auto intervals =
+    transferase::genomic_interval::read(index, args.intervals_file, ec);
   if (ec) {
-    lgr.error("Error reading intervals file: {} ({})", intervals_file, ec);
+    lgr.error("Error reading intervals file: {} ({})", args.intervals_file, ec);
     return EXIT_FAILURE;
   }
-  if (!genomic_interval::are_sorted(intervals)) {
-    lgr.error("Intervals not sorted: {}", intervals_file);
+  if (!transferase::genomic_interval::are_sorted(intervals)) {
+    lgr.error("Intervals not sorted: {}", args.intervals_file);
     return EXIT_FAILURE;
   }
-  if (!genomic_interval::are_valid(intervals)) {
-    lgr.error("Intervals not valid: {} (negative size found)", intervals_file);
+  if (!transferase::genomic_interval::are_valid(intervals)) {
+    lgr.error("Intervals not valid: {} (negative size found)",
+              args.intervals_file);
     return EXIT_FAILURE;
   }
   lgr.info("Number of intervals: {}", std::size(intervals));
-
-  const auto request_type =
-    count_covered ? transferase::request_type_code::intervals_covered
-                  : transferase::request_type_code::intervals;
 
   // Convert intervals into query
   const auto format_query_start{std::chrono::high_resolution_clock::now()};
@@ -257,20 +260,28 @@ command_intervals_main(
   lgr.debug("Elapsed time to prepare query: {:.3}s",
             duration(format_query_start, format_query_stop));
 
-  const auto req = transferase::request{methylome_name, request_type,
+  using transferase::request_type_code;
+  const auto request_type = args.count_covered
+                              ? request_type_code::intervals_covered
+                              : request_type_code::intervals;
+
+  const auto req = transferase::request{args.methylome_name, request_type,
                                         index.get_hash(), std::size(intervals)};
 
   const auto resource = transferase::methylome_resource{
-    .directory = methylome_directory,
-    .hostname = hostname,
-    .port_number = port,
+    .directory = args.local_mode ? args.methylome_dir : std::string{},
+    .hostname = args.hostname,
+    .port_number = args.port,
   };
 
   const auto intervals_start{std::chrono::high_resolution_clock::now()};
 
+  using transferase::level_element_covered_t;
+  using transferase::level_element_t;
   const auto results =
-    count_covered ? resource.get_levels<level_element_covered_t>(req, query, ec)
-                  : resource.get_levels<level_element_t>(req, query, ec);
+    args.count_covered
+      ? resource.get_levels<level_element_covered_t>(req, query, ec)
+      : resource.get_levels<level_element_t>(req, query, ec);
   if (ec) {
     lgr.error("Error obtaining levels: {}", ec);
     return EXIT_FAILURE;
@@ -280,8 +291,8 @@ command_intervals_main(
   lgr.debug("Elapsed time for query: {:.3}s",
             duration(intervals_start, intervals_stop));
 
-  const auto outmgr =
-    transferase::intervals_output_mgr{outfile, intervals, index, write_scores};
+  const auto outmgr = transferase::intervals_output_mgr{
+    args.output_file, intervals, index, args.write_scores};
 
   const auto output_start{std::chrono::high_resolution_clock::now()};
   ec = write_output(outmgr, results);
