@@ -138,6 +138,7 @@ TEST(command_intervals_test, failing_remote_test) {
   static constexpr auto output_file = "data/remote_output_file.bed";
 
   // Define command line arguments
+  // NOLINTBEGIN(cppcoreguidelines-avoid-c-arrays)
   const char *command_argv[] = {
     // clang-format off
     "intervals",
@@ -156,17 +157,22 @@ TEST(command_intervals_test, failing_remote_test) {
     output_file,
     // clang-format on
   };
+  // NOLINTEND(cppcoreguidelines-avoid-c-arrays)
   const int command_argc = sizeof(command_argv) / sizeof(command_argv[0]);
 
   // Run the main function
+  // NOLINTBEGIN(cppcoreguidelines-pro-type-const-cast)
   const int result =
     command_intervals_main(command_argc, const_cast<char **>(command_argv));
+  // NOLINTEND(cppcoreguidelines-pro-type-const-cast)
 
   // Check that the output file is created
   EXPECT_EQ(result, EXIT_FAILURE);
   EXPECT_FALSE(std::filesystem::exists(output_file));
 
   // Clean up: delete test files
-  if (std::filesystem::exists(output_file))
-    std::filesystem::remove(output_file);
+  if (std::filesystem::exists(output_file)) {
+    const auto remove_ok = std::filesystem::remove(output_file);
+    EXPECT_TRUE(remove_ok);
+  }
 }

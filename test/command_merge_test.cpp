@@ -56,6 +56,7 @@ TEST(command_merge_test, basic_local_test) {
     "data/lutions/eFlareon_merged_expected.m16";
 
   // Define command line arguments
+  // NOLINTBEGIN(cppcoreguidelines-avoid-c-arrays)
   const char *command_argv[] = {
     // clang-format off
     "merge",
@@ -73,6 +74,7 @@ TEST(command_merge_test, basic_local_test) {
     "debug",
     // clang-format on
   };
+  // NOLINTEND(cppcoreguidelines-avoid-c-arrays)
   const int command_argc = sizeof(command_argv) / sizeof(command_argv[0]);
 
   // Run the main function

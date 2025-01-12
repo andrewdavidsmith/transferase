@@ -70,7 +70,7 @@ TEST(counts_file_format_test, parse_counts_line) {
 
 TEST(parse_counts_line_tests, valid_line_test) {
   static constexpr auto line = "chr1 100 + CG 0.5 10";
-  std::uint32_t pos, n_meth, n_unmeth;
+  std::uint32_t pos{}, n_meth{}, n_unmeth{};
   bool result = parse_counts_line(line, pos, n_meth, n_unmeth);
   EXPECT_TRUE(result);
   EXPECT_EQ(pos, 100);
@@ -80,7 +80,7 @@ TEST(parse_counts_line_tests, valid_line_test) {
 
 TEST(parse_counts_line_tests, invalid_line_test) {
   static constexpr auto line = "chr1 100 + CG 0.5";
-  std::uint32_t pos, n_meth, n_unmeth;
+  std::uint32_t pos{}, n_meth{}, n_unmeth{};
   const bool result = parse_counts_line(line, pos, n_meth, n_unmeth);
   EXPECT_FALSE(result);
 }
@@ -92,7 +92,8 @@ TEST(is_counts_format_tests, valid_counts_format_test) {
   outfile.close();
   const bool result = is_counts_format(filename);
   EXPECT_TRUE(result);
-  std::filesystem::remove(filename);
+  const auto remove_ok = std::filesystem::remove(filename);
+  EXPECT_TRUE(remove_ok);
 }
 
 TEST(is_counts_format_tests, invalid_counts_format_test) {
@@ -102,7 +103,8 @@ TEST(is_counts_format_tests, invalid_counts_format_test) {
   outfile.close();
   const bool result = is_counts_format(filename);
   EXPECT_FALSE(result);
-  std::filesystem::remove(filename);
+  const auto remove_ok = std::filesystem::remove(filename);
+  EXPECT_TRUE(remove_ok);
 }
 
 TEST(is_xcounts_format_tests, valid_xcounts_format_test) {
@@ -112,7 +114,8 @@ TEST(is_xcounts_format_tests, valid_xcounts_format_test) {
   outfile.close();
   const bool result = is_xcounts_format(filename);
   EXPECT_TRUE(result);
-  std::filesystem::remove(filename);
+  const auto remove_ok = std::filesystem::remove(filename);
+  EXPECT_TRUE(remove_ok);
 }
 
 TEST(is_xcounts_format_tests, invalid_xcounts_format_test) {
@@ -122,7 +125,8 @@ TEST(is_xcounts_format_tests, invalid_xcounts_format_test) {
   outfile.close();
   const bool result = is_xcounts_format(filename);
   EXPECT_FALSE(result);
-  std::filesystem::remove(filename);
+  const auto remove_ok = std::filesystem::remove(filename);
+  EXPECT_TRUE(remove_ok);
 }
 
 TEST(get_meth_file_format_tests, counts_format_test) {
@@ -133,7 +137,8 @@ TEST(get_meth_file_format_tests, counts_format_test) {
   const auto [format, ec] = get_meth_file_format(filename);
   EXPECT_EQ(format, counts_file_format::counts);
   EXPECT_FALSE(ec);
-  std::filesystem::remove(filename);
+  const auto remove_ok = std::filesystem::remove(filename);
+  EXPECT_TRUE(remove_ok);
 }
 
 TEST(get_meth_file_format_tests, xcounts_format_test) {
@@ -144,7 +149,8 @@ TEST(get_meth_file_format_tests, xcounts_format_test) {
   const auto [format, ec] = get_meth_file_format(filename);
   EXPECT_EQ(format, counts_file_format::xcounts);
   EXPECT_FALSE(ec);
-  std::filesystem::remove(filename);
+  const auto remove_ok = std::filesystem::remove(filename);
+  EXPECT_TRUE(remove_ok);
 }
 
 TEST(get_meth_file_format_tests, none_format_test) {
@@ -155,5 +161,6 @@ TEST(get_meth_file_format_tests, none_format_test) {
   const auto [format, ec] = get_meth_file_format(filename);
   EXPECT_EQ(format, counts_file_format::none);
   EXPECT_FALSE(ec);
-  std::filesystem::remove(filename);
+  const auto remove_ok = std::filesystem::remove(filename);
+  EXPECT_TRUE(remove_ok);
 }
