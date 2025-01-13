@@ -398,9 +398,9 @@ command_format_main(int argc,
     ("help,h", "print this message and exit")
     ("meth,m", po::value(&methylation_input)->required(),
      "methylation input file")
-    ("indexdir,x", po::value(&index_directory)->required(), "cpg index directory")
+    ("indexdir,x", po::value(&index_directory)->required(), "genome index directory")
     ("outdir,o", po::value(&methylome_outdir)->required(), "methylome output directory")
-    ("genome,g", po::value(&genome_name)->required(), "genome name/assembly")
+    ("genome,g", po::value(&genome_name)->required(), "genome name")
     ("zip,z", po::bool_switch(&zip), "zip the output")
     ("log-level,v", po::value(&log_level)->default_value(logger::default_level),
      "log level {debug,info,warning,error,critical}")
@@ -450,7 +450,7 @@ command_format_main(int argc,
   std::error_code index_ec;
   const auto index = genome_index::read(index_directory, genome_name, index_ec);
   if (index_ec) {
-    lgr.error("Failed to read cpg index {} {}: {}", index_directory,
+    lgr.error("Failed to read genome index {} {}: {}", index_directory,
               genome_name, index_ec);
     return EXIT_FAILURE;
   }
