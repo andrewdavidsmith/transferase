@@ -36,21 +36,28 @@ TEST(request_test, basic_assertions) {
   EXPECT_EQ(req, request{});
 
   const auto rq_type = request_type_code::intervals;
-  req = request{"SRX012345", rq_type, 0, 0};
+  req = request{rq_type, 0, 0, "SRX012345"};
   EXPECT_TRUE(req.is_valid_type());
 }
 
 TEST(request_test, valid_compose) {
+  using namespace std::string_literals;  // NOLINT
   static constexpr auto rq_type = request_type_code::intervals;
-  static constexpr auto accession = "SRX012345";
+  static constexpr auto mock_aux_value = 1234;
+  static constexpr auto mock_index_hash = 5678;
+  static constexpr auto accession = "SRX012345"s;
   request_buffer buf;
-  const request req{accession, rq_type, 0, 0};
-  const auto res = compose(buf, req);
-  EXPECT_FALSE(res);
-  EXPECT_EQ(std::string(buf.data(), buf.data() + strlen(accession)), accession);
+  const request req{rq_type, mock_index_hash, mock_aux_value, accession};
+  const std::error_code compose_ec = compose(buf, req);
+  EXPECT_FALSE(compose_ec);
+  request req_parsed;
+  const std::error_code parse_ec = parse(buf, req_parsed);
+  EXPECT_FALSE(parse_ec);
+  EXPECT_EQ(req, req_parsed);
+  EXPECT_EQ(req_parsed.n_intervals(), mock_aux_value);
 }
 
 TEST(request_test, basic_assertions_bins) {
-  const request req{"SRX12345", request_type_code::bins, 0, 100};
+  const request req{request_type_code::bins, 0, 100, "SRX12345"};
   EXPECT_EQ(req.bin_size(), 100);
 }
