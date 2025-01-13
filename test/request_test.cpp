@@ -36,7 +36,7 @@ TEST(request_test, basic_assertions) {
   EXPECT_EQ(req, request{});
 
   const auto rq_type = request_type_code::intervals;
-  req = request{rq_type, 0, 0, "SRX012345"};
+  req = request{rq_type, 0, 0, {"SRX012345"}};
   EXPECT_TRUE(req.is_valid_type());
 }
 
@@ -47,7 +47,7 @@ TEST(request_test, valid_compose) {
   static constexpr auto mock_index_hash = 5678;
   static constexpr auto accession = "SRX012345"s;
   request_buffer buf;
-  const request req{rq_type, mock_index_hash, mock_aux_value, accession};
+  const request req{rq_type, mock_index_hash, mock_aux_value, {accession}};
   const std::error_code compose_ec = compose(buf, req);
   EXPECT_FALSE(compose_ec);
   request req_parsed;
@@ -57,7 +57,29 @@ TEST(request_test, valid_compose) {
   EXPECT_EQ(req_parsed.n_intervals(), mock_aux_value);
 }
 
+TEST(request_test, valid_compose_multiple) {
+  using namespace std::string_literals;  // NOLINT
+  static constexpr auto rq_type = request_type_code::intervals;
+  static constexpr auto mock_aux_value = 1234;
+  static constexpr auto mock_index_hash = 5678;
+  const auto methylome_names = std::vector{
+    "SRX012345"s,
+    "asdf"s,
+    "_V_A_P_O_R_"s,
+  };
+  request_buffer buf;
+  const request req{rq_type, mock_index_hash, mock_aux_value, methylome_names};
+  const std::error_code compose_ec = compose(buf, req);
+  EXPECT_FALSE(compose_ec);
+  request req_parsed;
+  const std::error_code parse_ec = parse(buf, req_parsed);
+  EXPECT_FALSE(parse_ec);
+  EXPECT_EQ(req, req_parsed);
+  EXPECT_EQ(std::size(req.methylome_names), std::size(methylome_names));
+  EXPECT_EQ(req_parsed.n_intervals(), mock_aux_value);
+}
+
 TEST(request_test, basic_assertions_bins) {
-  const request req{request_type_code::bins, 0, 100, "SRX12345"};
+  const request req{request_type_code::bins, 0, 100, {"SRX12345"}};
   EXPECT_EQ(req.bin_size(), 100);
 }
