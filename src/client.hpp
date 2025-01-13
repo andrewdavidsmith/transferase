@@ -57,14 +57,16 @@ public:
     return status;
   }
 
-  auto
-  get_levels() const -> const level_container<level_element> & {
-    return resp.levels;
+  [[nodiscard]] auto
+  get_levels(std::error_code &error) const noexcept
+    -> std::vector<level_container<level_element>> {
+    return resp_payload.to_levels<level_element>(resp_hdr, error);
   }
 
-  auto
-  take_levels() -> level_container<level_element> && {
-    return std::move(resp.levels);
+  [[nodiscard]] auto
+  take_levels(std::error_code &error) const noexcept
+    -> std::vector<level_container<level_element>> {
+    return resp_payload.to_levels<level_element>(resp_hdr, error);
   }
 
 protected:
@@ -98,19 +100,19 @@ private:
   auto
   prepare_to_read_response_payload() -> void {
     // get space for query_container
-    resp.levels.resize(resp_hdr.response_size);
-    levels_bytes_remaining = get_levels_n_bytes();  // init counters
-    levels_bytes_received = 0;
+    resp_payload.payload.resize(get_incoming_n_bytes());
+    incoming_bytes_remaining = get_incoming_n_bytes();  // init counters
+    incoming_bytes_received = 0;
   }
 
   auto
-  get_levels_n_bytes() const -> std::uint32_t {
-    return sizeof(level_element) * resp_hdr.response_size;
+  get_incoming_n_bytes() const -> std::uint32_t {
+    return sizeof(level_element) * resp_hdr.rows * resp_hdr.cols;
   }
 
-  auto
-  resp_get_levels_data() -> char * {
-    return reinterpret_cast<char *>(resp.levels.data());
+  [[nodiscard]] auto
+  get_incoming_data_buffer() noexcept -> char * {
+    return resp_payload.data();
   }
 
 private:
@@ -131,7 +133,7 @@ private:
 
   response_header_buffer resp_hdr_buf{};
   response_header resp_hdr{};
-  response<level_element> resp{};
+  response_payload resp_payload{};
 
   std::error_code status{};
   logger &lgr;
@@ -141,8 +143,8 @@ private:
 
   // These help keep track of where we are in the incoming levels;
   // they might best be associated with the response.
-  std::size_t levels_bytes_received{};
-  std::size_t levels_bytes_remaining{};
+  std::size_t incoming_bytes_received{};
+  std::size_t incoming_bytes_remaining{};
 };  // class client_base
 
 template <typename D, typename L>
@@ -264,15 +266,15 @@ template <typename D, typename L>
 auto
 client_base<D, L>::do_read_response_payload() -> void {
   socket.async_read_some(
-    boost::asio::buffer(resp_get_levels_data() + levels_bytes_received,
-                        levels_bytes_remaining),
+    boost::asio::buffer(get_incoming_data_buffer() + incoming_bytes_received,
+                        incoming_bytes_remaining),
     [this](const boost::system::error_code ec,
            const std::size_t bytes_transferred) {
       deadline.expires_at(boost::asio::steady_timer::time_point::max());
       if (!ec) {
-        levels_bytes_remaining -= bytes_transferred;
-        levels_bytes_received += bytes_transferred;
-        if (levels_bytes_remaining == 0) {
+        incoming_bytes_remaining -= bytes_transferred;
+        incoming_bytes_received += bytes_transferred;
+        if (incoming_bytes_remaining == 0) {
           do_finish(ec);
         }
         else {
