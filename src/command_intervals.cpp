@@ -265,11 +265,11 @@ command_intervals_main(
                               ? request_type_code::intervals_covered
                               : request_type_code::intervals;
 
-  const auto req = transferase::request{args.methylome_name, request_type,
-                                        index.get_hash(), std::size(intervals)};
+  const auto req = transferase::request{
+    request_type, index.get_hash(), std::size(intervals), args.methylome_name};
 
   const auto resource = transferase::methylome_resource{
-    .directory = args.local_mode ? args.methylome_dir : std::string{},
+    .directory = args.methylome_dir,
     .hostname = args.hostname,
     .port_number = args.port,
   };

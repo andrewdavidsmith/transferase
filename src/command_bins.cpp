@@ -232,8 +232,8 @@ command_bins_main(int argc,
   const auto request_type = args.count_covered ? request_type_code::bins_covered
                                                : request_type_code::bins;
 
-  const auto req = transferase::request{args.methylome_name, request_type,
-                                        index.get_hash(), args.bin_size};
+  const auto req = transferase::request{request_type, index.get_hash(),
+                                        args.bin_size, args.methylome_name};
 
   const auto resource = transferase::methylome_resource{
     .directory = args.methylome_dir,
