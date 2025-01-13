@@ -58,18 +58,18 @@ protected:
   std::unique_ptr<genome_index_set> genome_index_set_ptr;
 };
 
-TEST_F(genome_index_set_mock, get_genome_index_metadata_assembly_name) {
+TEST_F(genome_index_set_mock, get_genome_index_metadata_genome_name) {
   static constexpr auto species = "tProrsus1";
   std::error_code ec{};
   const auto index_ptr = genome_index_set_ptr->get_genome_index(species, ec);
   EXPECT_FALSE(ec);
-  EXPECT_EQ(index_ptr->meta.assembly, species);
+  EXPECT_EQ(index_ptr->meta.genome_name, species);
 }
 
-TEST_F(genome_index_set_mock, get_genome_index_set_assembly_not_found) {
+TEST_F(genome_index_set_mock, get_genome_index_set_genome_not_found) {
   std::error_code ec;
   const auto index_ptr =
-    genome_index_set_ptr->get_genome_index("invalid.assembly", ec);
+    genome_index_set_ptr->get_genome_index("invalid.genome_name", ec);
   std::ignore = index_ptr;
   EXPECT_EQ(ec, genome_index_error_code::invalid_genome_name);
 }
