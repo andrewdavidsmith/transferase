@@ -90,12 +90,12 @@ command_check_main(int argc,
   desc.add_options()
     // clang-format off
     ("help,h", "print this message and exit")
-    ("indexdir,x", po::value(&index_directory)->required(), "cpg index directory")
-    ("genome,g", po::value(&genome_name)->required(), "genome name/assembly")
+    ("indexdir,x", po::value(&index_directory)->required(), "genome index directory")
+    ("genome,g", po::value(&genome_name)->required(), "genome name")
     ("methdir,d", po::value(&methylome_directory)->required(),
      "directory containing methylomes")
     ("methylomes,m", po::value<std::vector<std::string>>()->multitoken()->required(),
-     "methylome names/accessions")
+     "methylome names")
     ("log-level,v", po::value(&log_level)->default_value(transferase::logger::default_level),
      "log level {debug,info,warning,error,critical}")
     // clang-format on
@@ -144,7 +144,7 @@ command_check_main(int argc,
   const auto index = transferase::genome_index::read(
     index_directory, genome_name, index_read_err);
   if (index_read_err) {
-    lgr.error("Failed to read cpg index {} {}: {}", index_directory,
+    lgr.error("Failed to read genome index {} {}: {}", index_directory,
               genome_name, index_read_err);
     return EXIT_FAILURE;
   }
