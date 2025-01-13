@@ -37,9 +37,10 @@ namespace transferase {
 
 [[nodiscard]] auto
 compose(char *first, const char *last,
-        const response_header &hdr) -> std::error_code {
+        const response_header &hdr) noexcept -> std::error_code {
   // ADS: use to_chars here
-  const auto s = std::format("{}\t{}\n", hdr.status.value(), hdr.response_size);
+  const auto s =
+    std::format("{}\t{}\t{}\n", hdr.status.value(), hdr.cols, hdr.rows);
   assert(std::ranges::ssize(s) <
          std::distance(const_cast<const char *>(first), last));
   const auto data_end = std::ranges::copy(s, first);  // in_out_result
@@ -50,7 +51,7 @@ compose(char *first, const char *last,
 
 [[nodiscard]] auto
 parse(const char *first, const char *last,
-      response_header &hdr) -> std::error_code {
+      response_header &hdr) noexcept -> std::error_code {
   static constexpr auto delim = '\t';
   static constexpr auto term = '\n';
 
@@ -65,14 +66,24 @@ parse(const char *first, const char *last,
     cursor = ptr;
   }
   hdr.status = static_cast<server_error_code>(tmp);
-
   if (*cursor != delim)
     return server_error_code::server_failure;
   ++cursor;
 
-  // response size
+  // response cols
   {
-    const auto [ptr, ec] = std::from_chars(cursor, last, hdr.response_size);
+    const auto [ptr, ec] = std::from_chars(cursor, last, hdr.cols);
+    if (ec != std::errc{})
+      return server_error_code::server_failure;
+    cursor = ptr;
+  }
+  if (*cursor != delim)
+    return server_error_code::server_failure;
+  ++cursor;
+
+  // response rows
+  {
+    const auto [ptr, ec] = std::from_chars(cursor, last, hdr.rows);
     if (ec != std::errc{})
       return server_error_code::server_failure;
     cursor = ptr;
@@ -88,21 +99,21 @@ parse(const char *first, const char *last,
 
 [[nodiscard]] auto
 compose(response_header_buffer &buf,
-        const response_header &hdr) -> std::error_code {
+        const response_header &hdr) noexcept -> std::error_code {
   return compose(buf.data(), buf.data() + response_header_buffer_size, hdr);
 }
 
 [[nodiscard]] auto
 parse(const response_header_buffer &buf,
-      response_header &hdr) -> std::error_code {
+      response_header &hdr) noexcept -> std::error_code {
   return parse(buf.data(), buf.data() + response_header_buffer_size, hdr);
 }
 
 [[nodiscard]] auto
-response_header::summary() const -> std::string {
-  static constexpr auto fmt = R"({{"{}": "{}", "response_size": {}}})";
-  return std::format(fmt, status.category().name(), status.message(),
-                     response_size);
+response_header::summary() const noexcept -> std::string {
+  static constexpr auto fmt = R"({{"{}": "{}", "cols": {}, "rows": {}}})";
+  return std::format(fmt, status.category().name(), status.message(), cols,
+                     rows);
 }
 
 }  // namespace transferase
