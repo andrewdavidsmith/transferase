@@ -27,6 +27,7 @@
 
 #include <gtest/gtest.h>
 
+#include <array>
 #include <cstdlib>  // for EXIT_SUCCESS
 #include <filesystem>
 #include <string>
@@ -45,10 +46,10 @@ TEST(command_intervals_test, basic_local_test) {
     "data/pAntiquusx_promoters_local.bed";
 
   // Define command line arguments
-  const char *command_argv[] = {
+  const auto argv = std::array{
     // clang-format off
     "intervals",
-    "local",
+    "--local",
     "-x",
     index_directory,
     "-g",
@@ -63,11 +64,11 @@ TEST(command_intervals_test, basic_local_test) {
     output_file,
     // clang-format on
   };
-  const int command_argc = sizeof(command_argv) / sizeof(command_argv[0]);
+  const int command_argc = sizeof(argv) / sizeof(argv[0]);
 
   // Run the main function
   const int result =
-    command_intervals_main(command_argc, const_cast<char **>(command_argv));
+    command_intervals_main(command_argc, const_cast<char **>(argv.data()));
 
   // Check that the output file is created
   EXPECT_EQ(result, EXIT_SUCCESS);
@@ -76,8 +77,10 @@ TEST(command_intervals_test, basic_local_test) {
   EXPECT_TRUE(files_are_identical(output_file, expected_output_file));
 
   // Clean up: delete test files
-  if (std::filesystem::exists(output_file))
-    std::filesystem::remove(output_file);
+  if (std::filesystem::exists(output_file)) {
+    const auto remove_ok = std::filesystem::remove(output_file);
+    EXPECT_TRUE(remove_ok);
+  }
 }
 
 TEST(command_intervals_test, basic_local_test_scores) {
@@ -93,13 +96,13 @@ TEST(command_intervals_test, basic_local_test_scores) {
     "data/pAntiquusx_promoters_local.bed";
 
   // Define command line arguments
-  const char *command_argv[] = {
+  const auto argv = std::array{
     // clang-format off
     "intervals",
-    "local",
+    "--local",
     "-x",
     index_directory,
-    "-g",
+    "--genome",
     genome_name,
     "-d",
     methylome_directory,
@@ -112,11 +115,11 @@ TEST(command_intervals_test, basic_local_test_scores) {
     "--score",
     // clang-format on
   };
-  const int command_argc = sizeof(command_argv) / sizeof(command_argv[0]);
+  const int command_argc = sizeof(argv) / sizeof(argv[0]);
 
   // Run the main function
   const int result =
-    command_intervals_main(command_argc, const_cast<char **>(command_argv));
+    command_intervals_main(command_argc, const_cast<char **>(argv.data()));
 
   // Check that the output file is created
   EXPECT_EQ(result, EXIT_SUCCESS);
@@ -125,8 +128,10 @@ TEST(command_intervals_test, basic_local_test_scores) {
 
   // Clean up: delete test files
   std::error_code ignored_ec;
-  if (std::filesystem::exists(output_file, ignored_ec))
-    std::filesystem::remove(output_file, ignored_ec);
+  if (std::filesystem::exists(output_file, ignored_ec)) {
+    const auto remove_ok = std::filesystem::remove(output_file, ignored_ec);
+    EXPECT_TRUE(remove_ok);
+  }
 }
 
 TEST(command_intervals_test, failing_remote_test) {
@@ -138,11 +143,9 @@ TEST(command_intervals_test, failing_remote_test) {
   static constexpr auto output_file = "data/remote_output_file.bed";
 
   // Define command line arguments
-  // NOLINTBEGIN(cppcoreguidelines-avoid-c-arrays)
-  const char *command_argv[] = {
+  const auto argv = std::array{
     // clang-format off
     "intervals",
-    "remote",
     "-s",
     "localhost",
     "-p",
@@ -157,13 +160,12 @@ TEST(command_intervals_test, failing_remote_test) {
     output_file,
     // clang-format on
   };
-  // NOLINTEND(cppcoreguidelines-avoid-c-arrays)
-  const int command_argc = sizeof(command_argv) / sizeof(command_argv[0]);
+  const int command_argc = sizeof(argv) / sizeof(argv[0]);
 
   // Run the main function
   // NOLINTBEGIN(cppcoreguidelines-pro-type-const-cast)
   const int result =
-    command_intervals_main(command_argc, const_cast<char **>(command_argv));
+    command_intervals_main(command_argc, const_cast<char **>(argv.data()));
   // NOLINTEND(cppcoreguidelines-pro-type-const-cast)
 
   // Check that the output file is created
