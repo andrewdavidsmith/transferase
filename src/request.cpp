@@ -63,18 +63,9 @@ parse(char const *first, char const *last, request &req) -> std::error_code {
   req.index_hash = 0;
   req.request_type = request_type_code::unknown;
 
-  // accession
-  req.accession.clear();
-  auto cursor = std::find(first, last, delim);
-
-  if (cursor == last)
-    return request_error_code::parse_error_accession;
-  req.accession = std::string(first, std::distance(first, cursor));
+  auto cursor = first;
 
   // request type
-  if (*cursor != delim)
-    return request_error_code::parse_error_request_type;
-  ++cursor;
   {
     std::underlying_type_t<request_type_code> tmp{};
     const auto [ptr, ec] = std::from_chars(cursor, last, tmp);
@@ -106,8 +97,19 @@ parse(char const *first, char const *last, request &req) -> std::error_code {
     cursor = ptr;
   }
 
-  if (*cursor != term)
+  if (*cursor != delim)
     return request_error_code::parse_error_aux_value;
+  ++cursor;
+
+  // accession
+  req.accession.clear();
+  if (cursor == last)
+    return request_error_code::parse_error_accession;
+  const auto accession_end = std::find(cursor, last, term);
+  if (*accession_end != term)
+    return request_error_code::parse_error_accession;
+  req.accession = std::string(cursor, accession_end);
+  cursor = accession_end;
   ++cursor;
 
   return std::error_code{};
@@ -125,11 +127,11 @@ parse(const request_buffer &buf, request &req) -> std::error_code {
 
 [[nodiscard]] auto
 request::summary() const -> std::string {
-  return std::format(R"({{"accession": "{}", )"
-                     R"("request_type": {}, )"
+  return std::format(R"({{"request_type": {}, )"
                      R"("index_hash": {}, )"
-                     R"("aux_value": {}}})",
-                     accession, request_type, index_hash, aux_value);
+                     R"("aux_value": {}, )"
+                     R"("accession": "{}"}})",
+                     request_type, index_hash, aux_value, accession);
 }
 
 }  // namespace transferase

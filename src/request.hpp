@@ -40,10 +40,10 @@ static constexpr std::uint32_t request_buffer_size{256};
 typedef std::array<char, request_buffer_size> request_buffer;
 
 struct request {
-  std::string accession;
   request_type_code request_type{};
   std::uint64_t index_hash{};
   std::uint64_t aux_value{};
+  std::string accession;
 
   [[nodiscard]] auto
   n_intervals() const {
@@ -91,23 +91,24 @@ template <>
 struct std::formatter<transferase::request> : std::formatter<std::string> {
   auto
   format(const transferase::request &r, std::format_context &ctx) const {
-    return std::format_to(ctx.out(), "{}\t{}\t{}\t{}", r.accession,
-                          r.request_type, r.index_hash, r.aux_value);
+    return std::format_to(ctx.out(), "{}\t{}\t{}\t{}", r.request_type,
+                          r.index_hash, r.aux_value, r.accession);
   }
 };
 
 // request error code
 enum class request_error_code : std::uint8_t {
   ok = 0,
-  parse_error_accession = 1,
-  parse_error_request_type = 2,
-  parse_error_index_hash = 3,
-  parse_error_aux_value = 4,
+  parse_error_request_type = 1,
+  parse_error_index_hash = 2,
+  parse_error_aux_value = 3,
+  parse_error_accession = 4,
   error_reading_query = 5,
 };
 
 template <>
 struct std::is_error_code_enum<request_error_code> : public std::true_type {};
+
 struct request_error_category : std::error_category {
   // clang-format off
   auto name() const noexcept -> const char * override {return "request_error_code";}
@@ -115,10 +116,10 @@ struct request_error_category : std::error_category {
     using std::string_literals::operator""s;
     switch (code) {
     case 0: return "ok"s;
-    case 1: return "error parsing accession"s;
-    case 2: return "error parsing request_type"s;
-    case 3: return "error parsing index_hash"s;
-    case 4: return "error parsing aux_value"s;
+    case 1: return "error parsing request_type"s;
+    case 2: return "error parsing index_hash"s;
+    case 3: return "error parsing aux_value"s;
+    case 4: return "error parsing accession"s;
     case 5: return "error reading query"s;
     }
     std::unreachable();
