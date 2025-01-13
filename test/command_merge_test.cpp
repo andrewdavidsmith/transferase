@@ -89,9 +89,6 @@ TEST(command_merge_test, basic_local_test) {
   const auto meta_exists = std::filesystem::exists(output_meta_fn, ec);
   EXPECT_FALSE(ec);
   EXPECT_TRUE(meta_exists);
-  if (std::filesystem::exists(output_meta_fn, ec))
-    std::filesystem::remove(output_meta_fn, ec);
-  EXPECT_FALSE(ec);
 
   const auto output_data_fn =
     methylome_data::compose_filename(output_directory, merged_name);
@@ -99,7 +96,11 @@ TEST(command_merge_test, basic_local_test) {
   EXPECT_FALSE(ec);
   EXPECT_TRUE(data_exists);
   EXPECT_TRUE(files_are_identical(output_data_fn, expected_output_data_file));
-  if (std::filesystem::exists(output_data_fn, ec))
-    std::filesystem::remove(output_meta_fn, ec);
+  if (meta_exists && data_exists) {
+    auto remove_ok = std::filesystem::remove(output_data_fn, ec);
+    EXPECT_TRUE(remove_ok);
+    remove_ok = std::filesystem::remove(output_meta_fn, ec);
+    EXPECT_TRUE(remove_ok);
+  }
   EXPECT_FALSE(ec);
 }
