@@ -66,7 +66,7 @@ protected:
     index_file_dir = "data/lutions/indexes";
     raw_data_dir = "data/lutions/raw";
 
-    logger::instance(shared_from_cout(), "command", log_level_t::critical);
+    logger::instance(shared_from_cout(), "command", log_level_t::debug);
 
     mock_methylome_set =
       std::make_unique<methylome_set>(methylome_dir, max_live_methylomes);
@@ -87,106 +87,22 @@ protected:
   std::unique_ptr<request_handler> mock_request_handler;
 };
 
-TEST_F(request_handler_mock, add_response_size_for_bins_success) {
-  static constexpr auto index_hash = 0;
-  static constexpr auto bin_size = 100;
-  // (below) comes from eFlareon chrom sizes and the given bin_size
-  static constexpr auto expected_response_size_n_bins = 37;
-  request req{request_type_code::bins, index_hash, bin_size, "eFlareon_brain"};
-  response_header resp_hdr;
-
-  mock_request_handler->add_response_size(req, resp_hdr);
-
-  EXPECT_EQ(resp_hdr.status, server_error_code::ok);
-  EXPECT_EQ(resp_hdr.response_size, expected_response_size_n_bins);
-}
-
-TEST_F(request_handler_mock, add_response_size_for_bins_methylome_error) {
-  static constexpr auto non_existent_methylome_accession = "eFlareon_brainZZZ";
-  static constexpr auto index_hash = 0;
-  static constexpr auto rq_type = request_type_code::bins;
-  static constexpr auto bin_size = 100;
-  request req{rq_type, index_hash, bin_size, non_existent_methylome_accession};
-  response_header resp_hdr;
-  mock_request_handler->add_response_size(req, resp_hdr);
-
-  EXPECT_EQ(resp_hdr.status, server_error_code::methylome_not_found);
-}
-
-TEST_F(request_handler_mock, add_response_size_for_bins_bad_assembly) {
-  static constexpr auto real_accession = "eFlareon_brain";
-  static constexpr auto fake_accession = "eFlareon_brainZZZ";
-  static constexpr auto index_hash = 0;
-  static constexpr auto rq_type = request_type_code::bins;
-  static constexpr auto bin_size = 100;
-
-  const auto get_mm_json_path = [&](const auto &acc) {
-    return methylome_dir / std::format("{}.m16.json", acc);
-  };
-
-  std::error_code ec;
-  auto meta = methylome_metadata::read(get_mm_json_path(real_accession), ec);
-  EXPECT_FALSE(ec);
-
-  meta.assembly = "eUmbreon";
-  const auto fake_meta_file = get_mm_json_path(fake_accession);
-  ec = meta.write(fake_meta_file);
-  EXPECT_FALSE(ec);
-
-  const std::string real_methylome_file =
-    methylome_data::compose_filename(methylome_dir, real_accession);
-  const std::string fake_methylome_file =
-    methylome_data::compose_filename(methylome_dir, fake_accession);
-
-  std::filesystem::copy(real_methylome_file, fake_methylome_file, ec);
-  EXPECT_FALSE(ec);
-
-  request req{rq_type, index_hash, bin_size, fake_accession};
-  response_header resp_hdr;
-  mock_request_handler->add_response_size(req, resp_hdr);
-
-  EXPECT_EQ(resp_hdr.status, server_error_code::index_not_found);
-
-  if (std::filesystem::exists(fake_methylome_file))
-    std::filesystem::remove(fake_methylome_file);
-  if (std::filesystem::exists(fake_meta_file))
-    std::filesystem::remove(fake_meta_file);
-}
-
-TEST_F(request_handler_mock, add_response_size_for_intervals_success) {
-  static constexpr auto rq_type = request_type_code::intervals;
-  static constexpr auto index_hash = 0;
-  static constexpr auto n_intervals = 100;
-  static constexpr auto expected_response_size_n_intervals = n_intervals;
-  [[maybe_unused]] const auto offsets =
-    std::vector<transferase::query_element>(n_intervals);
-
-  const request req{rq_type, index_hash, n_intervals, "eFlareon_brain"};
-  response_header resp_hdr;
-  mock_request_handler->add_response_size(req, resp_hdr);
-
-  EXPECT_EQ(resp_hdr.status, server_error_code::ok);
-  EXPECT_EQ(resp_hdr.response_size, expected_response_size_n_intervals);
-}
-
 TEST_F(request_handler_mock, handle_request_success) {
   static constexpr auto rq_type = request_type_code::intervals;
   static constexpr auto n_intervals = 100;
-  static constexpr auto index_hash = 0;
-  static constexpr auto expected_response_size_n_intervals = n_intervals;
+  static constexpr auto index_hash = 233205952;
+  static constexpr auto expected_rows = n_intervals;
+  static constexpr auto expected_cols = 1;
 
   [[maybe_unused]] const auto offsets =
     std::vector<transferase::query_element>(n_intervals);
-  const request req{rq_type, index_hash, n_intervals, "eFlareon_brain"};
+  const request req{rq_type, index_hash, n_intervals, {"eFlareon_brain"}};
   response_header resp_hdr;
-
-  mock_request_handler->add_response_size(req, resp_hdr);
-
-  EXPECT_EQ(resp_hdr.status, server_error_code::ok);
-  EXPECT_EQ(resp_hdr.response_size, expected_response_size_n_intervals);
-
   mock_request_handler->handle_request(req, resp_hdr);
 
+  EXPECT_EQ(resp_hdr.status, server_error_code::ok);
+  EXPECT_EQ(resp_hdr.rows, expected_rows);
+  EXPECT_EQ(resp_hdr.cols, expected_cols);
   EXPECT_EQ(std::size(mock_request_handler->methylomes.accession_to_methylome),
             1);
 }
@@ -200,14 +116,14 @@ TEST_F(request_handler_mock, handle_request_bad_state) {
   static constexpr auto invalid_rq_type = static_cast<request_type_code>(5);
   static constexpr auto n_intervals = 100;
 
-  request req{valid_rq_type, index_hash, n_intervals, malformed_accession};
+  request req{valid_rq_type, index_hash, n_intervals, {malformed_accession}};
 
   response_header resp_hdr;
   mock_request_handler->handle_request(req, resp_hdr);
 
-  EXPECT_EQ(resp_hdr.status, server_error_code::invalid_accession);
+  EXPECT_EQ(resp_hdr.status, server_error_code::invalid_methylome_name);
 
-  req = request{invalid_rq_type, index_hash, n_intervals, ok_accession};
+  req = request{invalid_rq_type, index_hash, n_intervals, {ok_accession}};
   mock_request_handler->handle_request(req, resp_hdr);
 
   EXPECT_EQ(resp_hdr.status, server_error_code::invalid_request_type);
@@ -218,29 +134,23 @@ TEST_F(request_handler_mock, handle_request_failure) {
   static constexpr auto non_existent_accession{"eFlareon_brainZZZ"};
   static constexpr auto rq_type = request_type_code::intervals;
   static constexpr auto n_intervals = 100;
-  static constexpr auto expected_response_size_n_intervals = n_intervals;
+  static constexpr auto expected_rows = 0;  // due to error
+  static constexpr auto expected_cols = 0;  // due to error
   [[maybe_unused]] const auto offsets =
     std::vector<transferase::query_element>(n_intervals);
 
-  request req{rq_type, index_hash, n_intervals, "eFlareon_brain"};
-
+  request req{rq_type, index_hash, n_intervals, {"eFlareon_brain"}};
   response_header resp_hdr;
-  mock_request_handler->add_response_size(req, resp_hdr);
-
-  EXPECT_EQ(resp_hdr.status, server_error_code::ok);
-  EXPECT_EQ(resp_hdr.response_size, expected_response_size_n_intervals);
-  EXPECT_EQ(std::size(mock_request_handler->methylomes.accession_to_methylome),
-            1);
-
-  req.accession = non_existent_accession;
+  req.methylome_names.front() = non_existent_accession;
   mock_request_handler->handle_request(req, resp_hdr);
-
-  EXPECT_EQ(std::size(mock_request_handler->methylomes.accession_to_methylome),
-            1);
   EXPECT_EQ(resp_hdr.status, server_error_code::methylome_not_found);
+  EXPECT_EQ(resp_hdr.rows, expected_rows);
+  EXPECT_EQ(resp_hdr.cols, expected_cols);
+  EXPECT_EQ(std::size(mock_request_handler->methylomes.accession_to_methylome),
+            0);
 }
 
-TEST_F(request_handler_mock, handle_get_levels_intervals_success) {
+TEST_F(request_handler_mock, intervals_get_levels_success) {
   static constexpr auto index_hash = 0;
   static constexpr auto rq_type = request_type_code::intervals;
   static constexpr auto assembly = "eFlareon";
@@ -262,22 +172,20 @@ TEST_F(request_handler_mock, handle_get_levels_intervals_success) {
 
   const auto query = index.make_query(intervals);
 
-  request req{rq_type, index_hash, std::size(intervals), methylome_name};
+  request req{rq_type, index_hash, std::size(intervals), {methylome_name}};
   response_header resp_hdr;
-
-  mock_request_handler->add_response_size(req, resp_hdr);
   mock_request_handler->handle_request(req, resp_hdr);
 
   // ADS: payload stays on server side
   response_payload resp_data;
-  mock_request_handler->handle_get_levels(req, query, resp_hdr, resp_data);
+  mock_request_handler->intervals_get_levels(req, query, resp_hdr, resp_data);
 
   const auto req_offset_elem_size = sizeof(transferase::query_element);
   const auto expected_payload_size = req_offset_elem_size * size(query);
   EXPECT_EQ(std::size(resp_data.payload), expected_payload_size);
 }
 
-TEST_F(request_handler_mock, handle_get_levels_bins_success) {
+TEST_F(request_handler_mock, bins_get_levels_success) {
   static constexpr auto index_hash = 0;
   static constexpr auto bin_size = 100;
   static constexpr auto rq_type = request_type_code::bins;
@@ -292,13 +200,12 @@ TEST_F(request_handler_mock, handle_get_levels_bins_success) {
   const auto index = genome_index::read(index_file_dir, assembly, ec);
   EXPECT_FALSE(ec);
 
-  request req{rq_type, index_hash, bin_size, methylome_name};
+  request req{rq_type, index_hash, bin_size, {methylome_name}};
   response_header resp_hdr;
-  mock_request_handler->add_response_size(req, resp_hdr);
   mock_request_handler->handle_request(req, resp_hdr);
 
   response_payload resp_data;
-  mock_request_handler->handle_get_levels(req, resp_hdr, resp_data);
+  mock_request_handler->bins_get_levels(req, resp_hdr, resp_data);
 
   const auto expected_n_bins = index.get_n_bins(bin_size);
 
