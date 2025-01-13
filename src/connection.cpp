@@ -75,7 +75,6 @@ connection::read_request() -> void {
           lgr.debug("{} Received request: {}", conn_id, req.summary());
           handler.handle_request(req, resp_hdr);
           if (!resp_hdr.error()) {
-            handler.add_response_size(req, resp_hdr);
             if (req.is_intervals_request()) {
               prepare_to_read_query();
               read_query();
@@ -85,7 +84,7 @@ connection::read_request() -> void {
             }
           }
           else {
-            // response error already assigned in header
+            // response header already contains the error code
             respond_with_error();
           }
         }
@@ -122,7 +121,10 @@ connection::read_query() -> void {
         query_byte += bytes_transferred;
         if (query_remaining == 0) {
           lgr.debug("{} Finished reading query ({}B)", conn_id, query_byte);
-          handler.handle_get_levels(req, query, resp_hdr, resp);
+          if (req.is_covered_request())
+            handler.intervals_get_levels_covered(req, query, resp_hdr, resp);
+          else
+            handler.intervals_get_levels(req, query, resp_hdr, resp);
           lgr.debug("{} Finished computing levels in intervals", conn_id);
           // exiting the read loop -- no deadline for now
           respond_with_header();
@@ -143,7 +145,10 @@ connection::read_query() -> void {
 auto
 connection::compute_bins() -> void {
   deadline.expires_at(boost::asio::steady_timer::time_point::max());
-  handler.handle_get_levels(req, resp_hdr, resp);
+  if (req.is_covered_request())
+    handler.bins_get_levels_covered(req, resp_hdr, resp);
+  else
+    handler.bins_get_levels(req, resp_hdr, resp);
   lgr.debug("{} Finished computing levels in bins", conn_id);
   respond_with_header();
 }
