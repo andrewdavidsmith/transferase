@@ -76,7 +76,7 @@ struct server {
 
 enum class server_error_code : std::uint8_t {
   ok = 0,
-  invalid_accession = 1,
+  invalid_methylome_name = 1,
   invalid_request_type = 2,
   invalid_index_hash = 3,
   methylome_not_found = 4,
@@ -90,12 +90,12 @@ struct std::is_error_code_enum<server_error_code> : public std::true_type {};
 
 struct server_error_category : std::error_category {
   // clang-format off
-  auto name() const noexcept -> const char * override {return "server_response";}
+  auto name() const noexcept -> const char * override {return "server_error_code";}
   auto message(int code) const -> std::string override {
     using std::string_literals::operator""s;
     switch (code) {
     case 0: return "ok"s;
-    case 1: return "invalid accession"s;
+    case 1: return "invalid methylome name"s;
     case 2: return "invalid request type"s;
     case 3: return "invalid index hash"s;
     case 4: return "methylome not found"s;
