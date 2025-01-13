@@ -336,7 +336,7 @@ make_genome_index_plain(const std::string &genome_filename,
 
   meta.index_hash = data.hash();
 
-  meta.assembly = genome_index::parse_genome_name(genome_filename, error);
+  meta.genome_name = genome_index::parse_genome_name(genome_filename, error);
   if (error)
     return {};
 
@@ -423,7 +423,7 @@ make_genome_index_gzip(const std::string &genome_filename,
 
   meta.index_hash = data.hash();
 
-  meta.assembly = genome_index::parse_genome_name(genome_filename, error);
+  meta.genome_name = genome_index::parse_genome_name(genome_filename, error);
   if (error)
     return {};
 
