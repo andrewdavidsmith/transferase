@@ -204,27 +204,6 @@ get_levels_impl(const T b, const T e) noexcept -> U {
   return u;
 }
 
-template <typename U>
-[[nodiscard]] static inline auto
-get_levels_impl(const methylome_data::vec &cpgs,
-                const genome_index_data::vec &positions,
-                const std::uint32_t offset, const transferase::q_elem_t start,
-                const transferase::q_elem_t stop) noexcept -> U {
-  // ADS: it is possible that the intervals requested are past the cpg
-  // sites since they might be in the genome, but past the final cpg
-  // site location. This code *should* be able to handle such a
-  // situation.
-  namespace rg = std::ranges;
-  const auto cpg_beg_lb = rg::lower_bound(positions, start);
-  const auto cpg_beg_dist = rg::distance(std::cbegin(positions), cpg_beg_lb);
-  const auto cpg_beg = std::cbegin(cpgs) + offset + cpg_beg_dist;
-  const auto cpg_end_lb =
-    rg::lower_bound(cpg_beg_lb, std::cend(positions), stop);
-  const auto cpg_end_dist = rg::distance(std::cbegin(positions), cpg_end_lb);
-  const auto cpg_end = std::cbegin(cpgs) + offset + cpg_end_dist;
-  return get_levels_impl<U>(cpg_beg, cpg_end);
-}
-
 [[nodiscard]] auto
 methylome_data::get_levels_covered(const transferase::query_container &query)
   const noexcept -> level_container<level_element_covered_t> {
