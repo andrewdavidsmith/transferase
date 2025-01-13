@@ -37,7 +37,8 @@ metadata_is_consistent(const methylome &meth,
   const auto versions_match = (index.meta.version == meth.meta.version);
   const auto index_hashes_match =
     (index.meta.index_hash == meth.meta.index_hash);
-  const auto assemblies_match = (index.meta.assembly == meth.meta.assembly);
+  const auto assemblies_match =
+    (index.meta.genome_name == meth.meta.genome_name);
   const auto n_cpgs_match = (index.meta.n_cpgs == meth.meta.n_cpgs);
   return versions_match && index_hashes_match && assemblies_match &&
          n_cpgs_match;
