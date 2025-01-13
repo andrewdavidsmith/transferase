@@ -157,8 +157,8 @@ public:
     -> level_container<level_element_t> {
     static constexpr auto REQUEST_TYPE =
       transferase::request_type_code::intervals;
-    const auto req = transferase::request{methylome_name, REQUEST_TYPE,
-                                          index_hash, transferase::size(query)};
+    const auto req = transferase::request{
+      REQUEST_TYPE, index_hash, transferase::size(query), methylome_name};
     return get_levels_local_impl<level_element_t>(*this, req, query, ec);
   }
 
@@ -182,8 +182,8 @@ public:
     const noexcept -> level_container<level_element_covered_t> {
     static constexpr auto REQUEST_TYPE =
       transferase::request_type_code::intervals_covered;
-    const auto req = transferase::request{methylome_name, REQUEST_TYPE,
-                                          index_hash, transferase::size(query)};
+    const auto req = transferase::request{
+      REQUEST_TYPE, index_hash, transferase::size(query), methylome_name};
     return get_levels_local_impl<level_element_covered_t>(*this, req, query,
                                                           ec);
   }
@@ -210,7 +210,7 @@ public:
     static constexpr auto REQUEST_TYPE =
       transferase::request_type_code::intervals;
     const auto req =
-      transferase::request{methylome_name, REQUEST_TYPE, index_hash, bin_size};
+      transferase::request{REQUEST_TYPE, index_hash, bin_size, methylome_name};
     return get_levels_local_impl<level_element_t>(*this, req, index, ec);
   }
 
@@ -237,7 +237,7 @@ public:
     static constexpr auto REQUEST_TYPE =
       transferase::request_type_code::intervals_covered;
     const auto req =
-      transferase::request{methylome_name, REQUEST_TYPE, index_hash, bin_size};
+      transferase::request{REQUEST_TYPE, index_hash, bin_size, methylome_name};
     return get_levels_local_impl<level_element_covered_t>(*this, req, index,
                                                           ec);
   }
@@ -286,8 +286,8 @@ public:
     -> level_container<level_element_t> {
     static constexpr auto REQUEST_TYPE =
       transferase::request_type_code::intervals;
-    const auto req = transferase::request{methylome_name, REQUEST_TYPE,
-                                          index_hash, transferase::size(query)};
+    const auto req = transferase::request{
+      REQUEST_TYPE, index_hash, transferase::size(query), methylome_name};
     return get_levels_remote_impl<level_element_t>(*this, req, query, ec);
   }
 
@@ -311,8 +311,8 @@ public:
     const noexcept -> level_container<level_element_covered_t> {
     static constexpr auto REQUEST_TYPE =
       transferase::request_type_code::intervals_covered;
-    const auto req = transferase::request{methylome_name, REQUEST_TYPE,
-                                          index_hash, transferase::size(query)};
+    const auto req = transferase::request{
+      REQUEST_TYPE, index_hash, transferase::size(query), methylome_name};
     return get_levels_remote_impl<level_element_covered_t>(*this, req, query,
                                                            ec);
   }
@@ -338,7 +338,7 @@ public:
     -> level_container<level_element_t> {
     static constexpr auto REQUEST_TYPE = transferase::request_type_code::bins;
     const auto req =
-      transferase::request{methylome_name, REQUEST_TYPE, index_hash, bin_size};
+      transferase::request{REQUEST_TYPE, index_hash, bin_size, methylome_name};
     return get_levels_remote_impl<level_element_t>(*this, req, ec);
   }
 
@@ -363,7 +363,7 @@ public:
     static constexpr auto REQUEST_TYPE =
       transferase::request_type_code::bins_covered;
     const auto req =
-      transferase::request{methylome_name, REQUEST_TYPE, index_hash, bin_size};
+      transferase::request{REQUEST_TYPE, index_hash, bin_size, methylome_name};
     return get_levels_remote_impl<level_element_covered_t>(*this, req, ec);
   }
 
