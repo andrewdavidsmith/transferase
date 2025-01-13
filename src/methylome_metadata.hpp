@@ -42,7 +42,7 @@ struct methylome_metadata {
   std::string creation_time;
   std::uint64_t methylome_hash{};
   std::uint64_t index_hash{};
-  std::string assembly;
+  std::string genome_name;
   std::uint32_t n_cpgs{};
   bool is_compressed{};
 
@@ -53,17 +53,17 @@ struct methylome_metadata {
             !host.empty()          &&
             !user.empty()          &&
             !creation_time.empty() &&
-            !assembly.empty());
+            !genome_name.empty());
     // clang-format on
   }
 
   [[nodiscard]] auto
   is_consistent(const methylome_metadata &rhs) const -> bool {
     // clang-format off
-    return (index_hash == rhs.index_hash &&
-            n_cpgs     == rhs.n_cpgs     &&
-            assembly   == rhs.assembly   &&
-            version    == rhs.version);
+    return (index_hash  == rhs.index_hash  &&
+            n_cpgs      == rhs.n_cpgs      &&
+            genome_name == rhs.genome_name &&
+            version     == rhs.version);
     // clang-format on
   }
 
@@ -106,7 +106,7 @@ BOOST_DESCRIBE_STRUCT(methylome_metadata, (),
  creation_time,
  methylome_hash,
  index_hash,
- assembly,
+ genome_name,
  n_cpgs,
  is_compressed
 ))
