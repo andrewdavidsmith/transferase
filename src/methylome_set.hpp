@@ -40,16 +40,19 @@ namespace transferase {
 struct methylome;
 
 struct methylome_set {
-  // prevent copy; move disallowed because of std::mutex member
-  methylome_set(const methylome_set &) = delete;
-  methylome_set &
-  operator=(const methylome_set &) = delete;
-
   explicit methylome_set(
     const std::string &methylome_directory,
     const std::uint32_t max_live_methylomes = default_max_live_methylomes) :
     methylome_directory{methylome_directory},
     max_live_methylomes{max_live_methylomes}, accessions{max_live_methylomes} {}
+
+  // prevent copy; move disallowed because of std::mutex member
+  // clang-format off
+  methylome_set(const methylome_set &) = delete;
+  methylome_set &operator=(const methylome_set &) = delete;
+  methylome_set(methylome_set &&) noexcept = delete;
+  methylome_set &operator=(methylome_set &&) noexcept = delete;
+  // clang-format on
 
   [[nodiscard]] auto
   get_methylome(const std::string &accession,
