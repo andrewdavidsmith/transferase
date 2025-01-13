@@ -52,7 +52,7 @@ methylome::init_metadata(const genome_index &index) noexcept
     "",  // creation_time
     data.hash(),
     index.meta.index_hash,
-    index.meta.assembly,
+    index.meta.genome_name,
     index.meta.n_cpgs,
     is_compressed_init
     // clang-format on
