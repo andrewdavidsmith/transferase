@@ -48,11 +48,10 @@ struct connection : public std::enable_shared_from_this<connection> {
   connection &
   operator=(const connection &) = delete;
 
-  explicit connection(boost::asio::ip::tcp::socket socket_,
-                      request_handler &handler, logger &lgr,
-                      std::uint32_t conn_id) :
-    // socket used below gets confused if arg has exact same name
-    socket{std::move(socket_)}, deadline{socket.get_executor()},
+  connection(boost::asio::ip::tcp::socket socket_to_move,
+             request_handler &handler, logger &lgr, std::uint32_t conn_id) :
+    // 'socket' below can get confused if arg has exact same name
+    socket{std::move(socket_to_move)}, deadline{socket.get_executor()},
     handler{handler}, lgr{lgr}, conn_id{conn_id} {
     lgr.info("Connection id: {}. Request endpoint: {}", conn_id,
              boost::lexical_cast<std::string>(socket.remote_endpoint()));
