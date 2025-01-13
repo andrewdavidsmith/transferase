@@ -28,6 +28,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cctype>    // for isalnum, std::isalnum
 #include <charconv>  // std::from_chars
 #include <format>
 #include <iterator>  // for std::size, std::distance, std::iterator_traits
@@ -49,9 +50,10 @@ compose(char *first, char const *last, const request &req) -> std::error_code {
 #endif
 
   // std::ranges::in_out_result
-  const auto data_end = std::ranges::copy(s, first);
+  auto data_end = std::ranges::copy(s, first);
   if (data_end.out == last)
     return std::make_error_code(std::errc::result_out_of_range);
+  *data_end.out = '\0';  // enables strlen, convenient for debugging
   return std::error_code{};
 }
 
@@ -97,20 +99,23 @@ parse(char const *first, char const *last, request &req) -> std::error_code {
     cursor = ptr;
   }
 
-  if (*cursor != delim)
-    return request_error_code::parse_error_aux_value;
-  ++cursor;
-
-  // accession
-  req.accession.clear();
-  if (cursor == last)
-    return request_error_code::parse_error_accession;
-  const auto accession_end = std::find(cursor, last, term);
-  if (*accession_end != term)
-    return request_error_code::parse_error_accession;
-  req.accession = std::string(cursor, accession_end);
-  cursor = accession_end;
-  ++cursor;
+  // methylome_names
+  const auto ok_name = [](const auto x) { return std::isalnum(x) || x == '_'; };
+  req.methylome_names.clear();
+  while (true) {
+    if (*cursor != delim)
+      break;
+    // didn't break; we have another methylome name
+    ++cursor;  // move beyond delim
+    // find where the methylome name ends
+    const auto methylome_name_end = std::find_if_not(cursor, last, ok_name);
+    if (methylome_name_end == last)
+      return request_error_code::parse_error_methylome_names;
+    req.methylome_names.emplace_back(cursor, methylome_name_end);
+    cursor = methylome_name_end;
+  }
+  if (*cursor != term)
+    return request_error_code::parse_error_methylome_names;
 
   return std::error_code{};
 }
@@ -127,11 +132,15 @@ parse(const request_buffer &buf, request &req) -> std::error_code {
 
 [[nodiscard]] auto
 request::summary() const -> std::string {
+  auto joined = methylome_names | std::views::transform([](const auto &r) {
+                  return std::format("\"{}\"", r);
+                }) |
+                std::views::join_with(',') | std::ranges::to<std::string>();
   return std::format(R"({{"request_type": {}, )"
                      R"("index_hash": {}, )"
                      R"("aux_value": {}, )"
-                     R"("accession": "{}"}})",
-                     request_type, index_hash, aux_value, accession);
+                     R"("methylome_names": [{}]}})",
+                     request_type, index_hash, aux_value, joined);
 }
 
 }  // namespace transferase
