@@ -44,11 +44,10 @@ TEST(command_bins_test, basic_local_test) {
     "data/SRX012346_bin100_local.bed";
 
   // Define command line arguments
-  // NOLINTBEGIN(cppcoreguidelines-avoid-c-arrays)
-  const char *command_argv[] = {
+  const auto argv = std::array{
     // clang-format off
     "bins",
-    "local",
+    "--local",
     "-x",
     index_directory,
     "-g",
@@ -63,13 +62,12 @@ TEST(command_bins_test, basic_local_test) {
     "100",
     // clang-format on
   };
-  // NOLINTEND(cppcoreguidelines-avoid-c-arrays)
-  const int command_argc = sizeof(command_argv) / sizeof(command_argv[0]);
+  const int command_argc = sizeof(argv) / sizeof(argv[0]);
 
   // Run the main function
   // NOLINTBEGIN(cppcoreguidelines-pro-type-const-cast)
   const int result =
-    command_bins_main(command_argc, const_cast<char **>(command_argv));
+    command_bins_main(command_argc, const_cast<char **>(argv.data()));
   // NOLINTEND(cppcoreguidelines-pro-type-const-cast)
 
   // Check that the output file is created
