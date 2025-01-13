@@ -53,9 +53,11 @@ static constexpr auto request_type_code_names = std::array{
 
 }  // namespace transferase
 
+/// Helper to specialize std::format for request_type_code
 template <>
 struct std::formatter<transferase::request_type_code>
   : std::formatter<std::string> {
+  /// Specialization of std::format for request_type_code
   auto
   format(const transferase::request_type_code &rtc,
          std::format_context &ctx) const {
