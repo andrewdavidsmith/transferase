@@ -74,10 +74,13 @@ TEST(command_bins_test, basic_local_test) {
   EXPECT_EQ(result, EXIT_SUCCESS);
   std::error_code ignored_ec;
   EXPECT_TRUE(std::filesystem::exists(output_file, ignored_ec));
-  EXPECT_TRUE(files_are_identical(output_file, expected_output_file));
 
-  // Clean up: delete test files
-  if (std::filesystem::exists(output_file)) {
+  const bool output_files_identical =
+    files_are_identical(output_file, expected_output_file);
+  EXPECT_TRUE(output_files_identical);
+
+  // Clean up: delete test files only if tests pass
+  if (output_files_identical && std::filesystem::exists(output_file)) {
     const auto remove_ok = std::filesystem::remove(output_file);
     EXPECT_TRUE(remove_ok);
   }
