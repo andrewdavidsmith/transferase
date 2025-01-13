@@ -29,21 +29,28 @@
 #include <array>
 #include <cstdint>  // for uint32_t
 #include <format>
+#include <iterator>  // for std::size
 #include <string>
 #include <system_error>
 #include <type_traits>  // for true_type
 #include <utility>      // for to_underlying, pair, unreachable
+#include <vector>
 
 namespace transferase {
 
-static constexpr std::uint32_t request_buffer_size{256};
+static constexpr std::uint32_t request_buffer_size{512};
 typedef std::array<char, request_buffer_size> request_buffer;
 
 struct request {
   request_type_code request_type{};
   std::uint64_t index_hash{};
   std::uint64_t aux_value{};
-  std::string accession;
+  std::vector<std::string> methylome_names;
+
+  [[nodiscard]] auto
+  n_methylomes() const {
+    return std::size(methylome_names);
+  }
 
   [[nodiscard]] auto
   n_intervals() const {
@@ -77,6 +84,12 @@ struct request {
     return request_type == request_type_code::bins ||
            request_type == request_type_code::bins_covered;
   }
+
+  [[nodiscard]] auto
+  is_covered_request() const -> bool {
+    return request_type == request_type_code::intervals_covered ||
+           request_type == request_type_code::bins_covered;
+  }
 };
 
 [[nodiscard]] auto
@@ -91,8 +104,11 @@ template <>
 struct std::formatter<transferase::request> : std::formatter<std::string> {
   auto
   format(const transferase::request &r, std::format_context &ctx) const {
-    return std::format_to(ctx.out(), "{}\t{}\t{}\t{}", r.request_type,
-                          r.index_hash, r.aux_value, r.accession);
+    std::string s;
+    s += std::format("{}\t{}\t{}", r.request_type, r.index_hash, r.aux_value);
+    for (const auto &methylome_name : r.methylome_names)
+      s += std::format("\t{}", methylome_name);
+    return std::format_to(ctx.out(), "{}\n", s);
   }
 };
 
@@ -102,7 +118,7 @@ enum class request_error_code : std::uint8_t {
   parse_error_request_type = 1,
   parse_error_index_hash = 2,
   parse_error_aux_value = 3,
-  parse_error_accession = 4,
+  parse_error_methylome_names = 4,
   error_reading_query = 5,
 };
 
@@ -119,7 +135,7 @@ struct request_error_category : std::error_category {
     case 1: return "error parsing request_type"s;
     case 2: return "error parsing index_hash"s;
     case 3: return "error parsing aux_value"s;
-    case 4: return "error parsing accession"s;
+    case 4: return "error parsing methylome_names"s;
     case 5: return "error reading query"s;
     }
     std::unreachable();
