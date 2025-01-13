@@ -46,7 +46,7 @@ struct genome_index_metadata {
   std::string user;
   std::string creation_time;
   std::uint64_t index_hash{};
-  std::string assembly;
+  std::string genome_name;
   std::uint32_t n_cpgs{};
   std::unordered_map<std::string, std::int32_t> chrom_index;
   std::vector<std::string> chrom_order;
@@ -97,7 +97,7 @@ BOOST_DESCRIBE_STRUCT(genome_index_metadata, (),
  user,
  creation_time,
  index_hash,
- assembly,
+ genome_name,
  n_cpgs,
  chrom_index,
  chrom_order,
