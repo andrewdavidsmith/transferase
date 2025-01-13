@@ -126,6 +126,18 @@ struct methylome {
   }
 #endif
 
+  /// @brief Get the name of the genome corresponding to this methylome
+  [[nodiscard]] auto
+  get_genome_name() const noexcept -> const std::string & {
+    return meta.genome_name;
+  }
+
+  /// @brief Get the index hash of the genome corresponding to this methylome
+  [[nodiscard]] auto
+  get_index_hash() const noexcept -> std::uint64_t {
+    return meta.index_hash;
+  }
+
   /// @brief Returns true iff a methylome is internally consistent
   [[nodiscard]] auto
   is_consistent() const noexcept -> bool {
