@@ -40,7 +40,7 @@ mock_get_username() -> std::string {
 }
 
 [[nodiscard]] static inline auto
-mock_get_assembly() -> std::string {
+mock_get_genome_name() -> std::string {
   return "mUnicornicus";
 }
 
@@ -75,7 +75,7 @@ TEST(methylome_metadata_test, is_valid_test) {
   meta.creation_time = mock_get_time_as_string();
   EXPECT_FALSE(meta.is_valid());
 
-  meta.assembly = mock_get_assembly();
+  meta.genome_name = mock_get_genome_name();
   EXPECT_TRUE(meta.is_valid());
 }
 
@@ -84,7 +84,7 @@ TEST(methylome_metadata_test, init_env_test) {
   const std::error_code ec = meta.init_env();
   EXPECT_FALSE(ec);
 
-  meta.assembly = mock_get_assembly();
+  meta.genome_name = mock_get_genome_name();
   EXPECT_TRUE(meta.is_valid());
 }
 
@@ -104,7 +104,7 @@ TEST(methylome_metadata_test, consistent_test) {
   EXPECT_TRUE(meta1.is_consistent(meta2));
   EXPECT_TRUE(meta2.is_consistent(meta1));
 
-  meta2.assembly = mock_get_assembly();
+  meta2.genome_name = mock_get_genome_name();
   EXPECT_TRUE(meta2.is_valid());
   EXPECT_FALSE(meta2.is_consistent(meta1));
 }
