@@ -27,6 +27,7 @@
 #include "genome_index.hpp"
 #include "genome_index_metadata.hpp"
 #include "genomic_interval.hpp"
+#include "level_container.hpp"
 #include "logger.hpp"
 
 #include <algorithm>  // std::min
@@ -37,6 +38,7 @@
 #include <cstdint>  // for std::uint32_t
 #include <fstream>
 #include <iterator>  // for std::size, std::cbegin, std::cend
+#include <print>
 #include <ranges>
 #include <string>
 #include <system_error>
@@ -112,6 +114,29 @@ write_intervals(const std::string &outfile, const genome_index_metadata &meta,
 }
 
 [[nodiscard]] auto
+write_intervals(const std::string &outfile, const genome_index_metadata &meta,
+                const std::vector<genomic_interval> &intervals,
+                const auto &levels) -> std::error_code {
+  std::ofstream out(outfile);
+  if (!out)
+    return std::make_error_code(std::errc(errno));
+  const auto n_levels = std::size(levels);
+  auto prev_ch_id = genomic_interval::not_a_chrom;
+  std::string chrom;
+  for (const auto [i, interval] : std::views::enumerate(intervals)) {
+    if (interval.ch_id != prev_ch_id) {
+      chrom = meta.chrom_order[interval.ch_id];
+      prev_ch_id = interval.ch_id;
+    }
+    std::print(out, "{}\t{}\t{}", chrom, interval.start, interval.stop);
+    for (auto j = 0u; j < n_levels; ++j)
+      std::print(out, "\t{}\t{}", levels[j][i].n_meth, levels[j][i].n_unmeth);
+    std::println(out);
+  }
+  return {};
+}
+
+[[nodiscard]] auto
 write_intervals_bedgraph(
   const std::string &outfile, const genome_index_metadata &meta,
   const std::vector<genomic_interval> &intervals,
@@ -168,9 +193,37 @@ write_intervals_bedgraph(
 }
 
 [[nodiscard]] auto
+write_intervals_bedgraph(const std::string &outfile,
+                         const genome_index_metadata &meta,
+                         const std::vector<genomic_interval> &intervals,
+                         const auto &levels) -> std::error_code {
+  const auto to_score = [](const auto x) {
+    const double total = x.n_meth + x.n_unmeth;
+    return x.n_meth / std::max(1.0, total);
+  };
+  std::ofstream out(outfile);
+  if (!out)
+    return std::make_error_code(std::errc(errno));
+  const auto n_levels = std::size(levels);
+  auto prev_ch_id = genomic_interval::not_a_chrom;
+  std::string chrom;
+  for (const auto [i, interval] : std::views::enumerate(intervals)) {
+    if (interval.ch_id != prev_ch_id) {
+      chrom = meta.chrom_order[interval.ch_id];
+      prev_ch_id = interval.ch_id;
+    }
+    std::print(out, "{}\t{}\t{}", chrom, interval.start, interval.stop);
+    for (auto j = 0u; j < n_levels; ++j)
+      std::print(out, "\t{:.6}", to_score(levels[j][i]));
+    std::println(out);
+  }
+  return {};
+}
+
+[[nodiscard]] auto
 write_bins(const std::string &outfile, const genome_index_metadata &meta,
            const std::uint32_t bin_size,
-           const auto &levels) -> std::error_code {
+           std::ranges::input_range auto &&levels) -> std::error_code {
   static constexpr auto buf_size{512};
   // ADS: modified_buf_size is to ensure we can't go past the end of
   // the actual buffer with the (*tcr.ptr++) below
@@ -223,6 +276,29 @@ write_bins(const std::string &outfile, const genome_index_metadata &meta,
     }
   }
   assert(levels_itr == std::cend(levels));
+  return {};
+}
+
+[[nodiscard]] auto
+write_bins(const std::string &outfile, const genome_index_metadata &meta,
+           const std::uint32_t bin_size,
+           const auto &levels) -> std::error_code {
+  std::ofstream out(outfile);
+  if (!out)
+    return std::make_error_code(std::errc(errno));
+  const auto n_levels = std::size(levels);
+  std::uint32_t i = 0;
+  const auto zipped = std::views::zip(meta.chrom_size, meta.chrom_order);
+  for (const auto [chrom_size, chrom_name] : zipped) {
+    for (std::uint32_t bin_beg = 0; bin_beg < chrom_size; bin_beg += bin_size) {
+      const auto bin_end = std::min(bin_beg + bin_size, chrom_size);
+      std::print(out, "{}\t{}\t{}", chrom_name, bin_beg, bin_end);
+      for (auto j = 0u; j < n_levels; ++j)
+        std::print(out, "\t{}\t{}", levels[j][i].n_meth, levels[j][i].n_unmeth);
+      std::println(out);
+      ++i;
+    }
+  }
   return {};
 }
 
@@ -280,6 +356,34 @@ write_bins_bedgraph(const std::string &outfile,
   return {};
 }
 
+[[nodiscard]] auto
+write_bins_bedgraph(const std::string &outfile,
+                    const genome_index_metadata &meta,
+                    const std::uint32_t bin_size,
+                    const auto &levels) -> std::error_code {
+  const auto to_score = [](const auto x) {
+    const double total = x.n_meth + x.n_unmeth;
+    return x.n_meth / std::max(1.0, total);
+  };
+  std::ofstream out(outfile);
+  if (!out)
+    return std::make_error_code(std::errc(errno));
+  const auto n_levels = std::ssize(levels);
+  std::uint32_t i = 0;
+  const auto zipped = std::views::zip(meta.chrom_size, meta.chrom_order);
+  for (const auto [chrom_size, chrom_name] : zipped) {
+    for (std::uint32_t bin_beg = 0; bin_beg < chrom_size; bin_beg += bin_size) {
+      const auto bin_end = std::min(bin_beg + bin_size, chrom_size);
+      std::print(out, "{}\t{}\t{}", chrom_name, bin_beg, bin_end);
+      for (auto j = 0; j < n_levels; ++j)
+        std::print(out, "\t{:.6}", to_score(levels[j][i]));
+      std::println(out);
+      ++i;
+    }
+  }
+  return {};
+}
+
 struct intervals_output_mgr {
   const std::string &outfile;
   const std::vector<genomic_interval> &intervals;
@@ -317,7 +421,7 @@ static_assert(LevelsInputRange<std::vector<level_element_covered_t> &>);
 [[nodiscard]] inline auto
 write_output(const intervals_output_mgr &m,
              const LevelsInputRange auto &levels) {
-  auto &lgr = transferase::logger::instance();
+  auto &lgr = logger::instance();
   if (!m.write_scores)
     return write_intervals(m.outfile, m.index.meta, m.intervals, levels);
   // ADS: counting intervals that have no reads
@@ -331,9 +435,19 @@ write_output(const intervals_output_mgr &m,
                                   std::views::transform(levels, to_score));
 }
 
+template <typename level_element_type>
+[[nodiscard]] inline auto
+write_output(const intervals_output_mgr &m,
+             const std::vector<level_container<level_element_type>> &levels) {
+  return m.write_scores
+           ? write_intervals_bedgraph(m.outfile, m.index.meta, m.intervals,
+                                      levels)
+           : write_intervals(m.outfile, m.index.meta, m.intervals, levels);
+}
+
 [[nodiscard]] inline auto
 write_output(const bins_output_mgr &m, const LevelsInputRange auto &levels) {
-  auto &lgr = transferase::logger::instance();
+  auto &lgr = logger::instance();
   if (!m.write_scores)
     return write_bins(m.outfile, m.index.meta, m.bin_size, levels);
   // ADS: counting intervals that have no reads
@@ -345,6 +459,15 @@ write_output(const bins_output_mgr &m, const LevelsInputRange auto &levels) {
   lgr.debug("Number of bins without reads: {}", zero_coverage);
   const auto scores = std::views::transform(levels, to_score);
   return write_bins_bedgraph(m.outfile, m.index.meta, m.bin_size, scores);
+}
+
+template <typename level_element_type>
+[[nodiscard]] inline auto
+write_output(const bins_output_mgr &m,
+             const std::vector<level_container<level_element_type>> &levels) {
+  return m.write_scores
+           ? write_bins_bedgraph(m.outfile, m.index.meta, m.bin_size, levels)
+           : write_bins(m.outfile, m.index.meta, m.bin_size, levels);
 }
 
 [[nodiscard]] inline auto
