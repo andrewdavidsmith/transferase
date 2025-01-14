@@ -72,8 +72,9 @@ TEST(genome_index_data_test, valid_write) {
   const std::filesystem::path output_file{
     generate_temp_filename("file", genome_index_data::filename_extension)};
   genome_index_data data;
-  // NOLINT(cppcoreguidelines-avoid-magic-numbers)
+  // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
   data.positions.push_back({1, 2, 3, 4, 5});
+  // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
   std::error_code ec = data.write(output_file);
   EXPECT_EQ(ec, std::error_code{});
   const auto outfile_exists = std::filesystem::exists(output_file, ec);

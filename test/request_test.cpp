@@ -26,7 +26,6 @@
 
 #include <gtest/gtest.h>
 
-#include <cstring>
 #include <string>
 
 using namespace transferase;  // NOLINT
