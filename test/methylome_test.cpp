@@ -21,6 +21,8 @@
  * SOFTWARE.
  */
 
+#include "unit_test_utils.hpp"
+
 #include <methylome.hpp>
 
 #include <genome_index.hpp>
@@ -32,23 +34,10 @@
 #include <chrono>
 #include <filesystem>
 #include <fstream>
-#include <random>
 #include <string>
 #include <utility>  // for std::move
 
 using namespace transferase;  // NOLINT
-
-[[nodiscard]] auto
-generate_unique_dir_name() -> std::string {
-  // Generate a random string based on current time and random numbers
-  auto now = std::chrono::system_clock::now().time_since_epoch().count();
-  std::random_device rd;
-  std::mt19937 gen(rd());
-  std::uniform_int_distribution<> dis(1000, 9999);
-
-  return "/tmp/test_dir_" + std::to_string(now) + "_" +
-         std::to_string(dis(gen));
-}
 
 [[nodiscard]] auto
 change_permissions_to_no_write(const std::filesystem::path &dir)
@@ -84,8 +73,10 @@ write_should_fail(const std::filesystem::path &dir,
     }
     std::error_code local_ec;
     const auto file_exists = std::filesystem::exists(file, local_ec);
-    if (file_exists)
-      std::filesystem::remove(file, local_ec);
+    if (file_exists) {
+      const bool remove_ok = std::filesystem::remove(file, local_ec);
+      EXPECT_TRUE(remove_ok);
+    }
   }
   return write_failed;
 }
@@ -148,8 +139,9 @@ TEST(methylome_test, valid_write) {
   EXPECT_FALSE(ec);
   EXPECT_TRUE(meta_file_exists);
   if (meta_file_exists) {
-    std::filesystem::remove(meta_filename, ec);
+    const bool remove_ok = std::filesystem::remove(meta_filename, ec);
     EXPECT_FALSE(ec);
+    EXPECT_TRUE(remove_ok);
   }
 
   const auto data_filename =
@@ -158,8 +150,9 @@ TEST(methylome_test, valid_write) {
   EXPECT_FALSE(ec);
   EXPECT_TRUE(data_file_exists);
   if (data_file_exists) {
-    std::filesystem::remove(data_filename, ec);
+    const bool remove_ok = std::filesystem::remove(data_filename, ec);
     EXPECT_FALSE(ec);
+    EXPECT_TRUE(remove_ok);
   }
 }
 
@@ -194,8 +187,9 @@ TEST(methylome_test, invalid_write) {
 
   EXPECT_FALSE(meta_file_exists);
   if (meta_file_exists) {
-    std::filesystem::remove(meta_filename, ec);
+    const bool remove_ok = std::filesystem::remove(meta_filename, ec);
     EXPECT_FALSE(ec);
+    EXPECT_TRUE(remove_ok);
   }
 
   const auto data_filename =
@@ -204,12 +198,14 @@ TEST(methylome_test, invalid_write) {
   EXPECT_FALSE(ec);
   EXPECT_FALSE(data_file_exists);
   if (data_file_exists) {
-    std::filesystem::remove(data_filename, ec);
+    const bool remove_ok = std::filesystem::remove(data_filename, ec);
     EXPECT_FALSE(ec);
+    EXPECT_TRUE(remove_ok);
   }
 
-  std::filesystem::remove_all(output_directory, ec);
+  const bool remove_ok = std::filesystem::remove_all(output_directory, ec);
   EXPECT_FALSE(ec);
+  EXPECT_TRUE(remove_ok);
 }
 
 TEST(methylome_test, init_metadata) {

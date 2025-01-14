@@ -29,6 +29,7 @@
 #include <format>
 #include <fstream>
 #include <iterator>
+#include <random>
 #include <string>
 
 [[nodiscard]] auto
@@ -53,4 +54,20 @@ generate_temp_filename(const std::string &prefix,
     std::format("{}_{}{}", prefix, millis,
                 (suffix.empty() || suffix[0] == '.') ? suffix : "." + suffix);
   return (std::filesystem::temp_directory_path() / filename).string();
+}
+
+[[nodiscard]] auto
+generate_unique_dir_name() -> std::string {
+  static constexpr auto test_dir_prefix = "test_dir_";
+  static constexpr auto min_fn_suff = 1000;
+  static constexpr auto max_fn_suff = 9999;
+  // Generate a random string based on current time and random numbers
+  const auto now = std::chrono::system_clock::now().time_since_epoch().count();
+  std::random_device rd;
+  std::mt19937 gen(rd());
+  std::uniform_int_distribution<> dis(min_fn_suff, max_fn_suff);
+  return (std::filesystem::temp_directory_path() /
+          (test_dir_prefix + std::to_string(now) + "_" +
+           std::to_string(dis(gen))))
+    .string();
 }

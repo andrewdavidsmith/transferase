@@ -33,4 +33,7 @@ files_are_identical(const std::string &, const std::string &) -> bool;
 generate_temp_filename(const std::string &prefix,
                        const std::string &suffix = "") -> std::string;
 
+[[nodiscard]] auto
+generate_unique_dir_name() -> std::string;
+
 #endif  // TEST_UNIT_TEST_UTILS_HPP_

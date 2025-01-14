@@ -79,8 +79,9 @@ TEST(genome_index_data_test, valid_write) {
   EXPECT_EQ(ec, std::error_code{});
   EXPECT_TRUE(outfile_exists);
 
-  std::filesystem::remove(output_file, ec);
+  const bool remove_ok = std::filesystem::remove(output_file, ec);
   EXPECT_EQ(ec, std::error_code{});
+  EXPECT_TRUE(remove_ok);
 }
 
 TEST(genome_index_data_test, valid_round_trip) {
@@ -106,8 +107,9 @@ TEST(genome_index_data_test, valid_round_trip) {
 
   EXPECT_EQ(data.positions, data2.positions);
 
-  std::filesystem::remove(output_file, ec);
+  const bool remove_ok = std::filesystem::remove(output_file, ec);
   EXPECT_FALSE(ec);
+  EXPECT_TRUE(remove_ok);
 }
 
 TEST(genome_index_data_test, invalid_read) {
@@ -123,16 +125,18 @@ TEST(genome_index_data_test, invalid_read) {
 
 TEST(genome_index_data_test, valid_make_query_within_chrom) {
   genome_index_data index;
+  // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
   index.positions.push_back({1, 2, 3, 4, 5});
-  std::vector<chrom_range_t> queries{
+  const std::vector<chrom_range_t> queries{
     {1, 3},
     {4, 5},
   };
-  const auto query =
-    transferase::make_query_within_chrom(index.positions[0], queries);
   const auto expected = transferase::query_container(std::vector<query_element>{
     {0, 2},
     {3, 4},
   });
+  // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
+  const auto query =
+    transferase::make_query_within_chrom(index.positions[0], queries);
   EXPECT_EQ(query, expected);
 }
