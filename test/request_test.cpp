@@ -84,8 +84,10 @@ TEST(request_test, compose_too_large) {
   static constexpr auto rq_type = request_type_code::intervals;
   static constexpr auto mock_aux_value = 1234;
   static constexpr auto mock_index_hash = 5678;
+  static constexpr auto mock_n_methylome_names = 60;
   static constexpr auto mock_methylome_name = "SRX012345"s;
-  std::vector<std::string> methylome_names(60, mock_methylome_name);
+  std::vector<std::string> methylome_names(mock_n_methylome_names,
+                                           mock_methylome_name);
   request_buffer buf;
   const request req{rq_type, mock_index_hash, mock_aux_value, methylome_names};
   const std::error_code compose_ec = compose(buf, req);
@@ -93,6 +95,10 @@ TEST(request_test, compose_too_large) {
 }
 
 TEST(request_test, basic_assertions_bins) {
-  const request req{request_type_code::bins, 0, 100, {"SRX12345"}};
-  EXPECT_EQ(req.bin_size(), 100);
+  using namespace std::string_literals;  // NOLINT
+  static constexpr auto mock_bin_size = 100;
+  static constexpr auto mock_methylome_name = "SRX12345"s;
+  const request req{
+    request_type_code::bins, 0, mock_bin_size, {mock_methylome_name}};
+  EXPECT_EQ(req.bin_size(), mock_bin_size);
 }
