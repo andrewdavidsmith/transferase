@@ -27,14 +27,15 @@
 
 #include <genome_index.hpp>
 #include <methylome_data.hpp>
+#include <methylome_metadata.hpp>
 
 #include <gtest/gtest.h>
 
 #include <cerrno>
-#include <chrono>
 #include <filesystem>
 #include <fstream>
 #include <string>
+#include <system_error>
 #include <utility>  // for std::move
 
 using namespace transferase;  // NOLINT

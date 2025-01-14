@@ -64,8 +64,10 @@ TEST(zlib_adapter_test, valid_gz_file) {
   EXPECT_EQ(std::size(buffer), std::size(content));
   EXPECT_EQ(std::string(std::cbegin(buffer), std::cend(buffer)), content);
 
-  if (std::filesystem::exists(gzfile))
-    std::filesystem::remove(gzfile);
+  if (std::filesystem::exists(gzfile)) {
+    const bool remove_ok = std::filesystem::remove(gzfile);
+    EXPECT_TRUE(remove_ok);
+  }
 }
 
 TEST(zlib_adapter_test, invalid_file) {
@@ -77,6 +79,12 @@ TEST(zlib_adapter_test, invalid_file) {
   EXPECT_EQ(ec, std::errc::no_such_file_or_directory);
 }
 
+static auto
+fputc_wrapper(const auto val, auto file) {
+  [[maybe_unused]] const auto fputc_code = std::fputc(val, file);
+  assert(fputc_code == val);
+}
+
 TEST(zlib_adapter_test, corrupted_gz_file) {
   // Manually create a corrupted gzipped file
   const auto gzfile = generate_temp_filename("corrupted", "gz");
@@ -84,22 +92,23 @@ TEST(zlib_adapter_test, corrupted_gz_file) {
   ASSERT_NE(file, nullptr);  // NOLINT
   // Write the gzip header: Magic Number (0x1F 0x8B), Compression Method
   // (DEFLATE)
-  fputc(0x1F, file);  // Magic byte 1
-  fputc(0x8B, file);  // Magic byte 2
-  fputc(0x08, file);  // Compression method (DEFLATE)
-  fputc(0x00, file);  // Flags (0x00)
+  fputc_wrapper(0x1F, file);  // Magic byte 1
+  fputc_wrapper(0x8B, file);  // Magic byte 2
+  fputc_wrapper(0x08, file);  // Compression method (DEFLATE)
+  fputc_wrapper(0x00, file);  // Flags (0x00)
 
   // Write arbitrary timestamp (4 bytes, typically 0x00 for no timestamp)
-  fputc(0x00, file);  // Modification time (1st byte)
-  fputc(0x00, file);  // Modification time (2nd byte)
-  fputc(0x00, file);  // Modification time (3rd byte)
-  fputc(0x00, file);  // Modification time (4th byte)
+  fputc_wrapper(0x00, file);  // Modification time (1st byte)
+  fputc_wrapper(0x00, file);  // Modification time (2nd byte)
+  fputc_wrapper(0x00, file);  // Modification time (3rd byte)
+  fputc_wrapper(0x00, file);  // Modification time (4th byte)
 
-  fputc(0x00, file);  // Extra flags (0x00)
-  fputc(0x03, file);  // OS (Unix)
+  fputc_wrapper(0x00, file);  // Extra flags (0x00)
+  fputc_wrapper(0x03, file);  // OS (Unix)
 
   fputs("Not a valid gzipped content", file);
-  fclose(file);
+  const auto close_code = std::fclose(file);
+  EXPECT_EQ(close_code, 0);
 
   const auto [buffer, ec] = read_gzfile_into_buffer(gzfile);
 
@@ -108,8 +117,10 @@ TEST(zlib_adapter_test, corrupted_gz_file) {
   // Protocol error (invalid gzip format)
   EXPECT_EQ(ec, zlib_adapter_error_code::unexpected_return_code);
 
-  if (std::filesystem::exists(gzfile))
-    std::filesystem::remove(gzfile);
+  if (std::filesystem::exists(gzfile)) {
+    const bool remove_ok = std::filesystem::remove(gzfile);
+    EXPECT_TRUE(remove_ok);
+  }
 }
 
 TEST(zlib_adapter_test, larger_file) {
@@ -123,8 +134,10 @@ TEST(zlib_adapter_test, larger_file) {
   EXPECT_EQ(std::size(buffer), std::size(content));
   EXPECT_EQ(std::string(std::cbegin(buffer), std::cend(buffer)), content);
 
-  if (std::filesystem::exists(gzfile))
-    std::filesystem::remove(gzfile);
+  if (std::filesystem::exists(gzfile)) {
+    const bool remove_ok = std::filesystem::remove(gzfile);
+    EXPECT_TRUE(remove_ok);
+  }
 }
 
 TEST(zlib_adapter_test, small_file) {
@@ -138,21 +151,26 @@ TEST(zlib_adapter_test, small_file) {
   // Content should be 'A'
   EXPECT_EQ(std::string(std::cbegin(buffer), std::cend(buffer)), content);
 
-  if (std::filesystem::exists(gzfile))
-    std::filesystem::remove(gzfile);
+  if (std::filesystem::exists(gzfile)) {
+    const bool remove_ok = std::filesystem::remove(gzfile);
+    EXPECT_TRUE(remove_ok);
+  }
 }
 
 TEST(zlib_adapter_test, empty_file) {
   const auto gzfile = generate_temp_filename("empty", "gz");
   const auto file = fopen(gzfile.data(), "wb");
   ASSERT_NE(file, nullptr);  // NOLINT
-  fclose(file);
+  const auto close_code = std::fclose(file);
+  EXPECT_EQ(close_code, 0);
 
   const auto [buffer, ec] = read_gzfile_into_buffer(gzfile);
 
   EXPECT_FALSE(ec);
   EXPECT_EQ(std::size(buffer), 0);  // buffer should be empty
 
-  if (std::filesystem::exists(gzfile))
-    std::filesystem::remove(gzfile);
+  if (std::filesystem::exists(gzfile)) {
+    const bool remove_ok = std::filesystem::remove(gzfile);
+    EXPECT_TRUE(remove_ok);
+  }
 }
