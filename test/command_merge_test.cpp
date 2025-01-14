@@ -56,8 +56,7 @@ TEST(command_merge_test, basic_local_test) {
     "data/lutions/eFlareon_merged_expected.m16";
 
   // Define command line arguments
-  // NOLINTBEGIN(cppcoreguidelines-avoid-c-arrays)
-  const char *command_argv[] = {
+  const auto argv std::array{
     // clang-format off
     "merge",
     "-o",
@@ -74,12 +73,13 @@ TEST(command_merge_test, basic_local_test) {
     "debug",
     // clang-format on
   };
-  // NOLINTEND(cppcoreguidelines-avoid-c-arrays)
-  const int command_argc = sizeof(command_argv) / sizeof(command_argv[0]);
+  const int command_argc = sizeof(argv) / sizeof(argv[0]);
 
   // Run the main function
+  // NOLINTBEGIN(cppcoreguidelines-pro-type-const-cast)
   const int result =
-    command_merge_main(command_argc, const_cast<char **>(command_argv));
+    command_merge_main(command_argc, const_cast<char **>(argv.data()));
+  // NOLINTEND(cppcoreguidelines-pro-type-const-cast)
   EXPECT_EQ(result, EXIT_SUCCESS);
 
   std::error_code ec;

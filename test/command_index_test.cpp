@@ -30,6 +30,7 @@
 #include <genome_index_data.hpp>
 #include <genome_index_metadata.hpp>
 
+#include <array>
 #include <cstdlib>
 #include <filesystem>
 #include <format>
@@ -49,7 +50,7 @@ TEST(command_index_test, basic_test) {
                            std::format(genome_name, ".fa.gz");
 
   // Define command line arguments
-  const char *command_argv[] = {
+  const auto argv = std::array{
     // clang-format off
     "index",
     "-x",
@@ -60,11 +61,13 @@ TEST(command_index_test, basic_test) {
     "debug",
     // clang-format on
   };
-  const int command_argc = sizeof(command_argv) / sizeof(command_argv[0]);
+  const int command_argc = sizeof(argv) / sizeof(argv[0]);
 
   // Run the main function
+  // NOLINTBEGIN(cppcoreguidelines-pro-type-const-cast)
   const int result =
-    command_index_main(command_argc, const_cast<char **>(command_argv));
+    command_index_main(command_argc, const_cast<char **>(argv.data()));
+  // NOLINTEND(cppcoreguidelines-pro-type-const-cast)
 
   const auto data_outfile =
     genome_index_data::compose_filename(output_directory, genome_name);
@@ -79,13 +82,17 @@ TEST(command_index_test, basic_test) {
     genome_index_data::compose_filename(index_directory, genome_name);
   EXPECT_TRUE(files_are_identical(data_outfile, expected_data_outfile));
 
-  if (std::filesystem::exists(data_outfile, ec))
-    std::filesystem::remove(data_outfile, ec);
+  if (std::filesystem::exists(data_outfile, ec)) {
+    const bool remove_ok = std::filesystem::remove(data_outfile, ec);
+    EXPECT_TRUE(remove_ok);
+  }
   EXPECT_EQ(ec, std::error_code{});
 
   const auto meta_outfile =
     genome_index_metadata::compose_filename(output_directory, genome_name);
-  if (std::filesystem::exists(meta_outfile, ec))
-    std::filesystem::remove(meta_outfile, ec);
+  if (std::filesystem::exists(meta_outfile, ec)) {
+    const bool remove_ok = std::filesystem::remove(meta_outfile, ec);
+    EXPECT_TRUE(remove_ok);
+  }
   EXPECT_EQ(ec, std::error_code{});
 }

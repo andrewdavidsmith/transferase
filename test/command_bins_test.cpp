@@ -27,6 +27,7 @@
 
 #include <gtest/gtest.h>
 
+#include <array>
 #include <cstdlib>  // for EXIT_SUCCESS
 #include <filesystem>
 #include <string>
