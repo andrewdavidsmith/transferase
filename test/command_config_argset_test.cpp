@@ -25,23 +25,23 @@
 
 #include <gtest/gtest.h>
 
+#include <array>
 #include <filesystem>
 #include <format>
 #include <iterator>  // for std::size
 #include <string>
-#include <vector>
 
 using namespace transferase;  // NOLINT
 
 TEST(command_config_argset_test, run_success) {
-  // NOLINTBEGIN(cppcoreguidelines-avoid-c-arrays)
-  std::vector<const char *> argv = {
+  using std::string_literals::operator""s;
+  const auto argv = std::array{
     // clang-format off
     "config",
     "-v",
-    "critical",
+    "debug",
     "-c",
-    "config/xfrase_client_config.toml",
+    "config/transferase_client_config.toml",
     "-s",
      "example.com",
     "-p",
@@ -50,26 +50,25 @@ TEST(command_config_argset_test, run_success) {
     "hg38,mm39",
     // clang-format on
   };
-  // NOLINTEND(cppcoreguidelines-avoid-c-arrays)
-  const int argc = static_cast<int>(std::size(argv));
+  const int argc = sizeof(argv) / sizeof(argv[0]);
 
   EXPECT_EQ(argc, 11);
   EXPECT_EQ(argv[0], "config");
 
   command_config_argset args;
   // NOLINTBEGIN(cppcoreguidelines-pro-type-const-cast)
-  const auto ec =
-    args.parse(argc, const_cast<char **>(argv.data()), std::string("usage"),
-               std::string("about"), std::string("description"));
+  const auto ec = args.parse(argc, const_cast<char **>(argv.data()), "usage"s,
+                             "about"s, "description"s);
   // NOLINTEND(cppcoreguidelines-pro-type-const-cast)
-  const std::filesystem::path config_file{"config/xfrase_client_config.toml"};
-  EXPECT_EQ(args.client_config_file, "config/xfrase_client_config.toml");
+  const std::filesystem::path config_file{
+    "config/transferase_client_config.toml"};
+  EXPECT_EQ(args.client_config_file, "config/transferase_client_config.toml");
   EXPECT_FALSE(ec);
 }
 
 TEST(command_config_argset_test, default_client_config_file) {
   using std::string_literals::operator""s;
-  std::vector<const char *> argv = {
+  const auto argv = std::array{
     // clang-format off
     "config",
     "-v",
@@ -82,7 +81,7 @@ TEST(command_config_argset_test, default_client_config_file) {
     "hg38,mm39",
     // clang-format on
   };
-  const int argc = static_cast<int>(std::size(argv));
+  const int argc = sizeof(argv) / sizeof(argv[0]);
 
   EXPECT_EQ(argc, 9);
   EXPECT_EQ(argv[0], "config");
