@@ -25,6 +25,7 @@
 
 #include <genome_index.hpp>
 #include <genomic_interval.hpp>
+#include <level_element.hpp>
 #include <logger.hpp>  // ADS: so we can setup the logger
 #include <query_container.hpp>
 #include <query_element.hpp>
@@ -179,7 +180,8 @@ TEST_F(request_handler_mock, intervals_get_levels_success) {
 
   // ADS: payload stays on server side
   response_payload resp_data;
-  mock_request_handler->intervals_get_levels(req, query, resp_hdr, resp_data);
+  mock_request_handler->intervals_get_levels<transferase::level_element_t>(
+    req, query, resp_hdr, resp_data);
 
   const auto req_offset_elem_size = sizeof(transferase::query_element);
   const auto expected_payload_size = req_offset_elem_size * size(query);
@@ -206,7 +208,8 @@ TEST_F(request_handler_mock, bins_get_levels_success) {
   mock_request_handler->handle_request(req, resp_hdr);
 
   response_payload resp_data;
-  mock_request_handler->bins_get_levels(req, resp_hdr, resp_data);
+  mock_request_handler->bins_get_levels<level_element_t>(req, resp_hdr,
+                                                         resp_data);
 
   const auto expected_n_bins = index.get_n_bins(bin_size);
 
