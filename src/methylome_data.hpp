@@ -29,12 +29,12 @@
 #endif
 
 #include "level_container.hpp"
-#include "level_element.hpp"
 
 #include <algorithm>
-#include <cmath>    // for std::round
-#include <cstddef>  // for std::size_t
-#include <cstdint>  // for std::uint32_t
+#include <cmath>     // for std::round
+#include <concepts>  // for std::integral
+#include <cstddef>   // for std::size_t
+#include <cstdint>   // for std::uint32_t
 #include <filesystem>
 #include <format>
 #include <iterator>  // for std::pair, std::size

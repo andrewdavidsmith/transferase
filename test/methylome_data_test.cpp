@@ -40,7 +40,7 @@ TEST(methylome_data_test, basic_assertions) {
   const std::uint32_t rounded_n_meth{65535};
   const std::uint32_t rounded_n_unmeth{65535};
   // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
-  conditional_round_to_fit<m_count_t>(n_meth, n_unmeth);
+  conditional_round_to_fit<mcount_t>(n_meth, n_unmeth);
   EXPECT_EQ(std::make_pair(n_meth, n_unmeth),
             std::make_pair(rounded_n_meth, rounded_n_unmeth));
 }

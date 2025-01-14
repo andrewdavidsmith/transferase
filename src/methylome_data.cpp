@@ -27,6 +27,7 @@
 #include "genome_index_data.hpp"
 #include "genome_index_metadata.hpp"
 #include "hash.hpp"
+#include "level_element.hpp"
 #include "methylome_metadata.hpp"
 #include "query_container.hpp"
 #include "zlib_adapter.hpp"
