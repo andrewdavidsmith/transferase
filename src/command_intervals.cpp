@@ -71,6 +71,7 @@ xfrase intervals --local -x index_dir -g hg38 -d methylome_dir \
 #include <format>
 #include <iterator>  // for std::size
 #include <print>
+#include <ranges>  // for std::views, std::ranges::view...
 #include <string>
 #include <string_view>
 #include <system_error>
@@ -105,7 +106,7 @@ struct intervals_argset : argset_base<intervals_argset> {
 
   bool local_mode{};
   std::string intervals_file{};
-  std::string methylome_name{};
+  std::string methylome_names{};
   std::string genome_name{};
   bool write_scores{};
   bool count_covered{};
@@ -123,7 +124,7 @@ struct intervals_argset : argset_base<intervals_argset> {
         {"log_filename", std::format("{}", log_filename)},
         {"log_level", std::format("{}", log_level)},
         {"local_mode", std::format("{}", local_mode)},
-        {"methylome_name", std::format("{}", methylome_name)},
+        {"methylome_names", std::format("{}", methylome_names)},
         {"intervals_file", std::format("{}", intervals_file)},
         {"write_scores", std::format("{}", write_scores)},
         {"count_covered", std::format("{}", count_covered)},
@@ -157,30 +158,27 @@ struct intervals_argset : argset_base<intervals_argset> {
 
   [[nodiscard]] auto
   set_cli_only_opts_impl() -> boost::program_options::options_description {
-    boost::program_options::options_description opts("Command line options");
-    // clang-format off
+    namespace po = boost::program_options;
+    using po::value;
+    po::options_description opts("Command line options");
     opts.add_options()
+      // clang-format off
       ("help,h", "print this message and exit")
       ("config-file,c",
-       boost::program_options::value(&config_file)
-       ->default_value(get_default_config_file(), ""),
+       po::value(&config_file)->default_value(get_default_config_file(), ""),
        "use specified config file")
-      ("local", boost::program_options::bool_switch(&local_mode),
-       "run in local mode")
-      ("intervals,i", boost::program_options::value(&intervals_file)->required(),
-       "intervals file")
-      ("genome,g", boost::program_options::value(&genome_name)->required(),
-       "genome name")
-      ("methylome,m", boost::program_options::value(&methylome_name)->required(),
-       "methylome name")
-      ("output,o", boost::program_options::value(&output_file)->required(),
-       "output file")
-      ("covered", boost::program_options::bool_switch(&count_covered),
+      ("local", po::bool_switch(&local_mode), "run in local mode")
+      ("intervals,i", po::value(&intervals_file)->required(), "intervals file")
+      ("genome,g", po::value(&genome_name)->required(), "genome name")
+      ("methylomes,m", po::value(&methylome_names)->required(),
+       "methylome names (comma separated)")
+      ("output,o", po::value(&output_file)->required(), "output file")
+      ("covered", po::bool_switch(&count_covered),
        "count covered sites for each interval")
-      ("score", boost::program_options::bool_switch(&write_scores),
+      ("score", po::bool_switch(&write_scores),
        "output weighted methylation in bedgraph format")
+      // clang-format on
       ;
-    // clang-format on
     return opts;
   }
 };
@@ -192,12 +190,20 @@ BOOST_DESCRIBE_STRUCT(intervals_argset, (), (
   methylome_dir,
   index_dir,
   log_filename,
-  log_level,
+  log_level
 )
 )
 // clang-format on
 
 }  // namespace transferase
+
+[[nodiscard]] static inline auto
+split_comma(const auto &s) {
+  return s | std::views::split(',') | std::views::transform([](const auto r) {
+           return std::string(std::cbegin(r), std::cend(r));
+         }) |
+         std::ranges::to<std::vector<std::string>>();
+}
 
 auto
 command_intervals_main(
@@ -265,11 +271,12 @@ command_intervals_main(
                               ? request_type_code::intervals_covered
                               : request_type_code::intervals;
 
-  const auto req = transferase::request{
-    request_type, index.get_hash(), std::size(intervals), args.methylome_name};
+  const auto methylome_names = split_comma(args.methylome_names);
+  const auto req = transferase::request{request_type, index.get_hash(),
+                                        std::size(intervals), methylome_names};
 
   const auto resource = transferase::methylome_resource{
-    .directory = args.methylome_dir,
+    .directory = args.local_mode ? args.methylome_dir : std::string{},
     .hostname = args.hostname,
     .port_number = args.port,
   };

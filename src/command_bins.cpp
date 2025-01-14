@@ -66,7 +66,9 @@ xfrase bins --local -d methylome_dir -x index_dir -g hg38 \
 #include <cstdlib>  // for EXIT_FAILURE, EXIT_SUCCESS
 #include <filesystem>
 #include <format>
+#include <iterator>  // for std::cbegin, std::cend
 #include <print>
+#include <ranges>  // for std::views
 #include <string>
 #include <string_view>
 #include <system_error>
@@ -101,7 +103,7 @@ struct bins_argset : argset_base<bins_argset> {
 
   bool local_mode{};
   std::uint32_t bin_size{};
-  std::string methylome_name{};
+  std::string methylome_names{};
   std::string genome_name{};
   bool write_scores{};
   bool count_covered{};
@@ -120,7 +122,7 @@ struct bins_argset : argset_base<bins_argset> {
         {"log_level", std::format("{}", log_level)},
         {"local_mode", std::format("{}", local_mode)},
         {"bin_size", std::format("{}", bin_size)},
-        {"methylome_name", std::format("{}", methylome_name)},
+        {"methylome_names", std::format("{}", methylome_names)},
         {"write_scores", std::format("{}", write_scores)},
         {"count_covered", std::format("{}", count_covered)},
         {"output_file", std::format("{}", output_file)},
@@ -155,7 +157,7 @@ struct bins_argset : argset_base<bins_argset> {
   set_cli_only_opts_impl() -> boost::program_options::options_description {
     namespace po = boost::program_options;
     using po::value;
-    boost::program_options::options_description opts("Command line options");
+    po::options_description opts("Command line options");
     opts.add_options()
       // clang-format off
       ("help,h", "print this message and exit")
@@ -166,7 +168,8 @@ struct bins_argset : argset_base<bins_argset> {
       ("bin-size,b", value(&bin_size),
        "size of genomic bins in base pairs")
       ("genome,g", value(&genome_name)->required(), "genome name")
-      ("methylome,m", value(&methylome_name)->required(), "methylome name")
+      ("methylomes,m", value(&methylome_names)->required(),
+       "methylome names (comma separated)")
       ("output,o", value(&output_file)->required(), "output file")
       ("covered", po::bool_switch(&count_covered),
        "count covered sites for each interval")
@@ -191,6 +194,14 @@ BOOST_DESCRIBE_STRUCT(bins_argset, (), (
 // clang-format on
 
 }  // namespace transferase
+
+[[nodiscard]] static inline auto
+split_comma(const auto &s) {
+  return s | std::views::split(',') | std::views::transform([](const auto r) {
+           return std::string(std::cbegin(r), std::cend(r));
+         }) |
+         std::ranges::to<std::vector<std::string>>();
+}
 
 auto
 command_bins_main(int argc,
@@ -223,7 +234,7 @@ command_bins_main(int argc,
   const auto index =
     transferase::genome_index::read(args.index_dir, args.genome_name, ec);
   if (ec) {
-    lgr.error("Failed to read cpg index {} {}: {}", args.index_dir,
+    lgr.error("Failed to read genome index {} {}: {}", args.index_dir,
               args.genome_name, ec);
     return EXIT_FAILURE;
   }
@@ -232,11 +243,12 @@ command_bins_main(int argc,
   const auto request_type = args.count_covered ? request_type_code::bins_covered
                                                : request_type_code::bins;
 
+  const auto methylome_names = split_comma(args.methylome_names);
   const auto req = transferase::request{request_type, index.get_hash(),
-                                        args.bin_size, args.methylome_name};
+                                        args.bin_size, methylome_names};
 
   const auto resource = transferase::methylome_resource{
-    .directory = args.methylome_dir,
+    .directory = args.local_mode ? args.methylome_dir : std::string{},
     .hostname = args.hostname,
     .port_number = args.port,
   };
