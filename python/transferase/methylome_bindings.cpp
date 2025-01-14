@@ -102,33 +102,37 @@ methylome_bindings(py::class_<transferase::methylome> &cls) -> void {
     .def("get_levels",
          [](const transferase::methylome &self,
             const transferase::query_container &query) {
-           return self.get_levels(query);
+           return self.get_levels<transferase::level_element_t>(query);
          })
     .def("get_levels_covered",
          [](const transferase::methylome &self,
             const transferase::query_container &query) {
-           return self.get_levels_covered(query);
+           return self.get_levels<transferase::level_element_covered_t>(query);
          })
     .def("get_levels",
          [](const transferase::methylome &self, const std::uint32_t bin_size,
             const transferase::genome_index &index) {
-           return self.get_levels(bin_size, index);
+           return self.get_levels<transferase::level_element_t>(bin_size,
+                                                                index);
          })
     .def("get_levels_covered",
          [](const transferase::methylome &self, const std::uint32_t bin_size,
             const transferase::genome_index &index) {
-           return self.get_levels_covered(bin_size, index);
+           return self.get_levels<transferase::level_element_covered_t>(
+             bin_size, index);
          })
     .def("global_levels",
          [](const transferase::methylome &self)
            -> std::tuple<std::uint32_t, std::uint32_t> {
-           const auto result = self.global_levels();
+           const auto result =
+             self.global_levels<transferase::level_element_t>();
            return std::make_tuple(result.n_meth, result.n_unmeth);
          })
     .def("global_levels_covered",
          [](const transferase::methylome &self)
            -> std::tuple<std::uint32_t, std::uint32_t, std::uint32_t> {
-           const auto result = self.global_levels_covered();
+           const auto result =
+             self.global_levels<transferase::level_element_covered_t>();
            return std::make_tuple(result.n_meth, result.n_unmeth,
                                   result.n_covered);
          })
