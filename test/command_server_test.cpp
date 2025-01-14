@@ -31,10 +31,8 @@
 TEST(command_server_test, failing_server_missing_directory) {
   static constexpr auto methylome_directory = "data/lutions/methylomes";
   static constexpr auto index_directory = "data/lutions/indexes_non_existant";
-
   // Define command line arguments
-  // NOLINT(cppcoreguidelines-avoid-c-arrays)
-  const char *command_argv[] = {
+  const auto argv = std::array{
     // clang-format off
     "server",
     "-v",
@@ -47,10 +45,8 @@ TEST(command_server_test, failing_server_missing_directory) {
     methylome_directory,
     // clang-format on
   };
-  const int command_argc = sizeof(command_argv) / sizeof(command_argv[0]);
-
+  const int command_argc = sizeof(argv) / sizeof(argv[0]);
   const int result =
-    command_server_main(command_argc, const_cast<char **>(command_argv));
-
+    command_server_main(command_argc, const_cast<char **>(argv.data()));
   EXPECT_EQ(result, EXIT_FAILURE);
 }
