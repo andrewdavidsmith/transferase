@@ -87,12 +87,19 @@ fputc_wrapper(const auto val, auto file) {
 }
 
 TEST(zlib_adapter_test, corrupted_gz_file) {
+  const auto closer = [](FILE *fp) {
+    const auto r = std::fclose(fp);  // NOLINT(cppcoreguidelines-owning-memory)
+    EXPECT_EQ(r, 0);
+  };
+
   // Manually create a corrupted gzipped file
   const auto gzfile = generate_temp_filename("corrupted", "gz");
-  auto file = fopen(gzfile.data(), "wb");
-  ASSERT_NE(file, nullptr);  // NOLINT
+  std::unique_ptr<FILE, decltype(closer)> file(std::fopen(gzfile.data(), "wb"),
+                                               closer);
+  EXPECT_NE(file, nullptr);  // NOLINT
   // Write the gzip header: Magic Number (0x1F 0x8B), Compression Method
   // (DEFLATE)
+  // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
   fputc_wrapper(0x1F, file);  // Magic byte 1
   fputc_wrapper(0x8B, file);  // Magic byte 2
   fputc_wrapper(0x08, file);  // Compression method (DEFLATE)
@@ -106,6 +113,7 @@ TEST(zlib_adapter_test, corrupted_gz_file) {
 
   fputc_wrapper(0x00, file);  // Extra flags (0x00)
   fputc_wrapper(0x03, file);  // OS (Unix)
+  // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
 
   fputs("Not a valid gzipped content", file);
   const auto close_code = std::fclose(file);
