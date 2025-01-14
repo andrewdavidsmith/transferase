@@ -36,6 +36,7 @@
 using namespace transferase;  // NOLINT
 
 TEST(genomic_interval_test, basic_assertions) {
+  // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
   static constexpr auto index_dir{"data"};
   static constexpr auto assembly{"tProrsus1"};
   static constexpr auto intervals_file{"data/tProrsus1_intervals.bed"};
@@ -47,6 +48,7 @@ TEST(genomic_interval_test, basic_assertions) {
   EXPECT_EQ(std::size(intervals), 20);
   EXPECT_EQ(intervals[0].start, 6595);
   EXPECT_EQ(intervals[0].stop, 6890);
+  // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
 }
 
 TEST(genomic_interval_test, read_non_existent_file) {
@@ -69,6 +71,7 @@ TEST(genomic_interval_test, read_invalid_file) {
 
 // Test cases
 TEST(genomic_interval_test, valid_input) {
+  // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
   genome_index_metadata meta;
   meta.chrom_index["chr1"] = 0;
   meta.chrom_size.push_back(100000);
@@ -78,9 +81,11 @@ TEST(genomic_interval_test, valid_input) {
   EXPECT_EQ(result.ch_id, 0);
   EXPECT_EQ(result.start, 100);
   EXPECT_EQ(result.stop, 200);
+  // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
 }
 
 TEST(genomic_interval_test, valid_input_with_tabs) {
+  // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
   genome_index_metadata meta;
   meta.chrom_index["chr1"] = 0;
   meta.chrom_size.push_back(100000);
@@ -90,6 +95,7 @@ TEST(genomic_interval_test, valid_input_with_tabs) {
   EXPECT_EQ(result.ch_id, 0);
   EXPECT_EQ(result.start, 100);
   EXPECT_EQ(result.stop, 200);
+  // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
 }
 
 TEST(genomic_interval_test, missing_chromosome_name) {
@@ -117,6 +123,7 @@ TEST(genomic_interval_test, non_existent_chromosome_name) {
 }
 
 TEST(genomic_interval_test, stop_position_exceeds_chromosome_size) {
+  // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
   genome_index_metadata meta;
   meta.chrom_index["chr1"] = 0;
   meta.chrom_size.push_back(100000);
@@ -127,4 +134,5 @@ TEST(genomic_interval_test, stop_position_exceeds_chromosome_size) {
   EXPECT_EQ(result.ch_id, genomic_interval::not_a_chrom);
   EXPECT_EQ(result.start, 0);
   EXPECT_EQ(result.stop, 0);
+  // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
 }
