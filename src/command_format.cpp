@@ -251,12 +251,9 @@ process_cpg_sites_xcounts(const std::string &infile, const genome_index &index)
       }
 
       // ADS: prevent counts from overflowing
-      conditional_round_to_fit<m_count_t>(n_meth, n_unmeth);
+      conditional_round_to_fit<mcount_t>(n_meth, n_unmeth);
 
-      *(cpgs_itr + cpg_idx_out++) = {
-        static_cast<m_count_t>(n_meth),
-        static_cast<m_count_t>(n_unmeth),
-      };
+      *(cpgs_itr + cpg_idx_out++) = {n_meth, n_unmeth};
 
       pos = curr_pos;
       ++cpg_idx_in;
@@ -338,12 +335,9 @@ process_cpg_sites_counts(const std::string &infile, const genome_index &index)
     }
 
     // ADS: prevent counts from overflowing
-    conditional_round_to_fit<m_count_t>(n_meth, n_unmeth);
+    conditional_round_to_fit<mcount_t>(n_meth, n_unmeth);
 
-    *(cpgs_itr + cpg_idx_out++) = {
-      static_cast<m_count_t>(n_meth),
-      static_cast<m_count_t>(n_unmeth),
-    };
+    *(cpgs_itr + cpg_idx_out++) = {n_meth, n_unmeth};
 
     pos = curr_pos;
     ++cpg_idx_in;
