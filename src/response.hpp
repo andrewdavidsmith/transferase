@@ -121,8 +121,9 @@ struct response_payload {
         return {};
       level_container<lvl_elem> lvl(hdr.rows);
       std::memcpy(lvl.data(), source, lvl.get_n_bytes());
-      result.emplace_back(std::move(lvl));
       byte_offset += lvl.get_n_bytes();
+      // ADS: be careful of the move here -- don't reorder!
+      result.emplace_back(std::move(lvl));
     }
     return result;
   }
