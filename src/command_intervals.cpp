@@ -65,7 +65,7 @@ xfrase intervals --local -x index_dir -g hg38 -d methylome_dir \
 #include <boost/describe.hpp>
 #include <boost/program_options.hpp>
 
-#include <algorithm>
+#include <algorithm>  // IWYU pragma: keep
 #include <chrono>
 #include <cstdlib>  // for EXIT_FAILURE, EXIT_SUCCESS
 #include <filesystem>
