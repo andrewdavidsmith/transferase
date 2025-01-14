@@ -56,7 +56,7 @@ TEST(command_merge_test, basic_local_test) {
     "data/lutions/eFlareon_merged_expected.m16";
 
   // Define command line arguments
-  const auto argv std::array{
+  const auto argv = std::array{
     // clang-format off
     "merge",
     "-o",

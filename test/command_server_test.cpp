@@ -25,6 +25,7 @@
 
 #include <gtest/gtest.h>
 
+#include <array>
 #include <cstdlib>  // for EXIT_FAILURE
 #include <string>
 
@@ -46,7 +47,9 @@ TEST(command_server_test, failing_server_missing_directory) {
     // clang-format on
   };
   const int command_argc = sizeof(argv) / sizeof(argv[0]);
+  // NOLINTBEGIN(cppcoreguidelines-pro-type-const-cast)
   const int result =
     command_server_main(command_argc, const_cast<char **>(argv.data()));
+  // NOLINTEND(cppcoreguidelines-pro-type-const-cast)
   EXPECT_EQ(result, EXIT_FAILURE);
 }
