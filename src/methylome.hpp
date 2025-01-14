@@ -218,6 +218,13 @@ struct methylome {
     return data.global_levels<lvl_elem_t>();
   }
 
+  /// @brief Convenience function that calls global_levels with
+  /// specialized to return information about sites covered.
+  [[nodiscard]] auto
+  global_levels_covered() const noexcept -> level_element_covered_t {
+    return data.global_levels<level_element_covered_t>();
+  }
+
   /// @brief Get the methylation level for each interval represented in a given
   /// query container.
   template <typename lvl_elem_t>

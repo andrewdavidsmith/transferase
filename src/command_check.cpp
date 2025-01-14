@@ -162,8 +162,7 @@ command_check_main(int argc,
       return EXIT_FAILURE;
     }
 
-    lgr.info("Methylome methylation levels: {}",
-             meth.global_levels<transferase::level_element_covered_t>());
+    lgr.info("Methylome methylation levels: {}", meth.global_levels_covered());
 
     const auto methylome_consistency = meth.is_consistent();
     lgr.info("Methylome data and metadata are consistent: {}",
