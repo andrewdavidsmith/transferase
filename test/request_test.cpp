@@ -27,6 +27,7 @@
 #include <gtest/gtest.h>
 
 #include <string>
+#include <vector>
 
 using namespace transferase;  // NOLINT
 
@@ -76,6 +77,19 @@ TEST(request_test, valid_compose_multiple) {
   EXPECT_EQ(req, req_parsed);
   EXPECT_EQ(std::size(req.methylome_names), std::size(methylome_names));
   EXPECT_EQ(req_parsed.n_intervals(), mock_aux_value);
+}
+
+TEST(request_test, compose_too_large) {
+  using namespace std::string_literals;  // NOLINT
+  static constexpr auto rq_type = request_type_code::intervals;
+  static constexpr auto mock_aux_value = 1234;
+  static constexpr auto mock_index_hash = 5678;
+  static constexpr auto mock_methylome_name = "SRX012345"s;
+  std::vector<std::string> methylome_names(60, mock_methylome_name);
+  request_buffer buf;
+  const request req{rq_type, mock_index_hash, mock_aux_value, methylome_names};
+  const std::error_code compose_ec = compose(buf, req);
+  EXPECT_EQ(compose_ec, request_error_code::request_too_large);
 }
 
 TEST(request_test, basic_assertions_bins) {
