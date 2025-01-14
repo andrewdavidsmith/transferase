@@ -37,37 +37,59 @@ struct response_header;
 struct response_payload;
 struct query_container;
 
-// handles all incoming requests
+/// @brief A handler that is shared by all connections; holds
+/// methylomes and genome indexes in memory.
 struct request_handler {
-  request_handler(const request_handler &) = delete;
-  request_handler &
-  operator=(const request_handler &) = delete;
-
   request_handler(const std::string &methylome_dir,
                   const std::string &index_file_dir,
                   const std::uint32_t max_live_methylomes) :
     methylome_dir{methylome_dir}, index_file_dir{index_file_dir},
     methylomes(methylome_dir, max_live_methylomes), indexes(index_file_dir) {}
 
+  // prevent copy; move disallowed because of std::mutex members in methylomes
+  // and indexes
+  // clang-format off
+  request_handler(const request_handler &) = delete;
+  request_handler &operator=(const request_handler &) = delete;
+  request_handler(request_handler &&) noexcept = delete;
+  request_handler &operator=(request_handler &&) noexcept = delete;
+  // clang-format on
+
+  /// @brief Construct the response header given the request, possibly
+  /// while additional query information is still being received. This
+  /// allows a response on certain errors allowing the client to
+  /// cancel a large query that it may still be sending.
   auto
   handle_request(const request &req, response_header &resp_hdr) -> void;
 
-  /// handle a request to get levels for query intervals
+  /// Handle a request to get levels for query intervals.
   auto
-  handle_get_levels(const request &req,
-                    const transferase::query_container &query,
-                    response_header &resp_hdr, response_payload &resp) -> void;
+  intervals_get_levels(const request &req, const query_container &query,
+                       response_header &resp_hdr,
+                       response_payload &resp_data) -> void;
 
-  /// handle a request to get levels for genomic bins
+  /// Handle a request to get levels for query intervals, including information
+  /// about sites covered.
   auto
-  handle_get_levels(const request &req, response_header &resp_hdr,
-                    response_payload &resp) -> void;
+  intervals_get_levels_covered(const request &req, const query_container &query,
+                               response_header &resp_hdr,
+                               response_payload &resp_data) -> void;
 
+  /// Handle a request to get levels for query bins.
   auto
-  add_response_size(const request &req, response_header &resp_hdr) -> void;
+  bins_get_levels(const request &req, response_header &resp_hdr,
+                  response_payload &resp_data) -> void;
 
-  std::string methylome_dir;   // dir of available methylomes
-  std::string index_file_dir;  // dir of cpg index files
+  /// Handle a request to get levels for query bins, including information
+  /// about sites covered.
+  auto
+  bins_get_levels_covered(const request &req, response_header &resp_hdr,
+                          response_payload &resp_data) -> void;
+
+  /// @brief Directory on the local filesystem with methylomes
+  std::string methylome_dir;
+  /// @brief Directory on the local filesystem with genome indexes
+  std::string index_file_dir;
   methylome_set methylomes;
   genome_index_set indexes;
 };
