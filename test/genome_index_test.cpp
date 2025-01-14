@@ -78,7 +78,8 @@ TEST(genome_index_test, mmap_genome_valid_file) {
   EXPECT_GT(gf.sz, 0);
 
   [[maybe_unused]] const auto err = cleanup_mmap_genome(gf);
-  std::filesystem::remove("test_genome.txt");
+  const bool remove_ok = std::filesystem::remove("test_genome.txt");
+  EXPECT_TRUE(remove_ok);
 }
 
 TEST(genome_index_test, mmap_genome_invalid_file) {
@@ -110,7 +111,8 @@ TEST(genome_index_test, cleanup_mmap_genome_valid_data) {
 
   const auto err = cleanup_mmap_genome(gf);
   EXPECT_FALSE(err);
-  std::filesystem::remove("test_genome.txt");
+  const bool remove_ok = std::filesystem::remove("test_genome.txt");
+  EXPECT_TRUE(remove_ok);
 }
 
 TEST(genome_index_test, cleanup_mmap_genome_invalid_unmap) {

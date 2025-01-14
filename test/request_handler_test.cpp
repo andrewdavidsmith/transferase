@@ -26,8 +26,6 @@
 #include <genome_index.hpp>
 #include <genomic_interval.hpp>
 #include <logger.hpp>  // ADS: so we can setup the logger
-#include <methylome_data.hpp>
-#include <methylome_metadata.hpp>
 #include <query_container.hpp>
 #include <query_element.hpp>
 #include <request.hpp>
@@ -50,7 +48,8 @@
 using namespace transferase;  // NOLINT
 
 TEST(request_handler_test, basic_assertions) {
-  request_handler rh("data", "data", 8);
+  static constexpr auto mock_max_live_methylomes = 8;
+  request_handler rh("data", "data", mock_max_live_methylomes);
   EXPECT_EQ(rh.methylome_dir, "data");
   EXPECT_EQ(rh.index_file_dir, "data");
 }
@@ -78,6 +77,7 @@ protected:
   void
   TearDown() override {}
 
+  // NOLINTBEGIN(cppcoreguidelines-non-private-member-variables-in-classes)
   std::uint32_t max_live_methylomes{};
   std::filesystem::path raw_data_dir;
   std::filesystem::path methylome_dir;
@@ -85,6 +85,7 @@ protected:
   std::unique_ptr<methylome_set> mock_methylome_set;
   std::unique_ptr<genome_index_set> mock_genome_index_set;
   std::unique_ptr<request_handler> mock_request_handler;
+  // NOLINTEND(cppcoreguidelines-non-private-member-variables-in-classes)
 };
 
 TEST_F(request_handler_mock, handle_request_success) {

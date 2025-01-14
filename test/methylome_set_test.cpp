@@ -52,9 +52,11 @@ protected:
   auto
   TearDown() -> void override {}
 
+  // NOLINTBEGIN(cppcoreguidelines-non-private-member-variables-in-classes)
   std::uint32_t max_live_methylomes;
   std::string methylome_directory;
   std::unique_ptr<methylome_set> methylome_set_ptr;
+  // NOLINTEND(cppcoreguidelines-non-private-member-variables-in-classes)
 };
 
 TEST_F(methylome_set_mock, get_methylome_existing_accession) {
