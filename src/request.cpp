@@ -41,6 +41,8 @@ namespace transferase {
 compose(char *first, char const *last, const request &req) -> std::error_code {
   // ADS: use to_chars here
   const std::string s = std::format("{}\n", req);
+  if (std::size(s) >= request_buffer_size)
+    return request_error_code::request_too_large;
 
 #ifndef NDEBUG
   typedef std::iterator_traits<char *>::difference_type diff_type;
@@ -106,7 +108,9 @@ parse(char const *first, char const *last, request &req) -> std::error_code {
     if (*cursor != delim)
       break;
     // didn't break; we have another methylome name
-    ++cursor;  // move beyond delim
+    ++cursor;              // move beyond delim
+    if (*cursor == delim)  // two delims in a row not allowed
+      break;
     // find where the methylome name ends
     const auto methylome_name_end = std::find_if_not(cursor, last, ok_name);
     if (methylome_name_end == last)

@@ -120,6 +120,7 @@ enum class request_error_code : std::uint8_t {
   parse_error_aux_value = 3,
   parse_error_methylome_names = 4,
   error_reading_query = 5,
+  request_too_large = 6,
 };
 
 template <>
@@ -135,8 +136,9 @@ struct request_error_category : std::error_category {
     case 1: return "error parsing request_type"s;
     case 2: return "error parsing index_hash"s;
     case 3: return "error parsing aux_value"s;
-    case 4: return "error parsing methylome_names"s;
+    case 4: return "error parsing methylome names"s;
     case 5: return "error reading query"s;
+    case 6: return "request too large"s;
     }
     std::unreachable();
   }
