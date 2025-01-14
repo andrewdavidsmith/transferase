@@ -23,7 +23,7 @@
 
 #include "methylome_directory_bindings.hpp"
 
-#include <methylome_resource.hpp>
+#include <methylome_directory.hpp>
 
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
@@ -53,13 +53,15 @@ methylome_directory_bindings(py::class_<transferase::methylome_directory> &cls)
          [](const transferase::methylome_directory &self,
             const std::vector<std::string> &methylome_names,
             const transferase::query_container &query) {
-           return self.get_levels(methylome_names, query);
+           return self.get_levels<transferase::level_element_t>(methylome_names,
+                                                                query);
          })
     .def("get_levels_covered",
          [](const transferase::methylome_directory &self,
             const std::vector<std::string> &methylome_names,
             const transferase::query_container &query) {
-           return self.get_levels_covered(methylome_names, query);
+           return self.get_levels<transferase::level_element_covered_t>(
+             methylome_names, query);
          })
     .def_readwrite("directory", &transferase::methylome_directory::directory)
     .def_readwrite("index_hash", &transferase::methylome_directory::index_hash)
