@@ -122,34 +122,22 @@ struct methylome_data {
   [[nodiscard]] auto
   hash() const noexcept -> std::uint64_t;
 
-  /// get methylation levels for query intervals and number for query
-  /// intervals covered
-  [[nodiscard]] auto
-  get_levels_covered(const transferase::query_container &query) const noexcept
-    -> level_container<level_element_covered_t>;
-
-  /// get methylation levels for query intervals
+  /// @brief Get methylation levels for each of a set of query intervals.
+  template <typename lvl_elem_t>
   [[nodiscard]] auto
   get_levels(const transferase::query_container &query) const noexcept
-    -> level_container<level_element_t>;
+    -> level_container<lvl_elem_t>;
 
-  /// get global methylation level
+  /// Get global methylation levels.
+  template <typename lvl_elem_t>
   [[nodiscard]] auto
-  global_levels() const noexcept -> level_element_t;
+  global_levels() const noexcept -> lvl_elem_t;
 
-  /// get global methylation level and sites covered
-  [[nodiscard]] auto
-  global_levels_covered() const noexcept -> level_element_covered_t;
-
-  /// get methylation levels for bins
+  /// @brief Get methylation levels for each fixed size bin in the genome.
+  template <typename lvl_elem_t>
   [[nodiscard]] auto
   get_levels(const std::uint32_t bin_size, const genome_index &index)
-    const noexcept -> level_container<level_element_t>;
-
-  /// get methylation levels for bins and number of bins covered
-  [[nodiscard]] auto
-  get_levels_covered(const std::uint32_t bin_size, const genome_index &index)
-    const noexcept -> level_container<level_element_covered_t>;
+    const noexcept -> level_container<lvl_elem_t>;
 
   [[nodiscard]] static auto
   compose_filename(auto wo_extension) {
