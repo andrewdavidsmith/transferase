@@ -54,8 +54,10 @@ protected:
   auto
   TearDown() -> void override {}
 
+  // NOLINTBEGIN(cppcoreguidelines-non-private-member-variables-in-classes)
   std::string genome_index_directory;
   std::unique_ptr<genome_index_set> genome_index_set_ptr;
+  // NOLINTEND(cppcoreguidelines-non-private-member-variables-in-classes)
 };
 
 TEST_F(genome_index_set_mock, get_genome_index_metadata_genome_name) {

@@ -67,8 +67,10 @@ TEST(command_intervals_test, basic_local_test) {
   const int command_argc = sizeof(argv) / sizeof(argv[0]);
 
   // Run the main function
+  // NOLINTBEGIN(cppcoreguidelines-pro-type-const-cast)
   const int result =
     command_intervals_main(command_argc, const_cast<char **>(argv.data()));
+  // NOLINTEND(cppcoreguidelines-pro-type-const-cast)
 
   // Check that the output file is created
   EXPECT_EQ(result, EXIT_SUCCESS);
@@ -118,8 +120,10 @@ TEST(command_intervals_test, basic_local_test_scores) {
   const int command_argc = sizeof(argv) / sizeof(argv[0]);
 
   // Run the main function
+  // NOLINTBEGIN(cppcoreguidelines-pro-type-const-cast)
   const int result =
     command_intervals_main(command_argc, const_cast<char **>(argv.data()));
+  // NOLINTEND(cppcoreguidelines-pro-type-const-cast)
 
   // Check that the output file is created
   EXPECT_EQ(result, EXIT_SUCCESS);

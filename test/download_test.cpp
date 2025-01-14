@@ -57,8 +57,10 @@ TEST(download_test, send_request_timeout) {
   std::ignore = headers;
 
   EXPECT_TRUE(ec.value() == std::to_underlying(boost::beast::error::timeout));
-  if (std::filesystem::exists(expected_outfile))
-    std::filesystem::remove(expected_outfile);
+  if (std::filesystem::exists(expected_outfile)) {
+    const bool remove_ok = std::filesystem::remove(expected_outfile);
+    EXPECT_TRUE(remove_ok);
+  }
 }
 
 TEST(download_test, receive_download_timeout) {
@@ -83,8 +85,10 @@ TEST(download_test, receive_download_timeout) {
 
   EXPECT_TRUE(ec.value() == std::to_underlying(boost::beast::error::timeout));
 
-  if (std::filesystem::exists(expected_outfile))
-    std::filesystem::remove(expected_outfile);
+  if (std::filesystem::exists(expected_outfile)) {
+    const bool remove_ok = std::filesystem::remove(expected_outfile);
+    EXPECT_TRUE(remove_ok);
+  }
 }
 
 TEST(download_test, download_non_existent_file) {
@@ -114,8 +118,10 @@ TEST(download_test, download_non_existent_file) {
   // randomly generated filename should not exist as a uri
   EXPECT_TRUE(timeout_happened || headers.at("Status") == "404");
 
-  if (std::filesystem::exists(expected_outfile))
-    std::filesystem::remove(expected_outfile);
+  if (std::filesystem::exists(expected_outfile)) {
+    const bool remove_ok = std::filesystem::remove(expected_outfile);
+    EXPECT_TRUE(remove_ok);
+  }
 }
 
 TEST(download_test, download_success) {
@@ -144,6 +150,8 @@ TEST(download_test, download_success) {
   // index.html should exist
   EXPECT_TRUE(timeout_happened || headers.at("Status") == "200");
 
-  if (std::filesystem::exists(expected_outfile))
-    std::filesystem::remove(expected_outfile);
+  if (std::filesystem::exists(expected_outfile)) {
+    const bool remove_ok = std::filesystem::remove(expected_outfile);
+    EXPECT_TRUE(remove_ok);
+  }
 }
