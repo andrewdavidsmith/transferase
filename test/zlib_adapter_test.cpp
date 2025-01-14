@@ -158,11 +158,18 @@ TEST(zlib_adapter_test, small_file) {
 }
 
 TEST(zlib_adapter_test, empty_file) {
+  const auto closer = [](FILE *fp) {
+    const auto r = std::fclose(fp);  // NOLINT(cppcoreguidelines-owning-memory)
+    EXPECT_EQ(r, 0);
+  };
+
   const auto gzfile = generate_temp_filename("empty", "gz");
-  const auto file = fopen(gzfile.data(), "wb");
-  ASSERT_NE(file, nullptr);  // NOLINT
-  const auto close_code = std::fclose(file);
-  EXPECT_EQ(close_code, 0);
+
+  {
+    std::unique_ptr<FILE, decltype(closer)> file(
+      std::fopen(gzfile.data(), "wb"), closer);
+    EXPECT_NE(file, nullptr);  // NOLINT
+  }
 
   const auto [buffer, ec] = read_gzfile_into_buffer(gzfile);
 

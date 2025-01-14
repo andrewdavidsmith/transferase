@@ -43,7 +43,6 @@ class methylome_set_mock : public ::testing::Test {
 protected:
   auto
   SetUp() -> void override {
-    max_live_methylomes = 128;
     methylome_directory = "data";
     methylome_set_ptr =
       std::make_unique<methylome_set>(methylome_directory, max_live_methylomes);
@@ -52,11 +51,11 @@ protected:
   auto
   TearDown() -> void override {}
 
-  // NOLINTBEGIN(cppcoreguidelines-non-private-member-variables-in-classes)
-  std::uint32_t max_live_methylomes;
+  // NOLINTBEGIN(misc-non-private-member-variables-in-classes)
+  std::uint32_t max_live_methylomes{128};
   std::string methylome_directory;
   std::unique_ptr<methylome_set> methylome_set_ptr;
-  // NOLINTEND(cppcoreguidelines-non-private-member-variables-in-classes)
+  // NOLINTEND(misc-non-private-member-variables-in-classes)
 };
 
 TEST_F(methylome_set_mock, get_methylome_existing_accession) {
