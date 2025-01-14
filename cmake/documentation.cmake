@@ -26,13 +26,16 @@
 find_package(Doxygen)
 
 if(DOXYGEN_FOUND)
+  # Set the path to the out-of-source Doxyfile
+  set(DOXYFILE_PATH ${PROJECT_SOURCE_DIR}/data/Doxyfile)
+
   # Set output directory for documentation
-  set(DOXYGEN_OUTPUT_DIR ${CMAKE_BINARY_DIR}/docs)
+  set(DOXYGEN_OUTPUT_DIR ${PROJECT_BINARY_DIR}/docs)
 
   # Add a custom target to generate documentation
   add_custom_target(doc_doxygen
-    COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_SOURCE_DIR}/Doxyfile
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    COMMAND ${DOXYGEN_EXECUTABLE} ${PROJECT_SOURCE_DIR}/Doxyfile
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
     COMMENT "Generating Doxygen documentation"
     VERBATIM
   )
