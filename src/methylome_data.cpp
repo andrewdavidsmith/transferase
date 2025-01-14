@@ -203,20 +203,11 @@ get_levels_impl(const T b, const T e) noexcept -> U {
   return u;
 }
 
+template <>
 [[nodiscard]] auto
-methylome_data::get_levels_covered(const transferase::query_container &query)
-  const noexcept -> level_container<level_element_covered_t> {
-  auto res = level_container<level_element_covered_t>(size(query));
-  const auto beg = std::cbegin(cpgs);
-  for (const auto [i, q] : std::views::enumerate(query))
-    res[i] =
-      get_levels_impl<level_element_covered_t>(beg + q.start, beg + q.stop);
-  return res;
-}
-
-[[nodiscard]] auto
-methylome_data::get_levels(const transferase::query_container &query)
-  const noexcept -> level_container<level_element_t> {
+methylome_data::get_levels<level_element_t>(
+  const transferase::query_container &query) const noexcept
+  -> level_container<level_element_t> {
   std::vector<level_element_t> res(size(query));
   const auto beg = std::cbegin(cpgs);
   for (const auto [i, q] : std::views::enumerate(query))
@@ -224,8 +215,22 @@ methylome_data::get_levels(const transferase::query_container &query)
   return level_container<level_element_t>(std::move(res));
 }
 
+template <>
 [[nodiscard]] auto
-methylome_data::global_levels_covered() const noexcept
+methylome_data::get_levels<level_element_covered_t>(
+  const transferase::query_container &query) const noexcept
+  -> level_container<level_element_covered_t> {
+  std::vector<level_element_covered_t> res(size(query));
+  const auto beg = std::cbegin(cpgs);
+  for (const auto [i, q] : std::views::enumerate(query))
+    res[i] =
+      get_levels_impl<level_element_covered_t>(beg + q.start, beg + q.stop);
+  return level_container<level_element_covered_t>(std::move(res));
+}
+
+template <>
+[[nodiscard]] auto
+methylome_data::global_levels<level_element_covered_t>() const noexcept
   -> level_element_covered_t {
   std::uint32_t n_meth{};
   std::uint32_t n_unmeth{};
@@ -238,8 +243,10 @@ methylome_data::global_levels_covered() const noexcept
   return {n_meth, n_unmeth, n_covered};
 }
 
+template <>
 [[nodiscard]] auto
-methylome_data::global_levels() const noexcept -> level_element_t {
+methylome_data::global_levels<level_element_t>() const noexcept
+  -> level_element_t {
   std::uint32_t n_meth{};
   std::uint32_t n_unmeth{};
   for (const auto &cpg : cpgs) {
@@ -289,16 +296,18 @@ get_levels_impl(const std::uint32_t bin_size, const genome_index &index,
   return level_container<T>(std::move(results));
 }
 
+template <>
 [[nodiscard]] auto
-methylome_data::get_levels(const std::uint32_t bin_size,
-                           const genome_index &index) const noexcept
-  -> level_container<level_element_t> {
+methylome_data::get_levels<level_element_t>(const std::uint32_t bin_size,
+                                            const genome_index &index)
+  const noexcept -> level_container<level_element_t> {
   return get_levels_impl<level_element_t>(bin_size, index, cpgs);
 }
 
+template <>
 [[nodiscard]] auto
-methylome_data::get_levels_covered(const std::uint32_t bin_size,
-                                   const genome_index &index) const noexcept
+methylome_data::get_levels<level_element_covered_t>(
+  const std::uint32_t bin_size, const genome_index &index) const noexcept
   -> level_container<level_element_covered_t> {
   return get_levels_impl<level_element_covered_t>(bin_size, index, cpgs);
 }
