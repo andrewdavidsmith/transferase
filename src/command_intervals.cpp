@@ -80,6 +80,15 @@ xfrase intervals --local -x index_dir -g hg38 -d methylome_dir \
 #include <variant>
 #include <vector>
 
+[[nodiscard]] static inline auto
+format_methylome_names_brief(const std::string &methylome_names)
+  -> std::string {
+  static constexpr auto max_names_width = 50;
+  if (std::size(methylome_names) > max_names_width)
+    return methylome_names.substr(0, max_names_width - 3) + "...";
+  return methylome_names;
+}
+
 namespace transferase {
 
 struct intervals_argset : argset_base<intervals_argset> {
@@ -125,7 +134,7 @@ struct intervals_argset : argset_base<intervals_argset> {
         {"log_filename", std::format("{}", log_filename)},
         {"log_level", std::format("{}", log_level)},
         {"local_mode", std::format("{}", local_mode)},
-        {"methylome_names", std::format("{}", methylome_names)},
+        {"methylome_names", format_methylome_names_brief(methylome_names)},
         {"intervals_file", std::format("{}", intervals_file)},
         {"write_scores", std::format("{}", write_scores)},
         {"count_covered", std::format("{}", count_covered)},

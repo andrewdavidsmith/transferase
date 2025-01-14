@@ -77,6 +77,15 @@ xfrase bins --local -d methylome_dir -x index_dir -g hg38 \
 #include <variant>  // for std::tuple
 #include <vector>
 
+[[nodiscard]] static inline auto
+format_methylome_names_brief(const std::string &methylome_names)
+  -> std::string {
+  static constexpr auto max_names_width = 50;
+  if (std::size(methylome_names) > max_names_width)
+    return methylome_names.substr(0, max_names_width - 3) + "...";
+  return methylome_names;
+}
+
 namespace transferase {
 
 struct bins_argset : argset_base<bins_argset> {
@@ -123,7 +132,7 @@ struct bins_argset : argset_base<bins_argset> {
         {"log_level", std::format("{}", log_level)},
         {"local_mode", std::format("{}", local_mode)},
         {"bin_size", std::format("{}", bin_size)},
-        {"methylome_names", std::format("{}", methylome_names)},
+        {"methylome_names", format_methylome_names_brief(methylome_names)},
         {"write_scores", std::format("{}", write_scores)},
         {"count_covered", std::format("{}", count_covered)},
         {"output_file", std::format("{}", output_file)},
