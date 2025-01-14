@@ -23,7 +23,7 @@
 
 #include "methylome_server_bindings.hpp"
 
-#include <methylome_resource.hpp>
+#include <methylome_server.hpp>
 
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
@@ -54,13 +54,15 @@ methylome_server_bindings(py::class_<transferase::methylome_server> &cls)
          [](const transferase::methylome_server &self,
             const std::vector<std::string> &methylome_names,
             const transferase::query_container &query) {
-           return self.get_levels(methylome_names, query);
+           return self.get_levels<transferase::level_element_t>(methylome_names,
+                                                                query);
          })
     .def("get_levels_covered",
          [](const transferase::methylome_server &self,
             const std::vector<std::string> &methylome_names,
             const transferase::query_container &query) {
-           return self.get_levels(methylome_names, query);
+           return self.get_levels<transferase::level_element_covered_t>(
+             methylome_names, query);
          })
     .def_readwrite("hostname", &transferase::methylome_server::hostname)
     .def_readwrite("port_number", &transferase::methylome_server::port_number)
