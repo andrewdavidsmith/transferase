@@ -30,17 +30,43 @@
 
 namespace transferase {
 
+/// @brief Pair of counts representing methylation level.
+///
+/// The counts correspond to number of methylated and unmethylated
+/// observations for the purpose of representing methylation level
+/// through a genomic interval.
 struct level_element_t {
+  /// Number of observations (e.g., sites in reads) corresponding to a
+  /// methylated state.
   std::uint32_t n_meth{};
+
+  /// Number of observations (e.g., sites in reads) corresponding to an
+  /// unmethylated state.
   std::uint32_t n_unmeth{};
+
   auto
   operator<=>(const level_element_t &) const = default;
 };
 
+/// @brief Triple of counts for methylation level with number of sites covered.
+///
+/// Includes three counts: number of methylated and unmethylated
+/// observations, and number of sites contributing at least one
+/// observation, for the purpose of representing methylation level
+/// through a genomic interval.
 struct level_element_covered_t {
+  /// Number of observations (e.g., sites in reads) corresponding to a
+  /// methylated state.
   std::uint32_t n_meth{};
+
+  /// Number of observations (e.g., sites in reads) corresponding to an
+  /// unmethylated state.
   std::uint32_t n_unmeth{};
+
+  /// Number of sites in the corresponding genomic interval that contribute at
+  /// least one observation to the n_meth or n_unmeth values.
   std::uint32_t n_covered{};
+
   auto
   operator<=>(const level_element_covered_t &) const = default;
 };
