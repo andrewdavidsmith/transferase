@@ -44,7 +44,8 @@ When in doubt, consult the module reference at the location listed above.
 #include <level_element.hpp>
 #include <logger.hpp>
 #include <methylome.hpp>
-#include <methylome_resource.hpp>
+#include <methylome_directory.hpp>
+#include <methylome_server.hpp>
 #include <query_container.hpp>
 
 #include <moduleobject.h>
