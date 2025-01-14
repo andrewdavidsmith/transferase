@@ -34,8 +34,8 @@
 using namespace transferase;  // NOLINT
 
 TEST(methylome_data_test, basic_assertions) {
-  const std::uint32_t n_meth{65536};
-  const std::uint32_t n_unmeth{65536};
+  std::uint32_t n_meth{65536};
+  std::uint32_t n_unmeth{65536};
   const std::uint32_t rounded_n_meth{65535};
   const std::uint32_t rounded_n_unmeth{65535};
   conditional_round_to_fit<m_count_t>(n_meth, n_unmeth);

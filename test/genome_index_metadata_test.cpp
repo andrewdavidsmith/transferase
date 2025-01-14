@@ -35,15 +35,17 @@
 #include <string>
 #include <vector>
 
-using namespace transferase;  // NOLINT  // NOLINT
+using namespace transferase;  // NOLINT
 
 TEST(genome_index_metadata_test, basic_assertions) {
   genome_index_metadata meta;
   EXPECT_EQ(meta.get_n_cpgs_chrom(), std::vector<std::uint32_t>());
+  // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
   meta.chrom_offset = {0, 1000, 10000};
   meta.n_cpgs = 11000;
   EXPECT_EQ(meta.get_n_cpgs_chrom(),
             std::vector<std::uint32_t>({1000, 9000, 1000}));
+  // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
   meta.chrom_offset = {0};
   meta.n_cpgs = 0;
   EXPECT_EQ(meta.get_n_cpgs_chrom(), std::vector<std::uint32_t>({0}));
@@ -60,8 +62,10 @@ protected:
   auto
   TearDown() -> void override {}
 
+  // NOLINTBEGIN(misc-non-private-member-variables-in-classes)
   std::string genome_index_dir;
   std::string species_name;
+  // NOLINTEND(misc-non-private-member-variables-in-classes)
 };
 
 TEST_F(genome_index_metadata_mock, read_existing_genome_index_metadata) {
