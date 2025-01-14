@@ -57,7 +57,6 @@ typedef std::uint16_t mcount_t;
 /// @brief A pair of counts for methylated and unmethylated observations at a
 /// single site (e.g., CpG) in the genome.
 struct mcount_pair {
-
   /// Number of methylated observations.
   mcount_t n_meth{};
 
