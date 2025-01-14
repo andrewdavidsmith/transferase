@@ -110,10 +110,12 @@ protected:
   auto
   TearDown() -> void override {}
 
-  std::uint32_t max_live_methylomes;
+  // NOLINTBEGIN(misc-non-private-member-variables-in-classes)
+  std::uint32_t max_live_methylomes{};
   std::string methylome_directory;
   std::unique_ptr<methylome_set> methylome_set_ptr;
   std::vector<std::string> accessions;
+  // NOLINTEND(misc-non-private-member-variables-in-classes)
 };
 
 TEST_F(methylome_set_lutions, get_methylome_more_than_max_methylomes) {

@@ -32,6 +32,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <filesystem>
+#include <memory>  // for std::unique_ptr
 #include <string>
 #include <system_error>
 
