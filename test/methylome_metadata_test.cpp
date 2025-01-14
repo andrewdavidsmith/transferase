@@ -157,7 +157,9 @@ TEST(methylome_metadata_test, write_test) {
   EXPECT_FALSE(ec);
   EXPECT_TRUE(outfile_exists);
 
-  if (outfile_exists)
-    std::filesystem::remove(outfile, ec);
+  if (outfile_exists) {
+    const bool remove_ok = std::filesystem::remove(outfile, ec);
+    EXPECT_TRUE(remove_ok);
+  }
   EXPECT_FALSE(ec);
 }
