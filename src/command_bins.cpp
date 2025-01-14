@@ -53,7 +53,7 @@ xfrase bins --local -d methylome_dir -x index_dir -g hg38 \
 #include "level_container.hpp"
 #include "level_element.hpp"
 #include "logger.hpp"
-#include "methylome_resource.hpp"
+#include "methylome_interface.hpp"
 #include "request.hpp"
 #include "request_type_code.hpp"
 #include "utilities.hpp"
@@ -248,7 +248,7 @@ command_bins_main(int argc,
   const auto req = transferase::request{request_type, index.get_hash(),
                                         args.bin_size, methylome_names};
 
-  const auto resource = transferase::methylome_resource{
+  const auto resource = transferase::methylome_interface{
     .directory = args.local_mode ? args.methylome_dir : std::string{},
     .hostname = args.hostname,
     .port_number = args.port,
