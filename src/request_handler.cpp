@@ -24,72 +24,29 @@
 #include "request_handler.hpp"
 
 #include "genome_index.hpp"
-#include "genome_index_metadata.hpp"
-#include "level_container.hpp"  // for xfrase::size
+#include "level_container.hpp"
+#include "level_element.hpp"
 #include "logger.hpp"
 #include "methylome.hpp"
-#include "methylome_data.hpp"
-#include "methylome_metadata.hpp"
-#include "methylome_set.hpp"    // for is_valid_accession
+#include "methylome_set.hpp"
 #include "query_container.hpp"  // IWYU pragma: keep
 #include "request.hpp"
-#include "request_type_code.hpp"
 #include "response.hpp"
 #include "server.hpp"
-#include "utilities.hpp"
 
-#include <chrono>   // for std::chrono::high_resolution_clock
-#include <cstring>  // for std::memcpy
-#include <memory>   // for std::shared_ptr
+#include <memory>  // for std::shared_ptr
+#include <string>
 #include <system_error>
-#include <type_traits>  // for std::remove_cvref_t
 #include <vector>
 
 namespace transferase {
 
 auto
-request_handler::add_response_size(const request &req,
-                                   response_header &resp_hdr) -> void {
-  // ADS: error codes in here should be converted to codes that will
-  // make more sense on the other end of a connection: "can't read a
-  // methylome file" => "can't find the methylome". Not the best
-  // approach.
-  auto &lgr = logger::instance();
-  std::error_code ec;
-
-  // assume methylome availability has been determined
-  const auto meth = methylomes.get_methylome(req.accession, ec);
-  if (ec) {
-    lgr.warning("Error loading methylome {}: {}", req.accession, ec);
-    resp_hdr.status = server_error_code::methylome_not_found;
-    return;
-  }
-
-  const auto index = indexes.get_genome_index(meth->meta.assembly, ec);
-  if (ec) {
-    lgr.error("Failed to load cpg index for {}: {}", meth->meta.assembly, ec);
-    resp_hdr.status = server_error_code::index_not_found;
-    return;
-  }
-  resp_hdr.response_size = req.is_intervals_request()
-                             ? req.n_intervals()
-                             : index->meta.get_n_bins(req.bin_size());
-  resp_hdr.status = server_error_code::ok;
-}
-
-auto
 request_handler::handle_request(const request &req,
                                 response_header &resp_hdr) -> void {
   auto &lgr = logger::instance();
-  resp_hdr.response_size = 0;
-
-  // ADS: might be redundant here
-  // verify that the accession makes sense
-  if (!methylome::is_valid_name(req.accession)) {
-    lgr.warning("Malformed accession: {}", req.accession);
-    resp_hdr.status = server_error_code::invalid_accession;
-    return;
-  }
+  resp_hdr.rows = 0;
+  resp_hdr.cols = 0;
 
   // verify that the request type makes sense
   if (!req.is_valid_type()) {
@@ -98,118 +55,187 @@ request_handler::handle_request(const request &req,
     return;
   }
 
-  std::error_code ec;
-  const auto start_time{std::chrono::high_resolution_clock::now()};
-  const auto meth = methylomes.get_methylome(req.accession, ec);
-  const auto stop_time{std::chrono::high_resolution_clock::now()};
-  lgr.debug("Elapsed time for get_methylome: {:.3}s",
-            duration(start_time, stop_time));
+  // verify that the methylome names makes sense
+  for (const auto &methylome_name : req.methylome_names)
+    // cppcheck-suppress useStlAlgorithm
+    if (!methylome::is_valid_name(methylome_name)) {
+      lgr.warning("Malformed methylome name: {}", methylome_name);
+      resp_hdr.status = server_error_code::invalid_methylome_name;
+      return;
+    }
 
+  std::error_code ec;
+  // get one methylome so we can associate a genome with this request
+  const auto methylome_name = req.methylome_names.front();
+  const auto meth = methylomes.get_methylome(methylome_name, ec);
   if (ec) {
-    lgr.warning("Error loading methylome {}: {}", req.accession, ec);
+    lgr.warning("Error loading methylome {}: {}", methylome_name, ec);
     resp_hdr.status = server_error_code::methylome_not_found;
     return;
   }
 
+  // load the genome index (a preload)
+  const auto genome_name = meth->get_genome_name();
+  const auto index = indexes.get_genome_index(genome_name, ec);
+  if (ec) {
+    lgr.error("Failed to load genome index for {}: {}", genome_name, ec);
+    resp_hdr.status = server_error_code::index_not_found;
+    return;
+  }
+
   // confirm that the methylome size is as expected
-  if (req.index_hash != meth->meta.index_hash) {
+  if (req.index_hash != meth->get_index_hash()) {
     lgr.warning("Incorrect index_hash (provided={}, expected={})",
-                req.index_hash, meth->meta.index_hash);
+                req.index_hash, meth->get_index_hash());
     resp_hdr.status = server_error_code::invalid_index_hash;
     return;
   }
 
-  // ADS: check for errors related to bins here also for early exit if an
-  // error is found
-
-  // ADS TODO: set up the methylome for loading here?
-  /* This would involve the methylome_set */
-
-  // ADS TODO: allocate the space to start reading offsets? Can't do
-  // that if the number of intervals is not yet known
-}
-
-[[nodiscard]] static inline auto
-levels_to_payload(auto &&levels) -> response_payload {
-  // ADS: copy happening here is not needed
-  using levels_res_type =
-    typename std::remove_cvref_t<decltype(levels)>::value_type;
-  const auto levels_n_bytes = sizeof(levels_res_type) * size(levels);
-  response_payload r;
-  r.payload.resize(levels_n_bytes);
-  std::memcpy(r.payload.data(), levels.data(), levels_n_bytes);
-  return r;
+  resp_hdr.rows = req.is_intervals_request()
+                    ? req.n_intervals()
+                    : index->get_n_bins(req.bin_size());
+  resp_hdr.cols = req.n_methylomes();
+  resp_hdr.status = server_error_code::ok;
 }
 
 auto
-request_handler::handle_get_levels(const request &req,
-                                   const transferase::query_container &query,
-                                   response_header &resp_hdr,
-                                   response_payload &resp_data) -> void {
+request_handler::intervals_get_levels(const request &req,
+                                      const query_container &query,
+                                      response_header &resp_hdr,
+                                      response_payload &resp_data) -> void {
   auto &lgr = logger::instance();
-
-  // assume methylome availability has been determined
   std::error_code ec;
-  const auto meth = methylomes.get_methylome(req.accession, ec);
+  std::vector<level_container<level_element_t>> levels;
+  for (const auto &methylome_name : req.methylome_names) {
+    const auto meth = methylomes.get_methylome(methylome_name, ec);
+    if (ec) {
+      lgr.error("Failed to load methylome {}: {}", methylome_name, ec);
+      resp_hdr.status = ec;
+      return;
+    }
+    lgr.debug("Computing levels for methylome: {}", methylome_name);
+    levels.emplace_back(meth->get_levels(query));
+  }
+  resp_data = response_payload::from_levels(levels, ec);
   if (ec) {
-    lgr.error("Failed to load methylome {}: {}", req.accession, ec);
-    resp_hdr.status = ec;
-    return;
+    lgr.debug("Error composing response payload: {}", ec);
+    resp_hdr.status = server_error_code::bad_request;
   }
-
-  lgr.debug("Computing levels for methylome: {}", req.accession);
-
-  if (req.request_type == request_type_code::intervals) {
-    resp_data = levels_to_payload(meth->data.get_levels(query));
-    return;
-  }
-  if (req.request_type == request_type_code::intervals_covered) {
-    resp_data = levels_to_payload(meth->data.get_levels_covered(query));
-    return;
-  }
-
-  // ADS: if we arrive here, the request was bad
-  resp_hdr.status = server_error_code::bad_request;
 }
 
 auto
-request_handler::handle_get_levels(const request &req,
-                                   response_header &resp_hdr,
-                                   response_payload &resp_data) -> void {
+request_handler::intervals_get_levels_covered(
+  const request &req, const query_container &query, response_header &resp_hdr,
+  response_payload &resp_data) -> void {
   auto &lgr = logger::instance();
-
-  // assume methylome availability has been determined
   std::error_code ec;
-  const auto meth = methylomes.get_methylome(req.accession, ec);
+  std::vector<level_container<level_element_covered_t>> levels;
+  for (const auto &methylome_name : req.methylome_names) {
+    const auto meth = methylomes.get_methylome(methylome_name, ec);
+    if (ec) {
+      lgr.error("Failed to load methylome {}: {}", methylome_name, ec);
+      resp_hdr.status = ec;
+      return;
+    }
+    lgr.debug("Computing levels for methylome: {}", methylome_name);
+    levels.emplace_back(meth->get_levels_covered(query));
+  }
+  resp_data = response_payload::from_levels(levels, ec);
   if (ec) {
-    lgr.error("Failed to load methylome {}: {}", req.accession, ec);
-    resp_hdr.status = ec;
-    return;
+    lgr.debug("Error composing response payload: {}", ec);
+    resp_hdr.status = server_error_code::bad_request;
+  }
+}
+
+auto
+request_handler::bins_get_levels(const request &req, response_header &resp_hdr,
+                                 response_payload &resp_data) -> void {
+  auto &lgr = logger::instance();
+  std::error_code ec;
+  std::shared_ptr<genome_index> index = nullptr;
+  std::string genome_name;
+  std::vector<level_container<level_element_t>> levels;
+
+  for (const auto &methylome_name : req.methylome_names) {
+    const auto meth = methylomes.get_methylome(methylome_name, ec);
+    if (ec) {
+      lgr.error("Failed to load methylome {}: {}", methylome_name, ec);
+      resp_hdr.status = ec;
+      return;
+    }
+    // need genome index to know the bins
+    if (index == nullptr) {
+      genome_name = meth->get_genome_name();
+      index = indexes.get_genome_index(genome_name, ec);
+      if (ec) {
+        lgr.error("Failed to load genome index for {}: {}", genome_name, ec);
+        resp_hdr.status = ec;
+        return;
+      }
+    }
+    else if (meth->get_genome_name() != genome_name) {
+      lgr.error("Inconsistent genome names for methylomes in request "
+                "(expected={}, observed={} for {})",
+                genome_name, meth->get_genome_name(), methylome_name);
+      resp_hdr.status = server_error_code::bad_request;
+      return;
+    }
+    lgr.debug("Computing levels for methylome: {}", methylome_name);
+    levels.emplace_back(meth->get_levels(req.bin_size(), *index));
   }
 
-  lgr.debug("Computing bins for methylome: {}", req.accession);
-
-  // need cpg index to know what is in each bin
-  const auto index = indexes.get_genome_index(meth->meta.assembly, ec);
+  // convert the levels to data for sending
+  resp_data = response_payload::from_levels(levels, ec);
   if (ec) {
-    lgr.error("Failed to load cpg index for {}: {}", meth->meta.assembly, ec);
-    resp_hdr.status = ec;
-    return;
+    lgr.debug("Error composing response payload: {}", ec);
+    resp_hdr.status = server_error_code::bad_request;
+  }
+}
+
+auto
+request_handler::bins_get_levels_covered(const request &req,
+                                         response_header &resp_hdr,
+                                         response_payload &resp_data) -> void {
+  auto &lgr = logger::instance();
+  std::error_code ec;
+  std::shared_ptr<genome_index> index = nullptr;
+  std::string genome_name;
+  std::vector<level_container<level_element_covered_t>> levels;
+
+  for (const auto &methylome_name : req.methylome_names) {
+    const auto meth = methylomes.get_methylome(methylome_name, ec);
+    if (ec) {
+      lgr.error("Failed to load methylome {}: {}", methylome_name, ec);
+      resp_hdr.status = ec;
+      return;
+    }
+    // need genome index to know the bins
+    if (index == nullptr) {
+      genome_name = meth->get_genome_name();
+      index = indexes.get_genome_index(genome_name, ec);
+      if (ec) {
+        lgr.error("Failed to load genome index for {}: {}", genome_name, ec);
+        resp_hdr.status = ec;
+        return;
+      }
+    }
+    else if (meth->get_genome_name() != genome_name) {
+      lgr.error("Inconsistent genome names for methylomes in request "
+                "(expected={}, observed={} for {})",
+                genome_name, meth->get_genome_name(), methylome_name);
+      resp_hdr.status = server_error_code::bad_request;
+      return;
+    }
+    lgr.debug("Computing levels for methylome: {}", methylome_name);
+    levels.emplace_back(meth->get_levels_covered(req.bin_size(), *index));
   }
 
-  if (req.request_type == request_type_code::bins) {
-    resp_data = levels_to_payload(meth->get_levels(req.bin_size(), *index));
-    return;
+  // convert the levels to data for sending
+  resp_data = response_payload::from_levels(levels, ec);
+  if (ec) {
+    lgr.debug("Error composing response payload: {}", ec);
+    resp_hdr.status = server_error_code::bad_request;
   }
-
-  if (req.request_type == request_type_code::bins_covered) {
-    resp_data =
-      levels_to_payload(meth->get_levels_covered(req.bin_size(), *index));
-    return;
-  }
-
-  // ADS: if we arrive here, the request was bad
-  resp_hdr.status = server_error_code::bad_request;
 }
 
 }  // namespace transferase
