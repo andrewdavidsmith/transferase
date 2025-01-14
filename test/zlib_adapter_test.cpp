@@ -83,7 +83,7 @@ TEST(zlib_adapter_test, invalid_file) {
 
 static auto
 fputc_wrapper(const auto val, auto file) {
-  [[maybe_unused]] const auto fputc_code = std::fputc(val, file.get());
+  [[maybe_unused]] const auto fputc_code = std::fputc(val, file);
   assert(fputc_code == val);
 }
 
@@ -95,30 +95,30 @@ TEST(zlib_adapter_test, corrupted_gz_file) {
 
   // Manually create a corrupted gzipped file
   const auto gzfile = generate_temp_filename("corrupted", "gz");
-  std::unique_ptr<FILE, decltype(closer)> file(std::fopen(gzfile.data(), "wb"),
-                                               closer);
-  EXPECT_NE(file, nullptr);  // NOLINT
-  // Write the gzip header: Magic Number (0x1F 0x8B), Compression Method
-  // (DEFLATE)
-  // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
-  fputc_wrapper(0x1F, file);  // Magic byte 1
-  fputc_wrapper(0x8B, file);  // Magic byte 2
-  fputc_wrapper(0x08, file);  // Compression method (DEFLATE)
-  fputc_wrapper(0x00, file);  // Flags (0x00)
+  {
+    std::unique_ptr<FILE, decltype(closer)> file(
+      std::fopen(gzfile.data(), "wb"), closer);
+    EXPECT_NE(file, nullptr);  // NOLINT
+    // Write the gzip header: Magic Number (0x1F 0x8B), Compression Method
+    // (DEFLATE)
+    // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
+    fputc_wrapper(0x1F, file.get());  // Magic byte 1
+    fputc_wrapper(0x8B, file.get());  // Magic byte 2
+    fputc_wrapper(0x08, file.get());  // Compression method (DEFLATE)
+    fputc_wrapper(0x00, file.get());  // Flags (0x00)
 
-  // Write arbitrary timestamp (4 bytes, typically 0x00 for no timestamp)
-  fputc_wrapper(0x00, file);  // Modification time (1st byte)
-  fputc_wrapper(0x00, file);  // Modification time (2nd byte)
-  fputc_wrapper(0x00, file);  // Modification time (3rd byte)
-  fputc_wrapper(0x00, file);  // Modification time (4th byte)
+    // Write arbitrary timestamp (4 bytes, typically 0x00 for no timestamp)
+    fputc_wrapper(0x00, file.get());  // Modification time (1st byte)
+    fputc_wrapper(0x00, file.get());  // Modification time (2nd byte)
+    fputc_wrapper(0x00, file.get());  // Modification time (3rd byte)
+    fputc_wrapper(0x00, file.get());  // Modification time (4th byte)
 
-  fputc_wrapper(0x00, file);  // Extra flags (0x00)
-  fputc_wrapper(0x03, file);  // OS (Unix)
-  // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
+    fputc_wrapper(0x00, file.get());  // Extra flags (0x00)
+    fputc_wrapper(0x03, file.get());  // OS (Unix)
+    // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
 
-  fputs("Not a valid gzipped content", file);
-  const auto close_code = std::fclose(file);
-  EXPECT_EQ(close_code, 0);
+    std::fputs("Not a valid gzipped content", file.get());
+  }
 
   const auto [buffer, ec] = read_gzfile_into_buffer(gzfile);
 
