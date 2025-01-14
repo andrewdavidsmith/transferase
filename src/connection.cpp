@@ -23,6 +23,7 @@
 
 #include "connection.hpp"
 
+#include "level_element.hpp"
 #include "query_container.hpp"
 #include "request_handler.hpp"
 #include "response.hpp"
@@ -122,9 +123,11 @@ connection::read_query() -> void {
         if (query_remaining == 0) {
           lgr.debug("{} Finished reading query ({}B)", conn_id, query_byte);
           if (req.is_covered_request())
-            handler.intervals_get_levels_covered(req, query, resp_hdr, resp);
+            handler.intervals_get_levels<level_element_covered_t>(
+              req, query, resp_hdr, resp);
           else
-            handler.intervals_get_levels(req, query, resp_hdr, resp);
+            handler.intervals_get_levels<level_element_t>(req, query, resp_hdr,
+                                                          resp);
           lgr.debug("{} Finished computing levels in intervals", conn_id);
           // exiting the read loop -- no deadline for now
           respond_with_header();
@@ -146,9 +149,9 @@ auto
 connection::compute_bins() -> void {
   deadline.expires_at(boost::asio::steady_timer::time_point::max());
   if (req.is_covered_request())
-    handler.bins_get_levels_covered(req, resp_hdr, resp);
+    handler.bins_get_levels<level_element_covered_t>(req, resp_hdr, resp);
   else
-    handler.bins_get_levels(req, resp_hdr, resp);
+    handler.bins_get_levels<level_element_t>(req, resp_hdr, resp);
   lgr.debug("{} Finished computing levels in bins", conn_id);
   respond_with_header();
 }
