@@ -212,56 +212,29 @@ struct methylome {
   /// @brief Get the global methylation level in the methylome based
   /// in the form of two integer counts of number of methylated and
   /// number of unmethylated read counts over the whole methylome.
+  template <typename lvl_elem_t>
   [[nodiscard]] auto
-  global_levels() const noexcept -> level_element_t {
-    return data.global_levels();
-  }
-
-  /// @brief Get the global methylation level in the methylome based
-  /// in the form of two integer counts of number of methylated and
-  /// number of unmethylated read counts over the whole
-  /// methylome. Additionally, get the number of sites with at least
-  /// one observation (read) -- this is the number of sites
-  /// contributing to the global methylation level.
-  [[nodiscard]] auto
-  global_levels_covered() const noexcept -> level_element_covered_t {
-    return data.global_levels_covered();
+  global_levels() const noexcept -> lvl_elem_t {
+    return data.global_levels<lvl_elem_t>();
   }
 
   /// @brief Get the methylation level for each interval represented in a given
   /// query container.
+  template <typename lvl_elem_t>
   [[nodiscard]] auto
   get_levels(const transferase::query_container &query) const
-    -> level_container<level_element_t> {
-    return data.get_levels(query);
-  }
-
-  /// @brief Get the methylation level for each interval represented
-  /// in a given query container. Additionally, includes the number of
-  /// covered sites for each interval.
-  [[nodiscard]] auto
-  get_levels_covered(const transferase::query_container &query) const
-    -> level_container<level_element_covered_t> {
-    return data.get_levels_covered(query);
+    -> level_container<lvl_elem_t> {
+    return data.get_levels<lvl_elem_t>(query);
   }
 
   /// @brief Get the methylation level for each genomic 'bin' (i.e.,
   /// non-overlapping intervals of fixed size; not the same as
   /// windows, which may overlap).
+  template <typename lvl_elem_t>
   [[nodiscard]] auto
-  get_levels(const std::uint32_t bin_size, const genome_index &index) const
-    -> level_container<level_element_t> {
-    return data.get_levels(bin_size, index);
-  }
-
-  /// @brief Get the methylation level for each genomic 'bin' (i.e.,
-  /// non-overlapping intervals of fixed size; not the same as
-  /// windows, which may overlap). Additionally, includes the number
-  /// of covered sites for each bin.
-  [[nodiscard]] auto
-  get_levels_covered(const std::uint32_t bin_size, const genome_index &index)
-    const -> level_container<level_element_covered_t> {
-    return data.get_levels_covered(bin_size, index);
+  get_levels(const std::uint32_t bin_size,
+             const genome_index &index) const -> level_container<lvl_elem_t> {
+    return data.get_levels<lvl_elem_t>(bin_size, index);
   }
 
   /// @brief Returns true iff the methylome files exist for the given name.
