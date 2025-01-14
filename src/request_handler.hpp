@@ -63,28 +63,17 @@ struct request_handler {
   handle_request(const request &req, response_header &resp_hdr) -> void;
 
   /// Handle a request to get levels for query intervals.
+  template <typename lvl_elem_t>
   auto
   intervals_get_levels(const request &req, const query_container &query,
                        response_header &resp_hdr,
                        response_payload &resp_data) -> void;
 
-  /// Handle a request to get levels for query intervals, including information
-  /// about sites covered.
-  auto
-  intervals_get_levels_covered(const request &req, const query_container &query,
-                               response_header &resp_hdr,
-                               response_payload &resp_data) -> void;
-
   /// Handle a request to get levels for query bins.
+  template <typename lvl_elem_t>
   auto
   bins_get_levels(const request &req, response_header &resp_hdr,
                   response_payload &resp_data) -> void;
-
-  /// Handle a request to get levels for query bins, including information
-  /// about sites covered.
-  auto
-  bins_get_levels_covered(const request &req, response_header &resp_hdr,
-                          response_payload &resp_data) -> void;
 
   /// @brief Directory on the local filesystem with methylomes
   std::string methylome_dir;
