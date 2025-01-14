@@ -60,7 +60,7 @@ methylome_data::get_n_cpgs_from_file(
   const auto filesize = std::filesystem::file_size(filename, ec);
   if (ec)
     return 0;
-  return filesize / sizeof(m_count_p);
+  return filesize / sizeof(mcount_pair);
 }
 
 [[nodiscard]] auto
@@ -183,10 +183,10 @@ methylome_data::add(const methylome_data &rhs) noexcept -> void {
   // this follows the operator+= pattern
   assert(std::size(cpgs) == std::size(rhs.cpgs));
   std::ranges::transform(cpgs, rhs.cpgs, std::begin(cpgs),
-                         [](const auto &l, const auto &r) -> m_count_p {
+                         [](const auto &l, const auto &r) -> mcount_pair {
                            return {
-                             static_cast<m_count_t>(l.n_meth + r.n_meth),
-                             static_cast<m_count_t>(l.n_unmeth + r.n_unmeth)};
+                             static_cast<mcount_t>(l.n_meth + r.n_meth),
+                             static_cast<mcount_t>(l.n_unmeth + r.n_unmeth)};
                          });
 }
 
@@ -198,7 +198,7 @@ get_levels_impl(const T b, const T e) noexcept -> U {
     u.n_meth += cursor->n_meth;
     u.n_unmeth += cursor->n_unmeth;
     if constexpr (std::is_same<U, level_element_covered_t>::value)
-      u.n_covered += (*cursor != m_count_p{});
+      u.n_covered += (*cursor != mcount_pair{});
   }
   return u;
 }
@@ -238,7 +238,7 @@ methylome_data::global_levels<level_element_covered_t>() const noexcept
   for (const auto &cpg : cpgs) {
     n_meth += cpg.n_meth;
     n_unmeth += cpg.n_unmeth;
-    n_covered += (cpg != m_count_p{});
+    n_covered += (cpg != mcount_pair{});
   }
   return {n_meth, n_unmeth, n_covered};
 }
@@ -267,7 +267,7 @@ bin_levels_impl(genome_index_data::vec::const_iterator &posn_itr,
     t.n_meth += cpg_itr->n_meth;
     t.n_unmeth += cpg_itr->n_unmeth;
     if constexpr (std::is_same<T, level_element_covered_t>::value)
-      t.n_covered += (*cpg_itr == m_count_p{});
+      t.n_covered += (*cpg_itr == mcount_pair{});
     ++cpg_itr;
     ++posn_itr;
   }

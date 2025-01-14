@@ -52,22 +52,36 @@ struct genome_index;
 struct methylome_metadata;
 struct query_container;
 
-typedef std::uint16_t m_count_t;
-struct m_count_p {
-  m_count_t n_meth{};
-  m_count_t n_unmeth{};
+typedef std::uint16_t mcount_t;
+
+/// @brief A pair of counts for methylated and unmethylated observations at a
+/// single site (e.g., CpG) in the genome.
+struct mcount_pair {
+
+  /// Number of methylated observations.
+  mcount_t n_meth{};
+
+  /// Number of unmethylated observations.
+  mcount_t n_unmeth{};
+
+  mcount_pair() = default;
+
+  mcount_pair(const std::integral auto n_meth,
+              const std::integral auto n_unmeth) :
+    n_meth{static_cast<mcount_t>(n_meth)},
+    n_unmeth{static_cast<mcount_t>(n_unmeth)} {}
   // ADS: need spaceship here because of constness
   [[nodiscard]] auto
-  operator<=>(const m_count_p &) const = default;
+  operator<=>(const mcount_pair &) const = default;
 };
 
 struct methylome_data {
   static constexpr auto filename_extension{".m16"};
 
 #if not defined(__APPLE__) && not defined(__MACH__)
-  typedef std::vector<m_count_p, aligned_allocator<m_count_p>> vec;
+  typedef std::vector<mcount_pair, aligned_allocator<mcount_pair>> vec;
 #else
-  typedef std::vector<m_count_p> vec;
+  typedef std::vector<mcount_pair> vec;
 #endif
 
   methylome_data() = default;
@@ -76,9 +90,9 @@ struct methylome_data {
   // prevent copy, allow move
   // clang-format off
   methylome_data(const methylome_data &) = delete;
-  methylome_data &operator=(const methylome_data &) = delete;
+  auto operator=(const methylome_data &) -> methylome_data & = delete;
   methylome_data(methylome_data &&) noexcept = default;
-  methylome_data &operator=(methylome_data &&) noexcept = default;
+  auto operator=(methylome_data &&) noexcept -> methylome_data & = default;
   // clang-format on
 
   [[nodiscard]] auto
@@ -109,6 +123,7 @@ struct methylome_data {
 
   [[nodiscard]] static auto
   get_n_cpgs_from_file(const std::string &filename) noexcept -> std::uint32_t;
+
   [[nodiscard]] static auto
   get_n_cpgs_from_file(const std::string &filename,
                        std::error_code &ec) noexcept -> std::uint32_t;
@@ -152,7 +167,7 @@ struct methylome_data {
   }
 
   methylome_data::vec cpgs{};
-  static constexpr auto record_size = sizeof(m_count_p);
+  static constexpr auto record_size = sizeof(mcount_pair);
 };
 
 template <typename T, typename U>
