@@ -45,7 +45,8 @@ create_gzipped_file(const std::string &content) -> std::string {
   const auto filename = generate_temp_filename("test_file", "gz");
   gzFile gz = gzopen(filename.data(), "wb");
   assert(gz != nullptr);
-  const std::int64_t content_size = std::size(content);
+  const std::int64_t content_size =
+    static_cast<std::uint64_t>(std::size(content));
   [[maybe_unused]] const std::int64_t bytes_written =
     gzwrite(gz, content.data(), content_size);
   assert(bytes_written == content_size);
@@ -82,7 +83,7 @@ TEST(zlib_adapter_test, invalid_file) {
 
 static auto
 fputc_wrapper(const auto val, auto file) {
-  [[maybe_unused]] const auto fputc_code = std::fputc(val, file);
+  [[maybe_unused]] const auto fputc_code = std::fputc(val, file.get());
   assert(fputc_code == val);
 }
 
