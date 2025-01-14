@@ -27,6 +27,7 @@
 #include <boost/program_options.hpp>
 
 #include <cstdint>  // for std::uint8_t
+#include <filesystem>
 #include <iostream>
 #include <print>
 #include <string>
@@ -128,8 +129,14 @@ template <typename T> struct argset_base {
                                 .allow_unregistered()
                                 .run();
       po::store(cli_parsed, vm_common);
-      // if we have a configuration file, parse it
-      if (!config_file.empty()) {
+
+      // attempt to use the config file if it was explicitly specified
+      // or if it exists
+      const bool config_file_defaulted = vm_cli_only["config-file"].defaulted();
+      const bool use_config_file =
+        !config_file.empty() &&
+        (!config_file_defaulted || std::filesystem::exists(config_file));
+      if (use_config_file) {
         const auto cfg_parsed =
           po::parse_config_file(config_file.data(), common_opts, true);
         po::store(cfg_parsed, vm_common);
