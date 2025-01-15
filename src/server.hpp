@@ -54,7 +54,8 @@ struct server {
          const std::uint32_t n_threads, const std::string &methylome_dir,
          const std::string &index_file_dir,
          const std::uint32_t max_live_methylomes, logger &lgr,
-         std::error_code &ec, [[maybe_unused]] const bool daemonize);
+         std::error_code &ec, [[maybe_unused]] const bool daemonize,
+         const std::string &pid_filename);
 
   // clang-format off
   auto run() -> void;
@@ -70,6 +71,7 @@ struct server {
   request_handler handler;                  // handles incoming requests
   logger &lgr;
   std::atomic_uint32_t connection_id{};  // incremented per thread
+  std::string pid_filename;
 };
 
 }  // namespace transferase

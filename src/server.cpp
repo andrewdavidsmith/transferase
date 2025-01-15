@@ -77,16 +77,9 @@ get_daemon_stdout_filename(std::error_code &error) -> std::string {
   return get_daemon_filename(filename, error);
 }
 
-[[nodiscard]] static inline auto
-get_daemon_pid_filename(std::error_code &error) -> std::string {
-  static constexpr auto filename = "TRANSFERASE_PID_FILE";
-  return get_daemon_filename(filename, error);
-}
-
 static auto
-write_pid_to_file(std::error_code &ec) -> void {
-  const auto pid_filename = get_daemon_pid_filename(ec);
-
+write_pid_to_file(const std::string &pid_filename,
+                  std::error_code &ec) -> void {
   auto &lgr = logger::instance();
   const auto pid_file_exists = std::filesystem::exists(pid_filename, ec);
   if (ec) {
@@ -191,7 +184,8 @@ server::server(const std::string &address, const std::string &port,
                const std::uint32_t n_threads, const std::string &methylome_dir,
                const std::string &genome_index_file_dir,
                const std::uint32_t max_live_methylomes, logger &lgr,
-               std::error_code &ec, [[maybe_unused]] const bool daemonize) :
+               std::error_code &ec, [[maybe_unused]] const bool daemonize,
+               const std::string &pid_filename) :
   // io_context ioc uses default constructor
   n_threads{n_threads},
 #if defined(SIGQUIT)
@@ -201,7 +195,8 @@ server::server(const std::string &address, const std::string &port,
   signals(ioc, SIGINT, SIGTERM),
 #endif
   acceptor(ioc),
-  handler(methylome_dir, genome_index_file_dir, max_live_methylomes), lgr{lgr} {
+  handler(methylome_dir, genome_index_file_dir, max_live_methylomes), lgr{lgr},
+  pid_filename{pid_filename} {
   // ADS: standard workflow for daemonizing
   do_daemon_await_stop();  // signals setup; start waiting for them
 
@@ -251,11 +246,13 @@ server::server(const std::string &address, const std::string &port,
   }
 
   // write the pid of the daemon to a file
-  write_pid_to_file(ec);
-  // error reporting within the above function
-  if (ec) {
-    // ec value already set if we are here
-    return;
+  if (!pid_filename.empty()) {
+    write_pid_to_file(pid_filename, ec);
+    // error reporting within the above function
+    if (ec) {
+      // ec value already set if we are here
+      return;
+    }
   }
 
   // close standard streams to decouple the daemon from the terminal
@@ -418,17 +415,14 @@ server::do_daemon_await_stop() -> void {
       syslog(LOG_INFO | LOG_USER, "%s", message.data());
       // NOLINTEND(cppcoreguidelines-pro-type-vararg)
       lgr.info(message);
-      std::error_code ec;
-      const auto pid_file = get_daemon_pid_filename(ec);
+      std::error_code ec{};
+      const auto pid_file_exists = std::filesystem::exists(pid_filename, ec);
       if (ec)
-        lgr.info("Failed to get pid file: {}", ec);
-      const auto pid_file_exists = std::filesystem::exists(pid_file, ec);
-      if (ec)
-        lgr.info("Error identifying pid file: {}", ec);
+        lgr.info("Error identifying PID file {}: {}", pid_filename, ec);
       if (pid_file_exists) {
-        const bool remove_ok = std::filesystem::remove(pid_file, ec);
+        const bool remove_ok = std::filesystem::remove(pid_filename, ec);
         if (remove_ok)
-          lgr.info("Removed pid file: {}", pid_file);
+          lgr.info("Removed pid file: {}", pid_filename);
       }
       // stop server by cancelling all outstanding async ops; when all
       // have finished, the call to io_context::run() will finish
