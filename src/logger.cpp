@@ -33,10 +33,10 @@
 
 namespace transferase {
 
-logger::logger(std::shared_ptr<std::ostream> log_file_ptr,
+logger::logger(const std::shared_ptr<std::ostream> &log_file,
                const std::string &appname, log_level_t min_log_level) :
-  log_file{std::move(log_file_ptr)}, min_log_level{min_log_level} {
-  if (!log_file_ptr || !log_file_ptr->good()) {
+  log_file{log_file}, min_log_level{min_log_level} {
+  if (log_file == nullptr || !log_file->good()) {
     status = std::make_error_code(std::errc::bad_file_descriptor);
     return;
   }
