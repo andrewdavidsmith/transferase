@@ -157,7 +157,8 @@ public:
     return fl;
   }
 
-  logger(std::shared_ptr<std::ostream> log_file_ptr, const std::string &appname,
+  logger(const std::shared_ptr<std::ostream> &log_file,
+         const std::string &appname,
          log_level_t min_log_level = log_level_t::info);
 
   [[nodiscard]] auto
