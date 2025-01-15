@@ -23,7 +23,6 @@
 
 #include "connection.hpp"
 
-#include "level_element.hpp"
 #include "query_container.hpp"
 #include "request_handler.hpp"
 #include "response.hpp"
@@ -36,6 +35,9 @@
 #include <system_error>
 
 namespace transferase {
+
+struct level_element_covered_t;
+struct level_element_t;
 
 auto
 connection::stop() -> void {
