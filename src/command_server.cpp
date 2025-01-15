@@ -46,7 +46,7 @@ server can run in detached mode.
 static constexpr auto examples = R"(
 Examples:
 
-xfrase server -s localhost -m methylomes -x indexes
+xfrase server -s localhost -d methylomes -x indexes
 )";
 
 #include "arguments.hpp"
@@ -135,7 +135,7 @@ struct server_argset : argset_base<server_argset> {
       ("hostname,s", value(&hostname)->default_value(hostname_default),
        "server hostname")
       ("port,p", value(&port)->default_value(port_default), "server port")
-      ("methylome-dir,m", value(&methylome_dir)->required(), "methylome directory")
+      ("methylome-dir,d", value(&methylome_dir)->required(), "methylome directory")
       ("index-dir,x", value(&index_dir)->required(), "cpg index file directory")
       ("max-resident,r",
        value(&max_resident)->default_value(max_resident_default),
