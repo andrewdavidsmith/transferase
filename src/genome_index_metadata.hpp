@@ -136,7 +136,7 @@ struct genome_index_metadata_error_category : std::error_category {
     using std::string_literals::operator""s;
     switch (code) {
     case 0: return "ok"s;
-    case 1: return "failure parsing methylome metadata json"s;
+    case 1: return "failure parsing genome index metadata file"s;
     }
     std::unreachable();
   }
