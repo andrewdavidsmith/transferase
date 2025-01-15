@@ -24,6 +24,7 @@
 #include "server.hpp"
 #include "connection.hpp"
 #include "logger.hpp"
+#include "utilities.hpp"
 
 #include <boost/asio.hpp>
 #include <boost/lexical_cast.hpp>
@@ -54,21 +55,37 @@
 
 namespace transferase {
 
-static auto
-get_pid_filename(std::error_code &ec) -> std::string {
-  static const auto pid_file_rhs =
-    std::filesystem::path(".config") / "transferase" / "TRANSFERASE_PID_FILE";
-  const auto env_home = std::getenv("HOME");
-  if (!env_home) {
-    ec = std::make_error_code(std::errc(errno));
-    return {};
+[[nodiscard]] static auto
+get_daemon_filename(const std::string &filename,
+                    std::error_code &ec) -> std::string {
+  static constexpr auto system_dir = "/var/tmp/transferase";
+  auto dirname = get_transferase_config_dir_default(ec);
+  if (dirname.empty() || ec)
+    // Could not get the config dir, so go with a system dir
+    dirname = system_dir;
+  if (!std::filesystem::is_directory(dirname, ec)) {
+    const bool create_ok = std::filesystem::create_directories(dirname, ec);
+    if (!create_ok || ec)
+      return {};
   }
-  return (std::filesystem::path(env_home) / pid_file_rhs).string();
+  return std::filesystem::path(dirname) / filename;
+}
+
+[[nodiscard]] static inline auto
+get_daemon_stdout_filename(std::error_code &error) -> std::string {
+  static constexpr auto filename = "transferase_server.log";
+  return get_daemon_filename(filename, error);
+}
+
+[[nodiscard]] static inline auto
+get_daemon_pid_filename(std::error_code &error) -> std::string {
+  static constexpr auto filename = "TRANSFERASE_PID_FILE";
+  return get_daemon_filename(filename, error);
 }
 
 static auto
 write_pid_to_file(std::error_code &ec) -> void {
-  const auto pid_filename = get_pid_filename(ec);
+  const auto pid_filename = get_daemon_pid_filename(ec);
 
   auto &lgr = logger::instance();
   const auto pid_file_exists = std::filesystem::exists(pid_filename, ec);
@@ -260,11 +277,14 @@ server::server(const std::string &address, const std::string &port,
 
   // Send standard output to a log file in case something would be
   // written there.
-  // ADS: (todo) fix this hardcoded file below
-  const auto output = "/tmp/xfrase_daemon.out";
+  const auto output = get_daemon_stdout_filename(ec);
+  if (ec) {
+    lgr.error("Failed to set stdout for daemon {}: {}", output, ec);
+    return;
+  }
   const int flags = O_WRONLY | O_CREAT | O_APPEND;
   const mode_t mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;  // 644
-  open_value = open(output, flags, mode);
+  open_value = open(output.data(), flags, mode);
   if (open_value < 0) {
     ec = std::make_error_code(std::errc(errno));
     lgr.error("Unable to open output file {}: {}", output, ec);
@@ -399,7 +419,7 @@ server::do_daemon_await_stop() -> void {
       // NOLINTEND(cppcoreguidelines-pro-type-vararg)
       lgr.info(message);
       std::error_code ec;
-      const auto pid_file = get_pid_filename(ec);
+      const auto pid_file = get_daemon_pid_filename(ec);
       if (ec)
         lgr.info("Failed to get pid file: {}", ec);
       const auto pid_file_exists = std::filesystem::exists(pid_file, ec);
