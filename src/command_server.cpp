@@ -99,6 +99,7 @@ struct server_argset : argset_base<server_argset> {
   std::string methylome_dir;
   std::string index_dir;
   std::string log_filename;
+  std::string pid_filename;
   transferase::log_level_t log_level{};
   std::uint32_t n_threads{};
   std::uint32_t max_resident{};
@@ -119,6 +120,7 @@ struct server_argset : argset_base<server_argset> {
         {"n_threads", std::format("{}", n_threads)},
         {"max_resident", std::format("{}", max_resident)},
         {"daemonize", std::format("{}", daemonize)},
+        {"pid", std::format("{}", pid_filename)},
         // clang-format on
       });
   }
@@ -133,7 +135,6 @@ struct server_argset : argset_base<server_argset> {
       ("hostname,s", value(&hostname)->default_value(hostname_default),
        "server hostname")
       ("port,p", value(&port)->default_value(port_default), "server port")
-      ("daemonize,d", po::bool_switch(&daemonize), "daemonize the server")
       ("methylome-dir,m", value(&methylome_dir)->required(), "methylome directory")
       ("index-dir,x", value(&index_dir)->required(), "cpg index file directory")
       ("max-resident,r",
@@ -145,6 +146,8 @@ struct server_argset : argset_base<server_argset> {
        "log level {debug,info,warning,error,critical}")
       ("log-file,l", value(&log_filename)->value_name("console"),
        "log file name")
+      ("daemonize,d", po::bool_switch(&daemonize), "daemonize the server")
+      ("pid", value(&pid_filename), "Filename to use for the PID  when daemonizing")
       // clang-format on
       ;
     return opts;
@@ -258,7 +261,7 @@ command_server_main(int argc,
   if (args.daemonize) {
     auto s = transferase::server(args.hostname, args.port, args.n_threads,
                                  methylome_dir, index_dir, args.max_resident,
-                                 lgr, ec, args.daemonize);
+                                 lgr, ec, args.daemonize, args.pid_filename);
     if (ec) {
       lgr.error("Failure daemonizing server: {}", ec);
       return EXIT_FAILURE;
