@@ -27,6 +27,7 @@
 #include <unistd.h>  // for gethostname, getpid
 
 #include <cstring>  // for std::memcpy
+#include <memory>   // for std::shared_ptr
 #include <string>
 #include <string_view>
 #include <system_error>
