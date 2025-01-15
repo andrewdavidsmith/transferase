@@ -158,14 +158,7 @@ public:
   }
 
   logger(std::shared_ptr<std::ostream> log_file_ptr, const std::string &appname,
-         log_level_t min_log_level = log_level_t::info) :
-    log_file{std::move(log_file_ptr)}, min_log_level{min_log_level} {
-    // ADS: check for log file good here?
-    // status = std::make_error_code(std::errc(errno));
-    buf.fill(' ');  // ADS: not sure this is needed
-    if (const auto ec = set_attributes(appname))
-      status = ec;
-  }
+         log_level_t min_log_level = log_level_t::info);
 
   [[nodiscard]] auto
   get_status() const -> std::error_code {

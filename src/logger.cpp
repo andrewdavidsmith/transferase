@@ -33,6 +33,18 @@
 
 namespace transferase {
 
+logger::logger(std::shared_ptr<std::ostream> log_file_ptr,
+               const std::string &appname, log_level_t min_log_level) :
+  log_file{std::move(log_file_ptr)}, min_log_level{min_log_level} {
+  if (!log_file_ptr || !log_file_ptr->good()) {
+    status = std::make_error_code(std::errc::bad_file_descriptor);
+    return;
+  }
+  buf.fill(' ');  // ADS: not sure this is needed
+  if (const auto ec = set_attributes(appname))
+    status = ec;
+}
+
 [[nodiscard]] auto
 logger::set_attributes(const std::string_view appname) -> std::error_code {
   // get the hostname
