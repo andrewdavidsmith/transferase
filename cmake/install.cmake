@@ -32,15 +32,18 @@ install(PROGRAMS $<TARGET_FILE:transferase>
   RENAME xfrase
 )
 
-# Install the versioned JSON file to the appropriate share directory
-# (e.g., /usr/local/share/transferase)
+# Versioned JSON file (e.g., /usr/local/share/transferase)
 install(FILES ${PROJECT_BINARY_DIR}/share/transferase/transferase_data_${PROJECT_VERSION}.json
   DESTINATION ${CMAKE_INSTALL_DATADIR}/transferase
 )
 
-# Install the bash completions script to the appropriate directory
-# (e.g., /usr/share/bash-completion/completions/)
-install(FILES ${CMAKE_SOURCE_DIR}/data/transferase-bash-completion
+# Bash completions script (e.g., /usr/share/bash-completion/completions/)
+install(FILES ${PROJECT_SOURCE_DIR}/data/transferase-bash-completion
   DESTINATION ${CMAKE_INSTALL_DATADIR}/bash-completion/completions
   RENAME transferase
+)
+
+# Systemd configuration file (e.g., /usr/lib/systemd/system/)
+install(FILES ${PROJECT_SOURCE_DIR}/data/transferase.service
+  DESTINATION ${CMAKE_INSTALL_LIBDIR}/systemd/system
 )
