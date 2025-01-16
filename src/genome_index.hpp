@@ -45,11 +45,12 @@ namespace transferase {
 
 struct genomic_interval;
 
-/// Objects of the genome_index class are data structures that
-/// correspond to reference genomes and exist to accelerate retrieval
-/// of methylation levels for genomic intervals. When stored on disk a
-/// genomic_interval is in the for of two files: one a binary data
-/// file and the other a JSON format metadata file.
+/// @brief Data structures that correspond to reference genomes.
+///
+/// Genome indexes accelerate retrieval of methylation levels for
+/// genomic intervals. When stored on disk a genomic_interval is in
+/// the for of two files: one a binary data file and the other a JSON
+/// format metadata file.
 struct genome_index {
   /// @brief Filename extension that identifies genome index data files
   static constexpr auto data_extn = genome_index_data::filename_extension;
@@ -185,10 +186,10 @@ struct genome_index {
   }
 
   /// @brief Make a genome_index for a reference genome.
-  /// @param genome_name A reference genome file in FASTA format, possibly
-  /// gzipped.
-  /// @param error An error code that is set for any error encountered while
-  /// making the genome_index.
+  /// @param genome_name A reference genome file in FASTA format,
+  /// possibly gzipped.
+  /// @param error An error code that is set for any error encountered
+  /// while making the genome_index.
   /// @return A genome_index object.
   [[nodiscard]] static auto
   make_genome_index(const std::string &genome_file,
@@ -222,8 +223,8 @@ struct genome_index {
   /// @brief Parse a genome name from a reference genome filename.
   /// @param filename A reference genome filename, including FASTA- or
   /// gzip-related suffixes.
-  /// @param error An error code that is set if any error is encountered while
-  /// parsing.
+  /// @param error An error code that is set if any error is
+  /// encountered while parsing.
   [[nodiscard]] static auto
   parse_genome_name(const std::string &filename,
                     std::error_code &error) noexcept -> std::string;
@@ -253,23 +254,23 @@ struct genome_index {
       genome_name, [](const auto c) { return std::isalnum(c) || c == '_'; });
   }
 
-  /// @brief List the names of genomes for which genome_index objects can be
-  /// read from the given directory.
+  /// @brief List the names of genomes for which genome_index objects
+  /// can be read from the given directory.
   /// @param directory The directory in which to look.
-  /// @param error An error code if any error is encountered while searching the
-  /// directory.
+  /// @param error An error code if any error is encountered while
+  /// searching the directory.
   /// @return A vector of strings holding genome names.
   [[nodiscard]] static auto
   list(const std::string &directory,
        std::error_code &error) noexcept -> std::vector<std::string>;
 
 #ifndef TRANSFERASE_NOEXCEPT
-  /// @brief List the names of genomes for which genome_index objects can be
-  /// read from the given directory.
+  /// @brief List the names of genomes for which genome_index objects
+  /// can be read from the given directory.
   /// @param directory The directory in which to look.
   /// @return A vector of strings holding genome names.
-  /// @throws std::system_error if any error is encountered while searching the
-  /// directory
+  /// @throws std::system_error if any error is encountered while
+  /// searching the directory
   [[nodiscard]] static auto
   list_genome_indexes(const std::string &directory)
     -> std::vector<std::string> {

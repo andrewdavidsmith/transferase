@@ -46,17 +46,18 @@ namespace transferase {
 struct genome_index;
 struct query_container;
 
-/// Methylome is an abstraction for genome-wide methylation levels
-/// measured at a subset of sites, in particular CpG sites. Each sites
-/// is associated with two counts: the number of reads providing
-/// methylated observations and the number providing unmethylated
-/// observations -- so a pair of counts for each site. When stored on
-/// disk a genomic_interval is in the for of two files: one a binary
-/// data file and the other a JSON format metadata file. The binary
-/// layout on disk directly corresponds to the data layout in objects
-/// of the Methylome class. Important: the counts are 16-bit, which
-/// would allow for up to 65535-fold coverage at any site. In
-/// consturcting methylomes, if counts exceed this they are
+/// @brief An abstraction for genome-wide methylation levels measured
+/// at a subset of sites, in particular CpG sites.
+///
+/// Each sites is associated with two counts: the number of reads
+/// providing methylated observations and the number providing
+/// unmethylated observations -- so a pair of counts for each
+/// site. When stored on disk a genomic_interval is in the for of two
+/// files: one a binary data file and the other a JSON format metadata
+/// file. The binary layout on disk directly corresponds to the data
+/// layout in objects of the Methylome class. Important: the counts
+/// are 16-bit, which would allow for up to 65535-fold coverage at any
+/// site. In consturcting methylomes, if counts exceed this they are
 /// proportionally reduced and rounded to integers such that the
 /// largest of the two values is 65535. However, at present such a
 /// data set would be prohibitively expensive to produce and would
@@ -185,9 +186,10 @@ struct methylome {
   }
 #endif
 
-  /// @brief Initialize the metadata associated with this
-  /// methylome. This information is used while constructing a
-  /// methylome and is based on a genome_index data structure.
+  /// @brief Initialize the metadata associated with this methylome.
+  ///
+  /// This information is used while constructing a methylome and is
+  /// based on a genome_index data structure.
   [[nodiscard]] auto
   init_metadata(const genome_index &index) noexcept -> std::error_code;
 
@@ -202,16 +204,20 @@ struct methylome {
                        data.tostring());
   }
 
-  /// @brief Add two methylomes together. WARNING: at present this
-  /// could in theory overflow the counts if too many methylomes are added.
+  /// @brief Add two methylomes together.
+  ///
+  /// WARNING: at present this could in theory overflow the counts if
+  /// too many methylomes are added.
   auto
   add(const methylome &rhs) noexcept -> void {
     data.add(rhs.data);
   }
 
-  /// @brief Get the global methylation level in the methylome based
-  /// in the form of two integer counts of number of methylated and
-  /// number of unmethylated read counts over the whole methylome.
+  /// @brief Get the global methylation level.
+  ///
+  /// These levels are in the form of two integer counts of number of
+  /// methylated and number of unmethylated read counts over the whole
+  /// methylome.
   template <typename lvl_elem_t>
   [[nodiscard]] auto
   global_levels() const noexcept -> lvl_elem_t {
@@ -225,8 +231,8 @@ struct methylome {
     return data.global_levels<level_element_covered_t>();
   }
 
-  /// @brief Get the methylation level for each interval represented in a given
-  /// query container.
+  /// @brief Get the methylation level for each interval represented
+  /// in a given query container.
   template <typename lvl_elem_t>
   [[nodiscard]] auto
   get_levels(const transferase::query_container &query) const
@@ -251,11 +257,11 @@ struct methylome {
   files_exist(const std::string &directory,
               const std::string &methylome_name) noexcept -> bool;
 
-  /// @brief List the names of methylomes that can be read from the given
-  /// directory.
+  /// @brief List the names of methylomes that can be read from the
+  /// given directory.
   /// @param directory The directory in which to look.
-  /// @param error An error code set if any error is encountered while searching
-  /// the directory.
+  /// @param error An error code set if any error is encountered while
+  /// searching the directory.
   /// @return A vector of strings holding methylome names.
   [[nodiscard]] static auto
   list(const std::string &dirname,
