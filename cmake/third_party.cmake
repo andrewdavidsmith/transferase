@@ -41,3 +41,13 @@ find_package(
 )
 
 find_package(ZLIB REQUIRED)
+
+message(STATUS "Locating optional third-party packages")
+
+set(CURSES_NEED_NCURSES TRUE)
+find_package(Curses)
+if(CURSES_FOUND)
+  add_compile_definitions(HAVE_NCURSES)
+else()
+  message(STATUS "NCurses not found; 'select' command will not be built")
+endif()
