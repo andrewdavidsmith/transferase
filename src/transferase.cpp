@@ -34,6 +34,7 @@
 #include "command_list.hpp"
 #include "command_merge.hpp"
 #include "command_server.hpp"
+#include "command_server_config.hpp"
 
 #include <config.h>  // for VERSION
 
@@ -56,10 +57,11 @@
 
 typedef std::function<int(int, char **)> main_fun;
 typedef std::tuple<std::string_view, main_fun, std::string_view> cmd_tuple;
-static constexpr auto n_commands = 10;
+static constexpr auto n_commands = 11;
 const auto commands = std::array<cmd_tuple, n_commands>{{
   // clang-format off
   {"config", command_config_main, "configure a client for remote queries"},
+  {"server-config", command_server_config_main, "generate a server config file"},
   {"list", command_list_main, "list methylome or indexs in a directory"},
   {"index", command_index_main, "make an index for a reference genome"},
   {"format", command_format_main, "format a methylome file"},

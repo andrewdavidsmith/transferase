@@ -30,9 +30,9 @@ start an transferase server
 static constexpr auto description = R"(
 A transferase server transfers methylation features to clients. The
 server must be provided with one directory for methylomes and one
-directory for cpg indexes. The methylome directory must include pairs
+directory for genome indexes. The methylome directory must include pairs
 of methylome data and metadata files as produced by the 'format'
-command. The indexes directory must include pairs of cpg index data
+command. The indexes directory must include pairs of genome index data
 and metadata files as produced by the 'index' command. For each
 methylome in the methylomes directory, the corresponding index must be
 present in the indexes directory. For example, if a methylome was
@@ -50,7 +50,6 @@ xfrase server -s localhost -d methylomes -x indexes
 )";
 
 #include "arguments.hpp"
-#include "config_file_utils.hpp"  // write_config_file
 #include "format_error_code.hpp"  // IWYU pragma: keep
 #include "logger.hpp"
 #include "server.hpp"
@@ -104,7 +103,6 @@ struct server_argset : argset_base<server_argset> {
   std::uint32_t n_threads{};
   std::uint32_t max_resident{};
   bool daemonize{};
-  std::string config_out;
 
   auto
   log_options_impl() const {
@@ -136,7 +134,7 @@ struct server_argset : argset_base<server_argset> {
        "server hostname")
       ("port,p", value(&port)->default_value(port_default), "server port")
       ("methylome-dir,d", value(&methylome_dir)->required(), "methylome directory")
-      ("index-dir,x", value(&index_dir)->required(), "cpg index file directory")
+      ("index-dir,x", value(&index_dir)->required(), "genome index file directory")
       ("max-resident,r",
        value(&max_resident)->default_value(max_resident_default),
        "max resident methylomes")
@@ -163,9 +161,6 @@ struct server_argset : argset_base<server_argset> {
        boost::program_options::value(&config_file)
        ->value_name("[arg]")->implicit_value(get_default_config_file(), ""),
        "use this config file")
-      ("make-config",
-       boost::program_options::value(&config_out),
-       "write specified configuration to this file and exit")
       ;
     // clang-format on
     return opts;
@@ -233,9 +228,6 @@ command_server_main(int argc,
     return EXIT_SUCCESS;
   if (ec)
     return EXIT_FAILURE;
-
-  if (!args.config_out.empty())
-    return transferase::write_config_file(args) ? EXIT_FAILURE : EXIT_SUCCESS;
 
   std::shared_ptr<std::ostream> log_file =
     args.log_filename.empty()
