@@ -57,26 +57,25 @@
 #include <vector>
 
 typedef std::function<int(int, char **)> main_fun;
-typedef std::tuple<std::string_view, main_fun, std::string_view> cmd_tuple;
-static constexpr auto n_commands = 12;
-const auto commands = std::array<cmd_tuple, n_commands>{{
+typedef std::tuple<std::string_view, main_fun, std::string_view> cmd;
+const auto commands = std::array{
   // clang-format off
-  {"config", command_config_main, "configure a client for remote queries"},
-  {"server-config", command_server_config_main, "generate a server config file"},
-  {"list", command_list_main, "list methylome or indexs in a directory"},
+  cmd{"config", command_config_main, "configure a client for remote queries"},
+  cmd{"server-config", command_server_config_main, "generate a server config file"},
+  cmd{"list", command_list_main, "list methylome or indexs in a directory"},
 #ifdef HAVE_NCURSES
-  {"select", command_select_main, "select methylomes from those available"},
+  cmd{"select", command_select_main, "select methylomes from those available"},
 #endif
-  {"index", command_index_main, "make an index for a reference genome"},
-  {"format", command_format_main, "format a methylome file"},
-  {"check", command_check_main, "perform checks on methylome and index files"},
-  {"intervals", command_intervals_main, "get methylation levels in each interval"},
-  {"merge", command_merge_main, "merge a set of transferase format methylomes"},
-  {"compress", command_compress_main, "make an transferase format methylome smaller"},
-  {"bins", command_bins_main, "get methylation levels in each bin"},
-  {"server", command_server_main, "run a server to respond to lookup queries"},
+  cmd{"index", command_index_main, "make an index for a reference genome"},
+  cmd{"format", command_format_main, "format a methylome file"},
+  cmd{"check", command_check_main, "perform checks on methylome and index files"},
+  cmd{"intervals", command_intervals_main, "get methylation levels in each interval"},
+  cmd{"merge", command_merge_main, "merge a set of transferase format methylomes"},
+  cmd{"compress", command_compress_main, "make an transferase format methylome smaller"},
+  cmd{"bins", command_bins_main, "get methylation levels in each bin"},
+  cmd{"server", command_server_main, "run a server to respond to lookup queries"},
   // clang-format on
-}};
+};
 
 static auto
 format_help(const std::string &description,
