@@ -33,6 +33,7 @@
 #include "command_intervals.hpp"
 #include "command_list.hpp"
 #include "command_merge.hpp"
+#include "command_select.hpp"
 #include "command_server.hpp"
 #include "command_server_config.hpp"
 
@@ -57,12 +58,15 @@
 
 typedef std::function<int(int, char **)> main_fun;
 typedef std::tuple<std::string_view, main_fun, std::string_view> cmd_tuple;
-static constexpr auto n_commands = 11;
+static constexpr auto n_commands = 12;
 const auto commands = std::array<cmd_tuple, n_commands>{{
   // clang-format off
   {"config", command_config_main, "configure a client for remote queries"},
   {"server-config", command_server_config_main, "generate a server config file"},
   {"list", command_list_main, "list methylome or indexs in a directory"},
+#ifdef HAVE_NCURSES
+  {"select", command_select_main, "select methylomes from those available"},
+#endif
   {"index", command_index_main, "make an index for a reference genome"},
   {"format", command_format_main, "format a methylome file"},
   {"check", command_check_main, "perform checks on methylome and index files"},
