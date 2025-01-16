@@ -53,29 +53,19 @@ xfrase server-config -c /path/to/server_config_file.toml \
 )";
 
 #include "arguments.hpp"
-#include "config_file_utils.hpp"  // write_config_file
-#include "format_error_code.hpp"  // IWYU pragma: keep
+#include "config_file_utils.hpp"
 #include "logger.hpp"
-#include "server.hpp"
 #include "utilities.hpp"
 
 #include <boost/describe.hpp>
 #include <boost/program_options.hpp>
 
 #include <cstdint>
-#include <cstdlib>  // for EXIT_FAILURE, EXIT_SUCCESS
-#include <filesystem>
+#include <cstdlib>
 #include <format>
-#include <fstream>
-#include <iostream>
-#include <memory>  // std::make_shared
-#include <print>
 #include <string>
 #include <string_view>
 #include <system_error>
-#include <tuple>
-#include <variant>
-#include <vector>
 
 namespace transferase {
 
@@ -134,7 +124,7 @@ BOOST_DESCRIBE_STRUCT(server_config_argset, (), (
   log_level,
   n_threads,
   max_resident,
-  pid_file,
+  pid_file
 )
 )
 // clang-format on
