@@ -1,0 +1,71 @@
+# MIT License
+#
+# Copyright (c) 2025 Andrew Smith
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+[Unit]
+Description=transferase server
+After=systemd-user-sessions.service
+Documentation=https://github.com/andrewdavidsmith/transferase
+
+[Service]
+# Not running the server process itself as a daemon
+Type=simple
+# The "User" below needs to have transferase binary and any
+# dependencies in their path, have read access to data directories,
+# and write access to the log file also specified in the config file.
+User=
+Group=
+SyslogIdentifier=transferase
+# The ReadWritePaths below is likely where the log file will be
+# written, but if it will go somewhere else, then update it.
+ReadWritePaths=/var/tmp/
+# The location of the config file below depends on the insallation
+# prefix.
+ExecStart=transferase server \
+  --config-file=/usr/local/share/transferase/transferase_server_config.toml
+
+# Probably don't need any editing below here
+CapabilityBoundingSet=
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+NoNewPrivileges=yes
+PrivateTmp=no
+PrivateUsers=yes
+ProcSubset=pid
+ProtectClock=yes
+ProtectControlGroups=yes
+ProtectHome=yes
+ProtectHostname=yes
+ProtectKernelLogs=yes
+ProtectKernelModules=yes
+ProtectKernelTunables=yes
+ProtectProc=invisible
+ProtectSystem=strict
+RemoveIPC=yes
+RestrictAddressFamilies=AF_INET AF_INET6
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+SystemCallFilter=~@debug @module @mount @reboot @privileged @resources @cpu-emulation @obsolete
+
+[Install]
+# Bring up this service eventually on boot
+WantedBy=multi-user.target
