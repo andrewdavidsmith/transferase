@@ -56,3 +56,8 @@ target_link_libraries(transferase PRIVATE
   ${Boost_LIBRARIES}
   Threads::Threads
 )
+if(CURSES_FOUND)
+  target_link_libraries(transferase PRIVATE
+    ${CURSES_LIBRARIES}
+  )
+endif()
