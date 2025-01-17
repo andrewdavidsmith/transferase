@@ -97,8 +97,8 @@ struct server_argset : argset_base<server_argset> {
   std::string port;
   std::string methylome_dir;
   std::string index_dir;
-  std::string log_filename;
-  std::string pid_filename;
+  std::string log_file;
+  std::string pid_file;
   transferase::log_level_t log_level{};
   std::uint32_t n_threads{};
   std::uint32_t max_resident{};
@@ -113,12 +113,12 @@ struct server_argset : argset_base<server_argset> {
         {"port", std::format("{}", port)},
         {"methylome_dir", std::format("{}", methylome_dir)},
         {"index_dir", std::format("{}", index_dir)},
-        {"log_filename", std::format("{}", log_filename)},
+        {"log_file", std::format("{}", log_file)},
         {"log_level", std::format("{}", log_level)},
         {"n_threads", std::format("{}", n_threads)},
         {"max_resident", std::format("{}", max_resident)},
         {"daemonize", std::format("{}", daemonize)},
-        {"pid", std::format("{}", pid_filename)},
+        {"pid-file", std::format("{}", pid_file)},
         // clang-format on
       });
   }
@@ -138,14 +138,14 @@ struct server_argset : argset_base<server_argset> {
       ("max-resident,r",
        value(&max_resident)->default_value(max_resident_default),
        "max resident methylomes")
-      ("threads,t", value(&n_threads)->default_value(n_threads_default),
+      ("n-threads,t", value(&n_threads)->default_value(n_threads_default),
        "number of threads")
       ("log-level,v", value(&log_level)->default_value(log_level_default),
        "log level {debug,info,warning,error,critical}")
-      ("log-file,l", value(&log_filename)->value_name("console"),
+      ("log-file,l", value(&log_file)->value_name("console"),
        "log file name")
-      ("daemonize,d", po::bool_switch(&daemonize), "daemonize the server")
-      ("pid", value(&pid_filename), "Filename to use for the PID  when daemonizing")
+      ("daemonize", po::bool_switch(&daemonize), "daemonize the server")
+      ("pid-file", value(&pid_file), "Filename to use for the PID  when daemonizing")
       // clang-format on
       ;
     return opts;
@@ -173,11 +173,11 @@ BOOST_DESCRIBE_STRUCT(server_argset, (), (
   port,
   methylome_dir,
   index_dir,
-  log_filename,
+  log_file,
   log_level,
   n_threads,
   max_resident,
-  daemonize
+  pid_file
 )
 )
 // clang-format on
@@ -230,9 +230,9 @@ command_server_main(int argc,
     return EXIT_FAILURE;
 
   std::shared_ptr<std::ostream> log_file =
-    args.log_filename.empty()
+    args.log_file.empty()
       ? std::make_shared<std::ostream>(std::cout.rdbuf())
-      : std::make_shared<std::ofstream>(args.log_filename, std::ios::app);
+      : std::make_shared<std::ofstream>(args.log_file, std::ios::app);
 
   auto &lgr = logger::instance(log_file, command, args.log_level);
   if (!lgr) {
@@ -253,7 +253,7 @@ command_server_main(int argc,
   if (args.daemonize) {
     auto s = transferase::server(args.hostname, args.port, args.n_threads,
                                  methylome_dir, index_dir, args.max_resident,
-                                 lgr, ec, args.daemonize, args.pid_filename);
+                                 lgr, ec, args.daemonize, args.pid_file);
     if (ec) {
       lgr.error("Failure daemonizing server: {}", ec);
       return EXIT_FAILURE;
