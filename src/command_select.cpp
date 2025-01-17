@@ -48,6 +48,7 @@ xfrase select -o output_file.json -g hg38
 
 #include "utilities.hpp"
 
+#include <boost/container/detail/std_fwd.hpp>  // for std::pair
 #include <boost/json.hpp>
 #include <boost/program_options.hpp>
 
@@ -390,7 +391,7 @@ command_select_main(int argc, char *argv[]) -> int {  // NOLINT
     }
     const auto selected = main_loop(data);
     if (!selected.empty()) {
-      if (const auto error = write_output(selected, output_file); error) {
+      if (error = write_output(selected, output_file); error) {
         std::println("Error writing output {}: {}", output_file,
                      error.message());
         return EXIT_FAILURE;
