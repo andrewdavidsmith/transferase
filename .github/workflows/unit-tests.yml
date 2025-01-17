@@ -15,7 +15,7 @@ jobs:
       - name: Install dependencies
         run: |
           apt-get update
-          apt-get install -y zlib1g-dev libgtest-dev
+          apt-get install -y zlib1g-dev libgtest-dev ca-certificates
 
       - name: Configure for unit tests as Build with GCC
         run: |
