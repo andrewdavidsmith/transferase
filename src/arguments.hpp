@@ -47,11 +47,8 @@ struct std::is_error_code_enum<argument_error_code> : public std::true_type {};
 struct argument_error_code_category : std::error_category {
   // clang-format off
   auto
-  name() const noexcept -> const char * override  {
-    return "argument_error_code";
-  }
-  auto
-  message(int code) const -> std::string override {
+  name() const noexcept -> const char * override {return "argument_error_code";}
+  auto message(int code) const -> std::string override {
     using std::string_literals::operator""s;
     switch (code) {
     case 0: return "ok"s;
@@ -71,101 +68,60 @@ make_error_code(argument_error_code e) -> std::error_code {
 
 template <typename T> struct argset_base {
   std::string config_file{};
+  bool skip_parsing_config_file{false};
 
-  T &
-  self() {
-    return static_cast<T &>(*this);
-  }
-  const T &
-  self() const {
-    return static_cast<const T &>(*this);
-  }
+  // clang-format off
+  auto self() -> T & {return static_cast<T &>(*this);}
+  auto self() const -> const T & {return static_cast<const T &>(*this);}
+  auto log_options() const { self().log_options_impl(); }
+  // clang-format on
 
   [[nodiscard]] static auto
   get_default_config_file() -> std::string {
     return T::get_default_config_file_impl();
   }
 
-  [[nodiscard]] static auto
-  get_default_config_dir() -> std::string {
-    return T::get_default_config_dir_impl();
+  [[nodiscard]] auto
+  set_opts() -> boost::program_options::options_description {
+    return self().set_opts_impl();
   }
 
   [[nodiscard]] auto
-  parse(int argc, char const *const argv[], const std::string &usage,
+  parse(const int argc, const char *const argv[], const std::string &usage,
         const std::string &about_msg,
         const std::string &description_msg) -> std::error_code {
     namespace po = boost::program_options;
-    auto cli_only_opts = set_cli_only_opts();
-    auto common_opts = set_common_opts();
-    po::options_description help_opts("Options");
-    help_opts.add(cli_only_opts).add(common_opts);
-    // first check if config file or help are specified
+    const auto opts = set_opts();
     try {
-      // Command-line only options
-      po::variables_map vm_cli_only;
-      po::store(po::command_line_parser(argc, argv)
-                  .options(cli_only_opts)
-                  .allow_unregistered()
-                  .run(),
-                vm_cli_only);
+      po::variables_map var_map;
+      po::store(po::parse_command_line(argc, argv, opts), var_map);
       // check if help has been seen
-      if (vm_cli_only.count("help") || argc == 1) {
-        // help output is for all options
+      if (var_map.count("help") || argc == 1) {
         std::println("{}\n{}", about_msg, usage);
-        cli_only_opts.print(std::cout);
-        std::println();
-        common_opts.print(std::cout);
+        opts.print(std::cout);
         std::println("\n{}", description_msg);
         return argument_error_code::help_requested;
       }
-      // do the parsing -- this might throw
-      po::notify(vm_cli_only);
 
-      // Common options
-      po::variables_map vm_common;
-      const auto cli_parsed =
-        po::command_line_parser(argc, argv).options(common_opts).run();
-      po::store(cli_parsed, vm_common);
-
-      // attempt to use the config file if it was explicitly specified
-      // or if it exists
-      const bool config_file_defaulted = vm_cli_only["config-file"].defaulted();
+      // attempt to use the config file if it was explicitly
+      // specified, or if it was defaulted and exists.
+      const bool config_file_defaulted = var_map["config-file"].defaulted();
+      config_file = var_map["config-file"].as<std::string>();
       const bool use_config_file =
         !config_file.empty() &&
         (!config_file_defaulted || std::filesystem::exists(config_file));
-      if (use_config_file) {
-        const auto cfg_parsed =
-          po::parse_config_file(config_file.data(), common_opts, true);
-        po::store(cfg_parsed, vm_common);
-      }
-      po::notify(vm_common);
+      if (!skip_parsing_config_file && use_config_file)
+        po::store(po::parse_config_file(config_file.data(), opts), var_map);
+      po::notify(var_map);
     }
     catch (po::error &e) {
       std::println("{}", e.what());
       std::println("{}\n{}", about_msg, usage);
-      cli_only_opts.print(std::cout);
-      std::println();
-      common_opts.print(std::cout);
+      opts.print(std::cout);
       std::println("\n{}", description_msg);
       return argument_error_code::failure;
     }
     return argument_error_code::ok;
-  }
-
-  auto
-  log_options() const {
-    self().log_options_impl();
-  }
-
-  [[nodiscard]] auto
-  set_cli_only_opts() -> boost::program_options::options_description {
-    return self().set_cli_only_opts_impl();
-  }
-
-  [[nodiscard]] auto
-  set_common_opts() -> boost::program_options::options_description {
-    return self().set_common_opts_impl();
   }
 };
 
