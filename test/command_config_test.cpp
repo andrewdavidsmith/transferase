@@ -32,28 +32,30 @@
 #include <vector>
 
 TEST(command_config_test, run_success) {
-  std::vector<const char *> argv = {
+  static constexpr auto config_file = "config/transferase_client_config.toml";
+  static constexpr auto argv = std::array{
+    // clang-format off
     "config",
+    "-c",
+    config_file,
     "-v",
     "critical",
-    "-c",
-    "config/xfrase_client_config.toml",
     "-s",
     "example.com",
     "-p",
     "5000",
+    // clang-format on
   };
-  EXPECT_EQ(std::size(argv), 9);
+  // NOLINT(cppcoreguidelines-narrowing-conversions)
+  const int argc = static_cast<int>(std::size(argv));
+
   EXPECT_EQ(argv[0], "config");
   // NOLINTBEGIN(cppcoreguidelines-pro-type-const-cast)
-  // NOLINTBEGIN(cppcoreguidelines-narrowing-conversions)
-  const int ret =
-    command_config_main(std::size(argv), const_cast<char **>(argv.data()));
-  // NOLINTEND(cppcoreguidelines-narrowing-conversions)
+  const int ret = command_config_main(argc, const_cast<char **>(argv.data()));
   // NOLINTEND(cppcoreguidelines-pro-type-const-cast)
   EXPECT_EQ(ret, EXIT_SUCCESS);
 
-  const std::filesystem::path config_file{"config/xfrase_client_config.toml"};
-  EXPECT_TRUE(std::filesystem::remove(config_file));
-  EXPECT_TRUE(std::filesystem::remove_all(config_file.parent_path()));
+  const std::filesystem::path config_path{config_file};
+  EXPECT_TRUE(std::filesystem::remove(config_path));
+  EXPECT_TRUE(std::filesystem::remove_all(config_path.parent_path()));
 }
