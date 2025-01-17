@@ -93,6 +93,11 @@ level_container_bindings(
       "Access the 'n_unmeth' value via copy for the element at position 'pos' "
       "in this container",
       "pos"_a)
+    .def("__str__",
+         [](const tra::level_container<tra::level_element_t> &self)
+           -> std::string {
+           return std::format("LevelContainer size={}", tra::size(self));
+         })
     //
     ;
 }
@@ -149,6 +154,11 @@ level_container_covered_bindings(
       "Access the 'n_covered' value via copy for the element at position 'pos' "
       "in this container ",
       "pos"_a)
+    .def("__str__",
+         [](const tra::level_container<tra::level_element_covered_t> &self)
+           -> std::string {
+           return std::format("LevelContainerCovered size={}", tra::size(self));
+         })
     //
     ;
 }
