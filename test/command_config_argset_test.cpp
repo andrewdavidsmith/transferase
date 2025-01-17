@@ -40,19 +40,16 @@ TEST(command_config_argset_test, run_success) {
     "config",
     "-v",
     "debug",
-    "-c",
-    "config/transferase_client_config.toml",
     "-s",
      "example.com",
     "-p",
     "5000",
-    "--assemblies",
+    "--genomes",
     "hg38,mm39",
     // clang-format on
   };
-  const int argc = sizeof(argv) / sizeof(argv[0]);
+  const int argc = static_cast<int>(std::size(argv));
 
-  EXPECT_EQ(argc, 11);
   EXPECT_EQ(argv[0], "config");
 
   command_config_argset args;
@@ -60,13 +57,11 @@ TEST(command_config_argset_test, run_success) {
   const auto ec = args.parse(argc, const_cast<char **>(argv.data()), "usage"s,
                              "about"s, "description"s);
   // NOLINTEND(cppcoreguidelines-pro-type-const-cast)
-  const std::filesystem::path config_file{
-    "config/transferase_client_config.toml"};
-  EXPECT_EQ(args.client_config_file, "config/transferase_client_config.toml");
+  EXPECT_FALSE(args.config_file.empty());
   EXPECT_FALSE(ec);
 }
 
-TEST(command_config_argset_test, default_client_config_file) {
+TEST(command_config_argset_test, default_config_file) {
   using std::string_literals::operator""s;
   const auto argv = std::array{
     // clang-format off
@@ -77,13 +72,12 @@ TEST(command_config_argset_test, default_client_config_file) {
     "example.com",
     "-p",
     "5000",
-    "--assemblies",
+    "--genomes",
     "hg38,mm39",
     // clang-format on
   };
-  const int argc = sizeof(argv) / sizeof(argv[0]);
+  const int argc = static_cast<int>(std::size(argv));
 
-  EXPECT_EQ(argc, 9);
   EXPECT_EQ(argv[0], "config");
 
   command_config_argset args;
@@ -99,5 +93,5 @@ TEST(command_config_argset_test, default_client_config_file) {
   const auto default_config_file_path =
     std::format("{}/{}", default_config_dir,
                 command_config_argset::default_config_filename);
-  EXPECT_EQ(args.client_config_file, default_config_file_path);
+  EXPECT_EQ(args.config_file, default_config_file_path);
 }
