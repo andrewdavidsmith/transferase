@@ -101,8 +101,6 @@ struct bins_argset : argset_base<bins_argset> {
     return std::filesystem::path{config_dir} / default_config_filename;
   }
 
-  static constexpr auto hostname_default{""};
-  static constexpr auto port_default{"5000"};
   static constexpr auto log_level_default{log_level_t::info};
   std::string hostname;
   std::string port;
