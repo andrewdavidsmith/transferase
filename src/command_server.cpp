@@ -122,12 +122,17 @@ struct server_argset : argset_base<server_argset> {
   }
 
   [[nodiscard]] auto
-  set_common_opts_impl() -> boost::program_options::options_description {
+  set_opts_impl() -> boost::program_options::options_description {
     namespace po = boost::program_options;
     using po::value;
     po::options_description opts("Command line or config file");
     opts.add_options()
       // clang-format off
+      ("help,h", "print this message and exit")
+      ("config-file,c",
+       boost::program_options::value(&config_file)
+       ->value_name("[arg]")->implicit_value(get_default_config_file(), ""),
+       "use this config file")
       ("hostname,s", value(&hostname)->required(),
        "server hostname (required)")
       ("port,p", value(&port)->required(), "server port")
@@ -148,21 +153,6 @@ struct server_argset : argset_base<server_argset> {
        "Filename to use for the PID  when daemonizing")
       // clang-format on
       ;
-    return opts;
-  }
-
-  [[nodiscard]] auto
-  set_cli_only_opts_impl() -> boost::program_options::options_description {
-    boost::program_options::options_description opts("Command line only");
-    // clang-format off
-    opts.add_options()
-      ("help,h", "print this message and exit")
-      ("config-file,c",
-       boost::program_options::value(&config_file)
-       ->value_name("[arg]")->implicit_value(get_default_config_file(), ""),
-       "use this config file")
-      ;
-    // clang-format on
     return opts;
   }
 };

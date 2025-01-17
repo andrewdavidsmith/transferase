@@ -90,7 +90,7 @@ struct server_config_argset : argset_base<server_config_argset> {
   }
 
   [[nodiscard]] auto
-  set_cli_only_opts_impl() -> boost::program_options::options_description {
+  set_opts_impl() -> boost::program_options::options_description {
     namespace po = boost::program_options;
     using po::value;
     po::options_description opts("Options");

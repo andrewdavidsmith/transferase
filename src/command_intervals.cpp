@@ -144,33 +144,10 @@ struct intervals_argset : argset_base<intervals_argset> {
   }
 
   [[nodiscard]] auto
-  set_common_opts_impl() -> boost::program_options::options_description {
+  set_opts_impl() -> boost::program_options::options_description {
     namespace po = boost::program_options;
     using po::value;
-    po::options_description opts("Command line or config file options");
-    opts.add_options()
-      // clang-format off
-      ("hostname,s", value(&hostname)->default_value(hostname_default),
-       "server hostname")
-      ("port,p", value(&port)->default_value(port_default, ""), "server port")
-      ("methylome-dir,d", value(&methylome_dir)->required(),
-       "methylome directory (local mode only)")
-      ("index-dir,x", value(&index_dir)->required(),
-       "genome index directory")
-      ("log-level,v", value(&log_level)->default_value(log_level_default),
-       "{debug, info, warning, error, critical}")
-      ("log-file,l", value(&log_filename)->value_name("[arg]"),
-       "log file name (defaults: print to screen)")
-      // clang-format on
-      ;
-    return opts;
-  }
-
-  [[nodiscard]] auto
-  set_cli_only_opts_impl() -> boost::program_options::options_description {
-    namespace po = boost::program_options;
-    using po::value;
-    po::options_description opts("Command line options");
+    po::options_description opts("Options");
     opts.add_options()
       // clang-format off
       ("help,h", "print this message and exit")
@@ -187,6 +164,17 @@ struct intervals_argset : argset_base<intervals_argset> {
        "count covered sites for each interval")
       ("score", po::bool_switch(&write_scores),
        "output weighted methylation in bedgraph format")
+      ("hostname,s", value(&hostname)->default_value(hostname_default),
+       "server hostname")
+      ("port,p", value(&port)->default_value(port_default, ""), "server port")
+      ("methylome-dir,d", value(&methylome_dir)->required(),
+       "methylome directory (local mode only)")
+      ("index-dir,x", value(&index_dir)->required(),
+       "genome index directory")
+      ("log-level,v", value(&log_level)->default_value(log_level_default),
+       "{debug, info, warning, error, critical}")
+      ("log-file,l", value(&log_filename)->value_name("[arg]"),
+       "log file name (defaults: print to screen)")
       // clang-format on
       ;
     return opts;

@@ -45,7 +45,7 @@ xfrase config -c my_config_file.toml -s example.com -p 5009 --genomes hg38,mm39
 
 #include "arguments.hpp"
 #include "command_config_argset.hpp"
-#include "config_file_utils.hpp"  // write_client_config_file
+#include "config_file_utils.hpp"  // write_config_file
 #include "download.hpp"
 #include "find_path_to_binary.hpp"
 #include "format_error_code.hpp"  // IWYU pragma: keep
@@ -239,7 +239,7 @@ command_config_main(int argc,
     std::ranges::for_each(
       std::vector<std::tuple<std::string, std::string>>{
         // clang-format off
-        {"config_file", std::format("{}", args.client_config_file)},
+        {"config_file", std::format("{}", args.config_file)},
         {"hostname", std::format("{}", args.hostname)},
         {"port", std::format("{}", args.port)},
         {"log_filename", std::format("{}", args.log_filename)},
@@ -248,17 +248,15 @@ command_config_main(int argc,
       },
       [](auto &&x) { std::println("{}: {}", std::get<0>(x), std::get<1>(x)); });
 
-  args.client_config_file =
-    std::filesystem::absolute(args.client_config_file, ec);
-  args.client_config_file =
-    std::filesystem::weakly_canonical(args.client_config_file, ec);
+  args.config_file = std::filesystem::absolute(args.config_file, ec);
+  args.config_file = std::filesystem::weakly_canonical(args.config_file, ec);
   if (ec) {
-    std::println("Bad config file {}: {}", args.client_config_file, ec);
+    std::println("Bad config file {}: {}", args.config_file, ec);
     return EXIT_FAILURE;
   }
 
   const auto config_dir =
-    std::filesystem::path(args.client_config_file).parent_path().string();
+    std::filesystem::path(args.config_file).parent_path().string();
   if (!args.quiet)
     std::println("Client config directory: {}", config_dir);
 
@@ -280,7 +278,7 @@ command_config_main(int argc,
     }
   }
 
-  const auto config_write_err = write_client_config_file(args);
+  const auto config_write_err = write_config_file(args);
   if (config_write_err) {
     std::println("Error writing config file: {}", config_write_err);
     return EXIT_FAILURE;
