@@ -397,7 +397,7 @@ command_format_main(int argc,
     ("genome,g", po::value(&genome_name)->required(), "genome name")
     ("zip,z", po::bool_switch(&zip), "zip the output")
     ("log-level,v", po::value(&log_level)->default_value(logger::default_level),
-     "log level {debug,info,warning,error,critical}")
+     "{debug, info, warning, error, critical}")
     // clang-format on
     ;
   try {

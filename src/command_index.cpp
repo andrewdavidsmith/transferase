@@ -90,7 +90,7 @@ command_index_main(int argc,
     ("genome,g", po::value(&genome_filename)->required(), "genome_file")
     ("indexdir,x", po::value(&index_directory)->required(), "index output directory")
     ("log-level,v", po::value(&log_level)->default_value(transferase::logger::default_level),
-     "log level {debug,info,warning,error,critical}")
+     "{debug, info, warning, error, critical}")
     // clang-format on
     ;
   try {

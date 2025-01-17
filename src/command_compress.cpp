@@ -96,7 +96,7 @@ command_compress_main(int argc,
      "methylome output directory")
     ("uncompress,u", po::bool_switch(&uncompress), "uncompress the file")
     ("log-level,v", po::value(&log_level)->default_value(transferase::logger::default_level),
-     "log level {debug,info,warning,error,critical}")
+     "{debug, info, warning, error, critical}")
     ;
   // clang-format on
   try {

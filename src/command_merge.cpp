@@ -100,7 +100,7 @@ command_merge_main(int argc,
     ("outdir,o", po::value(&methylome_outdir)->required(), "methylome output directory")
     ("name,n", po::value(&merged_name)->required(), "merged methylome name")
     ("log-level,v", po::value(&log_level)->default_value(logger::default_level),
-     "log level {debug,info,warning,error,critical}")
+     "{debug, info, warning, error, critical}")
     // clang-format on
     ;
   po::variables_map vm;

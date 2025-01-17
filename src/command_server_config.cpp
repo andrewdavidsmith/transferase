@@ -105,7 +105,7 @@ struct server_config_argset : argset_base<server_config_argset> {
       ("index-dir,x", value(&index_dir), "genome index file directory")
       ("max-resident,r", value(&max_resident), "max methylomes resident in memory at once")
       ("n-threads,t", value(&n_threads), "number of threads to use (one per connection)")
-      ("log-level,v", value(&log_level), "log level {debug, info, warning, error, critical}")
+      ("log-level,v", value(&log_level), "{debug, info, warning, error, critical}")
       ("log-file,l", value(&log_file), "log file name")
       ("pid-file,p", value(&pid_file), "Filename to use for the PID when daemonizing")
       // clang-format on

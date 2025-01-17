@@ -97,7 +97,7 @@ command_check_main(int argc,
     ("methylomes,m", po::value<std::vector<std::string>>()->multitoken()->required(),
      "methylome names")
     ("log-level,v", po::value(&log_level)->default_value(transferase::logger::default_level),
-     "log level {debug,info,warning,error,critical}")
+     "{debug, info, warning, error, critical}")
     // clang-format on
     ;
   po::variables_map vm;

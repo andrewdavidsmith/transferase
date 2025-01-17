@@ -158,7 +158,7 @@ struct intervals_argset : argset_base<intervals_argset> {
       ("index-dir,x", value(&index_dir)->required(),
        "genome index directory")
       ("log-level,v", value(&log_level)->default_value(log_level_default),
-       "log level {debug,info,warning,error,critical}")
+       "{debug, info, warning, error, critical}")
       ("log-file,l", value(&log_filename)->value_name("[arg]"),
        "log file name (defaults: print to screen)")
       // clang-format on
