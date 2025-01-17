@@ -88,8 +88,6 @@ struct server_argset : argset_base<server_argset> {
     return std::filesystem::path{config_dir} / default_config_filename;
   }
 
-  static constexpr auto hostname_default{"localhost"};
-  static constexpr auto port_default{"5000"};
   static constexpr auto log_level_default{log_level_t::info};
   static constexpr auto n_threads_default{1};
   static constexpr auto max_resident_default = 32;
@@ -130,22 +128,24 @@ struct server_argset : argset_base<server_argset> {
     po::options_description opts("Command line or config file");
     opts.add_options()
       // clang-format off
-      ("hostname,s", value(&hostname)->default_value(hostname_default),
-       "server hostname")
-      ("port,p", value(&port)->default_value(port_default), "server port")
+      ("hostname,s", value(&hostname)->required(),
+       "server hostname (required)")
+      ("port,p", value(&port)->required(), "server port")
       ("methylome-dir,d", value(&methylome_dir)->required(), "methylome directory")
-      ("index-dir,x", value(&index_dir)->required(), "genome index file directory")
+      ("index-dir,x", value(&index_dir)->required(), "genome index directory")
       ("max-resident,r",
        value(&max_resident)->default_value(max_resident_default),
        "max resident methylomes")
       ("n-threads,t", value(&n_threads)->default_value(n_threads_default),
        "number of threads")
       ("log-level,v", value(&log_level)->default_value(log_level_default),
-       "log level {debug,info,warning,error,critical}")
-      ("log-file,l", value(&log_file)->value_name("console"),
+       "{debug, info, warning, error, critical}")
+      ("log-file,l", value(&log_file)->default_value("", "screen"),
        "log file name")
-      ("daemonize", po::bool_switch(&daemonize), "daemonize the server")
-      ("pid-file", value(&pid_file), "Filename to use for the PID  when daemonizing")
+      ("daemonize", po::bool_switch(&daemonize),
+       "daemonize the server")
+      ("pid-file", value(&pid_file)->default_value("", "none"),
+       "Filename to use for the PID  when daemonizing")
       // clang-format on
       ;
     return opts;
