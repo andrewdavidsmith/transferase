@@ -61,10 +61,11 @@ format_as_config(const auto &t) -> std::string {
 write_config_file(const auto &args, [[maybe_unused]] const std::string &header =
                                       "") -> std::error_code {
   [[maybe_unused]] static constexpr auto header_width = 78;
-  std::ofstream out(args.config_out);
+
+  std::ofstream out(args.config_file);
   if (!out) {
     const auto ec = std::make_error_code(std::errc(errno));
-    std::println("Failed to open config file {}: {}", args.config_out, ec);
+    std::println("Failed to open config file {}: {}", args.config_file, ec);
     return ec;
   }
 
@@ -72,29 +73,6 @@ write_config_file(const auto &args, [[maybe_unused]] const std::string &header =
   if (!out) {
     const auto ec = std::make_error_code(std::errc(errno));
     std::println("Failed to write config file {}: {}", args.config_file, ec);
-    return ec;
-  }
-  return {};
-}
-
-[[nodiscard]] inline auto
-write_client_config_file(const auto &args,
-                         [[maybe_unused]] const std::string &header = "")
-  -> std::error_code {
-  [[maybe_unused]] static constexpr auto header_width = 78;
-  std::ofstream out(args.client_config_file);
-  if (!out) {
-    const auto ec = std::make_error_code(std::errc(errno));
-    std::println("Failed to open client config file {}: {}",
-                 args.client_config_file, ec);
-    return ec;
-  }
-
-  std::print(out, "{}", format_as_config(args));
-  if (!out) {
-    const auto ec = std::make_error_code(std::errc(errno));
-    std::println("Failed to write client config file {}: {}",
-                 args.client_config_file, ec);
     return ec;
   }
   return {};
