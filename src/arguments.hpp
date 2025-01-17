@@ -124,10 +124,8 @@ template <typename T> struct argset_base {
 
       // Common options
       po::variables_map vm_common;
-      const auto cli_parsed = po::command_line_parser(argc, argv)
-                                .options(common_opts)
-                                .allow_unregistered()
-                                .run();
+      const auto cli_parsed =
+        po::command_line_parser(argc, argv).options(common_opts).run();
       po::store(cli_parsed, vm_common);
 
       // attempt to use the config file if it was explicitly specified
