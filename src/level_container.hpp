@@ -48,9 +48,9 @@ template <typename level_element_type> struct level_container {
 
   // prevent copying and allow moving
   level_container(const level_container &) = delete;
-  level_container &operator=(const level_container &) = delete;
+  auto operator=(const level_container &) -> level_container & = delete;
   level_container(level_container &&) noexcept = default;
-  level_container &operator=(level_container &&) noexcept = default;
+  auto operator=(level_container &&) noexcept -> level_container & = default;
 
   [[nodiscard]] auto begin() {return std::begin(v);}
   [[nodiscard]] auto begin() const {return std::cbegin(v);}
