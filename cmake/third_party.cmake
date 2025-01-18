@@ -46,8 +46,12 @@ message(STATUS "Locating optional third-party packages")
 
 set(CURSES_NEED_NCURSES TRUE)
 find_package(Curses)
-if(CURSES_FOUND)
+if(CURSES_FOUND AND CURSES_HAVE_NCURSES_H)
+  ## ADS: above, the header used in the sources is <ncurses.h> and not
+  ## <curses.h> or <ncurses/curses.h>
   add_compile_definitions(HAVE_NCURSES)
+  message(STATUS "Found ncurses header: ${CURSES_HAVE_NCURSES_H}")
+  message(STATUS "Found ncurses libraries: ${CURSES_LIBRARIES}")
 else()
   message(STATUS "NCurses not found; 'select' command will not be built")
 endif()
