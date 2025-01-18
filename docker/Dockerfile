@@ -10,6 +10,7 @@ RUN git clone https://github.com/andrewdavidsmith/transferase.git \
     && cd /build/transferase \
     && cmake -B Release \
     -DUSE_STATIC_LIBS=on \
+    -DENABLE_LTO=on \
     -DCMAKE_VERBOSE_MAKEFILE=on \
     -DCMAKE_EXPORT_COMPILE_COMMANDS=on \
     -DCMAKE_CXX_COMPILER=g++ \
@@ -21,4 +22,4 @@ RUN git clone https://github.com/andrewdavidsmith/transferase.git \
 FROM ubuntu:latest
 COPY --from=build /transferase/ /usr/
 
-ENTRYPOINT ["xfase"]
+ENTRYPOINT ["xfr"]
