@@ -43,6 +43,12 @@ if(BOOST_JSON_NO_LIB)
   target_compile_definitions(boost_json PRIVATE BOOST_JSON_NO_LIB)
 endif()
 
+## Make sure that the command_select.cpp source can see the header for
+## ncurses if the ncurses library was found
+if(CURSES_FOUND)
+  target_include_directories(command_select PRIVATE "${CURSES_INCLUDE_DIRS}")
+endif()
+
 # Create the final library by linking the previous parts
 add_library(transferase_system STATIC)
 target_link_libraries(transferase_system PRIVATE ${LIBRARY_OBJECTS})
@@ -57,7 +63,5 @@ target_link_libraries(transferase PRIVATE
   Threads::Threads
 )
 if(CURSES_FOUND)
-  target_link_libraries(transferase PRIVATE
-    ${CURSES_LIBRARIES}
-  )
+  target_link_libraries(transferase PRIVATE ${CURSES_LIBRARIES})
 endif()
