@@ -2,11 +2,12 @@
 
 The transferase system for retrieving methylomes from methbase.
 
-The transferase program is `xfrase` which is quicker to type and will
-be used below. There are several commands within `xfrase` and the best
-way to start is to understand the `dnmtools roi` command, as the
-information functionality provided by `xfrase` is the same. If you
-need to learn about `dnmtools roi` you can find the docs
+The transferase program has an alias `xfr` (installed as a copy of the
+program) which is quicker to type and will be used below. There are
+several commands within `xfr` and the best way to start is to
+understand the `dnmtools roi` command, as the information
+functionality provided by `xfr` is the same. If you need to learn
+about `dnmtools roi` you can find the docs
 [here](https://dnmtools.readthedocs.io/en/latest/roi)
 
 ## Installing transferase
@@ -17,33 +18,33 @@ If you are on a reasonably recent Linux (i.e., no older than 10
 yeads), then you can install the binary distribution. First
 download it like this:
 ```console
-wget https://github.com/andrewdavidsmith/transferase/releases/download/v0.2.0/transferase-0.2.0-Linux.sh
+wget https://github.com/andrewdavidsmith/transferase/releases/download/v0.3.0/transferase-0.3.0-Linux.sh
 ```
 
 Then run the downloaded installer (likely you want to first install it
 beneath your home dir):
 ```console
-sh transferase-0.2.0-Linux.sh --prefix=${PREFIX}
+sh transferase-0.3.0-Linux.sh --prefix=${PREFIX}
 ```
 
 This will prompt you to accept the license, and then it will install
-the `xfrase` binaries in `${PREFIX}/bin`, along with some config files
+the transferase binaries in `${PREFIX}/bin`, along with some config files
 in `${PREFIX}/share`. If you want to install it system-wide, and have
 the admin privs, you can do:
 ```console
-sh transferase-0.2.0-Linux.sh --prefix=/usr/local
+sh transferase-0.3.0-Linux.sh --prefix=/usr/local
 ```
 
 If you are on Debian or Ubuntu, and have admin privileges, you can use
 the Debian package and then transferase will be tracked in the package
 management system.  Get the file like this:
 ```console
-wget https://github.com/andrewdavidsmith/transferase/releases/download/v0.2.0/transferase-0.2.0-Linux.deb
+wget https://github.com/andrewdavidsmith/transferase/releases/download/v0.3.0/transferase-0.3.0-Linux.deb
 ```
 
 And then install it like this:
 ```console
-sudo dpkg -i ./transferase-0.2.0-Linux.deb
+sudo dpkg -i ./transferase-0.3.0-Linux.deb
 ```
 
 ### Building the source
@@ -66,10 +67,9 @@ paths accordingly.
 Since transferase uses CMake to generate the build system, there are
 multiple ways to do it, but I like this:
 ```shell
-tar -xf transferase-0.2.0-Source.tar.gz
-cd transferase-0.2.0-Source
-cmake -B build \
-  -DCMAKE_BUILD_TYPE=Build    # for a faster xfrase
+tar -xf transferase-0.3.0-Source.tar.gz
+cd transferase-0.3.0-Source
+cmake -B build -DCMAKE_BUILD_TYPE=Release   # for a faster xfr
 cmake --build build -j64      # i.e., if you have 64 cores
 cmake --install build --prefix=${HOME}  # or wherever
 ```
@@ -82,7 +82,7 @@ Before starting, an index file is required. To make the index, you
 need the reference genome in a single fasta format file. If your
 reference file name is `hg38.fa`, then do this:
 ```console
-xfrase index -v -g hg38.fa -x hg38.cpg_idx
+xfr index -v -g hg38.fa -x hg38.cpg_idx
 ```
 
 If `hg38.fa` is roughly 3.0G in size, then you should expect the index
