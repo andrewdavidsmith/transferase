@@ -26,4 +26,4 @@ jobs:
         cmake --build Release -j2
     - name: Check that it runs
       run: |
-        ./Release/src/xfrase
+        ./Release/src/transferase
