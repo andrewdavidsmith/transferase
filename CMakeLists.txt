@@ -66,7 +66,15 @@ endif()
 
 # Turn on LTO for Release builds
 if(ENABLE_LTO)
-  set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+  # Optional IPO. Do not use IPO if it's not supported by compiler.
+  include(CheckIPOSupported)
+  check_ipo_supported(RESULT result OUTPUT output)
+  if(result)
+    # set_property(TARGET foo PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
+    set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+  else()
+    message(FATAL_ERROR "IPO is not supported: ${output}")
+  endif()
 endif()
 
 if(ENABLE_UNIT_TESTS OR ENABLE_PYTHON_UNIT_TESTS)
