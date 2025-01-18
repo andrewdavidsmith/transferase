@@ -29,7 +29,7 @@ install(TARGETS transferase
 # Install an abbreviated alias
 install(PROGRAMS $<TARGET_FILE:transferase>
   DESTINATION ${CMAKE_INSTALL_BINDIR}
-  RENAME xfrase
+  RENAME xfr
 )
 
 # Versioned JSON file (e.g., /usr/local/share/transferase)
