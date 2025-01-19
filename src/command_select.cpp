@@ -375,7 +375,6 @@ command_select_main(int argc, char *argv[]) -> int {  // NOLINT
   }
 
   try {
-
     std::error_code error;
     const auto data = load_data(input_file, error);
     if (error)
