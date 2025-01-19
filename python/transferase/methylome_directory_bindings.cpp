@@ -23,10 +23,11 @@
 
 #include "methylome_directory_bindings.hpp"
 
+#include <level_element.hpp>
 #include <methylome_directory.hpp>
 
 #include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
+#include <pybind11/stl.h>  // IWYU pragma: keep
 
 #include <cstdint>
 #include <string>
@@ -34,8 +35,6 @@
 
 namespace transferase {
 struct query_container;
-struct level_element_covered_t;
-struct level_element_t;
 template <typename level_element_type> struct level_container;
 }  // namespace transferase
 

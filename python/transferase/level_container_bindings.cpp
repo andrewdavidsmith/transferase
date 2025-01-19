@@ -31,6 +31,7 @@
 
 #include <cstddef>  // for std::size_t
 #include <cstdint>  // for std::uint32_t
+#include <format>
 #include <stdexcept>
 #include <string>
 #include <tuple>
