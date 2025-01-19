@@ -20,15 +20,21 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+# Set static for 3rd party libraries
+
 message(STATUS "Enabling static linkage for all non-system libraries")
 
-# Set static for 3rd party libraries
-set(Boost_USE_STATIC_LIBS on)
+# required
+set(Boost_USE_STATIC_LIBS on)  # cmake-lint: disable=C0103
 set(ZLIB_USE_STATIC_LIBS on)
 
-# Set static for the compiler's libraries
-## ADS: using this instead of forcing static for everything avoids the
-## static linkage that aiso warns against, but also means it's not
-## 100% static linked
-set(CMAKE_EXE_LINKER_FLAGS
-  "${CMAKE_EXE_LINKER_FLAGS} -static-libgcc -static-libstdc++")
+# Python3 and pybind11: can't use static libs
+
+# optional
+set(Curses_USE_STATIC_LIBS on)  # cmake-lint: disable=C0103
+
+# Set static for the linker so the compiler's libraries will be static
+## ADS: using this instead of forcing -static for everything avoids
+## the static linkage that Boost.Aiso warns against, but also means
+## it's not 100% static linked
+list(APPEND GLOBAL_LINKER_OPTIONS -static-libgcc -static-libstdc++)
