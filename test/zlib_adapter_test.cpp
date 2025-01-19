@@ -119,7 +119,7 @@ TEST(zlib_adapter_test, corrupted_gz_file) {
     // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
 
     const auto ret = std::fputs("Not a valid gzipped content", file.get());
-    EXPECT_EQ(ret, EOF);
+    EXPECT_NE(ret, EOF);
   }
 
   const auto [buffer, ec] = read_gzfile_into_buffer(gzfile);
