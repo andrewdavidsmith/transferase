@@ -1,6 +1,6 @@
 # MIT License
 #
-# Copyright (c) 2024 Andrew Smith
+# Copyright (c) 2024-2025 Andrew Smith
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -21,5 +21,11 @@
 # SOFTWARE.
 
 message(STATUS "Enabling unit tests")
+
+# The UNIT_TEST preprocessor variable turns off the static and inline
+# on several functions so they can be tested; all sources could need this.
 add_compile_definitions(UNIT_TEST)
+
 enable_testing()
+find_package(GTest REQUIRED)
+include(GoogleTest)
