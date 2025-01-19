@@ -93,23 +93,22 @@ also start with a gzip format file like `hg38.fa.gz`.
 
 ### Make a methylome file
 
-The starting point within `xfrase` is a file in the `xcounts` format that
-involves the symmetric CpG sites. This is called a symmetric xcounts
-format file, and may be gzip compressed, in which case the extension
-should be `.xsym.gz`. First I will explain how to start with this
-format, and below I will explain how to start with the other format
-used by `dnmtools`. We again assume that the reference genome is
-`hg38.fa` and that this file was used to create the
-`SRX012345.xsym.gz` file. This ensures a correspondence between the
-`SRX012345.xsym.gz` file and the `hg38.cpg_idx` file we will need.
-Here is how to convert such a file into the xfrase format:
+The starting point is a file in the `xcounts` format that involves the
+symmetric CpG sites. This is called a symmetric xcounts format file,
+and may be gzip compressed, in which case the extension should be
+`.xsym.gz`. First I will explain how to start with this format, and
+below I will explain how to start with the other format used by
+`dnmtools`. We again assume that the reference genome is `hg38.fa` and
+that this file was used to create the `SRX012345.xsym.gz` file. This
+ensures a correspondence between the `SRX012345.xsym.gz` file and the
+genome index (two files named `hg38.cpg_idx` and `hg38.cpg_idx.json`).
+Here is how to convert such a file into the transferase format:
 ```console
-xfrase compress -v -x hg38.cpg_idx -m SRX012345.xsym.gz -o SRX012345.m16
+xfr format -x index_dir -g hg38 -o methylome_dir -m SRX012345.xsym.gz
 ```
-
-As with the `hg38.cpg_idx` index file, the methylome file
-`SRX012345.m16` will be accompanied by a metadata file with an
-additional json extension: `SRX012345.m16.json`.
+As with the genome index, the methylome in transferase format will
+involve two files: `SRX012345.m16` and `SRX012345.m16.json`, the
+latter containing metadata.
 
 If you begin with a
 [counts](https://dnmtools.readthedocs.io/en/latest/counts) format
@@ -122,21 +121,23 @@ dnmtools xcounts -z -o SRX012345.xsym.gz -c hg38.fa -v SRX012345.sym
 ```
 
 Once again, be sure to always use the same `hg38.fa` file.  A hash is
-generated and used internally to `xfrase` to ensure that the index and
-methylome files correspond to the same reference genome file.
+generated and used internally to transferase to ensure that the index
+and methylome files correspond to the same reference genome file.
 
 ### Run the `intervals` command locally
 
 This step is to make sure everything is sensible. Or you might just
 want to keep using this tool for your own analysis (it's fast). You
 will need a set of genomic intervals of interest. In this example
-these will be named `intervals.bed`. You also need the index file and
-the methylome file explained in the above steps.
+these will be named `intervals.bed`. You also need the genome index and
+the methylome generated in the above steps.
 ```console
-xfrase intervals local -v debug -x hg38.cpg_idx -m SRX012345.m16 -o local_output.bed -i intervals.bed
+xfr intervals --local -v debug \
+    -x index_dir -g hg38 -d methylome_dir -m SRX012345.m16 \
+    -o output.bed -i intervals.bed
 ```
 
-The index file `hg38.cpg_idx` and the methylome file `SRX012345.m16`
+The genome index for hg38 and the methylome for SRX012345
 are the same as explained above. The `intervals.bed` file may contain
 any number of columns, but the first 3 columns must be in 3-column BED
 format: chrom, start, stop for each interval.  The output in the
@@ -149,29 +150,29 @@ dnmtools roi -o intervals.roi intervals.bed SRX012345.xsym.gz
 The format of these output files are different, but the methylation
 levels on each line (i.e., for each interval) should be identical.
 Note that `dnmtools roi` can fail if intervals are nested, while
-`xfrase intervals` command will still work.
+`xfr intervals` command will still work.
 
 ### Run the `server` command
 
 The `server` command can be tested first locally by using two terminal
-windows. We require the index file `hg38.cpg_index` and the methylome
-file `SRX012345.m16` along with the corresponding `.json` metadata
-files. These should be in directories named for methylomes and
-indexes. The methylomes directory will contain all files with `.m16`
-and `.m16.json` extensions; these are the methylomes that can be
-served. The indexes directory will contain the files ending with
-`.cpg_idx` and `.cpg_idx.json`; these are index files for each
-relevant genome assembly. For now, using the above examples, we
-would have a single index and a single methylome. I will assume these
-are in subdirectories, named `indexes` and `methylomes` respectively,
-of the current directory. Here is a command that will start the server:
+windows. We require the genome index for hg38 and the methylome for
+SRX012345. These should be in directories named for methylomes and
+indexes for this example. The methylome directory will contain all
+files with `.m16` and `.m16.json` extensions; these correspond to the
+methylomes that can be served. The indexes directory will contain the
+files ending with `.cpg_idx` and `.cpg_idx.json`; these are index
+files for each relevant genome assembly. For now, using the above
+examples, we would have a single index and a single methylome. I will
+assume these are in subdirectories, named `indexes` and `methylomes`
+respectively, of the current directory. Here is a command that will
+start the server:
 ```console
-xfrase server -v debug -s localhost -p 5000 -m methylomes -x indexes
+xfr server -v debug -s localhost -p 5000 -m methylomes -x indexes
 ```
 
-Not that this will fail with an appropriate error message if port 5000
-is already be in use, and you can just try 5001, etc., until one is
-free. The `-v debug` will ensure you see info beyond just the
+Note that this will fail with an appropriate error message if port
+5000 is already be in use, and you can just try 5001, etc., until one
+is free. The `-v debug` will ensure you see info beyond just the
 errors. This informtion is logged to the terminal by default.
 
 ### Run the `intervals` command remotely
@@ -180,11 +181,11 @@ We will assume for now that "remote" server is running on the local
 machine (localhost) and using port is 5000 (the default). The
 following command should give identical earlier `intervals` command:
 ```console
-xfrase intervals remote -v debug -s localhost -x indexes/hg38.cpg_idx \
-    -o remote_output.bed -a SRX012345 -i intervals.bed
+xfr intervals -v debug -s localhost -x indexes \
+    -o remote_output.bed -m SRX012345 -i intervals.bed
 ```
 
-Note that now `SRX012345` is not a file this time. Rather, it is a
-methylome name or accession, and should be available on the server. If
-the server can't find the named methylome, it will respond indicating
-that methylome is not available.
+Note that now `SRX012345` is not a file. Rather, it is a methylome
+name or accession, and should be available on the server. If the
+server can't find the named methylome, it will respond indicating that
+methylome is not available.
