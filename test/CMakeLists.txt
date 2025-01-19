@@ -1,6 +1,6 @@
 # MIT License
 #
-# Copyright (c) 2024 Andrew Smith
+# Copyright (c) 2024-2025 Andrew Smith
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -20,45 +20,40 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-find_package(GTest REQUIRED)
-include(GoogleTest)
-
+# Test sources in this directory need to see the headers from the
+# project sources
 include_directories(${PROJECT_SOURCE_DIR}/src)
+# The test sources need UNIT_TEST defined for the preprocessor but
+# this is set globally in cmake/unit_tests.cmake
 
 add_library(unit_test_utils OBJECT unit_test_utils.cpp unit_test_utils.hpp)
 
-file(GLOB CPP_FILES "*_test.cpp")
+file(GLOB cpp_files "*_test.cpp")
 
 # Ensure all objects depend on both the cpp and hpp files
-set(TEST_OBJECTS)
-foreach(CPP_FILE ${CPP_FILES})
-  get_filename_component(BASE_NAME ${CPP_FILE} NAME_WE)
-  add_executable(${BASE_NAME} ${CPP_FILE})
-  target_link_libraries(${BASE_NAME}
-    PRIVATE
+foreach(cpp_file ${cpp_files})
+  get_filename_component(BASE_NAME ${cpp_file} NAME_WE)
+  add_executable(${BASE_NAME} ${cpp_file})
+  target_link_libraries(${BASE_NAME} PRIVATE
     GTest::GTest
     GTest::Main
     ZLIB::ZLIB
     ${Boost_LIBRARIES}
     Threads::Threads
     transferase_system
+    unit_test_utils
   )
+  # make sure 'config.h' is available to include
   target_include_directories(${BASE_NAME} PRIVATE ${PROJECT_BINARY_DIR})
-  target_link_libraries(${BASE_NAME} PRIVATE unit_test_utils)
-  list(APPEND TEST_OBJECTS ${BASE_NAME})
+  target_link_options(${BASE_NAME} PRIVATE ${GLOBAL_LINKER_OPTIONS})
+  target_compile_options(${BASE_NAME} PRIVATE ${GLOBAL_COMPILE_OPTIONS})
+  # Discover all tests in these files
+  gtest_discover_tests(${BASE_NAME})
 endforeach()
 
-# Define the UNIT_TEST variable for the test targets, which exposes
-# static functions through impl headers.
-foreach(target ${TEST_OBJECTS})
-  target_compile_definitions(${target} PRIVATE UNIT_TEST)
-endforeach()
-
-foreach(target ${TEST_OBJECTS})
-  gtest_discover_tests(${target})
-endforeach()
-
-# Ensure test data dir is in the right place relative to ctest paths
+## Ensure test data dir is in the right place relative to ctest paths
+# Do this in the current CMakeLists.txt because beforehand the target
+# dir might not exit.
 file(CREATE_LINK
   ${PROJECT_SOURCE_DIR}/test/data
   ${PROJECT_BINARY_DIR}/test/data
