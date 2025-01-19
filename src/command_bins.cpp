@@ -225,7 +225,7 @@ command_bins_main(int argc,
 
   args.log_options();
 
-  if (args.local && args.methylome_dir.empty()) {
+  if (args.local_mode && args.methylome_dir.empty()) {
     lgr.error("Error: local mode requires a methylomes directory");
     return EXIT_FAILURE;
   }
