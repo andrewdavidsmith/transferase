@@ -25,7 +25,6 @@
 
 #include <genome_index.hpp>
 #include <genomic_interval.hpp>
-#include <level_element.hpp>
 #include <logger.hpp>  // ADS: so we can setup the logger
 #include <query_container.hpp>
 #include <query_element.hpp>
@@ -45,6 +44,10 @@
 #include <format>
 #include <iterator>  // for std::size
 #include <unordered_map>
+
+namespace transferase {
+struct level_element_t;
+}
 
 using namespace transferase;  // NOLINT
 

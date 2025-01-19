@@ -51,11 +51,10 @@ protected:
   auto
   TearDown() -> void override {}
 
-  // NOLINTBEGIN(misc-non-private-member-variables-in-classes)
+public:
   std::uint32_t max_live_methylomes{128};
   std::string methylome_directory;
   std::unique_ptr<methylome_set> methylome_set_ptr;
-  // NOLINTEND(misc-non-private-member-variables-in-classes)
 };
 
 TEST_F(methylome_set_mock, get_methylome_existing_accession) {
@@ -110,12 +109,11 @@ protected:
   auto
   TearDown() -> void override {}
 
-  // NOLINTBEGIN(misc-non-private-member-variables-in-classes)
+public:
   std::uint32_t max_live_methylomes{};
   std::string methylome_directory;
   std::unique_ptr<methylome_set> methylome_set_ptr;
   std::vector<std::string> accessions;
-  // NOLINTEND(misc-non-private-member-variables-in-classes)
 };
 
 TEST_F(methylome_set_lutions, get_methylome_more_than_max_methylomes) {

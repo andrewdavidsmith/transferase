@@ -46,7 +46,8 @@ create_gzipped_file(const std::string &content) -> std::string {
   gzFile gz = gzopen(filename.data(), "wb");
   assert(gz != nullptr);
   const std::int64_t content_size =
-    static_cast<std::uint64_t>(std::size(content));
+    // NOLINT (cppcoreguidelines-narrowing-conversions)
+    static_cast<std::int64_t>(std::size(content));
   [[maybe_unused]] const std::int64_t bytes_written =
     gzwrite(gz, content.data(), content_size);
   assert(bytes_written == content_size);
@@ -117,7 +118,8 @@ TEST(zlib_adapter_test, corrupted_gz_file) {
     fputc_wrapper(0x03, file.get());  // OS (Unix)
     // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
 
-    std::fputs("Not a valid gzipped content", file.get());
+    const auto ret = std::fputs("Not a valid gzipped content", file.get());
+    EXPECT_EQ(ret, EOF);
   }
 
   const auto [buffer, ec] = read_gzfile_into_buffer(gzfile);

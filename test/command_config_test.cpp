@@ -25,11 +25,11 @@
 
 #include <gtest/gtest.h>
 
+#include <array>
 #include <cstdlib>  // for EXIT_FAILURE, EXIT_SUCCESS
 #include <filesystem>
 #include <iterator>  // for std::size
 #include <string>
-#include <vector>
 
 TEST(command_config_test, run_success) {
   static constexpr auto config_file = "config/transferase_client_config.toml";

@@ -62,10 +62,9 @@ protected:
   auto
   TearDown() -> void override {}
 
-  // NOLINTBEGIN(misc-non-private-member-variables-in-classes)
+public:
   std::string genome_index_dir;
   std::string species_name;
-  // NOLINTEND(misc-non-private-member-variables-in-classes)
 };
 
 TEST_F(genome_index_metadata_mock, read_existing_genome_index_metadata) {

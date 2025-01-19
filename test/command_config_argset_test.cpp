@@ -26,7 +26,6 @@
 #include <gtest/gtest.h>
 
 #include <array>
-#include <filesystem>
 #include <format>
 #include <iterator>  // for std::size
 #include <string>
