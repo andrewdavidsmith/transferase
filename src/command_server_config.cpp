@@ -40,7 +40,7 @@ after the file is generated.
 static constexpr auto examples = R"(
 Examples:
 
-xfrase server-config -c /path/to/server_config_file.toml \
+xfr server-config -c /path/to/server_config_file.toml \
     --hostname=not.kernel.org \
     --port=9000 \
     --methylome-dir=/data/methylomes \
@@ -138,9 +138,9 @@ command_server_config_main(
   -> int {
   static constexpr auto command = "server-config";
   static const auto usage =
-    std::format("Usage: xfrase {} [options]\n", rstrip(command));
+    std::format("Usage: xfr {} [options]\n", rstrip(command));
   static const auto about_msg =
-    std::format("xfrase {}: {}", rstrip(command), rstrip(about));
+    std::format("xfr {}: {}", rstrip(command), rstrip(about));
   static const auto description_msg =
     std::format("{}\n{}", rstrip(description), rstrip(examples));
 

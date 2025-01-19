@@ -35,7 +35,7 @@ on their filenames and filename extenionsions.
 static constexpr auto examples = R"(
 Examples:
 
-xfrase list /path/to/some_directory ../relative/path
+xfr list /path/to/some_directory ../relative/path
 )";
 
 #include "format_error_code.hpp"  // IWYU pragma: keep
@@ -63,9 +63,9 @@ command_list_main(int argc,
   -> int {
   static constexpr auto command = "list";
   static const auto usage =
-    std::format("Usage: xfrase {} [options]\n", rstrip(command));
+    std::format("Usage: xfr {} [options]\n", rstrip(command));
   static const auto about_msg =
-    std::format("xfrase {}: {}", rstrip(command), rstrip(about));
+    std::format("xfr {}: {}", rstrip(command), rstrip(about));
   static const auto description_msg =
     std::format("{}\n{}", rstrip(description), rstrip(examples));
 

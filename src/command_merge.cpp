@@ -41,7 +41,7 @@ metadata files (.m16.yaml) files.
 static constexpr auto examples = R"(
 Examples:
 
-xfrase merge -o merged.m16 -i SRX0123*.m16
+xfr merge -o merged.m16 -i SRX0123*.m16
 )";
 
 #include "format_error_code.hpp"  // IWYU pragma: keep
@@ -71,9 +71,9 @@ command_merge_main(int argc,
   -> int {
   static constexpr auto command = "merge";
   static const auto usage =
-    std::format("Usage: xfrase {} [options]\n", rstrip(command));
+    std::format("Usage: xfr {} [options]\n", rstrip(command));
   static const auto about_msg =
-    std::format("xfrase {}: {}", rstrip(command), rstrip(about));
+    std::format("xfr {}: {}", rstrip(command), rstrip(about));
   static const auto description_msg =
     std::format("{}\n{}", rstrip(description), rstrip(examples));
 

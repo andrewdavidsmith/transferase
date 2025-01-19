@@ -42,7 +42,7 @@ together in the same directory.
 static constexpr auto examples = R"(
 Examples:
 
-xfrase index -v debug -x /path/to/index_directory -g hg38.fa
+xfr index -v debug -x /path/to/index_directory -g hg38.fa
 )";
 
 #include "format_error_code.hpp"  // IWYU pragma: keep
@@ -70,9 +70,9 @@ command_index_main(int argc,
   -> int {
   static constexpr auto command = "index";
   static const auto usage =
-    std::format("Usage: xfrase {} [options]\n", rstrip(command));
+    std::format("Usage: xfr {} [options]\n", rstrip(command));
   static const auto about_msg =
-    std::format("xfrase {}: {}", rstrip(command), rstrip(about));
+    std::format("xfr {}: {}", rstrip(command), rstrip(about));
   static const auto description_msg =
     std::format("{}\n{}", rstrip(description), rstrip(examples));
 

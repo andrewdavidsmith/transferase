@@ -43,7 +43,7 @@ transferase queries.
 static constexpr auto examples = R"(
 Examples:
 
-xfrase select -o output_file.json -g hg38
+xfr select -o output_file.json -g hg38
 )";
 
 #include "utilities.hpp"
@@ -334,9 +334,9 @@ auto
 command_select_main(int argc, char *argv[]) -> int {  // NOLINT
   static constexpr auto command = "select";
   static const auto usage =
-    std::format("Usage: xfrase {} [options]\n", rstrip(command));
+    std::format("Usage: xfr {} [options]\n", rstrip(command));
   static const auto about_msg =
-    std::format("xfrase {}: {}", rstrip(command), rstrip(about));
+    std::format("xfr {}: {}", rstrip(command), rstrip(about));
   static const auto description_msg =
     std::format("{}\n{}", rstrip(description), rstrip(examples));
 

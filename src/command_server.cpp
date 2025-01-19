@@ -46,7 +46,7 @@ server can run in detached mode.
 static constexpr auto examples = R"(
 Examples:
 
-xfrase server -s localhost -d methylomes -x indexes
+xfr server -s localhost -d methylomes -x indexes
 )";
 
 #include "arguments.hpp"
@@ -202,9 +202,9 @@ command_server_main(int argc,
   -> int {
   static constexpr auto command = "server";
   static const auto usage =
-    std::format("Usage: xfrase {} [options]\n", rstrip(command));
+    std::format("Usage: xfr {} [options]\n", rstrip(command));
   static const auto about_msg =
-    std::format("xfrase {}: {}", rstrip(command), rstrip(about));
+    std::format("xfr {}: {}", rstrip(command), rstrip(about));
   static const auto description_msg =
     std::format("{}\n{}", rstrip(description), rstrip(examples));
 

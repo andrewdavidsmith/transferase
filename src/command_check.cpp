@@ -43,7 +43,7 @@ determined.
 static constexpr auto examples = R"(
 Examples:
 
-xfrase check -x index_dir -d methylome_dir -g hg38 -m SRX012345 SRX612345
+xfr check -x index_dir -d methylome_dir -g hg38 -m SRX012345 SRX612345
 )";
 
 #include "genome_index.hpp"
@@ -73,9 +73,9 @@ command_check_main(int argc,
   -> int {
   static constexpr auto command = "check";
   static const auto usage =
-    std::format("Usage: xfrase {} [options]\n", rstrip(command));
+    std::format("Usage: xfr {} [options]\n", rstrip(command));
   static const auto about_msg =
-    std::format("xfrase {}: {}", rstrip(command), rstrip(about));
+    std::format("xfr {}: {}", rstrip(command), rstrip(about));
   static const auto description_msg =
     std::format("{}\n{}", rstrip(description), rstrip(examples));
 

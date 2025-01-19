@@ -42,8 +42,8 @@ files.
 static constexpr auto examples = R"(
 Examples:
 
-xfrase compress -d methylome_dir -m methylome_name -o output_dir
-xfrase compress -u -d methylome_dir -m methylome_name -o output_dir
+xfr compress -d methylome_dir -m methylome_name -o output_dir
+xfr compress -u -d methylome_dir -m methylome_name -o output_dir
 )";
 
 #include "format_error_code.hpp"  // IWYU pragma: keep
@@ -72,9 +72,9 @@ command_compress_main(int argc,
   -> int {
   static constexpr auto command = "compress";
   static const auto usage =
-    std::format("Usage: xfrase {} [options]\n", rstrip(command));
+    std::format("Usage: xfr {} [options]\n", rstrip(command));
   static const auto about_msg =
-    std::format("xfrase {}: {}", rstrip(command), rstrip(about));
+    std::format("xfr {}: {}", rstrip(command), rstrip(about));
   static const auto description_msg =
     std::format("{}\n{}", rstrip(description), rstrip(examples));
 

@@ -24,7 +24,7 @@
 #include "command_config.hpp"
 
 static constexpr auto about = R"(
-configure an xfrase client
+configure an xfr client
 )";
 
 static constexpr auto description = R"(
@@ -40,7 +40,7 @@ be downloaded separately. The default config directory is
 static constexpr auto examples = R"(
 Examples:
 
-xfrase config -c my_config_file.toml -s example.com -p 5009 --genomes hg38,mm39
+xfr config -c my_config_file.toml -s example.com -p 5009 --genomes hg38,mm39
 )";
 
 #include "arguments.hpp"
@@ -217,9 +217,9 @@ command_config_main(int argc,
   -> int {
   static constexpr auto command = "config";
   static const auto usage =
-    std::format("Usage: xfrase {} [options]\n", rstrip(command));
+    std::format("Usage: xfr {} [options]\n", rstrip(command));
   static const auto about_msg =
-    std::format("xfrase {}: {}", rstrip(command), rstrip(about));
+    std::format("xfr {}: {}", rstrip(command), rstrip(about));
   static const auto description_msg =
     std::format("{}\n{}", rstrip(description), rstrip(examples));
 
