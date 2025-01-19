@@ -22,22 +22,26 @@
 
 if(BUILD_PYTHON)
   message(FATAL_ERROR "Sanitizing unsupported when building Python package")
-else()
-  if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    if(SANITIZER_TYPE STREQUAL "address")
-      set(SANITIZER_FLAGS "-fsanitize=address -fno-omit-frame-pointer")
-    elseif(SANITIZER_TYPE STREQUAL "undefined")
-      set(SANITIZER_FLAGS "-fsanitize=undefined -fno-omit-frame-pointer")
-    else()
-      # ADS: others don't seem to work...
-      message(FATAL_ERROR "Unsupported sanitizer type: ${SANITIZER_TYPE}")
-    endif()
-
-    # Set flags for the compiler and linker
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SANITIZER_FLAGS}")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${SANITIZER_FLAGS}")
-    message(STATUS "Sanitizer enabled: ${SANITIZER_TYPE}")
-  else()
-    message(STATUS "Not enabling sanitizer (only setup for GCC)")
-  endif()
 endif()
+
+if(NOT (CMAKE_CXX_COMPILER_ID STREQUAL "GNU"))
+  message(FATAL_ERROR "Sanitizing only supported for GCC")
+endif()
+
+set(SANITIZER_FLAGS "")
+list(APPEND SANITIZER_FLAGS -fno-omit-frame-pointer)
+if(SANITIZER_TYPE STREQUAL "address")
+  list(APPEND SANITIZER_FLAGS -fsanitize=address)
+elseif(SANITIZER_TYPE STREQUAL "undefined")
+  list(APPEND SANITIZER_FLAGS -fsanitize=undefined)
+else()
+  # ADS: others don't seem to work yet...
+  message(FATAL_ERROR "Unsupported sanitizer type: ${SANITIZER_TYPE}")
+endif()
+
+message(STATUS "Sanitizer enabled: ${SANITIZER_TYPE}")
+message(STATUS "Sanitizer options: ${SANITIZER_FLAGS}")
+
+# Set flags for the compiler and linker
+list(APPEND GLOBAL_COMPILE_OPTIONS ${SANITIZER_FLAGS})
+list(APPEND GLOBAL_LINKER_OPTIONS ${SANITIZER_FLAGS})
