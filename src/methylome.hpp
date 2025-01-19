@@ -317,7 +317,6 @@ enum class methylome_error_code : std::uint8_t {
   error_loading_methylome = 3,
   methylome_not_found = 4,
   unknown_error = 5,
-
 };
 
 template <>
