@@ -22,64 +22,68 @@
 
 # transferase cmake file for packaging
 
+# This file sets STRIP_SUB_LIST and GLOBAL_LINKER_OPTIONS options
+# which are used by compiling and linking.
+
+message(STATUS "Configuring to package for distribution")
+
+include(CPack)
+
 set(CPACK_PACKAGE_VENDOR "Andrew D Smith")
 set(CPACK_PACKAGE_CONTACT "Andrew D Smith")
 set(CPACK_RESOURCE_FILE_LICENSE ${PROJECT_SOURCE_DIR}/LICENSE)
 set(CPACK_GENERATOR "TGZ;STGZ")
 
-## Strip binaries for size and build system info
-set(CPACK_STRIP_FILES on)
+if (STRIP_PATHS_FROM_BINARIES)
+  # Strip binaries for size and removing build system info
+  set(CPACK_STRIP_FILES ${STRIP_PATHS_FROM_BINARIES})
 
-## Replace any home dir prefix in paths
-set(PREFIX_MAP_PROJECT "${PROJECT_SOURCE_DIR}/=/")
-set(CMAKE_CXX_FLAGS_RELEASE
-  "${CMAKE_CXX_FLAGS_RELEASE} -ffile-prefix-map=${PREFIX_MAP_PROJECT}")
-set(HOME_DIR $ENV{HOME}) # For Unix-like systems
-set(PREFIX_MAP_HOME "${HOME_DIR}/=/")
-set(CMAKE_CXX_FLAGS_RELEASE
-  "${CMAKE_CXX_FLAGS_RELEASE} -ffile-prefix-map=${PREFIX_MAP_HOME}")
-## Make sure compile command strips symbols
-set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} -s")
+  # Remove project source directory information from text section
+  list(APPEND STRIP_SUB_LIST "${PROJECT_SOURCE_DIR}/=/")
+  # Replace any home dir prefix in paths
+  list(APPEND STRIP_SUB_LIST "$ENV{HOME}/=/")
 
-## For STGZ
+  # Set linker to strips symbols (redundant with cpack setting?)
+  list(APPEND GLOBAL_LINKER_OPTIONS "-s")
+endif()
+
+# For custome STGZ generator
 set(CPACK_STGZ_HEADER_FILE
   "${CMAKE_SOURCE_DIR}/modules/CPack.STGZ_Header.sh.in")
 
-## Only make the Debian installer if building on Linux
+# Only make the Debian installer if building on Linux
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
   list(APPEND CPACK_GENERATOR "DEB")
   set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Andrew D Smith <andrewds@usc.edu>")
-  ### Get the system processor architecture
+  # Get the system processor architecture
   message(STATUS "System Architecture: ${CMAKE_SYSTEM_PROCESSOR}")
-  ### Check if the architecture is x86_64 and set to amd64 for Debian packaging
+  # Check if the architecture is x86_64 and set to amd64 for Debian packaging
   if(CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
     set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "amd64")
   elseif(CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64")
     set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "arm64")
   else()
-    set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "${CMAKE_SYSTEM_PROCESSOR}")
+    set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE ${CMAKE_SYSTEM_PROCESSOR})
   endif()
 
   message(STATUS
     "Debian package architecture: ${CPACK_DEBIAN_PACKAGE_ARCHITECTURE}")
-  ### Run `ldd --version` to get glibc version
+  # Run 'ldd --version' to get glibc version
   execute_process(
     COMMAND sh -c "ldd --version | head -1 | awk '{print \$NF}'"
     OUTPUT_VARIABLE GLIBC_VERSION
     ERROR_VARIABLE LDD_ERROR
     OUTPUT_STRIP_TRAILING_WHITESPACE
   )
-  if(GLIBC_VERSION AND NOT LDD_ERROR)
-    message(STATUS "Detected glibc version: ${GLIBC_VERSION}")
-  else()
+  if(LDD_ERROR OR NOT GLIBC_VERSION)
     message(FATAL_ERROR "Failed to detect glibc version")
+  else()
+    message(STATUS "Detected glibc version: ${GLIBC_VERSION}")
   endif()
-  ### Set dependency libc6 with the version constraint
+  # Set dependency libc6 with the version constraint
   set(CPACK_DEBIAN_PACKAGE_DEPENDS "libc6 (>= ${GLIBC_VERSION})")
 endif()
 
-## For Source
-### Only package source from a clean clone
+# For Source (only package source from a clean clone)
 set(CPACK_SOURCE_IGNORE_FILES build .git .github)
 set(CPACK_SOURCE_GENERATOR "TGZ")
-include(CPack)
