@@ -20,14 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-# Find Python 3 and its necessary components
 message(STATUS "Configuring to build Python API")
-find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
-message(STATUS "Python3 include dir: ${Python3_INCLUDE_DIRS}")
-message(STATUS "Python3 libraries: ${Python3_LIBRARIES}")
-message(STATUS "Python3 version: ${Python3_VERSION}")
-message(STATUS "Python3 SOABI: ${Python3_SOABI}")
-find_package(pybind11 REQUIRED)
 
 # Setup the Python include and lib directories
 include_directories(${Python3_INCLUDE_DIRS})
@@ -35,7 +28,7 @@ link_directories(${Python3_LIBRARIES})
 
 # For release, strip any directories on header filenames
 foreach(dirname ${Python3_INCLUDE_DIRS})
-  set(CMAKE_CXX_FLAGS_RELEASE "-ffile-prefix-map=${dirname}/=/ ${CMAKE_CXX_FLAGS}")
+  list(APPEND STRIP_SUB_LIST "${dirname}/=/")
 endforeach()
 
 # Set the Python package/library name
@@ -57,18 +50,21 @@ configure_file(${PROJECT_SOURCE_DIR}/python/README.md
                ${PROJECT_BINARY_DIR}/python/README.md COPYONLY)
 configure_file(${PROJECT_SOURCE_DIR}/python/version.py
                ${PROJECT_BINARY_DIR}/python/version.py)
-file(TOUCH ${PROJECT_BINARY_DIR}/python/transferase/__init__.py)
+# Copy the LICENSE file to the build directory
+configure_file(${PROJECT_SOURCE_DIR}/LICENSE
+               ${PROJECT_BINARY_DIR}/python/LICENSE COPYONLY)
+file(TOUCH ${PROJECT_BINARY_DIR}/python/${LIBRARY_NAME}/__init__.py)
 
 # Create a custom target that runs after the build
 add_custom_target(PYTHON_BUILD_WHL ALL
-  COMMAND hatch build -t wheel
+  COMMAND hatch build
   WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/python
   DEPENDS py_${LIBRARY_NAME}
 )
 
 # Rename the wheel file after it has been generated
 add_custom_target(PYTHON_RENAME_WHL ALL
-  COMMAND mv transferase-*.whl transferase.${Python3_SOABI}.whl
+  COMMAND mv ${LIBRARY_NAME}-*.whl ${LIBRARY_NAME}.${Python3_SOABI}.whl
   WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/python/dist
   DEPENDS PYTHON_BUILD_WHL
 )
