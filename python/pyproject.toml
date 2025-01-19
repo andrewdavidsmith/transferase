@@ -18,13 +18,10 @@ exclude = [
     "**/*",  # Exclude everything recursively
     "!*.so", # Except the library .so file
     "!*.py", # Except any python bindings
-    "!README.md", # Except the README file
 ]
 
 [tool.hatch.build.targets.sdist]
 exclude = [
     "**/*",  # Exclude everything recursively
-    ".gitignore",  # This needs to be specified
     "!*.py", # Except any python bindings
-    "!README.md", # Except the README file
 ]
