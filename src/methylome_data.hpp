@@ -207,38 +207,4 @@ template <> struct std::hash<transferase::methylome_data> {
   }
 };
 
-// methylome_data errors
-enum class methylome_data_error_code : std::uint8_t {
-  ok = 0,
-  error_reading = 1,
-  error_writing = 2,
-  inconsistent = 3,
-};
-
-template <>
-struct std::is_error_code_enum<methylome_data_error_code>
-  : public std::true_type {};
-
-struct methylome_data_error_category : std::error_category {
-  // clang-format off
-  auto name() const noexcept -> const char * override {return "methylome_data";}
-  auto message(int code) const noexcept -> std::string override {
-    using std::string_literals::operator""s;
-    switch (code) {
-    case 0: return "ok"s;
-    case 1: return "error reading methylome data"s;
-    case 2: return "error writing methylome data"s;
-    case 3: return "inconsistent methylome data"s;
-    }
-    std::unreachable();  // hopefully
-  }
-  // clang-format on
-};
-
-inline auto
-make_error_code(methylome_data_error_code e) noexcept -> std::error_code {
-  static auto category = methylome_data_error_category{};
-  return std::error_code(std::to_underlying(e), category);
-}
-
 #endif  // SRC_METHYLOME_DATA_HPP_

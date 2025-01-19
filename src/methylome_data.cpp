@@ -75,6 +75,7 @@ methylome_data::get_n_cpgs_from_file(const std::string &filename) noexcept
 methylome_data_read(const std::string &filename,
                     const methylome_metadata &metadata,
                     std::error_code &ec) noexcept -> methylome_data {
+  static const auto io_error = std::make_error_code(std::errc::io_error);
   const auto filesize =
     static_cast<std::streamsize>(std::filesystem::file_size(filename, ec));
   if (ec)
@@ -93,7 +94,7 @@ methylome_data_read(const std::string &filename,
       in.read(reinterpret_cast<char *>(buf.data()), filesize));
     const auto n_bytes = in.gcount();
     if (!read_ok || n_bytes != static_cast<std::streamsize>(filesize)) {
-      ec = methylome_data_error_code::error_reading;
+      ec = io_error;
       return {};
     }
     meth.cpgs.resize(metadata.n_cpgs);
@@ -113,7 +114,7 @@ methylome_data_read(const std::string &filename,
     in.read(reinterpret_cast<char *>(meth.cpgs.data()), filesize));
   const auto n_bytes = in.gcount();
   if (!read_ok || n_bytes != static_cast<std::streamsize>(filesize)) {
-    ec = methylome_data_error_code::error_reading;
+    ec = io_error;
     return {};
   }
 
@@ -144,6 +145,7 @@ methylome_data::read(const std::string &dirname,
 [[nodiscard]] auto
 methylome_data::write(const std::string &filename,
                       const bool zip) const noexcept -> std::error_code {
+  static const auto io_error = std::make_error_code(std::errc::io_error);
   std::vector<std::uint8_t> buf;
   if (zip) {
 #ifdef BENCHMARK
@@ -167,13 +169,13 @@ methylome_data::write(const std::string &filename,
   if (zip) {
     const auto n_bytes = static_cast<std::streamsize>(std::size(buf));
     if (!out.write(reinterpret_cast<const char *>(buf.data()), n_bytes))
-      return methylome_data_error_code::error_writing;
+      return io_error;
   }
   else {
     const auto n_bytes =
       static_cast<std::streamsize>(std::size(cpgs) * record_size);
     if (!out.write(reinterpret_cast<const char *>(cpgs.data()), n_bytes))
-      return methylome_data_error_code::error_writing;
+      return io_error;
   }
   // NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)
   return std::error_code{};
