@@ -374,14 +374,14 @@ command_select_main(int argc, char *argv[]) -> int {  // NOLINT
     return EXIT_FAILURE;
   }
 
-  std::error_code error;
-  const auto data = load_data(input_file, error);
-  if (error) {
-    throw std::runtime_error(
-      std::format("Error reading input {}: {}", output_file, error.message()));
-  }
-
   try {
+
+    std::error_code error;
+    const auto data = load_data(input_file, error);
+    if (error)
+      throw std::runtime_error(
+        std::format("Error reading input {}: {}", input_file, error.message()));
+
     std::println(
       "Type g then Enter to go to selection. Any other key to exit.");
     const auto user_input = std::cin.get();
