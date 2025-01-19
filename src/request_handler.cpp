@@ -69,7 +69,7 @@ request_handler::handle_request(const request &req,
   const auto methylome_name = req.methylome_names.front();
   const auto meth = methylomes.get_methylome(methylome_name, ec);
   if (ec) {
-    lgr.warning("Error loading methylome {}: {}", methylome_name, ec);
+    lgr.warning("Error reading methylome {}: {}", methylome_name, ec);
     resp_hdr.status = server_error_code::methylome_not_found;
     return;
   }

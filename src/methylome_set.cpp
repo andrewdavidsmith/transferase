@@ -69,7 +69,7 @@ methylome_set::get_methylome(const std::string &accession, std::error_code &ec)
   if (accessions.full()) {
     const auto to_eject_itr = accession_to_methylome.find(accessions.front());
     if (to_eject_itr == std::cend(accession_to_methylome)) {
-      ec = methylome_error_code::error_loading_methylome;
+      ec = methylome_error_code::error_reading_methylome;
       return nullptr;
     }
     accession_to_methylome.erase(to_eject_itr);
