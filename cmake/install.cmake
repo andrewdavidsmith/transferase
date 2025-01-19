@@ -1,6 +1,6 @@
 # MIT License
 #
-# Copyright (c) 2024 Andrew Smith
+# Copyright (c) 2024-2025 Andrew Smith
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -20,6 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+# One way to install:
 # cmake --install build_dir --prefix /path/to/install/root
 
 install(TARGETS transferase
@@ -32,8 +33,9 @@ install(PROGRAMS $<TARGET_FILE:transferase>
   RENAME xfr
 )
 
-# Versioned JSON file (e.g., /usr/local/share/transferase)
-install(FILES ${PROJECT_BINARY_DIR}/share/transferase/transferase_data_${PROJECT_VERSION}.json
+# Versioned JSON file (e.g., /usr/share/transferase)
+set(DATA_SOURCE_DIR ${PROJECT_BINARY_DIR}/share/transferase)
+install(FILES ${DATA_SOURCE_DIR}/transferase_data_${PROJECT_VERSION}.json
   DESTINATION ${CMAKE_INSTALL_DATADIR}/transferase
 )
 
