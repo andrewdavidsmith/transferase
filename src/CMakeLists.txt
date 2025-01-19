@@ -20,20 +20,19 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-file(GLOB CPP_FILES "*.cpp")
+file(GLOB cpp_files "*.cpp")
+list(FILTER cpp_files EXCLUDE REGEX "transferase.cpp")
 
-# Ensure all objects depend on both the cpp and hpp files
-set(LIBRARY_OBJECTS)
-foreach(CPP_FILE ${CPP_FILES})
-  get_filename_component(BASE_NAME ${CPP_FILE} NAME_WE)
-  set(HPP_PATH "${CMAKE_CURRENT_SOURCE_DIR}/${BASE_NAME}.hpp")
-  set(HPP_FILE "${BASE_NAME}.hpp")
-  if(EXISTS ${HPP_PATH})
-    add_library(${BASE_NAME} OBJECT ${CPP_FILE} ${HPP_FILE})
-    ## below, make sure config.h is visible to include
-    target_include_directories(${BASE_NAME} PRIVATE ${PROJECT_BINARY_DIR})
-    list(APPEND LIBRARY_OBJECTS ${BASE_NAME})
-  endif()
+# Gather all the object files that will be put in the static library
+# and prepare to compile them.
+set(LIBRARY_OBJECTS "")
+foreach(cpp_file ${cpp_files})
+  get_filename_component(BASE_NAME ${cpp_file} NAME_WE)
+  add_library(${BASE_NAME} OBJECT ${cpp_file})
+  ## Below is to make sure 'config.h' is visible for includes
+  target_include_directories(${BASE_NAME} PRIVATE ${PROJECT_BINARY_DIR})
+  target_compile_options(${BASE_NAME} PRIVATE ${GLOBAL_COMPILE_OPTIONS})
+  list(APPEND LIBRARY_OBJECTS ${BASE_NAME})
 endforeach()
 
 ## Passing BOOST_JSON_NO_LIB to the boost_json library will turn on
@@ -46,17 +45,19 @@ endif()
 ## Make sure that the command_select.cpp source can see the header for
 ## ncurses if the ncurses library was found
 if(CURSES_FOUND)
-  target_include_directories(command_select PRIVATE "${CURSES_INCLUDE_DIRS}")
+  target_include_directories(command_select PRIVATE ${CURSES_INCLUDE_DIRS})
 endif()
 
-# Create the final library by linking the previous parts
+# Create the initial static library linking the individual objects
 add_library(transferase_system STATIC)
+target_link_options(transferase_system PRIVATE ${GLOBAL_LINKER_OPTIONS})
 target_link_libraries(transferase_system PRIVATE ${LIBRARY_OBJECTS})
 
+# Create the executable
 add_executable(transferase transferase.cpp)
-target_include_directories(transferase PRIVATE "${PROJECT_BINARY_DIR}")
+# Make sure that the 'config.h' is visible to include
+target_include_directories(transferase PRIVATE ${PROJECT_BINARY_DIR})
 target_link_libraries(transferase PRIVATE
-  ${COMMAND_OBJECTS}
   transferase_system
   ZLIB::ZLIB
   ${Boost_LIBRARIES}
@@ -65,3 +66,6 @@ target_link_libraries(transferase PRIVATE
 if(CURSES_FOUND)
   target_link_libraries(transferase PRIVATE ${CURSES_LIBRARIES})
 endif()
+
+target_link_options(transferase PRIVATE ${GLOBAL_LINKER_OPTIONS})
+target_compile_options(transferase PRIVATE ${GLOBAL_COMPILE_OPTIONS})
