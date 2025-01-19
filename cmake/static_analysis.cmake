@@ -1,6 +1,6 @@
 # MIT License
 #
-# Copyright (c) 2024 Andrew Smith
+# Copyright (c) 2024-2025 Andrew Smith
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -20,7 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-message(STATUS "Static analysis enabled")
+message(STATUS "Configuring build for static analysis")
 
 # cpplint: all options are in the config file
 find_program(FOUND_CPPLINT cpplint)
@@ -76,7 +76,7 @@ if(CLANG_TIDY_EXECUTABLE)
     set(CMAKE_CXX_CLANG_TIDY
       clang-tidy
       --quiet
-      -p Build
+      -p ${PROJECT_BINARY_DIR}
     )
   else()
     message(STATUS "Not enabling clang-tidy (min version not found")
