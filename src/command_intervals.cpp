@@ -40,13 +40,13 @@ select, the options you must specify will differ.
 static constexpr auto examples = R"(
 Examples:
 
-xfrase intervals -s example.com -x index_dir -g hg38 -m methylome_name \
+xfr intervals -s example.com -x index_dir -g hg38 -m methylome_name \
     -o output.bed -i input.bed
 
-xfrase intervals -c config_file.toml -g hg38 -m methylome_name \
+xfr intervals -c config_file.toml -g hg38 -m methylome_name \
     -o output.bed -i input.bed
 
-xfrase intervals --local -x index_dir -g hg38 -d methylome_dir \
+xfr intervals --local -x index_dir -g hg38 -d methylome_dir \
     -m methylome_name -o output.bed -i input.bed
 )";
 
@@ -208,9 +208,9 @@ command_intervals_main(
   int argc, char *argv[])  // NOLINT(cppcoreguidelines-avoid-c-arrays)
   -> int {
   static constexpr auto command = "intervals";
-  static const auto usage = std::format("Usage: xfrase intervals [options]\n");
+  static const auto usage = std::format("Usage: xfr intervals [options]\n");
   static const auto about_msg =
-    std::format("xfrase {}: {}", rstrip(command), rstrip(about));
+    std::format("xfr {}: {}", rstrip(command), rstrip(about));
   static const auto description_msg =
     std::format("{}\n{}", rstrip(description), rstrip(examples));
 
@@ -229,6 +229,11 @@ command_intervals_main(
   }
 
   args.log_options();
+
+  if (args.local && args.methylome_dir.empty()) {
+    lgr.error("Error: local mode requires a methylomes directory");
+    return EXIT_FAILURE;
+  }
 
   std::error_code ec;
   const auto index =

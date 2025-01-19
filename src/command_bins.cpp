@@ -40,10 +40,10 @@ on the mode you select, the options you must specify will differ.
 static constexpr auto examples = R"(
 Examples:
 
-xfrase bins -x index_dir -g hg38 -s example.com -m SRX012345 \
+xfr bins -x index_dir -g hg38 -s example.com -m SRX012345 \
     -o output.bed -b 1000
 
-xfrase bins --local -d methylome_dir -x index_dir -g hg38 \
+xfr bins --local -d methylome_dir -x index_dir -g hg38 \
     -m methylome_name -o output.bed -b 1000
 )";
 
@@ -164,7 +164,7 @@ struct bins_argset : argset_base<bins_argset> {
       ("port,p", value(&port), "server port")
       ("methylome-dir,d", value(&methylome_dir)->required(),
        "methylome directory (local mode only)")
-      ("index-dir,x", value(&index_dir)->required(),
+      ("index-dir,x", value(&index_dir),
        "genome index directory")
       ("log-level,v", value(&log_level)->default_value(log_level_default),
        "{debug, info, warning, error, critical}")
@@ -203,9 +203,9 @@ command_bins_main(int argc,
                   char *argv[])  // NOLINT(cppcoreguidelines-avoid-c-arrays)
   -> int {
   static constexpr auto command = "bins";
-  static const auto usage = std::format("Usage: xfrase bins [options]\n");
+  static const auto usage = std::format("Usage: xfr bins [options]\n");
   static const auto about_msg =
-    std::format("xfrase {}: {}", rstrip(command), rstrip(about));
+    std::format("xfr {}: {}", rstrip(command), rstrip(about));
   static const auto description_msg =
     std::format("{}\n{}", rstrip(description), rstrip(examples));
 
@@ -224,6 +224,11 @@ command_bins_main(int argc,
   }
 
   args.log_options();
+
+  if (args.local && args.methylome_dir.empty()) {
+    lgr.error("Error: local mode requires a methylomes directory");
+    return EXIT_FAILURE;
+  }
 
   std::error_code ec;
   const auto index =
