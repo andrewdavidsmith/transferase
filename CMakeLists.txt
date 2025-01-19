@@ -30,6 +30,9 @@ project(
   HOMEPAGE_URL https://github.com/andrewdavidsmith/transferase
   LANGUAGES CXX)
 
+# Make sure our modules are found first
+list(PREPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/modules)
+
 # Set language version used
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED on)
@@ -38,39 +41,47 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS on)
 
 include(CheckIncludeFileCXX)
 include(CheckFunctionExists)
+include(CheckCXXCompilerFlag)
 
 include(GNUInstallDirs)
-set(DATADIR "${CMAKE_INSTALL_DATADIR}")
 
+# Collect any global linker options as needed and then apply them
+# individually to targets
+set(GLOBAL_COMPILE_OPTIONS "")
+set(GLOBAL_LINKER_OPTIONS "")
+
+include(cmake/build_types.cmake)
 include(cmake/config_options.cmake)
+include(cmake/data_config.cmake)
 
-if(BUILD_PYTHON)
-  # Ensure that -fPIC is used when compiling the static library so
-  # pybind11 works
-  set(CMAKE_POSITION_INDEPENDENT_CODE on)
+if(USE_STATIC_LIBS)
+  # This needs to come before finding any libraries so that the static
+  # versions are identified
+  include(cmake/static_libs.cmake)
 endif()
 
 if(ENABLE_STATIC_ANALYSIS)
   include(cmake/static_analysis.cmake)
 endif()
 
-if(NOT ENABLE_UNIT_TESTS)
-  # ADS: this should be turned on by Release and ENABLE_UNIT_TESTS
-  # turned off by Release
+include(cmake/third_party.cmake)
+
+if(CONFIGURE_FOR_DISTRIBUTION)
   include(cmake/packaging.cmake)
 endif()
 
-if(USE_STATIC_LIBS)
-  include(cmake/static_libs.cmake)
+if(BUILD_PYTHON)
+  message(STATUS "Building with position-independent code for Python API")
+  # Ensure that -fPIC is used when compiling the static library so
+  # pybind11 works
+  set(CMAKE_POSITION_INDEPENDENT_CODE on)
 endif()
 
-# Turn on LTO for Release builds
 if(ENABLE_LTO)
-  # Optional IPO. Do not use IPO if it's not supported by compiler.
+  # Turn on LTO if we are building for distribution
   include(CheckIPOSupported)
   check_ipo_supported(RESULT result OUTPUT output)
   if(result)
-    # set_property(TARGET foo PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
     set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
   else()
     message(FATAL_ERROR "IPO is not supported: ${output}")
@@ -84,36 +95,32 @@ if(ENABLE_UNIT_TESTS OR ENABLE_PYTHON_UNIT_TESTS)
   endif()
 endif()
 
-include(cmake/third_party.cmake)
-
 # Seems this needs to come after some third-party deps are found
 if(ENABLE_SANITIZING)
   include(cmake/sanitizing.cmake)
 endif()
 
-# Configure this dir and JSON file for any build. They are always
-# needed in the right place with the version in the filename
-set(BUILD_DATA_DIR "${PROJECT_BINARY_DIR}/${DATADIR}/transferase")
-file(MAKE_DIRECTORY ${BUILD_DATA_DIR})
-configure_file(${CMAKE_SOURCE_DIR}/data/transferase_data.json
-  ${BUILD_DATA_DIR}/transferase_data_${PROJECT_VERSION}.json
-  COPYONLY
+# ADS: set the most stringent warnings we can
+list(APPEND GLOBAL_COMPILE_OPTIONS
+  -Wall -Wextra -Wpedantic -Werror -Wfatal-errors
 )
 
-configure_file(config.h.in config.h)
+if(STRIP_PATHS_FROM_BINARIES)
+  # This is set if we have configured to distribute
+  set(PREFIX_MAP_ARG -ffile-prefix-map=)
+  list(TRANSFORM STRIP_SUB_LIST PREPEND ${PREFIX_MAP_ARG})
+  list(APPEND GLOBAL_COMPILE_OPTIONS ${STRIP_SUB_LIST})
+endif()
 
-add_compile_options(-Wall -Wextra -Wpedantic -Werror -Wfatal-errors)
+message(STATUS "Finished global compile and linker configuration")
 
+add_subdirectory(src)
 if(ENABLE_UNIT_TESTS)
   add_subdirectory(test)
 endif()
-
-add_subdirectory(src)
-
-if(NOT ENABLE_UNIT_TESTS)
-  include(cmake/install.cmake)
-endif()
-
 if(BUILD_PYTHON)
   add_subdirectory(python)
 endif()
+
+# Putting install at the end
+include(cmake/install.cmake)
