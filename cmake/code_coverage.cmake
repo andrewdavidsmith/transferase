@@ -21,17 +21,15 @@
 # SOFTWARE.
 
 # Check for coverage support in the compiler
-include(CheckCXXCompilerFlag)
-
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --coverage")
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --coverage")
+set(COVERAGE_LINK_OPTIONS --coverage)
+list(APPEND GLOBAL_COMPILE_OPTIONS --coverage)
+list(APPEND GLOBAL_LINKER_OPTIONS --coverage)
 
 # Try to add the necessary flags for coverage
-check_cxx_compiler_flag("--coverage" COVERAGE_SUPPORTED)
-
-if(COVERAGE_SUPPORTED)
-  message(STATUS "Code coverage is supported by the compiler")
-else()
+# The CMAKE_REQUIRED_LINK_OPTIONS var is for 'try_compile'
+set(CMAKE_REQUIRED_LINK_OPTIONS ${COVERAGE_LINK_OPTIONS})
+check_cxx_compiler_flag(--coverage COVERAGE_SUPPORTED)
+if(NOT COVERAGE_SUPPORTED)
   message(FATAL_ERROR "Code coverage is NOT supported by the compiler")
 endif()
 
