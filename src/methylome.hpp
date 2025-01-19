@@ -314,6 +314,10 @@ enum class methylome_error_code : std::uint8_t {
   ok = 0,
   invalid_accession = 1,
   invalid_methylome_data = 2,
+  error_loading_methylome = 3,
+  methylome_not_found = 4,
+  unknown_error = 5,
+
 };
 
 template <>
@@ -328,6 +332,9 @@ struct methylome_error_category : std::error_category {
     case 0: return "ok"s;
     case 1: return "invalid accession"s;
     case 2: return "invalid methylome data"s;
+    case 3: return "error loading methylome"s;
+    case 4: return "methylome not found"s;
+    case 5: return "methylome unknown error"s;
     }
     std::unreachable();
   }
