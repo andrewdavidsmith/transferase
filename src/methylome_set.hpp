@@ -71,38 +71,4 @@ struct methylome_set {
 
 }  // namespace transferase
 
-// methylome_set errors
-enum class methylome_set_error_code : std::uint8_t {
-  ok = 0,
-  error_loading_methylome = 1,
-  methylome_not_found = 2,
-  unknown_error = 3,
-};
-
-template <>
-struct std::is_error_code_enum<methylome_set_error_code>
-  : public std::true_type {};
-
-struct methylome_set_error_category : std::error_category {
-  // clang-format off
-  auto name() const noexcept -> const char * override {return "methylome_set";}
-  auto message(int code) const -> std::string override {
-    using std::string_literals::operator""s;
-    switch (code) {
-    case 0: return "ok"s;
-    case 1: return "error loading methylome"s;
-    case 2: return "methylome not found"s;
-    case 3: return "methylome set unknown error"s;
-    }
-    std::unreachable();
-  }
-  // clang-format on
-};
-
-inline auto
-make_error_code(methylome_set_error_code e) -> std::error_code {
-  static auto category = methylome_set_error_category{};
-  return std::error_code(std::to_underlying(e), category);
-}
-
 #endif  // SRC_METHYLOME_SET_HPP_
