@@ -110,6 +110,15 @@ TEST_F(genome_index_metadata_mock, genome_index_metadata_read_write_read) {
   EXPECT_TRUE(removed);
 }
 
+TEST_F(genome_index_metadata_mock,
+       genome_index_metadata_read_non_existing_file) {
+  static constexpr auto bad_species_name = "namekian";
+  std::error_code ec;
+  const auto meta =
+    genome_index_metadata::read(genome_index_dir, bad_species_name, ec);
+  EXPECT_EQ(ec, std::errc::no_such_file_or_directory);
+}
+
 TEST_F(genome_index_metadata_mock, genome_index_metadata_get_n_bins) {
   std::error_code ec;
   const auto meta =
