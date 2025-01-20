@@ -68,6 +68,21 @@ TEST(genome_index_data_test, valid_read) {
   EXPECT_FALSE(ec);
 }
 
+TEST(genome_index_data_test, invalid_read_file_does_not_exist) {
+  static constexpr auto dirname{"data"};
+  static constexpr auto genome_name_ok{"pAntiquusx"};
+  static constexpr auto genome_name_bad{"pAntiquusy"};
+  std::error_code metadata_ec;
+  [[maybe_unused]] const auto meta =
+    genome_index_metadata::read(dirname, genome_name_ok, metadata_ec);
+  EXPECT_FALSE(metadata_ec)
+    << metadata_ec.message() << '\t' << metadata_ec.value() << '\n';
+  std::error_code data_ec;
+  [[maybe_unused]] const auto data =
+    genome_index_data::read(dirname, genome_name_bad, meta, data_ec);
+  EXPECT_EQ(data_ec, std::errc::no_such_file_or_directory);
+}
+
 TEST(genome_index_data_test, valid_write) {
   const std::filesystem::path output_file{
     generate_temp_filename("file", genome_index_data::filename_extension)};
@@ -84,6 +99,26 @@ TEST(genome_index_data_test, valid_write) {
   const bool remove_ok = std::filesystem::remove(output_file, ec);
   EXPECT_EQ(ec, std::error_code{});
   EXPECT_TRUE(remove_ok);
+}
+
+TEST(genome_index_data_test, write_bad_output_directory) {
+  const std::filesystem::path output_file{"/etc/bad/directory/file.txt"};
+  genome_index_data data;
+  std::error_code ec = data.write(output_file);
+  EXPECT_EQ(ec, std::errc::no_such_file_or_directory);
+  const bool remove_ok = std::filesystem::remove(output_file, ec);
+  EXPECT_EQ(ec, std::error_code{});
+  EXPECT_FALSE(remove_ok);
+}
+
+TEST(genome_index_data_test, write_bad_output_file) {
+  const std::filesystem::path output_file{"/proc/bad_file.txt"};
+  genome_index_data data;
+  std::error_code ec = data.write(output_file);
+  EXPECT_EQ(ec, std::errc::no_such_file_or_directory);
+  const bool remove_ok = std::filesystem::remove(output_file, ec);
+  EXPECT_EQ(ec, std::error_code{});
+  EXPECT_FALSE(remove_ok);
 }
 
 TEST(genome_index_data_test, valid_round_trip) {
