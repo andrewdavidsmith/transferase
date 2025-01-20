@@ -45,10 +45,10 @@
 namespace transferase {
 
 [[nodiscard]] auto
-genome_index_data::read(const std::string &index_file,
+genome_index_data::read(const std::string &data_file,
                         const genome_index_metadata &meta,
                         std::error_code &ec) noexcept -> genome_index_data {
-  std::ifstream in(index_file, std::ios::binary);
+  std::ifstream in(data_file, std::ios::binary);
   if (!in) {
     ec = std::make_error_code(std::errc(errno));
     return {};
@@ -100,9 +100,9 @@ genome_index_data::read(const std::string &dirname,
 }
 
 [[nodiscard]] auto
-genome_index_data::write(const std::string &index_file) const noexcept
+genome_index_data::write(const std::string &data_file) const noexcept
   -> std::error_code {
-  std::ofstream out(index_file);
+  std::ofstream out(data_file);
   if (!out)
     return std::make_error_code(std::errc(errno));
   for (const auto &cpgs : positions) {
