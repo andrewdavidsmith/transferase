@@ -112,19 +112,20 @@ struct query_argset : argset_base<query_argset> {
   }
 
   static constexpr auto log_level_default{log_level_t::info};
+  static constexpr auto out_fmt_default{output_format_t::counts};
   std::string hostname;
   std::string port;
   std::string methylome_dir;
   std::string index_dir;
   std::string log_filename;
-  transferase::log_level_t log_level{};
+  log_level_t log_level{};
 
   bool local_mode{};
   std::uint32_t bin_size{};
   std::string intervals_file{};
   std::string methylome_names{};
   std::string genome_name{};
-  bool write_scores{};
+  output_format_t out_fmt{};
   bool count_covered{};
   std::string output_file{};
 
@@ -143,7 +144,7 @@ struct query_argset : argset_base<query_argset> {
         {"bin_size", std::format("{}", bin_size)},
         {"methylome_names", format_methylome_names_brief(methylome_names)},
         {"intervals_file", std::format("{}", intervals_file)},
-        {"write_scores", std::format("{}", write_scores)},
+        {"out_fmt", std::format("{}", out_fmt)},
         {"count_covered", std::format("{}", count_covered)},
         {"output_file", std::format("{}", output_file)},
         // clang-format on
@@ -170,8 +171,8 @@ struct query_argset : argset_base<query_argset> {
       ("output,o", po::value(&output_file)->required(), "output file")
       ("covered", po::bool_switch(&count_covered),
        "count covered sites for each interval")
-      ("score", po::bool_switch(&write_scores),
-       "output weighted methylation in bedgraph format")
+      ("out-fmt,f", po::value(&out_fmt)->default_value(out_fmt_default),
+       "output format {counts=1,bedgraph=2,dataframe=3}")
       ("hostname,s", po::value(&hostname), "server hostname")
       ("port,p", po::value(&port), "server port")
       ("methylome-dir,d", po::value(&methylome_dir),
@@ -275,7 +276,14 @@ do_intervals_query(const auto &args, const transferase::genome_index &index,
             duration(query_start, query_stop));
 
   const auto outmgr = transferase::intervals_output_mgr{
-    args.output_file, intervals, index, args.write_scores};
+    // clang-format off
+    args.output_file,
+    intervals,
+    index,
+    args.out_fmt,
+    methylome_names,
+    // clang-format on
+  };
 
   const auto output_start{std::chrono::high_resolution_clock::now()};
   error = write_output(outmgr, results);
@@ -315,7 +323,14 @@ do_bins_query(const auto &args, const transferase::genome_index &index,
             duration(query_start, query_stop));
 
   const auto outmgr = transferase::bins_output_mgr{
-    args.output_file, args.bin_size, index, args.write_scores};
+    // clang-format off
+    args.output_file,
+    args.bin_size,
+    index,
+    args.out_fmt,
+    methylome_names,
+    // clang-format on
+  };
 
   const auto output_start{std::chrono::high_resolution_clock::now()};
   error = write_output(outmgr, results);
