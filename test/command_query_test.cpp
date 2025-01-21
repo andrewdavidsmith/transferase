@@ -21,7 +21,7 @@
  * SOFTWARE.
  */
 
-#include <command_intervals.hpp>
+#include <command_query.hpp>
 
 #include "unit_test_utils.hpp"
 
@@ -33,7 +33,7 @@
 #include <string>
 #include <system_error>
 
-TEST(command_intervals_test, basic_local_test) {
+TEST(command_query_test, intervals_basic_local_test) {
   // Input files for test
   static constexpr auto index_directory = "data";
   static constexpr auto genome_name = "pAntiquusx";
@@ -48,7 +48,7 @@ TEST(command_intervals_test, basic_local_test) {
   // Define command line arguments
   const auto argv = std::array{
     // clang-format off
-    "intervals",
+    "query",
     "--local",
     "-x",
     index_directory,
@@ -69,7 +69,7 @@ TEST(command_intervals_test, basic_local_test) {
   // Run the main function
   // NOLINTBEGIN(cppcoreguidelines-pro-type-const-cast)
   const int result =
-    command_intervals_main(command_argc, const_cast<char **>(argv.data()));
+    command_query_main(command_argc, const_cast<char **>(argv.data()));
   // NOLINTEND(cppcoreguidelines-pro-type-const-cast)
 
   // Check that the output file is created
@@ -85,7 +85,7 @@ TEST(command_intervals_test, basic_local_test) {
   }
 }
 
-TEST(command_intervals_test, basic_local_test_scores) {
+TEST(command_query_test, intervals_basic_local_test_scores) {
   // Input files for test
   static constexpr auto index_directory = "data";
   static constexpr auto genome_name = "pAntiquusx";
@@ -100,7 +100,7 @@ TEST(command_intervals_test, basic_local_test_scores) {
   // Define command line arguments
   const auto argv = std::array{
     // clang-format off
-    "intervals",
+    "query",
     "--local",
     "-x",
     index_directory,
@@ -122,7 +122,7 @@ TEST(command_intervals_test, basic_local_test_scores) {
   // Run the main function
   // NOLINTBEGIN(cppcoreguidelines-pro-type-const-cast)
   const int result =
-    command_intervals_main(command_argc, const_cast<char **>(argv.data()));
+    command_query_main(command_argc, const_cast<char **>(argv.data()));
   // NOLINTEND(cppcoreguidelines-pro-type-const-cast)
 
   // Check that the output file is created
@@ -138,7 +138,7 @@ TEST(command_intervals_test, basic_local_test_scores) {
   }
 }
 
-TEST(command_intervals_test, failing_remote_test) {
+TEST(command_query_test, intervals_failing_remote_test) {
   // Input files for test
   static constexpr auto index_file = "data/pAntiquusx.cpg_idx";
   static constexpr auto accession = "SRX012346";
@@ -149,7 +149,7 @@ TEST(command_intervals_test, failing_remote_test) {
   // Define command line arguments
   const auto argv = std::array{
     // clang-format off
-    "intervals",
+    "query",
     "-s",
     "localhost",
     "-p",
@@ -169,7 +169,7 @@ TEST(command_intervals_test, failing_remote_test) {
   // Run the main function
   // NOLINTBEGIN(cppcoreguidelines-pro-type-const-cast)
   const int result =
-    command_intervals_main(command_argc, const_cast<char **>(argv.data()));
+    command_query_main(command_argc, const_cast<char **>(argv.data()));
   // NOLINTEND(cppcoreguidelines-pro-type-const-cast)
 
   // Check that the output file is created
@@ -178,6 +178,60 @@ TEST(command_intervals_test, failing_remote_test) {
 
   // Clean up: delete test files
   if (std::filesystem::exists(output_file)) {
+    const auto remove_ok = std::filesystem::remove(output_file);
+    EXPECT_TRUE(remove_ok);
+  }
+}
+
+TEST(command_query_test, bins_basic_local_test) {
+  // Input files for test
+  static constexpr auto index_directory = "data";
+  static constexpr auto genome_name = "pAntiquusx";
+  static constexpr auto methylome_directory = "data";
+  static constexpr auto methylome_name = "SRX012346";
+  // Output filename and expected output
+  static constexpr auto output_file = "data/output_file.bed";
+  static constexpr auto expected_output_file =
+    "data/SRX012346_bin100_local.bed";
+
+  // Define command line arguments
+  const auto argv = std::array{
+    // clang-format off
+    "query",
+    "--local",
+    "-x",
+    index_directory,
+    "-g",
+    genome_name,
+    "-d",
+    methylome_directory,
+    "-m",
+    methylome_name,
+    "-o",
+    output_file,
+    "-b",
+    "100",
+    // clang-format on
+  };
+  const int command_argc = sizeof(argv) / sizeof(argv[0]);
+
+  // Run the main function
+  // NOLINTBEGIN(cppcoreguidelines-pro-type-const-cast)
+  const int result =
+    command_query_main(command_argc, const_cast<char **>(argv.data()));
+  // NOLINTEND(cppcoreguidelines-pro-type-const-cast)
+
+  // Check that the output file is created
+  EXPECT_EQ(result, EXIT_SUCCESS);
+  std::error_code ignored_ec;
+  EXPECT_TRUE(std::filesystem::exists(output_file, ignored_ec));
+
+  const bool output_files_identical =
+    files_are_identical(output_file, expected_output_file);
+  EXPECT_TRUE(output_files_identical);
+
+  // Clean up: delete test files only if tests pass
+  if (output_files_identical && std::filesystem::exists(output_file)) {
     const auto remove_ok = std::filesystem::remove(output_file);
     EXPECT_TRUE(remove_ok);
   }
