@@ -97,13 +97,13 @@ static constexpr auto level_name_sz{[]() constexpr {
   return tmp;
 }()};
 
-inline std::ostream &
-operator<<(std::ostream &o, const log_level_t &l) {
+inline auto
+operator<<(std::ostream &o, const log_level_t &l) -> std::ostream & {
   return o << level_name[std::to_underlying(l)];
 }
 
-inline std::istream &
-operator>>(std::istream &in, log_level_t &l) {
+inline auto
+operator>>(std::istream &in, log_level_t &l) -> std::istream & {
   std::string tmp;
   if (!(in >> tmp))
     return in;
