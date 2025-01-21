@@ -44,6 +44,13 @@ struct level_element_t {
   /// unmethylated state.
   std::uint32_t n_unmeth{};
 
+  /// Number of observations (e.g., sites in reads) contributing to either
+  /// state.
+  [[nodiscard]] constexpr auto
+  n_reads() const noexcept -> std::uint32_t {
+    return n_meth + n_unmeth;
+  }
+
   auto
   operator<=>(const level_element_t &) const = default;
 };
@@ -66,6 +73,13 @@ struct level_element_covered_t {
   /// Number of sites in the corresponding genomic interval that contribute at
   /// least one observation to the n_meth or n_unmeth values.
   std::uint32_t n_covered{};
+
+  /// Number of observations (e.g., sites in reads) contributing to either
+  /// state.
+  [[nodiscard]] constexpr auto
+  n_reads() const noexcept -> std::uint32_t {
+    return n_meth + n_unmeth;
+  }
 
   auto
   operator<=>(const level_element_covered_t &) const = default;
