@@ -37,12 +37,11 @@
 #include <cstdint>   // for std::uint32_t
 #include <filesystem>
 #include <format>
-#include <iterator>  // for std::pair, std::size
+#include <iterator>  // for std::size
 #include <limits>    // for std::numeric_limits
 #include <string>
 #include <system_error>
-#include <type_traits>
-#include <utility>  // for std::pair
+#include <utility>  // std::move
 #include <variant>  // for std::hash
 #include <vector>
 
@@ -169,6 +168,8 @@ struct methylome_data {
   static constexpr auto record_size = sizeof(mcount_pair);
 };
 
+/// Given two integer count values, round the values so that they keep their
+/// ratio but fit into a smaller specified type.
 template <typename T, typename U>
 inline auto
 round_to_fit(U &a, U &b) noexcept -> void {
@@ -183,6 +184,9 @@ round_to_fit(U &a, U &b) noexcept -> void {
                             std::numeric_limits<T>::max());
 }
 
+/// Given two integer count values, if those values do not fit in a
+/// specified type, round them but keep their ratio and shrink them to
+/// fit into the smaller specified type.
 template <typename T, typename U>
 inline auto
 conditional_round_to_fit(U &a, U &b) noexcept -> void {
@@ -198,7 +202,7 @@ size(const methylome_data &data) {
 
 }  // namespace transferase
 
-// Specialization of std::hash for methylome_data
+/// Specialization of std::hash for methylome_data
 template <> struct std::hash<transferase::methylome_data> {
   auto
   operator()(const transferase::methylome_data &data) const noexcept

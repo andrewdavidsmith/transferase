@@ -61,7 +61,6 @@ xfr query --local -d methylome_dir -x index_dir -g hg38 \
 #include "genome_index.hpp"
 #include "genomic_interval.hpp"
 #include "genomic_interval_output.hpp"
-#include "level_container.hpp"
 #include "level_element.hpp"
 #include "logger.hpp"
 #include "methylome_interface.hpp"
@@ -74,6 +73,7 @@ xfr query --local -d methylome_dir -x index_dir -g hg38 \
 
 #include <algorithm>  // IWYU pragma: keep
 #include <chrono>
+#include <cstdint>
 #include <cstdlib>  // for EXIT_FAILURE, EXIT_SUCCESS
 #include <filesystem>
 #include <format>
@@ -216,7 +216,7 @@ read_intervals(const transferase::genome_index &index,
                const std::string &intervals_file, std::error_code &error)
   -> std::vector<transferase::genomic_interval> {
   auto &lgr = transferase::logger::instance();
-  const auto intervals =
+  auto intervals =
     transferase::genomic_interval::read(index, intervals_file, error);
   if (error) {
     lgr.error("Error reading intervals file {}: {}", intervals_file, error);

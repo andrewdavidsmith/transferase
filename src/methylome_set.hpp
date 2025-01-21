@@ -31,9 +31,7 @@
 #include <mutex>
 #include <string>
 #include <system_error>
-#include <type_traits>  // for std::true_type
 #include <unordered_map>
-#include <utility>
 
 namespace transferase {
 
