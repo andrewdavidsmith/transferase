@@ -27,8 +27,6 @@
 
 message(STATUS "Configuring to package for distribution")
 
-include(CPack)
-
 set(CPACK_PACKAGE_VENDOR "Andrew D Smith")
 set(CPACK_PACKAGE_CONTACT "Andrew D Smith")
 set(CPACK_RESOURCE_FILE_LICENSE ${PROJECT_SOURCE_DIR}/LICENSE)
@@ -47,7 +45,7 @@ if (STRIP_PATHS_FROM_BINARIES)
   list(APPEND GLOBAL_LINKER_OPTIONS "-s")
 endif()
 
-# For custome STGZ generator
+# For custom STGZ generator
 set(CPACK_STGZ_HEADER_FILE
   "${CMAKE_SOURCE_DIR}/modules/CPack.STGZ_Header.sh.in")
 
@@ -87,3 +85,5 @@ endif()
 # For Source (only package source from a clean clone)
 set(CPACK_SOURCE_IGNORE_FILES build .git .github)
 set(CPACK_SOURCE_GENERATOR "TGZ")
+
+include(CPack)
