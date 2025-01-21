@@ -91,7 +91,11 @@ find_package(
   COMPONENTS
   ${BOOST_COMPONENTS}
 )
+message(STATUS "Boost version: ${Boost_VERSION_STRING}")
+message(STATUS "Boost include dirs: ${Boost_INCLUDE_DIRS}")
+message(STATUS "Boost library dirs: ${Boost_LIBRARY_DIRS}")
 
+# Optional libraries
 message(STATUS "Locating OPTIONAL third-party packages")
 
 # Curses
