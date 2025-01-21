@@ -40,33 +40,34 @@ add_subdirectory(transferase)
 # Configure the tests if requested
 if(ENABLE_PYTHON_UNIT_TESTS)
   add_subdirectory(test)
+else()
+  ## Configuration for distributing is mutually independent with tests
+  # Copy the python/pyproject.toml to the build directory
+  configure_file(${PROJECT_SOURCE_DIR}/python/pyproject.toml
+    ${PROJECT_BINARY_DIR}/python/pyproject.toml COPYONLY)
+  # Copy the python/README.md to the build directory
+  configure_file(${PROJECT_SOURCE_DIR}/python/README.md
+    ${PROJECT_BINARY_DIR}/python/README.md COPYONLY)
+  configure_file(${PROJECT_SOURCE_DIR}/python/version.py
+    ${PROJECT_BINARY_DIR}/python/version.py)
+  # Copy the LICENSE file to the build directory
+  configure_file(${PROJECT_SOURCE_DIR}/LICENSE
+    ${PROJECT_BINARY_DIR}/python/LICENSE COPYONLY)
+  file(TOUCH ${PROJECT_BINARY_DIR}/python/${LIBRARY_NAME}/__init__.py)
+
+  # Create a custom target that runs after the build
+  add_custom_target(PYTHON_BUILD_WHL ALL
+    COMMAND hatch build
+    WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/python
+    DEPENDS py_${LIBRARY_NAME}
+    COMMENT "Use hatch to build the Python package inside the build tree"
+  )
+
+  # Rename the wheel file after it has been generated
+  add_custom_target(PYTHON_RENAME_WHL ALL
+    COMMAND mv ${LIBRARY_NAME}-*.whl ${LIBRARY_NAME}.${Python3_SOABI}.whl
+    WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/python/dist
+    DEPENDS PYTHON_BUILD_WHL
+    COMMENT "Rename the wheel hatch built so it has correct tags in the filename"
+  )
 endif()
-
-# Copy the python/pyproject.toml to the build directory
-configure_file(${PROJECT_SOURCE_DIR}/python/pyproject.toml
-               ${PROJECT_BINARY_DIR}/python/pyproject.toml COPYONLY)
-# Copy the python/README.md to the build directory
-configure_file(${PROJECT_SOURCE_DIR}/python/README.md
-               ${PROJECT_BINARY_DIR}/python/README.md COPYONLY)
-configure_file(${PROJECT_SOURCE_DIR}/python/version.py
-               ${PROJECT_BINARY_DIR}/python/version.py)
-# Copy the LICENSE file to the build directory
-configure_file(${PROJECT_SOURCE_DIR}/LICENSE
-               ${PROJECT_BINARY_DIR}/python/LICENSE COPYONLY)
-file(TOUCH ${PROJECT_BINARY_DIR}/python/${LIBRARY_NAME}/__init__.py)
-
-# Create a custom target that runs after the build
-add_custom_target(PYTHON_BUILD_WHL ALL
-  COMMAND hatch build
-  WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/python
-  DEPENDS py_${LIBRARY_NAME}
-  COMMENT "Use hatch to build the Python package inside the build tree"
-)
-
-# Rename the wheel file after it has been generated
-add_custom_target(PYTHON_RENAME_WHL ALL
-  COMMAND mv ${LIBRARY_NAME}-*.whl ${LIBRARY_NAME}.${Python3_SOABI}.whl
-  WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/python/dist
-  DEPENDS PYTHON_BUILD_WHL
-  COMMENT "Rename the wheel hatch built so it has correct tags in the filename"
-)
