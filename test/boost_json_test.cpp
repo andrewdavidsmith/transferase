@@ -21,10 +21,9 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_BOOST_JSON_HPP_
-#define SRC_BOOST_JSON_HPP_
+#include <boost_json.hpp>
 
-auto
-boost_json_empty() -> int;
+#include <gtest/gtest.h>
+#include <string>
 
-#endif  // SRC_BOOST_JSON_HPP_
+TEST(boost_json_test, basic_empty_test) { EXPECT_EQ(boost_json_empty(), 0); }

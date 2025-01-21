@@ -28,4 +28,6 @@
 #endif
 
 auto
-boost_json_empty() -> void {}
+boost_json_empty() -> int {
+  return 0;
+}
