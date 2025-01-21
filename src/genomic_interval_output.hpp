@@ -600,6 +600,7 @@ write_output(const intervals_output_mgr &m,
                                      m.intervals, levels);
     break;
   }
+  std::unreachable();
 }
 
 [[nodiscard]] inline auto
@@ -637,6 +638,7 @@ write_output(const bins_output_mgr &m,
                                 levels);
     break;
   }
+  std::unreachable();
 }
 
 [[nodiscard]] inline auto
