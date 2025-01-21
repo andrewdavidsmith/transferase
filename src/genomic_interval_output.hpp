@@ -41,6 +41,7 @@
 #include <print>
 #include <ranges>
 #include <string>
+#include <string_view>
 #include <system_error>
 #include <tuple>
 #include <type_traits>  // for std::is_same_v
@@ -52,6 +53,59 @@ namespace transferase {
 
 struct level_element_covered_t;
 struct level_element_t;
+
+enum class output_format_t : std::uint8_t {
+  none = 0,
+  counts = 1,
+  bedgraph = 2,
+  dataframe = 3,
+};
+
+static constexpr auto output_format_t_name = std::array{
+  // clang-format off
+  std::string_view{"none"},
+  std::string_view{"counts"},
+  std::string_view{"bedgraph"},
+  std::string_view{"dataframe"},
+  // clang-format on
+};
+
+// static constexpr auto output_format_name = std::array {
+
+inline auto
+operator<<(std::ostream &o, const output_format_t &of) -> std::ostream & {
+  return o << output_format_t_name[std::to_underlying(of)];
+}
+
+inline auto
+operator>>(std::istream &in, output_format_t &of) -> std::istream & {
+  constexpr auto is_digit = [](const auto c) {
+    return std::isdigit(static_cast<unsigned char>(c));
+  };
+  std::string tmp;
+  if (!(in >> tmp))
+    return in;
+
+  if (std::ranges::all_of(tmp, is_digit)) {
+    std::underlying_type_t<output_format_t> num{};
+    const auto last = tmp.data() + std::size(tmp);
+    const auto res = std::from_chars(tmp.data(), last, num);
+    if (res.ptr != last) {
+      in.setstate(std::ios::failbit);
+      return in;
+    }
+    of = static_cast<output_format_t>(num);
+    return in;
+  }
+
+  for (const auto [i, name] : std::views::enumerate(output_format_t_name))
+    if (tmp == name) {
+      of = static_cast<output_format_t>(i);
+      return in;
+    }
+  in.setstate(std::ios::failbit);
+  return in;
+}
 
 [[nodiscard]] auto
 write_intervals(const std::string &outfile, const genome_index_metadata &meta,
@@ -197,7 +251,7 @@ write_intervals_bedgraph(const std::string &outfile,
                          const genome_index_metadata &meta,
                          const std::vector<genomic_interval> &intervals,
                          const auto &levels) -> std::error_code {
-  const auto to_score = [](const auto x) {
+  const auto get_score = [](const auto x) {
     const double total = x.n_meth + x.n_unmeth;
     return x.n_meth / std::max(1.0, total);
   };
@@ -214,7 +268,50 @@ write_intervals_bedgraph(const std::string &outfile,
     }
     std::print(out, "{}\t{}\t{}", chrom, interval.start, interval.stop);
     for (auto j = 0u; j < n_levels; ++j)
-      std::print(out, "\t{:.6}", to_score(levels[j][i]));
+      std::print(out, "\t{:.6}", get_score(levels[j][i]));
+    std::println(out);
+  }
+  return {};
+}
+
+[[nodiscard]] auto
+write_intervals_dataframe(const std::string &outfile,
+                          const std::vector<std::string> &names,
+                          const genome_index_metadata &meta,
+                          const std::vector<genomic_interval> &intervals,
+                          const auto &levels) -> std::error_code {
+  using std::literals::string_view_literals::operator""sv;
+  static constexpr auto none_label = "NA"sv;
+  static constexpr auto delim{'\t'};
+  static constexpr auto min_reads{1};
+
+  const auto get_score = [](const auto x) {
+    const double total = x.n_meth + x.n_unmeth;
+    return x.n_meth / std::max(1.0, total);
+  };
+
+  std::ofstream out(outfile);
+  if (!out)
+    return std::make_error_code(std::errc(errno));
+
+  const auto joined =
+    names | std::views::join_with(delim) | std::ranges::to<std::string>();
+  std::println(out, "{}", joined);
+
+  const auto n_levels = std::size(levels);
+  auto prev_ch_id = genomic_interval::not_a_chrom;
+  std::string chrom;
+  for (const auto [i, interval] : std::views::enumerate(intervals)) {
+    if (interval.ch_id != prev_ch_id) {
+      chrom = meta.chrom_order[interval.ch_id];
+      prev_ch_id = interval.ch_id;
+    }
+    std::print(out, "{}.{}.{}", chrom, interval.start, interval.stop);
+    for (auto j = 0u; j < n_levels; ++j)
+      if (levels[j][i].n_reads() >= min_reads)
+        std::print(out, "{}{:.6}", delim, get_score(levels[j][i]));
+      else
+        std::print(out, "{}{}", delim, none_label);
     std::println(out);
   }
   return {};
@@ -361,7 +458,7 @@ write_bins_bedgraph(const std::string &outfile,
                     const genome_index_metadata &meta,
                     const std::uint32_t bin_size,
                     const auto &levels) -> std::error_code {
-  const auto to_score = [](const auto x) {
+  const auto get_score = [](const auto x) {
     const double total = x.n_meth + x.n_unmeth;
     return x.n_meth / std::max(1.0, total);
   };
@@ -376,7 +473,50 @@ write_bins_bedgraph(const std::string &outfile,
       const auto bin_end = std::min(bin_beg + bin_size, chrom_size);
       std::print(out, "{}\t{}\t{}", chrom_name, bin_beg, bin_end);
       for (auto j = 0; j < n_levels; ++j)
-        std::print(out, "\t{:.6}", to_score(levels[j][i]));
+        std::print(out, "\t{:.6}", get_score(levels[j][i]));
+      std::println(out);
+      ++i;
+    }
+  }
+  return {};
+}
+
+[[nodiscard]] auto
+write_bins_dataframe(const std::string &outfile,
+                     const std::vector<std::string> &names,
+                     const genome_index_metadata &meta,
+                     const std::uint32_t bin_size,
+                     const auto &levels) -> std::error_code {
+  using std::literals::string_view_literals::operator""sv;
+  static constexpr auto none_label = "NA"sv;
+  static constexpr auto delim{'\t'};
+  static constexpr auto min_reads{1};
+
+  const auto get_score = [](const auto x) {
+    const double total = x.n_meth + x.n_unmeth;
+    return x.n_meth / std::max(1.0, total);
+  };
+
+  std::ofstream out(outfile);
+  if (!out)
+    return std::make_error_code(std::errc(errno));
+
+  const auto joined =
+    names | std::views::join_with(delim) | std::ranges::to<std::string>();
+  std::println(out, "{}", joined);
+
+  const auto n_levels = std::ssize(levels);
+  std::uint32_t i = 0;
+  const auto zipped = std::views::zip(meta.chrom_size, meta.chrom_order);
+  for (const auto [chrom_size, chrom_name] : zipped) {
+    for (std::uint32_t bin_beg = 0; bin_beg < chrom_size; bin_beg += bin_size) {
+      const auto bin_end = std::min(bin_beg + bin_size, chrom_size);
+      std::print(out, "{}.{}.{}", chrom_name, bin_beg, bin_end);
+      for (auto j = 0; j < n_levels; ++j)
+        if (levels[j][i].n_reads() >= min_reads)
+          std::print(out, "{}{:.6}", delim, get_score(levels[j][i]));
+        else
+          std::print(out, "{}{}", delim, none_label);
       std::println(out);
       ++i;
     }
@@ -388,23 +528,28 @@ struct intervals_output_mgr {
   const std::string &outfile;
   const std::vector<genomic_interval> &intervals;
   const genome_index &index;
-  const bool &write_scores;
+  const output_format_t out_fmt;
+  const std::vector<std::string> &names;
   intervals_output_mgr(const std::string &outfile,
                        const std::vector<genomic_interval> &intervals,
-                       const genome_index &index, const bool &write_scores) :
-    outfile{outfile}, intervals{intervals}, index{index},
-    write_scores{write_scores} {}
+                       const genome_index &index,
+                       const output_format_t &out_fmt,
+                       const std::vector<std::string> &names) :
+    outfile{outfile}, intervals{intervals}, index{index}, out_fmt{out_fmt},
+    names{names} {}
 };
 
 struct bins_output_mgr {
   const std::string &outfile;
-  const std::uint32_t &bin_size;
+  const std::uint32_t bin_size;
   const genome_index &index;
-  const bool &write_scores;
+  const output_format_t out_fmt;
+  const std::vector<std::string> &names;
   bins_output_mgr(const std::string &outfile, const std::uint32_t &bin_size,
-                  const genome_index &index, const bool &write_scores) :
-    outfile{outfile}, bin_size{bin_size}, index{index},
-    write_scores{write_scores} {}
+                  const genome_index &index, const output_format_t &out_fmt,
+                  const std::vector<std::string> &names) :
+    outfile{outfile}, bin_size{bin_size}, index{index}, out_fmt{out_fmt},
+    names{names} {}
 };
 
 template <typename T>
@@ -422,42 +567,54 @@ static_assert(LevelsInputRange<std::vector<level_element_covered_t> &>);
 write_output(const intervals_output_mgr &m,
              const LevelsInputRange auto &levels) {
   auto &lgr = logger::instance();
-  if (!m.write_scores)
+  if (m.out_fmt == output_format_t::counts)
     return write_intervals(m.outfile, m.index.meta, m.intervals, levels);
   // ADS: counting intervals that have no reads
   std::uint32_t zero_coverage = 0;
-  const auto to_score = [&zero_coverage](const auto &x) {
+  const auto get_score = [&zero_coverage](const auto &x) {
     zero_coverage += (x.n_meth + x.n_unmeth == 0);
     return x.n_meth / std::max(1.0, static_cast<double>(x.n_meth + x.n_unmeth));
   };
   lgr.debug("Number of intervals without reads: {}", zero_coverage);
   return write_intervals_bedgraph(m.outfile, m.index.meta, m.intervals,
-                                  std::views::transform(levels, to_score));
+                                  std::views::transform(levels, get_score));
 }
 
 template <typename level_element_type>
 [[nodiscard]] inline auto
 write_output(const intervals_output_mgr &m,
              const std::vector<level_container<level_element_type>> &levels) {
-  return m.write_scores
-           ? write_intervals_bedgraph(m.outfile, m.index.meta, m.intervals,
-                                      levels)
-           : write_intervals(m.outfile, m.index.meta, m.intervals, levels);
+  switch (m.out_fmt) {
+  case output_format_t::none:
+    return write_intervals(m.outfile, m.index.meta, m.intervals, levels);
+    break;
+  case output_format_t::counts:
+    return write_intervals(m.outfile, m.index.meta, m.intervals, levels);
+    break;
+  case output_format_t::bedgraph:
+    return write_intervals_bedgraph(m.outfile, m.index.meta, m.intervals,
+                                    levels);
+    break;
+  case output_format_t::dataframe:
+    return write_intervals_dataframe(m.outfile, m.names, m.index.meta,
+                                     m.intervals, levels);
+    break;
+  }
 }
 
 [[nodiscard]] inline auto
 write_output(const bins_output_mgr &m, const LevelsInputRange auto &levels) {
   auto &lgr = logger::instance();
-  if (!m.write_scores)
+  if (m.out_fmt == output_format_t::counts)
     return write_bins(m.outfile, m.index.meta, m.bin_size, levels);
   // ADS: counting intervals that have no reads
   std::uint32_t zero_coverage = 0;
-  const auto to_score = [&zero_coverage](const auto &x) {
+  const auto get_score = [&zero_coverage](const auto &x) {
     zero_coverage += (x.n_meth + x.n_unmeth == 0);
     return x.n_meth / std::max(1.0, static_cast<double>(x.n_meth + x.n_unmeth));
   };
   lgr.debug("Number of bins without reads: {}", zero_coverage);
-  const auto scores = std::views::transform(levels, to_score);
+  const auto scores = std::views::transform(levels, get_score);
   return write_bins_bedgraph(m.outfile, m.index.meta, m.bin_size, scores);
 }
 
@@ -465,9 +622,21 @@ template <typename level_element_type>
 [[nodiscard]] inline auto
 write_output(const bins_output_mgr &m,
              const std::vector<level_container<level_element_type>> &levels) {
-  return m.write_scores
-           ? write_bins_bedgraph(m.outfile, m.index.meta, m.bin_size, levels)
-           : write_bins(m.outfile, m.index.meta, m.bin_size, levels);
+  switch (m.out_fmt) {
+  case output_format_t::none:
+    return write_bins(m.outfile, m.index.meta, m.bin_size, levels);
+    break;
+  case output_format_t::counts:
+    return write_bins(m.outfile, m.index.meta, m.bin_size, levels);
+    break;
+  case output_format_t::bedgraph:
+    return write_bins_bedgraph(m.outfile, m.index.meta, m.bin_size, levels);
+    break;
+  case output_format_t::dataframe:
+    return write_bins_dataframe(m.outfile, m.names, m.index.meta, m.bin_size,
+                                levels);
+    break;
+  }
 }
 
 [[nodiscard]] inline auto
@@ -478,5 +647,17 @@ write_output(const auto &outmgr, const auto &results) -> std::error_code {
 }
 
 }  // namespace transferase
+
+template <>
+struct std::formatter<transferase::output_format_t>
+  : std::formatter<std::string> {
+  auto
+  format(const transferase::output_format_t &of,
+         std::format_context &ctx) const {
+    return std::format_to(
+      ctx.out(), "{}",
+      transferase::output_format_t_name[std::to_underlying(of)]);
+  }
+};
 
 #endif  // SRC_GENOMIC_INTERVAL_OUTPUT_HPP_
