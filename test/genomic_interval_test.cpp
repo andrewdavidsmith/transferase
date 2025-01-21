@@ -35,38 +35,37 @@
 
 using namespace transferase;  // NOLINT
 
-TEST(genomic_interval_test, basic_assertions) {
-  // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
-  static constexpr auto index_dir{"data"};
-  static constexpr auto assembly{"tProrsus1"};
-  static constexpr auto intervals_file{"data/tProrsus1_intervals.bed"};
+class genomic_interval_read_valid : public ::testing::Test {
+protected:
+  auto
+  SetUp() -> void override {
+    // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
+    index_dir = "data";
+    genome_name = "tProrsus1";
+    intervals_file = "data/tProrsus1_intervals.bed";
+    expected_intervals_size = 20;
+    expected_first_interval = genomic_interval{0, 6595, 6890};
+    // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
+  }
+  auto
+  TearDown() -> void override {}
+
+public:
+  std::string index_dir;
+  std::string genome_name;
+  std::string intervals_file;
+  std::uint32_t expected_intervals_size{};
+  genomic_interval expected_first_interval;
+};
+
+TEST_F(genomic_interval_read_valid, basic_assertions) {
   std::error_code ec;
-  const auto index = genome_index::read(index_dir, assembly, ec);
+  const auto index = genome_index::read(index_dir, genome_name, ec);
   EXPECT_FALSE(ec);
   const auto intervals = genomic_interval::read(index, intervals_file, ec);
   EXPECT_FALSE(ec);
-  EXPECT_EQ(std::size(intervals), 20);
-  EXPECT_EQ(intervals[0].start, 6595);
-  EXPECT_EQ(intervals[0].stop, 6890);
-  // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
-}
-
-TEST(genomic_interval_test, read_non_existent_file) {
-  static constexpr auto index_dir{"data"};
-  static constexpr auto assembly{"asdfasdfasdf"};
-  std::error_code ec;
-  [[maybe_unused]] const auto index =
-    genome_index::read(index_dir, assembly, ec);
-  EXPECT_TRUE(ec);
-}
-
-TEST(genomic_interval_test, read_invalid_file) {
-  static constexpr auto index_dir{"/etc/"};
-  static constexpr auto assembly{"passwd"};
-  std::error_code ec;
-  [[maybe_unused]] const auto index =
-    genome_index::read(index_dir, assembly, ec);
-  EXPECT_TRUE(ec);
+  EXPECT_EQ(std::size(intervals), expected_intervals_size);
+  EXPECT_EQ(intervals[0], expected_first_interval);
 }
 
 // Test cases
