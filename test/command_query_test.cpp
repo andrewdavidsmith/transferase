@@ -30,6 +30,7 @@
 #include <array>
 #include <cstdlib>  // for EXIT_SUCCESS
 #include <filesystem>
+#include <iterator>  // for std::size
 #include <string>
 #include <system_error>
 
@@ -114,10 +115,11 @@ TEST(command_query_test, intervals_basic_local_test_scores) {
     intervals_file,
     "-o",
     output_file,
-    "--score",
+    "-f",
+    "bedgraph",
     // clang-format on
   };
-  const int command_argc = sizeof(argv) / sizeof(argv[0]);
+  const int command_argc = static_cast<int>(std::size(argv));
 
   // Run the main function
   // NOLINTBEGIN(cppcoreguidelines-pro-type-const-cast)
