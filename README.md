@@ -124,25 +124,26 @@ Once again, be sure to always use the same `hg38.fa` file.  A hash is
 generated and used internally to transferase to ensure that the index
 and methylome files correspond to the same reference genome file.
 
-### Run the `intervals` command locally
+### Run the query command locally
 
 This step is to make sure everything is sensible. Or you might just
-want to keep using this tool for your own analysis (it's fast). You
-will need a set of genomic intervals of interest. In this example
-these will be named `intervals.bed`. You also need the genome index and
-the methylome generated in the above steps.
+want to keep using this tool for your own analysis (it can be
+extremely fast). We will assume first that you have a set of genomic
+intervals of interest. In this example these will be named
+`intervals.bed`. You also need the genome index and the methylome
+generated in the above steps.
 ```console
-xfr intervals --local -v debug \
-    -x index_dir -g hg38 -d methylome_dir -m SRX012345.m16 \
+xfr query --local \
+    -x index_dir -g hg38 -d methylome_dir -m SRX012345 \
     -o output.bed -i intervals.bed
 ```
 
-The genome index for hg38 and the methylome for SRX012345
-are the same as explained above. The `intervals.bed` file may contain
-any number of columns, but the first 3 columns must be in 3-column BED
-format: chrom, start, stop for each interval.  The output in the
-`local_output.bed` file should be consistent with the information in
-the command:
+The genome index for hg38 and the methylome for SRX012345 are the same
+as explained above (each is two files). The `intervals.bed` file may
+contain any number of columns, but the first 3 columns must be in
+3-column BED format: chrom, start, stop for each interval.  The output
+in the `local_output.bed` file should be consistent with the
+information in the command:
 ```console
 dnmtools roi -o intervals.roi intervals.bed SRX012345.xsym.gz
 ```
@@ -150,42 +151,51 @@ dnmtools roi -o intervals.roi intervals.bed SRX012345.xsym.gz
 The format of these output files are different, but the methylation
 levels on each line (i.e., for each interval) should be identical.
 Note that `dnmtools roi` can fail if intervals are nested, while
-`xfr intervals` command will still work.
+`xfr query` command will still work.
 
-### Run the `server` command
+### Running a transferase server
 
 The `server` command can be tested first locally by using two terminal
-windows. We require the genome index for hg38 and the methylome for
-SRX012345. These should be in directories named for methylomes and
-indexes for this example. The methylome directory will contain all
-files with `.m16` and `.m16.json` extensions; these correspond to the
-methylomes that can be served. The indexes directory will contain the
-files ending with `.cpg_idx` and `.cpg_idx.json`; these are index
-files for each relevant genome assembly. For now, using the above
-examples, we would have a single index and a single methylome. I will
-assume these are in subdirectories, named `indexes` and `methylomes`
-respectively, of the current directory. Here is a command that will
-start the server:
+windows. The steps here assume you have the genome index for hg38 and
+a methylome named SRX012345. If you have some other methylome it's
+fine, just substitute the name. These files should be in directories
+named `methylomes` and `indexes` for this example. The methylome
+directory will contain files with `.m16` and `.m16.json` extensions;
+these correspond to the methylomes that can be served and must be in
+pairs. For every `.m16` file there must be a `.m16.json` file, and
+vice-versa. The indexes directory will contain the files ending with
+`.cpg_idx` and `.cpg_idx.json`; these are index files for each
+relevant genome assembly. For now, using the above examples, we would
+have a single index and a single methylome. Here is a command that
+will start the server:
+
 ```console
 xfr server -v debug -s localhost -p 5000 -m methylomes -x indexes
 ```
 
-Note that this will fail with an appropriate error message if port
-5000 is already be in use, and you can just try 5001, etc., until one
-is free. The `-v debug` will ensure you see info beyond just the
-errors. This informtion is logged to the terminal by default.
+Above, the arguments indicate to use the host localhost with
+port 5000. Note that this will fail with an appropriate error message
+if port 5000 is already be in use, and you can just try 5001, etc.,
+until one is free. The hostname can also be specified numerically (in
+this example, 127.0.0.1). The `-v debug` will ensure you see info
+beyond just the errors. This informtion is logged to the terminal by
+default. The server can also be run in detached mode, but if you don't
+know what that means, you don't likely have any reason to do it.
 
-### Run the `intervals` command remotely
+### Run the query command remotely
 
 We will assume for now that "remote" server is running on the local
-machine (localhost) and using port is 5000 (the default). The
-following command should give identical earlier `intervals` command:
+machine (localhost) and using port is 5000 (the default). You would
+have started this in the previous step using a different terminal
+window. The following command should give identical results to the
+earlier `xfr query` command:
+
 ```console
-xfr intervals -v debug -s localhost -x indexes \
+xfr query -v debug -s localhost -x indexes \
     -o remote_output.bed -m SRX012345 -i intervals.bed
 ```
 
 Note that now `SRX012345` is not a file. Rather, it is a methylome
-name or accession, and should be available on the server. If the
-server can't find the named methylome, it will respond indicating that
-methylome is not available.
+name, and should be available on the server. If the server can't find
+the named methylome, it will respond indicating that methylome is not
+available.
