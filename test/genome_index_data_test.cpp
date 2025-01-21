@@ -40,7 +40,7 @@
 
 using namespace transferase;  // NOLINT
 
-TEST(genome_index_data_test, basic_assertions) {
+TEST(genome_index_data_test, empty_data) {
   genome_index_data data;
   EXPECT_EQ(data.positions, std::vector<genome_index_data::vec>());
   EXPECT_EQ(data.hash(), 1);
@@ -75,8 +75,7 @@ TEST(genome_index_data_test, invalid_read_file_does_not_exist) {
   std::error_code metadata_ec;
   [[maybe_unused]] const auto meta =
     genome_index_metadata::read(dirname, genome_name_ok, metadata_ec);
-  EXPECT_FALSE(metadata_ec)
-    << metadata_ec.message() << '\t' << metadata_ec.value() << '\n';
+  EXPECT_FALSE(metadata_ec);
   std::error_code data_ec;
   [[maybe_unused]] const auto data =
     genome_index_data::read(dirname, genome_name_bad, meta, data_ec);
@@ -160,20 +159,69 @@ TEST(genome_index_data_test, invalid_read) {
   EXPECT_EQ(std::size(index.data.positions), 0);
 }
 
-TEST(genome_index_data_test, valid_make_query_within_chrom) {
-  genome_index_data index;
-  // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
-  index.positions.push_back({1, 2, 3, 4, 5});
-  const std::vector<chrom_range_t> queries{
-    {1, 3},
-    {4, 5},
-  };
-  const auto expected = transferase::query_container(std::vector<query_element>{
-    {0, 2},
-    {3, 4},
-  });
-  // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
+class genome_index_data_make_query_success : public ::testing::Test {
+protected:
+  auto
+  SetUp() -> void override {
+    // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
+    some_wide_range = chrom_range_t{0, 100'000};
+    data = genome_index_data({{1, 2, 3, 4, 5}});
+    queries = std::vector{
+      chrom_range_t{1, 3},
+      chrom_range_t{4, 5},
+    };
+    expected = transferase::query_container(std::vector{
+      query_element{0, 2},
+      query_element{3, 4},
+    });
+    // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
+  }
+  auto
+  TearDown() -> void override {}
+
+public:
+  chrom_range_t some_wide_range;
+  genome_index_data data;
+  std::vector<chrom_range_t> queries;
+  query_container expected;
+};
+
+TEST_F(genome_index_data_make_query_success, valid_make_query_within_chrom) {
   const auto query =
-    transferase::make_query_within_chrom(index.positions[0], queries);
+    transferase::make_query_within_chrom(data.positions[0], queries);
   EXPECT_EQ(query, expected);
+  EXPECT_LE(some_wide_range, queries[0]);
+}
+
+class genome_index_read_non_existent : public ::testing::Test {
+protected:
+  auto
+  SetUp() -> void override {
+    valid_index_dir = "data";
+    non_existent_genome_name = "asdfasdfasdf";
+    possibly_valid_index_dir = "/etc/";
+    invalid_genome_index_data_file = "passwd";
+  }
+  auto
+  TearDown() -> void override {}
+
+public:
+  std::string valid_index_dir;
+  std::string non_existent_genome_name;
+  std::string possibly_valid_index_dir;
+  std::string invalid_genome_index_data_file;
+};
+
+TEST_F(genome_index_read_non_existent, read_non_existent) {
+  std::error_code ec;
+  [[maybe_unused]] const auto index =
+    genome_index::read(valid_index_dir, non_existent_genome_name, ec);
+  EXPECT_TRUE(ec);
+}
+
+TEST_F(genome_index_read_non_existent, read_invalid) {
+  std::error_code ec;
+  [[maybe_unused]] const auto index = genome_index::read(
+    possibly_valid_index_dir, invalid_genome_index_data_file, ec);
+  EXPECT_TRUE(ec);
 }
