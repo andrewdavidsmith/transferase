@@ -24,15 +24,14 @@
 /* transferase: methylome transfer engine
  */
 
-#include "command_bins.hpp"
 #include "command_check.hpp"
 #include "command_compress.hpp"
 #include "command_config.hpp"
 #include "command_format.hpp"
 #include "command_index.hpp"
-#include "command_intervals.hpp"
 #include "command_list.hpp"
 #include "command_merge.hpp"
+#include "command_query.hpp"
 #include "command_select.hpp"
 #include "command_server.hpp"
 #include "command_server_config.hpp"
@@ -69,10 +68,9 @@ const auto commands = std::array{
   cmd{"index", command_index_main, "make an index for a reference genome"},
   cmd{"format", command_format_main, "format a methylome file"},
   cmd{"check", command_check_main, "perform checks on methylome and index files"},
-  cmd{"intervals", command_intervals_main, "get methylation levels in each interval"},
   cmd{"merge", command_merge_main, "merge a set of transferase format methylomes"},
   cmd{"compress", command_compress_main, "make an transferase format methylome smaller"},
-  cmd{"bins", command_bins_main, "get methylation levels in each bin"},
+  cmd{"query", command_query_main, "query methylation levels"},
   cmd{"server", command_server_main, "run a server to respond to lookup queries"},
   // clang-format on
 };
