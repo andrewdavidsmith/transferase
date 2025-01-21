@@ -33,6 +33,7 @@
 #include <cstdint>  // for std::uint32_t, std::int32_t, std::uint64_t
 #include <filesystem>
 #include <format>
+#include <initializer_list>
 #include <string>
 #include <system_error>
 #include <type_traits>  // for std::true_type
@@ -56,6 +57,9 @@ struct genome_index_data {
 #else
   typedef std::vector<genome_pos_t> vec;
 #endif
+
+  explicit genome_index_data(
+    const std::initializer_list<genome_index_data::vec> &l) : positions(l) {}
 
   // prevent copying and allow moving
   // clang-format off
