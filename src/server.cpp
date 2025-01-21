@@ -303,15 +303,13 @@ server::server(const std::string &address, const std::string &port,
 
   // NOLINTEND(cppcoreguidelines-pro-type-vararg)
 
-  // NOLINTBEGIN(cert-err33-c)
-
   boost::asio::ip::tcp::resolver resolver(ioc);
   boost::system::error_code boost_ec;
   const auto resolved = resolver.resolve(address, port, boost_ec);
   if (boost_ec) {
     ec = boost_ec;
     lgr.error("{} {}:{}", ec, address, port);
-    std::raise(SIGTERM);
+    (void)std::raise(SIGTERM);
     return;  // don't wait for signal handler
   }
 
@@ -321,41 +319,40 @@ server::server(const std::string &address, const std::string &port,
   lgr.info("Resolved endpoint {}", endpoint_str);
 
   // open acceptor...
-  acceptor.open(endpoint.protocol(), boost_ec);
+  (void)acceptor.open(endpoint.protocol(), boost_ec);
   if (boost_ec) {
     ec = boost_ec;
     lgr.error("Error opening endpoint {}: {}", endpoint_str, ec);
-    std::raise(SIGTERM);
+    (void)std::raise(SIGTERM);
     return;  // don't wait for signal handler
   }
 
   // ...with option to reuse the address (SO_REUSEADDR)
-  acceptor.set_option(boost::asio::ip::tcp::acceptor::reuse_address(true),
-                      boost_ec);
+  (void)acceptor.set_option(boost::asio::ip::tcp::acceptor::reuse_address(true),
+                            boost_ec);
   if (boost_ec) {
     ec = boost_ec;
     lgr.error("Error setting SO_REUSEADDR: {}", ec);
-    std::raise(SIGTERM);
+    (void)std::raise(SIGTERM);
     return;  // don't wait for signal handler
   }
 
-  acceptor.bind(endpoint, boost_ec);
+  (void)acceptor.bind(endpoint, boost_ec);
   if (boost_ec) {
     ec = boost_ec;
     lgr.error("Error binding endpoint {}: {}", endpoint_str, ec);
-    std::raise(SIGTERM);
+    (void)std::raise(SIGTERM);
     return;  // don't wait for signal handler
   }
 
-  acceptor.listen(boost::asio::socket_base::max_listen_connections, boost_ec);
+  (void)acceptor.listen(boost::asio::socket_base::max_listen_connections,
+                        boost_ec);
   if (boost_ec) {
     ec = boost_ec;
     lgr.error("Error listening  on endpoint {}: {}", endpoint_str, ec);
-    std::raise(SIGTERM);
+    (void)std::raise(SIGTERM);
     return;  // don't wait for signal handler
   }
-
-  // NOLINTEND(cert-err33-c)
 
   do_accept();
 }
