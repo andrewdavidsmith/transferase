@@ -21,12 +21,10 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_COMMAND_INTERVALS_HPP_
-#define SRC_COMMAND_INTERVALS_HPP_
+#ifndef SRC_COMMAND_QUERY_HPP_
+#define SRC_COMMAND_QUERY_HPP_
 
 auto
-command_intervals_main(
-  int argc, char *argv[])  // NOLINT(cppcoreguidelines-avoid-c-arrays)
-  -> int;
+command_query_main(int argc, char *argv[]) -> int;  // NOLINT
 
-#endif  // SRC_COMMAND_INTERVALS_HPP_
+#endif  // SRC_COMMAND_QUERY_HPP_
