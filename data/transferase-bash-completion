@@ -36,6 +36,22 @@ _transferase_completion() {
                   sed -n '/^Options:/,/^$/ { /^Options:/d; p }' | \
                   sed 's/^ .*\(--[^ ]*\).*/\1/g' | tr '\n' ' ')
 
+    # Check if the previous token begins with an unescaped dash and
+    # has the suffix dir, and if so, suggest a directory
+    if [[ "$prev" =~ ^[^\\-]*-*.*dir ]]; then
+        # Attempt to expand filenames/paths/directories
+        COMPREPLY=( $(compgen -d -- "$cur") )
+        return 0;
+    fi
+
+    # Check if the previous token begins with an unescaped dash and if
+    # so, suggest a file or directory
+    if [[ "$prev" =~ ^[^\\-]*- ]]; then
+        # Attempt to expand filenames/paths/directories
+        COMPREPLY=( $(compgen -f -- "$cur") )
+        return 0;
+    fi
+
     COMPREPLY=($(compgen -W "${options}" -- "$cur"))
     return 0;
 }
