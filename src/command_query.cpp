@@ -64,6 +64,7 @@ xfr query --local -d methylome_dir -x index_dir -g hg38 \
 #include "level_element.hpp"
 #include "logger.hpp"
 #include "methylome_interface.hpp"
+#include "output_format_type.hpp"
 #include "request.hpp"
 #include "request_type_code.hpp"
 #include "utilities.hpp"
@@ -164,15 +165,15 @@ struct query_argset : argset_base<query_argset> {
        "use specified config file")
       ("local", po::bool_switch(&local_mode), "run in local mode")
       ("bin-size,b", po::value(&bin_size), "size of genomic bins")
-      ("intervals,i", po::value(&intervals_file), "intervals file")
+      ("intervals-file,i", po::value(&intervals_file), "intervals file")
       ("genome,g", po::value(&genome_name)->required(), "genome name")
       ("methylomes,m", po::value(&methylome_names)->required(),
        "methylome names (comma separated)")
-      ("output,o", po::value(&output_file)->required(), "output file")
+      ("out-file,o", po::value(&output_file)->required(), "output file")
       ("covered", po::bool_switch(&count_covered),
        "count covered sites for each interval")
       ("out-fmt,f", po::value(&out_fmt)->default_value(out_fmt_default),
-       "output format {counts=1,bedgraph=2,dataframe=3}")
+       "output format {counts=1, bedgraph=2, dataframe=3}")
       ("hostname,s", po::value(&hostname), "server hostname")
       ("port,p", po::value(&port), "server port")
       ("methylome-dir,d", po::value(&methylome_dir),
@@ -278,10 +279,10 @@ do_intervals_query(const auto &args, const transferase::genome_index &index,
   const auto outmgr = transferase::intervals_output_mgr{
     // clang-format off
     args.output_file,
-    intervals,
     index,
     args.out_fmt,
     methylome_names,
+    intervals,
     // clang-format on
   };
 
@@ -325,10 +326,10 @@ do_bins_query(const auto &args, const transferase::genome_index &index,
   const auto outmgr = transferase::bins_output_mgr{
     // clang-format off
     args.output_file,
-    args.bin_size,
     index,
     args.out_fmt,
     methylome_names,
+    args.bin_size,
     // clang-format on
   };
 
