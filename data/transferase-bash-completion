@@ -34,7 +34,7 @@ _transferase_completion() {
     # Get options for the current subcommand (if available)
     options=$("${binary_path}" "${COMP_WORDS[1]}" --help | \
                   sed -n '/^Options:/,/^$/ { /^Options:/d; p }' | \
-                  sed 's/^ .*\(--[^ ]*\).*/\1/g' | tr '\n' ' ')
+                  sed 's/^  .*\(--[^ ]*\).*/\1/g;t;d' | tr '\n' ' ')
 
     # Check if the previous token begins with an unescaped dash and
     # has the suffix dir, and if so, suggest a directory
