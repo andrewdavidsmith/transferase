@@ -42,6 +42,8 @@ static constexpr std::uint32_t request_buffer_size{512};
 typedef std::array<char, request_buffer_size> request_buffer;
 
 struct request {
+  static constexpr auto max_aux_value_n_intervals{1024 * 1024 * 8};
+  static constexpr auto min_aux_value_bin_size{100};
   request_type_code request_type{};
   std::uint64_t index_hash{};
   std::uint64_t aux_value{};
@@ -67,6 +69,12 @@ struct request {
 
   [[nodiscard]] auto
   summary() const -> std::string;
+
+  [[nodiscard]] auto
+  is_valid_aux_value() const -> bool {
+    return is_intervals_request() ? aux_value < max_aux_value_n_intervals
+                                  : aux_value >= min_aux_value_bin_size;
+  }
 
   [[nodiscard]] auto
   is_valid_type() const -> bool {
