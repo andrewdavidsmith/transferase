@@ -98,6 +98,12 @@ struct genome_index {
     return std::format(R"json({{"meta"={}, "data"={}}})json", meta, data);
   }
 
+  /// @brief Get a const reference to the associated metadata
+  [[nodiscard]] auto
+  get_metadata() const noexcept -> const genome_index_metadata & {
+    return meta;
+  }
+
   /// @brief Read a genome_index object from a filesystem.
   /// @param directory Directory where the genome_index files can be found.
   /// @param genome_name Read the index for the genome with this name.
