@@ -55,6 +55,14 @@ request_handler::handle_request(const request &req,
     return;
   }
 
+  // verify that the request type makes sense
+  if (!req.is_valid_aux_value()) {
+    lgr.warning("Aux value {} invalid for request type {}", req.aux_value,
+                req.request_type);
+    resp_hdr.status = server_error_code::invalid_aux_value;
+    return;
+  }
+
   // verify that the methylome names makes sense
   for (const auto &methylome_name : req.methylome_names)
     // cppcheck-suppress useStlAlgorithm
