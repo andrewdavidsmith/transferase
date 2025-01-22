@@ -51,7 +51,6 @@ if(BUILD_PYTHON)
     -DSKIP_INSTALL_FILES=on
     -DCMAKE_POSITION_INDEPENDENT_CODE=on
     -DCMAKE_INSTALL_PREFIX=${PROJECT_BINARY_DIR}/src/zlib
-    -DCMAKE_C_FLAGS=${CMAKE_C_FLAGS_RELEASE_INIT}
     -DCMAKE_BUILD_TYPE=Release
   )
   # Include the built zlib headers and link against the built zlib library
