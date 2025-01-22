@@ -36,7 +36,12 @@ if(CMAKE_BUILD_TYPE STREQUAL "Distribute")
   message(STATUS "Using the Distribute build type")
 
   # Check compatibility
-  if(BUILD_PYTHON OR UNIT_TESTS OR STATIC_ANALYSIS OR ENABLE_SANITIZING)
+  if(BUILD_PYTHON OR
+      UNIT_TESTS OR
+      STATIC_ANALYSIS OR
+      ENABLE_CODE_COVERAGE OR
+      ENABLE_PYTHON_UNIT_TESTS OR
+      ENABLE_SANITIZING)
     message(FATAL_ERROR "Specified options are incompatible with 'Distribute'")
   endif()
 
@@ -59,7 +64,11 @@ if(CMAKE_BUILD_TYPE STREQUAL "DistributePython")
   message(STATUS "Using the DistributePython build type")
 
   # Check compatibility
-  if(USE_STATIC_LIBS OR UNIT_TESTS OR STATIC_ANALYSIS OR ENABLE_SANITIZING)
+  if(UNIT_TESTS OR
+      STATIC_ANALYSIS OR
+      ENABLE_CODE_COVERAGE OR
+      ENABLE_PYTHON_UNIT_TESTS OR
+      ENABLE_SANITIZING)
     message(FATAL_ERROR
       "Specified options are incompatible with 'DistributePython'")
   endif()
@@ -72,7 +81,10 @@ if(CMAKE_BUILD_TYPE STREQUAL "DistributePython")
 
   # Options
   set(BUILD_PYTHON on)
-  set(CONFIGURE_FOR_DISTRIBUTION on)
+  set(PACKAGE_PYTHON on)
+  set(ENABLE_LTO on)
+  set(USE_STATIC_LIBS on)
+  set(CONFIGURE_FOR_DISTRIBUTION off)
   set(STRIP_PATHS_FROM_BINARIES on)
   set(STRIP_SUB_LIST "")
 endif()
@@ -87,7 +99,6 @@ if(CMAKE_BUILD_TYPE STREQUAL "UnitTests")
   # Options off
   set(CONFIGURE_FOR_DISTRIBUTION off)
   set(STRIP_PATHS_FROM_BINARIES off)
-  set(STRIP_SUB_LIST "")
 endif()
 
 # PythonTests
@@ -101,7 +112,6 @@ if(CMAKE_BUILD_TYPE STREQUAL "PythonTests")
   # Options off
   set(CONFIGURE_FOR_DISTRIBUTION off)
   set(STRIP_PATHS_FROM_BINARIES off)
-  set(STRIP_SUB_LIST "")
 endif()
 
 # StaticAnalysis
