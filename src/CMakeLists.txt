@@ -29,10 +29,13 @@ set(LIBRARY_OBJECTS "")
 foreach(cpp_file ${cpp_files})
   get_filename_component(BASE_NAME ${cpp_file} NAME_WE)
   add_library(${BASE_NAME} OBJECT ${cpp_file})
-  ## Below is to make sure 'config.h' is visible for includes
-  target_include_directories(${BASE_NAME} PRIVATE ${PROJECT_BINARY_DIR})
-  # Below, link to these libraries to get the headers
-  target_link_libraries(${BASE_NAME} PRIVATE ${Boost_LIBRARIES})
+  ## Below is to make sure 'config.h' is visible for includes and any
+  ## of the headers for configured libraries
+  target_include_directories(${BASE_NAME} PRIVATE
+    ${PROJECT_BINARY_DIR}
+    ${Boost_INCLUDE_DIRS}
+    ${ZLIB_INCLUDE_DIRS}
+  )
   target_compile_options(${BASE_NAME} PRIVATE ${GLOBAL_COMPILE_OPTIONS})
   list(APPEND LIBRARY_OBJECTS ${BASE_NAME})
 endforeach()
