@@ -130,9 +130,9 @@ struct server_argset : argset_base<server_argset> {
       // clang-format off
       ("help,h", "print this message and exit")
       ("config-file,c",
-       boost::program_options::value(&config_file)
-       ->value_name("[arg]")->implicit_value(get_default_config_file(), ""),
-       "use this config file")
+       value(&config_file)
+       ->default_value(get_default_config_file(), ""),
+       "use specified config file")
       ("hostname,s", value(&hostname)->required(),
        "server hostname (required)")
       ("port,p", value(&port)->required(), "server port")
