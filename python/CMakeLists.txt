@@ -40,7 +40,9 @@ add_subdirectory(transferase)
 # Configure the tests if requested
 if(ENABLE_PYTHON_UNIT_TESTS)
   add_subdirectory(test)
-else()
+endif()
+
+if(PACKAGE_PYTHON)
   ## Configuration for distributing is mutually independent with tests
   # Copy the python/pyproject.toml to the build directory
   configure_file(${PROJECT_SOURCE_DIR}/python/pyproject.toml
