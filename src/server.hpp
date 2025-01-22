@@ -80,11 +80,12 @@ enum class server_error_code : std::uint8_t {
   ok = 0,
   invalid_methylome_name = 1,
   invalid_request_type = 2,
-  invalid_index_hash = 3,
-  methylome_not_found = 4,
-  index_not_found = 5,
-  server_failure = 6,
-  bad_request = 7,
+  invalid_aux_value = 3,
+  invalid_index_hash = 4,
+  methylome_not_found = 5,
+  index_not_found = 6,
+  server_failure = 7,
+  bad_request = 8,
 };
 
 template <>
@@ -99,11 +100,12 @@ struct server_error_category : std::error_category {
     case 0: return "ok"s;
     case 1: return "invalid methylome name"s;
     case 2: return "invalid request type"s;
-    case 3: return "invalid index hash"s;
-    case 4: return "methylome not found"s;
-    case 5: return "index not found"s;
-    case 6: return "server failure"s;
-    case 7: return "bad request"s;
+    case 3: return "invalid aux value"s;
+    case 4: return "invalid index hash"s;
+    case 5: return "methylome not found"s;
+    case 6: return "index not found"s;
+    case 7: return "server failure"s;
+    case 8: return "bad request"s;
     }
     std::unreachable();
   }
