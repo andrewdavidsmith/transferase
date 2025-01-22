@@ -77,15 +77,18 @@ struct server {
 }  // namespace transferase
 
 enum class server_error_code : std::uint8_t {
-  ok = 0,
+  // clang-format off
+  ok =                     0,
   invalid_methylome_name = 1,
-  invalid_request_type = 2,
-  invalid_aux_value = 3,
-  invalid_index_hash = 4,
-  methylome_not_found = 5,
-  index_not_found = 6,
-  server_failure = 7,
-  bad_request = 8,
+  invalid_request_type =   2,
+  bin_size_too_small =     3,
+  too_many_intervals =     4,
+  invalid_index_hash =     5,
+  methylome_not_found =    6,
+  index_not_found =        7,
+  server_failure =         8,
+  bad_request =            9,
+  // clang-format on
 };
 
 template <>
@@ -100,12 +103,13 @@ struct server_error_category : std::error_category {
     case 0: return "ok"s;
     case 1: return "invalid methylome name"s;
     case 2: return "invalid request type"s;
-    case 3: return "invalid aux value"s;
-    case 4: return "invalid index hash"s;
-    case 5: return "methylome not found"s;
-    case 6: return "index not found"s;
-    case 7: return "server failure"s;
-    case 8: return "bad request"s;
+    case 3: return "bin size too small"s;
+    case 4: return "too many intervals"s;
+    case 5: return "invalid index hash"s;
+    case 6: return "methylome not found"s;
+    case 7: return "index not found"s;
+    case 8: return "server failure"s;
+    case 9: return "bad request"s;
     }
     std::unreachable();
   }
