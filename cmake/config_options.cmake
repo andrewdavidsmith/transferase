@@ -29,6 +29,7 @@ option(ENABLE_SANITIZING "Enable sanitizing" off)
 option(ENABLE_CODE_COVERAGE "Enable code coverage analysis" off)
 option(ENABLE_LTO "Enable link-time optimization" off)
 option(BUILD_PYTHON "Build Python bindings" off)
+option(PACKAGE_PYTHON "Package the Python bindings" off)
 option(ENABLE_PYTHON_UNIT_TESTS "Enable Python unit tests" off)
 set(SANITIZER_TYPE "address"
   CACHE STRING "Choose sanitizer type (address, undefined)")
