@@ -24,6 +24,7 @@
 #ifndef SRC_ARGUMENTS_HPP_
 #define SRC_ARGUMENTS_HPP_
 
+#include <boost/exception/diagnostic_information.hpp>
 #include <boost/program_options.hpp>
 
 #include <cstdint>  // for std::uint8_t
@@ -119,6 +120,10 @@ template <typename T> struct argset_base {
       std::println("{}\n{}", about_msg, usage);
       opts.print(std::cout);
       std::println("\n{}", description_msg);
+      return argument_error_code::failure;
+    }
+    catch (const boost::exception &e) {
+      std::println("{}", boost::diagnostic_information(e));
       return argument_error_code::failure;
     }
     return argument_error_code::ok;
