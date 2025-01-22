@@ -28,7 +28,6 @@
 #include "genomic_interval.hpp"
 #include "level_container.hpp"
 #include "level_element.hpp"
-#include "logger.hpp"
 
 #include <algorithm>  // std::min
 #include <array>
@@ -46,7 +45,6 @@
 #include <tuple>
 #include <type_traits>  // for std::is_same_v
 #include <utility>      // for std::pair
-#include <variant>
 #include <vector>
 
 namespace transferase {
@@ -122,6 +120,7 @@ intervals_output_mgr::write_bedgraph(
 
   const auto &meta = index.get_metadata();
 
+  // NOLINTBEGIN(cppcoreguidelines-pro-bounds-*)
   for (const auto &chunk :
        std::views::zip(intervals, scores) | std::views::chunk_by(same_chrom)) {
     const auto ch_id = get<0>(chunk.front()).ch_id;
@@ -150,6 +149,7 @@ intervals_output_mgr::write_bedgraph(
         return std::make_error_code(std::errc(errno));
     }
   }
+  // NOLINTEND(cppcoreguidelines-pro-bounds-*)
   return {};
 }
 
@@ -179,6 +179,7 @@ write_intervals_impl(
   if (!out)
     return std::make_error_code(std::errc(errno));
 
+  // NOLINTBEGIN(cppcoreguidelines-pro-bounds-*)
   for (const auto &chunk :
        std::views::zip(intervals, levels) | std::views::chunk_by(same_chrom)) {
     const auto ch_id = get<0>(chunk.front()).ch_id;
@@ -211,19 +212,20 @@ write_intervals_impl(
         return std::make_error_code(std::errc(errno));
     }
   }
+  // NOLINTEND(cppcoreguidelines-pro-bounds-*)
   return {};
 }
 
 template <>
 [[nodiscard]] auto
-intervals_output_mgr::write(
-  std::vector<level_element_t> &&levels) const noexcept -> std::error_code {
+intervals_output_mgr::write(const std::vector<level_element_t> &levels)
+  const noexcept -> std::error_code {
   return write_intervals_impl(outfile, index.get_metadata(), intervals, levels);
 }
 
 template <>
 [[nodiscard]] auto
-intervals_output_mgr::write(std::vector<level_element_covered_t> &&levels)
+intervals_output_mgr::write(const std::vector<level_element_covered_t> &levels)
   const noexcept -> std::error_code {
   return write_intervals_impl(outfile, index.get_metadata(), intervals, levels);
 }
@@ -351,6 +353,8 @@ write_bins_impl(const std::string &outfile, const genome_index_metadata &meta,
   auto levels_itr = std::cbegin(levels);
 
   const auto zipped = std::views::zip(meta.chrom_size, meta.chrom_order);
+
+  // NOLINTBEGIN(cppcoreguidelines-pro-bounds-*)
   for (const auto [chrom_size, chrom_name] : zipped) {
     std::ranges::copy(chrom_name, buf.data());
     buf[std::size(chrom_name)] = delim;
@@ -383,6 +387,7 @@ write_bins_impl(const std::string &outfile, const genome_index_metadata &meta,
       ++levels_itr;
     }
   }
+  // NOLINTEND(cppcoreguidelines-pro-bounds-*)
   assert(levels_itr == std::cend(levels));
   return {};
 }
@@ -530,6 +535,7 @@ bins_output_mgr::write_bedgraph(
   const auto &meta = index.get_metadata();
 
   const auto zipped = std::views::zip(meta.chrom_size, meta.chrom_order);
+  // NOLINTBEGIN(cppcoreguidelines-pro-bounds-*)
   for (const auto [chrom_size, chrom_name] : zipped) {
     std::ranges::copy(chrom_name, buf.data());
     buf[std::size(chrom_name)] = delim;
@@ -558,6 +564,7 @@ bins_output_mgr::write_bedgraph(
       ++scores_itr;
     }
   }
+  // NOLINTEND(cppcoreguidelines-pro-bounds-*)
   assert(scores_itr == std::cend(scores));
   return {};
 }
