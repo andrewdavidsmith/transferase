@@ -219,13 +219,20 @@ server::server(const std::string &address, const std::string &port,
   }
 
   // make the process a new session leader, detaching it from terminal
-  setsid();
+  setsid();  // ADS: so far no warnings or errors
 
   // Process inherits working dir from parent. Could be on a mounted
   // filesystem, which means that the daemon would prevent filesystem
   // from being unmounted. Changing to root dir avoids this problem.
   // chdir("/");
-  chdir(std::filesystem::current_path().root_path().string().data());
+  const int chdir_ret =
+    chdir(std::filesystem::current_path().root_path().string().data());
+  if (chdir_ret) {
+    ec = std::make_error_code(std::errc(errno));
+    lgr.error("Server failed to change directory: {}", ec);
+    (void)std::raise(SIGTERM);
+    return;
+  }
 
   // File mode creation mask is inherited from parent process. We
   // don't want to restrict perms on new files, so umask is cleared.
