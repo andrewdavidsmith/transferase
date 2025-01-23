@@ -52,6 +52,7 @@ xfr server -s localhost -d methylomes -x indexes
 #include "arguments.hpp"
 #include "format_error_code.hpp"  // IWYU pragma: keep
 #include "logger.hpp"
+#include "request.hpp"
 #include "server.hpp"
 #include "utilities.hpp"
 
@@ -115,6 +116,8 @@ struct server_argset : argset_base<server_argset> {
         {"log_level", std::format("{}", log_level)},
         {"n_threads", std::format("{}", n_threads)},
         {"max_resident", std::format("{}", max_resident)},
+        {"min_bin_size", std::format("{}", request::min_bin_size)},
+        {"max_intervals", std::format("{}", request::max_intervals)},
         {"daemonize", std::format("{}", daemonize)},
         {"pid-file", std::format("{}", pid_file)},
         // clang-format on
@@ -143,6 +146,14 @@ struct server_argset : argset_base<server_argset> {
        "max resident methylomes")
       ("n-threads,t", value(&n_threads)->default_value(n_threads_default),
        "number of threads")
+      ("min-bin-size",
+       value(&transferase::request::min_bin_size)
+       ->default_value(transferase::request::min_bin_size_default),
+       "minimum size of bins for queries")
+      ("max-intervals",
+       value(&transferase::request::max_intervals)
+       ->default_value(transferase::request::max_intervals_default),
+       "maximum number of intervals in a query")
       ("log-level,v", value(&log_level)->default_value(log_level_default),
        "{debug, info, warning, error, critical}")
       ("log-file,l", value(&log_file)->default_value("", "screen"),
