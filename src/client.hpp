@@ -158,8 +158,7 @@ client_base<D, L>::client_base(const std::string &hostname,
     handle_resolve(error, results);
   };
   boost::system::error_code ec;
-  boost::asio::ip::address addr{};
-  addr.from_string(hostname, ec);
+  boost::asio::ip::make_address(hostname, ec);
   if (ec) {  // hostname not an IP address
     lgr.debug("Resolving address for hostname: {}", hostname);
     resolver.async_resolve(hostname, port_number, token);
