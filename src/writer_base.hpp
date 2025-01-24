@@ -81,6 +81,11 @@ template <typename T> struct writer_base {
   }
 
   [[nodiscard]] auto
+  write_dataframe_scores(const auto &levels) const noexcept -> std::error_code {
+    return self().write_dataframe_scores_impl(levels);
+  }
+
+  [[nodiscard]] auto
   write_output(const auto &levels) const noexcept -> std::error_code {
     switch (out_fmt) {
     case output_format_t::none:
@@ -91,6 +96,8 @@ template <typename T> struct writer_base {
       return write_bedgraph(levels);
     case output_format_t::dataframe:
       return write_dataframe(levels);
+    case output_format_t::dataframe_scores:
+      return write_dataframe_scores(levels);
     }
     std::unreachable();
   }
