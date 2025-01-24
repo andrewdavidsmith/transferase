@@ -33,6 +33,7 @@
 #include <array>
 #include <cerrno>
 #include <charconv>
+#include <format>
 #include <fstream>
 #include <iterator>  // for std::size, std::cbegin
 #include <print>
@@ -269,8 +270,6 @@ write_intervals_dataframe_impl(const std::string &outfile,
                                const genome_index_metadata &meta,
                                const std::vector<genomic_interval> &intervals,
                                const auto &levels) -> std::error_code {
-  static constexpr auto hdr_lvl_fmt = "{}_M{}{}_U";
-  static constexpr auto hdr_lvl_cov_fmt = "{}_M{}{}_U{}{}_C";
   static constexpr auto delim = '\t';
 
   std::ofstream out(outfile);
@@ -281,6 +280,7 @@ write_intervals_dataframe_impl(const std::string &outfile,
     typename std::remove_cvref_t<decltype(levels)>::value_type;
 
   if constexpr (std::is_same_v<level_element, level_element_covered_t>) {
+    static constexpr auto hdr_lvl_cov_fmt = "{}_M{}{}_U{}{}_C";
     const auto hdr_formatter = [&](const auto &r) {
       return std::format(hdr_lvl_cov_fmt, r, delim, r, delim, r);
     };
@@ -290,6 +290,7 @@ write_intervals_dataframe_impl(const std::string &outfile,
     std::println(out, "{}", joined);
   }
   else {
+    static constexpr auto hdr_lvl_fmt = "{}_M{}{}_U";
     const auto hdr_formatter = [&](const auto &r) {
       return std::format(hdr_lvl_fmt, r, delim, r);
     };
