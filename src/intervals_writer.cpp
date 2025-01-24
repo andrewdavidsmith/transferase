@@ -221,11 +221,11 @@ write_intervals_bedgraph_impl(const std::string &outfile,
 }
 
 [[nodiscard]] static inline auto
-write_intervals_dataframe_impl(const std::string &outfile,
-                               const std::vector<std::string> &names,
-                               const genome_index_metadata &meta,
-                               const std::vector<genomic_interval> &intervals,
-                               const auto &levels) -> std::error_code {
+write_intervals_dataframe_scores_impl(
+  const std::string &outfile, const std::vector<std::string> &names,
+  const genome_index_metadata &meta,
+  const std::vector<genomic_interval> &intervals,
+  const auto &levels) -> std::error_code {
   using std::literals::string_view_literals::operator""sv;
   static constexpr auto none_label = "NA"sv;
   static constexpr auto delim{'\t'};
@@ -258,6 +258,65 @@ write_intervals_dataframe_impl(const std::string &outfile,
         std::print(out, "{}{:.6}", delim, get_score(levels[j][i]));
       else
         std::print(out, "{}{}", delim, none_label);
+    std::println(out);
+  }
+  return {};
+}
+
+[[nodiscard]] static inline auto
+write_intervals_dataframe_impl(const std::string &outfile,
+                               const std::vector<std::string> &names,
+                               const genome_index_metadata &meta,
+                               const std::vector<genomic_interval> &intervals,
+                               const auto &levels) -> std::error_code {
+  static constexpr auto hdr_lvl_fmt = "{}_M{}{}_U";
+  static constexpr auto hdr_lvl_cov_fmt = "{}_M{}{}_U{}{}_C";
+  static constexpr auto delim = '\t';
+
+  std::ofstream out(outfile);
+  if (!out)
+    return std::make_error_code(std::errc(errno));
+
+  using level_element =
+    typename std::remove_cvref_t<decltype(levels)>::value_type;
+
+  if constexpr (std::is_same_v<level_element, level_element_covered_t>) {
+    const auto hdr_formatter = [&](const auto &r) {
+      return std::format(hdr_lvl_cov_fmt, r, delim, r, delim, r);
+    };
+    const auto joined = names | std::views::transform(hdr_formatter) |
+                        std::views::join_with(delim) |
+                        std::ranges::to<std::string>();
+    std::println(out, "{}", joined);
+  }
+  else {
+    const auto hdr_formatter = [&](const auto &r) {
+      return std::format(hdr_lvl_fmt, r, delim, r);
+    };
+    const auto joined = names | std::views::transform(hdr_formatter) |
+                        std::views::join_with(delim) |
+                        std::ranges::to<std::string>();
+    std::println(out, "{}", joined);
+  }
+
+  const auto n_levels = std::size(levels);
+  auto prev_ch_id = genomic_interval::not_a_chrom;
+  std::string chrom;
+  for (const auto [i, interval] : std::views::enumerate(intervals)) {
+    if (interval.ch_id != prev_ch_id) {
+      chrom = meta.chrom_order[interval.ch_id];
+      prev_ch_id = interval.ch_id;
+    }
+    std::print(out, "{}.{}.{}", chrom, interval.start, interval.stop);
+    for (auto j = 0u; j < n_levels; ++j)
+      if constexpr (std::is_same_v<level_element, level_element_covered_t>) {
+        std::print(out, "{}{}{}{}{}{}", delim, levels[j][i].n_meth, delim,
+                   levels[j][i].n_unmeth, delim, levels[j][i].n_covered);
+      }
+      else {
+        std::print(out, "{}{}{}{}", delim, levels[j][i].n_meth, delim,
+                   levels[j][i].n_unmeth);
+      }
     std::println(out);
   }
   return {};
@@ -332,6 +391,24 @@ template <>
 intervals_writer::write_impl(const std::vector<level_container<level_element_t>>
                                &levels) const noexcept -> std::error_code {
   return write_intervals_impl(outfile, index.get_metadata(), intervals, levels);
+}
+
+template <>
+[[nodiscard]] auto
+intervals_writer::write_dataframe_scores_impl(
+  const std::vector<level_container<level_element_t>> &levels) const noexcept
+  -> std::error_code {
+  return write_intervals_dataframe_scores_impl(
+    outfile, names, index.get_metadata(), intervals, levels);
+}
+
+template <>
+[[nodiscard]] auto
+intervals_writer::write_dataframe_scores_impl(
+  const std::vector<level_container<level_element_covered_t>> &levels)
+  const noexcept -> std::error_code {
+  return write_intervals_dataframe_scores_impl(
+    outfile, names, index.get_metadata(), intervals, levels);
 }
 
 template <>

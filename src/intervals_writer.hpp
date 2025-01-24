@@ -53,6 +53,10 @@ struct intervals_writer : public writer_base<intervals_writer> {
 
   [[nodiscard]] auto
   write_dataframe_impl(const auto &levels) const noexcept -> std::error_code;
+
+  [[nodiscard]] auto
+  write_dataframe_scores_impl(const auto &levels) const noexcept
+    -> std::error_code;
 };
 
 }  // namespace transferase
