@@ -33,8 +33,7 @@
 #include <cassert>
 #include <cerrno>
 #include <charconv>
-#include <concepts>  // for std::same_as
-#include <cstdint>   // for std::uint32_t
+#include <cstdint>  // for std::uint32_t
 #include <fstream>
 #include <iterator>  // for std::size, std::cbegin, std::cend
 #include <print>
@@ -44,7 +43,6 @@
 #include <system_error>
 #include <tuple>
 #include <type_traits>  // for std::is_same_v
-#include <utility>      // for std::pair
 #include <vector>
 
 namespace transferase {
