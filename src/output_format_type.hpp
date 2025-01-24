@@ -39,6 +39,7 @@ enum class output_format_t : std::uint8_t {
   counts = 1,
   bedgraph = 2,
   dataframe = 3,
+  dataframe_scores = 4,
 };
 
 static constexpr auto output_format_t_name = std::array{
@@ -47,6 +48,7 @@ static constexpr auto output_format_t_name = std::array{
   std::string_view{"counts"},
   std::string_view{"bedgraph"},
   std::string_view{"dataframe"},
+  std::string_view{"dfscores"},
   // clang-format on
 };
 
