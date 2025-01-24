@@ -43,6 +43,22 @@ if(ENABLE_PYTHON_UNIT_TESTS)
 endif()
 
 if(PACKAGE_PYTHON)
+
+  # List of Python packages needed to make the wheel
+  set(needed_for_packaging wheel auditwheel hatch)
+
+  # Make sure the required Python packages are available
+  foreach(package_name ${needed_for_packaging})
+    execute_process(
+      COMMAND Python3::Interpreter -c "import ${package_name}"
+      RESULT_VARIABLE found_package
+      OUTPUT_QUIET
+    )
+    if (NOT found_package)
+      message(FATAL_ERROR "Required Python package not found: ${package_name}")
+    endif()
+  endforeach()
+
   ## Configuration for distributing is mutually independent with tests
   # Copy the python/pyproject.toml to the build directory
   configure_file(${PROJECT_SOURCE_DIR}/python/pyproject.toml
@@ -55,7 +71,9 @@ if(PACKAGE_PYTHON)
   # Copy the LICENSE file to the build directory
   configure_file(${PROJECT_SOURCE_DIR}/LICENSE
     ${PROJECT_BINARY_DIR}/python/LICENSE COPYONLY)
-  file(TOUCH ${PROJECT_BINARY_DIR}/python/${LIBRARY_NAME}/__init__.py)
+  # Copy the LICENSE file to the build directory
+  configure_file(${PROJECT_SOURCE_DIR}/python/__init__.py
+    ${PROJECT_BINARY_DIR}/python/${LIBRARY_NAME}/__init__.py COPYONLY)
 
   # Create a custom target that runs after the build
   add_custom_target(PYTHON_BUILD_WHL ALL
