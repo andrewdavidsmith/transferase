@@ -58,9 +58,10 @@ xfr query --local -d methylome_dir -x index_dir -g hg38 \
 )";
 
 #include "arguments.hpp"
+#include "bins_writer.hpp"
 #include "genome_index.hpp"
 #include "genomic_interval.hpp"
-#include "genomic_interval_output.hpp"
+#include "intervals_writer.hpp"
 #include "level_element.hpp"
 #include "logger.hpp"
 #include "methylome_interface.hpp"
@@ -75,12 +76,12 @@ xfr query --local -d methylome_dir -x index_dir -g hg38 \
 #include <algorithm>  // IWYU pragma: keep
 #include <chrono>
 #include <cstdint>
-#include <cstdlib>  // for EXIT_FAILURE, EXIT_SUCCESS
+#include <cstdlib>
 #include <filesystem>
 #include <format>
-#include <iterator>  // for std::size, for std::cbegin, std::cend
+#include <iterator>  // for std::size, for std::cbegin
 #include <print>
-#include <ranges>  // for std::views, std::ranges::view...
+#include <ranges>
 #include <string>
 #include <string_view>
 #include <system_error>
@@ -95,6 +96,13 @@ format_methylome_names_brief(const std::string &methylome_names)
   if (std::size(methylome_names) > max_names_width)
     return methylome_names.substr(0, max_names_width - 3) + "...";
   return methylome_names;
+}
+
+[[nodiscard]] inline auto
+write_output(const auto &outmgr, const auto &results) -> std::error_code {
+  std::error_code ec;
+  std::visit([&](const auto &arg) { ec = outmgr.write_output(arg); }, results);
+  return ec;
 }
 
 namespace transferase {
@@ -276,7 +284,7 @@ do_intervals_query(const auto &args, const transferase::genome_index &index,
   lgr.debug("Elapsed time for query: {:.3}s",
             duration(query_start, query_stop));
 
-  const auto outmgr = transferase::intervals_output_mgr{
+  const auto outmgr = transferase::intervals_writer{
     // clang-format off
     args.output_file,
     index,
@@ -323,7 +331,7 @@ do_bins_query(const auto &args, const transferase::genome_index &index,
   lgr.debug("Elapsed time for query: {:.3}s",
             duration(query_start, query_stop));
 
-  const auto outmgr = transferase::bins_output_mgr{
+  const auto outmgr = transferase::bins_writer{
     // clang-format off
     args.output_file,
     index,
