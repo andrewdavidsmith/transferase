@@ -26,8 +26,11 @@
 
 #include <array>
 #include <cstdint>
+#include <format>
 #include <iostream>
+#include <string>
 #include <string_view>
+#include <utility>  // for std::to_underlying
 
 namespace transferase {
 
@@ -54,5 +57,17 @@ auto
 operator>>(std::istream &in, output_format_t &of) -> std::istream &;
 
 }  // namespace transferase
+
+template <>
+struct std::formatter<transferase::output_format_t>
+  : std::formatter<std::string> {
+  auto
+  format(const transferase::output_format_t &of,
+         std::format_context &ctx) const {
+    return std::format_to(
+      ctx.out(), "{}",
+      transferase::output_format_t_name[std::to_underlying(of)]);
+  }
+};
 
 #endif  // SRC_OUTPUT_FORMAT_TYPE_HPP_
