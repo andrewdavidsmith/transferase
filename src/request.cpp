@@ -37,8 +37,8 @@
 
 namespace transferase {
 
-std::uint32_t request::max_intervals = 2'000'000;
-std::uint32_t request::min_bin_size = 100;
+std::uint32_t request::max_intervals = request::max_intervals_default;
+std::uint32_t request::min_bin_size = request::min_bin_size_default;
 
 [[nodiscard]] STATIC INLINE auto
 compose(char *first, char const *last, const request &req) -> std::error_code {
