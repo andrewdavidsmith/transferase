@@ -24,9 +24,9 @@
 #ifndef SRC_INTERVAL_WRITER_HPP_
 #define SRC_INTERVAL_WRITER_HPP_
 
-#include "output_format_type.hpp"
 #include "writer_base.hpp"
 
+#include <cstdint>
 #include <string>
 #include <system_error>
 #include <vector>
@@ -35,6 +35,7 @@ namespace transferase {
 
 struct genomic_interval;
 struct genome_index;
+enum class output_format_t : std::uint8_t;
 
 struct intervals_writer : public writer_base<intervals_writer> {
   const std::vector<genomic_interval> &intervals;
