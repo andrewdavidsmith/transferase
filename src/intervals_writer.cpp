@@ -119,6 +119,12 @@ write_intervals_impl(const std::string &outfile,
   std::ofstream out(outfile);
   if (!out)
     return std::make_error_code(std::errc(errno));
+
+  using level_container_type =
+    typename std::remove_cvref_t<decltype(levels)>::value_type;
+  using level_element =
+    typename std::remove_cvref_t<level_container_type>::value_type;
+
   const auto n_levels = std::size(levels);
   auto prev_ch_id = genomic_interval::not_a_chrom;
   std::string chrom;
@@ -128,8 +134,15 @@ write_intervals_impl(const std::string &outfile,
       prev_ch_id = interval.ch_id;
     }
     std::print(out, "{}\t{}\t{}", chrom, interval.start, interval.stop);
-    for (auto j = 0u; j < n_levels; ++j)
-      std::print(out, "\t{}\t{}", levels[j][i].n_meth, levels[j][i].n_unmeth);
+    for (auto j = 0u; j < n_levels; ++j) {
+      if constexpr (std::is_same_v<level_element, level_element_covered_t>)
+        std::print(out, "\t{}\t{}\t{}", levels[j][i].n_meth,
+                   levels[j][i].n_unmeth, levels[j][i].n_covered);
+      else if constexpr (std::is_same_v<level_element, level_element_t>)
+        std::print(out, "\t{}\t{}", levels[j][i].n_meth, levels[j][i].n_unmeth);
+      else
+        static_assert(false, "level_element has invalid type");
+    }
     std::println(out);
   }
   return {};
@@ -276,8 +289,10 @@ write_intervals_dataframe_impl(const std::string &outfile,
   if (!out)
     return std::make_error_code(std::errc(errno));
 
-  using level_element =
+  using level_container_type =
     typename std::remove_cvref_t<decltype(levels)>::value_type;
+  using level_element =
+    typename std::remove_cvref_t<level_container_type>::value_type;
 
   if constexpr (std::is_same_v<level_element, level_element_covered_t>) {
     static constexpr auto hdr_lvl_cov_fmt = "{}_M{}{}_U{}{}_C";
@@ -289,7 +304,7 @@ write_intervals_dataframe_impl(const std::string &outfile,
                         std::ranges::to<std::string>();
     std::println(out, "{}", joined);
   }
-  else {
+  else if constexpr (std::is_same_v<level_element, level_element_t>) {
     static constexpr auto hdr_lvl_fmt = "{}_M{}{}_U";
     const auto hdr_formatter = [&](const auto &r) {
       return std::format(hdr_lvl_fmt, r, delim, r);
@@ -299,6 +314,8 @@ write_intervals_dataframe_impl(const std::string &outfile,
                         std::ranges::to<std::string>();
     std::println(out, "{}", joined);
   }
+  else
+    static_assert(false, "level_element has invalid type");
 
   const auto n_levels = std::size(levels);
   auto prev_ch_id = genomic_interval::not_a_chrom;
@@ -309,15 +326,18 @@ write_intervals_dataframe_impl(const std::string &outfile,
       prev_ch_id = interval.ch_id;
     }
     std::print(out, "{}.{}.{}", chrom, interval.start, interval.stop);
-    for (auto j = 0u; j < n_levels; ++j)
+    for (auto j = 0u; j < n_levels; ++j) {
       if constexpr (std::is_same_v<level_element, level_element_covered_t>) {
         std::print(out, "{}{}{}{}{}{}", delim, levels[j][i].n_meth, delim,
                    levels[j][i].n_unmeth, delim, levels[j][i].n_covered);
       }
-      else {
+      else if constexpr (std::is_same_v<level_element, level_element_t>) {
         std::print(out, "{}{}{}{}", delim, levels[j][i].n_meth, delim,
                    levels[j][i].n_unmeth);
       }
+      else
+        static_assert(false, "level_element has invalid type");
+    }
     std::println(out);
   }
   return {};

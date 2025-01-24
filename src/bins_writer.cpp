@@ -165,8 +165,10 @@ write_bins_dataframe_impl(const std::string &outfile,
   if (!out)
     return std::make_error_code(std::errc(errno));
 
-  using level_element =
+  using level_container_type =
     typename std::remove_cvref_t<decltype(levels)>::value_type;
+  using level_element =
+    typename std::remove_cvref_t<level_container_type>::value_type;
 
   if constexpr (std::is_same_v<level_element, level_element_covered_t>) {
     static constexpr auto hdr_lvl_cov_fmt = "{}_M{}{}_U{}{}_C";
@@ -178,7 +180,7 @@ write_bins_dataframe_impl(const std::string &outfile,
                         std::ranges::to<std::string>();
     std::println(out, "{}", joined);
   }
-  else {
+  else if constexpr (std::is_same_v<level_element, level_element_t>) {
     static constexpr auto hdr_lvl_fmt = "{}_M{}{}_U";
     const auto hdr_formatter = [&](const auto &r) {
       return std::format(hdr_lvl_fmt, r, delim, r);
@@ -188,6 +190,8 @@ write_bins_dataframe_impl(const std::string &outfile,
                         std::ranges::to<std::string>();
     std::println(out, "{}", joined);
   }
+  else
+    static_assert(false, "level_element has invalid type");
 
   const auto n_levels = std::ssize(levels);
   std::uint32_t i = 0;
@@ -196,15 +200,18 @@ write_bins_dataframe_impl(const std::string &outfile,
     for (std::uint32_t bin_beg = 0; bin_beg < chrom_size; bin_beg += bin_size) {
       const auto bin_end = std::min(bin_beg + bin_size, chrom_size);
       std::print(out, "{}.{}.{}", chrom_name, bin_beg, bin_end);
-      for (auto j = 0; j < n_levels; ++j)
+      for (auto j = 0; j < n_levels; ++j) {
         if constexpr (std::is_same_v<level_element, level_element_covered_t>) {
           std::print(out, "{}{}{}{}{}{}", delim, levels[j][i].n_meth, delim,
                      levels[j][i].n_unmeth, delim, levels[j][i].n_covered);
         }
-        else {
+        else if constexpr (std::is_same_v<level_element, level_element_t>) {
           std::print(out, "{}{}{}{}", delim, levels[j][i].n_meth, delim,
                      levels[j][i].n_unmeth);
         }
+        else
+          static_assert(false, "level_element has invalid type");
+      }
       std::println(out);
       ++i;
     }
@@ -303,6 +310,12 @@ write_bins_impl(const std::string &outfile, const genome_index_metadata &meta,
   std::ofstream out(outfile);
   if (!out)
     return std::make_error_code(std::errc(errno));
+
+  using level_container_type =
+    typename std::remove_cvref_t<decltype(levels)>::value_type;
+  using level_element =
+    typename std::remove_cvref_t<level_container_type>::value_type;
+
   const auto n_levels = std::size(levels);
   std::uint32_t i = 0;
   const auto zipped = std::views::zip(meta.chrom_size, meta.chrom_order);
@@ -310,8 +323,16 @@ write_bins_impl(const std::string &outfile, const genome_index_metadata &meta,
     for (std::uint32_t bin_beg = 0; bin_beg < chrom_size; bin_beg += bin_size) {
       const auto bin_end = std::min(bin_beg + bin_size, chrom_size);
       std::print(out, "{}\t{}\t{}", chrom_name, bin_beg, bin_end);
-      for (auto j = 0u; j < n_levels; ++j)
-        std::print(out, "\t{}\t{}", levels[j][i].n_meth, levels[j][i].n_unmeth);
+      for (auto j = 0u; j < n_levels; ++j) {
+        if constexpr (std::is_same_v<level_element, level_element_covered_t>)
+          std::print(out, "\t{}\t{}\t{}", levels[j][i].n_meth,
+                     levels[j][i].n_unmeth, levels[j][i].n_covered);
+        else if constexpr (std::is_same_v<level_element, level_element_t>)
+          std::print(out, "\t{}\t{}", levels[j][i].n_meth,
+                     levels[j][i].n_unmeth);
+        else
+          static_assert(false, "level_element has invalid type");
+      }
       std::println(out);
       ++i;
     }
