@@ -8,15 +8,11 @@ RUN apt-get install -y --no-install-recommends \
     ca-certificates
 RUN git clone https://github.com/andrewdavidsmith/transferase.git \
     && cd /build/transferase \
-    && cmake -B Release \
-    -DUSE_STATIC_LIBS=on \
-    -DENABLE_LTO=on \
-    -DCMAKE_VERBOSE_MAKEFILE=on \
-    -DCMAKE_EXPORT_COMPILE_COMMANDS=on \
+    && cmake -B build \
     -DCMAKE_CXX_COMPILER=g++ \
-    -DCMAKE_BUILD_TYPE=Release \
-    && cmake --build Release -j${NUM_JOBS} \
-    && cmake --install Release --prefix /transferase
+    -DCMAKE_BUILD_TYPE=Distribute \
+    && cmake --build build -j${NUM_JOBS} \
+    && cmake --install build --prefix /transferase
 
 # Build a light-weight image just with the binary
 FROM ubuntu:latest
