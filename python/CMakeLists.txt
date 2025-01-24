@@ -63,6 +63,10 @@ if(PACKAGE_PYTHON)
   # Copy the python/pyproject.toml to the build directory
   configure_file(${PROJECT_SOURCE_DIR}/python/pyproject.toml
     ${PROJECT_BINARY_DIR}/python/pyproject.toml COPYONLY)
+  # Copy the hatch_build.py script to the build directory so that the
+  # custom build hook can be used by 'hatch build'
+  configure_file(${PROJECT_SOURCE_DIR}/python/hatch_build.py
+    ${PROJECT_BINARY_DIR}/python/hatch_build.py COPYONLY)
   # Copy the python/README.md to the build directory
   configure_file(${PROJECT_SOURCE_DIR}/python/README.md
     ${PROJECT_BINARY_DIR}/python/README.md COPYONLY)
@@ -71,7 +75,8 @@ if(PACKAGE_PYTHON)
   # Copy the LICENSE file to the build directory
   configure_file(${PROJECT_SOURCE_DIR}/LICENSE
     ${PROJECT_BINARY_DIR}/python/LICENSE COPYONLY)
-  # Copy the LICENSE file to the build directory
+  # Copy the __init__.py file to the directory where it will be
+  # included in the package
   configure_file(${PROJECT_SOURCE_DIR}/python/__init__.py
     ${PROJECT_BINARY_DIR}/python/${LIBRARY_NAME}/__init__.py COPYONLY)
 
@@ -96,14 +101,21 @@ if(PACKAGE_PYTHON)
   message(STATUS "Python ABI tag: ${PYTHON_ABI_TAG}")
   message(STATUS "Python platform tag: deterined by auditwheel post-build")
 
+  # The initial wheel filename is determined by the entry in the
+  # custom hatch hook that can be found following pyproject.toml
+  set(INIT_WHL_FILE "${LIBRARY_NAME}-${PROJECT_VERSION}-py3-none-any.whl")
+  message(STATUS "Initial wheel filename: ${INIT_WHL_FILE}")
+
   # Rename the wheel file after it has been generated
   add_custom_target(PYTHON_RENAME_WHL ALL
     COMMAND
     wheel tags
     --python-tag ${PYTHON_VERSION_TAG}
     --abi-tag ${PYTHON_ABI_TAG}
-    --platform-tag `python3 ${PROJECT_SOURCE_DIR}/python/get_platform_tag.py ${LIBRARY_NAME}-*.whl`
-    ${LIBRARY_NAME}-*.whl
+    --platform-tag
+    `python3 ${PROJECT_SOURCE_DIR}/python/get_platform_tag.py ${INIT_WHL_FILE}`
+    ${INIT_WHL_FILE}
+    COMMAND rm ${INIT_WHL_FILE}
     WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/python/dist
     DEPENDS PYTHON_BUILD_WHL
     COMMENT "Put the correct tags in the wheel filename (todo: put in one script)"
