@@ -6,9 +6,31 @@ build-backend = "hatchling.build"
 name = "transferase"
 description = "Transferase"
 authors = [{name = "Andrew D Smith", email = "andrewds@usc.edu"}]
+maintainers =  [{name = "Andrew D Smith", email = "andrewds@usc.edu"}]
 readme = "README.md"
 license = {text = "MIT"}
 dynamic = ["version"]
+requires-python = ">= 3.12"
+keywords = ["methylome", "DNA methylation", "epigenetics", "epigenomics"]
+classifiers = [
+            "Development Status :: 3 - Alpha",
+            "Intended Audience :: Developers",
+            "Intended Audience :: Healthcare Industry",
+            "Intended Audience :: Science/Research",
+            "Topic :: Scientific/Engineering :: Bio-Informatics",
+            "Topic :: Scientific/Engineering :: Information Analysis",
+            "Topic :: Scientific/Engineering :: Medical Science Apps.",
+            "Programming Language :: Python :: 3.12",
+            "Programming Language :: Python :: 3.13",
+            "Programming Language :: Python :: 3.14",
+            "Programming Language :: Python :: Implementation :: CPython",
+]
+[project.urls]
+Homepage = "https://github.com/andrewdavidsmith/transferase"
+Documentation = "https://github.com/andrewdavidsmith/transferase"
+Repository = "https://github.com/andrewdavidsmith/transferase"
+Issues = "https://github.com/andrewdavidsmith/transferase/issues"
+# Changelog = ""
 
 [tool.hatch.version]
 path = "version.py"
