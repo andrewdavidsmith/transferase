@@ -110,11 +110,11 @@ write_bins_impl(const std::string &outfile, const genome_index_metadata &meta,
 }
 
 [[nodiscard]] static inline auto
-write_bins_dataframe_impl(const std::string &outfile,
-                          const std::vector<std::string> &names,
-                          const genome_index_metadata &meta,
-                          const std::uint32_t bin_size,
-                          const auto &levels) -> std::error_code {
+write_bins_dataframe_scores_impl(const std::string &outfile,
+                                 const std::vector<std::string> &names,
+                                 const genome_index_metadata &meta,
+                                 const std::uint32_t bin_size,
+                                 const auto &levels) -> std::error_code {
   using std::literals::string_view_literals::operator""sv;
   static constexpr auto none_label = "NA"sv;
   static constexpr auto delim{'\t'};
@@ -145,6 +145,65 @@ write_bins_dataframe_impl(const std::string &outfile,
           std::print(out, "{}{:.6}", delim, get_score(levels[j][i]));
         else
           std::print(out, "{}{}", delim, none_label);
+      std::println(out);
+      ++i;
+    }
+  }
+  return {};
+}
+
+[[nodiscard]] static inline auto
+write_bins_dataframe_impl(const std::string &outfile,
+                          const std::vector<std::string> &names,
+                          const genome_index_metadata &meta,
+                          const std::uint32_t bin_size,
+                          const auto &levels) -> std::error_code {
+  static constexpr auto hdr_lvl_fmt = "{}_M{}{}_U";
+  static constexpr auto hdr_lvl_cov_fmt = "{}_M{}{}_U{}{}_C";
+  static constexpr auto delim = '\t';
+
+  std::ofstream out(outfile);
+  if (!out)
+    return std::make_error_code(std::errc(errno));
+
+  using level_element =
+    typename std::remove_cvref_t<decltype(levels)>::value_type;
+
+  if constexpr (std::is_same_v<level_element, level_element_covered_t>) {
+    const auto hdr_formatter = [&](const auto &r) {
+      return std::format(hdr_lvl_cov_fmt, r, delim, r, delim, r);
+    };
+    const auto joined = names | std::views::transform(hdr_formatter) |
+                        std::views::join_with(delim) |
+                        std::ranges::to<std::string>();
+    std::println(out, "{}", joined);
+  }
+  else {
+    const auto hdr_formatter = [&](const auto &r) {
+      return std::format(hdr_lvl_fmt, r, delim, r);
+    };
+    const auto joined = names | std::views::transform(hdr_formatter) |
+                        std::views::join_with(delim) |
+                        std::ranges::to<std::string>();
+    std::println(out, "{}", joined);
+  }
+
+  const auto n_levels = std::ssize(levels);
+  std::uint32_t i = 0;
+  const auto zipped = std::views::zip(meta.chrom_size, meta.chrom_order);
+  for (const auto [chrom_size, chrom_name] : zipped) {
+    for (std::uint32_t bin_beg = 0; bin_beg < chrom_size; bin_beg += bin_size) {
+      const auto bin_end = std::min(bin_beg + bin_size, chrom_size);
+      std::print(out, "{}.{}.{}", chrom_name, bin_beg, bin_end);
+      for (auto j = 0; j < n_levels; ++j)
+        if constexpr (std::is_same_v<level_element, level_element_covered_t>) {
+          std::print(out, "{}{}{}{}{}{}", delim, levels[j][i].n_meth, delim,
+                     levels[j][i].n_unmeth, delim, levels[j][i].n_covered);
+        }
+        else {
+          std::print(out, "{}{}{}{}", delim, levels[j][i].n_meth, delim,
+                     levels[j][i].n_unmeth);
+        }
       std::println(out);
       ++i;
     }
@@ -311,6 +370,24 @@ bins_writer::write_bedgraph_impl(
   const noexcept -> std::error_code {
   return write_bins_bedgraph_impl(outfile, index.get_metadata(), bin_size,
                                   levels);
+}
+
+template <>
+[[nodiscard]] auto
+bins_writer::write_dataframe_scores_impl(
+  const std::vector<level_container<level_element_t>> &levels) const noexcept
+  -> std::error_code {
+  return write_bins_dataframe_scores_impl(outfile, names, index.get_metadata(),
+                                          bin_size, levels);
+}
+
+template <>
+[[nodiscard]] auto
+bins_writer::write_dataframe_scores_impl(
+  const std::vector<level_container<level_element_covered_t>> &levels)
+  const noexcept -> std::error_code {
+  return write_bins_dataframe_scores_impl(outfile, names, index.get_metadata(),
+                                          bin_size, levels);
 }
 
 template <>
