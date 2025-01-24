@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_INTERVAL_WRITER_HPP_
-#define SRC_INTERVAL_WRITER_HPP_
+#ifndef SRC_INTERVALS_WRITER_HPP_
+#define SRC_INTERVALS_WRITER_HPP_
 
 #include "writer_base.hpp"
 
@@ -57,4 +57,4 @@ struct intervals_writer : public writer_base<intervals_writer> {
 
 }  // namespace transferase
 
-#endif  // SRC_INTERVAL_WRITER_HPP_
+#endif  // SRC_INTERVALS_WRITER_HPP_
