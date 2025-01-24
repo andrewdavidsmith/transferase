@@ -24,9 +24,9 @@
 #ifndef SRC_BINS_WRITER_HPP_
 #define SRC_BINS_WRITER_HPP_
 
-#include "output_format_type.hpp"
 #include "writer_base.hpp"
 
+#include <cstdint>
 #include <string>
 #include <string_view>
 #include <system_error>
@@ -34,6 +34,7 @@
 
 namespace transferase {
 
+enum class output_format_t : std::uint8_t;
 struct genome_index;
 
 struct bins_writer : public writer_base<bins_writer> {
