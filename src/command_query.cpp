@@ -181,7 +181,7 @@ struct query_argset : argset_base<query_argset> {
       ("covered", po::bool_switch(&count_covered),
        "count covered sites for each interval")
       ("out-fmt,f", po::value(&out_fmt)->default_value(out_fmt_default),
-       "output format {counts=1, bedgraph=2, dataframe=3}")
+       "output format {counts=1, bedgraph=2, dataframe=3, dfscores=4}")
       ("hostname,s", po::value(&hostname), "server hostname")
       ("port,p", po::value(&port), "server port")
       ("methylome-dir,d", po::value(&methylome_dir),
