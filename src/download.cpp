@@ -35,6 +35,7 @@
 #include <boost/beast.hpp>
 
 #include <cerrno>
+#include <chrono>
 #include <cstdint>    // for std::uint64_t
 #include <exception>  // for std::exception_ptr
 #include <filesystem>
@@ -51,6 +52,67 @@
 #include <utility>  // for std::move
 
 namespace transferase {
+
+/// Download the header for a remote file
+[[nodiscard]]
+auto
+get_header(const download_request &dr)
+  -> std::tuple<std::unordered_map<std::string, std::string>, std::error_code> {
+  // ADS: this function just gets the timestamp on a remote file.
+  static constexpr auto http_version{11};
+
+  // setup for io
+  boost::asio::io_context ioc;
+  boost::asio::ip::tcp::resolver resolver(ioc);
+  boost::beast::tcp_stream stream(ioc);
+
+  // lookup server endpoint
+  boost::system::error_code ec{};
+  const auto results = resolver.resolve(dr.host, dr.port, ec);
+  if (ec)
+    return {{}, std::error_code{ec}};
+
+  stream.connect(results);
+
+  // build the HEAD request for the target
+  boost::beast::http::request<boost::beast::http::empty_body> req{
+    // clang-format off
+    boost::beast::http::verb::head,
+    dr.target,
+    http_version,
+    // clang-format on
+  };
+  req.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
+  req.set(boost::beast::http::field::host, dr.host);
+
+  boost::beast::http::write(stream, req, ec);
+  if (ec)
+    return {{}, std::error_code{ec}};
+
+  // empty body to only get header
+  boost::beast::http::response_parser<boost::beast::http::empty_body> p;
+  p.skip(true);  // inform parser there will be no body
+
+  boost::beast::flat_buffer buffer;
+  boost::beast::http::read(stream, buffer, p, ec);
+  if (ec)
+    return {{}, std::error_code{ec}};
+
+  const auto response = p.release();
+
+  const auto make_string = [](const auto &x) {
+    return (std::ostringstream() << x).str();
+  };
+
+  std::unordered_map<std::string, std::string> header = {
+    {"Status", std::to_string(response.result_int())},
+    {"Reason", make_string(response.result())},
+  };
+  for (const auto &h : response.base())
+    header.emplace(make_string(h.name_string()), make_string(h.value()));
+
+  return {header, ec};
+}
 
 auto
 do_download(const download_request &dr, const std::string &outfile,
@@ -73,7 +135,7 @@ do_download(const download_request &dr, const std::string &outfile,
   boost::beast::tcp_stream stream(ioc);
 
   // lookup server endpoint
-  auto const results = resolver.async_resolve(dr.host, dr.port, yield[ec]);
+  const auto results = resolver.async_resolve(dr.host, dr.port, yield[ec]);
   if (ec)
     return;
 
@@ -87,7 +149,12 @@ do_download(const download_request &dr, const std::string &outfile,
 
   // Set up an HTTP GET request message
   boost::beast::http::request<boost::beast::http::string_body> req{
-    boost::beast::http::verb::get, dr.target, http_version};
+    // clang-format off
+    boost::beast::http::verb::get,
+    dr.target,
+    http_version,
+    // clang-format on
+  };
   req.set(boost::beast::http::field::host, dr.host);
   req.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
 
@@ -202,6 +269,26 @@ download(const download_request &dr)
   }
 
   return {header, ec};
+}
+
+/// Get the timestamp for a remote file
+[[nodiscard]]
+auto
+get_timestamp(const download_request &dr)
+  -> std::chrono::time_point<std::chrono::file_clock> {
+  static constexpr auto http_time_format = "%a, %d %b %Y %T %z";
+  const auto [header, ec] = transferase::get_header(dr);
+  if (ec)
+    return {};
+  const auto last_modified_itr = header.find("Last-Modified");
+  if (last_modified_itr == std::cend(header))
+    return {};
+  std::istringstream is{last_modified_itr->second};
+  std::chrono::time_point<std::chrono::file_clock> tp;
+  if (!(is >> std::chrono::parse(http_time_format, tp)))
+    return {};
+
+  return tp;
 }
 
 }  // namespace transferase

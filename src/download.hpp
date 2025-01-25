@@ -106,6 +106,11 @@ auto
 download(const download_request &dr)
   -> std::tuple<std::unordered_map<std::string, std::string>, std::error_code>;
 
+[[nodiscard]]
+auto
+get_timestamp(const download_request &dr)
+  -> std::chrono::time_point<std::chrono::file_clock>;
+
 }  // namespace transferase
 
 #endif  // SRC_DOWNLOAD_HPP_
