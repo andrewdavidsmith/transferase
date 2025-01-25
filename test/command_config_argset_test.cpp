@@ -86,7 +86,7 @@ TEST(command_config_argset_test, default_config_file) {
   // NOLINTEND(cppcoreguidelines-pro-type-const-cast)
   EXPECT_FALSE(ec);
 
-  const auto default_config_dir = get_transferase_config_dir_default(ec);
+  const auto default_config_dir = get_config_dir_default(ec);
   EXPECT_FALSE(ec);
 
   const auto default_config_file_path =
