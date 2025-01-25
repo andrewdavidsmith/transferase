@@ -88,7 +88,7 @@ command_index_main(int argc,
     // clang-format off
     ("help,h", "print this message and exit")
     ("genome,g", po::value(&genome_filename)->required(), "genome_file")
-    ("indexdir,x", po::value(&index_directory)->required(), "index output directory")
+    ("index-dir,x", po::value(&index_directory)->required(), "index output directory")
     ("log-level,v", po::value(&log_level)->default_value(transferase::logger::default_level),
      "{debug, info, warning, error, critical}")
     // clang-format on

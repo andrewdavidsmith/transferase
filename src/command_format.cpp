@@ -390,10 +390,10 @@ command_format_main(int argc,
   desc.add_options()
     // clang-format off
     ("help,h", "print this message and exit")
-    ("meth,m", po::value(&methylation_input)->required(),
+    ("meth-file,m", po::value(&methylation_input)->required(),
      "methylation input file")
-    ("indexdir,x", po::value(&index_directory)->required(), "genome index directory")
-    ("outdir,o", po::value(&methylome_outdir)->required(), "methylome output directory")
+    ("index-dir,x", po::value(&index_directory)->required(), "genome index directory")
+    ("methylome-dir,d", po::value(&methylome_outdir)->required(), "methylome output directory")
     ("genome,g", po::value(&genome_name)->required(), "genome name")
     ("zip,z", po::bool_switch(&zip), "zip the output")
     ("log-level,v", po::value(&log_level)->default_value(logger::default_level),

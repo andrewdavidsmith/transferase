@@ -96,8 +96,8 @@ command_merge_main(int argc,
     ("help,h", "print this message and exit")
     ("methylomes,m", po::value<std::vector<std::string>>()->multitoken()->required(),
      "names of methylomes to merge")
-    ("directory,d", po::value(&methylome_directory)->required(), "methylome input directory")
-    ("outdir,o", po::value(&methylome_outdir)->required(), "methylome output directory")
+    ("methylome-dir,d", po::value(&methylome_directory)->required(), "methylome input directory")
+    ("output-dir,o", po::value(&methylome_outdir)->required(), "methylome output directory")
     ("name,n", po::value(&merged_name)->required(), "merged methylome name")
     ("log-level,v", po::value(&log_level)->default_value(logger::default_level),
      "{debug, info, warning, error, critical}")

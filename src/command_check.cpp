@@ -90,9 +90,9 @@ command_check_main(int argc,
   desc.add_options()
     // clang-format off
     ("help,h", "print this message and exit")
-    ("indexdir,x", po::value(&index_directory)->required(), "genome index directory")
+    ("index-dir,x", po::value(&index_directory)->required(), "genome index directory")
     ("genome,g", po::value(&genome_name)->required(), "genome name")
-    ("methdir,d", po::value(&methylome_directory)->required(),
+    ("methylome-dir,d", po::value(&methylome_directory)->required(),
      "directory containing methylomes")
     ("methylomes,m", po::value<std::vector<std::string>>()->multitoken()->required(),
      "methylome names")

@@ -90,9 +90,9 @@ command_compress_main(int argc,
   // clang-format off
   desc.add_options()
     ("help,h", "print this message and exit")
-    ("directory,d", po::value(&methylome_directory)->required(), "input methylome directory")
+    ("methylome-dir,d", po::value(&methylome_directory)->required(), "input methylome directory")
     ("methylome,m", po::value(&methylome_name)->required(), "methylome name/accession")
-    ("output,o", po::value(&methylome_outdir)->required(),
+    ("output-dir,o", po::value(&methylome_outdir)->required(),
      "methylome output directory")
     ("uncompress,u", po::bool_switch(&uncompress), "uncompress the file")
     ("log-level,v", po::value(&log_level)->default_value(transferase::logger::default_level),
