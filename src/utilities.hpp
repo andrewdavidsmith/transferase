@@ -37,14 +37,24 @@
 #include <type_traits>  // for std::true_type
 #include <utility>
 
+namespace transferase {
+
+[[nodiscard]] auto
+get_index_dir_default() -> std::string;
+
+[[nodiscard]] auto
+get_labels_dir_default() -> std::string;
+
+[[nodiscard]] auto
+get_config_dir_default(std::error_code &ec) -> std::string;
+
+}  // namespace transferase
+
 [[nodiscard]] inline auto
 duration(const auto start, const auto stop) {
   const auto d = stop - start;
   return std::chrono::duration_cast<std::chrono::duration<double>>(d).count();
 }
-
-[[nodiscard]] auto
-get_transferase_config_dir_default(std::error_code &ec) -> std::string;
 
 [[nodiscard]] inline auto
 rstrip(char const *const x) -> const std::string_view {
