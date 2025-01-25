@@ -30,11 +30,13 @@ configure an xfr client
 static constexpr auto description = R"(
 This command does the configuration to faciliate other commands,
 reducing the number of command line arguments by putting them in
-configuration file. It also will retrieve index files that are needed
-to accelerate queries. Note that this configuration is not needed, as
-all arguments can be specified on the command line and index files can
-be downloaded separately. The default config directory is
-'${HOME}/.config/transferase'.
+configuration file. Note that this configuration is not needed, as all
+arguments can be specified on the command line and index files can be
+downloaded separately. The default config directory is
+'${HOME}/.config/transferase'. It also will retrieve other data. It
+will get index files that are needed to accelerate queries. And it
+will retrieve files that associate entries in MethBase2 with labels
+for the underlying biological samples.
 )";
 
 static constexpr auto examples = R"(
@@ -81,26 +83,35 @@ xfr config -c my_config_file.toml -s example.com -p 5009 --genomes hg38,mm39
 
 namespace transferase {
 
-struct remote_indexes_resources {
+struct remote_data_resources {
   std::string host;
   std::string port;
   std::string path;
 
   [[nodiscard]] auto
-  form_target_stem(const auto &genome) const {
-    return (std::filesystem::path{path} / genome).string();
+  form_index_target_stem(const auto &genome) const {
+    return (std::filesystem::path{path} / "indexes" / genome).string();
   }
+
+  [[nodiscard]] auto
+  form_labels_target_stem(const auto &genome) const {
+    return (std::filesystem::path{path} / "labels/latest" / genome).string();
+  }
+
   [[nodiscard]] auto
   form_url(const auto &file) const {
     return std::format("{}:{}{}", host, port, file);
   }
 };
-BOOST_DESCRIBE_STRUCT(remote_indexes_resources, (), (host, port, path))
+BOOST_DESCRIBE_STRUCT(remote_data_resources, (), (host, port, path))
 
+/// Locate the system confuration file with information about servers for data
+/// downloads.
 [[nodiscard]] static auto
-get_remote_indexes_resources()
-  -> std::tuple<std::vector<remote_indexes_resources>, std::error_code> {
-  // ADS: this function prints error messages itself
+get_remote_data_resources()
+  -> std::tuple<std::vector<remote_data_resources>, std::error_code> {
+  // ADS: this function prints error messages itself, so no need to
+  // log based on error code returned
 
   static const auto exe_path = find_path_to_binary();
 
@@ -151,7 +162,7 @@ get_remote_indexes_resources()
     return {{}, std::make_error_code(std::errc(errno))};
   }
 
-  std::vector<remote_indexes_resources> resources;
+  std::vector<remote_data_resources> resources;
   boost::json::parse_into(resources, payload, ec);
   if (ec) {
     std::println("Malformed JSON for remote resources {}: {}",
@@ -162,39 +173,90 @@ get_remote_indexes_resources()
 }
 
 [[nodiscard]] static auto
-get_index_files(const bool quiet, const remote_indexes_resources &remote,
-                const std::string &genomes,
-                const std::string &dirname) -> std::error_code {
-  const auto dl_err = [&](const auto &hdr, const auto &ec, const auto &url) {
-    std::println("Error downloading {}: ", url);
-    if (ec)
-      std::println("Error code: {}", ec);
-    const auto status_itr = hdr.find("Status");
-    const auto reason_itr = hdr.find("Reason");
-    if (status_itr != std::cend(hdr) && reason_itr != std::cend(hdr))
-      std::println("HTTP status: {} {}", status_itr->second,
-                   reason_itr->second);
-  };
+dl_err(const auto &hdr, const auto &ec, const auto &url) -> std::error_code {
+  std::println("Error downloading {}: ", url);
+  if (ec)
+    std::println("Error code: {}", ec);
+  const auto status_itr = hdr.find("Status");
+  const auto reason_itr = hdr.find("Reason");
+  if (status_itr != std::cend(hdr) && reason_itr != std::cend(hdr))
+    std::println("HTTP status: {} {}", status_itr->second, reason_itr->second);
+  return ec;
+}
 
+[[nodiscard]] static auto
+check_is_outdated(const download_request &dr,
+                  const std::filesystem::path local_file) -> bool {
+  const std::filesystem::file_time_type ftime =
+    std::filesystem::last_write_time(local_file);
+  const auto remote_timestamp = get_timestamp(dr);
+
+  // std::chrono::time_point<std::chrono::file_clock>
+
+  //     std::chrono::clock_cast<std::file_clock>(
+  //       system_clock::from_time_t(time)) < lastWriteTime
+
+  return (remote_timestamp - ftime).count() > 0;
+}
+
+[[nodiscard]] static auto
+get_index_files(const bool quiet, const remote_data_resources &remote,
+                const std::string &genomes, const std::string &dirname,
+                const bool force_download) -> std::error_code {
   for (const auto genome : std::views::split(genomes, ',')) {
     const auto assem = std::string{std::cbegin(genome), std::cend(genome)};
-    const auto stem = remote.form_target_stem(assem);
-    const auto data_file = std::format(
-      "{}{}", stem, transferase::genome_index_data::filename_extension);
+    const auto stem = remote.form_index_target_stem(assem);
+
+    const auto data_file =
+      std::format("{}{}", stem, genome_index_data::filename_extension);
+
+    const download_request dr{remote.host, remote.port, data_file, dirname};
+    const auto local_index_file =
+      std::filesystem::path{dirname} / std::format("{}.cpg_idx", assem);
+
+    const bool is_outdated = check_is_outdated(dr, local_index_file);
+
+    if (is_outdated || force_download) {
+      if (!quiet)
+        std::println("Download: {} to {}", remote.form_url(data_file), dirname);
+
+      const auto [data_hdr, data_err] =
+        download({remote.host, remote.port, data_file, dirname});
+      if (data_err)
+        return dl_err(data_hdr, data_err, remote.form_url(data_file));
+
+      const auto meta_file =
+        std::format("{}{}", stem, genome_index_metadata::filename_extension);
+      if (!quiet)
+        std::println("Download: {} to {}", remote.form_url(meta_file), dirname);
+      const auto [meta_hdr, meta_err] =
+        download({remote.host, remote.port, meta_file, dirname});
+      if (meta_err)
+        return dl_err(meta_hdr, meta_err, remote.form_url(meta_file));
+    }
+    else if (!force_download) {
+      if (!quiet)
+        std::println("Existing index is most recent: {}",
+                     local_index_file.string());
+    }
+  }
+  return {};
+}
+
+[[nodiscard]] static auto
+get_labels_files(const bool quiet, const remote_data_resources &remote,
+                 const std::string &genomes,
+                 const std::string &dirname) -> std::error_code {
+  for (const auto genome : std::views::split(genomes, ',')) {
+    const auto assem = std::string{std::cbegin(genome), std::cend(genome)};
+    const auto stem = remote.form_labels_target_stem(assem);
+    const auto labels_file = std::format("{}.json", stem);
     if (!quiet)
-      std::println("Download: {}", remote.form_url(data_file));
+      std::println("Download: {} to {}", remote.form_url(labels_file), dirname);
     const auto [data_hdr, data_err] =
-      download({remote.host, remote.port, data_file, dirname});
+      download({remote.host, remote.port, labels_file, dirname});
     if (data_err)
-      dl_err(data_hdr, data_err, remote.form_url(data_file));
-    const auto meta_file = std::format(
-      "{}{}", stem, transferase::genome_index_metadata::filename_extension);
-    if (!quiet)
-      std::println("Download: {}", remote.form_url(meta_file));
-    const auto [meta_hdr, meta_err] =
-      download({remote.host, remote.port, meta_file, dirname});
-    if (meta_err)
-      dl_err(meta_hdr, meta_err, remote.form_url(meta_file));
+      return dl_err(data_hdr, data_err, remote.form_url(labels_file));
   }
   return {};
 }
@@ -202,10 +264,10 @@ get_index_files(const bool quiet, const remote_indexes_resources &remote,
 }  // namespace transferase
 
 template <>
-struct std::formatter<transferase::remote_indexes_resources>
+struct std::formatter<transferase::remote_data_resources>
   : std::formatter<std::string> {
   auto
-  format(const transferase::remote_indexes_resources &r,
+  format(const transferase::remote_data_resources &r,
          std::format_context &ctx) const {
     return std::format_to(ctx.out(), "{}:{}{}", r.host, r.port, r.path);
   }
@@ -278,30 +340,52 @@ command_config_main(int argc,
     }
   }
 
+  // Setup the indexes dir and the labels dir if the user has
+  // specified genomes to configure but not given locations for the
+  // files. This must be done prior to writing the config file.
+  if (!args.genomes.empty()) {
+    if (args.index_dir.empty())
+      args.set_index_dir_default();
+    if (args.labels_dir.empty())
+      args.set_labels_dir_default();
+  }
+
   const auto config_write_err = write_config_file(args);
   if (config_write_err) {
     std::println("Error writing config file: {}", config_write_err);
     return EXIT_FAILURE;
   }
 
-  const auto [remotes, remote_err] =
-    transferase::get_remote_indexes_resources();
-  if (remote_err) {
-    std::println("Error identifying remote server: {}", remote_err);
-    return EXIT_FAILURE;
-  }
-
-  // take care of obtaining index files
-  for (const auto &remote : remotes) {
-    if (!args.quiet)
-      std::println("Host for index files: {}:{}", remote.host, remote.port);
-    const auto index_err =
-      get_index_files(args.quiet, remote, args.genomes, config_dir);
-    if (index_err) {
-      std::println("Error obtaining cpg index files: {}", index_err);
+  if (!args.genomes.empty()) {
+    // Only attempt downloads if the user specifies one or more
+    // genomes. And if the user specifies genomes, but no index_dir
+    // or labels_dir, then make the defaults.
+    const auto [remotes, remote_err] = transferase::get_remote_data_resources();
+    if (remote_err) {
+      std::println("Error identifying remote server: {}", remote_err);
       return EXIT_FAILURE;
     }
-    break;  // quit if we got what we want
+
+    // Do the downloads, attempting whatever remote resources are
+    // available
+    for (const auto &remote : remotes) {
+      if (!args.quiet)
+        std::println("Host for data files: {}:{}", remote.host, remote.port);
+      const auto index_err = get_index_files(
+        args.quiet, remote, args.genomes, args.index_dir, args.force_download);
+      if (index_err)
+        std::println("Error obtaining cpg index files: {}", index_err);
+
+      const auto labels_err =
+        get_labels_files(args.quiet, remote, args.genomes, args.labels_dir);
+      if (labels_err)
+        std::println("Error obtaining labels files: {}", labels_err);
+
+      // ADS: this is broken -- there is no proper check for whether a
+      // subsequent server should be attempted.
+      if (!index_err && !labels_err)
+        break;  // quit if we got what we want
+    }
   }
   return EXIT_SUCCESS;
 }
