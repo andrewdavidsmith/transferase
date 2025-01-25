@@ -2,11 +2,11 @@
     {
         "host" : "smithlab.usc.edu",
         "port" : "80",
-        "path" : "/lab/public/transferase/indexes"
+        "path" : "/lab/public/transferase"
     },
     {
 	"host": "smithlabresearch.org",
 	"port": "80",
-	"path": "/transferase/indexes"
+	"path": "/transferase"
     }
 ]
