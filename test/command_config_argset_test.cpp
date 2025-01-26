@@ -21,6 +21,7 @@
  * SOFTWARE.
  */
 
+#include <client_config.hpp>
 #include <command_config_argset.hpp>
 
 #include <gtest/gtest.h>
@@ -86,11 +87,10 @@ TEST(command_config_argset_test, default_config_file) {
   // NOLINTEND(cppcoreguidelines-pro-type-const-cast)
   EXPECT_FALSE(ec);
 
-  const auto default_config_dir = get_config_dir_default(ec);
+  const auto default_config_dir = client_config::get_config_dir_default(ec);
   EXPECT_FALSE(ec);
 
-  const auto default_config_file_path =
-    std::format("{}/{}", default_config_dir,
-                command_config_argset::default_config_filename);
+  const auto default_config_file_path = std::format(
+    "{}/{}", default_config_dir, client_config::client_config_filename);
   EXPECT_EQ(args.config_file, default_config_file_path);
 }
