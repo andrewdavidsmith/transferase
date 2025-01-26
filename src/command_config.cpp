@@ -46,6 +46,7 @@ xfr config -c my_config_file.toml -s example.com -p 5009 --genomes hg38,mm39
 )";
 
 #include "arguments.hpp"
+#include "client_config.hpp"
 #include "command_config_argset.hpp"
 #include "config_file_utils.hpp"  // write_config_file
 #include "download.hpp"
@@ -318,44 +319,51 @@ command_config_main(int argc,
       },
       [](auto &&x) { std::println("{}: {}", std::get<0>(x), std::get<1>(x)); });
 
-  args.config_file = std::filesystem::absolute(args.config_file, ec);
-  args.config_file = std::filesystem::weakly_canonical(args.config_file, ec);
+  using transferase::client_config;
+  client_config config{};
+
+  if (args.config_file.empty()) {
+    config.config_file = client_config::get_config_file_default(ec);
+  }
+  else
+    ec = config.set_config_file(args.config_file);
   if (ec) {
-    std::println("Bad config file {}: {}", args.config_file, ec);
+    std::println("Bad config file {}: {}", config.config_file, ec);
     return EXIT_FAILURE;
   }
 
-  const auto config_dir =
-    std::filesystem::path(args.config_file).parent_path().string();
   if (!args.quiet)
-    std::println("Client config directory: {}", config_dir);
+    std::println("Creating needed directories");
 
-  {
-    // make sure the user specified config dir exists
-    const bool dir_exists = std::filesystem::exists(config_dir, ec);
-    if (dir_exists && !std::filesystem::is_directory(config_dir, ec)) {
-      std::println("File exists and is not a directory: {}", config_dir);
-      return EXIT_FAILURE;
-    }
-    if (!dir_exists) {
-      if (!args.quiet)
-        std::println("Creating directory {}", config_dir);
-      const bool made_dir = std::filesystem::create_directories(config_dir, ec);
-      if (!made_dir) {
-        std::println("{}: {}", config_dir, ec);
-        return EXIT_FAILURE;
-      }
-    }
+  ec = config.make_directories();
+  if (ec) {
+    std::println("Failure creating directories: {}", ec);
+    return EXIT_FAILURE;
   }
 
   // Setup the indexes dir and the labels dir if the user has
   // specified genomes to configure but not given locations for the
   // files. This must be done prior to writing the config file.
   if (!args.genomes.empty()) {
-    if (args.index_dir.empty())
-      args.set_index_dir_default();
-    if (args.labels_dir.empty())
-      args.set_labels_dir_default();
+    if (args.index_dir.empty()) {
+      config.index_dir = client_config::get_index_dir_default(ec);
+      if (ec) {
+        std::println("Failure setting default indexes dir: {}", ec);
+        return EXIT_FAILURE;
+      }
+    }
+    else
+      config.index_dir = args.index_dir;
+
+    if (args.labels_dir.empty()) {
+      config.labels_dir = client_config::get_labels_dir_default(ec);
+      if (ec) {
+        std::println("Failure setting default labels dir: {}", ec);
+        return EXIT_FAILURE;
+      }
+    }
+    else
+      config.labels_dir = args.labels_dir;
   }
 
   const auto config_write_err = write_config_file(args);
@@ -379,13 +387,14 @@ command_config_main(int argc,
     for (const auto &remote : remotes) {
       if (!args.quiet)
         std::println("Host for data files: {}:{}", remote.host, remote.port);
-      const auto index_err = get_index_files(
-        args.quiet, remote, args.genomes, args.index_dir, args.force_download);
+      const auto index_err =
+        get_index_files(args.quiet, remote, args.genomes, config.index_dir,
+                        args.force_download);
       if (index_err)
         std::println("Error obtaining cpg index files: {}", index_err);
 
       const auto labels_err =
-        get_labels_files(args.quiet, remote, args.genomes, args.labels_dir);
+        get_labels_files(args.quiet, remote, args.genomes, config.labels_dir);
       if (labels_err)
         std::println("Error obtaining labels files: {}", labels_err);
 
