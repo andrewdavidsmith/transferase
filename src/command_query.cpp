@@ -59,6 +59,7 @@ xfr query --local -d methylome_dir -x index_dir -g hg38 \
 
 #include "arguments.hpp"
 #include "bins_writer.hpp"
+#include "client_config.hpp"
 #include "genome_index.hpp"
 #include "genomic_interval.hpp"
 #include "intervals_writer.hpp"
@@ -129,16 +130,10 @@ read_methylomes_file(const std::string &filename,
 namespace transferase {
 
 struct query_argset : argset_base<query_argset> {
-  static constexpr auto default_config_filename =
-    "transferase_client_config.toml";
-
-  static auto
+  [[nodiscard]] static auto
   get_default_config_file_impl() -> std::string {
     std::error_code ec;
-    const auto config_dir = get_config_dir_default(ec);
-    if (ec)
-      return {};
-    return std::filesystem::path{config_dir} / default_config_filename;
+    return client_config::get_config_file_default(ec);
   }
 
   static constexpr auto log_level_default{log_level_t::info};
