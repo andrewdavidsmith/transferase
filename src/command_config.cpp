@@ -62,6 +62,7 @@ xfr config -c my_config_file.toml -s example.com -p 5009 --genomes hg38,mm39
 
 #include <algorithm>
 #include <cerrno>   // for errno
+#include <chrono>   // for std::chrono::operator-
 #include <cstdlib>  // for EXIT_FAILURE, EXIT_SUCCESS
 #include <filesystem>
 #include <format>
@@ -186,16 +187,10 @@ dl_err(const auto &hdr, const auto &ec, const auto &url) -> std::error_code {
 
 [[nodiscard]] static auto
 check_is_outdated(const download_request &dr,
-                  const std::filesystem::path local_file) -> bool {
+                  const std::filesystem::path &local_file) -> bool {
   const std::filesystem::file_time_type ftime =
     std::filesystem::last_write_time(local_file);
   const auto remote_timestamp = get_timestamp(dr);
-
-  // std::chrono::time_point<std::chrono::file_clock>
-
-  //     std::chrono::clock_cast<std::file_clock>(
-  //       system_clock::from_time_t(time)) < lastWriteTime
-
   return (remote_timestamp - ftime).count() > 0;
 }
 
