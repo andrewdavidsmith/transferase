@@ -187,9 +187,19 @@ dl_err(const auto &hdr, const auto &ec, const auto &url) -> std::error_code {
 
 [[nodiscard]] static auto
 check_is_outdated(const download_request &dr,
-                  const std::filesystem::path &local_file) -> bool {
+                  const std::filesystem::path &local_file,
+                  std::error_code &ec) -> bool {
+  ec.clear();
+  const auto local_file_exists = std::filesystem::exists(local_file, ec);
+  if (ec)
+    return false;
+  if (!local_file_exists)
+    return true;
+
   const std::filesystem::file_time_type ftime =
-    std::filesystem::last_write_time(local_file);
+    std::filesystem::last_write_time(local_file, ec);
+  if (ec)
+    return false;
   const auto remote_timestamp = get_timestamp(dr);
   return (remote_timestamp - ftime).count() > 0;
 }
@@ -209,7 +219,10 @@ get_index_files(const bool quiet, const remote_data_resources &remote,
     const auto local_index_file =
       std::filesystem::path{dirname} / std::format("{}.cpg_idx", assem);
 
-    const bool is_outdated = check_is_outdated(dr, local_index_file);
+    std::error_code ec;
+    const bool is_outdated = check_is_outdated(dr, local_index_file, ec);
+    if (ec)
+      return ec;
 
     if (is_outdated || force_download) {
       if (!quiet)
