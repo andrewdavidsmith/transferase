@@ -90,6 +90,11 @@ struct server_config_argset : argset_base<server_config_argset> {
   }
 
   [[nodiscard]] auto
+  set_hidden_impl() -> boost::program_options::options_description {
+    return {};
+  }
+
+  [[nodiscard]] auto
   set_opts_impl() -> boost::program_options::options_description {
     namespace po = boost::program_options;
     using po::value;
