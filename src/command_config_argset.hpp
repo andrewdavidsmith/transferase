@@ -87,6 +87,11 @@ struct command_config_argset : argset_base<command_config_argset> {
   log_options_impl() const {}
 
   [[nodiscard]] auto
+  set_hidden_impl() -> boost::program_options::options_description {
+    return {};
+  }
+
+  [[nodiscard]] auto
   set_opts_impl() -> boost::program_options::options_description {
     namespace po = boost::program_options;
     using po::value;
