@@ -32,23 +32,7 @@
 namespace transferase {
 
 [[nodiscard]] auto
-get_labels_dir_default() -> std::string {
-  std::error_code ec;
-  const auto config_dir = get_config_dir_default(ec);
-  return ec ? std::string{}
-            : (std::filesystem::path(config_dir) / "labels").string();
-}
-
-[[nodiscard]] auto
-get_index_dir_default() -> std::string {
-  std::error_code ec;
-  const auto config_dir = get_config_dir_default(ec);
-  return ec ? std::string{}
-            : (std::filesystem::path(config_dir) / "indexes").string();
-}
-
-[[nodiscard]] auto
-get_config_dir_default(std::error_code &ec) -> std::string {
+get_server_config_dir_default(std::error_code &ec) -> std::string {
   static const auto config_dir_rhs =
     std::filesystem::path(".config/transferase");
   static const auto env_home = std::getenv("HOME");
