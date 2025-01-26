@@ -64,6 +64,7 @@ xfr query --local -d methylome_dir -x index_dir -g hg38 \
 #include "intervals_writer.hpp"
 #include "level_element.hpp"
 #include "logger.hpp"
+#include "methylome.hpp"
 #include "methylome_interface.hpp"
 #include "output_format_type.hpp"
 #include "request.hpp"
@@ -74,11 +75,13 @@ xfr query --local -d methylome_dir -x index_dir -g hg38 \
 #include <boost/program_options.hpp>
 
 #include <algorithm>  // IWYU pragma: keep
+#include <cerrno>     // for errno
 #include <chrono>
 #include <cstdint>
 #include <cstdlib>
 #include <filesystem>
 #include <format>
+#include <fstream>
 #include <iterator>  // for std::size, for std::cbegin
 #include <print>
 #include <ranges>
@@ -103,6 +106,24 @@ write_output(const auto &outmgr, const auto &results) -> std::error_code {
   std::error_code ec;
   std::visit([&](const auto &arg) { ec = outmgr.write_output(arg); }, results);
   return ec;
+}
+
+[[nodiscard]] inline auto
+read_methylomes_file(const std::string &filename,
+                     std::error_code &ec) -> std::vector<std::string> {
+  std::ifstream in(filename);
+  if (!in) {
+    ec = std::make_error_code(std::errc(errno));
+    return {};
+  }
+
+  std::vector<std::string> names;
+  std::string line;
+  while (getline(in, line))
+    names.push_back(line);
+
+  ec = std::error_code{};
+  return names;
 }
 
 namespace transferase {
@@ -133,7 +154,9 @@ struct query_argset : argset_base<query_argset> {
   std::uint32_t bin_size{};
   std::string intervals_file{};
   std::string methylome_names{};
+  std::string methylomes_file{};
   std::string genome_name{};
+  std::string labels_dir{};
   output_format_t out_fmt{};
   bool count_covered{};
   std::string output_file{};
@@ -161,6 +184,19 @@ struct query_argset : argset_base<query_argset> {
   }
 
   [[nodiscard]] auto
+  set_hidden_impl() -> boost::program_options::options_description {
+    namespace po = boost::program_options;
+    using po::value;
+    po::options_description opts;
+    opts.add_options()
+      // clang-format off
+      ("labels-dir", po::value(&labels_dir), "none")
+      // clang-format on
+      ;
+    return opts;
+  }
+
+  [[nodiscard]] auto
   set_opts_impl() -> boost::program_options::options_description {
     namespace po = boost::program_options;
     using po::value;
@@ -175,8 +211,10 @@ struct query_argset : argset_base<query_argset> {
       ("bin-size,b", po::value(&bin_size), "size of genomic bins")
       ("intervals-file,i", po::value(&intervals_file), "intervals file")
       ("genome,g", po::value(&genome_name)->required(), "genome name")
-      ("methylomes,m", po::value(&methylome_names)->required(),
+      ("methylomes,m", po::value(&methylome_names),
        "methylome names (comma separated)")
+      ("methylomes-file,M", po::value(&methylomes_file),
+       "methylomes file (text file; one methylome per line)")
       ("out-file,o", po::value(&output_file)->required(), "output file")
       ("covered", po::bool_switch(&count_covered),
        "count covered sites for each interval")
@@ -378,6 +416,7 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
 
   args.log_options();
 
+  // validate relationships between arguments
   if (args.local_mode && args.methylome_dir.empty()) {
     lgr.error("Error: local mode requires a methylomes directory");
     return EXIT_FAILURE;
@@ -387,12 +426,12 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
       "Error: specify index directory on command line or in config file");
     return EXIT_FAILURE;
   }
-  if (args.bin_size == 0 && args.intervals_file.empty()) {
-    lgr.error("Error: specify either a non-zer bin size or an intervals file");
+  if ((args.bin_size == 0) == args.intervals_file.empty()) {
+    lgr.error("Error: specify exactly one of bins-size or intervals-file");
     return EXIT_FAILURE;
   }
-  if (args.bin_size > 0 && !args.intervals_file.empty()) {
-    lgr.error("Error: specify only one of bin size or intervals file");
+  if (args.methylome_names.empty() == args.methylomes_file.empty()) {
+    lgr.error("Error: specify exactly one of methylomes or methylomes-file");
     return EXIT_FAILURE;
   }
 
@@ -410,10 +449,29 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
     .hostname = args.hostname,
     .port_number = args.port,
   };
+
+  // get methylome names either parsed from command line or in a file
+  const auto methylome_names =
+    !args.methylomes_file.empty()
+      ? read_methylomes_file(args.methylomes_file, ec)
+      : split_comma(args.methylome_names);
+  if (ec) {
+    lgr.error("Error reading methylomes file {}: {}", args.methylomes_file, ec);
+    return EXIT_FAILURE;
+  }
+
+  // validate the methylome names
+  const auto invalid_name = std::ranges::find_if_not(
+    methylome_names, &transferase::methylome::is_valid_name);
+  if (invalid_name != std::cend(methylome_names)) {
+    lgr.error("Error: invalid methylome name \"{}\"", *invalid_name);
+    return EXIT_FAILURE;
+  }
+
   using transferase::level_element_covered_t;
   using transferase::level_element_t;
   using transferase::request_type_code;
-  const auto methylome_names = split_comma(args.methylome_names);
+
   const bool intervals_query = (args.bin_size == 0);
   const auto request_type =
     intervals_query ? (args.count_covered ? request_type_code::intervals_covered
