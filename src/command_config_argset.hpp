@@ -25,6 +25,7 @@
 #define SRC_COMMAND_CONFIG_ARGSET_HPP_
 
 #include "arguments.hpp"
+#include "client_config.hpp"
 #include "logger.hpp"
 #include "utilities.hpp"
 
@@ -38,35 +39,10 @@
 namespace transferase {
 
 struct command_config_argset : argset_base<command_config_argset> {
-  static constexpr auto default_config_filename =
-    "transferase_client_config.toml";
-
-  [[nodiscard]] auto
-  set_index_dir_default() {
-    index_dir = get_index_dir_default();
-  }
-
-  [[nodiscard]] auto
-  set_labels_dir_default() {
-    labels_dir = get_labels_dir_default();
-  }
-
   [[nodiscard]] static auto
   get_default_config_file_impl() -> std::string {
-    std::error_code ec;
-    const auto config_dir = get_config_dir_default(ec);
-    if (ec)
-      return {};
-    return std::filesystem::path(config_dir) / default_config_filename;
-  }
-
-  [[nodiscard]] static auto
-  get_default_config_dir() -> std::string {
-    std::error_code ec;
-    const auto config_dir = get_config_dir_default(ec);
-    if (ec)
-      return {};
-    return config_dir;
+    std::error_code ignored_ec;  // ADS: careful here
+    return client_config::get_config_file_default(ignored_ec);
   }
 
   static constexpr auto port_default{"5000"};
