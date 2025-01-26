@@ -59,7 +59,7 @@ namespace transferase {
 get_daemon_filename(const std::string &filename,
                     std::error_code &ec) -> std::string {
   static constexpr auto system_dir = "/var/tmp/transferase";
-  auto dirname = get_config_dir_default(ec);
+  auto dirname = get_server_config_dir_default(ec);
   if (dirname.empty() || ec)
     // Could not get the config dir, so go with a system dir
     dirname = system_dir;
