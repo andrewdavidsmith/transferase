@@ -56,7 +56,7 @@ TEST(command_format_test, basic_test) {
     index_directory,
     "-g",
     genome_name,
-    "-o",
+    "-d",
     output_directory,
     "-m",
     methylation_file,
