@@ -187,8 +187,10 @@ get_query(std::string &query, std::regex &query_re) {
       break;  // ESC to cancel
     else if (query_ch == enter_key_code)
       break;  // Enter to submit
-    else if (std::isprint(query_ch))
+    else if (std::isprint(query_ch) || query_ch == ' ')
       query += static_cast<char>(query_ch);
+    else if (query_ch == KEY_BACKSPACE || query_ch == KEY_DC || query_ch == 127)
+      query.pop_back();
     clear();
     mvprintw(1, 0, std::format("Search Query: {}", query));
     refresh();
