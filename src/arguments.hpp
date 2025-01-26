@@ -88,14 +88,26 @@ template <typename T> struct argset_base {
   }
 
   [[nodiscard]] auto
+  set_hidden() -> boost::program_options::options_description {
+    // This function should cover all options that go unused but might
+    // appear in the config file because there is no easy way to treat
+    // the config file differently from the cli when it comes to
+    // unregistered options.
+    return self().set_hidden_impl();
+  }
+
+  [[nodiscard]] auto
   parse(const int argc, const char *const argv[], const std::string &usage,
         const std::string &about_msg,
         const std::string &description_msg) -> std::error_code {
     namespace po = boost::program_options;
     const auto opts = set_opts();
+    const auto hidden = set_hidden();
+    po::options_description all;
+    all.add(opts).add(hidden);
     try {
       po::variables_map var_map;
-      po::store(po::parse_command_line(argc, argv, opts), var_map);
+      po::store(po::parse_command_line(argc, argv, all), var_map);
       // check if help has been seen
       if (var_map.count("help") || argc == 1) {
         std::println("{}\n{}", about_msg, usage);
@@ -112,7 +124,7 @@ template <typename T> struct argset_base {
         !config_file.empty() &&
         (!config_file_defaulted || std::filesystem::exists(config_file));
       if (!skip_parsing_config_file && use_config_file)
-        po::store(po::parse_config_file(config_file.data(), opts), var_map);
+        po::store(po::parse_config_file(config_file.data(), all), var_map);
       po::notify(var_map);
     }
     catch (po::error &e) {
