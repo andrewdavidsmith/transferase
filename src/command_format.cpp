@@ -67,8 +67,8 @@ xfr format -g hg38 -d output_dir -m SRX012345.xsym.gz
 #include <chrono>
 #include <cstdint>  // for std::uint32_t, std::uint64_t, std::int32_t
 #include <cstdlib>  // for EXIT_FAILURE, abort, EXIT_SUCCESS
+#include <filesystem>
 #include <format>
-#include <iostream>
 #include <iterator>  // for std::cbegin, std::size
 #include <limits>
 #include <print>
@@ -369,7 +369,7 @@ struct command_format_argset : argset_base<command_format_argset> {
   [[nodiscard]] static auto
   get_default_config_dir() -> std::string {
     std::error_code ec;
-    const auto config_dir = get_config_dir_default(ec);
+    auto config_dir = get_config_dir_default(ec);
     if (ec)
       return {};
     return config_dir;
