@@ -48,6 +48,7 @@ xfr format -g hg38 -d output_dir -m SRX012345.xsym.gz
 )";
 
 #include "arguments.hpp"
+#include "client_config.hpp"
 #include "counts_file_format.hpp"
 #include "format_error_code.hpp"  // IWYU pragma: keep
 #include "genome_index.hpp"
@@ -354,25 +355,10 @@ process_cpg_sites_counts(const std::string &infile, const genome_index &index)
 }
 
 struct command_format_argset : argset_base<command_format_argset> {
-  static constexpr auto default_config_filename =
-    "transferase_client_config.toml";
-
   [[nodiscard]] static auto
   get_default_config_file_impl() -> std::string {
     std::error_code ec;
-    const auto config_dir = get_config_dir_default(ec);
-    if (ec)
-      return {};
-    return std::filesystem::path(config_dir) / default_config_filename;
-  }
-
-  [[nodiscard]] static auto
-  get_default_config_dir() -> std::string {
-    std::error_code ec;
-    auto config_dir = get_config_dir_default(ec);
-    if (ec)
-      return {};
-    return config_dir;
+    return client_config::get_config_file_default(ec);
   }
 
   std::string hostname{};
@@ -487,8 +473,14 @@ command_format_main(int argc,
 
   args.methylome_name = methylome::parse_methylome_name(args.methylation_input);
 
-  if (args.index_directory.empty())
-    args.index_directory = transferase::get_index_dir_default();
+  if (args.index_directory.empty()) {
+    args.index_directory =
+      transferase::client_config::get_index_dir_default(ec);
+    if (ec) {
+      lgr.error("Failure identifying index directory: {}", ec.message());
+      return EXIT_FAILURE;
+    }
+  }
 
   args.log_options();
 
