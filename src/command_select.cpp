@@ -46,6 +46,7 @@ Examples:
 xfr select -o output_file.txt -g hg38
 )";
 
+#include "client_config.hpp"
 #include "utilities.hpp"
 
 #include <boost/container/detail/std_fwd.hpp>  // for std::pair
@@ -499,13 +500,19 @@ command_select_main(int argc, char *argv[]) -> int {  // NOLINT
     return EXIT_FAILURE;
   }
 
-  if (input_file.empty())
-    input_file = (std::filesystem::path{transferase::get_labels_dir_default()} /
-                  std::format("{}.json", genome_name))
-                   .string();
-
   try {
     std::error_code error{};
+    if (input_file.empty()) {
+      const auto labels_dir =
+        transferase::client_config::get_labels_dir_default(error);
+      if (error)
+        throw std::runtime_error(
+          std::format("Error identifying labels dir: {}", error.message()));
+      input_file = (std::filesystem::path{labels_dir} /
+                    std::format("{}.json", genome_name))
+                     .string();
+    }
+
     const auto data = load_data(input_file, error);
     if (error)
       throw std::runtime_error(
