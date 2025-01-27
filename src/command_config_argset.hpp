@@ -41,26 +41,43 @@ namespace transferase {
 struct command_config_argset : argset_base<command_config_argset> {
   [[nodiscard]] static auto
   get_default_config_file_impl() -> std::string {
-    std::error_code ignored_ec;  // ADS: careful here
-    return client_config::get_config_file_default(ignored_ec);
+    // skpping parsing config file
+    return {};
   }
 
   static constexpr auto port_default{"5000"};
   static constexpr auto log_level_default{log_level_t::info};
+
+  std::string config_dir{};
   std::string hostname{};
   std::string port{};
   std::string index_dir{};
-  std::string methylome_dir{};
-  std::string log_filename{};
   std::string labels_dir{};
+  std::string methylome_dir{};
   std::string genomes{};
+  std::string log_file{};
   log_level_t log_level{};
+
   bool update{};
   bool quiet{};
   bool force_download{};
 
   auto
-  log_options_impl() const {}
+  log_options_impl() const {
+    transferase::log_args<log_level_t::info>(
+      std::vector<std::tuple<std::string, std::string>>{
+        // clang-format off
+        {"config_dir", std::format("{}", config_dir)},
+        {"hostname", std::format("{}", hostname)},
+        {"port", std::format("{}", port)},
+        {"index_dir", std::format("{}", index_dir)},
+        {"labels_dir", std::format("{}", index_dir)},
+        {"log_file", std::format("{}", log_file)},
+        {"log_level", std::format("{}", log_level)},
+        {"genomes", std::format("{}", genomes)},
+        // clang-format on
+      });
+  }
 
   [[nodiscard]] auto
   set_hidden_impl() -> boost::program_options::options_description {
@@ -76,9 +93,8 @@ struct command_config_argset : argset_base<command_config_argset> {
     // clang-format off
     opts.add_options()
       ("help,h", "print this message and exit")
-      ("config-file,c", value(&config_file)
-       ->value_name("[arg]")->default_value(get_default_config_file(), ""),
-       "name of configuration file; see help for default")
+      ("config-dir,c", value(&config_dir),
+       "name of configuration directory; see help for default")
       ("hostname,s", value(&hostname), "transferase server hostname")
       ("port,p", value(&port)->default_value(port_default), "transferase server port")
       ("genomes,g", value(&genomes),
@@ -87,12 +103,12 @@ struct command_config_argset : argset_base<command_config_argset> {
       ("index-dir,x", value(&index_dir),
        "name of a directory to store genome index files")
       ("methylome-dir,d", value(&methylome_dir),
-       "name of a directory to search for methylomes")
+       "name of a local directory to search for methylomes")
       ("labels-dir,L", value(&labels_dir),
        "name of a directory to search for sample labels")
       ("log-level,v", value(&log_level)->default_value(log_level_default, ""),
        "{debug, info, warning, error, critical}")
-      ("log-file,l", value(&log_filename)->value_name("console"),
+      ("log-file,l", value(&log_file)->value_name("console"),
        "log file name")
       ("update,u", po::bool_switch(&update), "update sample labels")
       ("force,f", po::bool_switch(&force_download), "force index file update")
@@ -108,9 +124,9 @@ BOOST_DESCRIBE_STRUCT(command_config_argset, (), (
   hostname,
   port,
   index_dir,
-  methylome_dir,
   labels_dir,
-  log_filename,
+  methylome_dir,
+  log_file,
   log_level
 ))
 // clang-format on
