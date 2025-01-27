@@ -118,13 +118,15 @@ template <typename T> struct argset_base {
 
       // attempt to use the config file if it was explicitly
       // specified, or if it was defaulted and exists.
-      const bool config_file_defaulted = var_map["config-file"].defaulted();
-      config_file = var_map["config-file"].as<std::string>();
-      const bool use_config_file =
-        !config_file.empty() &&
-        (!config_file_defaulted || std::filesystem::exists(config_file));
-      if (!skip_parsing_config_file && use_config_file)
-        po::store(po::parse_config_file(config_file.data(), all), var_map);
+      if (!skip_parsing_config_file) {
+        const bool config_file_defaulted = var_map["config-file"].defaulted();
+        config_file = var_map["config-file"].as<std::string>();
+        const bool use_config_file =
+          !config_file.empty() &&
+          (!config_file_defaulted || std::filesystem::exists(config_file));
+        if (use_config_file)
+          po::store(po::parse_config_file(config_file.data(), all), var_map);
+      }
       po::notify(var_map);
     }
     catch (po::error &e) {
