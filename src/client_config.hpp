@@ -24,7 +24,8 @@
 #ifndef SRC_CLIENT_CONFIG_HPP_
 #define SRC_CLIENT_CONFIG_HPP_
 
-#include "logger.hpp"  // for transferase::log_level_t
+// The full logger needs to be seen for 'mp11' and 'describe'
+#include "logger.hpp"  // IWYU pragma: keep
 
 #include <boost/describe.hpp>
 
@@ -33,7 +34,7 @@
 
 namespace transferase {
 
-class client_config {
+struct client_config {
 public:
   static constexpr auto transferase_config_dirname = ".config/transferase";
   static constexpr auto labels_dirname = "labels";
@@ -136,7 +137,8 @@ BOOST_DESCRIBE_STRUCT(client_config, (), (
   methylome_dir,
   log_file,
   log_level
-))
+)
+)
 // clang-format on
 
 }  // namespace transferase

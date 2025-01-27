@@ -29,6 +29,13 @@
 #include <string>
 #include <system_error>
 
+#include <cassert>
+#include <cerrno>
+#include <cstdint>
+#include <cstdlib>
+#include <fstream>
+#include <iterator>  // for std::size
+
 [[nodiscard]] static inline auto
 check_and_return_directory(const std::string &left, const std::string &right,
                            std::error_code &ec) -> std::string {
@@ -416,7 +423,11 @@ client_config::write() const -> std::error_code {
   if (!out)
     return std::make_error_code(std::errc(errno));
   const auto serialized = format_as_config(*this);
-  out.write(serialized.data(), std::size(serialized));
+
+  const auto serialized_size =
+    static_cast<std::streamsize>(std::size(serialized));
+
+  out.write(serialized.data(), serialized_size);
   if (!out)
     return std::make_error_code(std::errc::bad_file_descriptor);
   return std::error_code{};
