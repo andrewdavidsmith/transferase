@@ -245,14 +245,6 @@ BOOST_DESCRIBE_STRUCT(query_argset, (), (
 
 }  // namespace transferase
 
-[[nodiscard]] static inline auto
-split_comma(const auto &s) {
-  return s | std::views::split(',') | std::views::transform([](const auto r) {
-           return std::string(std::cbegin(r), std::cend(r));
-         }) |
-         std::ranges::to<std::vector<std::string>>();
-}
-
 /// Read query intervals, check that they are sorted and valid
 [[nodiscard]] static auto
 read_intervals(const transferase::genome_index &index,
