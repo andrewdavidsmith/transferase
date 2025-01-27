@@ -28,7 +28,7 @@
   Functions declared here are used by multiple source files
  */
 
-#include <algorithm>
+#include <algorithm>  // IWYU pragma: keep
 #include <chrono>
 #include <cstdint>   // for std::uint32_t
 #include <iterator>  // for std::size
