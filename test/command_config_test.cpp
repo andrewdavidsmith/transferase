@@ -32,12 +32,12 @@
 #include <string>
 
 TEST(command_config_test, run_success) {
-  static constexpr auto config_file = "config/transferase_client_config.toml";
+  static constexpr auto config_dir = "config";
   static constexpr auto argv = std::array{
     // clang-format off
     "config",
     "-c",
-    config_file,
+    config_dir,
     "-v",
     "critical",
     "-s",
@@ -55,7 +55,6 @@ TEST(command_config_test, run_success) {
   // NOLINTEND(cppcoreguidelines-pro-type-const-cast)
   EXPECT_EQ(ret, EXIT_SUCCESS);
 
-  const std::filesystem::path config_path{config_file};
-  EXPECT_TRUE(std::filesystem::remove(config_path));
-  EXPECT_TRUE(std::filesystem::remove_all(config_path.parent_path()));
+  const std::filesystem::path config_path{config_dir};
+  EXPECT_TRUE(std::filesystem::remove_all(config_dir));
 }
