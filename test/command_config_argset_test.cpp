@@ -57,40 +57,7 @@ TEST(command_config_argset_test, run_success) {
   const auto ec = args.parse(argc, const_cast<char **>(argv.data()), "usage"s,
                              "about"s, "description"s);
   // NOLINTEND(cppcoreguidelines-pro-type-const-cast)
-  EXPECT_FALSE(args.config_file.empty());
+  EXPECT_TRUE(args.config_dir.empty());
+  EXPECT_FALSE(args.hostname.empty());
   EXPECT_FALSE(ec);
-}
-
-TEST(command_config_argset_test, default_config_file) {
-  using std::string_literals::operator""s;
-  const auto argv = std::array{
-    // clang-format off
-    "config",
-    "-v",
-    "critical",
-    "-s",
-    "example.com",
-    "-p",
-    "5000",
-    "--genomes",
-    "hg38,mm39",
-    // clang-format on
-  };
-  const int argc = static_cast<int>(std::size(argv));
-
-  EXPECT_EQ(argv[0], "config");
-
-  command_config_argset args;
-  // NOLINTBEGIN(cppcoreguidelines-pro-type-const-cast)
-  std::error_code ec = args.parse(argc, const_cast<char **>(argv.data()),
-                                  "usage"s, "about"s, "description"s);
-  // NOLINTEND(cppcoreguidelines-pro-type-const-cast)
-  EXPECT_FALSE(ec);
-
-  const auto default_config_dir = client_config::get_config_dir_default(ec);
-  EXPECT_FALSE(ec);
-
-  const auto default_config_file_path = std::format(
-    "{}/{}", default_config_dir, client_config::client_config_filename);
-  EXPECT_EQ(args.config_file, default_config_file_path);
 }
