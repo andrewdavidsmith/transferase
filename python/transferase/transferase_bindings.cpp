@@ -30,6 +30,7 @@ are considered implementation detail and may vary between Python implementations
 When in doubt, consult the module reference at the location listed above.
 )";
 
+#include "client_config_bindings.hpp"
 #include "genome_index_bindings.hpp"
 #include "genomic_interval_bindings.hpp"
 #include "level_container_bindings.hpp"
@@ -38,6 +39,7 @@ When in doubt, consult the module reference at the location listed above.
 #include "methylome_server_bindings.hpp"
 #include "query_container_bindings.hpp"
 
+#include <client_config.hpp>
 #include <genome_index.hpp>
 #include <genomic_interval.hpp>
 #include <level_container.hpp>
@@ -69,6 +71,9 @@ PYBIND11_MODULE(transferase, the_module) {
 
   the_module.doc() = warning_message;
 
+  auto ClientConfig = py::class_<transferase::client_config>(
+    the_module, "ClientConfig", "Class to help configuring transferase");
+
   auto GenomicInterval = py::class_<transferase::genomic_interval>(
     the_module, "GenomicInterval",
     "Representation of a genomic interval as chrom, start, stop (zero-based, "
@@ -99,6 +104,8 @@ PYBIND11_MODULE(transferase, the_module) {
   auto MethylomeServer = py::class_<transferase::methylome_server>(
     the_module, "MethylomeServer",
     "Remote server that can serve methylome data");
+
+  client_config_bindings(ClientConfig);
 
   genomic_interval_bindings(GenomicInterval);
   genome_index_bindings(GenomeIndex);
