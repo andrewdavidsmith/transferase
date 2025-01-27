@@ -68,7 +68,6 @@ xfr format -g hg38 -d output_dir -m SRX012345.xsym.gz
 #include <chrono>
 #include <cstdint>  // for std::uint32_t, std::uint64_t, std::int32_t
 #include <cstdlib>  // for EXIT_FAILURE, abort, EXIT_SUCCESS
-#include <filesystem>
 #include <format>
 #include <iterator>  // for std::cbegin, std::size
 #include <limits>

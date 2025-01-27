@@ -21,13 +21,11 @@
  * SOFTWARE.
  */
 
-#include <client_config.hpp>
 #include <command_config_argset.hpp>
 
 #include <gtest/gtest.h>
 
 #include <array>
-#include <format>
 #include <iterator>  // for std::size
 #include <string>
 

@@ -80,7 +80,6 @@ xfr query --local -d methylome_dir -x index_dir -g hg38 \
 #include <chrono>
 #include <cstdint>
 #include <cstdlib>
-#include <filesystem>
 #include <format>
 #include <fstream>
 #include <iterator>  // for std::size, for std::cbegin
@@ -142,7 +141,7 @@ struct query_argset : argset_base<query_argset> {
   std::string port;
   std::string methylome_dir;
   std::string index_dir;
-  std::string log_filename;
+  std::string log_file;
   log_level_t log_level{};
 
   bool local_mode{};
@@ -165,7 +164,7 @@ struct query_argset : argset_base<query_argset> {
         {"port", std::format("{}", port)},
         {"methylome_dir", std::format("{}", methylome_dir)},
         {"index_dir", std::format("{}", index_dir)},
-        {"log_filename", std::format("{}", log_filename)},
+        {"log_file", std::format("{}", log_file)},
         {"log_level", std::format("{}", log_level)},
         {"local_mode", std::format("{}", local_mode)},
         {"bin_size", std::format("{}", bin_size)},
@@ -223,7 +222,7 @@ struct query_argset : argset_base<query_argset> {
        "genome index directory")
       ("log-level,v", po::value(&log_level)->default_value(log_level_default),
        "{debug, info, warning, error, critical}")
-      ("log-file,l", po::value(&log_filename)->value_name("[arg]"),
+      ("log-file,l", po::value(&log_file)->value_name("[arg]"),
        "log file name (defaults: print to screen)")
       // clang-format on
       ;
@@ -237,7 +236,7 @@ BOOST_DESCRIBE_STRUCT(query_argset, (), (
   port,
   methylome_dir,
   index_dir,
-  log_filename,
+  log_file,
   log_level
 )
 )
