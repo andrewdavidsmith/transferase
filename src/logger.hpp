@@ -26,6 +26,8 @@
 
 #include "format_error_code.hpp"  // IWYU pragma: keep
 
+#include <boost/describe.hpp>  // for BOOST_DESCRIBE_ENUM
+
 #if not defined(__APPLE__) && not defined(__MACH__)
 #include <sys/syscall.h>
 #include <unistd.h>  // gettid
@@ -79,6 +81,18 @@ enum class log_level_t : std::uint8_t {
 };
 static constexpr std::uint32_t n_log_levels =
   std::to_underlying(log_level_t::n_levels);
+
+// clang-format off
+BOOST_DESCRIBE_ENUM(
+  log_level_t,
+  debug,
+  info,
+  warning,
+  error,
+  critical,
+  n_levels
+)
+// clang-format on
 
 static constexpr std::array<const char *, n_log_levels> level_name = {
   // clang-format off
