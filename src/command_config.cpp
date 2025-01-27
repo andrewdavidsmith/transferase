@@ -271,9 +271,11 @@ get_labels_files(const remote_data_resources &remote,
 }
 
 [[nodiscard]] static auto
-configure_client(const std::string &config_dir, const std::string &log_file,
+configure_client(const std::string &config_dir, const std::string &hostname,
+                 const std::string &port, const std::string &log_file,
                  const transferase::log_level_t log_level,
                  const std::string &index_dir, const std::string &labels_dir,
+                 const std::string &methylome_dir,
                  const std::vector<std::string> &genomes,
                  const bool force_download) -> std::error_code {
   auto &lgr = transferase::logger::instance();
@@ -300,6 +302,10 @@ configure_client(const std::string &config_dir, const std::string &log_file,
     lgr.error("Failed to set log file: {}", error);
     return error;
   }
+
+  config.hostname = hostname;
+  config.port = port;
+  config.methylome_dir = methylome_dir;
 
   // Setup the indexes dir and the labels dir whether or not the user
   // has specified genomes to configure. This must be done prior to
@@ -413,10 +419,13 @@ command_config_main(int argc,
   // clang-format off
   const auto error = configure_client(
     args.config_dir,
+    args.hostname,
+    args.port,
     args.log_file,
     args.log_level,
     args.index_dir,
     args.labels_dir,
+    args.methylome_dir,
     genomes,
     args.force_download);
   // clang-format on
