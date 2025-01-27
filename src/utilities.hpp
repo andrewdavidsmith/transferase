@@ -28,14 +28,17 @@
   Functions declared here are used by multiple source files
  */
 
+#include <algorithm>
 #include <chrono>
 #include <cstdint>   // for std::uint32_t
 #include <iterator>  // for std::size
+#include <ranges>
 #include <string>
 #include <string_view>
 #include <system_error>
 #include <type_traits>  // for std::true_type
 #include <utility>
+#include <vector>
 
 namespace transferase {
 
@@ -43,6 +46,14 @@ namespace transferase {
 get_server_config_dir_default(std::error_code &ec) -> std::string;
 
 }  // namespace transferase
+
+[[nodiscard]] inline auto
+split_comma(const auto &s) {
+  return s | std::views::split(',') | std::views::transform([](const auto r) {
+           return std::string(std::cbegin(r), std::cend(r));
+         }) |
+         std::ranges::to<std::vector<std::string>>();
+}
 
 [[nodiscard]] inline auto
 duration(const auto start, const auto stop) {
