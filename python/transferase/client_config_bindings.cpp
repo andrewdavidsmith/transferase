@@ -47,7 +47,7 @@ find_dir(const std::vector<std::string> &paths,
   for (const auto &p : paths) {
     const auto dir_itr = std::filesystem::recursive_directory_iterator(p);
     for (const auto &dir_entry : dir_itr) {
-      const auto curr_dir = dir_entry.path();
+      const auto &curr_dir = dir_entry.path();
       if (std::filesystem::is_directory(curr_dir)) {
         const auto candidate = curr_dir / filename;
         if (std::filesystem::exists(candidate))
