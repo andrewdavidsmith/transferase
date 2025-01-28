@@ -30,10 +30,8 @@
 
 #include <boost/json.hpp>
 
-#include <cassert>
 #include <cerrno>
 #include <chrono>  // for std::chrono::operator-
-#include <cstdint>
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
@@ -45,90 +43,77 @@
 #include <vector>
 
 [[nodiscard]] static inline auto
-check_and_return_directory(const std::string &left, const std::string &right,
-                           std::error_code &ec) -> std::string {
-  const auto dirname = std::filesystem::path{left} / right;
-  const bool exists = std::filesystem::exists(dirname, ec);
-  if (ec)
+check_and_return_directory(const std::string &dirname,
+                           std::error_code &error) -> std::string {
+  const bool exists = std::filesystem::exists(dirname, error);
+  if (error)
     return {};
   if (!exists)
     return dirname;
-  const auto is_dir = std::filesystem::is_directory(dirname, ec);
-  if (ec)
+  const auto is_dir = std::filesystem::is_directory(dirname, error);
+  if (error)
     return {};
   if (!is_dir) {
-    ec = std::make_error_code(std::errc::not_a_directory);
+    error = std::make_error_code(std::errc::not_a_directory);
     return {};
   }
   return dirname;
 }
 
 [[nodiscard]] static inline auto
-check_and_return_directory(const std::string &dirname,
-                           std::error_code &ec) -> std::string {
-  const bool exists = std::filesystem::exists(dirname, ec);
-  if (ec)
-    return {};
-  if (!exists)
-    return dirname;
-  const auto is_dir = std::filesystem::is_directory(dirname, ec);
-  if (ec)
-    return {};
-  if (!is_dir) {
-    ec = std::make_error_code(std::errc::not_a_directory);
-    return {};
-  }
-  return dirname;
+check_and_return_directory(const std::string &left, const std::string &right,
+                           std::error_code &error) -> std::string {
+  const auto dirname = std::filesystem::path{left} / right;
+  return check_and_return_directory(dirname, error);
 }
 
 [[nodiscard]] static inline auto
 create_dirs_if_needed(const std::string &dirname,
                       std::error_code &error) -> bool {
-  const bool exists = std::filesystem::exists(dirname, error);
-  if (!exists) {
+  // get the status or error if enoent
+  const auto status = std::filesystem::status(dirname, error);
+  if (error == std::errc::no_such_file_or_directory) {
+    // If the file does not exist already, make the directories
     const bool dirs_ok = std::filesystem::create_directories(dirname, error);
     if (error)
       return false;
     return dirs_ok;
   }
-  const auto is_dir = std::filesystem::is_directory(dirname, error);
+  // real error...
   if (error)
     return false;
-  return is_dir;
+
+  // file exists, check if it's a dir
+  return std::filesystem::is_directory(status);
 }
 
-// [[nodiscard]] static inline auto
-// check_and_return_existing_file(const std::string &left,
-//                                const std::string &right,
-//                                std::error_code &ec) -> std::string {
-//   const auto joined = std::filesystem::path{left} / right;
-//   const auto file_exists = std::filesystem::exists(joined, ec);
-//   if (ec)
-//     return {};
-//   if (!file_exists) {
-//     ec = std::make_error_code(std::errc::no_such_file_or_directory);
-//     return {};
-//   }
-//   std::error_code ignored_ec;
-//   const auto is_dir = std::filesystem::is_directory(joined, ignored_ec);
-//   if (is_dir) {
-//     ec = std::make_error_code(std::errc::is_a_directory);
-//     return {};
-//   }
-//   return joined;
-// }
+[[nodiscard]] static inline auto
+check_and_return_file(const std::string &filename,
+                      std::error_code &error) noexcept -> std::string {
+  const auto status = std::filesystem::status(filename, error);
+  if (error == std::errc::no_such_file_or_directory) {
+    error.clear();
+    return filename;
+  }
+  if (error)
+    return {};
+
+  const auto is_dir = std::filesystem::is_directory(status);
+  // File exists as a dir
+  if (is_dir) {
+    error = std::make_error_code(std::errc::is_a_directory);
+    return {};
+  }
+
+  // File exists but not as dir
+  return filename;
+}
 
 [[nodiscard]] static inline auto
 check_and_return_file(const std::string &left, const std::string &right,
-                      std::error_code &ec) -> std::string {
+                      std::error_code &error) -> std::string {
   const auto joined = std::filesystem::path{left} / right;
-  std::error_code ignored_ec;
-  const auto is_dir = std::filesystem::is_directory(joined, ignored_ec);
-  if (is_dir) {
-    ec = std::make_error_code(std::errc::is_a_directory);
-    return {};
-  }
-  return joined;
+  return check_and_return_file(joined, error);
 }
 
 [[nodiscard]] inline auto
@@ -162,104 +147,68 @@ client_config::get_config_dir_default(std::error_code &ec) -> std::string {
 }
 
 [[nodiscard]] auto
-client_config::get_labels_dir_default(std::error_code &ec) -> std::string {
-  const auto config_dir = get_config_dir_default(ec);
-  if (ec)
-    return {};
-  return check_and_return_directory(config_dir, labels_dirname, ec);
-}
-
-[[nodiscard]] auto
-client_config::get_index_dir_default(std::error_code &ec) -> std::string {
-  const auto config_dir = get_config_dir_default(ec);
-  if (ec)
-    return {};
-  return check_and_return_directory(config_dir, index_dirname, ec);
-}
-
-[[nodiscard]] auto
-client_config::get_config_file_default(std::error_code &ec) -> std::string {
-  const auto config_dir = get_config_dir_default(ec);
-  if (ec)
-    return {};
-  return check_and_return_file(config_dir, client_config_filename, ec);
-}
-
-[[nodiscard]] auto
-client_config::get_log_file_default(std::error_code &ec) -> std::string {
-  const auto config_dir = get_config_dir_default(ec);
-  if (ec)
-    return {};
-  return check_and_return_file(config_dir, client_log_filename, ec);
-}
-
-[[nodiscard]] auto
-client_config::get_labels_dir_default_impl(std::error_code &ec) -> std::string {
+client_config::get_dir_default_impl(const std::string &dirname,
+                                    std::error_code &ec) -> std::string {
   const auto config_dir_local =
     config_dir.empty() ? get_config_dir_default(ec) : config_dir;
   if (ec)
     return {};
-  return check_and_return_directory(config_dir_local, labels_dirname, ec);
+  return check_and_return_directory(config_dir_local, dirname, ec);
 }
 
 [[nodiscard]] auto
-client_config::get_index_dir_default_impl(std::error_code &ec) -> std::string {
+client_config::get_index_dir_default(std::error_code &error) -> std::string {
+  // ADS: need to replace this with functions that take actual config
+  // dir, since the config file in that dir might point to a different
+  // location for the index dir.
+  const auto config_dir = get_config_dir_default(error);
+  if (error)
+    return {};
+  return check_and_return_directory(config_dir, index_dirname, error);
+}
+
+[[nodiscard]] auto
+client_config::get_file_default_impl(const std::string &filename,
+                                     std::error_code &ec) -> std::string {
   const auto config_dir_local =
     config_dir.empty() ? get_config_dir_default(ec) : config_dir;
   if (ec)
     return {};
-  return check_and_return_directory(config_dir_local, index_dirname, ec);
+  return check_and_return_file(config_dir_local, filename, ec);
 }
 
 [[nodiscard]] auto
-client_config::get_config_file_default_impl(std::error_code &ec)
-  -> std::string {
-  const auto config_dir_local =
-    config_dir.empty() ? get_config_dir_default(ec) : config_dir;
-  if (ec)
+client_config::get_config_file_default(std::error_code &error) -> std::string {
+  const auto config_dir = get_config_dir_default(error);
+  if (error)
     return {};
-  return check_and_return_file(config_dir_local, client_config_filename, ec);
-}
-
-[[nodiscard]] auto
-client_config::get_log_file_default_impl(std::error_code &ec) -> std::string {
-  const auto config_dir_local =
-    config_dir.empty() ? get_config_dir_default(ec) : config_dir;
-  if (ec)
-    return {};
-  return check_and_return_file(config_dir_local, client_log_filename, ec);
+  return check_and_return_file(config_dir, client_config_filename, error);
 }
 
 [[nodiscard]] auto
 client_config::set_defaults(const bool force) -> std::error_code {
   std::error_code ec;
   if (force || config_file.empty()) {
-    config_file = get_config_file_default_impl(ec);
+    config_file = get_file_default_impl(client_config_filename, ec);
     if (ec)
       return ec;
   }
 
   if (force || index_dir.empty()) {
-    index_dir = get_index_dir_default_impl(ec);
+    index_dir = get_dir_default_impl(index_dirname, ec);
     if (ec)
       return ec;
   }
 
   if (force || labels_dir.empty()) {
-    labels_dir = get_labels_dir_default_impl(ec);
+    labels_dir = get_dir_default_impl(labels_dirname, ec);
     if (ec)
       return ec;
   }
   return std::error_code{};
 }
 
-[[nodiscard]] auto
-client_config::set_config_file(const std::string &s) -> std::error_code {
-  std::error_code ec;
-  config_file = clean_path(s, ec);
-  return ec;
-}
-
+// Init routines for the  files / directories
 auto
 client_config::init_config_dir(const std::string &s,
                                std::error_code &error) -> void {
@@ -273,90 +222,35 @@ client_config::init_config_dir(const std::string &s,
 }
 
 auto
-client_config::init_config_file(const std::string &s,
-                                std::error_code &error) -> void {
-  config_file =
-    s.empty() ? get_config_file_default_impl(error) : clean_path(s, error);
+client_config::init_log_file(const std::string &s,
+                             std::error_code &error) -> void {
+  log_file = s.empty() ? get_file_default_impl(client_log_filename, error)
+                       : clean_path(s, error);
 }
 
 auto
-client_config::init_log_file(const std::string &s,
-                             std::error_code &error) -> void {
-  log_file =
-    s.empty() ? get_log_file_default_impl(error) : clean_path(s, error);
+client_config::init_config_file(const std::string &s,
+                                std::error_code &error) -> void {
+  config_file = s.empty() ? get_file_default_impl(client_config_filename, error)
+                          : clean_path(s, error);
 }
 
 auto
 client_config::init_index_dir(const std::string &s,
                               std::error_code &error) -> void {
-  if (s.empty()) {
-    index_dir = get_index_dir_default_impl(error);
-    if (error)
-      return;
-  }
-  else
-    index_dir = s;
+  index_dir = s.empty() ? get_dir_default_impl(index_dirname, error) : s;
+  if (error)
+    index_dir.clear();
 }
 
 auto
 client_config::init_labels_dir(const std::string &s,
                                std::error_code &error) -> void {
-  if (s.empty()) {
-    labels_dir = get_labels_dir_default_impl(error);
-    if (error)
-      return;
-  }
-  else
-    labels_dir = s;
+  labels_dir = s.empty() ? get_dir_default_impl(labels_dirname, error) : s;
+  if (error)
+    labels_dir.clear();
 }
-
-[[nodiscard]] auto
-client_config::set_hostname(const std::string &s) -> std::error_code {
-  // ADS(TODO): check hostname
-  hostname = s;
-  return {};
-}
-
-[[nodiscard]] auto
-client_config::set_port(const std::string &s) -> std::error_code {
-  std::istringstream is(s);
-  std::uint16_t port_parsed{};
-  if (!(is >> port_parsed)) {
-    port.clear();
-    return std::make_error_code(std::errc::result_out_of_range);
-  }
-  port = s;
-  return {};
-}
-
-[[nodiscard]] auto
-client_config::set_index_dir(const std::string &s) -> std::error_code {
-  std::error_code ec;
-  index_dir = clean_path(s, ec);
-  return ec;
-}
-
-[[nodiscard]] auto
-client_config::set_labels_dir(const std::string &s) -> std::error_code {
-  std::error_code ec;
-  labels_dir = clean_path(s, ec);
-  return ec;
-}
-
-[[nodiscard]] auto
-client_config::set_log_file(const std::string &s) -> std::error_code {
-  assert(!s.empty());
-  std::error_code ec;
-  log_file = clean_path(s, ec);
-  return ec;
-}
-
-[[nodiscard]] auto
-client_config::set_log_level(const log_level_t ll) -> std::error_code {
-  // ADS(TOD): validate log level
-  log_level = ll;
-  return {};
-}
+// done init routines
 
 /// Create all the directories involved in the client config, but if
 /// filesystem entires already exist for those directory names,
@@ -437,6 +331,7 @@ client_config::write() const -> std::error_code {
 
   out.write(serialized.data(), serialized_size);
   if (!out)
+    // EC
     return std::make_error_code(std::errc::bad_file_descriptor);
   return std::error_code{};
 }
@@ -566,8 +461,7 @@ client_config::validate(std::error_code &error) noexcept -> bool {
 
   // We want the config file to always get its default; the directory
   // is what the user sets
-  const std::string config_file_empty{};
-  init_config_file(config_file_empty, error);
+  init_config_file(std::string{}, error);
   if (error) {
     lgr.debug("Failed to set config file: {}", error);
     return false;
@@ -653,7 +547,8 @@ client_config::run(const std::vector<std::string> &genomes,
 
 auto
 client_config::run(const std::vector<std::string> &genomes,
-                   const std::string &data_dir, const bool force_download,
+                   const std::string &system_config_dir,
+                   const bool force_download,
                    std::error_code &error) const noexcept -> void {
   // validate fields that are needed
   auto &lgr = transferase::logger::instance();
@@ -661,6 +556,7 @@ client_config::run(const std::vector<std::string> &genomes,
   lgr.debug("Making config directories");
   error = make_directories();
   if (error) {
+    error = client_config_error_code::error_creating_directories;
     lgr.error("Error creating directories: {}", error);
     return;
   }
@@ -668,6 +564,7 @@ client_config::run(const std::vector<std::string> &genomes,
   lgr.debug("Writing configuration file");
   error = write();
   if (error) {
+    error = client_config_error_code::error_writing_config_file;
     lgr.error("Error writing config file: {}", error);
     return;
   }
@@ -677,8 +574,9 @@ client_config::run(const std::vector<std::string> &genomes,
     // genomes. And if the user specifies genomes, but no index_dir
     // or labels_dir, then make the defaults.
     const auto remotes =
-      transferase::get_remote_data_resources(data_dir, error);
+      transferase::get_remote_data_resources(system_config_dir, error);
     if (error) {
+      error = client_config_error_code::error_identifying_remote_resources;
       lgr.error("Error identifying remote server: {}", error);
       return;
     }
@@ -703,7 +601,7 @@ client_config::run(const std::vector<std::string> &genomes,
         break;  // quit if we got what we want
     }
     if (!all_downloads_ok)
-      error = std::make_error_code(std::errc::invalid_argument);
+      error = client_config_error_code::download_error;
   }
   error.clear();  // ok!
 }

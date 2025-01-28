@@ -59,11 +59,18 @@ struct client_config {
   std::string log_file;
   log_level_t log_level{};
 
+  /// Does the work of configuring the client.
+  ///
+  /// This work includes creating directories, downloading files and
+  /// writing files. The user's system is not changed until this point
+  /// in the client configuration process.
   auto
   run(const std::vector<std::string> &genomes, const bool force_download,
       std::error_code &error) const noexcept -> void;
 
 #ifndef TRANSFERASE_NOEXCEPT
+  /// Overload of ``run`` that throws system_error exceptions to serve
+  /// in an API.
   auto
   run(const std::vector<std::string> &genomes,
       const bool force_download) const -> void {
@@ -74,25 +81,47 @@ struct client_config {
   }
 #endif
 
+  /// Does the work of configuring the client, accepting a directory
+  /// to use when locating the system configuration file.
+  ///
+  /// This is an overload that can be used when the system
+  /// configuration file cannot be expected to reside in a specific
+  /// directory relative to the binary associated with the current
+  /// process.
   auto
-  run(const std::vector<std::string> &genomes, const std::string &data_dir,
-      const bool force_download, std::error_code &error) const noexcept -> void;
+  run(const std::vector<std::string> &genomes,
+      const std::string &system_config_dir, const bool force_download,
+      std::error_code &error) const noexcept -> void;
 
 #ifndef TRANSFERASE_NOEXCEPT
+  /// Overload of run that throw system_error exceptions to serve in
+  /// an API, providing an interface when system configuration files
+  /// reside in a language-specific location.
+  ///
+  /// This is currently used for Python bindings, which themselves use
+  /// the Python interpreter's search path to locate the system config
+  /// dir.
   auto
-  run(const std::vector<std::string> &genomes, const std::string &data_dir,
+  run(const std::vector<std::string> &genomes,
+      const std::string &system_config_dir,
       const bool force_download) const -> void {
     std::error_code error;
-    run(genomes, data_dir, force_download, error);
+    run(genomes, system_config_dir, force_download, error);
     if (error)
       throw std::system_error(error);
   }
 #endif
 
+  /// Validate that information already assigned to member variables
+  /// of this object make sense, and use defaults for those variables
+  /// that must have values in order to complete the configuration
+  /// process.
   [[nodiscard]] auto
   validate(std::error_code &error) noexcept -> bool;
 
 #ifndef TRANSFERASE_NOEXCEPT
+  // Overload of run that throw system_error exceptions to serve in
+  /// an API.
   [[nodiscard]] auto
   validate() -> bool {
     std::error_code error;
@@ -103,17 +132,13 @@ struct client_config {
   }
 #endif
 
+  /// Write the client configuration file to the filesystem.
   [[nodiscard]] auto
   write() const -> std::error_code;
 
+  /// Create directories needed for the client configuration.
   [[nodiscard]] auto
   make_directories() const -> std::error_code;
-
-  [[nodiscard]] auto
-  set_config_file(const std::string &) -> std::error_code;
-
-  auto
-  init_config_file(const std::string &s, std::error_code &error) -> void;
 
   auto
   init_config_dir(const std::string &s, std::error_code &error) -> void;
@@ -127,56 +152,38 @@ struct client_config {
   auto
   init_log_file(const std::string &s, std::error_code &error) -> void;
 
-  [[nodiscard]] auto
-  set_hostname(const std::string &) -> std::error_code;
-
-  [[nodiscard]] auto
-  set_port(const std::string &) -> std::error_code;
-
-  [[nodiscard]] auto
-  set_index_dir(const std::string &) -> std::error_code;
-
-  [[nodiscard]] auto
-  set_labels_dir(const std::string &) -> std::error_code;
-
-  [[nodiscard]] auto
-  set_log_file(const std::string &) -> std::error_code;
-
-  [[nodiscard]] auto
-  set_log_level(const log_level_t) -> std::error_code;
+  // ADS: need to replace this with functions that take actual config
+  // dir, since the config file in that dir might point to a different
+  // location for the index dir.
+  [[nodiscard]] static auto
+  get_index_dir_default(std::error_code &error) -> std::string;
 
   [[nodiscard]] auto
   set_defaults(const bool force = false) -> std::error_code;
 
   [[nodiscard]] static auto
-  get_config_dir_default(std::error_code &ec) -> std::string;
+  get_config_dir_default(std::error_code &error) -> std::string;
 
   [[nodiscard]] static auto
-  get_config_file_default(std::error_code &ec) -> std::string;
+  get_labels_dir_default(std::error_code &error) -> std::string;
 
   [[nodiscard]] static auto
-  get_log_file_default(std::error_code &ec) -> std::string;
-
-  [[nodiscard]] static auto
-  get_index_dir_default(std::error_code &ec) -> std::string;
-
-  [[nodiscard]] static auto
-  get_labels_dir_default(std::error_code &ec) -> std::string;
+  get_config_file_default(std::error_code &error) -> std::string;
 
   [[nodiscard]] auto
   tostring() const -> std::string;
 
-  [[nodiscard]] auto
-  get_config_file_default_impl(std::error_code &ec) -> std::string;
+private:
+  auto
+  init_config_file(const std::string &s, std::error_code &error) -> void;
 
   [[nodiscard]] auto
-  get_log_file_default_impl(std::error_code &ec) -> std::string;
+  get_file_default_impl(const std::string &filename,
+                        std::error_code &error) -> std::string;
 
   [[nodiscard]] auto
-  get_index_dir_default_impl(std::error_code &ec) -> std::string;
-
-  [[nodiscard]] auto
-  get_labels_dir_default_impl(std::error_code &ec) -> std::string;
+  get_dir_default_impl(const std::string &dirname,
+                       std::error_code &error) -> std::string;
 };
 
 // clang-format off
@@ -199,7 +206,10 @@ BOOST_DESCRIBE_STRUCT(client_config, (), (
 /// @brief Enum for error codes related to client configuration
 enum class client_config_error_code : std::uint8_t {
   ok = 0,
-  not_ok = 1,
+  download_error = 1,
+  error_creating_directories = 2,
+  error_writing_config_file = 3,
+  error_identifying_remote_resources = 4,
 };
 
 template <>
@@ -213,7 +223,10 @@ struct client_config_error_category : std::error_category {
     using std::string_literals::operator""s;
     switch (code) {
     case 0: return "ok"s;
-    case 1: return "not ok"s;
+    case 1: return "download error"s;
+    case 2: return "error creating directories"s;
+    case 3: return "error writing config file"s;
+    case 4: return "error idenidentifying remote resources"s;
     }
     std::unreachable();
   }
