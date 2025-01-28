@@ -24,18 +24,22 @@
 #ifndef SRC_CLIENT_CONFIG_HPP_
 #define SRC_CLIENT_CONFIG_HPP_
 
-// The full logger needs to be seen for 'mp11' and 'describe'
+// ADS: Not sure why logger is needed below, but it might be that the
+// full logger needs to be seen for 'mp11' and 'describe'
 #include "logger.hpp"  // IWYU pragma: keep
 
 #include <boost/describe.hpp>
 
+#include <cstdint>
+#include <format>  // for std::vector??
 #include <string>
 #include <system_error>
+#include <type_traits>  // for std::true_type
+#include <utility>      // for std::to_underlying, std::unreachable
 
 namespace transferase {
 
 struct client_config {
-public:
   static constexpr auto transferase_config_dirname = ".config/transferase";
   static constexpr auto labels_dirname = "labels";
   static constexpr auto index_dirname = "indexes";
@@ -53,6 +57,50 @@ public:
   std::string methylome_dir;
   std::string log_file;
   log_level_t log_level{};
+
+  auto
+  run(const std::vector<std::string> &genomes, const bool force_download,
+      std::error_code &error) const noexcept -> void;
+
+#ifndef TRANSFERASE_NOEXCEPT
+  auto
+  run(const std::vector<std::string> &genomes,
+      const bool force_download) const -> void {
+    std::error_code error;
+    run(genomes, force_download, error);
+    if (error)
+      throw std::system_error(error);
+  }
+#endif
+
+  auto
+  run(const std::vector<std::string> &genomes, const std::string &data_dir,
+      const bool force_download, std::error_code &error) const noexcept -> void;
+
+#ifndef TRANSFERASE_NOEXCEPT
+  auto
+  run(const std::vector<std::string> &genomes, const std::string &data_dir,
+      const bool force_download) const -> void {
+    std::error_code error;
+    run(genomes, data_dir, force_download, error);
+    if (error)
+      throw std::system_error(error);
+  }
+#endif
+
+  [[nodiscard]] auto
+  validate(std::error_code &error) noexcept -> bool;
+
+#ifndef TRANSFERASE_NOEXCEPT
+  [[nodiscard]] auto
+  validate() -> bool {
+    std::error_code error;
+    const auto validated = validate(error);
+    if (error)
+      throw std::system_error(error);
+    return validated;
+  }
+#endif
 
   [[nodiscard]] auto
   write() const -> std::error_code;
@@ -114,7 +162,9 @@ public:
   [[nodiscard]] static auto
   get_labels_dir_default(std::error_code &ec) -> std::string;
 
-private:
+  [[nodiscard]] auto
+  tostring() const -> std::string;
+
   [[nodiscard]] auto
   get_config_file_default_impl(std::error_code &ec) -> std::string;
 
@@ -130,6 +180,8 @@ private:
 
 // clang-format off
 BOOST_DESCRIBE_STRUCT(client_config, (), (
+  config_dir,
+  config_file,
   hostname,
   port,
   index_dir,
@@ -142,5 +194,35 @@ BOOST_DESCRIBE_STRUCT(client_config, (), (
 // clang-format on
 
 }  // namespace transferase
+
+/// @brief Enum for error codes related to client configuration
+enum class client_config_error_code : std::uint8_t {
+  ok = 0,
+  not_ok = 1,
+};
+
+template <>
+struct std::is_error_code_enum<client_config_error_code>
+  : public std::true_type {};
+
+struct client_config_error_category : std::error_category {
+  // clang-format off
+  auto name() const noexcept -> const char * override {return "client_config";}
+  auto message(int code) const -> std::string override {
+    using std::string_literals::operator""s;
+    switch (code) {
+    case 0: return "ok"s;
+    case 1: return "not ok"s;
+    }
+    std::unreachable();
+  }
+  // clang-format on
+};
+
+inline auto
+make_error_code(client_config_error_code e) -> std::error_code {
+  static auto category = client_config_error_category{};
+  return std::error_code(std::to_underlying(e), category);
+}
 
 #endif  // SRC_CLIENT_CONFIG_HPP_

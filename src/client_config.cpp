@@ -23,18 +23,26 @@
 
 #include "client_config.hpp"
 #include "config_file_utils.hpp"
+#include "download.hpp"
+#include "genome_index_data.hpp"
+#include "genome_index_metadata.hpp"
+#include "remote_data_resource.hpp"
 
-#include <filesystem>
-#include <sstream>
-#include <string>
-#include <system_error>
+#include <boost/json.hpp>
 
 #include <cassert>
 #include <cerrno>
+#include <chrono>  // for std::chrono::operator-
 #include <cstdint>
 #include <cstdlib>
+#include <filesystem>
 #include <fstream>
 #include <iterator>  // for std::size
+#include <sstream>
+#include <string>
+#include <system_error>
+#include <unordered_map>  // for std::__detail::operator==
+#include <vector>
 
 [[nodiscard]] static inline auto
 check_and_return_directory(const std::string &left, const std::string &right,
@@ -431,6 +439,273 @@ client_config::write() const -> std::error_code {
   if (!out)
     return std::make_error_code(std::errc::bad_file_descriptor);
   return std::error_code{};
+}
+
+[[nodiscard]] auto
+client_config::tostring() const -> std::string {
+  std::ostringstream o;
+  if (!(o << boost::json::value_from(*this)))
+    o.clear();
+  return o.str();
+}
+
+[[nodiscard]] static auto
+dl_err(const auto &hdr, const auto &ec, const auto &url) -> std::error_code {
+  auto &lgr = transferase::logger::instance();
+  lgr.debug("Error downloading {}: ", url);
+  if (ec)
+    lgr.debug("Error code: {}", ec);
+  const auto status_itr = hdr.find("Status");
+  const auto reason_itr = hdr.find("Reason");
+  if (status_itr != std::cend(hdr) && reason_itr != std::cend(hdr))
+    lgr.debug("HTTP status: {} {}", status_itr->second, reason_itr->second);
+  return ec;
+}
+
+[[nodiscard]] static auto
+check_is_outdated(const download_request &dr,
+                  const std::filesystem::path &local_file,
+                  std::error_code &ec) -> bool {
+  ec.clear();
+  const auto local_file_exists = std::filesystem::exists(local_file, ec);
+  if (ec)
+    return false;
+  if (!local_file_exists)
+    return true;
+
+  const std::filesystem::file_time_type ftime =
+    std::filesystem::last_write_time(local_file, ec);
+  if (ec)
+    return false;
+  const auto remote_timestamp = get_timestamp(dr);
+  return (remote_timestamp - ftime).count() > 0;
+}
+
+[[nodiscard]] static auto
+get_index_files(const remote_data_resources &remote,
+                const std::vector<std::string> &genomes,
+                const std::string &dirname,
+                const bool force_download) -> std::error_code {
+  auto &lgr = transferase::logger::instance();
+  for (const auto &genome : genomes) {
+    const auto stem = remote.form_index_target_stem(genome);
+
+    const auto data_file =
+      std::format("{}{}", stem, genome_index_data::filename_extension);
+
+    const download_request dr{remote.host, remote.port, data_file, dirname};
+    const auto local_index_file =
+      std::filesystem::path{dirname} / std::format("{}.cpg_idx", genome);
+
+    std::error_code ec;
+    const bool is_outdated = check_is_outdated(dr, local_index_file, ec);
+    if (ec)
+      return ec;
+
+    if (is_outdated || force_download) {
+      lgr.info("Download: {} to \"{}\"", remote.form_url(data_file), dirname);
+
+      const auto [data_hdr, data_err] =
+        download({remote.host, remote.port, data_file, dirname});
+      if (data_err)
+        return dl_err(data_hdr, data_err, remote.form_url(data_file));
+
+      const auto meta_file =
+        std::format("{}{}", stem, genome_index_metadata::filename_extension);
+      lgr.info("Download: {} to \"{}\"", remote.form_url(meta_file), dirname);
+      const auto [meta_hdr, meta_err] = download({
+        remote.host,
+        remote.port,
+        meta_file,
+        dirname,
+      });
+      if (meta_err)
+        return dl_err(meta_hdr, meta_err, remote.form_url(meta_file));
+    }
+    else if (!force_download)
+      lgr.debug("Existing index is most recent: {}", local_index_file.string());
+  }
+  return {};
+}
+
+[[nodiscard]] static auto
+get_labels_files(const remote_data_resources &remote,
+                 const std::vector<std::string> &genomes,
+                 const std::string &dirname) -> std::error_code {
+  auto &lgr = transferase::logger::instance();
+  for (const auto &genome : genomes) {
+    const auto stem = remote.form_labels_target_stem(genome);
+    const auto labels_file = std::format("{}.json", stem);
+    lgr.info("Download: {} to {}", remote.form_url(labels_file), dirname);
+    const auto [data_hdr, data_err] = download(download_request{
+      remote.host,
+      remote.port,
+      labels_file,
+      dirname,
+    });
+    if (data_err)
+      return dl_err(data_hdr, data_err, remote.form_url(labels_file));
+  }
+  return {};
+}
+
+/// Verifying that the client config makes sense and is possible must
+/// be done before creating directories, writing config files or
+/// attempting to download any config data.
+[[nodiscard]] auto
+client_config::validate(std::error_code &error) noexcept -> bool {
+  error.clear();
+  // verify fields that are needed
+  auto &lgr = transferase::logger::instance();
+
+  init_config_dir(config_dir, error);
+  if (error) {
+    lgr.error("Failed to set config dir {}: {}", config_dir, error);
+    return false;
+  }
+
+  // We want the config file to always get its default; the directory
+  // is what the user sets
+  const std::string config_file_empty{};
+  init_config_file(config_file_empty, error);
+  if (error) {
+    lgr.debug("Failed to set config file: {}", error);
+    return false;
+  }
+
+  init_log_file(log_file, error);
+  if (error) {
+    lgr.debug("Failed to set log file: {}", error);
+    return false;
+  }
+
+  // Setup the indexes dir and the labels dir whether or not the user
+  // has specified genomes to configure.
+  init_index_dir(index_dir, error);
+  if (error) {
+    lgr.debug("Failed to set index directory {}: {}", index_dir, error);
+    return false;
+  }
+  init_labels_dir(labels_dir, error);
+  if (error) {
+    lgr.debug("Failed to set labels directory {}: {}", labels_dir, error);
+    return false;
+  }
+
+  return true;
+}
+
+auto
+client_config::run(const std::vector<std::string> &genomes,
+                   const bool force_download,
+                   std::error_code &error) const noexcept -> void {
+  // validate fields that are needed
+  auto &lgr = transferase::logger::instance();
+
+  lgr.debug("Making config directories");
+  error = make_directories();
+  if (error) {
+    lgr.error("Error creating directories: {}", error);
+    return;
+  }
+
+  lgr.debug("Writing configuration file");
+  error = write();
+  if (error) {
+    lgr.error("Error writing config file: {}", error);
+    return;
+  }
+
+  if (!genomes.empty()) {
+    // Only attempt downloads if the user specifies one or more
+    // genomes. And if the user specifies genomes, but no index_dir
+    // or labels_dir, then make the defaults.
+    const auto remotes = transferase::get_remote_data_resources(error);
+    if (error) {
+      lgr.error("Error identifying remote server: {}", error);
+      return;
+    }
+
+    // Do the downloads, attempting whatever remote resources are
+    // available
+    bool all_downloads_ok{};
+    for (const auto &remote : remotes) {
+      lgr.debug("Attempting download from {}:{}", remote.host, remote.port);
+      const auto index_err =
+        get_index_files(remote, genomes, index_dir, force_download);
+      if (index_err)
+        lgr.debug("Error obtaining index files: {}", index_err);
+      const auto labels_err = get_labels_files(remote, genomes, labels_dir);
+      if (labels_err)
+        lgr.debug("Error obtaining labels files: {}", labels_err);
+
+      // ADS: this is broken -- there is no proper check for whether a
+      // subsequent server should be attempted.
+      all_downloads_ok = (!index_err && !labels_err);
+      if (all_downloads_ok)
+        break;  // quit if we got what we want
+    }
+    if (!all_downloads_ok)
+      error = std::make_error_code(std::errc::invalid_argument);
+  }
+  error.clear();  // ok!
+}
+
+auto
+client_config::run(const std::vector<std::string> &genomes,
+                   const std::string &data_dir, const bool force_download,
+                   std::error_code &error) const noexcept -> void {
+  // validate fields that are needed
+  auto &lgr = transferase::logger::instance();
+
+  lgr.debug("Making config directories");
+  error = make_directories();
+  if (error) {
+    lgr.error("Error creating directories: {}", error);
+    return;
+  }
+
+  lgr.debug("Writing configuration file");
+  error = write();
+  if (error) {
+    lgr.error("Error writing config file: {}", error);
+    return;
+  }
+
+  if (!genomes.empty()) {
+    // Only attempt downloads if the user specifies one or more
+    // genomes. And if the user specifies genomes, but no index_dir
+    // or labels_dir, then make the defaults.
+    const auto remotes =
+      transferase::get_remote_data_resources(data_dir, error);
+    if (error) {
+      lgr.error("Error identifying remote server: {}", error);
+      return;
+    }
+
+    // Do the downloads, attempting whatever remote resources are
+    // available
+    bool all_downloads_ok{};
+    for (const auto &remote : remotes) {
+      lgr.debug("Attempting download from {}:{}", remote.host, remote.port);
+      const auto index_err =
+        get_index_files(remote, genomes, index_dir, force_download);
+      if (index_err)
+        lgr.debug("Error obtaining index files: {}", index_err);
+      const auto labels_err = get_labels_files(remote, genomes, labels_dir);
+      if (labels_err)
+        lgr.debug("Error obtaining labels files: {}", labels_err);
+
+      // ADS: this is broken -- there is no proper check for whether a
+      // subsequent server should be attempted.
+      all_downloads_ok = (!index_err && !labels_err);
+      if (all_downloads_ok)
+        break;  // quit if we got what we want
+    }
+    if (!all_downloads_ok)
+      error = std::make_error_code(std::errc::invalid_argument);
+  }
+  error.clear();  // ok!
 }
 
 }  // namespace transferase
