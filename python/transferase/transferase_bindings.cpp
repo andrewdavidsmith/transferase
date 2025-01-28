@@ -56,8 +56,6 @@ When in doubt, consult the module reference at the location listed above.
 #include <pybind11/options.h>  // IWYU pragma: keep
 #include <pybind11/pybind11.h>
 
-#include <string>
-
 namespace py = pybind11;
 
 auto
@@ -70,6 +68,13 @@ PYBIND11_MODULE(transferase, the_module) {
   initialize_transferase();
 
   the_module.doc() = warning_message;
+
+  auto LogLevel = py::enum_<transferase::log_level_t>(the_module, "LogLevel")
+                    .value("debug", transferase::log_level_t::debug)
+                    .value("info", transferase::log_level_t::info)
+                    .value("warning", transferase::log_level_t::warning)
+                    .value("error", transferase::log_level_t::error)
+                    .value("critical", transferase::log_level_t::critical);
 
   auto ClientConfig = py::class_<transferase::client_config>(
     the_module, "ClientConfig", "Class to help configuring transferase");
