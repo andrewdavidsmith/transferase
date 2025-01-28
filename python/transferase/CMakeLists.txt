@@ -36,7 +36,10 @@ foreach(cpp_file ${cpp_files})
   )
   # Below, link to the pybind11::module to get the headers; these
   # won't be linked on their own
-  target_link_libraries(${BASE_NAME} PRIVATE pybind11::module)
+  target_link_libraries(${BASE_NAME} PRIVATE
+    pybind11::module
+    ${Boost_LIBRARIES}
+  )
   target_compile_options(${BASE_NAME} PRIVATE ${GLOBAL_COMPILE_OPTIONS})
   list(APPEND LIBRARY_OBJECTS ${BASE_NAME})
 endforeach()
@@ -55,6 +58,12 @@ target_include_directories(py_${LIBRARY_NAME} PRIVATE
   ${PROJECT_BINARY_DIR}
   ${PROJECT_SOURCE_DIR}/src
 )
+
+# ADS: below, need the Boost_LIBRARIES because otherwise problems
+# arise with undefined symols for jump_fcontext, ontop_fcontext and
+# others related to boost context at runtime within the Python
+# interpreter. Not sure it makes sense. I think it's related to the
+# fact that the header from
 target_link_libraries(py_${LIBRARY_NAME} PRIVATE
   transferase_bindings
   transferase_system
