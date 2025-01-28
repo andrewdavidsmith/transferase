@@ -56,6 +56,8 @@ When in doubt, consult the module reference at the location listed above.
 #include <pybind11/options.h>  // IWYU pragma: keep
 #include <pybind11/pybind11.h>
 
+#include <string>
+
 namespace py = pybind11;
 
 auto

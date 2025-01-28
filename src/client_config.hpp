@@ -36,6 +36,7 @@
 #include <system_error>
 #include <type_traits>  // for std::true_type
 #include <utility>      // for std::to_underlying, std::unreachable
+#include <vector>
 
 namespace transferase {
 
