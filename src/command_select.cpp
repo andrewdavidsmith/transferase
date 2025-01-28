@@ -468,6 +468,7 @@ command_select_main(int argc, char *argv[]) -> int {  // NOLINT
   std::string input_file;
   std::string genome_name;
   std::string output_file;
+  std::string config_dir;
 
   namespace po = boost::program_options;
 
@@ -477,8 +478,8 @@ command_select_main(int argc, char *argv[]) -> int {  // NOLINT
     ("help,h", "print this message and exit")
     ("genome,g", po::value(&genome_name)->required(), "use this genome (required)")
     ("output,o", po::value(&output_file)->required(), "output file (required)")
-    ("input,i", po::value(&input_file),
-     "specify an input file")
+    ("input-file,i", po::value(&input_file), "specify an input file")
+    ("config-dir,c", po::value(&config_dir), "specify a config directory")
     // clang-format on
     ;
   po::variables_map vm;
@@ -500,15 +501,21 @@ command_select_main(int argc, char *argv[]) -> int {  // NOLINT
     return EXIT_FAILURE;
   }
 
+  if (!input_file.empty() && !config_dir.empty()) {
+    std::println("Specify at most one of input-file or config-dir");
+    return EXIT_FAILURE;
+  }
+
   try {
     std::error_code error{};
     if (input_file.empty()) {
-      const auto labels_dir =
-        transferase::client_config::get_labels_dir_default(error);
+      transferase::client_config config;
+      config.config_dir = config_dir;
+      error = config.set_defaults();
       if (error)
-        throw std::runtime_error(
-          std::format("Error identifying labels dir: {}", error.message()));
-      input_file = (std::filesystem::path{labels_dir} /
+        throw std::runtime_error(std::format(
+          "Error setting client configuration: {}", error.message()));
+      input_file = (std::filesystem::path{config.labels_dir} /
                     std::format("{}.json", genome_name))
                      .string();
     }
