@@ -27,19 +27,15 @@
 #include <client_config.hpp>
 #include <remote_data_resource.hpp>
 
-#include <config.h>
-
 #include <pybind11/operators.h>  // IWYU pragma: keep
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>  // IWYU pragma: keep
 
-#include <string>
-
 #include <filesystem>
-#include <iostream>  /////////////////////////////////////////
-#include <print>
-#include <sstream>
+#include <format>
 #include <stdexcept>
+#include <string>
+#include <vector>
 
 namespace py = pybind11;
 
