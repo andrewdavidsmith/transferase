@@ -38,7 +38,8 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/system.hpp>  // for boost::system::error_code
 
-#include <cstdint>  // std::uint32_t
+#include <algorithm>  // for std::min, std::max
+#include <cstdint>    // std::uint32_t
 #include <string>
 #include <system_error>
 #include <utility>  // std::swap std::move
