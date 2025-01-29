@@ -131,6 +131,14 @@ struct connection : public std::enable_shared_from_this<connection> {
 
   std::size_t outgoing_bytes_sent{};
   std::size_t outgoing_bytes_remaining{};
+
+  std::size_t n_writes{};
+  std::size_t min_write_size{std::numeric_limits<std::size_t>::max()};
+  std::size_t max_write_size{};
+
+  std::size_t n_reads{};
+  std::size_t min_read_size{std::numeric_limits<std::size_t>::max()};
+  std::size_t max_read_size{};
 };
 
 }  // namespace transferase
