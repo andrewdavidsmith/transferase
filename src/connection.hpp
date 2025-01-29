@@ -35,9 +35,11 @@
 #include <cstddef>
 #include <cstdint>
 #include <functional>  // for std::bind
+#include <limits>      // for std::numeric_limits
 #include <memory>
 #include <string>
 #include <utility>  // for std::move
+#include <vector>   // for std::vector
 
 namespace transferase {
 
