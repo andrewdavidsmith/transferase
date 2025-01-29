@@ -63,7 +63,7 @@ namespace py = pybind11;
 auto
 initialize_transferase() -> void {
   transferase::logger::instance(transferase::shared_from_cout(), "Transferase",
-                                transferase::log_level_t::info);
+                                transferase::log_level_t::error);
 }
 
 PYBIND11_MODULE(transferase, the_module) {
@@ -77,6 +77,10 @@ PYBIND11_MODULE(transferase, the_module) {
                     .value("warning", transferase::log_level_t::warning)
                     .value("error", transferase::log_level_t::error)
                     .value("critical", transferase::log_level_t::critical);
+
+  the_module.def("set_log_level", [](const transferase::log_level_t lvl) {
+    transferase::logger::instance().set_level(lvl);
+  });
 
   auto ClientConfig = py::class_<transferase::client_config>(
     the_module, "ClientConfig", "Class to help configuring transferase");
