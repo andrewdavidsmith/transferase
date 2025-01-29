@@ -55,10 +55,13 @@ template <typename T> struct writer_base {
   const genome_index &index;
   const output_format_t out_fmt;
   const std::vector<std::string> &names;
+  const std::uint32_t min_reads{};
   writer_base(const std::string &outfile, const genome_index &index,
               const output_format_t &out_fmt,
-              const std::vector<std::string> &names) :
-    outfile{outfile}, index{index}, out_fmt{out_fmt}, names{names} {}
+              const std::vector<std::string> &names,
+              const std::uint32_t min_reads) :
+    outfile{outfile}, index{index}, out_fmt{out_fmt}, names{names},
+    min_reads{min_reads} {}
 
   // clang-format off
   auto self() noexcept -> T & {return static_cast<T &>(*this);}
