@@ -124,8 +124,14 @@ connection::read_query() -> void {
       if (!ec) {
         query_remaining -= bytes_transferred;
         query_byte += bytes_transferred;
+        ++n_reads;
+        max_read_size = std::max(max_read_size, bytes_transferred);
+        min_read_size = std::min(min_read_size, bytes_transferred);
         if (query_remaining == 0) {
-          lgr.debug("{} Finished reading query ({}B)", conn_id, query_byte);
+          lgr.debug("{} Finished reading query ({}B, reads={}, max={}B, "
+                    "min={}B, mean={}B)",
+                    conn_id, query_byte, n_reads, max_read_size, min_read_size,
+                    query_byte / n_reads);
           if (req.is_covered_request())
             handler.intervals_get_levels<level_element_covered_t>(
               req, query, resp_hdr, resp);
@@ -248,14 +254,17 @@ connection::respond_with_levels() -> void {
       if (!ec) {
         outgoing_bytes_remaining -= bytes_transferred;
         outgoing_bytes_sent += bytes_transferred;
-        std::println("outgoing_bytes_remaining: {}\n"
-                     "outgoing_bytes_sent: {}\n"
-                     "bytes_transferred: {}\n",
-                     outgoing_bytes_remaining, outgoing_bytes_sent,
-                     bytes_transferred);
+
+        // ADS: collect the stats here; should be refactored
+        ++n_writes;
+        max_write_size = std::max(max_write_size, bytes_transferred);
+        min_write_size = std::min(min_write_size, bytes_transferred);
         if (outgoing_bytes_remaining == 0) {
-          lgr.info("{} Responded with levels ({}B)", conn_id,
-                   outgoing_bytes_sent);
+          lgr.info(
+            "{} Responded with levels ({}B, writes={}, max={}B, min={}B, "
+            "mean={}B)",
+            conn_id, outgoing_bytes_sent, n_writes, max_write_size,
+            min_write_size, outgoing_bytes_sent / n_writes);
           stop();
           /* ADS: closing here but not sure it makes sense; RAII? See comment in
            * check_deadline */
