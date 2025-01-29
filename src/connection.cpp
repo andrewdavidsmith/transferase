@@ -34,6 +34,8 @@
 #include <compare>  // for operator<=
 #include <system_error>
 
+#include <print>
+
 namespace transferase {
 
 struct level_element_covered_t;
@@ -192,8 +194,10 @@ connection::respond_with_header() -> void {
       [this, self](const boost::system::error_code ec,
                    [[maybe_unused]] const std::size_t bytes_transferred) {
         deadline.expires_at(boost::asio::steady_timer::time_point::max());
-        if (!ec)
+        if (!ec) {
+          prepare_to_write_response_payload();
           respond_with_levels();
+        }
         else {
           lgr.warning("{} Error sending response header: {}", conn_id, ec);
           stop();
@@ -207,16 +211,65 @@ connection::respond_with_header() -> void {
   }
 }
 
+// auto
+// connection::respond_with_levels() -> void {
+//   auto self(shared_from_this());
+//   boost::asio::async_write(
+//     socket, boost::asio::buffer(resp.payload),
+//     [this, self](const boost::system::error_code ec,
+//                  const std::size_t bytes_transferred) {
+//       deadline.expires_at(boost::asio::steady_timer::time_point::max());
+//       if (!ec) {
+//         lgr.info("{} Responded with levels ({}B)", conn_id,
+//         bytes_transferred); stop();
+//         /* ADS: closing here but not sure it makes sense; RAII? See comment
+//         in
+//          * check_deadline */
+//         boost::system::error_code socket_close_ec;  // for non-throwing
+//         (void)socket.close(socket_close_ec);
+//         if (socket_close_ec)
+//           lgr.warning("{} Socket close error: {}", conn_id, socket_close_ec);
+//       }
+//       else
+//         lgr.warning("{} Error sending levels: {}", conn_id, ec);
+//     });
+//   deadline.expires_after(std::chrono::seconds(read_timeout_seconds));
+// }
+
 auto
 connection::respond_with_levels() -> void {
   auto self(shared_from_this());
-  boost::asio::async_write(
-    socket, boost::asio::buffer(resp.payload),
+  socket.async_write_some(
+    boost::asio::buffer(get_outgoing_data_buffer() + outgoing_bytes_sent,
+                        outgoing_bytes_remaining),
     [this, self](const boost::system::error_code ec,
                  const std::size_t bytes_transferred) {
       deadline.expires_at(boost::asio::steady_timer::time_point::max());
       if (!ec) {
-        lgr.info("{} Responded with levels ({}B)", conn_id, bytes_transferred);
+        outgoing_bytes_remaining -= bytes_transferred;
+        outgoing_bytes_sent += bytes_transferred;
+        std::println("outgoing_bytes_remaining: {}\n"
+                     "outgoing_bytes_sent: {}\n"
+                     "bytes_transferred: {}\n",
+                     outgoing_bytes_remaining, outgoing_bytes_sent,
+                     bytes_transferred);
+        if (outgoing_bytes_remaining == 0) {
+          lgr.info("{} Responded with levels ({}B)", conn_id,
+                   outgoing_bytes_sent);
+          stop();
+          /* ADS: closing here but not sure it makes sense; RAII? See comment in
+           * check_deadline */
+          boost::system::error_code socket_close_ec;  // for non-throwing
+          (void)socket.close(socket_close_ec);
+          if (socket_close_ec)
+            lgr.warning("{} Socket close error: {}", conn_id, socket_close_ec);
+        }
+        else {
+          respond_with_levels();
+        }
+      }
+      else {
+        lgr.warning("{} Error sending levels: {}", conn_id, ec);
         stop();
 
         /* ADS: closing here but not sure it makes sense; RAII? See comment in
@@ -226,8 +279,6 @@ connection::respond_with_levels() -> void {
         if (socket_close_ec)
           lgr.warning("{} Socket close error: {}", conn_id, socket_close_ec);
       }
-      else
-        lgr.warning("{} Error sending levels: {}", conn_id, ec);
     });
   deadline.expires_after(std::chrono::seconds(read_timeout_seconds));
 }
