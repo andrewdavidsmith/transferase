@@ -95,6 +95,22 @@ struct connection : public std::enable_shared_from_this<connection> {
   auto
   check_deadline() -> void;
 
+  [[nodiscard]] auto
+  get_outgoing_n_bytes() const -> std::uint32_t {
+    return resp.n_bytes();
+  }
+
+  auto
+  prepare_to_write_response_payload() -> void {
+    outgoing_bytes_remaining = get_outgoing_n_bytes();  // init counters
+    outgoing_bytes_sent = 0;
+  }
+
+  [[nodiscard]] auto
+  get_outgoing_data_buffer() const noexcept -> const char * {
+    return reinterpret_cast<const char *>(resp.payload.data());
+  }
+
   boost::asio::ip::tcp::socket socket;  // this connection's socket
   boost::asio::steady_timer deadline;
   request_handler &handler;  // handles incoming requests
@@ -112,6 +128,9 @@ struct connection : public std::enable_shared_from_this<connection> {
   transferase::query_container query;
   std::size_t query_byte{};
   std::size_t query_remaining{};
+
+  std::size_t outgoing_bytes_sent{};
+  std::size_t outgoing_bytes_remaining{};
 };
 
 }  // namespace transferase
