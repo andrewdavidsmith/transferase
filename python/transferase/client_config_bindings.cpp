@@ -45,6 +45,10 @@ namespace transferase {
 find_dir(const std::vector<std::string> &paths,
          const std::string &filename) -> std::string {
   for (const auto &p : paths) {
+    // Some of the paths given by Python might not exist
+    const auto path_elem_exists = std::filesystem::exists(p);
+    if (!path_elem_exists)
+      continue;
     const auto dir_itr = std::filesystem::recursive_directory_iterator(p);
     for (const auto &dir_entry : dir_itr) {
       const auto &curr_dir = dir_entry.path();
@@ -83,15 +87,21 @@ client_config_bindings(pybind11::class_<transferase::client_config> &cls)
   -> void {
   using namespace pybind11::literals;  // NOLINT
   cls.def(py::init(&kwargs_init_helper<transferase::client_config>))
-    .def("validate",
-         [](transferase::client_config &self) { return self.validate(); })
-    .def("run",
-         [](const transferase::client_config &self,
-            const std::vector<std::string> &genomes,
-            const bool force_download = false) {
-           const auto conf_dir = transferase::find_system_config_dir();
-           self.run(genomes, conf_dir, force_download);
-         })
+    .def(
+      "validate",
+      [](transferase::client_config &self) -> bool { return self.validate(); },
+      "Validate any initialized data members and assign default values to any "
+      "that have not been initialized.")
+    .def(
+      "run",
+      [](const transferase::client_config &self,
+         const std::vector<std::string> &genomes,
+         const bool force_download = false) {
+        const auto conf_dir = transferase::find_system_config_dir();
+        self.run(genomes, conf_dir, force_download);
+      },
+      "Does the work of configuring the client, accepting a list of genomes "
+      "and an indicator to force redownloading")
     .def_readwrite("config_dir", &transferase::client_config::config_dir,
                    "Directory where config info is stored.")
     .def_readwrite("config_file", &transferase::client_config::config_file,
@@ -116,7 +126,3 @@ client_config_bindings(pybind11::class_<transferase::client_config> &cls)
     //
     ;
 }
-
-// ,
-//   "Validate any initialized data members and assign default values to any
-//   " "that have not been initialized.")
