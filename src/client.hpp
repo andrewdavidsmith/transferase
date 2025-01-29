@@ -38,7 +38,8 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/system.hpp>  // for boost::system::error_code
 
-#include <cstdint>  // std::uint32_t
+#include <algorithm>  // for std::min, std::max
+#include <cstdint>    // std::uint32_t
 #include <string>
 #include <system_error>
 #include <utility>  // std::swap std::move
@@ -121,11 +122,7 @@ private:
 
 protected:
   boost::asio::ip::tcp::socket socket;
-
-private:
   boost::asio::steady_timer deadline;
-
-protected:
   request_buffer req_buf{};
 
 private:
@@ -136,9 +133,13 @@ private:
   response_payload resp_payload{};
 
   std::error_code status{};
+
+protected:
   logger &lgr;
   /// This is the timeout for individual read operations, not the
   /// time to read entire messages
+
+private:
   std::chrono::seconds read_timeout_seconds{3};
 
   // These help keep track of where we are in the incoming levels;
@@ -357,20 +358,69 @@ public:
     base_class_t(hostname, port_number, req), query{query} {}
 
   auto
-  handle_connect_impl() {
+  handle_connect_impl() noexcept -> void {
     boost::asio::async_write(
-      base_class_t::socket,
-      std::vector<boost::asio::const_buffer>{
-        boost::asio::buffer(base_class_t::req_buf),
-        boost::asio::buffer(query.v),
-      },
-      [this](auto error, auto) { base_class_t::handle_write_request(error); });
+      base_class_t::socket, boost::asio::buffer(base_class_t::req_buf),
+      [this](const auto error, auto) {
+        if (!error) {
+          // prepare to write query payload
+          bytes_remaining = query.get_n_bytes();  // init counters
+          bytes_sent = 0;
+          write_query();
+        }
+        else {
+          base_class_t::handle_write_request(error);
+        }
+      });
+  }
+
+  auto
+  write_query() noexcept -> void {
+    base_class_t::socket.async_write_some(
+      boost::asio::buffer(query.data() + bytes_sent, bytes_remaining),
+      [this](const auto error, const std::size_t bytes_transferred) {
+        base_class_t::deadline.expires_at(
+          boost::asio::steady_timer::time_point::max());
+        if (!error) {
+          bytes_remaining -= bytes_transferred;
+          bytes_sent += bytes_transferred;
+
+          // ADS: collect the stats here; should be refactored
+          ++n_writes;
+          max_write_size = std::max(max_write_size, bytes_transferred);
+          min_write_size = std::min(min_write_size, bytes_transferred);
+          if (bytes_remaining == 0) {
+            base_class_t::lgr.debug(
+              "Sent query ({}B, writes={}, max={}B, min={}B, mean={}B)",
+              bytes_sent, n_writes, max_write_size, min_write_size,
+              bytes_sent / n_writes);
+            base_class_t::handle_write_request(error);
+          }
+          else {
+            write_query();
+          }
+        }
+        else {
+          base_class_t::handle_write_request(error);
+        }
+      });
+    base_class_t::deadline.expires_after(write_timeout_seconds);
   }
 
 private:
   using base_class_t = client_base<intervals_client<lvl>, lvl>;
 
   const query_container &query;
+  std::chrono::seconds write_timeout_seconds{3};
+
+  // ADS: vars to keep track of what has been sent and what remains
+  std::size_t bytes_sent{};
+  std::size_t bytes_remaining{};
+
+  // ADS: vars to collect stats on sizes of individual write operations
+  std::size_t n_writes{};
+  std::size_t min_write_size{std::numeric_limits<std::size_t>::max()};
+  std::size_t max_write_size{0};
 };  // class intervals_client
 
 template <typename lvl>
@@ -380,10 +430,12 @@ public:
               const request &req) : base_class_t(hostname, port_number, req) {}
 
   auto
-  handle_connect_impl() {
-    boost::asio::async_write(
-      base_class_t::socket, boost::asio::buffer(base_class_t::req_buf),
-      [this](auto error, auto) { base_class_t::handle_write_request(error); });
+  handle_connect_impl() noexcept {
+    boost::asio::async_write(base_class_t::socket,
+                             boost::asio::buffer(base_class_t::req_buf),
+                             [this](const auto error, auto) {
+                               base_class_t::handle_write_request(error);
+                             });
   }
 
 private:
