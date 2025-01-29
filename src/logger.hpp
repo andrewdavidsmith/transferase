@@ -180,6 +180,11 @@ public:
     return status;
   }
 
+  [[nodiscard]] static auto
+  set_level(const log_level_t lvl) noexcept {
+    instance().min_log_level = lvl;
+  }
+
   operator bool() const { return status ? false : true; }
 
   template <log_level_t the_level>
@@ -282,7 +287,7 @@ private:
   std::shared_ptr<std::ostream> log_file{nullptr};
   std::mutex mtx{};
   char *cursor{};
-  const log_level_t min_log_level{};
+  log_level_t min_log_level{};
   std::error_code status{};
 
   logger(const logger &) = delete;
