@@ -143,6 +143,7 @@ struct query_argset : argset_base<query_argset> {
   std::string index_dir;
   std::string log_file;
   log_level_t log_level{};
+  std::uint32_t min_reads{1};
 
   bool local_mode{};
   std::uint32_t bin_size{};
@@ -170,8 +171,9 @@ struct query_argset : argset_base<query_argset> {
         {"bin_size", std::format("{}", bin_size)},
         {"methylome_names", format_methylome_names_brief(methylome_names)},
         {"intervals_file", std::format("{}", intervals_file)},
-        {"out_fmt", std::format("{}", out_fmt)},
         {"count_covered", std::format("{}", count_covered)},
+        {"out_fmt", std::format("{}", out_fmt)},
+        {"min_reads", std::format("{}", min_reads)},
         {"output_file", std::format("{}", output_file)},
         // clang-format on
       });
@@ -210,10 +212,12 @@ struct query_argset : argset_base<query_argset> {
       ("methylomes-file,M", po::value(&methylomes_file),
        "methylomes file (text file; one methylome per line)")
       ("out-file,o", po::value(&output_file)->required(), "output file")
-      ("covered", po::bool_switch(&count_covered),
+      ("covered,C", po::bool_switch(&count_covered),
        "count covered sites for each interval")
-      ("out-fmt,f", po::value(&out_fmt)->default_value(out_fmt_default),
+      ("out-fmt,f", po::value(&out_fmt)->default_value(out_fmt_default, "1"),
        "output format {counts=1, bedgraph=2, dataframe=3, dfscores=4}")
+      ("min-reads,r", po::value(&min_reads)->default_value(1),
+       "for fractional output, require this many reads")
       ("hostname,s", po::value(&hostname), "server hostname")
       ("port,p", po::value(&port), "server port")
       ("methylome-dir,d", po::value(&methylome_dir),
@@ -314,9 +318,11 @@ do_intervals_query(const auto &args, const transferase::genome_index &index,
     index,
     args.out_fmt,
     methylome_names,
+    args.min_reads,
     intervals,
     // clang-format on
   };
+  // outmgr.min_reads = args.min_reads;
 
   const auto output_start{std::chrono::high_resolution_clock::now()};
   error = write_output(outmgr, results);
@@ -361,9 +367,11 @@ do_bins_query(const auto &args, const transferase::genome_index &index,
     index,
     args.out_fmt,
     methylome_names,
+    args.min_reads,
     args.bin_size,
     // clang-format on
   };
+  // outmgr.min_reads = args.min_reads;
 
   const auto output_start{std::chrono::high_resolution_clock::now()};
   error = write_output(outmgr, results);
