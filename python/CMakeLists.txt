@@ -42,6 +42,16 @@ if(ENABLE_PYTHON_UNIT_TESTS)
   add_subdirectory(test)
 endif()
 
+## Install the system configuration file
+# This might usually only be part of the installation or packageing
+# target, but it's needed to run the package and the tests, so it's
+# incuded for any build config.
+set(PYTHON_DATA_DIR ${PROJECT_BINARY_DIR}/python/${LIBRARY_NAME}/data)
+configure_file(${CMAKE_SOURCE_DIR}/data/transferase_data.json
+  ${PYTHON_DATA_DIR}/transferase_data_${PROJECT_VERSION}.json
+  COPYONLY
+)
+
 if(PACKAGE_PYTHON)
 
   # List of Python packages needed to make the wheel
