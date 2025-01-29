@@ -40,10 +40,12 @@ enum class output_format_t : std::uint8_t;
 struct intervals_writer : public writer_base<intervals_writer> {
   const std::vector<genomic_interval> &intervals;
   intervals_writer(const std::string &outfile, const genome_index &index,
-                   const output_format_t &out_fmt,
+                   const output_format_t out_fmt,
                    const std::vector<std::string> &names,
+                   const std::uint32_t min_reads,
                    const std::vector<genomic_interval> &intervals) :
-    writer_base{outfile, index, out_fmt, names}, intervals{intervals} {}
+    writer_base{outfile, index, out_fmt, names, min_reads},
+    intervals{intervals} {}
 
   [[nodiscard]] auto
   write_impl(const auto &levels) const noexcept -> std::error_code;

@@ -39,10 +39,11 @@ struct genome_index;
 struct bins_writer : public writer_base<bins_writer> {
   const std::uint32_t bin_size;
   bins_writer(const std::string &outfile, const genome_index &index,
-              const output_format_t &out_fmt,
+              const output_format_t out_fmt,
               const std::vector<std::string> &names,
-              const std::uint32_t &bin_size) :
-    writer_base{outfile, index, out_fmt, names}, bin_size{bin_size} {}
+              const std::uint32_t &min_reads, const std::uint32_t bin_size) :
+    writer_base{outfile, index, out_fmt, names, min_reads}, bin_size{bin_size} {
+  }
 
   [[nodiscard]] auto
   write_impl(const auto &levels) const noexcept -> std::error_code;
