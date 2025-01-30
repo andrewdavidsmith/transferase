@@ -23,7 +23,7 @@
 
 #include "logger.hpp"
 
-#include <errno.h>
+#include <cerrno>
 #include <unistd.h>  // for gethostname, getpid
 
 #include <cstring>  // for std::memcpy
@@ -58,7 +58,7 @@ logger::set_attributes(const std::string_view appname) -> std::error_code {
 
   // ADS TODO: error conditions on buffer sizes
 
-  // NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+  // NOLINTBEGIN(*-pointer-arithmetic)
 
   // fill the buffer (after the time fields)
   cursor = buf.data() + date_time_fmt_size;
@@ -81,14 +81,14 @@ logger::set_attributes(const std::string_view appname) -> std::error_code {
 #pragma GCC diagnostic push
 #pragma GCC diagnostic error "-Wstringop-overflow=0"
 #endif
-  tcr = std::to_chars(tcr.ptr, buf_end, process_id);
+  tcr = std::to_chars(tcr.ptr, std::end(buf), process_id);
 #if defined(__GNUG__) and not defined(__clang__)
 #pragma GCC diagnostic pop
 #endif
   // ADS: no complaints from gcc because it can't find buff?
   *tcr.ptr++ = delim;
 
-  // NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+  // NOLINTEND(*-pointer-arithmetic)
 
   if (tcr.ec != std::errc{})
     return std::make_error_code(tcr.ec);

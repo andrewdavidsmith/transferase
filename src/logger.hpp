@@ -28,20 +28,9 @@
 
 #include <boost/describe.hpp>  // for BOOST_DESCRIBE_ENUM
 
-#if not defined(__APPLE__) && not defined(__MACH__)
-#include <sys/syscall.h>
-#include <unistd.h>  // gettid
-#ifndef SYS_gettid
-#error "SYS_gettid unavailable on this system"
-#endif
-#define gettid() ((pid_t)syscall(SYS_gettid))
-#else
-#include <pthread.h>  // pthread_threadid_np
-#endif
-
 #include <sys/types.h>  // for pid_t
 
-#include <array>  // for array
+#include <array>
 #include <cassert>
 #include <charconv>  // for to_chars, to_chars_result
 #include <chrono>
@@ -66,10 +55,11 @@ namespace transferase {
   - hostname
   - appname
   - process id
-  - thread id
   - log level
   - message
 */
+
+using std::literals::string_view_literals::operator""sv;
 
 enum class log_level_t : std::uint8_t {
   debug,
@@ -77,10 +67,7 @@ enum class log_level_t : std::uint8_t {
   warning,
   error,
   critical,
-  n_levels,
 };
-static constexpr std::uint32_t n_log_levels =
-  std::to_underlying(log_level_t::n_levels);
 
 // clang-format off
 BOOST_DESCRIBE_ENUM(
@@ -90,30 +77,27 @@ BOOST_DESCRIBE_ENUM(
   warning,
   error,
   critical,
-  n_levels
 )
 // clang-format on
 
-static constexpr std::array<const char *, n_log_levels> level_name = {
+static constexpr auto level_name = std::array{
   // clang-format off
-  "debug",
-  "info",
-  "warning",
-  "error",
-  "critical",
+  "debug"sv,
+  "info"sv,
+  "warning"sv,
+  "error"sv,
+  "critical"sv,
   // clang-format on
 };
 
-static constexpr auto level_name_sz{[]() constexpr {
-  std::array<std::uint32_t, n_log_levels> tmp{};
-  for (std::uint32_t i = 0; i < n_log_levels; ++i)
-    tmp[i] = std::size(std::string_view(level_name[i]));
-  return tmp;
-}()};
+[[nodiscard]] constexpr auto
+to_name(const log_level_t l) -> const std::string_view {
+  return level_name[std::to_underlying(l)];
+}
 
 inline auto
 operator<<(std::ostream &o, const log_level_t &l) -> std::ostream & {
-  return o << level_name[std::to_underlying(l)];
+  return o << to_name(l);
 }
 
 inline auto
@@ -121,9 +105,9 @@ operator>>(std::istream &in, log_level_t &l) -> std::istream & {
   std::string tmp;
   if (!(in >> tmp))
     return in;
-  for (std::uint32_t i = 0; i < n_log_levels; ++i)
-    if (tmp == std::string_view(level_name[i])) {
-      l = static_cast<log_level_t>(i);
+  for (const auto [idx, name] : std::views::enumerate(level_name))
+    if (tmp == name) {
+      l = static_cast<log_level_t>(idx);
       return in;
     }
   in.setstate(std::ios::failbit);
@@ -137,35 +121,29 @@ shared_from_cout() -> std::shared_ptr<std::ostream> {
 
 class logger {
 private:
-  static constexpr std::string_view date_time_fmt_expanded =
-    "YYYY-MM-DD HH:MM:SS";
+  // ADS: note the extra space at the end of the format string below
+  static constexpr auto date_time_fmt_expanded = "YYYY-MM-DD HH:MM:SS "sv;
   static constexpr std::uint32_t date_time_fmt_size =
     std::size(date_time_fmt_expanded);
   static constexpr auto delim = ' ';
   static constexpr auto date_time_fmt = "{:%F}{}{:%T}";
-  static constexpr std::array<const char *, n_log_levels> level_name = {
+  static constexpr auto level_name = std::array{
     // clang-format off
-    "DEBUG",
-    "INFO",
-    "WARNING",
-    "ERROR",
-    "CRITICAL",
+    "DEBUG"sv,
+    "INFO"sv,
+    "WARNING"sv,
+    "ERROR"sv,
+    "CRITICAL"sv,
     // clang-format on
   };
-  static constexpr auto level_name_sz{[]() constexpr {
-    std::array<std::uint32_t, n_log_levels> tmp{};
-    for (std::uint32_t i = 0; i < n_log_levels; ++i)
-      tmp[i] = std::size(std::string_view(level_name[i]));
-    return tmp;
-  }()};
 
 public:
   static constexpr log_level_t default_level{log_level_t::info};
 
-  static logger &
+  static auto
   instance(const std::shared_ptr<std::ostream> &log_file_ptr = nullptr,
            const std::string &appname = "",
-           log_level_t min_log_level = log_level_t::debug) {
+           log_level_t min_log_level = log_level_t::debug) -> logger & {
     static logger fl(log_file_ptr, appname, min_log_level);
     assert(fl.log_file != nullptr || log_file_ptr != nullptr);
     return fl;
@@ -189,21 +167,12 @@ public:
 
   template <log_level_t the_level>
   auto
-  log(const std::string_view message) -> void {
-    static constexpr auto idx = std::to_underlying(the_level);
-    static constexpr auto sz = level_name_sz[idx];
-    static constexpr auto lvl = level_name[idx];
+  log(const std::string_view msg) -> void {
     if (the_level >= min_log_level) {
-      std::uint64_t thread_id{};
-#if not defined(__APPLE__) && not defined(__MACH__)
-      thread_id = gettid();
-#else
-      pthread_threadid_np(nullptr, &thread_id);
-#endif
       std::lock_guard lck{mtx};
       format_time();
-      const auto buf_data_end = fill_buffer(thread_id, lvl, sz, message);
-      log_file->write(buf.data(), std::distance(buf.data(), buf_data_end));
+      const auto end_pos = fill_buffer<the_level>(msg);
+      log_file->write(buf.data(), std::distance(buf.data(), end_pos));
       log_file->flush();
     }
   }
@@ -211,21 +180,12 @@ public:
   template <log_level_t the_level, typename... Args>
   auto
   log(const std::string_view fmt_str, Args &&...args) -> void {
-    static constexpr auto idx = std::to_underlying(the_level);
-    static constexpr auto sz = level_name_sz[idx];
-    static constexpr auto lvl = level_name[idx];
     if (the_level >= min_log_level) {
-      std::uint64_t thread_id{};
-#if not defined(__APPLE__) && not defined(__MACH__)
-      thread_id = gettid();
-#else
-      pthread_threadid_np(nullptr, &thread_id);
-#endif
       const auto msg = std::vformat(fmt_str, std::make_format_args(args...));
       std::lock_guard lck{mtx};
       format_time();
-      const auto buf_data_end = fill_buffer(thread_id, lvl, sz, msg);
-      log_file->write(buf.data(), std::distance(buf.data(), buf_data_end));
+      const auto end_pos = fill_buffer<the_level>(msg);
+      log_file->write(buf.data(), std::distance(buf.data(), end_pos));
       log_file->flush();
     }
   }
@@ -283,7 +243,6 @@ private:
 
   static constexpr std::uint32_t buf_size{1024};  // max log line
   std::array<char, buf_size> buf{};
-  char *buf_end{buf.data() + buf_size};
   std::shared_ptr<std::ostream> log_file{nullptr};
   std::mutex mtx{};
   char *cursor{};
@@ -291,33 +250,33 @@ private:
   std::error_code status{};
 
   logger(const logger &) = delete;
-  logger &
-  operator=(const logger &) = delete;
+  auto
+  operator=(const logger &) -> logger & = delete;
+  logger() = default;
+  ~logger() = default;
 
-  logger() {}
-  ~logger() {}
-
+  template <log_level_t the_level>
   [[nodiscard]] auto
-  fill_buffer(std::uint32_t thread_id, const char *const lvl,
-              const std::uint32_t sz,
-              const std::string_view message) -> char * {
-    auto [buf_data_end, ec] = std::to_chars(cursor, buf_end, thread_id);
-    *buf_data_end++ = delim;
-    std::memcpy(buf_data_end, lvl, sz);
-    buf_data_end += sz;
-    *buf_data_end++ = delim;
-    return std::format_to(buf_data_end, "{}\n", message);
+  fill_buffer(const std::string_view msg) -> char * {
+    static constexpr auto lvl = level_name[std::to_underlying(the_level)];
+    static constexpr auto sz = std::size(lvl);
+    auto buf_data_itr = cursor;
+    std::memcpy(buf_data_itr, lvl.data(), sz);
+    buf_data_itr += sz;
+    *buf_data_itr++ = delim;
+    std::memcpy(buf_data_itr, msg.data(), std::size(msg));
+    buf_data_itr += std::size(msg);
+    *buf_data_itr++ = '\n';
+    return buf_data_itr;
   }
 
   auto
   format_time() -> void {
-    const auto now{std::chrono::system_clock::now()};
-    const std::chrono::year_month_day ymd{
-      std::chrono::floor<std::chrono::days>(now)};
-    const std::chrono::hh_mm_ss hms{
-      std::chrono::floor<std::chrono::seconds>(now) -
-      std::chrono::floor<std::chrono::days>(now)};
-    std::format_to(buf.data(), "{:%F}{}{:%T}", ymd, delim, hms);
+    const auto now = std::chrono::system_clock::now();
+    const auto now_time_t = std::chrono::system_clock::to_time_t(now);
+    struct tm tm;
+    localtime_r(&now_time_t, &tm);  // localtime_r is thread-safe
+    std::strftime(buf.data(), std::size(buf), "%Y-%m-%d %H:%M:%S ", &tm);
   }
 };  // struct logger
 
@@ -334,9 +293,9 @@ log_args(std::ranges::input_range auto &&key_value_pairs) {
 template <>
 struct std::formatter<transferase::log_level_t> : std::formatter<std::string> {
   auto
-  format(const transferase::log_level_t &l, std::format_context &ctx) const {
-    return std::format_to(ctx.out(), "{}",
-                          transferase::level_name[std::to_underlying(l)]);
+  format(const transferase::log_level_t &lvl, std::format_context &ctx) const {
+    const auto l = std::to_underlying(lvl);
+    return std::format_to(ctx.out(), "{}", transferase::level_name[l]);
   }
 };
 
