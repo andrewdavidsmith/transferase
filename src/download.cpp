@@ -197,11 +197,17 @@ do_download(const download_request &dr, const std::string &outfile,
     return (std::ostringstream() << x).str();
   };
 
-  header.clear();
-  header.emplace("Status", std::to_string(res.result_int()));
-  header.emplace("Reason", make_string(res.result()));
+  header = {
+    {"Status", std::to_string(res.result_int())},
+    {"Reason", make_string(res.result())},
+  };
   for (const auto &h : res.base())
     header.emplace(make_string(h.name_string()), make_string(h.value()));
+
+  if (boost::beast::http::int_to_status(res.result_int()) !=
+      boost::beast::http::status::ok)
+    ec = boost::beast::http::make_error_code(
+      boost::beast::http::error::bad_target);
 }
 
 [[nodiscard]]
@@ -253,16 +259,19 @@ download(const download_request &dr)
   // NOTE: here is where it all happens
   ioc.run();
 
-  if (!ec) {
-    // make sure we have a status if the http had no error; "reason" is
-    // deprecated since rfc7230
-    const auto status_itr = header.find("Status");
-    const auto reason_itr = header.find("Reason");
-    if (status_itr == std::cend(header) || reason_itr == std::cend(header))
-      ec = std::make_error_code(std::errc::invalid_argument);
-    std::error_code filesys_ec;
+  // make sure we have a status if the http had no error; "reason" is
+  // deprecated since rfc7230
+  const auto status_itr = header.find("Status");
+  const auto reason_itr = header.find("Reason");
+  if (status_itr == std::cend(header) || reason_itr == std::cend(header))
+    ec = std::make_error_code(std::errc::invalid_argument);
+
+  if (ec) {
+    // if we have an error, make sure we didn't get a file from the
+    // download; remove it if we did
+    std::error_code filesys_ec;  // unused
     const bool outfile_exists = std::filesystem::exists(outfile, filesys_ec);
-    if (filesys_ec && outfile_exists) {
+    if (outfile_exists) {
       [[maybe_unused]]
       const bool remove_ok = std::filesystem::remove(outfile, filesys_ec);
     }
