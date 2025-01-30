@@ -136,11 +136,15 @@ private:
 
 protected:
   logger &lgr;
-  /// This is the timeout for individual read operations, not the
-  /// time to read entire messages
 
 private:
+  /// This is the timeout for individual read operations, not the
+  /// time to read entire messages
   std::chrono::seconds read_timeout_seconds{3};
+
+  // ADS: this timeout applies when the server has received the
+  // request (with query if applicable) and is doing the work.
+  std::chrono::seconds wait_for_work_timeout_seconds{60};
 
   // These help keep track of where we are in the incoming levels;
   // they might best be associated with the response.
@@ -222,7 +226,7 @@ client_base<D, L>::handle_write_request(const std::error_code ec) -> void {
       socket, boost::asio::buffer(resp_hdr_buf),
       boost::asio::transfer_exactly(response_header_buffer_size),
       [this](const auto error, auto) { handle_read_response_header(error); });
-    deadline.expires_after(read_timeout_seconds);
+    deadline.expires_after(wait_for_work_timeout_seconds);
   }
   else {
     lgr.debug("Error writing request: {}", ec);
