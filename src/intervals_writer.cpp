@@ -238,12 +238,11 @@ write_intervals_bedgraph_impl(const std::string &outfile,
 write_intervals_dataframe_scores_impl(
   const std::string &outfile, const std::vector<std::string> &names,
   const genome_index_metadata &meta,
-  const std::vector<genomic_interval> &intervals,
+  const std::vector<genomic_interval> &intervals, const std::uint32_t min_reads,
   const auto &levels) -> std::error_code {
   using std::literals::string_view_literals::operator""sv;
   static constexpr auto none_label = "NA"sv;
-  static constexpr auto delim{'\t'};
-  static constexpr auto min_reads{1};
+  // static constexpr auto delim = '\t';  // not optional for now
 
   const auto get_score = [](const auto x) {
     const double total = x.n_meth + x.n_unmeth;
@@ -255,7 +254,7 @@ write_intervals_dataframe_scores_impl(
     return std::make_error_code(std::errc(errno));
 
   const auto joined =
-    names | std::views::join_with(delim) | std::ranges::to<std::string>();
+    names | std::views::join_with('\t') | std::ranges::to<std::string>();
   std::println(out, "{}", joined);
 
   const auto n_levels = std::size(levels);
@@ -269,9 +268,9 @@ write_intervals_dataframe_scores_impl(
     std::print(out, "{}.{}.{}", chrom, interval.start, interval.stop);
     for (auto j = 0u; j < n_levels; ++j)
       if (levels[j][i].n_reads() >= min_reads)
-        std::print(out, "{}{:.6}", delim, get_score(levels[j][i]));
+        std::print(out, "\t{:.6}", get_score(levels[j][i]));
       else
-        std::print(out, "{}{}", delim, none_label);
+        std::print(out, "\t{}", none_label);
     std::println(out);
   }
   return {};
@@ -283,7 +282,7 @@ write_intervals_dataframe_impl(const std::string &outfile,
                                const genome_index_metadata &meta,
                                const std::vector<genomic_interval> &intervals,
                                const auto &levels) -> std::error_code {
-  static constexpr auto delim = '\t';
+  // static constexpr auto delim = '\t';  // not optional for now
 
   std::ofstream out(outfile);
   if (!out)
@@ -295,22 +294,22 @@ write_intervals_dataframe_impl(const std::string &outfile,
     typename std::remove_cvref_t<level_container_type>::value_type;
 
   if constexpr (std::is_same_v<level_element, level_element_covered_t>) {
-    static constexpr auto hdr_lvl_cov_fmt = "{}_M{}{}_U{}{}_C";
+    static constexpr auto hdr_lvl_cov_fmt = "{}_M\t{}_U\t{}_C";
     const auto hdr_formatter = [&](const auto &r) {
-      return std::format(hdr_lvl_cov_fmt, r, delim, r, delim, r);
+      return std::format(hdr_lvl_cov_fmt, r, r, r);
     };
     const auto joined = names | std::views::transform(hdr_formatter) |
-                        std::views::join_with(delim) |
+                        std::views::join_with('\t') |
                         std::ranges::to<std::string>();
     std::println(out, "{}", joined);
   }
   else if constexpr (std::is_same_v<level_element, level_element_t>) {
-    static constexpr auto hdr_lvl_fmt = "{}_M{}{}_U";
+    static constexpr auto hdr_lvl_fmt = "{}_M\t{}_U";
     const auto hdr_formatter = [&](const auto &r) {
-      return std::format(hdr_lvl_fmt, r, delim, r);
+      return std::format(hdr_lvl_fmt, r, r);
     };
     const auto joined = names | std::views::transform(hdr_formatter) |
-                        std::views::join_with(delim) |
+                        std::views::join_with('\t') |
                         std::ranges::to<std::string>();
     std::println(out, "{}", joined);
   }
@@ -328,12 +327,11 @@ write_intervals_dataframe_impl(const std::string &outfile,
     std::print(out, "{}.{}.{}", chrom, interval.start, interval.stop);
     for (auto j = 0u; j < n_levels; ++j) {
       if constexpr (std::is_same_v<level_element, level_element_covered_t>) {
-        std::print(out, "{}{}{}{}{}{}", delim, levels[j][i].n_meth, delim,
-                   levels[j][i].n_unmeth, delim, levels[j][i].n_covered);
+        std::print(out, "\t{}\t{}\t{}", levels[j][i].n_meth,
+                   levels[j][i].n_unmeth, levels[j][i].n_covered);
       }
       else if constexpr (std::is_same_v<level_element, level_element_t>) {
-        std::print(out, "{}{}{}{}", delim, levels[j][i].n_meth, delim,
-                   levels[j][i].n_unmeth);
+        std::print(out, "\t{}\t{}", levels[j][i].n_meth, levels[j][i].n_unmeth);
       }
       else
         static_assert(false, "level_element has invalid type");
@@ -420,7 +418,7 @@ intervals_writer::write_dataframe_scores_impl(
   const std::vector<level_container<level_element_t>> &levels) const noexcept
   -> std::error_code {
   return write_intervals_dataframe_scores_impl(
-    outfile, names, index.get_metadata(), intervals, levels);
+    outfile, names, index.get_metadata(), intervals, min_reads, levels);
 }
 
 template <>
@@ -429,7 +427,7 @@ intervals_writer::write_dataframe_scores_impl(
   const std::vector<level_container<level_element_covered_t>> &levels)
   const noexcept -> std::error_code {
   return write_intervals_dataframe_scores_impl(
-    outfile, names, index.get_metadata(), intervals, levels);
+    outfile, names, index.get_metadata(), intervals, min_reads, levels);
 }
 
 template <>
