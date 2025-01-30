@@ -33,9 +33,9 @@ reducing the number of command line arguments by putting them in
 configuration file. Note that this configuration is not needed, as all
 arguments can be specified on the command line and index files can be
 downloaded separately. The default config directory is
-'${HOME}/.config/transferase'. It also will retrieve other data. It
-will get index files that are needed to accelerate queries. And it
-will retrieve files that associate entries in MethBase2 with labels
+'${HOME}/.config/transferase'. This command will also retrieve other
+data. It will get index files that are used to accelerate queries. And
+it will retrieve files that associate entries in MethBase2 with labels
 for the underlying biological samples.
 )";
 
@@ -59,9 +59,7 @@ xfr config -c my_config_dir -s example.com -p 5009 --genomes hg38,mm39
 #include <system_error>
 
 auto
-command_config_main(int argc,
-                    char *argv[])  // NOLINT(cppcoreguidelines-avoid-c-arrays)
-  -> int {
+command_config_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
   static constexpr auto command = "config";
   static const auto usage =
     std::format("Usage: xfr {} [options]\n", rstrip(command));
@@ -80,8 +78,9 @@ command_config_main(int argc,
     return EXIT_FAILURE;
 
   auto &lgr = xfr::logger::instance(xfr::shared_from_cout(), command,
-                                    args.quiet ? xfr::log_level_t::info
-                                               : xfr::log_level_t::debug);
+                                    args.debug   ? xfr::log_level_t::debug
+                                    : args.quiet ? xfr::log_level_t::error
+                                                 : xfr::log_level_t::info);
   if (!lgr) {
     std::println("Failure initializing logging: {}.", lgr.get_status());
     return EXIT_FAILURE;

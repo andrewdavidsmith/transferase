@@ -60,6 +60,7 @@ struct command_config_argset : argset_base<command_config_argset> {
 
   bool update{};
   bool quiet{};
+  bool debug{};
   bool force_download{};
 
   auto
@@ -94,7 +95,7 @@ struct command_config_argset : argset_base<command_config_argset> {
     opts.add_options()
       ("help,h", "print this message and exit")
       ("config-dir,c", value(&config_dir),
-       "name of configuration directory; see help for default")
+       "name of config directory; see help for default")
       ("hostname,s", value(&hostname), "transferase server hostname")
       ("port,p", value(&port)->default_value(port_default), "transferase server port")
       ("genomes,g", value(&genomes),
@@ -112,7 +113,8 @@ struct command_config_argset : argset_base<command_config_argset> {
        "log file name")
       ("update,u", po::bool_switch(&update), "update sample labels")
       ("force,f", po::bool_switch(&force_download), "force index file update")
-      ("quiet,q", po::bool_switch(&quiet), "only print error info to terminal")
+      ("quiet", po::bool_switch(&quiet), "only report on errors")
+      ("debug", po::bool_switch(&debug), "report debug information")
       ;
     // clang-format on
     return opts;
