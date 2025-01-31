@@ -23,6 +23,22 @@
 # Find Python
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
 
+# List of Python packages needed to do the tests
+set(needed_for_tests pytest)
+
+# Make sure the required Python packages are available
+foreach(package_name ${needed_for_tests})
+  execute_process(
+    COMMAND python3 -c "import ${package_name}"
+    RESULT_VARIABLE failed_to_find_package
+    OUTPUT_QUIET
+    ERROR_QUIET
+  )
+  if (failed_to_find_package)
+    message(FATAL_ERROR "Required Python package not found: ${package_name}")
+  endif()
+endforeach()
+
 # Get all .py files in the python/test/ directory:
 file(GLOB PYTHON_TEST_FILES ${CMAKE_CURRENT_SOURCE_DIR}/*_test.py)
 
