@@ -22,7 +22,6 @@
  */
 
 #include "client_config.hpp"
-#include "config_file_utils.hpp"
 #include "download.hpp"
 #include "genome_index_data.hpp"
 #include "genome_index_metadata.hpp"
@@ -307,6 +306,26 @@ client_config::make_directories() const -> std::error_code {
   }
 
   return {};
+}
+
+[[nodiscard]] inline auto
+format_as_client_config(const auto &t) -> std::string {
+  using T = std::remove_cvref_t<decltype(t)>;
+  using members =
+    boost::describe::describe_members<T, boost::describe::mod_any_access>;
+  std::string r;
+  boost::mp11::mp_for_each<members>([&](const auto &member) {
+    std::string name(member.name);
+    if (name != "config_dir" && name != "config_file") {
+      std::ranges::replace(name, '_', '-');
+      const auto value = std::format("{}", t.*member.pointer);
+      if (!value.empty())
+        r += std::format("{} = {}\n", name, value);
+      else
+        r += std::format("# {} =\n", name);
+    }
+  });
+  return r;
 }
 
 [[nodiscard]] auto
