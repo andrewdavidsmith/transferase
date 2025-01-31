@@ -203,8 +203,11 @@ get_query(std::string &query, std::regex &query_re) {
 [[nodiscard]] static inline auto
 confirm_quit(const auto &selected_keys) -> bool {
   using std::string_literals::operator""s;
-  const auto message = std::format("Quit and save selection ({} items)? [y/n]",
-                                   std::size(selected_keys));
+  const auto message =
+    selected_keys.empty()
+      ? std::format("Quit? [y/n]")
+      : std::format("Quit and save selection ({} items)? [y/n]",
+                    std::size(selected_keys));
   int confirmation{};
   while (std::tolower(confirmation) != 'y' &&
          std::tolower(confirmation) != 'n') {
@@ -227,7 +230,7 @@ main_loop(const std::vector<std::pair<std::string, std::string>> &data)
   static constexpr auto escape_delay{25};
   static constexpr auto legend =
     "q=Quit, Move=Arrows, a=Toggle multi-add, r=Toggle multi-remove, "
-    "Space=Add/Remove, v=View selected, Line={}/{}";
+    "Space=Add/Remove, v=View selected, c=Clear selected, Line={}/{}";
 
   // margin must be max key width plus room
   const auto key_sizes = std::views::transform(
@@ -400,6 +403,9 @@ main_loop(const std::vector<std::pair<std::string, std::string>> &data)
     else if (ch == ' ' || ch == '\n') {  // Select/deselect current item
       do_select(filtered, cursor_pos, selected_keys);
     }
+    else if (ch == 'c') {  // Clear selected keys
+      selected_keys.clear();
+    }
     else if (ch == 'v') {  // Display selected keys
       show_selected_keys(selected_keys);
     }
@@ -441,18 +447,29 @@ throwing_handler(int sig) {
   clear();
   refresh();
   endwin();
-  throw std::runtime_error(std::format("received signal: {}", sig));
+  throw std::runtime_error(
+    std::format("Terminating (received signal: {})", sig));
+}
+
+static auto
+throwing_handler_message([[maybe_unused]] int sig) {
+  clear();
+  refresh();
+  endwin();
+  throw std::runtime_error(std::format("Received user request to quit"));
 }
 
 /// Register all signals that could disrupt the curses and leave the
 /// terminal in a bad state.
 static auto
 register_signals() {
-  (void)std::signal(SIGTERM, throwing_handler);
-  (void)std::signal(SIGSEGV, throwing_handler);
-  (void)std::signal(SIGINT, throwing_handler);
-  (void)std::signal(SIGINT, throwing_handler);
+  (void)std::signal(SIGINT, throwing_handler_message);
+  (void)std::signal(SIGQUIT, throwing_handler_message);
+  (void)std::signal(SIGTERM, throwing_handler_message);
+
+  (void)std::signal(SIGKILL, throwing_handler);
   (void)std::signal(SIGABRT, throwing_handler);
+  (void)std::signal(SIGSEGV, throwing_handler);
   (void)std::signal(SIGFPE, throwing_handler);
 }
 
