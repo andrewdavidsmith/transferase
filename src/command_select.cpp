@@ -191,7 +191,8 @@ get_query(std::string &query, std::regex &query_re) {
     else if (std::isprint(query_ch) || query_ch == ' ')
       query += static_cast<char>(query_ch);
     else if (query_ch == KEY_BACKSPACE || query_ch == KEY_DC)
-      query.pop_back();
+      if (!query.empty())
+        query.pop_back();
     clear();
     mvprintw(1, 0, std::format("Search Query: {}", query));
     refresh();
