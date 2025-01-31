@@ -60,11 +60,12 @@ if(PACKAGE_PYTHON)
   # Make sure the required Python packages are available
   foreach(package_name ${needed_for_packaging})
     execute_process(
-      COMMAND Python3::Interpreter -c "import ${package_name}"
-      RESULT_VARIABLE found_package
+      COMMAND python3 -c "import ${package_name}"
+      RESULT_VARIABLE failed_to_find_package
       OUTPUT_QUIET
+      ERROR_QUIET
     )
-    if (NOT found_package)
+    if (failed_to_find_package)
       message(FATAL_ERROR "Required Python package not found: ${package_name}")
     endif()
   endforeach()
