@@ -50,6 +50,11 @@ struct remote_data_resources {
   }
 
   [[nodiscard]] auto
+  get_labels_target_stem() const {
+    return (std::filesystem::path{path} / "labels/latest/labels").string();
+  }
+
+  [[nodiscard]] auto
   form_url(const auto &file) const {
     return std::format("{}:{}{}", host, port, file);
   }
