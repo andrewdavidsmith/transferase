@@ -259,12 +259,14 @@ download(const download_request &dr)
   // NOTE: here is where it all happens
   ioc.run();
 
-  // make sure we have a status if the http had no error; "reason" is
-  // deprecated since rfc7230
-  const auto status_itr = header.find("Status");
-  const auto reason_itr = header.find("Reason");
-  if (status_itr == std::cend(header) || reason_itr == std::cend(header))
-    ec = std::make_error_code(std::errc::invalid_argument);
+  if (!ec) {
+    // make sure we have a status if the http had no error; "reason" is
+    // deprecated since rfc7230
+    const auto status_itr = header.find("Status");
+    const auto reason_itr = header.find("Reason");
+    if (status_itr == std::cend(header) || reason_itr == std::cend(header))
+      ec = std::make_error_code(std::errc::invalid_argument);
+  }
 
   if (ec) {
     // if we have an error, make sure we didn't get a file from the
