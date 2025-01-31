@@ -46,6 +46,17 @@ get_server_config_dir_default(std::error_code &ec) -> std::string {
 
 }  // namespace transferase
 
+[[nodiscard]] auto
+clean_path(const std::string &s, std::error_code &ec) -> std::string {
+  auto p = std::filesystem::absolute(s, ec);
+  if (ec)
+    return {};
+  p = std::filesystem::weakly_canonical(p, ec);
+  if (ec)
+    return {};
+  return p.string();
+}
+
 [[nodiscard]]
 auto
 check_output_file(const std::string &filename) -> std::error_code {

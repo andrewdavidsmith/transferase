@@ -47,6 +47,9 @@ get_server_config_dir_default(std::error_code &ec) -> std::string;
 
 }  // namespace transferase
 
+[[nodiscard]] auto
+clean_path(const std::string &s, std::error_code &ec) -> std::string;
+
 [[nodiscard]] inline auto
 split_comma(const auto &s) {
   return s | std::views::split(',') | std::views::transform([](const auto r) {
