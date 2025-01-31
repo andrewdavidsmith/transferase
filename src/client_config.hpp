@@ -188,6 +188,8 @@ private:
 
 // clang-format off
 BOOST_DESCRIBE_STRUCT(client_config, (), (
+  config_dir,
+  config_file,
   hostname,
   port,
   index_dir,
