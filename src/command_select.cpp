@@ -81,7 +81,7 @@ xfr select -o output_file.txt -g hg38
 
 [[nodiscard]] auto
 load_data(const std::string &json_filename, std::error_code &error)
-  -> std::vector<std::pair<std::string, std::string>> {
+  -> std::map<std::string, std::vector<std::pair<std::string, std::string>>> {
   std::ifstream in(json_filename);
   if (!in) {
     error = std::make_error_code(std::errc(errno));
@@ -99,15 +99,19 @@ load_data(const std::string &json_filename, std::error_code &error)
     return {};
   }
 
-  std::map<std::string, std::string> data;
+  std::map<std::string, std::map<std::string, std::string>> data;
   boost::json::parse_into(data, payload, error);
   if (error) {
     error = std::make_error_code(std::errc(errno));
     return {};
   }
 
-  return data |
-         std::ranges::to<std::vector<std::pair<std::string, std::string>>>();
+  typedef std::vector<std::pair<std::string, std::string>> vec_key_val;
+  std::map<std::string, vec_key_val> r;
+  std::ranges::for_each(data, [&](const auto &d) {
+    r.emplace(d.first, d.second | std::ranges::to<vec_key_val>());
+  });
+  return r;
 }
 
 static auto
@@ -533,17 +537,25 @@ command_select_main(int argc, char *argv[]) -> int {  // NOLINT
       if (error)
         throw std::runtime_error(std::format(
           "Error setting client configuration: {}", error.message()));
-      input_file = (std::filesystem::path{config.labels_dir} /
-                    std::format("{}.json", genome_name))
-                     .string();
+      input_file =
+        (std::filesystem::path{config.labels_dir} / "labels.json").string();
     }
 
-    const auto data = load_data(input_file, error);
+    const auto all_data = load_data(input_file, error);
     if (error)
       throw std::runtime_error(
         std::format("Error reading input {}: {}", input_file, error.message()));
 
-    std::println("Number of items loaded: {}", std::size(data));
+    const auto data_itr = all_data.find(genome_name);
+    if (data_itr == std::cend(all_data)) {
+      std::println("Data not found for genome: {}", genome_name);
+      std::println("Available genomes are:");
+      for (const auto &g : all_data)
+        std::println("{}", g.first);
+      return EXIT_FAILURE;
+    }
+
+    std::println("Number of items loaded: {}", std::size(data_itr->second));
     std::print("Type 'g' then Enter to proceed. Any other key to exit. ");
     if (std::cin.get() != 'g') {
       std::println("Terminating on user request");
@@ -552,7 +564,7 @@ command_select_main(int argc, char *argv[]) -> int {  // NOLINT
     // ADS: register the signals so a handler can properly reset the
     // terminal on exit
     register_signals();
-    const auto selected = main_loop(data);
+    const auto selected = main_loop(data_itr->second);
     if (!selected.empty())
       if (error = write_output(selected, output_file); error) {
         std::println("Error writing output {}: {}", output_file,
