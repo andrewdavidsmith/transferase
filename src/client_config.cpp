@@ -27,6 +27,7 @@
 #include "genome_index_data.hpp"
 #include "genome_index_metadata.hpp"
 #include "remote_data_resource.hpp"
+#include "utilities.hpp"  // for clean_path
 
 #include <boost/json.hpp>
 
@@ -114,17 +115,6 @@ check_and_return_file(const std::string &left, const std::string &right,
                       std::error_code &error) -> std::string {
   const auto joined = std::filesystem::path{left} / right;
   return check_and_return_file(joined, error);
-}
-
-[[nodiscard]] inline auto
-clean_path(const std::string &s, std::error_code &ec) -> std::string {
-  auto p = std::filesystem::absolute(s, ec);
-  if (ec)
-    return {};
-  p = std::filesystem::weakly_canonical(p, ec);
-  if (ec)
-    return {};
-  return p.string();
 }
 
 namespace transferase {
