@@ -89,8 +89,8 @@ struct command_config_argset : argset_base<command_config_argset> {
   set_opts_impl() -> boost::program_options::options_description {
     namespace po = boost::program_options;
     using po::value;
-    boost::program_options::options_description opts("Options");
     skip_parsing_config_file = true;
+    boost::program_options::options_description opts("Options");
     // clang-format off
     opts.add_options()
       ("help,h", "print this message and exit")
