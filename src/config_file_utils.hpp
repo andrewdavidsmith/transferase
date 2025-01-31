@@ -95,6 +95,26 @@ write_config_file(const auto &args, [[maybe_unused]] const std::string &header =
   return {};
 }
 
+[[nodiscard]] inline auto
+format_as_client_config(const auto &t) -> std::string {
+  using T = std::remove_cvref_t<decltype(t)>;
+  using members =
+    boost::describe::describe_members<T, boost::describe::mod_any_access>;
+  std::string r;
+  boost::mp11::mp_for_each<members>([&](const auto &member) {
+    std::string name(member.name);
+    if (name != "config_dir" && name != "config_file") {
+      std::ranges::replace(name, '_', '-');
+      const auto value = std::format("{}", t.*member.pointer);
+      if (!value.empty())
+        r += std::format("{} = {}\n", name, value);
+      else
+        r += std::format("# {} =\n", name);
+    }
+  });
+  return r;
+}
+
 }  // namespace transferase
 
 #endif  // SRC_CONFIG_FILE_UTILS_HPP_
