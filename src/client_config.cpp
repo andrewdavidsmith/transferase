@@ -314,7 +314,7 @@ client_config::write() const -> std::error_code {
   std::ofstream out(config_file);
   if (!out)
     return std::make_error_code(std::errc(errno));
-  const auto serialized = format_as_config(*this);
+  const auto serialized = format_as_client_config(*this);
 
   const auto serialized_size =
     static_cast<std::streamsize>(std::size(serialized));
