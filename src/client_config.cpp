@@ -433,23 +433,20 @@ get_index_files(const remote_data_resources &remote,
 }
 
 [[nodiscard]] static auto
-get_labels_files(const remote_data_resources &remote,
-                 const std::vector<std::string> &genomes,
-                 const std::string &dirname) -> std::error_code {
+get_labels_file(const remote_data_resources &remote,
+                const std::string &dirname) -> std::error_code {
   auto &lgr = transferase::logger::instance();
-  for (const auto &genome : genomes) {
-    const auto stem = remote.form_labels_target_stem(genome);
-    const auto labels_file = std::format("{}.json", stem);
-    lgr.info("Download: {} to {}", remote.form_url(labels_file), dirname);
-    const auto [data_hdr, data_err] = download(download_request{
-      remote.host,
-      remote.port,
-      labels_file,
-      dirname,
-    });
-    if (data_err)
-      return dl_err(data_hdr, data_err, remote.form_url(labels_file));
-  }
+  const auto stem = remote.get_labels_target_stem();
+  const auto labels_file = std::format("{}.json", stem);
+  lgr.info("Download: {} to {}", remote.form_url(labels_file), dirname);
+  const auto [data_hdr, data_err] = download(download_request{
+    remote.host,
+    remote.port,
+    labels_file,
+    dirname,
+  });
+  if (data_err)
+    return dl_err(data_hdr, data_err, remote.form_url(labels_file));
   return {};
 }
 
@@ -538,9 +535,10 @@ client_config::run(const std::vector<std::string> &genomes,
         get_index_files(remote, genomes, index_dir, force_download);
       if (index_err)
         lgr.debug("Error obtaining index files: {}", index_err);
-      const auto labels_err = get_labels_files(remote, genomes, labels_dir);
+
+      const auto labels_err = get_labels_file(remote, labels_dir);
       if (labels_err)
-        lgr.debug("Error obtaining labels files: {}", labels_err);
+        lgr.debug("Error obtaining labels file: {}", labels_err);
 
       // ADS: this is broken -- there is no proper check for whether a
       // subsequent server should be attempted.
@@ -599,9 +597,10 @@ client_config::run(const std::vector<std::string> &genomes,
         get_index_files(remote, genomes, index_dir, force_download);
       if (index_err)
         lgr.debug("Error obtaining index files: {}", index_err);
-      const auto labels_err = get_labels_files(remote, genomes, labels_dir);
+
+      const auto labels_err = get_labels_file(remote, labels_dir);
       if (labels_err)
-        lgr.debug("Error obtaining labels files: {}", labels_err);
+        lgr.debug("Error obtaining labels file: {}", labels_err);
 
       // ADS: this is broken -- there is no proper check for whether a
       // subsequent server should be attempted.
