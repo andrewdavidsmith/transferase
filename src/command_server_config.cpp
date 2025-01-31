@@ -70,6 +70,12 @@ xfr server-config -c /path/to/server_config_file.toml \
 #include <string_view>
 #include <system_error>
 
+#include <print>
+#include <sstream>
+#include <tuple>
+#include <variant>  // for std::tuple
+#include <vector>
+
 namespace transferase {
 
 struct server_config_argset : argset_base<server_config_argset> {

@@ -28,11 +28,8 @@
 
 #include <boost/describe.hpp>  // for BOOST_DESCRIBE_ENUM
 
-#include <sys/types.h>  // for pid_t
-
 #include <array>
 #include <cassert>
-#include <charconv>  // for to_chars, to_chars_result
 #include <chrono>
 #include <cstdint>  // std::uint32_t
 #include <cstring>  // std::memcpy
@@ -76,7 +73,7 @@ BOOST_DESCRIBE_ENUM(
   info,
   warning,
   error,
-  critical,
+  critical
 )
 // clang-format on
 

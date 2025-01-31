@@ -36,6 +36,7 @@
 #include <string>
 #include <system_error>
 #include <type_traits>  // for std::remove_cvref_t
+#include <vector>
 
 namespace transferase {
 
