@@ -107,13 +107,16 @@ TEST(download_test, download_non_existent_file) {
 
   const auto [headers, ec] = download(dr);  // do the download
 
+  const auto bad_target =
+    (ec.value() == std::to_underlying(boost::beast::http::error::bad_target));
+
   const auto timeout_happened =
-    ec.value() == std::to_underlying(boost::beast::error::timeout);
+    (ec.value() == std::to_underlying(boost::beast::error::timeout));
 
   // Only check things if a timeout didn't happen
-  EXPECT_TRUE(timeout_happened || !ec);
-  EXPECT_TRUE(timeout_happened || headers.contains("Status"));
-  EXPECT_TRUE(timeout_happened || headers.contains("Reason"));
+  EXPECT_TRUE(timeout_happened || bad_target);
+  EXPECT_TRUE(headers.contains("Status"));
+  EXPECT_TRUE(headers.contains("Reason"));
 
   // randomly generated filename should not exist as a uri
   EXPECT_TRUE(timeout_happened || headers.at("Status") == "404");
