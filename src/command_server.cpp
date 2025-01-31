@@ -235,6 +235,11 @@ command_server_main(int argc,
   if (ec)
     return EXIT_FAILURE;
 
+  if (args.daemonize && args.log_file.empty()) {
+    std::println("A log file with write perms is needed to daemonize");
+    return EXIT_FAILURE;
+  }
+
   std::shared_ptr<std::ostream> log_file =
     args.log_file.empty()
       ? std::make_shared<std::ostream>(std::cout.rdbuf())
@@ -257,6 +262,11 @@ command_server_main(int argc,
     return EXIT_FAILURE;
 
   if (args.daemonize) {
+    args.pid_file = clean_path(args.pid_file, ec);
+    if (ec) {
+      lgr.error("Failed to get full PID file path {}: {}", args.pid_file, ec);
+      return EXIT_FAILURE;
+    }
     auto s = transferase::server(args.hostname, args.port, args.n_threads,
                                  methylome_dir, index_dir, args.max_resident,
                                  lgr, ec, args.daemonize, args.pid_file);
