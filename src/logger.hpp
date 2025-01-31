@@ -33,6 +33,7 @@
 #include <chrono>
 #include <cstdint>  // std::uint32_t
 #include <cstring>  // std::memcpy
+#include <ctime>    // for localtime_r, strftime, tm, std::strftime
 #include <format>
 #include <iostream>
 #include <iterator>  // for size, distance
