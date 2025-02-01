@@ -31,7 +31,7 @@ static constexpr auto description = R"(
 The configuration parameters used by the transferase server are listed
 among the arguments. The transferase server configuration file can be
 generated for convenience, but it is required if the server will be
-run through systemd. Values must be specified for all parameters
+run through systemd. Values must be specified for certain parameters
 unless the 'force' argument is used, in which case any parameters
 without values will be left as commented-out lines in the
 configuration file. Those must be specified manually or given on the
@@ -44,13 +44,13 @@ static constexpr auto examples = R"(
 Examples:
 
 xfr server-config -c /path/to/server_config_file.toml \
-    --hostname=not.kernel.org \
-    --port=65539 \
+    --hostname=org.kernel.not \
+    --port=65536 \
     --methylome-dir=/data/methylomes \
     --index-dir=/data/indexes \
     --log-file=/var/tmp/transferase_server.log \
     --log-level=debug \
-    --max-resident=128 \
+    --max-resident=1984 \
     --n-threads=9000 \
     --pid-file=/var/tmp/TRANSFERASE_SERVER_PID
 )";
@@ -94,6 +94,8 @@ struct server_config_argset : argset_base<server_config_argset> {
   std::string log_level;
   std::string n_threads;
   std::string max_resident;
+  std::string min_bin_size;
+  std::string max_intervals;
   bool force{false};
 
   auto
@@ -101,16 +103,18 @@ struct server_config_argset : argset_base<server_config_argset> {
     transferase::log_args<log_level_t::info>(
       std::vector<std::tuple<std::string, std::string>>{
         // clang-format off
-        {"config_file", std::format("{}", config_file)},
-        {"hostname", std::format("{}", hostname)},
-        {"port", std::format("{}", port)},
-        {"methylome_dir", std::format("{}", methylome_dir)},
-        {"index_dir", std::format("{}", index_dir)},
-        {"log_file", std::format("{}", log_file)},
-        {"log_level", std::format("{}", log_level)},
-        {"n_threads", std::format("{}", n_threads)},
-        {"max_resident", std::format("{}", max_resident)},
-        {"pid_file", std::format("{}", pid_file)},
+        {"config_file", config_file},
+        {"hostname", hostname},
+        {"port", port},
+        {"methylome_dir", methylome_dir},
+        {"index_dir", index_dir},
+        {"log_file", log_file},
+        {"log_level", log_level},
+        {"n_threads", n_threads},
+        {"max_resident", max_resident},
+        {"min_bin_size", min_bin_size},
+        {"max_intervals", max_intervals},
+        {"pid_file", pid_file},
         // clang-format on
       });
   }
@@ -135,11 +139,13 @@ struct server_config_argset : argset_base<server_config_argset> {
       ("port,p", value(&port), "server port")
       ("methylome-dir,d", value(&methylome_dir), "methylome directory")
       ("index-dir,x", value(&index_dir), "genome index file directory")
-      ("max-resident,r", value(&max_resident), "max methylomes resident in memory at once")
-      ("n-threads,t", value(&n_threads), "number of threads to use (one per connection)")
       ("log-level,v", value(&log_level), "{debug, info, warning, error, critical}")
       ("log-file,l", value(&log_file), "log file name")
-      ("pid-file,p", value(&pid_file), "Filename to use for the PID when daemonizing")
+      ("max-resident,r", value(&max_resident), "max methylomes resident in memory at once")
+      ("n-threads,t", value(&n_threads), "number of threads to use (one per connection)")
+      ("min-bin-size,b", value(&min_bin_size), "Minimum bin size for a request")
+      ("max-intervals,i", value(&max_intervals), "Maximum number of intervals in a request")
+      ("pid-file,P", value(&pid_file), "Filename to use for the PID when daemonizing")
       ("force", po::bool_switch(&force), "Write config file even if values needed to "
        "run the server are missing (set them manually)")
       // clang-format on
@@ -158,6 +164,8 @@ BOOST_DESCRIBE_STRUCT(server_config_argset, (), (
   log_level,
   n_threads,
   max_resident,
+  min_bin_size,
+  max_intervals,
   pid_file
 )
 )
@@ -165,10 +173,28 @@ BOOST_DESCRIBE_STRUCT(server_config_argset, (), (
 
 }  // namespace transferase
 
+[[nodiscard]] inline auto
+check_empty_values(const auto &t, const std::vector<std::string> &allowed_empty)
+  -> std::vector<std::string> {
+  using T = std::remove_cvref_t<decltype(t)>;
+  using members =
+    boost::describe::describe_members<T, boost::describe::mod_any_access>;
+  std::vector<std::string> r;
+  boost::mp11::mp_for_each<members>([&](const auto &member) {
+    std::string name(member.name);
+    std::ranges::replace(name, '_', '-');
+    const auto value = std::format("{}", t.*member.pointer);
+    const auto itr = std::ranges::find(allowed_empty, name);
+    if (value.empty() && itr == std::cend(allowed_empty))
+      r.push_back(name);
+  });
+  return r;
+}
+
 auto
 command_server_config_main(int argc,
                            char *argv[]) -> int {  // NOLINT(*-c-arrays)
-  static constexpr auto invalid_fmt = R"(Warning: {} is not valid for "{}")";
+  static constexpr auto invalid_fmt = R"(Error: {} is not valid for "{}")";
   static constexpr auto command = "server-config";
   static const auto usage =
     std::format("Usage: xfr {} [options]\n", rstrip(command));
@@ -185,7 +211,11 @@ command_server_config_main(int argc,
     return EXIT_FAILURE;
 
   if (!args.force) {
-    const auto missing = check_empty_values(args);
+    const auto missing = check_empty_values(args, {
+                                                    "pid-file",
+                                                    "min-bin-size",
+                                                    "max-intervals",
+                                                  });
     if (!missing.empty()) {
       std::println("The following have missing values (constider --force):");
       for (const auto &m : missing)
@@ -194,37 +224,69 @@ command_server_config_main(int argc,
     }
   }
 
-  // validate n-threads
-  if (!args.n_threads.empty()) {
-    std::istringstream is(args.n_threads);
-    std::uint16_t n_threads_value{};
-    if (!(is >> n_threads_value))
-      std::println(invalid_fmt, args.n_threads, "n-threads");
-  }
-
+  bool validation_error = false;
   // validate port
   if (!args.port.empty()) {
     std::istringstream is(args.port);
     std::uint16_t port_value{};
-    if (!(is >> port_value))
+    if (!(is >> port_value)) {
       std::println(invalid_fmt, args.port, "port");
+      validation_error = true;
+    }
   }
 
   // validate log-level
   if (!args.log_level.empty()) {
     std::istringstream is(args.log_level);
     transferase::log_level_t log_level_value{};
-    if (!(is >> log_level_value))
+    if (!(is >> log_level_value)) {
       std::println(invalid_fmt, args.log_level, "log-level");
+      validation_error = true;
+    }
+  }
+
+  // validate n-threads
+  if (!args.n_threads.empty()) {
+    std::istringstream is(args.n_threads);
+    std::uint16_t n_threads_value{};
+    if (!(is >> n_threads_value)) {
+      std::println(invalid_fmt, args.n_threads, "n-threads");
+      validation_error = true;
+    }
   }
 
   // validate max-resident
   if (!args.max_resident.empty()) {
     std::istringstream is(args.max_resident);
     std::uint32_t max_resident_value{};
-    if (!(is >> max_resident_value))
+    if (!(is >> max_resident_value)) {
       std::println(invalid_fmt, args.max_resident, "max-resident");
+      validation_error = true;
+    }
   }
+
+  // validate min-bin-size
+  if (!args.min_bin_size.empty()) {
+    std::istringstream is(args.min_bin_size);
+    std::uint32_t min_bin_size{};
+    if (!(is >> min_bin_size)) {
+      std::println(invalid_fmt, args.min_bin_size, "min-bin-size");
+      validation_error = true;
+    }
+  }
+
+  // validate max-intervals
+  if (!args.max_intervals.empty()) {
+    std::istringstream is(args.max_intervals);
+    std::uint32_t max_intervals{};
+    if (!(is >> max_intervals)) {
+      std::println(invalid_fmt, args.max_intervals, "max-intervals");
+      validation_error = true;
+    }
+  }
+
+  if (validation_error)
+    return EXIT_FAILURE;
 
   const auto write_err = transferase::write_config_file(args);
   if (write_err)  // message already reported
