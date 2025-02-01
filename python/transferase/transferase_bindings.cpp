@@ -67,9 +67,11 @@ initialize_transferase() -> void {
 }
 
 PYBIND11_MODULE(transferase, the_module) {
-  initialize_transferase();
-
+  py::options options;
+  options.disable_function_signatures();
   the_module.doc() = warning_message;
+
+  initialize_transferase();
 
   auto LogLevel = py::enum_<transferase::log_level_t>(the_module, "LogLevel")
                     .value("debug", transferase::log_level_t::debug)
