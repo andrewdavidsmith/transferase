@@ -41,22 +41,6 @@
 namespace transferase {
 
 [[nodiscard]] inline auto
-check_empty_values(const auto &t) -> std::vector<std::string> {
-  using T = std::remove_cvref_t<decltype(t)>;
-  using members =
-    boost::describe::describe_members<T, boost::describe::mod_any_access>;
-  std::vector<std::string> r;
-  boost::mp11::mp_for_each<members>([&](const auto &member) {
-    std::string name(member.name);
-    std::ranges::replace(name, '_', '-');
-    const auto value = std::format("{}", t.*member.pointer);
-    if (value.empty())
-      r.push_back(name);
-  });
-  return r;
-}
-
-[[nodiscard]] inline auto
 format_as_config(const auto &t) -> std::string {
   using T = std::remove_cvref_t<decltype(t)>;
   using members =
