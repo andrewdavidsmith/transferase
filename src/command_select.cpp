@@ -132,6 +132,8 @@ get_to_show(const auto &filtered, const auto disp_start, const auto disp_end) {
 static inline auto
 format_current_entry(const auto &entry, const auto horiz_pos, const auto max_x,
                      const auto margin) {
+  if (horiz_pos > std::ssize(entry.second))
+    return std::format("{}:", entry.first);
   return std::format("{}: {}", entry.first,
                      entry.second.substr(horiz_pos, max_x - margin));
 }
@@ -173,6 +175,37 @@ show_selected_keys(const auto &selected_keys) {
     const auto joined = selected_keys | std::views::join_with(',') |
                         std::ranges::to<std::string>();
     mvprintw(1, 0, joined);
+  }
+  refresh();
+  getch();  // any key will go back to list for selection
+}
+
+static inline auto
+show_help() {
+  using std::literals::string_view_literals::operator""sv;
+  static constexpr auto keys = std::array{
+    std::pair{"Up arrow"sv, "Up one item (wrap at top)"sv},
+    std::pair{"Down arrow"sv, "Down one item (wrap at bottom)"sv},
+    std::pair{"Right arrow"sv, "Scroll right (if needed)"sv},
+    std::pair{"Down arrow"sv, "Scroll left (if needed)"sv},
+    std::pair{"Page up"sv, "Move up one page"sv},
+    std::pair{"Page down"sv, "Move down one page"sv},
+    std::pair{"Home"sv, "Move to the beginning of the list"sv},
+    std::pair{"End"sv, "Move to the end of the list"sv},
+    std::pair{"Space/Enter"sv, "Select or deselect current item"sv},
+    std::pair{"c"sv, "Clear current selections"sv},
+    std::pair{"v"sv, "View current selections"sv},
+    std::pair{"a"sv, "Toggle multi-select mode"sv},
+    std::pair{"r"sv, "Toggle multi-remove mode"sv},
+    std::pair{"s"sv, "Enter search phrase"sv},
+    std::pair{"q"sv, "Quit and save"sv},
+    std::pair{"C-c"sv, "Quit without saving"sv},
+    std::pair{"h"sv, "This message (any key to leave)"sv},
+  };
+  clear();
+  for (const auto [line_num, kv] : std::views::enumerate(keys)) {
+    const auto line = std::format("{}: {}", kv.first, kv.second);
+    mvprintw(line_num, 0, line);
   }
   refresh();
   getch();  // any key will go back to list for selection
@@ -229,12 +262,16 @@ confirm_quit(const auto &selected_keys) -> bool {
 auto
 main_loop(const std::vector<std::pair<std::string, std::string>> &data)
   -> std::vector<std::string> {
-  static constexpr auto extra_margin_space = 3;
+  static constexpr auto extra_margin_space = 2;  // colon and space
   static constexpr auto escape_key_code = 27;
   static constexpr auto escape_delay{25};
+  // lines to keep at top of display
+  static constexpr std::int32_t legend_height{2};
   static constexpr auto legend =
-    "q=Quit, Move=Arrows, a=Toggle multi-add, r=Toggle multi-remove, "
-    "Space=Add/Remove, v=View selected, c=Clear selected, Line={}/{}";
+    "h=Help, q=Quit, Move: Arrows/PgUp/PgDn/Home/End Space=Add/remove "
+    "[{}/{}, selected={}]\n"
+    "a/r=Toggle multi-add/remove, v/c=View/clear selection, s/Esc=Enter/clear "
+    "search";
 
   // margin must be max key width plus room
   const auto key_sizes = std::views::transform(
@@ -263,7 +300,6 @@ main_loop(const std::vector<std::pair<std::string, std::string>> &data)
   bool multi_remove = false;
   std::int32_t horiz_pos = 0;
   std::int32_t cursor_pos = 0;
-  std::int32_t legend_height = 1;  // lines to keep at top of display
   std::vector<std::pair<std::string, std::string>> filtered;
 
   while (true) {
@@ -287,8 +323,10 @@ main_loop(const std::vector<std::pair<std::string, std::string>> &data)
 
     // Include the query in the legened if appropriate
     const std::string current_legend =
-      query.empty() ? std::format(legend, cursor_pos + 1, n_filtered)
-                    : std::format(legend, cursor_pos + 1, n_filtered) +
+      query.empty() ? std::format(legend, cursor_pos + 1, n_filtered,
+                                  std::size(selected_keys))
+                    : std::format(legend, cursor_pos + 1, n_filtered,
+                                  std::size(selected_keys)) +
                         std::format(" [{}]", query);
 
     const auto disp_start =
@@ -352,6 +390,7 @@ main_loop(const std::vector<std::pair<std::string, std::string>> &data)
       horiz_pos = std::max(horiz_pos - 1, 0);
     }
     else if (ch == KEY_DOWN) {
+      horiz_pos = 0;
       cursor_pos = (cursor_pos + 1) % n_filtered;
       if (multi_add)
         do_add(filtered, cursor_pos, selected_keys);
@@ -359,6 +398,7 @@ main_loop(const std::vector<std::pair<std::string, std::string>> &data)
         do_remove(filtered, cursor_pos, selected_keys);
     }
     else if (ch == KEY_NPAGE) {
+      horiz_pos = 0;
       std::int32_t max_down =
         std::min(cursor_pos + LINES - legend_height, n_filtered - 1);
       if (multi_add)
@@ -370,6 +410,7 @@ main_loop(const std::vector<std::pair<std::string, std::string>> &data)
       cursor_pos = max_down;
     }
     else if (ch == KEY_END) {
+      horiz_pos = 0;
       if (multi_add)
         for (std::int32_t i = cursor_pos; i < n_filtered; ++i)
           do_add(filtered, i, selected_keys);
@@ -379,6 +420,7 @@ main_loop(const std::vector<std::pair<std::string, std::string>> &data)
       cursor_pos = n_filtered - 1;
     }
     else if (ch == KEY_UP) {
+      horiz_pos = 0;
       cursor_pos = (cursor_pos - 1 + n_filtered) % n_filtered;
       if (multi_add)
         do_add(filtered, cursor_pos, selected_keys);
@@ -386,6 +428,7 @@ main_loop(const std::vector<std::pair<std::string, std::string>> &data)
         do_remove(filtered, cursor_pos, selected_keys);
     }
     else if (ch == KEY_PPAGE) {
+      horiz_pos = 0;
       std::int32_t max_up = std::max(cursor_pos - (LINES - legend_height), 0);
       if (multi_add)
         for (std::int32_t i = cursor_pos; i >= max_up; --i)
@@ -396,6 +439,7 @@ main_loop(const std::vector<std::pair<std::string, std::string>> &data)
       cursor_pos = max_up;
     }
     else if (ch == KEY_HOME) {
+      horiz_pos = 0;
       if (multi_add)
         for (std::int32_t i = cursor_pos; i >= 0; --i)
           do_add(filtered, i, selected_keys);
@@ -425,9 +469,14 @@ main_loop(const std::vector<std::pair<std::string, std::string>> &data)
       if (multi_remove)
         do_remove(filtered, cursor_pos, selected_keys);
     }
-    else if (ch == '/') {  // Start search query
+    else if (ch == '/' || ch == 's') {  // Start search query
+      horiz_pos = 0;
       get_query(query, query_re);
       cursor_pos = 0;
+    }
+    else if (ch == 'h') {  // show help
+      horiz_pos = 0;
+      show_help();
     }
   }
 
