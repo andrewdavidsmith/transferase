@@ -41,19 +41,21 @@ def test_validate_success():
     validate_ok = obj.validate()
     assert validate_ok is True
 
-
-def test_run_fail_bad_config_dir():
-    """
-    Test that the run function will fail if the config dir makes no sense
-    """
-    bad_config_dir_mock = "/dev"
-    obj = ClientConfig()
-    obj.config_dir = bad_config_dir_mock
-    validate_ok = obj.validate()
-    assert validate_ok is True
-    with pytest.raises(RuntimeError) as excinfo:
-        obj.run([], False)
-    assert "error creating directories" in str(excinfo.value)
+## ADS: Similar to the case for make_directories_failure in
+## test/client_config_test.cpp, the test below can't work on github
+## runners, so it's out for now...
+# def test_run_fail_bad_config_dir():
+#     """
+#     Test that the run function will fail if the config dir makes no sense
+#     """
+#     bad_config_dir_mock = "/dev"
+#     obj = ClientConfig()
+#     obj.config_dir = bad_config_dir_mock
+#     validate_ok = obj.validate()
+#     assert validate_ok is True
+#     with pytest.raises(RuntimeError) as excinfo:
+#         obj.run([], False)
+#     assert "error creating directories" in str(excinfo.value)
 
 def test_run_no_genomes_success():
     """
