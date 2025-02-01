@@ -25,8 +25,9 @@
 cmake_minimum_required(VERSION 3.30)
 project(
   transferase
-  VERSION 0.3.0
-  DESCRIPTION "The transferase system for retrieving methylomes"
+  VERSION 0.4.0
+  DESCRIPTION
+  "The transferase system for retrieving methylome data from methbase"
   HOMEPAGE_URL https://github.com/andrewdavidsmith/transferase
   LANGUAGES CXX)
 
