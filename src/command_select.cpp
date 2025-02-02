@@ -205,7 +205,7 @@ show_help() {
   };
   clear();
   std::int32_t line_num = 0;
-  for (const auto kv : keys) {
+  for (const auto &kv : keys) {
     const auto line = std::format("{}: {}", kv.first, kv.second);
     mvprintw(line_num++, 0, line);
   }

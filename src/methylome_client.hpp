@@ -25,12 +25,25 @@
 #define SRC_METHYLOME_CLIENT_HPP_
 
 #include "client.hpp"
+#include "query_container.hpp"  // for transferase::size
 #include "request.hpp"
+#include "request_type_code.hpp"  // for transferase::request_type_code
 
+#include <boost/describe.hpp>
 #include <boost/json.hpp>
 
+#include <cstdint>
+#include <format>
+#include <sstream>
 #include <string>
+#include <system_error>
+#include <type_traits>  // for std::true_type
+#include <utility>      // for std::to_underlying, std::unreachable
 #include <vector>
+
+namespace transferase {
+template <typename level_element_type> struct level_container;
+}
 
 namespace transferase {
 
