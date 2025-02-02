@@ -60,77 +60,85 @@ level_container_bindings(
   py::class_<transferase::level_container<transferase::level_element_t>> &cls)
   -> void {
   using namespace pybind11::literals;  // NOLINT
-  namespace tra = transferase;
+  namespace xfr = transferase;
   cls.def(py::init<>())
     .def(
       "__getitem__",
-      [](const tra::level_container<tra::level_element_t> &self,
+      [](const xfr::level_container<xfr::level_element_t> &self,
          const std::size_t pos) -> std::tuple<std::uint32_t, std::uint32_t> {
-        if (pos >= tra::size(self))
+        if (pos >= xfr::size(self))
           throw std::out_of_range("Index out of range");
-        return tra::level_element_t_to_tuple(self[pos]);
+        return xfr::level_element_t_to_tuple(self[pos]);
       },
       R"doc(
-      Access the tuple (n_meth, n_unmeth) of numbers of methylated and
-      unmethylated reads for the interval corresponding to the given
-      position in the container. These are returned by copy, so access
-      times might differ for the get_n_meth and get_n_unmeth methods.
 
-      Parameters
-      ----------
-      pos (int): The index of the interval for which to get the numbers
-      of methylated and unmethylated reads.
+    Access the tuple (n_meth, n_unmeth) of numbers of methylated and
+    unmethylated reads for the interval corresponding to the given
+    position in the container. These are returned by copy, so access
+    times might differ for the get_n_meth and get_n_unmeth methods.
+
+    Parameters
+    ----------
+
+    pos (int): The index of the interval for which to get the numbers
+        of methylated and unmethylated reads.
 
       )doc",
       "pos"_a)
     .def(
       "get_n_meth",
-      [](const tra::level_container<tra::level_element_t> &self,
+      [](const xfr::level_container<xfr::level_element_t> &self,
          const std::size_t pos) -> std::uint32_t {
-        if (pos >= tra::size(self))
+        if (pos >= xfr::size(self))
           throw std::out_of_range("Index out of range");
         return self[pos].n_meth;
       },
       R"doc(
-      Access the number of *methylated* observations for the interval
-      corresponding to the given position.
 
-      Parameters
-      ----------
-      pos (int): The index of the interval for which to get the number
-      of *methylated* reads.
+    Access the number of *methylated* observations for the interval
+    corresponding to the given position.
+
+    Parameters
+    ----------
+
+    pos (int): The index of the interval for which to get the number
+        of *methylated* reads.
 
       )doc",
       "pos"_a)
     .def(
       "get_n_unmeth",
-      [](const tra::level_container<tra::level_element_t> &self,
+      [](const xfr::level_container<xfr::level_element_t> &self,
          const std::size_t pos) -> std::uint32_t {
-        if (pos >= tra::size(self))
+        if (pos >= xfr::size(self))
           throw std::out_of_range("Index out of range");
         return self[pos].n_unmeth;
       },
       R"doc(
-      Access the number of *UNmethylated* observations for the interval
-      corresponding to the given position.
 
-      Parameters
-      ----------
-      pos (int): The index of the interval for which to get the number
-      of *UNmethylated* reads.
+    Access the number of *UNmethylated* observations for the interval
+    corresponding to the given position.
+
+    Parameters
+    ----------
+
+    pos (int): The index of the interval for which to get the number
+        of *UNmethylated* reads.
 
       )doc",
       "pos"_a)
     .def("__str__",
-         [](const tra::level_container<tra::level_element_t> &self)
+         [](const xfr::level_container<xfr::level_element_t> &self)
            -> std::string {
-           return std::format("LevelContainer size={}", tra::size(self));
+           return std::format("LevelContainer size={}", xfr::size(self));
          })
     .doc() = R"doc(
-    A LevelContainer represents methylation levels in each among a list
-    of GenomicInterval objects. This is the object type that is returned
-    from a transferase query, unless you additionally request information
-    about sites covered (see LevelContainerCovered).
+
+    A LevelContainer represents methylation levels in each among a
+    list of GenomicInterval objects. This is the object type that is
+    returned from a transferase query, unless you additionally request
+    information about sites covered (see LevelContainerCovered).
+
     )doc"
     //
     ;
@@ -141,98 +149,108 @@ level_container_covered_bindings(
   py::class_<transferase::level_container<transferase::level_element_covered_t>>
     &cls) -> void {
   using namespace pybind11::literals;  // NOLINT
-  namespace tra = transferase;
+  namespace xfr = transferase;
   cls.def(py::init<>())
     .def(
       "__getitem__",
-      [](const tra::level_container<tra::level_element_covered_t> &self,
+      [](const xfr::level_container<xfr::level_element_covered_t> &self,
          const std::size_t pos)
         -> std::tuple<std::uint32_t, std::uint32_t, std::uint32_t> {
-        if (pos >= tra::size(self))
+        if (pos >= xfr::size(self))
           throw std::out_of_range("Index out of range");
-        return tra::level_element_covered_t_to_tuple(self[pos]);
+        return xfr::level_element_covered_t_to_tuple(self[pos]);
       },
       R"doc(
-      Access the tuple (n_meth, n_unmeth, n_covered) of numbers of
-      methylated and unmethylated reads, along with number of sites with
-      at least one read, for the interval corresponding to the given
-      position in the container. These are returned by copy, so access
-      times might differ for the get_n_meth and get_n_unmeth methods.
 
-      Parameters
-      ----------
-      pos (int): The index of the interval for which to get the numbers
-      of methylated and unmethylated reads, and covered sites.
+    Access the tuple (n_meth, n_unmeth, n_covered) of numbers of
+    methylated and unmethylated reads, along with number of sites with
+    at least one read, for the interval corresponding to the given
+    position in the container. These are returned by copy, so access
+    times might differ for the get_n_meth and get_n_unmeth methods.
+
+    Parameters
+    ----------
+
+    pos (int): The index of the interval for which to get the numbers
+        of methylated and unmethylated reads, and covered sites.
 
       )doc",
       "pos"_a)
     .def(
       "get_n_meth",
-      [](const tra::level_container<tra::level_element_covered_t> &self,
+      [](const xfr::level_container<xfr::level_element_covered_t> &self,
          const std::size_t pos) -> std::uint32_t {
-        if (pos >= tra::size(self))
+        if (pos >= xfr::size(self))
           throw std::out_of_range("Index out of range");
         return self[pos].n_meth;
       },
       R"doc(
-      Access the number of *methylated* observations for the interval
-      corresponding to the given position.
 
-      Parameters
-      ----------
-      pos (int): The index of the interval for which to get the number
-      of *methylated* reads.
+    Access the number of *methylated* observations for the interval
+    corresponding to the given position.
+
+    Parameters
+    ----------
+
+    pos (int): The index of the interval for which to get the number
+        of *methylated* reads.
 
       )doc",
       "pos"_a)
     .def(
       "get_n_unmeth",
-      [](const tra::level_container<tra::level_element_covered_t> &self,
+      [](const xfr::level_container<xfr::level_element_covered_t> &self,
          const std::size_t pos) -> std::uint32_t {
-        if (pos >= tra::size(self))
+        if (pos >= xfr::size(self))
           throw std::out_of_range("Index out of range");
         return self[pos].n_unmeth;
       },
       R"doc(
-      Access the number of *UNmethylated* observations for the interval
-      corresponding to the given position.
 
-      Parameters
-      ----------
-      pos (int): The index of the interval for which to get the number
-      of *UNmethylated* reads.
+    Access the number of *UNmethylated* observations for the interval
+    corresponding to the given position.
+
+    Parameters
+    ----------
+
+    pos (int): The index of the interval for which to get the number
+        of *UNmethylated* reads.
 
       )doc",
       "pos"_a)
     .def(
       "get_n_covered",
-      [](const tra::level_container<tra::level_element_covered_t> &self,
+      [](const xfr::level_container<xfr::level_element_covered_t> &self,
          const std::size_t pos) -> std::uint32_t {
-        if (pos >= tra::size(self))
+        if (pos >= xfr::size(self))
           throw std::out_of_range("Index out of range");
         return self[pos].n_covered;
       },
       R"doc(
-      Access the number of covered sites in the interval corresponding
-      to the given position.
 
-      Parameters
-      ----------
-      pos (int): The index of the interval for which to get the number
-      of covered sites.
+    Access the number of covered sites in the interval corresponding
+    to the given position.
+
+    Parameters
+    ----------
+
+    pos (int): The index of the interval for which to get the number
+        of covered sites.
 
       )doc",
       "pos"_a)
     .def("__str__",
-         [](const tra::level_container<tra::level_element_covered_t> &self)
+         [](const xfr::level_container<xfr::level_element_covered_t> &self)
            -> std::string {
-           return std::format("LevelContainerCovered size={}", tra::size(self));
+           return std::format("LevelContainerCovered size={}", xfr::size(self));
          })
     .doc() = R"doc(
-    A LevelContainerCovered represents methylation levels in each among
-    a list of GenomicInterval objects. This is the object type that is
-    returned from a transferase query if you request information about
-    sites covered.
+
+    A LevelContainerCovered represents methylation levels in each
+    among a list of GenomicInterval objects. This is the object type
+    that is returned from a transferase query if you request
+    information about sites covered.
+
     )doc"
     //
     ;
