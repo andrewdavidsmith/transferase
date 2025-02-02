@@ -70,8 +70,18 @@ level_container_bindings(
           throw std::out_of_range("Index out of range");
         return tra::level_element_t_to_tuple(self[pos]);
       },
-      "Access element at position 'pos' in this container by copying it into a "
-      "tuple of the values [n_meth, n_unmeth]",
+      R"doc(
+      Access the tuple (n_meth, n_unmeth) of numbers of methylated and
+      unmethylated reads for the interval corresponding to the given
+      position in the container. These are returned by copy, so access
+      times might differ for the get_n_meth and get_n_unmeth methods.
+
+      Parameters
+      ----------
+      pos (int): The index of the interval for which to get the numbers
+      of methylated and unmethylated reads.
+
+      )doc",
       "pos"_a)
     .def(
       "get_n_meth",
@@ -81,8 +91,16 @@ level_container_bindings(
           throw std::out_of_range("Index out of range");
         return self[pos].n_meth;
       },
-      "Access the 'n_meth' value via copy for the element at position 'pos' in "
-      "this container",
+      R"doc(
+      Access the number of *methylated* observations for the interval
+      corresponding to the given position.
+
+      Parameters
+      ----------
+      pos (int): The index of the interval for which to get the number
+      of *methylated* reads.
+
+      )doc",
       "pos"_a)
     .def(
       "get_n_unmeth",
@@ -92,8 +110,16 @@ level_container_bindings(
           throw std::out_of_range("Index out of range");
         return self[pos].n_unmeth;
       },
-      "Access the 'n_unmeth' value via copy for the element at position 'pos' "
-      "in this container",
+      R"doc(
+      Access the number of *UNmethylated* observations for the interval
+      corresponding to the given position.
+
+      Parameters
+      ----------
+      pos (int): The index of the interval for which to get the number
+      of *UNmethylated* reads.
+
+      )doc",
       "pos"_a)
     .def("__str__",
          [](const tra::level_container<tra::level_element_t> &self)
@@ -120,8 +146,19 @@ level_container_covered_bindings(
           throw std::out_of_range("Index out of range");
         return tra::level_element_covered_t_to_tuple(self[pos]);
       },
-      "Access element at position 'pos' in this container by copying it into a "
-      "tuple of the values [n_meth, n_unmeth]",
+      R"doc(
+      Access the tuple (n_meth, n_unmeth, n_covered) of numbers of
+      methylated and unmethylated reads, along with number of sites with
+      at least one read, for the interval corresponding to the given
+      position in the container. These are returned by copy, so access
+      times might differ for the get_n_meth and get_n_unmeth methods.
+
+      Parameters
+      ----------
+      pos (int): The index of the interval for which to get the numbers
+      of methylated and unmethylated reads, and covered sites.
+
+      )doc",
       "pos"_a)
     .def(
       "get_n_meth",
@@ -131,8 +168,16 @@ level_container_covered_bindings(
           throw std::out_of_range("Index out of range");
         return self[pos].n_meth;
       },
-      "Access the 'n_meth' value via copy for the element at position 'pos' in "
-      "this container",
+      R"doc(
+      Access the number of *methylated* observations for the interval
+      corresponding to the given position.
+
+      Parameters
+      ----------
+      pos (int): The index of the interval for which to get the number
+      of *methylated* reads.
+
+      )doc",
       "pos"_a)
     .def(
       "get_n_unmeth",
@@ -142,8 +187,16 @@ level_container_covered_bindings(
           throw std::out_of_range("Index out of range");
         return self[pos].n_unmeth;
       },
-      "Access the 'n_unmeth' value via copy for the element at position 'pos' "
-      "in this container",
+      R"doc(
+      Access the number of *UNmethylated* observations for the interval
+      corresponding to the given position.
+
+      Parameters
+      ----------
+      pos (int): The index of the interval for which to get the number
+      of *UNmethylated* reads.
+
+      )doc",
       "pos"_a)
     .def(
       "get_n_covered",
@@ -153,8 +206,16 @@ level_container_covered_bindings(
           throw std::out_of_range("Index out of range");
         return self[pos].n_covered;
       },
-      "Access the 'n_covered' value via copy for the element at position 'pos' "
-      "in this container ",
+      R"doc(
+      Access the number of covered sites in the interval corresponding
+      to the given position.
+
+      Parameters
+      ----------
+      pos (int): The index of the interval for which to get the number
+      of covered sites.
+
+      )doc",
       "pos"_a)
     .def("__str__",
          [](const tra::level_container<tra::level_element_covered_t> &self)
