@@ -126,6 +126,12 @@ level_container_bindings(
            -> std::string {
            return std::format("LevelContainer size={}", tra::size(self));
          })
+    .doc() = R"doc(
+    A LevelContainer represents methylation levels in each among a list
+    of GenomicInterval objects. This is the object type that is returned
+    from a transferase query, unless you additionally request information
+    about sites covered (see LevelContainerCovered).
+    )doc"
     //
     ;
 }
@@ -222,6 +228,12 @@ level_container_covered_bindings(
            -> std::string {
            return std::format("LevelContainerCovered size={}", tra::size(self));
          })
+    .doc() = R"doc(
+    A LevelContainerCovered represents methylation levels in each among
+    a list of GenomicInterval objects. This is the object type that is
+    returned from a transferase query if you request information about
+    sites covered.
+    )doc"
     //
     ;
 }

@@ -74,7 +74,10 @@ genomic_interval_bindings(pybind11::class_<transferase::genomic_interval> &cls)
         return std::format("{}", gi);
       },
       R"doc(
-      Print a genomic interval with the numeric code for chromosome name.
+
+    Print a genomic interval with the numeric code for chromosome
+    name.
+
       )doc")
     .def(
       "to_string",
@@ -88,46 +91,69 @@ genomic_interval_bindings(pybind11::class_<transferase::genomic_interval> &cls)
                            self.start, self.stop);
       },
       R"doc(
-      Print a genomic interval with name of chromosome.
 
-      Parameters
-      ----------
-      genome_index (GenomeIndex): Must correspond to the appropriate genome.
+    Print a genomic interval with name of chromosome.
 
-      )doc",
+    Parameters
+    ----------
+
+    genome_index (GenomeIndex): Must correspond to the appropriate
+        genome.
+
+    )doc",
       "genome_index"_a)
     // static functions of genomic_interval class
     .def_static("read", &transferase::genomic_interval_read,
                 R"doc(
-      Read a BED file of genomic intervals.
 
-      Parameters
-      ----------
-      genome_index (GenomeIndex): Must correspond to the appropriate genome.
-      filename (str): The name of the BED file.
+    Read a BED file of genomic intervals.
 
-      )doc",
+    Parameters
+    ----------
+
+    genome_index (GenomeIndex): Must correspond to the appropriate
+        genome.
+
+    filename (str): The name of the BED file.
+
+    )doc",
                 "genome_index"_a, "filename"_a)
     .def_static("are_sorted", &transferase::genomic_interval::are_sorted,
                 R"doc(
-      Check if intervals are sorted.
 
-      Parameters
-      ----------
-      intervals (list[GenomicInterval]): The list of intervals to check.
-                )doc",
+    Check if intervals are sorted.
+
+    Parameters
+    ----------
+
+    intervals (list[GenomicInterval]): The list of intervals to check.
+
+    )doc",
                 "intervals"_a)
     .def_static("are_valid",
                 &transferase::genomic_interval::are_valid<
                   std::vector<transferase::genomic_interval>>,
                 R"doc(
-      Check if all intervals are valid (start <= stop).
 
-      Parameters
-      ----------
-      intervals (list[GenomicInterval]): The list of intervals to check.
-                )doc",
+    Check if all intervals are valid (start <= stop).
+
+    Parameters
+    ----------
+
+    intervals (list[GenomicInterval]): The list of intervals to check.
+
+    )doc",
                 "intervals"_a)
+    .doc() = R"doc(
+
+    A GenomicInterval is a representation of an interval in the genome
+    as chromosome, start position and end position. These are
+    half-open intervals and correspond to one line in a BED format
+    file. The chromosome is represented as an integer identifier, but
+    the chromosome name can be recovered using a GenomeIndex object,
+    and formatted for printing with the to_string() method.
+
+    )doc"
     //
     ;
 }
