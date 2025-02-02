@@ -35,8 +35,8 @@ When in doubt, consult the module reference at the location listed above.
 #include "genomic_interval_bindings.hpp"
 #include "level_container_bindings.hpp"
 #include "methylome_bindings.hpp"
+#include "methylome_client_bindings.hpp"
 #include "methylome_directory_bindings.hpp"
-#include "methylome_server_bindings.hpp"
 #include "query_container_bindings.hpp"
 
 #include <client_config.hpp>
@@ -46,8 +46,8 @@ When in doubt, consult the module reference at the location listed above.
 #include <level_element.hpp>
 #include <logger.hpp>
 #include <methylome.hpp>
+#include <methylome_client.hpp>
 #include <methylome_directory.hpp>
-#include <methylome_server.hpp>
 #include <query_container.hpp>
 
 #include <moduleobject.h>
@@ -114,9 +114,9 @@ PYBIND11_MODULE(transferase, the_module) {
     the_module, "MethylomeDirectory",
     "Directory on local system containing methylomes");
 
-  auto MethylomeServer = py::class_<transferase::methylome_server>(
-    the_module, "MethylomeServer",
-    "Remote server that can serve methylome data");
+  auto MethylomeClient = py::class_<transferase::methylome_client>(
+    the_module, "MethylomeClient",
+    "Client to get data from a remote methylome server");
 
   client_config_bindings(ClientConfig);
 
@@ -129,5 +129,5 @@ PYBIND11_MODULE(transferase, the_module) {
   level_container_covered_bindings(LevelContainerCovered);
 
   methylome_directory_bindings(MethylomeDirectory);
-  methylome_server_bindings(MethylomeServer);
+  methylome_client_bindings(MethylomeClient);
 }
