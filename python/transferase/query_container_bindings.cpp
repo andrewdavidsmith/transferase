@@ -45,8 +45,18 @@ query_container_bindings(py::class_<transferase::query_container> &cls)
          })
     .def(pybind11::self == pybind11::self)
     .def(pybind11::self != pybind11::self)
-    .def(
-      "__repr__", [](const transferase::query_container &self) -> std::string {
-        return std::format("<QueryContainer size={}>", transferase::size(self));
-      });
+    .def("__repr__",
+         [](const transferase::query_container &self) -> std::string {
+           return std::format("<QueryContainer size={}>",
+                              transferase::size(self));
+         })
+    .doc() = R"doc(
+    A QueryContainer is a representation for a list of GenomicInterval
+    objects that has been packaged for use in a transferase query. You
+    can't do anything else with a QueryContainer, but it allows you to
+    avoid repeating some of the work if you want to use the same set of
+    GenomicIntervals in more than one query.
+    )doc"
+    //
+    ;
 }
