@@ -21,17 +21,17 @@
  * SOFTWARE.
  */
 
-#ifndef PYTHON_TRANSFERASE_METHYLOME_SERVER_BINDINGS_HPP_
-#define PYTHON_TRANSFERASE_METHYLOME_SERVER_BINDINGS_HPP_
+#ifndef PYTHON_TRANSFERASE_METHYLOME_CLIENT_BINDINGS_HPP_
+#define PYTHON_TRANSFERASE_METHYLOME_CLIENT_BINDINGS_HPP_
 
 #include <pybind11/pybind11.h>
 
 namespace transferase {
-class methylome_server;
+class methylome_client;
 }  // namespace transferase
 
 auto
-methylome_server_bindings(pybind11::class_<transferase::methylome_server> &cls)
+methylome_client_bindings(pybind11::class_<transferase::methylome_client> &cls)
   -> void;
 
-#endif  // PYTHON_TRANSFERASE_METHYLOME_SERVER_BINDINGS_HPP_
+#endif  // PYTHON_TRANSFERASE_METHYLOME_CLIENT_BINDINGS_HPP_
