@@ -65,7 +65,7 @@ duration(const auto start, const auto stop) {
 }
 
 [[nodiscard]] inline auto
-rstrip(char const *const x) -> const std::string_view {
+rstrip(const char *const x) -> const std::string_view {
   const std::string s{x};
   const auto start = s.find_first_not_of("\n\r");
   return std::string_view(x + start, x + std::size(s));
