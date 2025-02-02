@@ -25,8 +25,11 @@
 
 #include "client_config.hpp"
 
-#include <cctype>
+#include <algorithm>
+#include <cctype>  // for std::isgraph
+#include <cerrno>  // for errno
 #include <fstream>
+#include <iterator>  // for std::size, std::begin, std::cend
 #include <ranges>
 #include <string>
 #include <system_error>
@@ -34,9 +37,9 @@
 
 [[nodiscard]] inline auto
 rlstrip(const std::string &s) noexcept -> std::string {
-  constexpr auto is_graph = [](const char c) { return std::isgraph(c); };
-  if (s.empty())
-    return {};
+  constexpr auto is_graph = [](const unsigned char c) {
+    return std::isgraph(c);
+  };
   const auto start = std::ranges::find_if(s, is_graph);
   auto stop = std::begin(std::ranges::find_last_if(s, is_graph));
   if (stop != std::cend(s))
@@ -68,7 +71,6 @@ split_equals(const std::string &line, std::error_code &error) noexcept
 [[nodiscard]] auto
 methylome_client::get_default(std::error_code &error) noexcept
   -> methylome_client {
-
   const auto config_file = client_config::get_config_file_default(error);
   if (error)
     // error from get_config_file_default

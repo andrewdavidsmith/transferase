@@ -56,6 +56,7 @@ xfr select -o output_file.txt -g hg38
 #include <ncurses.h>
 
 #include <algorithm>
+#include <array>
 #include <cctype>  // for std::isprint
 #include <cerrno>
 #include <csignal>
@@ -203,9 +204,10 @@ show_help() {
     std::pair{"h"sv, "This message (any key to leave)"sv},
   };
   clear();
-  for (const auto [line_num, kv] : std::views::enumerate(keys)) {
+  std::int32_t line_num = 0;
+  for (const auto kv : keys) {
     const auto line = std::format("{}: {}", kv.first, kv.second);
-    mvprintw(line_num, 0, line);
+    mvprintw(line_num++, 0, line);
   }
   refresh();
   getch();  // any key will go back to list for selection

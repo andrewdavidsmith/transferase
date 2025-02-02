@@ -25,8 +25,6 @@
 #define SRC_METHYLOME_CLIENT_HPP_
 
 #include "client.hpp"
-#include "genome_index.hpp"
-#include "methylome.hpp"
 #include "request.hpp"
 
 #include <boost/json.hpp>

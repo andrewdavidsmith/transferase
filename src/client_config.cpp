@@ -29,7 +29,9 @@
 #include "utilities.hpp"  // for clean_path
 
 #include <boost/json.hpp>
+#include <boost/mp11/algorithm.hpp>
 
+#include <algorithm>  // for std::ranges::replace
 #include <cerrno>
 #include <chrono>  // for std::chrono::operator-
 #include <cstdlib>
@@ -39,7 +41,7 @@
 #include <sstream>
 #include <string>
 #include <system_error>
-#include <unordered_map>  // for std::__detail::operator==
+#include <unordered_map>
 #include <vector>
 
 [[nodiscard]] static inline auto
