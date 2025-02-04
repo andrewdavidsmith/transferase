@@ -56,6 +56,6 @@ TEST(command_config_argset_test, run_success) {
                              "about"s, "description"s);
   // NOLINTEND(cppcoreguidelines-pro-type-const-cast)
   EXPECT_TRUE(args.config_dir.empty());
-  EXPECT_FALSE(args.hostname.empty());
+  EXPECT_FALSE(args.config.hostname.empty());
   EXPECT_FALSE(ec);
 }
