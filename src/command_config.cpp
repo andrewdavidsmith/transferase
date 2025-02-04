@@ -24,7 +24,7 @@
 #include "command_config.hpp"
 
 static constexpr auto about = R"(
-configure an xfr client
+configure a transferase client
 )";
 
 static constexpr auto description = R"(
@@ -42,7 +42,7 @@ for the underlying biological samples.
 static constexpr auto examples = R"(
 Examples:
 
-xfr config -c my_config_dir -s example.com -p 5009 --genomes hg38,mm39
+xfr config -s example.com -p 5009 --genomes hg38,mm39
 )";
 
 #include "arguments.hpp"
@@ -58,6 +58,33 @@ xfr config -c my_config_dir -s example.com -p 5009 --genomes hg38,mm39
 #include <string_view>
 #include <system_error>
 
+static auto
+set_params_from_args(const transferase::command_config_argset &args,
+                     transferase::client_config &config) {
+
+  if (!args.config.hostname.empty())
+    config.hostname = args.config.hostname;
+
+  if (!args.config.port.empty())
+    config.port = args.config.port;
+
+  if (!args.config.index_dir.empty())
+    config.index_dir = args.config.index_dir;
+
+  if (!args.config.labels_dir.empty())
+    config.labels_dir = args.config.labels_dir;
+
+  if (!args.config.methylome_dir.empty())
+    config.methylome_dir = args.config.methylome_dir;
+
+  if (!args.config.log_file.empty())
+    config.log_file = args.config.log_file;
+
+  // Set this one anyway, because it will take the default if the user
+  // doesn't specify it.
+  config.log_level = args.config.log_level;
+}
+
 auto
 command_config_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
   static constexpr auto command = "config";
@@ -71,10 +98,10 @@ command_config_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
   namespace xfr = transferase;
 
   xfr::command_config_argset args;
-  auto ec = args.parse(argc, argv, usage, about_msg, description_msg);
-  if (ec == argument_error_code::help_requested)
+  auto error = args.parse(argc, argv, usage, about_msg, description_msg);
+  if (error == argument_error_code::help_requested)
     return EXIT_SUCCESS;
-  if (ec)
+  if (error)
     return EXIT_FAILURE;
 
   auto &lgr = xfr::logger::instance(xfr::shared_from_cout(), command,
@@ -88,26 +115,26 @@ command_config_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
 
   args.log_options();
 
+  xfr::client_config config;
+  error = config.set_defaults();
+  if (error) {
+    lgr.error("Error setting default config values: {}.", error);
+    return EXIT_FAILURE;
+  }
+
+  set_params_from_args(args, config);
+
+  if (args.config_dir.empty()) {
+    args.config_dir = xfr::client_config::get_config_dir_default(error);
+    if (error) {
+      lgr.error("Error obtaining config dir: {}.", error);
+      return EXIT_FAILURE;
+    }
+  }
+
   const auto genomes = split_comma(args.genomes);
 
-  xfr::client_config config{
-    .config_dir = args.config_dir,
-    .config_file = std::string{},  // because we don't set this
-    .hostname = args.hostname,
-    .port = args.port,
-    .index_dir = args.index_dir,
-    .labels_dir = args.labels_dir,
-    .methylome_dir = args.methylome_dir,
-    .log_file = args.log_file,
-    .log_level = args.log_level,
-  };
-
-  std::error_code error;
-  const bool validated = config.validate(error);
-  if (!validated || error)
-    return EXIT_FAILURE;
-
-  config.run(genomes, args.force_download, error);
+  config.run(args.config_dir, genomes, args.force_download, error);
   if (error)
     return EXIT_FAILURE;
 
