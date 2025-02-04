@@ -25,6 +25,7 @@
 #define SRC_COMMAND_CONFIG_ARGSET_HPP_
 
 #include "arguments.hpp"
+#include "client_config.hpp"
 #include "logger.hpp"
 
 #include <boost/describe.hpp>
@@ -49,14 +50,9 @@ struct command_config_argset : argset_base<command_config_argset> {
   static constexpr auto log_level_default{log_level_t::info};
 
   std::string config_dir{};
-  std::string hostname{};
-  std::string port{};
-  std::string index_dir{};
-  std::string labels_dir{};
-  std::string methylome_dir{};
   std::string genomes{};
-  std::string log_file{};
-  log_level_t log_level{};
+
+  client_config config;
 
   bool update{};
   bool quiet{};
@@ -69,12 +65,13 @@ struct command_config_argset : argset_base<command_config_argset> {
       std::vector<std::tuple<std::string, std::string>>{
         // clang-format off
         {"config_dir", std::format("{}", config_dir)},
-        {"hostname", std::format("{}", hostname)},
-        {"port", std::format("{}", port)},
-        {"index_dir", std::format("{}", index_dir)},
-        {"labels_dir", std::format("{}", index_dir)},
-        {"log_file", std::format("{}", log_file)},
-        {"log_level", std::format("{}", log_level)},
+        {"hostname", std::format("{}", config.hostname)},
+        {"port", std::format("{}", config.port)},
+        {"index_dir", std::format("{}", config.index_dir)},
+        {"labels_dir", std::format("{}", config.labels_dir)},
+        {"methylome_dir", std::format("{}", config.methylome_dir)},
+        {"log_file", std::format("{}", config.log_file)},
+        {"log_level", std::format("{}", config.log_level)},
         {"genomes", std::format("{}", genomes)},
         // clang-format on
       });
@@ -96,20 +93,20 @@ struct command_config_argset : argset_base<command_config_argset> {
       ("help,h", "print this message and exit")
       ("config-dir,c", value(&config_dir),
        "name of config directory; see help for default")
-      ("hostname,s", value(&hostname), "transferase server hostname")
-      ("port,p", value(&port)->default_value(port_default), "transferase server port")
+      ("hostname,s", value(&config.hostname), "transferase server hostname")
+      ("port,p", value(&config.port)->default_value(port_default), "transferase server port")
       ("genomes,g", value(&genomes),
        "download index files and sample labels for these genomes "
        "(comma separated list, e.g. hg38,mm39)")
-      ("index-dir,x", value(&index_dir),
+      ("index-dir,x", value(&config.index_dir),
        "name of a directory to store genome index files")
-      ("methylome-dir,d", value(&methylome_dir),
+      ("methylome-dir,d", value(&config.methylome_dir),
        "name of a local directory to search for methylomes")
-      ("labels-dir,L", value(&labels_dir),
+      ("labels-dir,L", value(&config.labels_dir),
        "name of a directory to search for sample labels")
-      ("log-level,v", value(&log_level)->default_value(log_level_default, ""),
+      ("log-level,v", value(&config.log_level)->default_value(log_level_default, ""),
        "{debug, info, warning, error, critical}")
-      ("log-file,l", value(&log_file)->value_name("console"),
+      ("log-file,l", value(&config.log_file)->value_name("console"),
        "log file name")
       ("update,u", po::bool_switch(&update), "update sample labels")
       ("force,f", po::bool_switch(&force_download), "force index file update")
@@ -120,18 +117,6 @@ struct command_config_argset : argset_base<command_config_argset> {
     return opts;
   }
 };
-
-// clang-format off
-BOOST_DESCRIBE_STRUCT(command_config_argset, (), (
-  hostname,
-  port,
-  index_dir,
-  labels_dir,
-  methylome_dir,
-  log_file,
-  log_level
-))
-// clang-format on
 
 }  // namespace transferase
 
