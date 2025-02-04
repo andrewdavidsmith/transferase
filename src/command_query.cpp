@@ -132,7 +132,8 @@ struct query_argset : argset_base<query_argset> {
   [[nodiscard]] static auto
   get_default_config_file_impl() -> std::string {
     std::error_code ec;
-    return client_config::get_config_file_default(ec);
+    const auto config_dir = client_config::get_config_dir_default(ec);
+    return client_config::get_config_file(config_dir, ec);
   }
 
   static constexpr auto log_level_default{log_level_t::info};
@@ -233,18 +234,6 @@ struct query_argset : argset_base<query_argset> {
     return opts;
   }
 };
-
-// clang-format off
-BOOST_DESCRIBE_STRUCT(query_argset, (), (
-  hostname,
-  port,
-  methylome_dir,
-  index_dir,
-  log_file,
-  log_level
-)
-)
-// clang-format on
 
 }  // namespace transferase
 
@@ -439,9 +428,12 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
   }
 
   const auto interface = transferase::methylome_interface{
-    .directory = args.local_mode ? args.methylome_dir : std::string{},
-    .hostname = args.hostname,
-    .port_number = args.port,
+    // directory
+    args.local_mode ? args.methylome_dir : std::string{},
+    // hostname
+    args.hostname,
+    // port number
+    args.port,
   };
 
   // get methylome names either parsed from command line or in a file
