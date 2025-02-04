@@ -574,20 +574,20 @@ command_select_main(int argc, char *argv[]) -> int {  // NOLINT
     return EXIT_FAILURE;
   }
 
-  if (!input_file.empty() && !config_dir.empty()) {
-    std::println("Specify at most one of input-file or config-dir");
-    return EXIT_FAILURE;
-  }
-
   try {
+    using transferase::client_config;
+
     std::error_code error{};
     if (input_file.empty()) {
-      transferase::client_config config;
-      config.config_dir = config_dir;
-      error = config.set_defaults();
-      if (error)
-        throw std::runtime_error(std::format(
-          "Error setting client configuration: {}", error.message()));
+
+      if (config_dir.empty()) {
+        config_dir = client_config::get_config_dir_default(error);
+        if (error)
+          throw std::runtime_error(std::format(
+            "Error setting client configuration: {}", error.message()));
+      }
+
+      const auto config = client_config::read(config_dir);
       input_file =
         (std::filesystem::path{config.labels_dir} / "labels.json").string();
     }
