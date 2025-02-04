@@ -84,7 +84,7 @@ PYBIND11_MODULE(transferase, the_module) {
     transferase::logger::instance().set_level(lvl);
   });
 
-  auto ClientConfig = py::class_<transferase::client_config>(
+  auto ClientConfig = py::class_<transferase::client_config_pybind11>(
     the_module, "ClientConfig", "Class to help configuring transferase");
 
   auto GenomicInterval = py::class_<transferase::genomic_interval>(
