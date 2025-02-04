@@ -88,6 +88,34 @@ methylome_client_bindings(py::class_<transferase::methylome_client> &cls)
 
     )doc")
     .def(
+      "get_levels",
+      [](const transferase::methylome_client &self,
+         const std::vector<std::string> &methylome_names,
+         const std::uint32_t bin_size) {
+        return self.get_levels<transferase::level_element_t>(methylome_names,
+                                                             bin_size);
+      },
+      R"doc(
+
+    Make a query for methylation levels in each non-overlapping
+    genomic interval of the given size.
+
+    Parameters
+    ----------
+
+    methylome_names (list[str]): A list of methylome names. These must
+        be the names of methylomes that exist on the server. These
+        will usually be SRA accession numbers, and the server will
+        immediately reject any names that include letters other than
+        [a-zA-Z0-9_].  Queries involving too many methylomes will be
+        rejected; this number is roughly 45.
+
+    bin_size (int): A values specifying the size of non-overlapping
+        intervals to request levels for. There is a minimum size,
+        likely between 100 and 200 to prevent server overload.
+
+    )doc")
+    .def(
       "get_levels_covered",
       [](const transferase::methylome_client &self,
          const std::vector<std::string> &methylome_names,
@@ -115,6 +143,35 @@ methylome_client_bindings(py::class_<transferase::methylome_client> &cls)
         list of GenomicInterval objects using a GenomeIndex. These
         must be valid for the genome associated with the given
         methylome names.
+
+    )doc")
+    .def(
+      "get_levels_covered",
+      [](const transferase::methylome_client &self,
+         const std::vector<std::string> &methylome_names,
+         const std::uint32_t bin_size) {
+        return self.get_levels<transferase::level_element_covered_t>(
+          methylome_names, bin_size);
+      },
+      R"doc(
+
+    Make a query for methylation levels, along with information about
+    the number of sites covered by reads, in each non-overlapping
+    genomic interval of the given size.
+
+    Parameters
+    ----------
+
+    methylome_names (list[str]): A list of methylome names. These must
+        be the names of methylomes that exist on the server. These
+        will usually be SRA accession numbers, and the server will
+        immediately reject any names that include letters other than
+        [a-zA-Z0-9_].  Queries involving too many methylomes will be
+        rejected; this number is roughly 45.
+
+    bin_size (int): A values specifying the size of non-overlapping
+        intervals to request levels for. There is a minimum size,
+        likely between 100 and 200 to prevent server overload.
 
     )doc")
     .def_readwrite("hostname", &transferase::methylome_client::hostname,
