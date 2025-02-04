@@ -61,8 +61,48 @@ struct remote_data_resources {
 };
 BOOST_DESCRIBE_STRUCT(remote_data_resources, (), (host, port, path))
 
+struct system_config {
+  std::string hostname;
+  std::string port;
+  std::vector<remote_data_resources> resources;
+};
+
+BOOST_DESCRIBE_STRUCT(system_config, (), (hostname, port, resources))
+
 [[nodiscard]] auto
 get_system_config_filename() -> std::string;
+
+[[nodiscard]] auto
+get_transferase_server_info(std::error_code &error) noexcept
+  -> std::tuple<std::string, std::string>;
+
+#ifndef TRANSFERASE_NOEXCEPT
+[[nodiscard]] inline auto
+get_transferase_server_info() -> std::tuple<std::string, std::string> {
+  std::error_code error;
+  auto res = get_transferase_server_info(error);
+  if (error)
+    throw std::system_error(error);
+  return res;
+}
+#endif
+
+[[nodiscard]] auto
+get_transferase_server_info(const std::string &data_dir,
+                            std::error_code &error) noexcept
+  -> std::tuple<std::string, std::string>;
+
+#ifndef TRANSFERASE_NOEXCEPT
+[[nodiscard]] inline auto
+get_transferase_server_info(const std::string &data_dir)
+  -> std::tuple<std::string, std::string> {
+  std::error_code error;
+  auto res = get_transferase_server_info(data_dir, error);
+  if (error)
+    throw std::system_error(error);
+  return res;
+}
+#endif
 
 [[nodiscard]] auto
 get_remote_data_resources(std::error_code &error) noexcept
