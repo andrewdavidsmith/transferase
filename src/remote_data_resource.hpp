@@ -30,6 +30,8 @@
 #include <format>
 #include <string>
 #include <system_error>
+#include <tuple>
+#include <variant>  // for std::tuple
 #include <vector>
 
 namespace transferase {

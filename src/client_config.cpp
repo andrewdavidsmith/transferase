@@ -35,6 +35,7 @@
 #include <boost/mp11/algorithm.hpp>
 
 #include <algorithm>  // for std::ranges::replace
+#include <cassert>
 #include <cerrno>
 #include <chrono>  // for std::chrono::operator-
 #include <cstdlib>
@@ -43,8 +44,11 @@
 #include <iterator>  // for std::size
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <system_error>
+#include <tuple>
 #include <unordered_map>
+#include <variant>  // for std::tuple
 #include <vector>
 
 [[nodiscard]] static inline auto

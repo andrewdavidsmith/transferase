@@ -24,7 +24,7 @@
 #include "client_config_bindings.hpp"
 #include "kwargs_init_helper.hpp"
 
-#include <client_config.hpp>
+#include <client_config.hpp>  // IWYU pragma: keep
 #include <remote_data_resource.hpp>
 
 #include <pybind11/operators.h>  // IWYU pragma: keep
@@ -35,6 +35,7 @@
 #include <format>
 #include <stdexcept>
 #include <string>
+#include <system_error>
 #include <vector>
 
 namespace py = pybind11;

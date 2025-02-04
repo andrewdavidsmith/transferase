@@ -61,7 +61,6 @@ xfr config -s example.com -p 5009 --genomes hg38,mm39
 static auto
 set_params_from_args(const transferase::command_config_argset &args,
                      transferase::client_config &config) {
-
   if (!args.config.hostname.empty())
     config.hostname = args.config.hostname;
 

@@ -28,6 +28,7 @@
 
 #include <filesystem>
 #include <fstream>
+#include <iterator>  // for std::size
 #include <stdexcept>
 #include <string>
 #include <system_error>
@@ -60,7 +61,8 @@ port = 9000
     std::ofstream out(config_file);
     if (!out)
       throw std::runtime_error("failed to open config file to write mock");
-    out.write(payload.data(), std::size(payload));
+    const auto sz = static_cast<std::streamsize>(std::size(payload));
+    out.write(payload.data(), sz);
   }
 
   auto

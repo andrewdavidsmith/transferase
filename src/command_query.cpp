@@ -72,7 +72,6 @@ xfr query --local -d methylome_dir -x index_dir -g hg38 \
 #include "request_type_code.hpp"
 #include "utilities.hpp"
 
-#include <boost/describe.hpp>
 #include <boost/program_options.hpp>
 
 #include <algorithm>  // IWYU pragma: keep

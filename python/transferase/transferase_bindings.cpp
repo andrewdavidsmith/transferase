@@ -39,7 +39,7 @@ When in doubt, consult the module reference at the location listed above.
 #include "methylome_directory_bindings.hpp"
 #include "query_container_bindings.hpp"
 
-#include <client_config.hpp>
+#include <client_config.hpp>  // IWYU pragma: keep
 #include <genome_index.hpp>
 #include <genomic_interval.hpp>
 #include <level_container.hpp>

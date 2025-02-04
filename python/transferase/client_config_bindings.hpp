@@ -30,6 +30,9 @@
 
 #include <boost/describe.hpp>
 
+#include <string>
+#include <vector>
+
 namespace transferase {
 
 struct client_config_pybind11 : public client_config {

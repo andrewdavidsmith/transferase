@@ -579,7 +579,6 @@ command_select_main(int argc, char *argv[]) -> int {  // NOLINT
 
     std::error_code error{};
     if (input_file.empty()) {
-
       if (config_dir.empty()) {
         config_dir = client_config::get_config_dir_default(error);
         if (error)

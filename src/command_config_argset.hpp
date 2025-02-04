@@ -28,7 +28,6 @@
 #include "client_config.hpp"
 #include "logger.hpp"
 
-#include <boost/describe.hpp>
 #include <boost/program_options.hpp>
 
 #include <format>

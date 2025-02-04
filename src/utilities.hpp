@@ -29,6 +29,7 @@
  */
 
 #include <algorithm>  // IWYU pragma: keep
+#include <cctype>     // for isgraph, std::isgraph
 #include <chrono>
 #include <cstdint>   // for std::uint32_t
 #include <iterator>  // for std::size
@@ -39,6 +40,7 @@
 #include <tuple>
 #include <type_traits>  // for std::true_type
 #include <utility>
+#include <variant>  // for std::tuple
 #include <vector>
 
 namespace transferase {
