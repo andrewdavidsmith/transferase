@@ -221,20 +221,23 @@ download(const download_request &dr)
     if (std::filesystem::exists(outdir) &&
         !std::filesystem::is_directory(outdir)) {
       out_ec = std::make_error_code(std::errc::file_exists);
-      std::println("{}: {}", outdir.string(), out_ec.message());
+      std::println(R"(Error validating output directory "{}": {})",
+                   outdir.string(), out_ec.message());
       return {{}, out_ec};
     }
     if (!std::filesystem::exists(outdir)) {
       const bool made_dir = std::filesystem::create_directories(outdir, out_ec);
       if (!made_dir) {
-        std::println("{}: {}", outdir.string(), out_ec.message());
+        std::println(R"(Error output directory does not exist "{}": {})",
+                     outdir.string(), out_ec.message());
         return {{}, out_ec};
       }
     }
     std::ofstream out_test(outfile);
     if (!out_test) {
       out_ec = std::make_error_code(std::errc(errno));
-      std::println("{}: {}", outfile.string(), out_ec.message());
+      std::println(R"(Error validating output file: "{}": {})",
+                   outfile.string(), out_ec.message());
       return {{}, out_ec};
     }
     const bool remove_ok = std::filesystem::remove(outfile, out_ec);
