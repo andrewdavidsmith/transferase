@@ -47,6 +47,29 @@ get_server_config_dir_default(std::error_code &ec) -> std::string {
 }  // namespace transferase
 
 [[nodiscard]] auto
+split_equals(const std::string &line, std::error_code &error) noexcept
+  -> std::tuple<std::string, std::string> {
+  const auto key_ok = [](const unsigned char x) { return std::isgraph(x); };
+  static constexpr auto delim = '=';
+  const auto eq_pos = line.find(delim);
+  if (eq_pos >= std::size(line)) {
+    error = std::make_error_code(std::errc::invalid_argument);
+    return {std::string{}, std::string{}};
+  }
+  const std::string key{rlstrip(line.substr(0, eq_pos))};
+  if (!std::ranges::all_of(key, key_ok)) {
+    error = std::make_error_code(std::errc::invalid_argument);
+    return {std::string{}, std::string{}};
+  }
+  const std::string value{rlstrip(line.substr(eq_pos + 1))};
+  if (std::size(key) == 0 || std::size(value) == 0) {
+    error = std::make_error_code(std::errc::invalid_argument);
+    return {std::string{}, std::string{}};
+  }
+  return {key, value};
+}
+
+[[nodiscard]] auto
 clean_path(const std::string &s, std::error_code &ec) -> std::string {
   auto p = std::filesystem::absolute(s, ec);
   if (ec)

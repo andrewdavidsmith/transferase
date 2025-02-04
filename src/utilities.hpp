@@ -36,6 +36,7 @@
 #include <string>
 #include <string_view>
 #include <system_error>
+#include <tuple>
 #include <type_traits>  // for std::true_type
 #include <utility>
 #include <vector>
@@ -52,9 +53,11 @@ clean_path(const std::string &s, std::error_code &ec) -> std::string;
 
 [[nodiscard]] inline auto
 split_comma(const auto &s) {
+  auto nonempty = [](const auto &x) { return !x.empty(); };
   return s | std::views::split(',') | std::views::transform([](const auto r) {
            return std::string(std::cbegin(r), std::cend(r));
          }) |
+         std::views::filter(nonempty) |
          std::ranges::to<std::vector<std::string>>();
 }
 
@@ -70,6 +73,22 @@ rstrip(const char *const x) -> const std::string_view {
   const auto start = s.find_first_not_of("\n\r");
   return std::string_view(x + start, x + std::size(s));
 }
+
+[[nodiscard]] inline auto
+rlstrip(const std::string &s) noexcept -> std::string {
+  constexpr auto is_graph = [](const unsigned char c) {
+    return std::isgraph(c);
+  };
+  const auto start = std::ranges::find_if(s, is_graph);
+  auto stop = std::begin(std::ranges::find_last_if(s, is_graph));
+  if (stop != std::cend(s))
+    ++stop;
+  return std::string(start, stop);
+}
+
+[[nodiscard]] auto
+split_equals(const std::string &line, std::error_code &error) noexcept
+  -> std::tuple<std::string, std::string>;
 
 [[nodiscard]]
 auto
