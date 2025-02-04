@@ -41,8 +41,21 @@ if (STRIP_PATHS_FROM_BINARIES)
   # Replace any home dir prefix in paths
   list(APPEND STRIP_SUB_LIST "$ENV{HOME}/=/")
 
-  # Set linker to strips symbols (redundant with cpack setting?)
-  list(APPEND GLOBAL_LINKER_OPTIONS "-s")
+  ## Set linker to strips symbols (seems not redundant with cpack
+  ## setting?)
+  # Check for the operating system
+  if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")  # macOS
+    # macOS-specific linker options
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-dead_strip")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--gc-sections") # If needed?
+  elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    # Linux-specific linker options
+    list(APPEND GLOBAL_LINKER_OPTIONS "-s")
+  elseif(CMAKE_SYSTEM_NAME STREQUAL "WIN32")
+    message(FATAL_ERROR "Windows isn't supported")
+  else()
+    message(FATAL_ERROR "Operatoring system not recognized: ${CMAKE_SYSTEM_NAME}")
+  endif()
 endif()
 
 # For custom STGZ generator
