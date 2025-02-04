@@ -70,8 +70,9 @@ genomic_interval_bindings(pybind11::class_<transferase::genomic_interval> &cls)
     // cppcheck-suppress-end duplicateExpression
     .def(
       "__repr__",
-      [](const transferase::genomic_interval &gi) {
-        return std::format("{}", gi);
+      [](const transferase::genomic_interval &self) {
+        const py::tuple t = py::make_tuple(self.ch_id, self.start, self.stop);
+        return py::repr(t);
       },
       R"doc(
 
@@ -87,8 +88,10 @@ genomic_interval_bindings(pybind11::class_<transferase::genomic_interval> &cls)
         if (self.ch_id >= n_chroms)
           throw std::out_of_range(std::format(
             "Index out of range: ch_id={}, n_chroms={}", self.ch_id, n_chroms));
-        return std::format("{}\t{}\t{}", index.meta.chrom_order[self.ch_id],
-                           self.start, self.stop);
+        return py::make_tuple(index.meta.chrom_order[self.ch_id], self.start,
+                              self.stop);
+        // return std::format("{}\t{}\t{}", index.meta.chrom_order[self.ch_id],
+        //                    self.start, self.stop);
       },
       R"doc(
 
