@@ -23,10 +23,13 @@
 
 #include "client_config.hpp"
 #include "download.hpp"
+#include "find_path_to_binary.hpp"
 #include "genome_index_data.hpp"
 #include "genome_index_metadata.hpp"
 #include "remote_data_resource.hpp"
 #include "utilities.hpp"  // for clean_path
+
+#include <config.h>
 
 #include <boost/json.hpp>
 #include <boost/mp11/algorithm.hpp>
@@ -120,6 +123,31 @@ check_and_return_file(const std::string &left, const std::string &right,
 
 namespace transferase {
 
+/// Locate the system confuration directory based on the path to the binary for
+/// the currently running process.
+[[nodiscard]] auto
+get_default_system_config_dir(std::error_code &error) noexcept -> std::string {
+  static const auto exe_path = find_path_to_binary();
+  auto &lgr = logger::instance();
+  const auto exe_dir_parent =
+    std::filesystem::canonical(exe_path).parent_path().parent_path().string();
+  const bool is_dir = std::filesystem::is_directory(exe_dir_parent, error);
+  if (error) {
+    lgr.debug("Error: {} ({})", error, exe_dir_parent);
+    return {};
+  }
+  if (!is_dir) {
+    error = std::make_error_code(std::errc::not_a_directory);
+    lgr.debug("Not a directory: {}", exe_dir_parent);
+    return {};
+  }
+  // ADS: DATADIR comes from config.h which comes from config.h.in and
+  // is set by cmake
+  const auto data_part = std::filesystem::path{DATADIR};
+  const auto data_dir = exe_dir_parent / data_part / std::string(PROJECT_NAME);
+  return data_dir;
+}
+
 [[nodiscard]] auto
 client_config::get_config_dir_default(std::error_code &ec) -> std::string {
   auto env_home = std::getenv("HOME");
@@ -133,15 +161,14 @@ client_config::get_config_dir_default(std::error_code &ec) -> std::string {
   env_home_path = std::filesystem::weakly_canonical(env_home_path, ec);
   if (ec)
     return {};
-  return check_and_return_directory(env_home_path, transferase_config_dirname,
-                                    ec);
+  return check_and_return_directory(env_home_path,
+                                    transferase_config_dirname_default, ec);
 }
 
 [[nodiscard]] auto
 client_config::get_dir_default_impl(const std::string &dirname,
                                     std::error_code &ec) -> std::string {
-  const auto config_dir_local =
-    config_dir.empty() ? get_config_dir_default(ec) : config_dir;
+  const auto config_dir_local = get_config_dir_default(ec);
   if (ec)
     return {};
   return check_and_return_directory(config_dir_local, dirname, ec);
@@ -155,122 +182,118 @@ client_config::get_index_dir_default(std::error_code &error) -> std::string {
   const auto config_dir = get_config_dir_default(error);
   if (error)
     return {};
-  return check_and_return_directory(config_dir, index_dirname, error);
+  return check_and_return_directory(config_dir, index_dirname_default, error);
 }
 
 [[nodiscard]] auto
 client_config::get_file_default_impl(const std::string &filename,
                                      std::error_code &ec) -> std::string {
-  const auto config_dir_local =
-    config_dir.empty() ? get_config_dir_default(ec) : config_dir;
+  const auto config_dir_local = get_config_dir_default(ec);
   if (ec)
     return {};
   return check_and_return_file(config_dir_local, filename, ec);
 }
 
 [[nodiscard]] auto
-client_config::get_config_file_default(std::error_code &error) -> std::string {
-  const auto config_dir = get_config_dir_default(error);
-  if (error)
-    return {};
-  return check_and_return_file(config_dir, client_config_filename, error);
+client_config::get_config_file(const std::string &config_dir,
+                               std::error_code &error) -> std::string {
+  return check_and_return_file(config_dir, client_config_filename_default,
+                               error);
 }
 
 [[nodiscard]] auto
-client_config::set_defaults(const bool force) -> std::error_code {
-  std::error_code ec;
-  if (force || config_file.empty()) {
-    config_file = get_file_default_impl(client_config_filename, ec);
-    if (ec)
-      return ec;
+client_config::set_defaults_system_config(const std::string &config_dir,
+                                          const std::string &system_config_dir)
+  -> std::error_code {
+  std::error_code error;
+  const auto [default_hostname, default_port] =
+    transferase::get_transferase_server_info(system_config_dir, error);
+  if (error)
+    return error;
+
+  hostname = default_hostname;
+  port = default_port;
+
+  {
+    const auto dirname =
+      (std::filesystem::path{config_dir} / index_dirname_default).string();
+    index_dir = get_dir_default_impl(dirname, error);
+    if (error)
+      return error;
   }
 
-  if (force || index_dir.empty()) {
-    index_dir = get_dir_default_impl(index_dirname, ec);
-    if (ec)
-      return ec;
+  {
+    const auto dirname =
+      (std::filesystem::path{config_dir} / labels_dirname_default).string();
+    labels_dir = get_dir_default_impl(dirname, error);
+    if (error)
+      return error;
   }
 
-  if (force || labels_dir.empty()) {
-    labels_dir = get_dir_default_impl(labels_dirname, ec);
-    if (ec)
-      return ec;
-  }
   return std::error_code{};
 }
 
-// Init routines for the  files / directories
-auto
-client_config::init_config_dir(const std::string &s,
-                               std::error_code &error) -> void {
-  auto tmp = s.empty() ? get_config_dir_default(error) : clean_path(s, error);
+[[nodiscard]] auto
+client_config::set_defaults_system_config(const std::string &system_config_dir)
+  -> std::error_code {
+  std::error_code error;
+  const std::string config_dir = get_config_dir_default(error);
   if (error)
-    return;
-  tmp = check_and_return_directory(tmp, error);
-  if (error)
-    return;
-  config_dir = tmp;
+    return error;
+  return set_defaults_system_config(config_dir, system_config_dir);
 }
 
-auto
-client_config::init_log_file(const std::string &s,
-                             std::error_code &error) -> void {
-  log_file = s.empty() ? get_file_default_impl(client_log_filename, error)
-                       : clean_path(s, error);
-}
-
-auto
-client_config::init_config_file(const std::string &s,
-                                std::error_code &error) -> void {
-  config_file = s.empty() ? get_file_default_impl(client_config_filename, error)
-                          : clean_path(s, error);
-}
-
-auto
-client_config::init_index_dir(const std::string &s,
-                              std::error_code &error) -> void {
-  index_dir = s.empty() ? get_dir_default_impl(index_dirname, error) : s;
+[[nodiscard]] auto
+client_config::set_defaults(const std::string &config_dir) -> std::error_code {
+  std::error_code error;
+  const std::string system_config_dir = get_default_system_config_dir(error);
   if (error)
-    index_dir.clear();
+    return error;
+  return set_defaults_system_config(config_dir, system_config_dir);
 }
 
-auto
-client_config::init_labels_dir(const std::string &s,
-                               std::error_code &error) -> void {
-  labels_dir = s.empty() ? get_dir_default_impl(labels_dirname, error) : s;
+[[nodiscard]] auto
+client_config::set_defaults() -> std::error_code {
+  std::error_code error;
+  const std::string config_dir = get_config_dir_default(error);
   if (error)
-    labels_dir.clear();
+    return error;
+  return set_defaults(config_dir);
 }
-// done init routines
 
 /// Create all the directories involved in the client config, but if
 /// filesystem entires already exist for those directory names,
 /// don't do anything. If they happen to already exist but are files
 /// and not directories, it will result in an error later.
 [[nodiscard]] auto
-client_config::make_directories() const -> std::error_code {
+client_config::make_directories(std::string config_dir) const
+  -> std::error_code {
   std::error_code ec;
 
-  if (!config_dir.empty()) {
-    const bool dirs_ok = create_dirs_if_needed(config_dir, ec);
-    if (ec)
-      return ec;
-    if (!dirs_ok)
-      return std::make_error_code(std::errc::not_a_directory);
-  }
+  config_dir = std::filesystem::absolute(config_dir, ec);
+  if (ec)
+    return ec;
+  config_dir = std::filesystem::weakly_canonical(config_dir, ec);
+  if (ec)
+    return ec;
 
-  if (!config_file.empty()) {
-    const auto config_file_clean = clean_path(config_file, ec);
-    if (ec)
-      return ec;
-    const auto config_file_dir =
-      std::filesystem::path(config_file_clean).parent_path().string();
-    const bool dirs_ok = create_dirs_if_needed(config_file_dir, ec);
-    if (ec)
-      return ec;
-    if (!dirs_ok)
-      return std::make_error_code(std::errc::not_a_directory);
-  }
+  assert(!config_dir.empty());
+
+  const bool dirs_ok = create_dirs_if_needed(config_dir, ec);
+  if (ec)
+    return ec;
+  if (!dirs_ok)
+    return std::make_error_code(std::errc::not_a_directory);
+
+  const auto config_file = get_config_file(config_dir, ec);
+  if (ec)
+    return ec;
+
+  assert(!config_file.empty());
+
+  const auto config_file_clean = clean_path(config_file, ec);
+  if (ec)
+    return ec;
 
   if (!labels_dir.empty()) {
     const auto labels_dir_clean = clean_path(labels_dir, ec);
@@ -310,6 +333,88 @@ client_config::make_directories() const -> std::error_code {
   return {};
 }
 
+template <class T>
+auto
+assign_member_impl(T &t, const std::string_view value) -> std::error_code {
+  std::string tmp(std::cbegin(value), std::cend(value));
+  std::istringstream is(tmp);
+  if (!(is >> t))
+    return std::make_error_code(std::errc::invalid_argument);
+  return {};
+}
+
+template <class Scope>
+auto
+assign_member(Scope &scope, const std::string_view name,
+              const std::string_view value) -> std::error_code {
+  using Md =
+    boost::describe::describe_members<Scope, boost::describe::mod_public>;
+  std::error_code error{};
+  boost::mp11::mp_for_each<Md>([&](const auto &D) {
+    if (!error && name == D.name) {
+      error = assign_member_impl(scope.*D.pointer, value);
+    }
+  });
+  return error;
+}
+
+[[nodiscard]] inline auto
+assign_members(const std::vector<std::tuple<std::string, std::string>> &key_val,
+               client_config &cfg) -> std::error_code {
+  std::error_code error;
+  for (const auto &[key, value] : key_val) {
+    std::string name(key);
+    std::ranges::replace(name, '-', '_');
+    error = assign_member(cfg, name, value);
+    if (error)
+      return {};
+  }
+  return error;
+}
+
+[[nodiscard]] auto
+client_config::read(const std::string &config_dir,
+                    std::error_code &error) noexcept -> client_config {
+  const auto config_file = get_config_file(config_dir, error);
+  if (error)
+    return {};
+
+  std::ifstream in(config_file);
+  if (!in) {
+    error = std::make_error_code(std::errc(errno));
+    return {};
+  }
+
+  std::vector<std::tuple<std::string, std::string>> key_val;
+  std::string line;
+  while (getline(in, line)) {
+    line = rlstrip(line);
+    // ignore empty lines and those beginning with '#'
+    if (!line.empty() && line[0] != '#') {
+      const auto [k, v] = split_equals(line, error);
+      if (error)
+        return {};
+      key_val.emplace_back(k, v);
+    }
+  }
+
+  client_config c;
+  error = assign_members(key_val, c);
+  if (error)
+    return {};
+
+  return c;
+}
+
+[[nodiscard]] auto
+client_config::read(std::error_code &error) noexcept -> client_config {
+  const auto config_dir = get_config_dir_default(error);
+  if (error)
+    // error from get_config_dir_default
+    return {};
+  return read(config_dir, error);
+}
+
 [[nodiscard]] inline auto
 format_as_client_config(const auto &t) -> std::string {
   using T = std::remove_cvref_t<decltype(t)>;
@@ -318,32 +423,41 @@ format_as_client_config(const auto &t) -> std::string {
   std::string r;
   boost::mp11::mp_for_each<members>([&](const auto &member) {
     std::string name(member.name);
-    if (name != "config_dir" && name != "config_file") {
-      std::ranges::replace(name, '_', '-');
-      const auto value = std::format("{}", t.*member.pointer);
-      if (!value.empty())
-        r += std::format("{} = {}\n", name, value);
-      else
-        r += std::format("# {} =\n", name);
-    }
+    std::ranges::replace(name, '_', '-');
+    const auto value = std::format("{}", t.*member.pointer);
+    if (!value.empty())
+      r += std::format("{} = {}\n", name, value);
+    else
+      r += std::format("# {} =\n", name);
   });
   return r;
 }
 
 [[nodiscard]] auto
-client_config::write() const -> std::error_code {
-  std::ofstream out(config_file);
-  if (!out)
-    return std::make_error_code(std::errc(errno));
-  const auto serialized = format_as_client_config(*this);
+client_config::write(std::string config_dir) const -> std::error_code {
+  std::error_code error;
+  if (config_dir.empty()) {
+    config_dir = get_config_dir_default(error);
+    if (error)
+      return error;
+  }
 
+  const auto config_file = get_config_file(config_dir, error);
+  if (error)
+    return error;
+
+  const auto serialized = format_as_client_config(*this);
   const auto serialized_size =
     static_cast<std::streamsize>(std::size(serialized));
 
+  std::ofstream out(config_file);
+  if (!out)
+    return std::make_error_code(std::errc(errno));
+
   out.write(serialized.data(), serialized_size);
   if (!out)
-    // EC
-    return std::make_error_code(std::errc::bad_file_descriptor);
+    return client_config_error_code::error_writing_config_file;
+
   return std::error_code{};
 }
 
@@ -384,6 +498,7 @@ check_is_outdated(const download_request &dr,
   if (ec)
     return false;
   const auto remote_timestamp = get_timestamp(dr);
+
   return (remote_timestamp - ftime).count() > 0;
 }
 
@@ -409,7 +524,7 @@ get_index_files(const remote_data_resources &remote,
       return ec;
 
     if (is_outdated || force_download) {
-      lgr.info("Download: {} to \"{}\"", remote.form_url(data_file), dirname);
+      lgr.debug(R"(Download: {} to "{}")", remote.form_url(data_file), dirname);
 
       const auto [data_hdr, data_err] =
         download({remote.host, remote.port, data_file, dirname});
@@ -418,7 +533,7 @@ get_index_files(const remote_data_resources &remote,
 
       const auto meta_file =
         std::format("{}{}", stem, genome_index_metadata::filename_extension);
-      lgr.info("Download: {} to \"{}\"", remote.form_url(meta_file), dirname);
+      lgr.debug(R"(Download: {} to "{}")", remote.form_url(meta_file), dirname);
       const auto [meta_hdr, meta_err] = download({
         remote.host,
         remote.port,
@@ -440,7 +555,7 @@ get_labels_file(const remote_data_resources &remote,
   auto &lgr = transferase::logger::instance();
   const auto stem = remote.get_labels_target_stem();
   const auto labels_file = std::format("{}.json", stem);
-  lgr.info("Download: {} to {}", remote.form_url(labels_file), dirname);
+  lgr.debug("Download: {} to {}", remote.form_url(labels_file), dirname);
   const auto [data_hdr, data_err] = download(download_request{
     remote.host,
     remote.port,
@@ -452,106 +567,103 @@ get_labels_file(const remote_data_resources &remote,
   return {};
 }
 
-/// Verifying that the client config makes sense and is possible must
-/// be done before creating directories, writing config files or
-/// attempting to download any config data.
-[[nodiscard]] auto
-client_config::validate(std::error_code &error) noexcept -> bool {
-  error.clear();
-  // verify fields that are needed
-  auto &lgr = transferase::logger::instance();
+auto
+client_config::run(const std::string &config_dir,
+                   const std::vector<std::string> &genomes,
+                   const std::string &system_config_dir,
+                   const bool force_download,
+                   std::error_code &error) const noexcept -> void {
+  auto &lgr = logger::instance();
 
-  init_config_dir(config_dir, error);
+  const bool valid = validate(error);
+  if (!valid || error)
+    return;
+
+  lgr.debug("Making config directories");
+  error = make_directories(config_dir);
   if (error) {
-    lgr.error("Failed to set config dir {}: {}", config_dir, error);
-    return false;
+    error = client_config_error_code::error_creating_directories;
+    lgr.debug("Error creating directories: {}", error);
+    return;
   }
 
-  // We want the config file to always get its default; the directory
-  // is what the user sets
-  init_config_file(std::string{}, error);
+  lgr.debug("Writing configuration file");
+  error = write(config_dir);
   if (error) {
-    lgr.debug("Failed to set config file: {}", error);
-    return false;
+    error = client_config_error_code::error_writing_config_file;
+    lgr.debug("Error writing config file: {}", error);
+    return;
   }
 
-  init_log_file(log_file, error);
+  const auto remotes =
+    transferase::get_remote_data_resources(system_config_dir, error);
   if (error) {
-    lgr.debug("Failed to set log file: {}", error);
-    return false;
+    error = client_config_error_code::error_identifying_remote_resources;
+    lgr.debug("Error identifying remote server: {}", error);
+    return;
   }
 
-  // Setup the indexes dir and the labels dir whether or not the user
-  // has specified genomes to configure.
-  init_index_dir(index_dir, error);
-  if (error) {
-    lgr.debug("Failed to set index directory {}: {}", index_dir, error);
-    return false;
+  // Do the downloads, attempting each remote resources server in the
+  // system config
+  bool labels_downloads_ok{false};
+  for (const auto &remote : remotes) {
+    lgr.debug("Attempting download labels from {}:{}", remote.host,
+              remote.port);
+    const auto labels_err = get_labels_file(remote, labels_dir);
+    if (labels_err)
+      lgr.debug("Error obtaining labels file: {}", labels_err);
+    if (!labels_err) {
+      labels_downloads_ok = true;
+      break;
+    }
   }
-  init_labels_dir(labels_dir, error);
-  if (error) {
-    lgr.debug("Failed to set labels directory {}: {}", labels_dir, error);
-    return false;
+  if (!labels_downloads_ok) {
+    error = client_config_error_code::download_error;
+    return;
   }
 
-  return true;
+  if (genomes.empty())
+    return;
+
+  bool genome_downloads_ok{false};
+  for (const auto &remote : remotes) {
+    lgr.debug("Attempting download from {}:{}", remote.host, remote.port);
+    const auto index_err =
+      get_index_files(remote, genomes, index_dir, force_download);
+    if (index_err)
+      lgr.debug("Error obtaining index files: {}", index_err);
+    if (!index_err) {
+      genome_downloads_ok = true;
+      break;
+    }
+  }
+  if (!genome_downloads_ok)
+    error = client_config_error_code::download_error;
+
+  return;
+}
+
+auto
+client_config::run(const std::string &config_dir,
+                   const std::vector<std::string> &genomes,
+                   const bool force_download,
+                   std::error_code &error) const noexcept -> void {
+  const auto system_config_dir = get_default_system_config_dir(error);
+  if (error) {
+    error = client_config_error_code::error_obtaining_sytem_config_dir;
+    return;
+  }
+  run(config_dir, genomes, system_config_dir, force_download, error);
 }
 
 auto
 client_config::run(const std::vector<std::string> &genomes,
                    const bool force_download,
                    std::error_code &error) const noexcept -> void {
-  // validate fields that are needed
-  auto &lgr = transferase::logger::instance();
-
-  lgr.debug("Making config directories");
-  error = make_directories();
-  if (error) {
-    lgr.error("Error creating directories: {}", error);
+  const auto config_dir = get_config_dir_default(error);
+  if (error)
     return;
-  }
-
-  lgr.debug("Writing configuration file");
-  error = write();
-  if (error) {
-    lgr.error("Error writing config file: {}", error);
-    return;
-  }
-
-  if (!genomes.empty()) {
-    // Only attempt downloads if the user specifies one or more
-    // genomes. And if the user specifies genomes, but no index_dir
-    // or labels_dir, then make the defaults.
-    const auto remotes = transferase::get_remote_data_resources(error);
-    if (error) {
-      lgr.error("Error identifying remote server: {}", error);
-      return;
-    }
-
-    // Do the downloads, attempting whatever remote resources are
-    // available
-    bool all_downloads_ok{};
-    for (const auto &remote : remotes) {
-      lgr.debug("Attempting download from {}:{}", remote.host, remote.port);
-      const auto index_err =
-        get_index_files(remote, genomes, index_dir, force_download);
-      if (index_err)
-        lgr.debug("Error obtaining index files: {}", index_err);
-
-      const auto labels_err = get_labels_file(remote, labels_dir);
-      if (labels_err)
-        lgr.debug("Error obtaining labels file: {}", labels_err);
-
-      // ADS: this is broken -- there is no proper check for whether a
-      // subsequent server should be attempted.
-      all_downloads_ok = (!index_err && !labels_err);
-      if (all_downloads_ok)
-        break;  // quit if we got what we want
-    }
-    if (!all_downloads_ok)
-      error = std::make_error_code(std::errc::invalid_argument);
-  }
-  error.clear();  // ok!
+  run(config_dir, genomes, force_download, error);
 }
 
 auto
@@ -559,61 +671,38 @@ client_config::run(const std::vector<std::string> &genomes,
                    const std::string &system_config_dir,
                    const bool force_download,
                    std::error_code &error) const noexcept -> void {
-  // validate fields that are needed
-  auto &lgr = transferase::logger::instance();
-
-  lgr.debug("Making config directories");
-  error = make_directories();
-  if (error) {
-    error = client_config_error_code::error_creating_directories;
-    lgr.error("Error creating directories: {}", error);
+  const auto config_dir = get_config_dir_default(error);
+  if (error)
     return;
+  run(config_dir, genomes, system_config_dir, force_download, error);
+}
+
+/// Validate that the client config makes sense. This must be done
+/// before creating directories, writing config files or attempting to
+/// download any config data.
+[[nodiscard]] auto
+client_config::validate(std::error_code &error) const noexcept -> bool {
+  // validate the hostname
+  if (hostname.empty()) {
+    error = client_config_error_code::invalid_client_config_information;
+    return false;
   }
-
-  lgr.debug("Writing configuration file");
-  error = write();
-  if (error) {
-    error = client_config_error_code::error_writing_config_file;
-    lgr.error("Error writing config file: {}", error);
-    return;
+  // validate the port
+  if (port.empty()) {
+    error = client_config_error_code::invalid_client_config_information;
+    return false;
   }
-
-  if (!genomes.empty()) {
-    // Only attempt downloads if the user specifies one or more
-    // genomes. And if the user specifies genomes, but no index_dir
-    // or labels_dir, then make the defaults.
-    const auto remotes =
-      transferase::get_remote_data_resources(system_config_dir, error);
-    if (error) {
-      error = client_config_error_code::error_identifying_remote_resources;
-      lgr.error("Error identifying remote server: {}", error);
-      return;
-    }
-
-    // Do the downloads, attempting whatever remote resources are
-    // available
-    bool all_downloads_ok{};
-    for (const auto &remote : remotes) {
-      lgr.debug("Attempting download from {}:{}", remote.host, remote.port);
-      const auto index_err =
-        get_index_files(remote, genomes, index_dir, force_download);
-      if (index_err)
-        lgr.debug("Error obtaining index files: {}", index_err);
-
-      const auto labels_err = get_labels_file(remote, labels_dir);
-      if (labels_err)
-        lgr.debug("Error obtaining labels file: {}", labels_err);
-
-      // ADS: this is broken -- there is no proper check for whether a
-      // subsequent server should be attempted.
-      all_downloads_ok = (!index_err && !labels_err);
-      if (all_downloads_ok)
-        break;  // quit if we got what we want
-    }
-    if (!all_downloads_ok)
-      error = client_config_error_code::download_error;
+  // validate the index_dir
+  if (index_dir.empty()) {
+    error = client_config_error_code::invalid_client_config_information;
+    return false;
   }
-  error.clear();  // ok!
+  // validate the labels_dir
+  if (labels_dir.empty()) {
+    error = client_config_error_code::invalid_client_config_information;
+    return false;
+  }
+  return true;
 }
 
 }  // namespace transferase
