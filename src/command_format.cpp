@@ -357,7 +357,8 @@ struct command_format_argset : argset_base<command_format_argset> {
   [[nodiscard]] static auto
   get_default_config_file_impl() -> std::string {
     std::error_code ec;
-    return client_config::get_config_file_default(ec);
+    const auto config_dir = client_config::get_config_dir_default(ec);
+    return client_config::get_config_file(config_dir, ec);
   }
 
   std::string hostname{};
