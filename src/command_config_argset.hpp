@@ -46,15 +46,17 @@ struct command_config_argset : argset_base<command_config_argset> {
   }
 
   static constexpr auto log_level_default{log_level_t::info};
+  static constexpr auto download_policy_default{download_policy_t::missing};
 
   std::string config_dir{};
   std::string genomes{};
 
   client_config config;
 
-  bool quiet{};
-  bool debug{};
-  download_policy_t download_policy{download_policy_t::missing};
+  bool quiet{false};
+  bool debug{false};
+  bool do_defaults{false};
+  download_policy_t download_policy{};
 
   auto
   log_options_impl() const {
@@ -103,11 +105,12 @@ struct command_config_argset : argset_base<command_config_argset> {
        "name of the MethBase2 metadata file")
       ("log-level,v", value(&config.log_level)->default_value(log_level_default, ""),
        "{debug, info, warning, error, critical}")
-      ("log-file,l", value(&config.log_file)->value_name("console"),
-       "log file name")
-      ("download,M", value(&download_policy), "download policy "
-       "(none,missing,update,all)")
-      ("quiet", po::bool_switch(&quiet), "only report on errors")
+      ("log-file,l", value(&config.log_file),
+       "log file name (default: console)")
+      ("download,M", value(&download_policy)->default_value(download_policy_default, ""),
+       "download policy (none,missing,update,all)")
+      ("default", po::bool_switch(&do_defaults), "only do the default configuration")
+      ("quiet", po::bool_switch(&quiet), "only report errors")
       ("debug", po::bool_switch(&debug), "report debug information")
       ;
     // clang-format on
