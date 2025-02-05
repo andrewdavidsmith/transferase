@@ -35,8 +35,7 @@ arguments can be specified on the command line and index files can be
 downloaded separately. The default config directory is
 '${HOME}/.config/transferase'. This command will also retrieve other
 data. It will get index files that are used to accelerate queries. And
-it will retrieve files that associate entries in MethBase2 with labels
-for the underlying biological samples.
+it will retrieve a file with MethBase2 metadata.
 )";
 
 static constexpr auto examples = R"(
@@ -70,8 +69,8 @@ set_params_from_args(const transferase::command_config_argset &args,
   if (!args.config.index_dir.empty())
     config.index_dir = args.config.index_dir;
 
-  if (!args.config.labels_dir.empty())
-    config.labels_dir = args.config.labels_dir;
+  if (!args.config.metadata_file.empty())
+    config.metadata_file = args.config.metadata_file;
 
   if (!args.config.methylome_dir.empty())
     config.methylome_dir = args.config.methylome_dir;
@@ -115,7 +114,7 @@ command_config_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
   args.log_options();
 
   xfr::client_config config;
-  error = config.set_defaults();
+  config.set_defaults(error);
   if (error) {
     lgr.error("Error setting default config values: {}.", error);
     return EXIT_FAILURE;
@@ -133,7 +132,7 @@ command_config_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
 
   const auto genomes = split_comma(args.genomes);
 
-  config.run(args.config_dir, genomes, args.force_download, error);
+  config.run(args.config_dir, genomes, args.download_policy, error);
   if (error)
     return EXIT_FAILURE;
 
