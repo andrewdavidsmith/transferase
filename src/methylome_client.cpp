@@ -24,13 +24,21 @@
 #include "methylome_client.hpp"
 #include "client_config.hpp"
 #include "genome_index.hpp"
+#include "genome_index_set.hpp"
 #include "methylome_genome_map.hpp"
 #include "utilities.hpp"
 
+#include <boost/mp11/algorithm.hpp>  // for boost::mp11::mp_for_each
+
+#include <algorithm>
+#include <cerrno>
 #include <fstream>
+#include <iterator>  // for std::cbegin, std::cend
 #include <ranges>
 #include <string>
+#include <string_view>
 #include <system_error>
+#include <unordered_map>
 #include <vector>
 
 namespace transferase {
@@ -71,7 +79,7 @@ methylome_client::get_genome_and_index_hash(
 [[nodiscard]] auto
 methylome_client::initialize(std::error_code &error) noexcept
   -> methylome_client {
-  const auto client = methylome_client::read(error);
+  auto client = methylome_client::read(error);
   if (error)
     return {};
   return client;

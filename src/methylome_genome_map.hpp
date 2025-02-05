@@ -24,14 +24,14 @@
 #ifndef SRC_METHYLOME_GENOME_MAP_HPP_
 #define SRC_METHYLOME_GENOME_MAP_HPP_
 
-#include <boost/describe.hpp>  // for BOOST_DESCRIBE_STRUCT
+#include <boost/describe.hpp>
 
-#include <cstdint>  // for uint32_t, uint64_t
-#include <filesystem>
-#include <format>
+#include <cstdint>
 #include <string>
 #include <system_error>
+#include <type_traits>  // for std::true_type
 #include <unordered_map>
+#include <utility>  // for std::to_underlying, std::unreachable
 #include <vector>
 
 namespace transferase {

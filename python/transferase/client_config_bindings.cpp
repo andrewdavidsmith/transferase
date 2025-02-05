@@ -26,18 +26,13 @@
 #include "client_config_python.hpp"
 
 #include "bindings_utils.hpp"
-#include "kwargs_init_helper.hpp"
 
 #include <client_config.hpp>  // IWYU pragma: keep
-#include <remote_data_resource.hpp>
 
 #include <pybind11/operators.h>  // IWYU pragma: keep
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>  // IWYU pragma: keep
 
-#include <filesystem>
-#include <format>
-#include <stdexcept>
 #include <string>
 #include <system_error>
 #include <vector>
@@ -49,7 +44,6 @@ client_config_bindings(pybind11::class_<transferase::client_config_python> &cls)
   -> void {
   using namespace pybind11::literals;  // NOLINT
   cls
-    // .def(py::init(&kwargs_init_helper<transferase::client_config_python>))
     .def_static(
       "default",
       []() {

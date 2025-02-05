@@ -26,6 +26,7 @@
 #include "bindings_utils.hpp"
 #include "client_config_python.hpp"
 
+#include <client_config.hpp>
 #include <level_element.hpp>
 #include <methylome_client.hpp>
 
@@ -33,14 +34,11 @@
 #include <pybind11/stl.h>  // IWYU pragma: keep
 
 #include <cstdint>
+#include <format>
 #include <stdexcept>
 #include <string>
+#include <system_error>
 #include <vector>
-
-namespace transferase {
-struct query_container;
-template <typename level_element_type> struct level_container;
-}  // namespace transferase
 
 namespace transferase {
 struct query_container;

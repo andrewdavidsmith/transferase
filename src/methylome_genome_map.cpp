@@ -25,12 +25,13 @@
 
 #include <boost/json.hpp>
 
-#include <cstdint>  // for uint32_t, uint64_t
+#include <algorithm>
 #include <filesystem>
-#include <format>
 #include <fstream>
+#include <iterator>
 #include <map>
 #include <ranges>
+#include <sstream>
 #include <string>
 #include <system_error>
 #include <vector>

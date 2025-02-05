@@ -37,6 +37,7 @@
 #include <cstdint>   // for std::uint32_t
 #include <iterator>  // for std::size
 #include <ranges>
+#include <sstream>
 #include <string>
 #include <string_view>
 #include <system_error>

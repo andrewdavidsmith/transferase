@@ -26,9 +26,9 @@
 #include "bindings_utils.hpp"
 
 #include <client_config.hpp>  // IWYU pragma: keep
+#include <logger.hpp>
 #include <utilities.hpp>
 
-#include <stdexcept>
 #include <string>
 #include <system_error>
 #include <vector>

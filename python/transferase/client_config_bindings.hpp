@@ -24,11 +24,11 @@
 #ifndef PYTHON_TRANSFERASE_CLIENT_CONFIG_BINDINGS_HPP_
 #define PYTHON_TRANSFERASE_CLIENT_CONFIG_BINDINGS_HPP_
 
-#include <client_config.hpp>
-
-#include "client_config_python.hpp"
-
 #include <pybind11/pybind11.h>
+
+namespace transferase {
+struct client_config_python;
+}
 
 auto
 client_config_bindings(pybind11::class_<transferase::client_config_python> &cls)
