@@ -120,7 +120,7 @@ shared_from_cout() -> std::shared_ptr<std::ostream> {
 class logger {
 private:
   // ADS: note the extra space at the end of the format string below
-  static constexpr auto date_time_fmt_expanded = "YYYY-MM-DD HH:MM:SS "sv;
+  static constexpr auto date_time_fmt_expanded = "YYYY-MM-DD HH:MM:SS"sv;
   static constexpr std::uint32_t date_time_fmt_size =
     std::size(date_time_fmt_expanded);
   static constexpr auto delim = ' ';
@@ -274,7 +274,9 @@ private:
     const auto now_time_t = std::chrono::system_clock::to_time_t(now);
     struct tm tm;
     localtime_r(&now_time_t, &tm);  // localtime_r is thread-safe
-    std::strftime(buf.data(), std::size(buf), "%Y-%m-%d %H:%M:%S ", &tm);
+    std::strftime(buf.data(), std::size(buf), "%Y-%m-%d %H:%M:%S", &tm);
+    buf[date_time_fmt_size] = delim;  // without this, we always get a
+                                      // '\0' in the log message
   }
 };  // struct logger
 
