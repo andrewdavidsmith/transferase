@@ -45,7 +45,6 @@ struct command_config_argset : argset_base<command_config_argset> {
     return {};
   }
 
-  static constexpr auto port_default{"5000"};
   static constexpr auto log_level_default{log_level_t::info};
 
   std::string config_dir{};
@@ -53,10 +52,9 @@ struct command_config_argset : argset_base<command_config_argset> {
 
   client_config config;
 
-  bool update{};
   bool quiet{};
   bool debug{};
-  bool force_download{};
+  download_policy_t download_policy{download_policy_t::missing};
 
   auto
   log_options_impl() const {
@@ -67,7 +65,7 @@ struct command_config_argset : argset_base<command_config_argset> {
         {"hostname", std::format("{}", config.hostname)},
         {"port", std::format("{}", config.port)},
         {"index_dir", std::format("{}", config.index_dir)},
-        {"labels_dir", std::format("{}", config.labels_dir)},
+        {"metadata_file", std::format("{}", config.metadata_file)},
         {"methylome_dir", std::format("{}", config.methylome_dir)},
         {"log_file", std::format("{}", config.log_file)},
         {"log_level", std::format("{}", config.log_level)},
@@ -93,22 +91,22 @@ struct command_config_argset : argset_base<command_config_argset> {
       ("config-dir,c", value(&config_dir),
        "name of config directory; see help for default")
       ("hostname,s", value(&config.hostname), "transferase server hostname")
-      ("port,p", value(&config.port)->default_value(port_default), "transferase server port")
+      ("port,p", value(&config.port), "transferase server port")
       ("genomes,g", value(&genomes),
-       "download index files and sample labels for these genomes "
+       "download index files for these genomes "
        "(comma separated list, e.g. hg38,mm39)")
       ("index-dir,x", value(&config.index_dir),
        "name of a directory to store genome index files")
       ("methylome-dir,d", value(&config.methylome_dir),
        "name of a local directory to search for methylomes")
-      ("labels-dir,L", value(&config.labels_dir),
-       "name of a directory to search for sample labels")
+      ("metadata-file,L", value(&config.metadata_file),
+       "name of the MethBase2 metadata file")
       ("log-level,v", value(&config.log_level)->default_value(log_level_default, ""),
        "{debug, info, warning, error, critical}")
       ("log-file,l", value(&config.log_file)->value_name("console"),
        "log file name")
-      ("update,u", po::bool_switch(&update), "update sample labels")
-      ("force,f", po::bool_switch(&force_download), "force index file update")
+      ("download,M", value(&download_policy), "download policy "
+       "(none,missing,update,all)")
       ("quiet", po::bool_switch(&quiet), "only report on errors")
       ("debug", po::bool_switch(&debug), "report debug information")
       ;
