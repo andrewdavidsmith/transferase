@@ -23,6 +23,9 @@
 
 #include "methylome_client_bindings.hpp"
 
+#include "bindings_utils.hpp"
+#include "client_config_python.hpp"
+
 #include <level_element.hpp>
 #include <methylome_client.hpp>
 
@@ -30,8 +33,14 @@
 #include <pybind11/stl.h>  // IWYU pragma: keep
 
 #include <cstdint>
+#include <stdexcept>
 #include <string>
 #include <vector>
+
+namespace transferase {
+struct query_container;
+template <typename level_element_type> struct level_container;
+}  // namespace transferase
 
 namespace transferase {
 struct query_container;
@@ -45,19 +54,92 @@ methylome_client_bindings(py::class_<transferase::methylome_client> &cls)
   -> void {
   using namespace pybind11::literals;  // NOLINT
   cls
-    .def(
-      py::init<const std::string &, const std::string &, const std::uint64_t>(),
-      "hostname"_a, "port_number"_a, "index_hash"_a)
     .def_static(
-      "get_default",
-      []() { return transferase::methylome_client::get_default(); },
+      "init",
+      []() {
+        try {
+          return transferase::methylome_client::initialize();
+        }
+        catch (std::runtime_error &e) {
+          throw std::runtime_error(
+            std::format("{} [Check that transferase is configured]", e.what()));
+        }
+      },
       R"doc(
 
-    Get a MethylomeClient initialized using the default client
-    configuration file.
+    Get a MethylomeClient initialized with settings already configured
+    by the current user.
 
     )doc")
+    .def(
+      "save_config",
+      [](const transferase::methylome_client &self,
+         const std::string &config_dir) {
+        if (config_dir.empty())
+          self.write();
+        else
+          self.write(config_dir);
+      },
+      R"doc(
+
+    Saves your current configuration, overwriting any existing values
+    that have already been saved.
+
+    )doc",
+      "config_dir"_a = std::string())
+    .def_static(
+      "reset_to_default_config",
+      []() {
+        const auto sys_conf_dir = transferase::find_system_config_dir();
+        std::error_code error;
+        transferase::methylome_client::
+          reset_to_default_configuration_system_config(sys_conf_dir, error);
+        if (error)
+          throw std::system_error(error);
+      },
+      R"doc(
+
+    Resets the user configuration to default values. This will erase
+    any configuration changes you uhave made since first configuring
+    transferase.
+
+    )doc")
+    .def_static(
+      "config",
+      [](
+        [[maybe_unused]] const std::vector<std::string> &genomes,
+        [[maybe_unused]] const transferase::download_policy_t download_policy) {
+        const auto config = transferase::client_config_python::read_python();
+        config.run_python_system_config(genomes, download_policy);
+      },
+      R"doc(
+
+    Does the work of configuring the client, accepting a list of
+    genomes and an indicator to force redownloading. If both arguments
+    are empty, the configuration will be written but no genome indexes
+    will be downloaded. If you specify genomes, or request a download,
+    this command will take roughly 15-30s per genome, depending on
+    internet speed.
+
+    Parameters
+    ----------
+
+    genomes (list[str]): A list of genomes, for example:
+        ["hg38", "mm39", "bosTau9"]
+
+    download_policy (DownloadPolicy): Indication of what to
+        (re)download.
+
+    )doc",
+      "genomes"_a = std::vector<std::string>(),
+      "download_policy"_a = transferase::download_policy_t::missing)
     .def("__repr__", &transferase::methylome_client::tostring)
+    .def("available_genomes",
+         py::overload_cast<>(&transferase::methylome_client::available_genomes,
+                             py::const_))
+    .def("configured_genomes",
+         py::overload_cast<>(&transferase::methylome_client::configured_genomes,
+                             py::const_))
     .def(
       "get_levels",
       [](const transferase::methylome_client &self,
@@ -177,12 +259,14 @@ methylome_client_bindings(py::class_<transferase::methylome_client> &cls)
     .def_readwrite("hostname", &transferase::methylome_client::hostname,
                    R"doc(
 
-    The name of the server. Like transferase.usc.edu. This must be a
-    valid hostname. Don't specify a protocol or slashes, just the
-    hostname. Note: you can also use the IP address.
+    URL or IP address for the remote transferase server.  Like
+    transferase.usc.edu. This must be a valid hostname. Don't specify
+    a protocol or slashes, just the hostname.  You should only change
+    this if there is a problem setting the server or if you have setup
+    your own server.
 
     )doc")
-    .def_readwrite("port_number", &transferase::methylome_client::port_number,
+    .def_readwrite("port", &transferase::methylome_client::port,
                    R"doc(
 
     The server port number. You will find this along with the hostname of
@@ -190,31 +274,43 @@ methylome_client_bindings(py::class_<transferase::methylome_client> &cls)
     you don't have to worry about it.
 
     )doc")
-    .def_readwrite("index_hash", &transferase::methylome_client::index_hash,
+    .def_readwrite("index_dir", &transferase::methylome_client::index_dir,
                    R"doc(
 
-    A number that identifies the reference genome. This number is
-    associated with a GenomeIndex object, and ensures that the client
-    and server are talking about the exact same reference genome.  You
-    don't need to provide this number with each query, but if you
-    start making queries about a different species, then you will need
-    to update this value.
+    The directory where genome index files are stored. For human and
+    mouse, this occupies roughly 200MB and for all available genomes
+    the total size is under 3GB. This defaults to
+    '${HOME}/.config/transferase/indexes' and there is no reason to
+    change it unless you are working with your own methylomes and
+    started the data analysis with your own reference genome.
+
+    )doc")
+    .def_readwrite("metadata_file",
+                   &transferase::methylome_client::metadata_file,
+                   R"doc(
+
+    This file contains information about available methylomes,
+    reference genomes, and biological sample information for available
+    methylomes. By default this file is pulled from a remote server
+    and can be updated.  As with 'index_dir' there is no reason to
+    change this unless you are working with your own data.
 
     )doc")
     .doc() = R"doc(
 
     A MethylomeClient is an interface for querying a remote
-    transferase server. It needs the hostname and port for the server,
-    which can be set directly with the 'hostname' and 'port_number'
-    instance variables.  But this information can also be setup
-    through the ClientConfig interface and afterwards you won't have
-    to specify it. Using the MethylomeClient to make queries requires
-    setting an 'index_hash' value to ensure that the intervals you are
-    using make sense for the methylomes you specify.  This ensure that
-    you and the server are referring to the exact same reference
-    genome, and not one that differs, for example, by inclusion of
-    unassembled fragments or alternate haplotypes. See GenomeIndex for
-    more information about the 'index_hash'.
+    transferase server. Using the MethylomeClient to make queries
+    ensures that the client and server are always communicating about
+    the exact same reference genome, and not one that differs, for
+    example, by inclusion of unassembled fragments or alternate
+    haplotypes. It needs the hostname and port for the server, along
+    with a directory for genome indexes and a MethBase2 metadata
+    file. It is possible for queries to work without the 'index_dir'
+    or 'metadata_file', but some functions might not work. It is
+    possible to change the values of all instance variables.  But this
+    information should be setup through the static interface of the
+    MethylomeClient class, which provides configuration functions. So
+    afterwards you likely won't have to specify any of these values.
 
     )doc"
     //
