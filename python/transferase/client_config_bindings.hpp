@@ -26,28 +26,12 @@
 
 #include <client_config.hpp>
 
+#include "client_config_python.hpp"
+
 #include <pybind11/pybind11.h>
 
-#include <boost/describe.hpp>
-
-#include <format>  // for std::vector??
-#include <string>
-#include <vector>
-
-namespace transferase {
-
-struct client_config_pybind11 : public client_config {
-  auto
-  run_python_system_config(const std::vector<std::string> &genomes,
-                           const bool force) -> void;
-};
-
-BOOST_DESCRIBE_STRUCT(client_config_pybind11, (client_config), ())
-
-}  // namespace transferase
-
 auto
-client_config_bindings(
-  pybind11::class_<transferase::client_config_pybind11> &cls) -> void;
+client_config_bindings(pybind11::class_<transferase::client_config_python> &cls)
+  -> void;
 
 #endif  // PYTHON_TRANSFERASE_CLIENT_CONFIG_BINDINGS_HPP_

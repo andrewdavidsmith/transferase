@@ -22,6 +22,10 @@
  */
 
 #include "client_config_bindings.hpp"
+
+#include "client_config_python.hpp"
+
+#include "bindings_utils.hpp"
 #include "kwargs_init_helper.hpp"
 
 #include <client_config.hpp>  // IWYU pragma: keep
@@ -40,68 +44,19 @@
 
 namespace py = pybind11;
 
-namespace transferase {
-
-[[nodiscard]] auto
-find_dir(const std::vector<std::string> &paths,
-         const std::string &filename) -> std::string {
-  for (const auto &p : paths) {
-    // Some of the paths given by Python might not exist
-    const auto path_elem_exists = std::filesystem::exists(p);
-    if (!path_elem_exists)
-      continue;
-    const auto dir_itr = std::filesystem::recursive_directory_iterator(p);
-    for (const auto &dir_entry : dir_itr) {
-      const auto &curr_dir = dir_entry.path();
-      if (std::filesystem::is_directory(curr_dir)) {
-        const auto candidate = curr_dir / filename;
-        if (std::filesystem::exists(candidate))
-          return curr_dir.string();
-      }
-    }
-  }
-  throw std::runtime_error(
-    std::format("Failed to locate system config file: {}", filename));
-}
-
-[[nodiscard]] auto
-get_package_paths() -> std::vector<std::string> {
-  py::object path = py::module::import("sys").attr("path");
-  std::vector<std::string> paths;
-  // cppcheck-suppress useStlAlgorithm
-  for (const auto &p : path)
-    paths.emplace_back(p.cast<std::string>());
-  return paths;
-}
-
-[[nodiscard]] auto
-find_system_config_dir() -> std::string {
-  const auto sys_conf_file = get_system_config_filename();
-  const auto package_paths = get_package_paths();
-  return find_dir(package_paths, sys_conf_file);
-}
-
 auto
-client_config_pybind11::run_python_system_config(
-  const std::vector<std::string> &genomes, const bool force) -> void {
-  const auto sys_conf_dir = find_system_config_dir();
-  run(genomes, sys_conf_dir, force);
-}
-
-}  // namespace transferase
-
-auto
-client_config_bindings(
-  pybind11::class_<transferase::client_config_pybind11> &cls) -> void {
+client_config_bindings(pybind11::class_<transferase::client_config_python> &cls)
+  -> void {
   using namespace pybind11::literals;  // NOLINT
-  cls.def(py::init(&kwargs_init_helper<transferase::client_config_pybind11>))
+  cls
+    // .def(py::init(&kwargs_init_helper<transferase::client_config_python>))
     .def_static(
       "default",
       []() {
         const auto sys_conf_dir = transferase::find_system_config_dir();
-        auto client = transferase::client_config_pybind11();
-        const std::error_code error =
-          client.set_defaults_system_config(sys_conf_dir);
+        auto client = transferase::client_config_python();
+        std::error_code error;
+        client.set_defaults_system_config(sys_conf_dir, error);
         if (error)
           throw std::system_error(error);
         return client;
@@ -123,8 +78,10 @@ client_config_bindings(
     assign to an object when calling this function.
 
     )doc")
+    .def("write", &transferase::client_config_python::write_python,
+         "directory"_a = std::string())
     .def("configure",
-         &transferase::client_config_pybind11::run_python_system_config,
+         &transferase::client_config_python::run_python_system_config,
          R"doc(
 
     Does the work of configuring the client, accepting a list of
@@ -140,12 +97,13 @@ client_config_bindings(
     genomes (list[str]): A list of genomes, for example:
         ["hg38", "mm39", "bosTau9"]
 
-    force_download (bool): Download genome indexes again even if they
-        seem up to date.
+    download_policy (DownloadPolicy): Indication of what to
+        (re)download.
 
     )doc",
-         "genomes"_a = std::vector<std::string>(), "force"_a = false)
-    .def_readwrite("hostname", &transferase::client_config_pybind11::hostname,
+         "genomes"_a = std::vector<std::string>(),
+         "download_policy"_a = transferase::download_policy_t::missing)
+    .def_readwrite("hostname", &transferase::client_config_python::hostname,
                    R"doc(
 
     URL or IP address for the remote transferase server. You should
@@ -153,22 +111,22 @@ client_config_bindings(
     you have setup your own server.
 
     )doc")
-    .def_readwrite("port", &transferase::client_config_pybind11::port,
+    .def_readwrite("port", &transferase::client_config_python::port,
                    "Port for the remote transferase server.")
-    .def_readwrite("index_dir", &transferase::client_config_pybind11::index_dir,
+    .def_readwrite("index_dir", &transferase::client_config_python::index_dir,
                    "Directory to store genome indexes.")
-    .def_readwrite("labels_dir",
-                   &transferase::client_config_pybind11::labels_dir,
+    .def_readwrite("metadata_file",
+                   &transferase::client_config_python::metadata_file,
                    "Directory to put files that map MethBase2 accessions to "
                    "biological samples.")
     .def_readwrite("methylome_dir",
-                   &transferase::client_config_pybind11::methylome_dir,
+                   &transferase::client_config_python::methylome_dir,
                    "Directory to search for methylomes stored locally.")
-    .def_readwrite("log_file", &transferase::client_config_pybind11::log_file,
+    .def_readwrite("log_file", &transferase::client_config_python::log_file,
                    "Log information about transferase events in this file.")
-    .def_readwrite("log_level", &transferase::client_config_pybind11::log_level,
+    .def_readwrite("log_level", &transferase::client_config_python::log_level,
                    "How much to log {debug, info, warning, error, critical}.")
-    .def("__repr__", &transferase::client_config_pybind11::tostring,
+    .def("__repr__", &transferase::client_config_python::tostring,
          "Print the contents of a ClientConfig object.")
     .doc() = R"doc(
 
