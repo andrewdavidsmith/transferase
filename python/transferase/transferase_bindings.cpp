@@ -30,6 +30,8 @@ are considered implementation detail and may vary between Python implementations
 When in doubt, consult the module reference at the location listed above.
 )";
 
+#include "client_config_python.hpp"
+
 #include "client_config_bindings.hpp"
 #include "genome_index_bindings.hpp"
 #include "genomic_interval_bindings.hpp"
@@ -84,7 +86,14 @@ PYBIND11_MODULE(transferase, the_module) {
     transferase::logger::instance().set_level(lvl);
   });
 
-  auto ClientConfig = py::class_<transferase::client_config_pybind11>(
+  auto DownloadPolicy =
+    py::enum_<transferase::download_policy_t>(the_module, "DownloadPolicy")
+      .value("none", transferase::download_policy_t::none)
+      .value("all", transferase::download_policy_t::all)
+      .value("missing", transferase::download_policy_t::missing)
+      .value("update", transferase::download_policy_t::update);
+
+  auto ClientConfig = py::class_<transferase::client_config_python>(
     the_module, "ClientConfig", "Class to help configuring transferase");
 
   auto GenomicInterval = py::class_<transferase::genomic_interval>(
