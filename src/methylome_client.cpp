@@ -34,10 +34,12 @@
 #include <cerrno>
 #include <fstream>
 #include <iterator>  // for std::cbegin, std::cend
+#include <memory>    // for std::make_shared
 #include <ranges>
 #include <string>
 #include <string_view>
 #include <system_error>
+#include <tuple>
 #include <unordered_map>
 #include <vector>
 
