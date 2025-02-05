@@ -25,6 +25,8 @@
 #define SRC_METHYLOME_CLIENT_HPP_
 
 #include "client.hpp"
+#include "genome_index_set.hpp"
+#include "methylome_genome_map.hpp"
 #include "query_container.hpp"  // for transferase::size
 #include "request.hpp"
 #include "request_type_code.hpp"  // for transferase::request_type_code
@@ -50,17 +52,137 @@ namespace transferase {
 class methylome_client {
 public:
   std::string hostname;
-  std::string port_number;
-  std::uint64_t index_hash{};
+  std::string port;
+  /// @brief Directory on the local filesystem with genome indexes
+  std::string index_dir;
+  /// @brief Directory on the local filesystem with metadata information
+  std::string metadata_file;
+  std::shared_ptr<genome_index_set> indexes;
+  methylome_genome_map lookup;
+
+  [[nodiscard]] auto
+  available_genomes([[maybe_unused]] std::error_code &error) const noexcept
+    -> std::vector<std::string>;
+
+#ifndef TRANSFERASE_NOEXCEPT
+  [[nodiscard]] auto
+  available_genomes() const -> std::vector<std::string> {
+    std::error_code error;
+    auto obj = available_genomes(error);
+    if (error)
+      throw std::system_error(error);
+    return obj;
+  }
+#endif
+
+  [[nodiscard]] auto
+  configured_genomes(std::error_code &error) const noexcept
+    -> std::vector<std::string>;
+
+#ifndef TRANSFERASE_NOEXCEPT
+  [[nodiscard]] auto
+  configured_genomes() const -> std::vector<std::string> {
+    std::error_code error;
+    auto obj = configured_genomes(error);
+    if (error)
+      throw std::system_error(error);
+    return obj;
+  }
+#endif
+
+  /// Read the client configuration.
+  [[nodiscard]] static auto
+  read(const std::string &config_dir,
+       std::error_code &error) noexcept -> methylome_client;
+
+#ifndef TRANSFERASE_NOEXCEPT
+  /// Overload of the read function that throws system_error exceptions to serve
+  /// in an API
+  [[nodiscard]] static auto
+  read(const std::string &config_dir) -> methylome_client {
+    std::error_code error;
+    const auto obj = read(config_dir, error);
+    if (error)
+      throw std::system_error(error);
+    return obj;
+  }
+#endif
+
+  /// Read the client configuration.
+  [[nodiscard]] static auto
+  read(std::error_code &error) noexcept -> methylome_client;
+
+#ifndef TRANSFERASE_NOEXCEPT
+  /// Overload of the read function that throws system_error exceptions to serve
+  /// in an API
+  [[nodiscard]] static auto
+  read() -> methylome_client {
+    std::error_code error;
+    const auto obj = read(error);
+    if (error)
+      throw std::system_error(error);
+    return obj;
+  }
+#endif
+
+  /// Write the client configuration to the given directory.
+  auto
+  write(const std::string &config_dir,
+        std::error_code &error) const noexcept -> void;
+
+#ifndef TRANSFERASE_NOEXCEPT
+  /// Write the client configuration to the given directory, throwing
+  /// system_error exceptions to serve in an API
+  auto
+  write(const std::string &config_dir) const -> void {
+    std::error_code error;
+    write(config_dir, error);
+    if (error)
+      throw std::system_error(error);
+  }
+#endif
+
+  /// Write the client configuration to the default configuration
+  /// directory.
+  auto
+  write(std::error_code &error) const noexcept -> void;
+
+#ifndef TRANSFERASE_NOEXCEPT
+  /// Write the client configuration to the given directory, throwing
+  /// system_error exceptions to serve in an API
+  auto
+  write() const -> void {
+    std::error_code error;
+    write(error);
+    if (error)
+      throw std::system_error(error);
+  }
+#endif
+
+  static auto
+  reset_to_default_configuration_system_config(
+    const std::string &config_dir, const std::string &system_config,
+    std::error_code &error) noexcept -> void;
+
+  static auto
+  reset_to_default_configuration_system_config(
+    const std::string &system_config, std::error_code &error) noexcept -> void;
+
+  static auto
+  reset_to_default_configuration(const std::string &config_dir,
+                                 std::error_code &error) noexcept -> void;
+
+  static auto
+  reset_to_default_configuration(std::error_code &error) noexcept -> void;
 
   [[nodiscard]] static auto
-  get_default(std::error_code &error) noexcept -> methylome_client;
+  initialize(std::error_code &error) noexcept -> methylome_client;
 
 #ifndef TRANSFERASE_NOEXCEPT
   [[nodiscard]] static auto
-  get_default() -> methylome_client {
+  initialize() -> methylome_client {
     std::error_code error;
-    auto result = get_default(error);
+    auto result = initialize(error);
     if (error)
       throw std::system_error(error);
     return result;
@@ -82,6 +204,8 @@ public:
              const query_container &query, std::error_code &error)
     const noexcept -> std::vector<level_container<lvl_elem_t>> {
     static constexpr auto REQ_TYPE = request_type_code::intervals;
+    const auto [_, index_hash] =
+      get_genome_and_index_hash(methylome_names, error);
     const auto req =
       request{REQ_TYPE, index_hash, size(query), methylome_names};
     return get_levels_impl<lvl_elem_t>(req, query, error);
@@ -109,6 +233,8 @@ public:
              const std::uint32_t bin_size, std::error_code &error)
     const noexcept -> std::vector<level_container<lvl_elem_t>> {
     static constexpr auto REQ_TYPE = request_type_code::bins;
+    const auto [_, index_hash] =
+      get_genome_and_index_hash(methylome_names, error);
     const auto req = request{REQ_TYPE, index_hash, bin_size, methylome_names};
     return get_levels_impl<lvl_elem_t>(req, error);
   }
@@ -134,7 +260,7 @@ private:
   get_levels_impl(const request &req, const query_container &query,
                   std::error_code &error) const noexcept
     -> std::vector<level_container<lvl_elem_t>> {
-    intervals_client<lvl_elem_t> cl(hostname, port_number, req, query);
+    intervals_client<lvl_elem_t> cl(hostname, port, req, query);
     error = cl.run();
     if (error)
       return {};
@@ -145,20 +271,30 @@ private:
   [[nodiscard]] auto
   get_levels_impl(const request &req, std::error_code &error) const noexcept
     -> std::vector<level_container<lvl_elem_t>> {
-    bins_client<lvl_elem_t> cl(hostname, port_number, req);
+    bins_client<lvl_elem_t> cl(hostname, port, req);
     error = cl.run();
     if (error)
       return {};
     return cl.take_levels(error);
   }
+
+  [[nodiscard]] auto
+  get_index_hash(const std::string &genome,
+                 std::error_code &error) const noexcept -> std::uint64_t;
+
+  [[nodiscard]] auto
+  get_genome_and_index_hash(const std::vector<std::string> &methylome_names,
+                            std::error_code &error) const noexcept
+    -> std::tuple<std::string, std::uint64_t>;
 };
 
 // clang-format off
 BOOST_DESCRIBE_STRUCT(methylome_client, (),
 (
  hostname,
- port_number,
- index_hash
+ port,
+ index_dir,
+ metadata_file
 ))
 // clang-format on
 
