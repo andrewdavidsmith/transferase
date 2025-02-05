@@ -276,7 +276,7 @@ struct client_config {
                std::error_code &error) noexcept -> void;
 
   auto
-  set_defaults(std::error_code &) noexcept -> void;
+  set_defaults(std::error_code &error) noexcept -> void;
 
   // ADS: need to replace this with functions that take actual config
   // dir, since the config file in that dir might point to a different
