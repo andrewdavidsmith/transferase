@@ -66,21 +66,9 @@ set(CPACK_STGZ_HEADER_FILE
 
 # Only make the Debian installer if building on Linux
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-  list(APPEND CPACK_GENERATOR "DEB")
-  set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Andrew D Smith <andrewds@usc.edu>")
   # Get the system processor architecture
   message(STATUS "System Architecture: ${CMAKE_SYSTEM_PROCESSOR}")
-  # Check if the architecture is x86_64 and set to amd64 for Debian packaging
-  if(CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
-    set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "amd64")
-  elseif(CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64")
-    set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "arm64")
-  else()
-    set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE ${CMAKE_SYSTEM_PROCESSOR})
-  endif()
 
-  message(STATUS
-    "Debian package architecture: ${CPACK_DEBIAN_PACKAGE_ARCHITECTURE}")
   # Run 'ldd --version' to get glibc version
   execute_process(
     COMMAND sh -c "ldd --version | head -1 | awk '{print \$NF}'"
@@ -93,8 +81,45 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
   else()
     message(STATUS "Detected glibc version: ${GLIBC_VERSION}")
   endif()
-  # Set dependency libc6 with the version constraint
-  set(CPACK_DEBIAN_PACKAGE_DEPENDS "libc6 (>= ${GLIBC_VERSION})")
+
+  # Check that the DEB can be built
+  find_program(DPKG_FOUND dpkg)
+  if (NOT DPKG_FOUND)
+    message(STATUS "Failed to detect dpkg; skipping DEB packaging")
+  else()
+    list(APPEND CPACK_GENERATOR "DEB")
+    set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Andrew D Smith <andrewds@usc.edu>")
+    # Set dependency libc6 with the version constraint
+    set(CPACK_DEBIAN_PACKAGE_DEPENDS "libc6 >= ${GLIBC_VERSION}")
+    # Check if the architecture is x86_64 and set to amd64 for Debian
+    # packaging; this is not the same as for RPMs.
+    if(CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
+      set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "amd64")
+    elseif(CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64")
+      set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "arm64")
+    else()
+      set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE ${CMAKE_SYSTEM_PROCESSOR})
+    endif()
+    message(STATUS
+      "Debian package architecture: ${CPACK_DEBIAN_PACKAGE_ARCHITECTURE}")
+  endif()
+
+  # Check that the RPM can be built
+  find_program(RPM_FOUND rpmbuild)
+  if (NOT RPMBUILD_FOUND)
+    message(STATUS "Failed to detect rpmbuild; skipping RPM packaging")
+  else()
+    list(APPEND CPACK_GENERATOR "RPM")
+    set(CPACK_RPM_PACKAGE_SUMMARY ${PROJECT_DESCRIPTION})
+    set(CPACK_RPM_PACKAGE_LICENSE "MIT")
+    set(CPACK_RPM_PACKAGE_NAME ${PROJECT_NAME})
+    set(CPACK_RPM_FILE_NAME RPM_DEFAULT)
+    set(CPACK_RPM_FILE_NAME ${CPACK_PACKAGE_VERSION})
+    set(CPACK_RPM_PACKAGE_RELEASE 1)
+    set(CPACK_RPM_PACKAGE_URL ${PROJECT_HOMEPAGE})
+    set(CPACK_RPM_PACKAGE_DESCRIPTION ${PROJECT_DESCRIPTION})
+    # RPM automatically deduces dependencies in binaries
+  endif()
 endif()
 
 # For Source (only package source from a clean clone)
