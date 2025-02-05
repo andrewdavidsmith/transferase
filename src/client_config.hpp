@@ -40,10 +40,71 @@
 
 namespace transferase {
 
+enum class download_policy_t : std::uint8_t {
+  none = 0,
+  missing = 1,
+  update = 2,
+  all = 3,
+};
+
+// clang-format off
+BOOST_DESCRIBE_ENUM(
+  download_policy_t,
+  none,
+  missing,
+  update,
+  all
+)
+// clang-format on
+
+static constexpr auto download_policy_t_name = std::array{
+  // clang-format off
+  std::string_view{"none"},
+  std::string_view{"missing"},
+  std::string_view{"update"},
+  std::string_view{"all"},
+  // clang-format on
+};
+
+inline auto
+operator<<(std::ostream &o, const download_policy_t &dp) -> std::ostream & {
+  return o << download_policy_t_name[std::to_underlying(dp)];
+}
+
+inline auto
+operator>>(std::istream &in, download_policy_t &dp) -> std::istream & {
+  std::string tmp;
+  if (!(in >> tmp))
+    return in;
+  for (const auto [idx, name] : std::views::enumerate(level_name))
+    if (tmp == name) {
+      dp = static_cast<download_policy_t>(idx);
+      return in;
+    }
+  in.setstate(std::ios::failbit);
+  return in;
+}
+
+}  // namespace transferase
+
+template <>
+struct std::formatter<transferase::download_policy_t>
+  : std::formatter<std::string> {
+  auto
+  format(const transferase::download_policy_t &of,
+         std::format_context &ctx) const {
+    return std::format_to(
+      ctx.out(), "{}",
+      transferase::download_policy_t_name[std::to_underlying(of)]);
+  }
+};
+
+namespace transferase {
+
 struct client_config {
   static constexpr auto transferase_config_dirname_default =
     ".config/transferase";
-  static constexpr auto labels_dirname_default = "labels";
+  static constexpr auto metadata_filename_default = "metadata.json";
   static constexpr auto index_dirname_default = "indexes";
   static constexpr auto client_config_filename_default =
     "transferase_client_config.toml";
@@ -52,7 +113,7 @@ struct client_config {
   std::string hostname;
   std::string port;
   std::string index_dir;
-  std::string labels_dir;
+  std::string metadata_file;
   std::string methylome_dir;
   std::string log_file;
   log_level_t log_level{};
@@ -103,15 +164,16 @@ struct client_config {
   /// There are several overloads.
   auto
   run(const std::string &config_dir, const std::vector<std::string> &genomes,
-      const bool force_download, std::error_code &error) const noexcept -> void;
+      const download_policy_t download_policy,
+      std::error_code &error) const noexcept -> void;
 
 #ifndef TRANSFERASE_NOEXCEPT
   /// Overload that throws system_error exceptions to serve in an API.
   auto
   run(const std::string &config_dir, const std::vector<std::string> &genomes,
-      const bool force_download) const -> void {
+      const download_policy_t download_policy) const -> void {
     std::error_code error;
-    run(config_dir, genomes, force_download, error);
+    run(config_dir, genomes, download_policy, error);
     if (error)
       throw std::system_error(error);
   }
@@ -121,7 +183,8 @@ struct client_config {
   /// must be specified. See below.
   auto
   run(const std::string &config_dir, const std::vector<std::string> &genomes,
-      const std::string &system_config_dir, const bool force_download,
+      const std::string &system_config_dir,
+      const download_policy_t download_policy,
       std::error_code &error) const noexcept -> void;
 
 #ifndef TRANSFERASE_NOEXCEPT
@@ -136,9 +199,9 @@ struct client_config {
   auto
   run(const std::string &config_dir, const std::vector<std::string> &genomes,
       const std::string &system_config_dir,
-      const bool force_download) const -> void {
+      const download_policy_t download_policy) const -> void {
     std::error_code error;
-    run(config_dir, genomes, system_config_dir, force_download, error);
+    run(config_dir, genomes, system_config_dir, download_policy, error);
     if (error)
       throw std::system_error(error);
   }
@@ -147,16 +210,17 @@ struct client_config {
   /// Overload that will guess the value of the configuration
   /// directory and default any instance variables not already set.
   auto
-  run(const std::vector<std::string> &genomes, const bool force_download,
+  run(const std::vector<std::string> &genomes,
+      const download_policy_t download_policy,
       std::error_code &error) const noexcept -> void;
 
 #ifndef TRANSFERASE_NOEXCEPT
   /// Throwing version of the overload that guesses the config dir.
   auto
   run(const std::vector<std::string> &genomes,
-      const bool force_download) const -> void {
+      const download_policy_t download_policy) const -> void {
     std::error_code error;
-    run(genomes, force_download, error);
+    run(genomes, download_policy, error);
     if (error)
       throw std::system_error(error);
   }
@@ -172,7 +236,8 @@ struct client_config {
   /// process.
   auto
   run(const std::vector<std::string> &genomes,
-      const std::string &system_config_dir, const bool force_download,
+      const std::string &system_config_dir,
+      const download_policy_t download_policy,
       std::error_code &error) const noexcept -> void;
 
 #ifndef TRANSFERASE_NOEXCEPT
@@ -185,9 +250,9 @@ struct client_config {
   auto
   run(const std::vector<std::string> &genomes,
       const std::string &system_config_dir,
-      const bool force_download) const -> void {
+      const download_policy_t download_policy) const -> void {
     std::error_code error;
-    run(genomes, system_config_dir, force_download, error);
+    run(genomes, system_config_dir, download_policy, error);
     if (error)
       throw std::system_error(error);
   }
@@ -197,20 +262,21 @@ struct client_config {
   // to look for the system config file since different APIs can't be
   // expected to find things the same way.
 
-  [[nodiscard]] auto
+  auto
   set_defaults_system_config(const std::string &config_dir,
-                             const std::string &system_config)
-    -> std::error_code;
+                             const std::string &system_config,
+                             std::error_code &error) noexcept -> void;
 
-  [[nodiscard]] auto
-  set_defaults_system_config(const std::string &system_config)
-    -> std::error_code;
+  auto
+  set_defaults_system_config(const std::string &system_config,
+                             std::error_code &error) noexcept -> void;
 
-  [[nodiscard]] auto
-  set_defaults(const std::string &config_dir) -> std::error_code;
+  auto
+  set_defaults(const std::string &config_dir,
+               std::error_code &error) noexcept -> void;
 
-  [[nodiscard]] auto
-  set_defaults() -> std::error_code;
+  auto
+  set_defaults(std::error_code &) noexcept -> void;
 
   // ADS: need to replace this with functions that take actual config
   // dir, since the config file in that dir might point to a different
@@ -222,7 +288,7 @@ struct client_config {
   get_config_dir_default(std::error_code &error) -> std::string;
 
   [[nodiscard]] static auto
-  get_labels_dir_default(std::error_code &error) -> std::string;
+  get_metadata_file_default(std::error_code &error) -> std::string;
 
   [[nodiscard]] static auto
   get_config_file(const std::string &config_dir,
@@ -240,11 +306,42 @@ struct client_config {
   [[nodiscard]] auto
   make_directories(std::string config_dir) const -> std::error_code;
 
-private:
-  /// Write the client configuration.
-  [[nodiscard]] auto
-  write(std::string config_dir = std::string{}) const -> std::error_code;
+  /// Write the client configuration to the default configuration
+  /// directory.
+  auto
+  write(std::error_code &error) const noexcept -> void;
 
+#ifndef TRANSFERASE_NOEXCEPT
+  /// Write the client configuration to the default configuration
+  /// directory, throwing system_error to serve in in an API.
+  auto
+  write() const -> void {
+    std::error_code error;
+    write(error);
+    if (error)
+      throw std::system_error(error);
+  }
+#endif
+
+  /// Write the client configuration to the given configuration
+  /// directory.
+  auto
+  write(const std::string &config_dir,
+        std::error_code &error) const noexcept -> void;
+
+#ifndef TRANSFERASE_NOEXCEPT
+  /// Write the client configuration to the given configuration
+  /// directory, throwing system_error to serve in in an API.
+  auto
+  write(const std::string &config_dir) const -> void {
+    std::error_code error;
+    write(config_dir, error);
+    if (error)
+      throw std::system_error(error);
+  }
+#endif
+
+private:
   [[nodiscard]] auto
   get_file_default_impl(const std::string &filename,
                         std::error_code &error) -> std::string;
@@ -259,7 +356,7 @@ BOOST_DESCRIBE_STRUCT(client_config, (), (
   hostname,
   port,
   index_dir,
-  labels_dir,
+  metadata_file,
   methylome_dir,
   log_file,
   log_level

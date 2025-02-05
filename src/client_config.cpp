@@ -205,15 +205,14 @@ client_config::get_config_file(const std::string &config_dir,
                                error);
 }
 
-[[nodiscard]] auto
-client_config::set_defaults_system_config(const std::string &config_dir,
-                                          const std::string &system_config_dir)
-  -> std::error_code {
-  std::error_code error;
+auto
+client_config::set_defaults_system_config(
+  const std::string &config_dir, const std::string &system_config_dir,
+  std::error_code &error) noexcept -> void {
   const auto [default_hostname, default_port] =
     transferase::get_transferase_server_info(system_config_dir, error);
   if (error)
-    return error;
+    return;
 
   hostname = default_hostname;
   port = default_port;
@@ -223,46 +222,43 @@ client_config::set_defaults_system_config(const std::string &config_dir,
       (std::filesystem::path{config_dir} / index_dirname_default).string();
     index_dir = get_dir_default_impl(dirname, error);
     if (error)
-      return error;
+      return;
   }
 
   {
-    const auto dirname =
-      (std::filesystem::path{config_dir} / labels_dirname_default).string();
-    labels_dir = get_dir_default_impl(dirname, error);
+    const auto filename =
+      (std::filesystem::path{config_dir} / metadata_filename_default).string();
+    metadata_file = get_file_default_impl(filename, error);
     if (error)
-      return error;
+      return;
   }
-
-  return std::error_code{};
 }
 
-[[nodiscard]] auto
-client_config::set_defaults_system_config(const std::string &system_config_dir)
-  -> std::error_code {
-  std::error_code error;
+auto
+client_config::set_defaults_system_config(const std::string &system_config_dir,
+                                          std::error_code &error) noexcept
+  -> void {
   const std::string config_dir = get_config_dir_default(error);
   if (error)
-    return error;
-  return set_defaults_system_config(config_dir, system_config_dir);
+    return;
+  set_defaults_system_config(config_dir, system_config_dir, error);
 }
 
-[[nodiscard]] auto
-client_config::set_defaults(const std::string &config_dir) -> std::error_code {
-  std::error_code error;
+auto
+client_config::set_defaults(const std::string &config_dir,
+                            std::error_code &error) noexcept -> void {
   const std::string system_config_dir = get_default_system_config_dir(error);
   if (error)
-    return error;
-  return set_defaults_system_config(config_dir, system_config_dir);
+    return;
+  set_defaults_system_config(config_dir, system_config_dir, error);
 }
 
-[[nodiscard]] auto
-client_config::set_defaults() -> std::error_code {
-  std::error_code error;
+auto
+client_config::set_defaults(std::error_code &error) noexcept -> void {
   const std::string config_dir = get_config_dir_default(error);
   if (error)
-    return error;
-  return set_defaults(config_dir);
+    return;
+  set_defaults(config_dir, error);
 }
 
 /// Create all the directories involved in the client config, but if
@@ -299,11 +295,13 @@ client_config::make_directories(std::string config_dir) const
   if (ec)
     return ec;
 
-  if (!labels_dir.empty()) {
-    const auto labels_dir_clean = clean_path(labels_dir, ec);
+  if (!metadata_file.empty()) {
+    const auto metadata_file_clean = clean_path(metadata_file, ec);
     if (ec)
       return ec;
-    const bool dirs_ok = create_dirs_if_needed(labels_dir_clean, ec);
+    const auto metadata_file_dir =
+      std::filesystem::path(metadata_file_clean).parent_path().string();
+    const bool dirs_ok = create_dirs_if_needed(metadata_file_dir, ec);
     if (ec)
       return ec;
     if (!dirs_ok)
@@ -337,45 +335,6 @@ client_config::make_directories(std::string config_dir) const
   return {};
 }
 
-template <class T>
-auto
-assign_member_impl(T &t, const std::string_view value) -> std::error_code {
-  std::string tmp(std::cbegin(value), std::cend(value));
-  std::istringstream is(tmp);
-  if (!(is >> t))
-    return std::make_error_code(std::errc::invalid_argument);
-  return {};
-}
-
-template <class Scope>
-auto
-assign_member(Scope &scope, const std::string_view name,
-              const std::string_view value) -> std::error_code {
-  using Md =
-    boost::describe::describe_members<Scope, boost::describe::mod_public>;
-  std::error_code error{};
-  boost::mp11::mp_for_each<Md>([&](const auto &D) {
-    if (!error && name == D.name) {
-      error = assign_member_impl(scope.*D.pointer, value);
-    }
-  });
-  return error;
-}
-
-[[nodiscard]] inline auto
-assign_members(const std::vector<std::tuple<std::string, std::string>> &key_val,
-               client_config &cfg) -> std::error_code {
-  std::error_code error;
-  for (const auto &[key, value] : key_val) {
-    std::string name(key);
-    std::ranges::replace(name, '-', '_');
-    error = assign_member(cfg, name, value);
-    if (error)
-      return {};
-  }
-  return error;
-}
-
 [[nodiscard]] auto
 client_config::read(const std::string &config_dir,
                     std::error_code &error) noexcept -> client_config {
@@ -383,24 +342,9 @@ client_config::read(const std::string &config_dir,
   if (error)
     return {};
 
-  std::ifstream in(config_file);
-  if (!in) {
-    error = std::make_error_code(std::errc(errno));
+  const auto key_val = parse_config_file(config_file, error);
+  if (error)
     return {};
-  }
-
-  std::vector<std::tuple<std::string, std::string>> key_val;
-  std::string line;
-  while (getline(in, line)) {
-    line = rlstrip(line);
-    // ignore empty lines and those beginning with '#'
-    if (!line.empty() && line[0] != '#') {
-      const auto [k, v] = split_equals(line, error);
-      if (error)
-        return {};
-      key_val.emplace_back(k, v);
-    }
-  }
 
   client_config c;
   error = assign_members(key_val, c);
@@ -437,32 +381,36 @@ format_as_client_config(const auto &t) -> std::string {
   return r;
 }
 
-[[nodiscard]] auto
-client_config::write(std::string config_dir) const -> std::error_code {
-  std::error_code error;
-  if (config_dir.empty()) {
-    config_dir = get_config_dir_default(error);
-    if (error)
-      return error;
-  }
-
+auto
+client_config::write(const std::string &config_dir,
+                     std::error_code &error) const noexcept -> void {
+  assert(!config_dir.empty());
   const auto config_file = get_config_file(config_dir, error);
   if (error)
-    return error;
+    return;
 
   const auto serialized = format_as_client_config(*this);
   const auto serialized_size =
     static_cast<std::streamsize>(std::size(serialized));
 
   std::ofstream out(config_file);
-  if (!out)
-    return std::make_error_code(std::errc(errno));
+  if (!out) {
+    error = std::make_error_code(std::errc(errno));
+    return;
+  }
 
   out.write(serialized.data(), serialized_size);
-  if (!out)
-    return client_config_error_code::error_writing_config_file;
+  if (!out) {
+    error = client_config_error_code::error_writing_config_file;
+    return;
+  }
+}
 
-  return std::error_code{};
+auto
+client_config::write(std::error_code &error) const noexcept -> void {
+  const std::string config_dir = get_config_dir_default(error);
+  if (!error)
+    write(config_dir, error);
 }
 
 [[nodiscard]] auto
@@ -490,7 +438,6 @@ dl_err(const auto &hdr, const auto &ec, const auto &url) -> std::error_code {
 check_is_outdated(const download_request &dr,
                   const std::filesystem::path &local_file,
                   std::error_code &ec) -> bool {
-  ec.clear();
   const auto local_file_exists = std::filesystem::exists(local_file, ec);
   if (ec)
     return false;
@@ -510,7 +457,7 @@ check_is_outdated(const download_request &dr,
 get_index_files(const remote_data_resources &remote,
                 const std::vector<std::string> &genomes,
                 const std::string &dirname,
-                const bool force_download) -> std::error_code {
+                const download_policy_t download_policy) -> std::error_code {
   auto &lgr = transferase::logger::instance();
   for (const auto &genome : genomes) {
     const auto stem = remote.form_index_target_stem(genome);
@@ -522,13 +469,25 @@ get_index_files(const remote_data_resources &remote,
     const auto local_index_file =
       std::filesystem::path{dirname} / std::format("{}.cpg_idx", genome);
 
-    std::error_code ec;
-    const bool is_outdated = check_is_outdated(dr, local_index_file, ec);
-    if (ec)
-      return ec;
+    std::error_code error;
+    const bool index_file_exists =
+      std::filesystem::exists(local_index_file, error);
+    if (error)
+      return error;
 
-    if (is_outdated || force_download) {
+    const bool is_outdated = index_file_exists &&
+                             (download_policy == download_policy_t::update) &&
+                             check_is_outdated(dr, local_index_file, error);
+    if (error)
+      return error;
+
+    // ADS: should report the reason why a download happened
+    if (download_policy == download_policy_t::all ||
+        (download_policy == download_policy_t::missing && !index_file_exists) ||
+        (download_policy == download_policy_t::update && is_outdated)) {
       lgr.debug(R"(Download: {} to "{}")", remote.form_url(data_file), dirname);
+      lgr.debug("Reason: policy={}, file_exists={}, is_outdated={}",
+                download_policy, index_file_exists, is_outdated);
 
       const auto [data_hdr, data_err] =
         download({remote.host, remote.port, data_file, dirname});
@@ -538,36 +497,59 @@ get_index_files(const remote_data_resources &remote,
       const auto meta_file =
         std::format("{}{}", stem, genome_index_metadata::filename_extension);
       lgr.debug(R"(Download: {} to "{}")", remote.form_url(meta_file), dirname);
-      const auto [meta_hdr, meta_err] = download({
-        remote.host,
-        remote.port,
-        meta_file,
-        dirname,
-      });
+      const auto [meta_hdr, meta_err] =
+        download({remote.host, remote.port, meta_file, dirname});
       if (meta_err)
         return dl_err(meta_hdr, meta_err, remote.form_url(meta_file));
     }
-    else if (!force_download)
-      lgr.debug("Existing index is most recent: {}", local_index_file.string());
   }
   return {};
 }
 
 [[nodiscard]] static auto
-get_labels_file(const remote_data_resources &remote,
-                const std::string &dirname) -> std::error_code {
+get_metadata_file(const remote_data_resources &remote,
+                  const std::string &dirname,
+                  const download_policy_t download_policy) -> std::error_code {
   auto &lgr = transferase::logger::instance();
-  const auto stem = remote.get_labels_target_stem();
-  const auto labels_file = std::format("{}.json", stem);
-  lgr.debug("Download: {} to {}", remote.form_url(labels_file), dirname);
-  const auto [data_hdr, data_err] = download(download_request{
+  const auto stem = remote.get_metadata_target_stem();
+  const auto metadata_file = std::format("{}.json", stem);
+  const auto local_metadata_file =
+    std::filesystem::path{dirname} / client_config::metadata_filename_default;
+
+  std::error_code error;
+  const bool metadata_file_exists =
+    std::filesystem::exists(local_metadata_file, error);
+  if (error)
+    return error;
+
+  // ADS: why do this check for 'is_outdated' for such a small file?
+  // Maybe local modifications are only worth overwriting if the
+  // remote is newer?
+  const download_request dr{
     remote.host,
     remote.port,
-    labels_file,
+    metadata_file,
     dirname,
-  });
-  if (data_err)
-    return dl_err(data_hdr, data_err, remote.form_url(labels_file));
+  };
+
+  const bool is_outdated = metadata_file_exists &&
+                           (download_policy == download_policy_t::update) &&
+                           check_is_outdated(dr, local_metadata_file, error);
+  if (error)
+    return error;
+
+  if (download_policy == download_policy_t::all ||
+      (download_policy == download_policy_t::missing &&
+       !metadata_file_exists) ||
+      (download_policy == download_policy_t::update && is_outdated)) {
+    lgr.debug("Download: {} to {}", remote.form_url(metadata_file), dirname);
+    lgr.debug("Reason: policy={}, file_exists={}, is_outdated={}",
+              download_policy, metadata_file_exists, is_outdated);
+
+    const auto [data_hdr, data_err] = download(dr);
+    if (data_err)
+      return dl_err(data_hdr, data_err, remote.form_url(metadata_file));
+  }
   return {};
 }
 
@@ -575,7 +557,7 @@ auto
 client_config::run(const std::string &config_dir,
                    const std::vector<std::string> &genomes,
                    const std::string &system_config_dir,
-                   const bool force_download,
+                   const download_policy_t download_policy,
                    std::error_code &error) const noexcept -> void {
   auto &lgr = logger::instance();
 
@@ -592,7 +574,7 @@ client_config::run(const std::string &config_dir,
   }
 
   lgr.debug("Writing configuration file");
-  error = write(config_dir);
+  write(config_dir, error);
   if (error) {
     error = client_config_error_code::error_writing_config_file;
     lgr.debug("Error writing config file: {}", error);
@@ -609,19 +591,18 @@ client_config::run(const std::string &config_dir,
 
   // Do the downloads, attempting each remote resources server in the
   // system config
-  bool labels_downloads_ok{false};
+  bool metadata_downloads_ok{false};
   for (const auto &remote : remotes) {
-    lgr.debug("Attempting download labels from {}:{}", remote.host,
-              remote.port);
-    const auto labels_err = get_labels_file(remote, labels_dir);
-    if (labels_err)
-      lgr.debug("Error obtaining labels file: {}", labels_err);
-    if (!labels_err) {
-      labels_downloads_ok = true;
+    const auto metadata_err =
+      get_metadata_file(remote, config_dir, download_policy);
+    if (metadata_err)
+      lgr.debug("Error obtaining metadata file: {}", metadata_err);
+    if (!metadata_err) {
+      metadata_downloads_ok = true;
       break;
     }
   }
-  if (!labels_downloads_ok) {
+  if (!metadata_downloads_ok) {
     error = client_config_error_code::download_error;
     return;
   }
@@ -631,9 +612,8 @@ client_config::run(const std::string &config_dir,
 
   bool genome_downloads_ok{false};
   for (const auto &remote : remotes) {
-    lgr.debug("Attempting download from {}:{}", remote.host, remote.port);
     const auto index_err =
-      get_index_files(remote, genomes, index_dir, force_download);
+      get_index_files(remote, genomes, index_dir, download_policy);
     if (index_err)
       lgr.debug("Error obtaining index files: {}", index_err);
     if (!index_err) {
@@ -650,35 +630,35 @@ client_config::run(const std::string &config_dir,
 auto
 client_config::run(const std::string &config_dir,
                    const std::vector<std::string> &genomes,
-                   const bool force_download,
+                   const download_policy_t download_policy,
                    std::error_code &error) const noexcept -> void {
   const auto system_config_dir = get_default_system_config_dir(error);
   if (error) {
     error = client_config_error_code::error_obtaining_sytem_config_dir;
     return;
   }
-  run(config_dir, genomes, system_config_dir, force_download, error);
+  run(config_dir, genomes, system_config_dir, download_policy, error);
 }
 
 auto
 client_config::run(const std::vector<std::string> &genomes,
-                   const bool force_download,
+                   const download_policy_t download_policy,
                    std::error_code &error) const noexcept -> void {
   const auto config_dir = get_config_dir_default(error);
   if (error)
     return;
-  run(config_dir, genomes, force_download, error);
+  run(config_dir, genomes, download_policy, error);
 }
 
 auto
 client_config::run(const std::vector<std::string> &genomes,
                    const std::string &system_config_dir,
-                   const bool force_download,
+                   const download_policy_t download_policy,
                    std::error_code &error) const noexcept -> void {
   const auto config_dir = get_config_dir_default(error);
   if (error)
     return;
-  run(config_dir, genomes, system_config_dir, force_download, error);
+  run(config_dir, genomes, system_config_dir, download_policy, error);
 }
 
 /// Validate that the client config makes sense. This must be done
@@ -701,8 +681,8 @@ client_config::validate(std::error_code &error) const noexcept -> bool {
     error = client_config_error_code::invalid_client_config_information;
     return false;
   }
-  // validate the labels_dir
-  if (labels_dir.empty()) {
+  // validate the metadata_file
+  if (metadata_file.empty()) {
     error = client_config_error_code::invalid_client_config_information;
     return false;
   }
