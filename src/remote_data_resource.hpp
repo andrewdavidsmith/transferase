@@ -47,13 +47,13 @@ struct remote_data_resources {
   }
 
   [[nodiscard]] auto
-  form_labels_target_stem(const auto &genome) const {
-    return (std::filesystem::path{path} / "labels/latest" / genome).string();
+  form_metadata_target_stem(const auto &genome) const {
+    return (std::filesystem::path{path} / "metadata/latest" / genome).string();
   }
 
   [[nodiscard]] auto
-  get_labels_target_stem() const {
-    return (std::filesystem::path{path} / "labels/latest/labels").string();
+  get_metadata_target_stem() const {
+    return (std::filesystem::path{path} / "metadata/latest/metadata").string();
   }
 
   [[nodiscard]] auto

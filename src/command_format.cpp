@@ -364,7 +364,7 @@ struct command_format_argset : argset_base<command_format_argset> {
   std::string hostname{};
   std::string port{};
   std::string log_filename{};
-  std::string labels_dir{};
+  std::string metadata_file{};
 
   std::string index_directory{};
   std::string genome_name{};
@@ -397,7 +397,7 @@ struct command_format_argset : argset_base<command_format_argset> {
     po::options_description opts;
     opts.add_options()
       // clang-format off
-      ("labels-dir", po::value(&labels_dir), "none")
+      ("metadata-file", po::value(&metadata_file), "none")
       ("hostname", po::value(&hostname), "none")
       ("port", po::value(&port), "none")
       ("log-file", po::value(&log_filename), "none")

@@ -151,7 +151,7 @@ struct query_argset : argset_base<query_argset> {
   std::string methylome_names{};
   std::string methylomes_file{};
   std::string genome_name{};
-  std::string labels_dir{};
+  std::string metadata_file{};
   output_format_t out_fmt{};
   bool count_covered{};
   std::string output_file{};
@@ -186,7 +186,7 @@ struct query_argset : argset_base<query_argset> {
     po::options_description opts;
     opts.add_options()
       // clang-format off
-      ("labels-dir", po::value(&labels_dir), "none")
+      ("metadata-file", po::value(&metadata_file), "none")
       // clang-format on
       ;
     return opts;

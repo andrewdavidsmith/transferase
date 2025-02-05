@@ -585,10 +585,8 @@ command_select_main(int argc, char *argv[]) -> int {  // NOLINT
           throw std::runtime_error(std::format(
             "Error setting client configuration: {}", error.message()));
       }
-
       const auto config = client_config::read(config_dir);
-      input_file =
-        (std::filesystem::path{config.labels_dir} / "labels.json").string();
+      input_file = config.metadata_file;
     }
 
     const auto all_data = load_data(input_file, error);

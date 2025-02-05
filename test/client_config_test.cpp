@@ -45,7 +45,7 @@ protected:
     const std::string payload = R"config(hostname = bulbapedia.bulbagarden.net
 port = 9000
 # index-dir =
-# labels-dir =
+# metadata-file =
 # methylome-dir =
 # log-file =
 # log-level = info
@@ -126,7 +126,7 @@ TEST_F(client_config_mock, get_defaults_success) {
   EXPECT_FALSE(error);
 
   EXPECT_NE(cfg.index_dir, std::string{});
-  EXPECT_NE(cfg.labels_dir, std::string{});
+  EXPECT_NE(cfg.metadata_file, std::string{});
 
   EXPECT_FALSE(cfg.hostname.empty());
   EXPECT_FALSE(cfg.port.empty());
