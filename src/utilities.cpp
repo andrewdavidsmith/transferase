@@ -119,3 +119,27 @@ check_output_file(const std::string &filename) -> std::error_code {
 
   return {};
 }
+
+[[nodiscard]] auto
+parse_config_file(const std::string &filename, std::error_code &error) noexcept
+  -> std::vector<std::tuple<std::string, std::string>> {
+  std::ifstream in(filename);
+  if (!in) {
+    error = std::make_error_code(std::errc(errno));
+    return {};
+  }
+
+  std::vector<std::tuple<std::string, std::string>> key_val;
+  std::string line;
+  while (getline(in, line)) {
+    line = rlstrip(line);
+    // ignore empty lines and those beginning with '#'
+    if (!line.empty() && line[0] != '#') {
+      const auto [k, v] = split_equals(line, error);
+      if (error)
+        return {};
+      key_val.emplace_back(k, v);
+    }
+  }
+  return key_val;
+}
