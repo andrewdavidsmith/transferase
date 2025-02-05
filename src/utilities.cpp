@@ -28,6 +28,8 @@
 #include <filesystem>  // for std::filesystem::path, std::filesystem::exists
 #include <fstream>
 #include <string>
+#include <tuple>
+#include <vector>
 
 namespace transferase {
 
