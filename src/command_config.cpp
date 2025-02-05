@@ -35,7 +35,11 @@ arguments can be specified on the command line and index files can be
 downloaded separately. The default config directory is
 '${HOME}/.config/transferase'. This command will also retrieve other
 data. It will get index files that are used to accelerate queries. And
-it will retrieve a file with MethBase2 metadata.
+it will retrieve a file with MethBase2 metadata. If you run the
+command again, the default behavior regarding downloads is to only
+retrieve requested files if they are not already present. On a
+subsequent configuration, you can request to re-download/update any of
+the files obtained during the initial configuration.
 )";
 
 static constexpr auto examples = R"(
