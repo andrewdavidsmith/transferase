@@ -105,7 +105,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
   endif()
 
   # Check that the RPM can be built
-  find_program(RPM_FOUND rpmbuild)
+  find_program(RPMBUILD_FOUND rpmbuild)
   if (NOT RPMBUILD_FOUND)
     message(STATUS "Failed to detect rpmbuild; skipping RPM packaging")
   else()
