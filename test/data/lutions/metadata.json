@@ -1,0 +1,17 @@
+{
+    "eFlareon": {
+        "eFlareon_brain": "Brain?",
+        "eFlareon_tail": "Tail!",
+        "eFlareon_ear": "ear..."
+    },
+    "eJolteon": {
+        "eJolteon_brain": "Brain you say?",
+        "eJolteon_tail": "It's a tail!",
+        "eJolteon_ear": "Nobody should have such an ear..."
+    },
+    "eVaporeon": {
+        "eVaporeon_brain": "Brain isn't what I expected.",
+        "eVaporeon_tail": "That tail is for swimming!",
+        "eVaporeon_ear": "Why have ears if you live underwater?"
+    }
+}
