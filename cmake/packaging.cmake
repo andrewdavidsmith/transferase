@@ -32,30 +32,32 @@ set(CPACK_PACKAGE_CONTACT "Andrew D Smith")
 set(CPACK_RESOURCE_FILE_LICENSE ${PROJECT_SOURCE_DIR}/LICENSE)
 set(CPACK_GENERATOR "TGZ;STGZ")
 
+# ADS: adding this is the most general way to make the alias and have
+# it both installed properly and linked the same way as tranferase.
+set(BUILD_XFR_ALIAS on)
+
 if (STRIP_PATHS_FROM_BINARIES)
-  # Strip binaries for size and removing build system info
-  set(CPACK_STRIP_FILES ${STRIP_PATHS_FROM_BINARIES})
+  # Strip binaries for size and removing build system info. This can
+  # take a bool, but also a list, so we can give it both transferase and xfr
+  set(CPACK_STRIP_FILES on)
 
   # Remove project source directory information from text section
   list(APPEND STRIP_SUB_LIST "${PROJECT_SOURCE_DIR}/=/")
   # Replace any home dir prefix in paths
   list(APPEND STRIP_SUB_LIST "$ENV{HOME}/=/")
+endif()
 
-  ## Set linker to strips symbols (seems not redundant with cpack
-  ## setting?)
-  # Check for the operating system
-  if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")  # macOS
-    # macOS-specific linker options
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-dead_strip")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--gc-sections") # If needed?
-  elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-    # Linux-specific linker options
-    list(APPEND GLOBAL_LINKER_OPTIONS "-s")
-  elseif(CMAKE_SYSTEM_NAME STREQUAL "WIN32")
-    message(FATAL_ERROR "Windows isn't supported")
-  else()
-    message(FATAL_ERROR "Operatoring system not recognized: ${CMAKE_SYSTEM_NAME}")
-  endif()
+## Set linker to strips symbols (seems not redundant with cpack
+## setting?)
+# Check for the operating system
+if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")  # macOS
+  list(APPEND GLOBAL_LINKER_OPTIONS "-Wl,-dead_strip")
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+  list(APPEND GLOBAL_LINKER_OPTIONS "-s")
+elseif(CMAKE_SYSTEM_NAME STREQUAL "WIN32")
+  message(FATAL_ERROR "Windows isn't supported")
+else()
+  message(FATAL_ERROR "Operatoring system not recognized: ${CMAKE_SYSTEM_NAME}")
 endif()
 
 # For custom STGZ generator

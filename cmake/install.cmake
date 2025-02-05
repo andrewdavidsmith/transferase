@@ -23,15 +23,10 @@
 # One way to install:
 # cmake --install build_dir --prefix /path/to/install/root
 
-install(TARGETS transferase
-  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-)
-
-# Install an abbreviated alias
-install(PROGRAMS $<TARGET_FILE:transferase>
-  DESTINATION ${CMAKE_INSTALL_BINDIR}
-  RENAME xfr
-)
+install(TARGETS transferase RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+if(BUILD_XFR_ALIAS)
+  install(TARGETS xfr RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+endif()
 
 # Versioned JSON file (e.g., /usr/share/transferase)
 set(DATA_SOURCE_DIR ${PROJECT_BINARY_DIR}/share/transferase)

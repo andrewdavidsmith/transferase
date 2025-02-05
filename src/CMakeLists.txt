@@ -58,19 +58,28 @@ add_library(transferase_system STATIC)
 target_link_options(transferase_system PRIVATE ${GLOBAL_LINKER_OPTIONS})
 target_link_libraries(transferase_system PRIVATE ${LIBRARY_OBJECTS})
 
-# Create the executable
-add_executable(transferase transferase.cpp)
-# Make sure that the 'config.h' is visible to include
-target_include_directories(transferase PRIVATE ${PROJECT_BINARY_DIR})
-target_link_libraries(transferase PRIVATE
-  transferase_system
-  ZLIB::ZLIB
-  ${Boost_LIBRARIES}
-  Threads::Threads
-)
-if(CURSES_FOUND)
-  target_link_libraries(transferase PRIVATE ${CURSES_LIBRARIES})
+# ADS: this approach is the most reliable way so far to have the alias
+# both installed properly and linked the same way as tranferase.
+set(TRANSFERASE_NAMES "transferase")
+if(BUILD_XFR_ALIAS)
+  list(APPEND TRANSFERASE_NAMES "xfr")
 endif()
 
-target_link_options(transferase PRIVATE ${GLOBAL_LINKER_OPTIONS})
-target_compile_options(transferase PRIVATE ${GLOBAL_COMPILE_OPTIONS})
+# Create the executable
+foreach(name ${TRANSFERASE_NAMES})
+  add_executable(${name} transferase.cpp)
+  # Make sure that the 'config.h' is visible to include
+  target_include_directories(${name} PRIVATE ${PROJECT_BINARY_DIR})
+  target_link_libraries(${name} PRIVATE
+    transferase_system
+    ZLIB::ZLIB
+    ${Boost_LIBRARIES}
+    Threads::Threads
+  )
+  if(CURSES_FOUND)
+    target_link_libraries(${name} PRIVATE ${CURSES_LIBRARIES})
+  endif()
+
+  target_link_options(${name} PRIVATE ${GLOBAL_LINKER_OPTIONS})
+  target_compile_options(${name} PRIVATE ${GLOBAL_COMPILE_OPTIONS})
+endforeach()
