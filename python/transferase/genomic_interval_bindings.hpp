@@ -24,14 +24,14 @@
 #ifndef PYTHON_TRANSFERASE_GENOMIC_INTERVAL_BINDINGS_HPP_
 #define PYTHON_TRANSFERASE_GENOMIC_INTERVAL_BINDINGS_HPP_
 
-#include <pybind11/pybind11.h>
+#include <nanobind/nanobind.h>
 
 namespace transferase {
 struct genomic_interval;
 }
 
 auto
-genomic_interval_bindings(pybind11::class_<transferase::genomic_interval> &cls)
+genomic_interval_bindings(nanobind::class_<transferase::genomic_interval> &cls)
   -> void;
 
 #endif  // PYTHON_TRANSFERASE_GENOMIC_INTERVAL_BINDINGS_HPP_
