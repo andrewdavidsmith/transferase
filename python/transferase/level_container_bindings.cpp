@@ -27,6 +27,8 @@
 #include <level_element.hpp>
 
 #include <nanobind/nanobind.h>
+#include <nanobind/stl/string.h>
+#include <nanobind/stl/vector.h>
 
 #include <cstddef>  // for std::size_t
 #include <cstdint>  // for std::uint32_t

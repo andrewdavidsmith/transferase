@@ -54,6 +54,8 @@ When in doubt, consult the module reference at the location listed above.
 
 #include <moduleobject.h>
 #include <nanobind/nanobind.h>
+#include <nanobind/stl/string.h>
+#include <nanobind/stl/vector.h>
 
 // ADS: the header below has functions to control what is
 // auto-generated in the python docs

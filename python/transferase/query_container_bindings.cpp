@@ -26,7 +26,8 @@
 #include <query_container.hpp>
 
 #include <nanobind/nanobind.h>
-#include <nanobind/operators.h>  // IWYU pragma: keep
+#include <nanobind/operators.h>   // IWYU pragma: keep
+#include <nanobind/stl/string.h>  // IWYU pragma: keep
 
 #include <cstdint>  // for std::uint32_t
 #include <format>

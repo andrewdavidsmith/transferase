@@ -27,6 +27,8 @@
 #include <methylome_directory.hpp>
 
 #include <nanobind/nanobind.h>
+#include <nanobind/stl/string.h>
+#include <nanobind/stl/vector.h>
 
 #include <cstdint>
 #include <string>
