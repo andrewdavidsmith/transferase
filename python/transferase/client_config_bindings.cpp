@@ -31,6 +31,8 @@
 
 #include <nanobind/nanobind.h>
 #include <nanobind/operators.h>  // IWYU pragma: keep
+#include <nanobind/stl/string.h>
+#include <nanobind/stl/vector.h>
 
 #include <string>
 #include <system_error>

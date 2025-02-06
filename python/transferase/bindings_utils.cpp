@@ -27,6 +27,7 @@
 
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/string.h>
+#include <nanobind/stl/vector.h>
 
 #include <filesystem>
 #include <format>
@@ -39,8 +40,8 @@ namespace nb = nanobind;
 namespace transferase {
 
 [[nodiscard]] auto
-find_dir(const std::vector<std::string> &paths,
-         const std::string &filename) -> std::string {
+find_dir(const std::vector<std::string> &paths, const std::string &filename)
+  -> std::string {
   for (const auto &p : paths) {
     // Some of the paths given by Python might not exist
     const auto path_elem_exists = std::filesystem::exists(p);
