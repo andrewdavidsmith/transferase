@@ -23,11 +23,11 @@
 message(STATUS "Configuring to build Python API")
 
 # Setup the Python include and lib directories
-include_directories(${Python3_INCLUDE_DIRS})
-link_directories(${Python3_LIBRARIES})
+include_directories(${Python_INCLUDE_DIRS})
+link_directories(${Python_LIBRARIES})
 
 # For release, strip any directories on header filenames
-foreach(dirname ${Python3_INCLUDE_DIRS})
+foreach(dirname ${Python_INCLUDE_DIRS})
   list(APPEND STRIP_SUB_LIST "${dirname}/=/")
 endforeach()
 
@@ -57,7 +57,8 @@ if(PACKAGE_PYTHON)
   # List of Python packages needed to make the wheel
   set(needed_for_packaging wheel auditwheel hatch)
 
-  # Make sure the required Python packages are available
+  # Make sure the required Python packages are available; using
+  # python3 below because that's available more places than python.
   foreach(package_name ${needed_for_packaging})
     execute_process(
       COMMAND python3 -c "import ${package_name}"
