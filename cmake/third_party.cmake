@@ -70,17 +70,23 @@ else()
   find_package(ZLIB REQUIRED)
 endif()
 
-# Python and Pybind11
+# Python and nanobind
 if(BUILD_PYTHON)
-  # Python3
-  find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
-  message(STATUS "Python3 include dir: ${Python3_INCLUDE_DIRS}")
-  message(STATUS "Python3 libraries: ${Python3_LIBRARIES}")
-  message(STATUS "Python3 version: ${Python3_VERSION}")
-  message(STATUS "Python3 SOABI: ${Python3_SOABI}")
+  # For nanobind before Python; seems to work with ordinary 'Development'
+  set(DEV_MODULE Development.Module)
 
-  # Pybind11
-  find_package(pybind11 REQUIRED)
+  # Python
+  find_package(Python COMPONENTS Interpreter ${DEV_MODULE} REQUIRED)
+  message(STATUS "Python include dir: ${Python_INCLUDE_DIRS}")
+  message(STATUS "Python libraries: ${Python_LIBRARIES}")
+  message(STATUS "Python version: ${Python_VERSION}")
+  message(STATUS "Python SOABI: ${Python_SOABI}")
+
+  # Detect the installed nanobind package and import it into CMake
+  execute_process(
+    COMMAND "${Python_EXECUTABLE}" -m nanobind --cmake_dir
+    OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE nanobind_ROOT)
+  find_package(nanobind CONFIG REQUIRED)
 endif()
 
 # Boost components
