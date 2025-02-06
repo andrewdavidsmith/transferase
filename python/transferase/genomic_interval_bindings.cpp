@@ -27,7 +27,9 @@
 #include <genome_index_metadata.hpp>
 
 #include <nanobind/nanobind.h>
-#include <nanobind/operators.h>  // IWYU pragma: keep
+#include <nanobind/operators.h>   // IWYU pragma: keep
+#include <nanobind/stl/string.h>  // IWYU pragma: keep
+#include <nanobind/stl/vector.h>  // IWYU pragma: keep
 
 #include <format>
 #include <genomic_interval.hpp>

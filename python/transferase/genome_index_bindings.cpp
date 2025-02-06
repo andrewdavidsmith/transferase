@@ -27,6 +27,8 @@
 #include <genomic_interval.hpp>  // IWYU pragma: keep
 
 #include <nanobind/nanobind.h>
+#include <nanobind/stl/string.h>
+#include <nanobind/stl/vector.h>
 
 #include <string>
 #include <vector>
@@ -59,8 +61,8 @@ genome_index_write(const transferase::genome_index &self,
 }
 
 [[nodiscard]] inline auto
-genome_index_read(const std::string &dirname,
-                  const std::string &genome_name) -> genome_index {
+genome_index_read(const std::string &dirname, const std::string &genome_name)
+  -> genome_index {
   return genome_index::read(dirname, genome_name);
 }
 
