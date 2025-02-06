@@ -136,9 +136,12 @@ command_config_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
 
   const auto genomes = split_comma(args.genomes);
 
-  config.run(args.config_dir, genomes, args.download_policy, error);
-  if (error)
+  config.configure(args.config_dir, genomes, args.download_policy, error);
+  if (error) {
+    lgr.error("Configuration incomplete: {}", error);
     return EXIT_FAILURE;
+  }
+  lgr.debug("Completed configuration with status: {}", error);
 
   return EXIT_SUCCESS;
 }
