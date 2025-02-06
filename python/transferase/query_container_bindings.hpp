@@ -24,14 +24,14 @@
 #ifndef PYTHON_TRANSFERASE_QUERY_CONTAINER_BINDINGS_HPP_
 #define PYTHON_TRANSFERASE_QUERY_CONTAINER_BINDINGS_HPP_
 
-#include <pybind11/pybind11.h>
+#include <nanobind/nanobind.h>
 
 namespace transferase {
 struct query_container;
 }
 
 auto
-query_container_bindings(pybind11::class_<transferase::query_container> &cls)
+query_container_bindings(nanobind::class_<transferase::query_container> &cls)
   -> void;
 
 #endif  // PYTHON_TRANSFERASE_QUERY_CONTAINER_BINDINGS_HPP_

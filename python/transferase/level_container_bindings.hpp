@@ -24,7 +24,7 @@
 #ifndef PYTHON_TRANSFERASE_LEVEL_CONTAINER_BINDINGS_HPP_
 #define PYTHON_TRANSFERASE_LEVEL_CONTAINER_BINDINGS_HPP_
 
-#include <pybind11/pybind11.h>
+#include <nanobind/nanobind.h>
 
 namespace transferase {
 struct level_element_covered_t;
@@ -32,16 +32,16 @@ struct level_element_t;
 template <typename level_element_type> struct level_container;
 }  // namespace transferase
 
-namespace py = pybind11;
+namespace nb = nanobind;
 
 auto
 level_container_bindings(
-  py::class_<transferase::level_container<transferase::level_element_t>> &cls)
+  nb::class_<transferase::level_container<transferase::level_element_t>> &cls)
   -> void;
 
 auto
 level_container_covered_bindings(
-  py::class_<transferase::level_container<transferase::level_element_covered_t>>
+  nb::class_<transferase::level_container<transferase::level_element_covered_t>>
     &cls) -> void;
 
 #endif  // PYTHON_TRANSFERASE_LEVEL_CONTAINER_BINDINGS_HPP_

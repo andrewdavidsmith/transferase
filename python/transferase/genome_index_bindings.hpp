@@ -24,13 +24,13 @@
 #ifndef PYTHON_TRANSFERASE_GENOME_INDEX_BINDINGS_HPP_
 #define PYTHON_TRANSFERASE_GENOME_INDEX_BINDINGS_HPP_
 
-#include <pybind11/pybind11.h>
+#include <nanobind/nanobind.h>
 
 namespace transferase {
 struct genome_index;
 };  // namespace transferase
 
 auto
-genome_index_bindings(pybind11::class_<transferase::genome_index> &cls) -> void;
+genome_index_bindings(nanobind::class_<transferase::genome_index> &cls) -> void;
 
 #endif  // PYTHON_TRANSFERASE_GENOME_INDEX_BINDINGS_HPP_

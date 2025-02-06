@@ -24,13 +24,13 @@
 #ifndef PYTHON_TRANSFERASE_METHYLOME_BINDINGS_HPP_
 #define PYTHON_TRANSFERASE_METHYLOME_BINDINGS_HPP_
 
-#include <pybind11/pybind11.h>
+#include <nanobind/nanobind.h>
 
 namespace transferase {
 struct methylome;
 }
 
 auto
-methylome_bindings(pybind11::class_<transferase::methylome> &cls) -> void;
+methylome_bindings(nanobind::class_<transferase::methylome> &cls) -> void;
 
 #endif  // PYTHON_TRANSFERASE_METHYLOME_BINDINGS_HPP_
