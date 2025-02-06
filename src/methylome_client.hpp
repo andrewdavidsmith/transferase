@@ -25,6 +25,7 @@
 #define SRC_METHYLOME_CLIENT_HPP_
 
 #include "client.hpp"
+#include "level_element.hpp"
 #include "methylome_genome_map.hpp"
 #include "query_container.hpp"  // for transferase::size
 #include "request.hpp"
@@ -206,11 +207,13 @@ public:
   get_levels(const std::vector<std::string> &methylome_names,
              const query_container &query, std::error_code &error)
     const noexcept -> std::vector<level_container<lvl_elem_t>> {
-    static constexpr auto REQ_TYPE = request_type_code::intervals;
+    request_type_code req_type = request_type_code::intervals;
+    if constexpr (std::is_same_v<lvl_elem_t, level_element_covered_t>)
+      req_type = request_type_code::intervals_covered;
     const auto [_, index_hash] =
       get_genome_and_index_hash(methylome_names, error);
     const auto req =
-      request{REQ_TYPE, index_hash, size(query), methylome_names};
+      request{req_type, index_hash, size(query), methylome_names};
     return get_levels_impl<lvl_elem_t>(req, query, error);
   }
 
@@ -235,10 +238,12 @@ public:
   get_levels(const std::vector<std::string> &methylome_names,
              const std::uint32_t bin_size, std::error_code &error)
     const noexcept -> std::vector<level_container<lvl_elem_t>> {
-    static constexpr auto REQ_TYPE = request_type_code::bins;
+    request_type_code req_type = request_type_code::bins;
+    if constexpr (std::is_same_v<lvl_elem_t, level_element_covered_t>)
+      req_type = request_type_code::bins_covered;
     const auto [_, index_hash] =
       get_genome_and_index_hash(methylome_names, error);
-    const auto req = request{REQ_TYPE, index_hash, bin_size, methylome_names};
+    const auto req = request{req_type, index_hash, bin_size, methylome_names};
     return get_levels_impl<lvl_elem_t>(req, error);
   }
 
