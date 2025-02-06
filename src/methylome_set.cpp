@@ -49,8 +49,11 @@ methylome_set::get_methylome(const std::string &accession, std::error_code &ec)
 
   // Easy case: methylome is already loaded
   const auto meth_itr = accession_to_methylome.find(accession);
-  if (meth_itr != std::cend(accession_to_methylome))
+  if (meth_itr != std::cend(accession_to_methylome)) {
+    // current methylome becomes the most recently used
+    accessions.move_to_front(accession);
     return meth_itr->second;
+  }
 
   // ADS: we need to load a methylome; make sure the file exists;
   // probably should check the directory in batch
@@ -67,7 +70,7 @@ methylome_set::get_methylome(const std::string &accession, std::error_code &ec)
 
   // remove loaded methylomes if we need to make room
   if (accessions.full()) {
-    const auto to_eject_itr = accession_to_methylome.find(accessions.front());
+    const auto to_eject_itr = accession_to_methylome.find(accessions.back());
     if (to_eject_itr == std::cend(accession_to_methylome)) {
       ec = methylome_error_code::error_reading_methylome;
       return nullptr;
@@ -86,7 +89,7 @@ methylome_set::get_methylome(const std::string &accession, std::error_code &ec)
 
   // ADS: if we are here, then everything went ok and we can insert
   // the accession into the ring buffer
-  accessions.push_back(accession);
+  accessions.push(accession);
 
   return insertion_result.first->second;
 }
