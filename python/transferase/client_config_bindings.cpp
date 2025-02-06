@@ -75,7 +75,7 @@ client_config_bindings(pybind11::class_<transferase::client_config_python> &cls)
     .def("write", &transferase::client_config_python::write_python,
          "directory"_a = std::string())
     .def("configure",
-         &transferase::client_config_python::run_python_system_config,
+         &transferase::client_config_python::configure_python_system_config,
          R"doc(
 
     Does the work of configuring the client, accepting a list of

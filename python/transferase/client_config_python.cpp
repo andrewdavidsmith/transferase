@@ -36,11 +36,11 @@
 namespace transferase {
 
 auto
-client_config_python::run_python_system_config(
+client_config_python::configure_python_system_config(
   const std::vector<std::string> &genomes,
   const download_policy_t download_policy) const -> void {
   const auto sys_conf_dir = find_system_config_dir();
-  run(genomes, sys_conf_dir, download_policy);
+  configure(genomes, sys_conf_dir, download_policy);
 }
 
 auto

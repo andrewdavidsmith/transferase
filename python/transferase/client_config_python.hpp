@@ -37,8 +37,8 @@ namespace transferase {
 
 struct client_config_python : public client_config {
   auto
-  run_python_system_config(const std::vector<std::string> &genomes,
-                           const download_policy_t download_policy) const
+  configure_python_system_config(const std::vector<std::string> &genomes,
+                                 const download_policy_t download_policy) const
     -> void;
 
   auto
