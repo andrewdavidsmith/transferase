@@ -25,7 +25,6 @@
 #define SRC_METHYLOME_CLIENT_HPP_
 
 #include "client.hpp"
-#include "level_element.hpp"
 #include "methylome_genome_map.hpp"
 #include "query_container.hpp"  // for transferase::size
 #include "request.hpp"
@@ -47,6 +46,7 @@
 #include <vector>
 
 namespace transferase {
+struct level_element_covered_t;
 template <typename level_element_type> struct level_container;
 struct genome_index_set;
 }  // namespace transferase

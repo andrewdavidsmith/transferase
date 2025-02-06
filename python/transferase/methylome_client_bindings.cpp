@@ -25,6 +25,7 @@
 
 #include "bindings_utils.hpp"
 #include "client_config_python.hpp"
+#include "query_container.hpp"
 
 #include <client_config.hpp>
 #include <level_element.hpp>
@@ -39,11 +40,6 @@
 #include <string>
 #include <system_error>
 #include <vector>
-
-namespace transferase {
-struct query_container;
-template <typename level_element_type> struct level_container;
-}  // namespace transferase
 
 namespace py = pybind11;
 
