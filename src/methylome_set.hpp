@@ -24,6 +24,7 @@
 #ifndef SRC_METHYLOME_SET_HPP_
 #define SRC_METHYLOME_SET_HPP_
 
+#include "lru_tracker.hpp"
 #include "ring_buffer.hpp"
 
 #include <cstdint>  // std::uint32_t
@@ -62,7 +63,7 @@ struct methylome_set {
   std::string methylome_directory;
   std::uint32_t max_live_methylomes{};
 
-  ring_buffer<std::string> accessions;
+  lru_tracker<std::string> accessions;
   std::unordered_map<std::string, std::shared_ptr<methylome>>
     accession_to_methylome;
 };
