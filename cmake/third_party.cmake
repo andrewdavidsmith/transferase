@@ -72,21 +72,45 @@ endif()
 
 # Python and nanobind
 if(BUILD_PYTHON)
-  # For nanobind before Python; seems to work with ordinary 'Development'
+  message(STATUS "Configuring nanobind for Python API")
+
+  ## Try to find nanobind on the system first
+  # For nanobind before Python; seems to work with ordinary
+  # 'Development' but Development.Module is recommended
   set(DEV_MODULE Development.Module)
 
-  # Python
+  # Python has to be available before nanobind
   find_package(Python COMPONENTS Interpreter ${DEV_MODULE} REQUIRED)
   message(STATUS "Python include dir: ${Python_INCLUDE_DIRS}")
   message(STATUS "Python libraries: ${Python_LIBRARIES}")
   message(STATUS "Python version: ${Python_VERSION}")
   message(STATUS "Python SOABI: ${Python_SOABI}")
 
-  # Detect the installed nanobind package and import it into CMake
+  # Detect the installed nanobind package
   execute_process(
     COMMAND "${Python_EXECUTABLE}" -m nanobind --cmake_dir
-    OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE nanobind_ROOT)
-  find_package(nanobind CONFIG REQUIRED)
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    OUTPUT_VARIABLE nanobind_ROOT
+    ERROR_QUIET
+  )
+  if (nanobind_ROOT)
+    message(STATUS "Found nanobind on the system")
+    # Now try to find nanobind and import it into CMake; it should be
+    # here if we have nanobind_ROOT.
+    find_package(nanobind CONFIG)
+  else()
+    message(STATUS "Configuring to clone nanobind")
+    # Didn't find nanobind so try to clone it
+    include(ExternalProject)
+    ExternalProject_Add(
+      nanobind
+      GIT_REPOSITORY https://github.com/wjakob/nanobind.git
+      GIT_TAG master
+      CMAKE_ARGS
+      -DCMAKE_INSTALL_PREFIX=${PROJECT_BINARY_DIR}/src/nanobind
+      -DCMAKE_BUILD_TYPE=Release
+    )
+  endif()
 endif()
 
 # Boost components
