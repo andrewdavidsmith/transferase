@@ -27,8 +27,7 @@
 #include <level_element.hpp>  // for level_element_covered_t (ptr only)
 #include <methylome.hpp>
 
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>  // IWYU pragma: keep
+#include <nanobind/nanobind.h>
 
 #include <cstdint>
 #include <format>  // for std::format
@@ -50,7 +49,7 @@ methylome_write(const methylome &self, const std::string &directory,
 
 }  // namespace transferase
 
-namespace py = pybind11;
+namespace nb = nanobind;
 
 [[nodiscard]] static inline auto
 transferase_methylome_read(const std::string &directory,
@@ -65,9 +64,9 @@ transferase_methylome_read(const std::string &directory,
 }
 
 auto
-methylome_bindings(py::class_<transferase::methylome> &cls) -> void {
-  using namespace pybind11::literals;  // NOLINT
-  cls.def(py::init<>())
+methylome_bindings(nb::class_<transferase::methylome> &cls) -> void {
+  using namespace nanobind::literals;  // NOLINT
+  cls.def(nb::init<>())
     .def_static("read", &transferase_methylome_read, "directory"_a,
                 "methylome_name"_a)
     .def("is_consistent",

@@ -31,8 +31,7 @@
 #include <level_element.hpp>
 #include <methylome_client.hpp>
 
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>  // IWYU pragma: keep
+#include <nanobind/nanobind.h>
 
 #include <cstdint>
 #include <format>
@@ -41,12 +40,12 @@
 #include <system_error>
 #include <vector>
 
-namespace py = pybind11;
+namespace nb = nanobind;
 
 auto
-methylome_client_bindings(py::class_<transferase::methylome_client> &cls)
+methylome_client_bindings(nb::class_<transferase::methylome_client> &cls)
   -> void {
-  using namespace pybind11::literals;  // NOLINT
+  using namespace nanobind::literals;  // NOLINT
   namespace xfr = transferase;         // NOLINT
   cls
     .def_static(
@@ -128,16 +127,16 @@ methylome_client_bindings(py::class_<transferase::methylome_client> &cls)
       "download_policy"_a = xfr::download_policy_t::missing)
     .def("__repr__", &xfr::methylome_client::tostring)
     .def("available_genomes",
-         py::overload_cast<>(&xfr::methylome_client::available_genomes,
-                             py::const_))
+         nb::overload_cast<>(&xfr::methylome_client::available_genomes,
+                             nb::const_))
     .def("configured_genomes",
-         py::overload_cast<>(&xfr::methylome_client::configured_genomes,
-                             py::const_))
+         nb::overload_cast<>(&xfr::methylome_client::configured_genomes,
+                             nb::const_))
     .def(
       "get_levels",
-      py::overload_cast<const std::vector<std::string> &,
+      nb::overload_cast<const std::vector<std::string> &,
                         const xfr::query_container &>(
-        &xfr::methylome_client::get_levels<xfr::level_element_t>, py::const_),
+        &xfr::methylome_client::get_levels<xfr::level_element_t>, nb::const_),
       R"doc(
 
     Make a query for methylation levels in each of a given set of
@@ -161,8 +160,8 @@ methylome_client_bindings(py::class_<transferase::methylome_client> &cls)
     )doc")
     .def(
       "get_levels",
-      py::overload_cast<const std::vector<std::string> &, const std::uint32_t>(
-        &xfr::methylome_client::get_levels<xfr::level_element_t>, py::const_),
+      nb::overload_cast<const std::vector<std::string> &, const std::uint32_t>(
+        &xfr::methylome_client::get_levels<xfr::level_element_t>, nb::const_),
       R"doc(
 
     Make a query for methylation levels in each non-overlapping
@@ -184,10 +183,10 @@ methylome_client_bindings(py::class_<transferase::methylome_client> &cls)
 
     )doc")
     .def("get_levels_covered",
-         py::overload_cast<const std::vector<std::string> &,
+         nb::overload_cast<const std::vector<std::string> &,
                            const xfr::query_container &>(
            &xfr::methylome_client::get_levels<xfr::level_element_covered_t>,
-           py::const_),
+           nb::const_),
          R"doc(
 
     Make a query for methylation levels and number of sites with reads
@@ -212,9 +211,9 @@ methylome_client_bindings(py::class_<transferase::methylome_client> &cls)
     )doc")
     .def(
       "get_levels_covered",
-      py::overload_cast<const std::vector<std::string> &, const std::uint32_t>(
+      nb::overload_cast<const std::vector<std::string> &, const std::uint32_t>(
         &xfr::methylome_client::get_levels<xfr::level_element_covered_t>,
-        py::const_),
+        nb::const_),
       R"doc(
 
     Make a query for methylation levels, along with information about
@@ -236,8 +235,8 @@ methylome_client_bindings(py::class_<transferase::methylome_client> &cls)
         likely between 100 and 200 to prevent server overload.
 
     )doc")
-    .def_readwrite("hostname", &xfr::methylome_client::hostname,
-                   R"doc(
+    .def_rw("hostname", &xfr::methylome_client::hostname,
+            R"doc(
 
     URL or IP address for the remote transferase server.  Like
     transferase.usc.edu. This must be a valid hostname. Don't specify
@@ -246,16 +245,16 @@ methylome_client_bindings(py::class_<transferase::methylome_client> &cls)
     your own server.
 
     )doc")
-    .def_readwrite("port", &xfr::methylome_client::port,
-                   R"doc(
+    .def_rw("port", &xfr::methylome_client::port,
+            R"doc(
 
     The server port number. You will find this along with the hostname of
     the transferase server. If it has been setup using ClientConfig, then
     you don't have to worry about it.
 
     )doc")
-    .def_readwrite("index_dir", &xfr::methylome_client::index_dir,
-                   R"doc(
+    .def_rw("index_dir", &xfr::methylome_client::index_dir,
+            R"doc(
 
     The directory where genome index files are stored. For human and
     mouse, this occupies roughly 200MB and for all available genomes
@@ -265,8 +264,8 @@ methylome_client_bindings(py::class_<transferase::methylome_client> &cls)
     started the data analysis with your own reference genome.
 
     )doc")
-    .def_readwrite("metadata_file", &xfr::methylome_client::metadata_file,
-                   R"doc(
+    .def_rw("metadata_file", &xfr::methylome_client::metadata_file,
+            R"doc(
 
     This file contains information about available methylomes,
     reference genomes, and biological sample information for available
