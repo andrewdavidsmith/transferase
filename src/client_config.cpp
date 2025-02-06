@@ -551,11 +551,11 @@ get_metadata_file(const remote_data_resources &remote,
 }
 
 auto
-client_config::run(const std::string &config_dir,
-                   const std::vector<std::string> &genomes,
-                   const std::string &system_config_dir,
-                   const download_policy_t download_policy,
-                   std::error_code &error) const noexcept -> void {
+client_config::configure(const std::string &config_dir,
+                         const std::vector<std::string> &genomes,
+                         const std::string &system_config_dir,
+                         const download_policy_t download_policy,
+                         std::error_code &error) const noexcept -> void {
   auto &lgr = logger::instance();
 
   const bool valid = validate(error);
@@ -600,7 +600,7 @@ client_config::run(const std::string &config_dir,
     }
   }
   if (!metadata_downloads_ok) {
-    error = client_config_error_code::download_error;
+    error = client_config_error_code::metadata_download_error;
     return;
   }
 
@@ -619,43 +619,43 @@ client_config::run(const std::string &config_dir,
     }
   }
   if (!genome_downloads_ok)
-    error = client_config_error_code::download_error;
+    error = client_config_error_code::genome_index_download_error;
 
   return;
 }
 
 auto
-client_config::run(const std::string &config_dir,
-                   const std::vector<std::string> &genomes,
-                   const download_policy_t download_policy,
-                   std::error_code &error) const noexcept -> void {
+client_config::configure(const std::string &config_dir,
+                         const std::vector<std::string> &genomes,
+                         const download_policy_t download_policy,
+                         std::error_code &error) const noexcept -> void {
   const auto system_config_dir = get_default_system_config_dir(error);
   if (error) {
     error = client_config_error_code::error_obtaining_sytem_config_dir;
     return;
   }
-  run(config_dir, genomes, system_config_dir, download_policy, error);
+  configure(config_dir, genomes, system_config_dir, download_policy, error);
 }
 
 auto
-client_config::run(const std::vector<std::string> &genomes,
-                   const download_policy_t download_policy,
-                   std::error_code &error) const noexcept -> void {
+client_config::configure(const std::vector<std::string> &genomes,
+                         const download_policy_t download_policy,
+                         std::error_code &error) const noexcept -> void {
   const auto config_dir = get_config_dir_default(error);
   if (error)
     return;
-  run(config_dir, genomes, download_policy, error);
+  configure(config_dir, genomes, download_policy, error);
 }
 
 auto
-client_config::run(const std::vector<std::string> &genomes,
-                   const std::string &system_config_dir,
-                   const download_policy_t download_policy,
-                   std::error_code &error) const noexcept -> void {
+client_config::configure(const std::vector<std::string> &genomes,
+                         const std::string &system_config_dir,
+                         const download_policy_t download_policy,
+                         std::error_code &error) const noexcept -> void {
   const auto config_dir = get_config_dir_default(error);
   if (error)
     return;
-  run(config_dir, genomes, system_config_dir, download_policy, error);
+  configure(config_dir, genomes, system_config_dir, download_policy, error);
 }
 
 /// Validate that the client config makes sense. This must be done

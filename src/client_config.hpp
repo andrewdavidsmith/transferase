@@ -158,106 +158,107 @@ struct client_config {
   }
 #endif
 
-  /// The 'run' function does the work of configuring the client,
-  /// using the values of the instance variables to know how where to
-  /// put various things.
+  /// These are different overloads of the `configure` function that
+  /// performs the step of making directories, writing configuration
+  /// files and doing downloads. In other words, 'configure' does the
+  /// work of configuring the client.
   ///
-  /// This work includes creating directories, downloading files and
-  /// writing files. The user's system is not changed until this point
-  /// in the client configuration process.
-  ///
-  /// There are several overloads.
+  /// Each overload of the `configure` function handles a different
+  /// combination of argument types, and the functions with fewer
+  /// arguments use deduced system defaults for the values that are
+  /// not specified. Each overload has a throwing and non-throwing
+  /// version. The no-throwing version uses an outparam error code and
+  /// does the work, while the throwing version simply converts the
+  /// error code into an exception. The throwing versions are for
+  /// APIs.
+
+  /// Set the client configuration specifying all possible values.
+  /// This overload accepts a system configuration directory, which is
+  /// essential in APIs for interpreted languages.
   auto
-  run(const std::string &config_dir, const std::vector<std::string> &genomes,
-      const download_policy_t download_policy,
-      std::error_code &error) const noexcept -> void;
+  configure(const std::string &config_dir,
+            const std::vector<std::string> &genomes,
+            const std::string &system_config_dir,
+            const download_policy_t download_policy,
+            std::error_code &error) const noexcept -> void;
 
 #ifndef TRANSFERASE_NOEXCEPT
-  /// Overload that throws system_error exceptions to serve in an API.
+  /// Set the client configuration specifying all possible values,
+  /// throwing system_error if any error is encountered.  This
+  /// overload accepts a system configuration directory, which is
+  /// essential in APIs for interpreted languages.
   auto
-  run(const std::string &config_dir, const std::vector<std::string> &genomes,
-      const download_policy_t download_policy) const -> void {
+  configure(const std::string &config_dir,
+            const std::vector<std::string> &genomes,
+            const std::string &system_config_dir,
+            const download_policy_t download_policy) const -> void {
     std::error_code error;
-    run(config_dir, genomes, download_policy, error);
+    configure(config_dir, genomes, system_config_dir, download_policy, error);
     if (error)
       throw std::system_error(error);
   }
 #endif
 
-  /// This overload can be used when the system configuration file
-  /// must be specified. See below.
+  /// Set the client configuration specifying all possible values
+  /// except the system configuration directory, which is deduced
+  /// using the path the current process' binary. This overload
+  /// accepts a user-specified configuration directory if the user
+  /// does not want to use the default location.
   auto
-  run(const std::string &config_dir, const std::vector<std::string> &genomes,
-      const std::string &system_config_dir,
-      const download_policy_t download_policy,
-      std::error_code &error) const noexcept -> void;
+  configure(const std::string &config_dir,
+            const std::vector<std::string> &genomes,
+            const download_policy_t download_policy,
+            std::error_code &error) const noexcept -> void;
 
 #ifndef TRANSFERASE_NOEXCEPT
-  /// Overload of run that throw system_error exceptions to serve in
-  /// an API, providing an interface when system configuration files
-  /// reside in a language-specific location.
-  ///
-  /// This is currently used for Python bindings, which themselves use
-  /// the Python interpreter's search path to locate the system config
-  /// dir. The Python bindings take care of finding that system config
-  /// file.
+  /// Set the client configuration specifying all possible values
+  /// except the system configuration directory, throwing system_error
+  /// if any error is encountered.  The configuration directory is
+  /// deduced using the path the current process' binary. This
+  /// overload accepts a user-specified configuration directory if the
+  /// user does not want to use the default location.
   auto
-  run(const std::string &config_dir, const std::vector<std::string> &genomes,
-      const std::string &system_config_dir,
-      const download_policy_t download_policy) const -> void {
+  configure(const std::string &config_dir,
+            const std::vector<std::string> &genomes,
+            const download_policy_t download_policy) const -> void {
     std::error_code error;
-    run(config_dir, genomes, system_config_dir, download_policy, error);
+    configure(config_dir, genomes, download_policy, error);
     if (error)
       throw std::system_error(error);
   }
 #endif
 
-  /// Overload that will guess the value of the configuration
-  /// directory and default any instance variables not already set.
+  /// Configure, accepting a system configuration directory for use in
+  /// APIs.
   auto
-  run(const std::vector<std::string> &genomes,
-      const download_policy_t download_policy,
-      std::error_code &error) const noexcept -> void;
+  configure(const std::vector<std::string> &genomes,
+            const std::string &system_config_dir,
+            const download_policy_t download_policy,
+            std::error_code &error) const noexcept -> void;
 
 #ifndef TRANSFERASE_NOEXCEPT
-  /// Throwing version of the overload that guesses the config dir.
   auto
-  run(const std::vector<std::string> &genomes,
-      const download_policy_t download_policy) const -> void {
+  configure(const std::vector<std::string> &genomes,
+            const std::string &system_config_dir,
+            const download_policy_t download_policy) const -> void {
     std::error_code error;
-    run(genomes, download_policy, error);
+    configure(genomes, system_config_dir, download_policy, error);
     if (error)
       throw std::system_error(error);
   }
 #endif
 
-  /// Does the work of configuring the client, accepting a directory
-  /// to use when locating the system configuration file, but uses a
-  /// default for the user's config directory.
-  ///
-  /// This is an overload that can be used when the system
-  /// configuration file cannot be expected to reside in a specific
-  /// directory relative to the binary associated with the current
-  /// process.
   auto
-  run(const std::vector<std::string> &genomes,
-      const std::string &system_config_dir,
-      const download_policy_t download_policy,
-      std::error_code &error) const noexcept -> void;
+  configure(const std::vector<std::string> &genomes,
+            const download_policy_t download_policy,
+            std::error_code &error) const noexcept -> void;
 
 #ifndef TRANSFERASE_NOEXCEPT
-  /// Throwing version of the overload that needs a system config
-  /// directory, but uses the default for the user's config directory.
-  ///
-  /// This is currently used for Python bindings, which themselves use
-  /// the Python interpreter's search path to locate the system config
-  /// dir.
   auto
-  run(const std::vector<std::string> &genomes,
-      const std::string &system_config_dir,
-      const download_policy_t download_policy) const -> void {
+  configure(const std::vector<std::string> &genomes,
+            const download_policy_t download_policy) const -> void {
     std::error_code error;
-    run(genomes, system_config_dir, download_policy, error);
+    configure(genomes, download_policy, error);
     if (error)
       throw std::system_error(error);
   }
@@ -377,13 +378,14 @@ get_default_system_config_dir(std::error_code &error) noexcept -> std::string;
 /// @brief Enum for error codes related to client configuration
 enum class client_config_error_code : std::uint8_t {
   ok = 0,
-  download_error = 1,
-  error_creating_directories = 2,
-  error_writing_config_file = 3,
-  error_identifying_remote_resources = 4,
-  error_identifying_transferase_server = 5,
-  invalid_client_config_information = 6,
-  error_obtaining_sytem_config_dir = 7,
+  metadata_download_error = 1,
+  genome_index_download_error = 2,
+  error_creating_directories = 3,
+  error_writing_config_file = 4,
+  error_identifying_remote_resources = 5,
+  error_identifying_transferase_server = 6,
+  invalid_client_config_information = 7,
+  error_obtaining_sytem_config_dir = 8,
 };
 
 template <>
@@ -397,13 +399,14 @@ struct client_config_error_category : std::error_category {
     using std::string_literals::operator""s;
     switch (code) {
     case 0: return "ok"s;
-    case 1: return "download error"s;
-    case 2: return "error creating directories"s;
-    case 3: return "error writing config file"s;
-    case 4: return "error identifying remote resources"s;
-    case 5: return "error identifying transferase server"s;
-    case 6: return "invalid client config information"s;
-    case 7: return "error obtaining system config dir"s;
+    case 1: return "metadata download error"s;
+    case 2: return "genome index download error"s;
+    case 3: return "error creating directories"s;
+    case 4: return "error writing config file"s;
+    case 5: return "error identifying remote resources"s;
+    case 6: return "error identifying transferase server"s;
+    case 7: return "invalid client config information"s;
+    case 8: return "error obtaining system config dir"s;
     }
     std::unreachable();
   }
