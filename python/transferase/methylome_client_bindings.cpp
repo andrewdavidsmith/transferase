@@ -32,6 +32,8 @@
 #include <methylome_client.hpp>
 
 #include <nanobind/nanobind.h>
+#include <nanobind/stl/string.h>
+#include <nanobind/stl/vector.h>
 
 #include <cstdint>
 #include <format>
