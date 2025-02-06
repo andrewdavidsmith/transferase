@@ -95,9 +95,6 @@ if(BUILD_PYTHON)
   )
   if (nanobind_ROOT)
     message(STATUS "Found nanobind on the system")
-    # Now try to find nanobind and import it into CMake; it should be
-    # here if we have nanobind_ROOT.
-    find_package(nanobind CONFIG)
   else()
     message(STATUS "Configuring to clone nanobind")
     # Didn't find nanobind so try to clone it
@@ -111,6 +108,10 @@ if(BUILD_PYTHON)
       -DCMAKE_BUILD_TYPE=Release
     )
   endif()
+  # Now try to import nanobind; if this step is not done here, then in
+  # python/CMakeLists.txt the
+  # nanobind_build_library(nanobind-static-abi3) will fail.
+  find_package(nanobind CONFIG)
 endif()
 
 # Boost components
