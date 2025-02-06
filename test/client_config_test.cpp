@@ -216,7 +216,7 @@ TEST_F(client_config_mock, run_no_genomes_success) {
   EXPECT_TRUE(validate_ok);
   EXPECT_FALSE(error);
 
-  cfg.run(config_dir_mock, mock_genomes, mock_download_policy, error);
+  cfg.configure(config_dir_mock, mock_genomes, mock_download_policy, error);
   EXPECT_FALSE(error) << error.message();
 
   const auto dir_exists = std::filesystem::is_directory(config_dir_mock, error);
