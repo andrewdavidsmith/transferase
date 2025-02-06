@@ -20,6 +20,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+nanobind_build_library(nanobind-static-abi3)
+
 file(GLOB cpp_files "*.cpp")
 list(FILTER cpp_files EXCLUDE REGEX "transferase_bindings.cpp")
 
@@ -34,13 +36,19 @@ foreach(cpp_file ${cpp_files})
     ${PROJECT_BINARY_DIR}
     ${PROJECT_SOURCE_DIR}/src
   )
-  # Below, link to the pybind11::module to get the headers; these
-  # won't be linked on their own
+  # Below, link to the nanobind module to get the headers; similar for
+  # boost. These headers might not be located otherwise
   target_link_libraries(${BASE_NAME} PRIVATE
-    pybind11::module
+    nanobind-static
     ${Boost_LIBRARIES}
   )
-  target_compile_options(${BASE_NAME} PRIVATE ${GLOBAL_COMPILE_OPTIONS})
+  set(GLOBAL_COMPILE_OPTIONS_FOR_NANOBIND ${GLOBAL_COMPILE_OPTIONS})
+  list(REMOVE_ITEM GLOBAL_COMPILE_OPTIONS_FOR_NANOBIND "-Wpedantic")
+  target_compile_options(
+    ${BASE_NAME}
+    PRIVATE
+    ${GLOBAL_COMPILE_OPTIONS_FOR_NANOBIND}
+  )
   list(APPEND LIBRARY_OBJECTS ${BASE_NAME})
 endforeach()
 
@@ -51,7 +59,11 @@ target_link_libraries(transferase_bindings PRIVATE ${LIBRARY_OBJECTS})
 # Make the package shared library by applying the bindings functions;
 # use the py_ prefix because otherwise there might be name clash with
 # the main 'transferase' target in a different directory.
-pybind11_add_module(py_${LIBRARY_NAME} MODULE transferase_bindings.cpp)
+nanobind_add_module(
+  py_${LIBRARY_NAME}
+  NB_STATIC STABLE_ABI LTO
+  transferase_bindings.cpp
+)
 # Make sure the compile job for the module can see the transferase
 # headers and also the config.h header in the binary dir
 target_include_directories(py_${LIBRARY_NAME} PRIVATE
@@ -67,11 +79,23 @@ target_include_directories(py_${LIBRARY_NAME} PRIVATE
 target_link_libraries(py_${LIBRARY_NAME} PRIVATE
   transferase_bindings
   transferase_system
-  pybind11::module
+  nanobind-static
   ZLIB::ZLIB
 )
-target_compile_options(py_${LIBRARY_NAME} PRIVATE ${GLOBAL_COMPILE_OPTIONS})
-target_link_options(py_${LIBRARY_NAME} PRIVATE ${GLOBAL_LINKER_OPTIONS})
+set(GLOBAL_COMPILE_OPTIONS_FOR_NANOBIND ${GLOBAL_COMPILE_OPTIONS})
+list(REMOVE_ITEM GLOBAL_COMPILE_OPTIONS_FOR_NANOBIND "-Wpedantic")
+target_compile_options(
+  py_${LIBRARY_NAME}
+  PRIVATE
+  ${GLOBAL_COMPILE_OPTIONS_FOR_NANOBIND}
+)
+set(GLOBAL_LINKER_OPTIONS_FOR_NANOBIND ${GLOBAL_LINKER_OPTIONS})
+list(APPEND GLOBAL_LINKER_OPTIONS_FOR_NANOBIND "-Wno-odr")
+target_link_options(
+  py_${LIBRARY_NAME}
+  PRIVATE
+  ${GLOBAL_LINKER_OPTIONS_FOR_NANOBIND}
+)
 
 set_target_properties(py_${LIBRARY_NAME}
   PROPERTIES
