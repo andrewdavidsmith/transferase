@@ -26,8 +26,7 @@
 #include <level_element.hpp>
 #include <methylome_directory.hpp>
 
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>  // IWYU pragma: keep
+#include <nanobind/nanobind.h>
 
 #include <cstdint>
 #include <string>
@@ -38,14 +37,14 @@ struct query_container;
 template <typename level_element_type> struct level_container;
 }  // namespace transferase
 
-namespace py = pybind11;
+namespace nb = nanobind;
 
 auto
-methylome_directory_bindings(py::class_<transferase::methylome_directory> &cls)
+methylome_directory_bindings(nb::class_<transferase::methylome_directory> &cls)
   -> void {
-  using namespace pybind11::literals;  // NOLINT
+  using namespace nanobind::literals;  // NOLINT
   cls
-    .def(py::init<const std::string &, const std::uint64_t>(), "directory"_a,
+    .def(nb::init<const std::string &, const std::uint64_t>(), "directory"_a,
          "index_hash"_a)
     .def("__repr__", &transferase::methylome_directory::tostring)
     .def("get_levels",
@@ -62,8 +61,8 @@ methylome_directory_bindings(py::class_<transferase::methylome_directory> &cls)
            return self.get_levels<transferase::level_element_covered_t>(
              methylome_names, query);
          })
-    .def_readwrite("directory", &transferase::methylome_directory::directory)
-    .def_readwrite("index_hash", &transferase::methylome_directory::index_hash)
+    .def_rw("directory", &transferase::methylome_directory::directory)
+    .def_rw("index_hash", &transferase::methylome_directory::index_hash)
     //
     ;
 }

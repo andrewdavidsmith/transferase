@@ -26,13 +26,12 @@
 #include <genome_index.hpp>
 #include <genomic_interval.hpp>  // IWYU pragma: keep
 
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>  // IWYU pragma: keep
+#include <nanobind/nanobind.h>
 
 #include <string>
 #include <vector>
 
-namespace py = pybind11;
+namespace nb = nanobind;
 
 namespace transferase {
 
@@ -68,9 +67,9 @@ genome_index_read(const std::string &dirname,
 };  // namespace transferase
 
 auto
-genome_index_bindings(py::class_<transferase::genome_index> &cls) -> void {
-  using namespace pybind11::literals;  // NOLINT
-  cls.def(py::init<>())
+genome_index_bindings(nb::class_<transferase::genome_index> &cls) -> void {
+  using namespace nanobind::literals;  // NOLINT
+  cls.def(nb::init<>())
     .def("is_consistent", &transferase::genome_index::is_consistent)
     .def("__hash__", &transferase::genome_index::get_hash)
     .def("__repr__", &transferase::genome_index::tostring)
@@ -78,9 +77,9 @@ genome_index_bindings(py::class_<transferase::genome_index> &cls) -> void {
                 "genome_name"_a)
     .def("write", &transferase::genome_index_write, "outdir"_a, "name"_a)
     .def("make_query", &transferase::genome_index::make_query,
-         py::arg("intervals").noconvert())
+         nb::arg("intervals").noconvert())
     .def_static("make_genome_index",
-                py::overload_cast<const std::string &>(
+                nb::overload_cast<const std::string &>(
                   &transferase::genome_index::make_genome_index),
                 "Create a genome index from a reference genome",
                 "genome_file"_a)

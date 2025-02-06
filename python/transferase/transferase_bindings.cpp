@@ -53,14 +53,15 @@ When in doubt, consult the module reference at the location listed above.
 #include <query_container.hpp>
 
 #include <moduleobject.h>
+#include <nanobind/nanobind.h>
+
 // ADS: the header below has functions to control what is
 // auto-generated in the python docs
-#include <pybind11/options.h>  // IWYU pragma: keep
-#include <pybind11/pybind11.h>
+// #include <nanobind/options.h>  // IWYU pragma: keep
 
 #include <string>
 
-namespace py = pybind11;
+namespace nb = nanobind;
 
 auto
 initialize_transferase() -> void {
@@ -68,14 +69,14 @@ initialize_transferase() -> void {
                                 transferase::log_level_t::error);
 }
 
-PYBIND11_MODULE(transferase, the_module) {
-  py::options options;
-  options.disable_function_signatures();
+NB_MODULE(transferase, the_module) {
+  // nb::options options;
+  // options.disable_function_signatures();
   the_module.doc() = warning_message;
 
   initialize_transferase();
 
-  auto LogLevel = py::enum_<transferase::log_level_t>(the_module, "LogLevel")
+  auto LogLevel = nb::enum_<transferase::log_level_t>(the_module, "LogLevel")
                     .value("debug", transferase::log_level_t::debug)
                     .value("info", transferase::log_level_t::info)
                     .value("warning", transferase::log_level_t::warning)
@@ -87,43 +88,43 @@ PYBIND11_MODULE(transferase, the_module) {
   });
 
   auto DownloadPolicy =
-    py::enum_<transferase::download_policy_t>(the_module, "DownloadPolicy")
+    nb::enum_<transferase::download_policy_t>(the_module, "DownloadPolicy")
       .value("none", transferase::download_policy_t::none)
       .value("all", transferase::download_policy_t::all)
       .value("missing", transferase::download_policy_t::missing)
       .value("update", transferase::download_policy_t::update);
 
-  auto ClientConfig = py::class_<transferase::client_config_python>(
+  auto ClientConfig = nb::class_<transferase::client_config_python>(
     the_module, "ClientConfig", "Class to help configuring transferase");
 
-  auto GenomicInterval = py::class_<transferase::genomic_interval>(
+  auto GenomicInterval = nb::class_<transferase::genomic_interval>(
     the_module, "GenomicInterval",
     "Representation of a genomic interval as chrom, start, stop (zero-based, "
     "half-open)");
 
-  auto GenomeIndex = py::class_<transferase::genome_index>(
+  auto GenomeIndex = nb::class_<transferase::genome_index>(
     the_module, "GenomeIndex", "An index of CpG sites in a genome");
 
-  auto Methylome = py::class_<transferase::methylome>(
+  auto Methylome = nb::class_<transferase::methylome>(
     the_module, "Methylome", "Representation of a methylome");
 
-  auto QueryContainer = py::class_<transferase::query_container>(
+  auto QueryContainer = nb::class_<transferase::query_container>(
     the_module, "QueryContainer", "A container for a methylome query");
 
   auto LevelContainer =
-    py::class_<transferase::level_container<transferase::level_element_t>>(
+    nb::class_<transferase::level_container<transferase::level_element_t>>(
       the_module, "LevelContainer", "A container for methylation levels");
 
-  auto LevelContainerCovered = py::class_<
+  auto LevelContainerCovered = nb::class_<
     transferase::level_container<transferase::level_element_covered_t>>(
     the_module, "LevelContainerCovered",
     "A container for methylation levels with information about covered sites");
 
-  auto MethylomeDirectory = py::class_<transferase::methylome_directory>(
+  auto MethylomeDirectory = nb::class_<transferase::methylome_directory>(
     the_module, "MethylomeDirectory",
     "Directory on local system containing methylomes");
 
-  auto MethylomeClient = py::class_<transferase::methylome_client>(
+  auto MethylomeClient = nb::class_<transferase::methylome_client>(
     the_module, "MethylomeClient",
     "Client to get data from a remote methylome server");
 

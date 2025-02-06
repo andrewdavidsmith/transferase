@@ -26,9 +26,8 @@
 #include <genome_index.hpp>
 #include <genome_index_metadata.hpp>
 
-#include <pybind11/operators.h>  // IWYU pragma: keep
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>  // IWYU pragma: keep
+#include <nanobind/nanobind.h>
+#include <nanobind/operators.h>  // IWYU pragma: keep
 
 #include <format>
 #include <genomic_interval.hpp>
@@ -37,7 +36,7 @@
 #include <string>
 #include <vector>
 
-namespace py = pybind11;
+namespace nb = nanobind;
 
 namespace transferase {
 
@@ -50,29 +49,29 @@ genomic_interval_read(const genome_index &index, const std::string &filename)
 }  // namespace transferase
 
 auto
-genomic_interval_bindings(pybind11::class_<transferase::genomic_interval> &cls)
+genomic_interval_bindings(nanobind::class_<transferase::genomic_interval> &cls)
   -> void {
-  using namespace pybind11::literals;  // NOLINT
-  cls.def(py::init<>())
-    .def_readwrite("ch_id", &transferase::genomic_interval::ch_id,
-                   "Numerical identifier for the chromosome")
-    .def_readwrite("start", &transferase::genomic_interval::start,
-                   "Start position of this interval in the chromosome")
-    .def_readwrite("stop", &transferase::genomic_interval::stop,
-                   "Stop position of this interval in the chromosome")
+  using namespace nanobind::literals;  // NOLINT
+  cls.def(nb::init<>())
+    .def_rw("ch_id", &transferase::genomic_interval::ch_id,
+            "Numerical identifier for the chromosome")
+    .def_rw("start", &transferase::genomic_interval::start,
+            "Start position of this interval in the chromosome")
+    .def_rw("stop", &transferase::genomic_interval::stop,
+            "Stop position of this interval in the chromosome")
     // cppcheck-suppress-begin duplicateExpression
-    .def(pybind11::self == pybind11::self)
-    .def(pybind11::self != pybind11::self)
-    .def(pybind11::self < pybind11::self)
-    .def(pybind11::self <= pybind11::self)
-    .def(pybind11::self > pybind11::self)
-    .def(pybind11::self >= pybind11::self)
+    .def(nanobind::self == nanobind::self)
+    .def(nanobind::self != nanobind::self)
+    .def(nanobind::self < nanobind::self)
+    .def(nanobind::self <= nanobind::self)
+    .def(nanobind::self > nanobind::self)
+    .def(nanobind::self >= nanobind::self)
     // cppcheck-suppress-end duplicateExpression
     .def(
       "__repr__",
       [](const transferase::genomic_interval &self) {
-        const py::tuple t = py::make_tuple(self.ch_id, self.start, self.stop);
-        return py::repr(t);
+        const nb::tuple t = nb::make_tuple(self.ch_id, self.start, self.stop);
+        return nb::repr(t);
       },
       R"doc(
 
@@ -88,7 +87,7 @@ genomic_interval_bindings(pybind11::class_<transferase::genomic_interval> &cls)
         if (self.ch_id >= n_chroms)
           throw std::out_of_range(std::format(
             "Index out of range: ch_id={}, n_chroms={}", self.ch_id, n_chroms));
-        return py::make_tuple(index.meta.chrom_order[self.ch_id], self.start,
+        return nb::make_tuple(index.meta.chrom_order[self.ch_id], self.start,
                               self.stop);
         // return std::format("{}\t{}\t{}", index.meta.chrom_order[self.ch_id],
         //                    self.start, self.stop);

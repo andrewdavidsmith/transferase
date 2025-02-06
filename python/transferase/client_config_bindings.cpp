@@ -29,20 +29,19 @@
 
 #include <client_config.hpp>  // IWYU pragma: keep
 
-#include <pybind11/operators.h>  // IWYU pragma: keep
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>  // IWYU pragma: keep
+#include <nanobind/nanobind.h>
+#include <nanobind/operators.h>  // IWYU pragma: keep
 
 #include <string>
 #include <system_error>
 #include <vector>
 
-namespace py = pybind11;
+namespace nb = nanobind;
 
 auto
-client_config_bindings(pybind11::class_<transferase::client_config_python> &cls)
+client_config_bindings(nanobind::class_<transferase::client_config_python> &cls)
   -> void {
-  using namespace pybind11::literals;  // NOLINT
+  using namespace nanobind::literals;  // NOLINT
   cls
     .def_static(
       "default",
@@ -97,29 +96,27 @@ client_config_bindings(pybind11::class_<transferase::client_config_python> &cls)
     )doc",
          "genomes"_a = std::vector<std::string>(),
          "download_policy"_a = transferase::download_policy_t::missing)
-    .def_readwrite("hostname", &transferase::client_config_python::hostname,
-                   R"doc(
+    .def_rw("hostname", &transferase::client_config_python::hostname,
+            R"doc(
 
     URL or IP address for the remote transferase server. You should
     only change this if there is a problem setting the server or if
     you have setup your own server.
 
     )doc")
-    .def_readwrite("port", &transferase::client_config_python::port,
-                   "Port for the remote transferase server.")
-    .def_readwrite("index_dir", &transferase::client_config_python::index_dir,
-                   "Directory to store genome indexes.")
-    .def_readwrite("metadata_file",
-                   &transferase::client_config_python::metadata_file,
-                   "Directory to put files that map MethBase2 accessions to "
-                   "biological samples.")
-    .def_readwrite("methylome_dir",
-                   &transferase::client_config_python::methylome_dir,
-                   "Directory to search for methylomes stored locally.")
-    .def_readwrite("log_file", &transferase::client_config_python::log_file,
-                   "Log information about transferase events in this file.")
-    .def_readwrite("log_level", &transferase::client_config_python::log_level,
-                   "How much to log {debug, info, warning, error, critical}.")
+    .def_rw("port", &transferase::client_config_python::port,
+            "Port for the remote transferase server.")
+    .def_rw("index_dir", &transferase::client_config_python::index_dir,
+            "Directory to store genome indexes.")
+    .def_rw("metadata_file", &transferase::client_config_python::metadata_file,
+            "Directory to put files that map MethBase2 accessions to "
+            "biological samples.")
+    .def_rw("methylome_dir", &transferase::client_config_python::methylome_dir,
+            "Directory to search for methylomes stored locally.")
+    .def_rw("log_file", &transferase::client_config_python::log_file,
+            "Log information about transferase events in this file.")
+    .def_rw("log_level", &transferase::client_config_python::log_level,
+            "How much to log {debug, info, warning, error, critical}.")
     .def("__repr__", &transferase::client_config_python::tostring,
          "Print the contents of a ClientConfig object.")
     .doc() = R"doc(
