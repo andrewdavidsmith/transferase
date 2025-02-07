@@ -133,6 +133,17 @@ include(FindCurses)  # This should be in the modules dir
 set(CURSES_NEED_NCURSES TRUE)
 find_package(Curses)
 if(CURSES_FOUND AND CURSES_HAVE_NCURSES_H)
+  # ADS: Currently the ncurses library on the build development needs
+  # to link with the GPM library; this is not optimal, but also not a
+  # priority now.
+  set(GPM_LIB_NAME gpm)
+  if (USE_STATIC_LIBS)
+    set(GPM_LIB_NAME libgpm.a)
+  endif()
+  find_library(GPM_LIB ${GPM_LIB_NAME})
+  message(STATUS "Found GPM library: ${GPM_LIB}")
+  list(APPEND CURSES_LIBRARIES ${GPM_LIB})
+
   ## ADS: above, the header used in the sources is <ncurses.h> and not
   ## <curses.h> or <ncurses/curses.h>
   add_compile_definitions(HAVE_NCURSES)
