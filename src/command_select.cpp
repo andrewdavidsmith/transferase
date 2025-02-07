@@ -585,7 +585,10 @@ command_select_main(int argc, char *argv[]) -> int {  // NOLINT
           throw std::runtime_error(std::format(
             "Error setting client configuration: {}", error.message()));
       }
-      const auto config = client_config::read(config_dir);
+      const auto config = client_config::read(config_dir, error);
+      if (error)
+        throw std::runtime_error(std::format("Error reading config dir {}: {}",
+                                             config_dir, error.message()));
       input_file = config.metadata_file;
     }
 
