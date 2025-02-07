@@ -25,9 +25,10 @@ static constexpr auto warning_message = R"(
 https://github.com/andrewdavidsmith/transferase
 
 The following documentation is automatically generated from the Python
-bindings files. It may be incomplete, incorrect or include features that
-are considered implementation detail and may vary between Python implementations.
-When in doubt, consult the module reference at the location listed above.
+bindings files. It may be incomplete, incorrect or include features
+that are considered implementation detail and may vary between Python
+implementations.  When in doubt, consult the module reference at the
+location listed above.
 )";
 
 #include "client_config_python.hpp"
@@ -96,8 +97,13 @@ NB_MODULE(transferase, the_module) {
       .value("missing", transferase::download_policy_t::missing)
       .value("update", transferase::download_policy_t::update);
 
-  auto ClientConfig = nb::class_<transferase::client_config_python>(
-    the_module, "ClientConfig", "Class to help configuring transferase");
+  /// ADS: leaving out of v0.4.0 bindings. This will probably be
+  /// removed because the functionality should be wrapped up in the
+  /// client itself, with the 'config' part just happening as
+  /// static/class functionality before instantiation.
+  //
+  // auto ClientConfig = nb::class_<transferase::client_config_python>(
+  //   the_module, "ClientConfig", "Class to help configuring transferase");
 
   auto GenomicInterval = nb::class_<transferase::genomic_interval>(
     the_module, "GenomicInterval",
@@ -122,15 +128,16 @@ NB_MODULE(transferase, the_module) {
     the_module, "LevelContainerCovered",
     "A container for methylation levels with information about covered sites");
 
-  auto MethylomeDirectory = nb::class_<transferase::methylome_directory>(
-    the_module, "MethylomeDirectory",
-    "Directory on local system containing methylomes");
+  /// ADS: leaving out of v0.4.0 bindings
+  // auto MethylomeDirectory = nb::class_<transferase::methylome_directory>(
+  // the_module, "MethylomeDirectory",
+  // "Directory on local system containing methylomes");
 
   auto MethylomeClient = nb::class_<transferase::methylome_client>(
     the_module, "MethylomeClient",
     "Client to get data from a remote methylome server");
 
-  client_config_bindings(ClientConfig);
+  // client_config_bindings(ClientConfig);
 
   genomic_interval_bindings(GenomicInterval);
   genome_index_bindings(GenomeIndex);
@@ -140,6 +147,7 @@ NB_MODULE(transferase, the_module) {
   level_container_bindings(LevelContainer);
   level_container_covered_bindings(LevelContainerCovered);
 
-  methylome_directory_bindings(MethylomeDirectory);
+  /// ADS: leaving out of v0.4.0 bindings
+  // methylome_directory_bindings(MethylomeDirectory);
   methylome_client_bindings(MethylomeClient);
 }
