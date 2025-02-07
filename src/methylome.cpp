@@ -39,6 +39,17 @@
 namespace transferase {
 
 [[nodiscard]] auto
+methylome::are_valid_names(const std::vector<std::string> &methylome_names,
+                           std::error_code &error) noexcept -> bool {
+  for (const auto &mn : methylome_names)
+    if (!is_valid_name(mn)) {
+      error = methylome_error_code::invalid_methylome_name;
+      return false;
+    }
+  return true;
+}
+
+[[nodiscard]] auto
 methylome::init_metadata(const genome_index &index) noexcept
   -> std::error_code {
   static constexpr auto is_compressed_init = false;
