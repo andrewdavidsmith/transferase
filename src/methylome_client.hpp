@@ -212,6 +212,8 @@ public:
       req_type = request_type_code::intervals_covered;
     const auto [_, index_hash] =
       get_genome_and_index_hash(methylome_names, error);
+    if (error)
+      return {};
     const auto req =
       request{req_type, index_hash, size(query), methylome_names};
     return get_levels_impl<lvl_elem_t>(req, query, error);
@@ -243,6 +245,8 @@ public:
       req_type = request_type_code::bins_covered;
     const auto [_, index_hash] =
       get_genome_and_index_hash(methylome_names, error);
+    if (error)
+      return {};
     const auto req = request{req_type, index_hash, bin_size, methylome_names};
     return get_levels_impl<lvl_elem_t>(req, error);
   }
