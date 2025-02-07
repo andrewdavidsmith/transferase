@@ -23,6 +23,8 @@
 
 #include "methylome_genome_map.hpp"
 
+#include "methylome.hpp"
+
 #include <boost/json.hpp>
 
 #include <algorithm>
@@ -42,12 +44,16 @@ namespace transferase {
 methylome_genome_map::get_genome(
   const std::vector<std::string> &methylome_names,
   std::error_code &error) const noexcept -> std::string {
+  [[maybe_unused]] const bool all_valid =
+    methylome::are_valid_names(methylome_names, error);
+  if (error)
+    return {};
   std::string genome;
   for (const auto &name : methylome_names) {
     const auto genome_itr = methylome_to_genome.find(name);
     if (genome_itr == std::cend(methylome_to_genome)) {
       // ERROR not found
-      error = std::make_error_code(std::errc::invalid_argument);
+      error = methylome_genome_map_error_code::methylome_not_found;
       return {};
     }
     if (!genome.empty() && genome != genome_itr->second) {

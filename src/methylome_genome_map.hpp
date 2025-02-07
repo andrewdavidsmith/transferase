@@ -68,6 +68,7 @@ enum class methylome_genome_map_error_code : std::uint8_t {
   ok = 0,
   error_reading_metadata_json_file = 1,
   error_parsing_metadata_json_file = 2,
+  methylome_not_found = 3,
 };
 
 template <>
@@ -83,6 +84,7 @@ struct methylome_genome_map_error_category : std::error_category {
     case 0: return "ok"s;
     case 1: return "error reading metadata json file"s;
     case 2: return "error parsing metadata json file"s;
+    case 3: return "methylome not found"s;
     }
     std::unreachable();
   }
