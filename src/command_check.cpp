@@ -81,7 +81,7 @@ command_check_main(int argc,
 
   std::string index_directory{};
   std::string genome_name{};
-  std::string methylome_directory{};
+  std::string methylome_dir{};
   transferase::log_level_t log_level{};
 
   namespace po = boost::program_options;
@@ -92,7 +92,7 @@ command_check_main(int argc,
     ("help,h", "print this message and exit")
     ("index-dir,x", po::value(&index_directory)->required(), "genome index directory")
     ("genome,g", po::value(&genome_name)->required(), "genome name")
-    ("methylome-dir,d", po::value(&methylome_directory)->required(),
+    ("methylome-dir,d", po::value(&methylome_dir)->required(),
      "directory containing methylomes")
     ("methylomes,m", po::value<std::vector<std::string>>()->multitoken()->required(),
      "methylome names")
@@ -134,7 +134,7 @@ command_check_main(int argc,
     // clang-format off
     {"Index directory", index_directory},
     {"Genome", genome_name},
-    {"Methylome directory", methylome_directory},
+    {"Methylome directory", methylome_dir},
     {"Methylomes", std::string(std::cbegin(joined), std::cend(joined))},
     // clang-format on
   };
@@ -156,7 +156,7 @@ command_check_main(int argc,
   for (const auto &methylome_name : methylomes) {
     std::error_code ec;
     const auto meth =
-      transferase::methylome::read(methylome_directory, methylome_name, ec);
+      transferase::methylome::read(methylome_dir, methylome_name, ec);
     if (ec) {
       lgr.error("Failed to read methylome {}: {}", methylome_name, ec);
       return EXIT_FAILURE;

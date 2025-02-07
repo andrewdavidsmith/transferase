@@ -40,10 +40,10 @@ struct methylome;
 
 struct methylome_set {
   explicit methylome_set(
-    const std::string &methylome_directory,
+    const std::string &methylome_dir,
     const std::uint32_t max_live_methylomes = default_max_live_methylomes) :
-    methylome_directory{methylome_directory},
-    max_live_methylomes{max_live_methylomes}, accessions{max_live_methylomes} {}
+    methylome_dir{methylome_dir}, max_live_methylomes{max_live_methylomes},
+    accessions{max_live_methylomes} {}
 
   // prevent copy; move disallowed because of std::mutex member
   // clang-format off
@@ -60,7 +60,7 @@ struct methylome_set {
   static constexpr std::uint32_t default_max_live_methylomes{128};
 
   std::mutex mtx;
-  std::string methylome_directory;
+  std::string methylome_dir;
   std::uint32_t max_live_methylomes{};
 
   lru_tracker<std::string> accessions;

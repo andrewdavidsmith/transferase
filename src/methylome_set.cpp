@@ -57,12 +57,12 @@ methylome_set::get_methylome(const std::string &accession, std::error_code &ec)
 
   // ADS: we need to load a methylome; make sure the file exists;
   // probably should check the directory in batch
-  if (!methylome::files_exist(methylome_directory, accession)) {
+  if (!methylome::files_exist(methylome_dir, accession)) {
     ec = methylome_error_code::methylome_not_found;
     return nullptr;
   }
 
-  auto loaded_meth = methylome::read(methylome_directory, accession, ec);
+  auto loaded_meth = methylome::read(methylome_dir, accession, ec);
   if (ec) {
     // ADS: need to ensure the error code is sensibly propagated
     return nullptr;
