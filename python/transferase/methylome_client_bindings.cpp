@@ -159,7 +159,8 @@ methylome_client_bindings(nb::class_<transferase::methylome_client> &cls)
         must be valid for the genome associated with the given
         methylome names.
 
-    )doc")
+    )doc",
+      "methylome_names"_a, "query"_a)
     .def(
       "get_levels",
       nb::overload_cast<const std::vector<std::string> &, const std::uint32_t>(
@@ -183,7 +184,8 @@ methylome_client_bindings(nb::class_<transferase::methylome_client> &cls)
         intervals to request levels for. There is a minimum size,
         likely between 100 and 200 to prevent server overload.
 
-    )doc")
+    )doc",
+      "methylome_names"_a, "bin_size"_a)
     .def("get_levels_covered",
          nb::overload_cast<const std::vector<std::string> &,
                            const xfr::query_container &>(
@@ -210,7 +212,8 @@ methylome_client_bindings(nb::class_<transferase::methylome_client> &cls)
         must be valid for the genome associated with the given
         methylome names.
 
-    )doc")
+    )doc",
+         "methylome_names"_a, "query"_a)
     .def(
       "get_levels_covered",
       nb::overload_cast<const std::vector<std::string> &, const std::uint32_t>(
@@ -236,7 +239,8 @@ methylome_client_bindings(nb::class_<transferase::methylome_client> &cls)
         intervals to request levels for. There is a minimum size,
         likely between 100 and 200 to prevent server overload.
 
-    )doc")
+    )doc",
+      "methylome_names"_a, "bin_size"_a)
     .def_rw("hostname", &xfr::methylome_client::hostname,
             R"doc(
 
