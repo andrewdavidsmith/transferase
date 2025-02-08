@@ -80,8 +80,8 @@ genome_index = GenomeIndex.read(client.index_dir, "hg38")
 We will now read genomic intervals. If you have a BED format file for
 hg38, for example ~100k intervals (you can do up to over 1M, but it
 will be slower), you can use it. Otherwise you can find the
-'intervals.bed.gz' in the docs directory of the repo, unpack it and
-put it in your working directory.
+`intervals.bed.gz` in the docs directory of the repo (should be where
+you found this file), unpack it and put it in your working directory.
 
 ```python
 from transferase import GenomicInterval
