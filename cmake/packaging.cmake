@@ -123,7 +123,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
 endif()
 
 # For Source (only package source from a clean clone)
-set(CPACK_SOURCE_IGNORE_FILES build .git .github)
+set(CPACK_SOURCE_IGNORE_FILES /build/ /.git/ /.github/ /.gitignore)
 set(CPACK_SOURCE_GENERATOR "TGZ")
 
 include(CPack)

@@ -140,7 +140,7 @@ if(CURSES_FOUND AND CURSES_HAVE_NCURSES_H)
   if (USE_STATIC_LIBS)
     set(GPM_LIB_NAME libgpm.a)
   endif()
-  find_library(GPM_LIB ${GPM_LIB_NAME})
+  find_library(GPM_LIB ${GPM_LIB_NAME} NO_CACHE)
   if (GPM_LIB STREQUAL GPM_LIB-NOTFOUND)
     message(STATUS "Failed to find GPM lib: ${GPM_LIB_NAME}")
   else()
@@ -148,13 +148,12 @@ if(CURSES_FOUND AND CURSES_HAVE_NCURSES_H)
       "Found GPM library: ${GPM_LIB_NAME}; check static vs. shared linkage"
     )
     list(APPEND CURSES_LIBRARIES ${GPM_LIB})
-
-    ## ADS: above, the header used in the sources is <ncurses.h> and not
-    ## <curses.h> or <ncurses/curses.h>
-    add_compile_definitions(HAVE_NCURSES)
-    message(STATUS "Found ncurses header: ${CURSES_HAVE_NCURSES_H}")
-    message(STATUS "Found ncurses libraries: ${CURSES_LIBRARIES}")
   endif()
+  ## ADS: above, the header used in the sources is <ncurses.h> and not
+  ## <curses.h> or <ncurses/curses.h>
+  add_compile_definitions(HAVE_NCURSES)
+  message(STATUS "Found ncurses header: ${CURSES_HAVE_NCURSES_H}")
+  message(STATUS "Found ncurses libraries: ${CURSES_LIBRARIES}")
 else()
   message(STATUS "NCurses not found: 'select' command will not be built")
 endif()
