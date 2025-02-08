@@ -18,13 +18,13 @@ If you are on a reasonably recent Linux (i.e., no older than 10
 yeads), then you can install the binary distribution. First
 download it like this:
 ```console
-wget https://github.com/andrewdavidsmith/transferase/releases/download/v0.3.0/transferase-0.3.0-Linux.sh
+wget https://github.com/andrewdavidsmith/transferase/releases/download/v0.4.0/transferase-0.4.0-Linux.sh
 ```
 
 Then run the downloaded installer (likely you want to first install it
 beneath your home dir):
 ```console
-sh transferase-0.3.0-Linux.sh --prefix=${PREFIX}
+sh transferase-0.4.0-Linux.sh --prefix=${PREFIX}
 ```
 
 This will prompt you to accept the license, and then it will install
@@ -32,19 +32,19 @@ the transferase binaries in `${PREFIX}/bin`, along with some config files
 in `${PREFIX}/share`. If you want to install it system-wide, and have
 the admin privs, you can do:
 ```console
-sh transferase-0.3.0-Linux.sh --prefix=/usr/local
+sh transferase-0.4.0-Linux.sh --prefix=/usr/local
 ```
 
 If you are on Debian or Ubuntu, and have admin privileges, you can use
 the Debian package and then transferase will be tracked in the package
 management system.  Get the file like this:
 ```console
-wget https://github.com/andrewdavidsmith/transferase/releases/download/v0.3.0/transferase-0.3.0-Linux.deb
+wget https://github.com/andrewdavidsmith/transferase/releases/download/v0.4.0/transferase-0.4.0-Linux.deb
 ```
 
 And then install it like this:
 ```console
-sudo dpkg -i ./transferase-0.3.0-Linux.deb
+sudo dpkg -i ./transferase-0.4.0-Linux.deb
 ```
 
 ### Building the source
@@ -67,8 +67,8 @@ paths accordingly.
 Since transferase uses CMake to generate the build system, there are
 multiple ways to do it, but I like this:
 ```shell
-tar -xf transferase-0.3.0-Source.tar.gz
-cd transferase-0.3.0-Source
+tar -xf transferase-0.4.0-Source.tar.gz
+cd transferase-0.4.0-Source
 cmake -B build -DCMAKE_BUILD_TYPE=Release   # for a faster xfr
 cmake --build build -j64      # i.e., if you have 64 cores
 cmake --install build --prefix=${HOME}  # or wherever
