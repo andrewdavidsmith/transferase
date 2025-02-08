@@ -55,7 +55,11 @@ configure_file(${CMAKE_SOURCE_DIR}/data/transferase_data.json
 if(PACKAGE_PYTHON)
 
   # List of Python packages needed to make the wheel
-  set(needed_for_packaging wheel auditwheel hatch)
+  set(needed_for_packaging wheel hatch)
+  if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    # On Linux use auditwheel to get the tags postbuild
+    list(APPEND needed_for_packaging auditwheel)
+  endif()
 
   # Make sure the required Python packages are available; using
   # python3 below because that's available more places than python.
@@ -111,7 +115,7 @@ if(PACKAGE_PYTHON)
   )
   message(STATUS "Platform version tag: ${PYTHON_VERSION_TAG}")
   message(STATUS "Python ABI tag: ${PYTHON_ABI_TAG}")
-  message(STATUS "Python platform tag: deterined by auditwheel post-build")
+  message(STATUS "Python platform tag: deterined post-build")
 
   # The initial wheel filename is determined by the entry in the
   # custom hatch hook that can be found following pyproject.toml
