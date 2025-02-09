@@ -27,6 +27,8 @@
 #include <cassert>
 #include <cstddef>
 #include <format>
+#include <initializer_list>  // for std::begin
+#include <iterator>          // for std::cend, std::size
 #include <list>
 #include <string>
 #include <unordered_map>

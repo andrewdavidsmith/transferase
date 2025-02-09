@@ -37,10 +37,10 @@ location listed above.
 #include "level_container_bindings.hpp"
 #include "methylome_bindings.hpp"
 #include "methylome_client_bindings.hpp"
-#include "methylome_directory_bindings.hpp"
 #include "query_container_bindings.hpp"
 
 #include <client_config.hpp>  // IWYU pragma: keep
+#include <download_policy.hpp>
 #include <genome_index.hpp>
 #include <genomic_interval.hpp>
 #include <level_container.hpp>
@@ -61,6 +61,8 @@ location listed above.
 // #include <nanobind/options.h>  // IWYU pragma: keep
 
 #include <string>
+#include <type_traits>  // for std::is_lvalue_reference_v
+#include <utility>      // for std::move
 
 namespace nb = nanobind;
 

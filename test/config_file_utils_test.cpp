@@ -30,12 +30,14 @@
 #include <filesystem>
 #include <format>
 #include <fstream>
+#include <iterator>
 #include <map>
 #include <ranges>
 #include <sstream>
 #include <string>
 #include <string_view>
 #include <system_error>
+#include <utility>  // for std::pair
 
 using namespace transferase;  // NOLINT
 

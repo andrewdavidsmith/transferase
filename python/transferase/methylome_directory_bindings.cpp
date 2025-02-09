@@ -26,12 +26,15 @@
 #include <level_element.hpp>
 #include <methylome_directory.hpp>
 
+#include <listobject.h>
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/vector.h>
 
 #include <cstdint>
 #include <string>
+#include <type_traits>  // for std::is_lvalue_reference_v, std::...
+#include <utility>      // for std::declval
 #include <vector>
 
 namespace transferase {
