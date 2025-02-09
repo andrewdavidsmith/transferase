@@ -27,11 +27,11 @@
 #include <nanobind/nanobind.h>
 
 namespace transferase {
-class methylome_client;
+class methylome_client_remote;
 }  // namespace transferase
 
 auto
-methylome_client_bindings(nanobind::class_<transferase::methylome_client> &cls)
-  -> void;
+methylome_client_bindings(
+  nanobind::class_<transferase::methylome_client_remote> &cls) -> void;
 
 #endif  // PYTHON_TRANSFERASE_METHYLOME_CLIENT_BINDINGS_HPP_
