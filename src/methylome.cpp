@@ -41,11 +41,10 @@ namespace transferase {
 [[nodiscard]] auto
 methylome::are_valid_names(const std::vector<std::string> &methylome_names,
                            std::error_code &error) noexcept -> bool {
-  for (const auto &mn : methylome_names)
-    if (!is_valid_name(mn)) {
-      error = methylome_error_code::invalid_methylome_name;
-      return false;
-    }
+  if (!std::ranges::all_of(methylome_names, &is_valid_name)) {
+    error = methylome_error_code::invalid_methylome_name;
+    return false;
+  }
   return true;
 }
 

@@ -26,22 +26,17 @@
 
 // ADS: Not sure why logger is needed below, but it might be that the
 // full logger needs to be seen for 'mp11' and 'describe'
+
 #include "logger.hpp"  // IWYU pragma: keep
 
 #include <boost/describe.hpp>
 
-#include <array>  // for std::array
 #include <cstdint>
-#include <format>  // for std::vector??
-#include <istream>
-#include <ranges>
 #include <string>
-#include <string_view>
 #include <system_error>
-#include <thread>       // for std::formatter??
 #include <type_traits>  // for std::true_type
 #include <utility>      // for std::to_underlying, std::unreachable
-#include <vector>       // IWYU pragma: keep
+#include <vector>
 
 namespace transferase {
 

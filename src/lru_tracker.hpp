@@ -57,7 +57,7 @@ public:
   [[nodiscard]] auto
   string() const noexcept -> std::string {
     std::string r;
-    for (const auto elem : the_list) {
+    for (const auto &elem : the_list) {
       const auto itr = the_map.find(elem);
       const auto addr = reinterpret_cast<std::size_t>(&(*itr));  // NOLINT
       r += std::format("{}\t{}\n", elem, addr);

@@ -25,7 +25,6 @@
 #define SRC_METHYLOME_SET_HPP_
 
 #include "lru_tracker.hpp"
-#include "ring_buffer.hpp"
 
 #include <cstdint>  // std::uint32_t
 #include <memory>   // std::shared_ptr, std::swap
