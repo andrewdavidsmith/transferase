@@ -27,7 +27,7 @@
 #include "config_file_utils.hpp"
 #include "genome_index.hpp"
 #include "genome_index_set.hpp"
-#include "methylome_genome_map.hpp"
+#include "transferase_metadata.hpp"
 #include "utilities.hpp"
 
 #include <boost/json.hpp>
