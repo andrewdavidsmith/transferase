@@ -64,12 +64,12 @@ TEST_F(methylome_set_mock, get_methylome_existing_accession) {
   EXPECT_EQ(std::size(methylome_set_ptr->accession_to_methylome), 1);
 }
 
-TEST_F(methylome_set_mock, get_methylome_invalid_accession) {
+TEST_F(methylome_set_mock, get_methylome_invalid_methylome_name) {
   std::error_code ec;
   const auto meth_ptr =
     methylome_set_ptr->get_methylome("invalid.accession", ec);
   EXPECT_EQ(meth_ptr, nullptr);
-  EXPECT_EQ(ec, methylome_error_code::invalid_accession);
+  EXPECT_EQ(ec, methylome_error_code::invalid_methylome_name);
 }
 
 TEST_F(methylome_set_mock, methylome_file_not_found) {
