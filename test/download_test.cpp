@@ -92,17 +92,23 @@ TEST(download_test, receive_download_timeout) {
 }
 
 TEST(download_test, download_non_existent_file) {
+  const std::chrono::milliseconds connect_timeout{3'000};   // 2s
+  const std::chrono::milliseconds download_timeout{3'000};  // 3s
   // ADS: note the prefix slash below
   const std::filesystem::path target{generate_temp_filename("/file", "txt")};
   // ADS: need to make sure this will be unique; got caught with an
   // pre-existing filename
   const std::filesystem::path outdir{"/tmp"};
+  // clang-format off
   const download_request dr{
     "example.com",  // host
     "80",           // port
     target,
     outdir,
+    connect_timeout,
+    download_timeout,
   };
+  // clang-format on
   const auto expected_outfile = outdir / target.filename();
 
   const auto [headers, ec] = download(dr);  // do the download
