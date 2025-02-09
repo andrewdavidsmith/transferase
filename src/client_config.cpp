@@ -22,6 +22,7 @@
  */
 
 #include "client_config.hpp"
+#include "config_file_utils.hpp"
 #include "download.hpp"
 #include "find_path_to_binary.hpp"
 #include "genome_index_data.hpp"
@@ -127,12 +128,13 @@ namespace transferase {
 /// Locate the system confuration directory based on the path to the binary for
 /// the currently running process.
 [[nodiscard]] auto
-get_default_system_config_dir(std::error_code &error) noexcept -> std::string {
-  static const auto exe_path = find_path_to_binary();
+get_default_sys_config_dir(std::error_code &error) noexcept -> std::string {
+  namespace fs = std::filesystem;
   auto &lgr = logger::instance();
+  static const auto exe_path = find_path_to_binary();
   const auto exe_dir_parent =
-    std::filesystem::canonical(exe_path).parent_path().parent_path().string();
-  const bool is_dir = std::filesystem::is_directory(exe_dir_parent, error);
+    fs::canonical(exe_path).parent_path().parent_path().string();
+  const bool is_dir = fs::is_directory(exe_dir_parent, error);
   if (error) {
     lgr.debug("Error: {} ({})", error, exe_dir_parent);
     return {};
@@ -144,13 +146,11 @@ get_default_system_config_dir(std::error_code &error) noexcept -> std::string {
   }
   // ADS: DATADIR comes from config.h which comes from config.h.in and
   // is set by cmake
-  const auto data_part = std::filesystem::path{DATADIR};
-  const auto data_dir = exe_dir_parent / data_part / std::string(PROJECT_NAME);
-  return data_dir;
+  return exe_dir_parent / fs::path{DATADIR} / std::string(PROJECT_NAME);
 }
 
 [[nodiscard]] auto
-client_config::get_config_dir_default(std::error_code &ec) -> std::string {
+client_config::get_default_config_dir(std::error_code &ec) -> std::string {
   auto env_home = std::getenv("HOME");
   if (!env_home) {
     ec = std::make_error_code(std::errc::not_a_directory);
@@ -167,32 +167,32 @@ client_config::get_config_dir_default(std::error_code &ec) -> std::string {
 }
 
 [[nodiscard]] auto
-client_config::get_dir_default_impl(const std::string &dirname,
-                                    std::error_code &ec) -> std::string {
-  const auto config_dir_local = get_config_dir_default(ec);
-  if (ec)
-    return {};
-  return check_and_return_directory(config_dir_local, dirname, ec);
-}
-
-[[nodiscard]] auto
-client_config::get_index_dir_default(std::error_code &error) -> std::string {
+client_config::get_default_index_dir(std::error_code &error) -> std::string {
   // ADS: need to replace this with functions that take actual config
   // dir, since the config file in that dir might point to a different
   // location for the index dir.
-  const auto config_dir = get_config_dir_default(error);
+  const auto config_dir = get_default_config_dir(error);
   if (error)
     return {};
   return check_and_return_directory(config_dir, index_dirname_default, error);
 }
 
-[[nodiscard]] auto
-client_config::get_file_default_impl(const std::string &filename,
-                                     std::error_code &ec) -> std::string {
-  const auto config_dir_local = get_config_dir_default(ec);
-  if (ec)
+[[nodiscard]] inline auto
+get_dir_default_impl(const std::string &dirname,
+                     std::error_code &error) -> std::string {
+  const auto config_dir_local = client_config::get_default_config_dir(error);
+  if (error)
     return {};
-  return check_and_return_file(config_dir_local, filename, ec);
+  return check_and_return_directory(config_dir_local, dirname, error);
+}
+
+[[nodiscard]] inline auto
+get_file_default_impl(const std::string &filename,
+                      std::error_code &error) -> std::string {
+  const auto config_dir_local = client_config::get_default_config_dir(error);
+  if (error)
+    return {};
+  return check_and_return_file(config_dir_local, filename, error);
 }
 
 [[nodiscard]] auto
@@ -203,211 +203,180 @@ client_config::get_config_file(const std::string &config_dir,
 }
 
 auto
-client_config::set_defaults_system_config(
-  const std::string &config_dir, const std::string &system_config_dir,
-  std::error_code &error) noexcept -> void {
+client_config::set_defaults(std::string config_dir,
+                            const std::string &sys_config_dir,
+                            std::error_code &error) noexcept -> void {
+  namespace fs = std::filesystem;
+  if (config_dir.empty())
+    config_dir = get_default_config_dir(error);
+
   const auto [default_hostname, default_port] =
-    transferase::get_transferase_server_info(system_config_dir, error);
+    transferase::get_transferase_server_info(sys_config_dir, error);
   if (error)
     return;
 
   hostname = default_hostname;
   port = default_port;
 
-  {
-    const auto dirname =
-      (std::filesystem::path{config_dir} / index_dirname_default).string();
-    index_dir = get_dir_default_impl(dirname, error);
-    if (error)
-      return;
-  }
-
-  {
-    const auto filename =
-      (std::filesystem::path{config_dir} / metadata_filename_default).string();
-    metadata_file = get_file_default_impl(filename, error);
-    if (error)
-      return;
-  }
-}
-
-auto
-client_config::set_defaults_system_config(const std::string &system_config_dir,
-                                          std::error_code &error) noexcept
-  -> void {
-  const std::string config_dir = get_config_dir_default(error);
+  const auto dirname = (fs::path{config_dir} / index_dirname_default).string();
+  index_dir = get_dir_default_impl(dirname, error);
   if (error)
     return;
-  set_defaults_system_config(config_dir, system_config_dir, error);
+
+  const auto filename =
+    (fs::path{config_dir} / metadata_filename_default).string();
+  metadata_file = get_file_default_impl(filename, error);
+  if (error)
+    return;
 }
 
 auto
-client_config::set_defaults(const std::string &config_dir,
+client_config::set_defaults(std::string config_dir,
                             std::error_code &error) noexcept -> void {
-  const std::string system_config_dir = get_default_system_config_dir(error);
+  if (config_dir.empty()) {
+    config_dir = get_default_config_dir(error);
+    if (error)
+      return;
+  }
+  const std::string sys_config_dir = get_default_sys_config_dir(error);
   if (error)
     return;
-  set_defaults_system_config(config_dir, system_config_dir, error);
+  set_defaults(config_dir, sys_config_dir, error);
 }
 
+/// Create all the directories involved in the client config, if they
+/// do not already exist. If directories exist as files, set the error
+/// code.
 auto
-client_config::set_defaults(std::error_code &error) noexcept -> void {
-  const std::string config_dir = get_config_dir_default(error);
+client_config::make_directories(const std::string &config_dir_arg,
+                                std::error_code &error) const noexcept -> void {
+  namespace fs = std::filesystem;
+  assert(!config_dir_arg.empty());
+
+  const std::string config_dir = fs::weakly_canonical(config_dir_arg, error);
   if (error)
     return;
-  set_defaults(config_dir, error);
-}
-
-/// Create all the directories involved in the client config, but if
-/// filesystem entires already exist for those directory names,
-/// don't do anything. If they happen to already exist but are files
-/// and not directories, it will result in an error later.
-[[nodiscard]] auto
-client_config::make_directories(std::string config_dir) const
-  -> std::error_code {
-  std::error_code ec;
-
-  config_dir = std::filesystem::absolute(config_dir, ec);
-  if (ec)
-    return ec;
-  config_dir = std::filesystem::weakly_canonical(config_dir, ec);
-  if (ec)
-    return ec;
 
   assert(!config_dir.empty());
 
-  const bool dirs_ok = create_dirs_if_needed(config_dir, ec);
-  if (ec)
-    return ec;
-  if (!dirs_ok)
-    return std::make_error_code(std::errc::not_a_directory);
+  const bool dirs_ok = create_dirs_if_needed(config_dir, error);
+  if (error)
+    return;
+  if (!dirs_ok) {
+    error = std::make_error_code(std::errc::not_a_directory);
+    return;
+  }
 
-  const auto config_file = get_config_file(config_dir, ec);
-  if (ec)
-    return ec;
+  const auto config_file = get_config_file(config_dir, error);
+  if (error)
+    return;
 
   assert(!config_file.empty());
 
-  const auto config_file_clean = clean_path(config_file, ec);
-  if (ec)
-    return ec;
+  const auto config_file_clean = clean_path(config_file, error);
+  if (error)
+    return;
 
   if (!metadata_file.empty()) {
-    const auto metadata_file_clean = clean_path(metadata_file, ec);
-    if (ec)
-      return ec;
+    const auto metadata_file_clean = clean_path(metadata_file, error);
+    if (error)
+      return;
     const auto metadata_file_dir =
-      std::filesystem::path(metadata_file_clean).parent_path().string();
-    const bool dirs_ok = create_dirs_if_needed(metadata_file_dir, ec);
-    if (ec)
-      return ec;
-    if (!dirs_ok)
-      return std::make_error_code(std::errc::not_a_directory);
+      fs::path(metadata_file_clean).parent_path().string();
+    const bool dirs_ok = create_dirs_if_needed(metadata_file_dir, error);
+    if (error)
+      return;
+    if (!dirs_ok) {
+      error = std::make_error_code(std::errc::not_a_directory);
+      return;
+    }
   }
 
   if (!index_dir.empty()) {
-    const auto index_dir_clean = clean_path(index_dir, ec);
-    if (ec)
-      return ec;
-    const bool dirs_ok = create_dirs_if_needed(index_dir_clean, ec);
-    if (ec)
-      return ec;
-    if (!dirs_ok)
-      return std::make_error_code(std::errc::not_a_directory);
+    const auto index_dir_clean = clean_path(index_dir, error);
+    if (error)
+      return;
+    const bool dirs_ok = create_dirs_if_needed(index_dir_clean, error);
+    if (error)
+      return;
+    if (!dirs_ok) {
+      error = std::make_error_code(std::errc::not_a_directory);
+      return;
+    }
   }
 
   if (!log_file.empty()) {
-    const auto log_file_clean = clean_path(log_file, ec);
-    if (ec)
-      return ec;
-    const auto log_file_dir =
-      std::filesystem::path(log_file_clean).parent_path().string();
-    const bool dirs_ok = create_dirs_if_needed(log_file_dir, ec);
-    if (ec)
-      return ec;
-    if (!dirs_ok)
-      return std::make_error_code(std::errc::not_a_directory);
+    const auto log_file_clean = clean_path(log_file, error);
+    if (error)
+      return;
+    const auto log_file_dir = fs::path(log_file_clean).parent_path().string();
+    const bool dirs_ok = create_dirs_if_needed(log_file_dir, error);
+    if (error)
+      return;
+    if (!dirs_ok) {
+      error = std::make_error_code(std::errc::not_a_directory);
+      return;
+    }
   }
-
-  return {};
 }
 
 [[nodiscard]] auto
-client_config::read(const std::string &config_dir,
+client_config::read(std::string config_dir,
                     std::error_code &error) noexcept -> client_config {
+  // If config dir is empty, get the default
+  if (config_dir.empty()) {
+    config_dir = get_default_config_dir(error);
+    if (error)
+      return {};
+  }
+  // Get the config filename
   const auto config_file = get_config_file(config_dir, error);
   if (error)
     return {};
-
-  const auto key_val = parse_config_file(config_file, error);
+  client_config config;
+  parse_config_file(config, config_file, error);
   if (error)
     return {};
-
-  client_config c;
-  error = assign_members(key_val, c);
-  if (error)
-    return {};
-
-  return c;
-}
-
-[[nodiscard]] auto
-client_config::read(std::error_code &error) noexcept -> client_config {
-  const auto config_dir = get_config_dir_default(error);
-  if (error)
-    // error from get_config_dir_default
-    return {};
-  return read(config_dir, error);
-}
-
-[[nodiscard]] inline auto
-format_as_client_config(const auto &t) -> std::string {
-  using T = std::remove_cvref_t<decltype(t)>;
-  using members =
-    boost::describe::describe_members<T, boost::describe::mod_any_access>;
-  std::string r;
-  boost::mp11::mp_for_each<members>([&](const auto &member) {
-    std::string name(member.name);
-    std::ranges::replace(name, '_', '-');
-    const auto value = std::format("{}", t.*member.pointer);
-    if (!value.empty())
-      r += std::format("{} = {}\n", name, value);
-    else
-      r += std::format("# {} =\n", name);
-  });
-  return r;
+  return config;
 }
 
 auto
-client_config::write(const std::string &config_dir,
-                     std::error_code &error) const noexcept -> void {
-  assert(!config_dir.empty());
+client_config::save(std::string config_dir,
+                    std::error_code &error) const noexcept -> void {
+  if (config_dir.empty()) {
+    config_dir = get_default_config_dir(error);
+    if (error)
+      return;
+  }
   const auto config_file = get_config_file(config_dir, error);
   if (error)
     return;
 
-  const auto serialized = format_as_client_config(*this);
-  const auto serialized_size =
-    static_cast<std::streamsize>(std::size(serialized));
-
-  std::ofstream out(config_file);
-  if (!out) {
-    error = std::make_error_code(std::errc(errno));
+  const bool file_exists = std::filesystem::exists(config_file, error);
+  if (error)
     return;
-  }
 
-  out.write(serialized.data(), serialized_size);
-  if (!out) {
+  /// ADS: need to extract this pattern of updates intead of writes.
+  client_config tmp = *this;
+  if (file_exists) {
+    // load current config values into a separate object
+    tmp = read(config_dir, error);
+    if (error)
+      return;
+    using Md = boost::describe::describe_members<client_config,
+                                                 boost::describe::mod_public>;
+    // All non-empty string values from the current object
+    boost::mp11::mp_for_each<Md>([&](const auto &D) {
+      if constexpr (std::is_same_v<decltype(D), std::string>)
+        if (!((*this).*D.pointer.empty()))
+          tmp.*D.pointer = (*this).*D.pointer;
+    });
+    // always overwrite log level -- no way to know not to
+    tmp.log_level = log_level;
+  }
+  error = write_config_file(tmp, config_file);
+  if (error)
     error = client_config_error_code::error_writing_config_file;
-    return;
-  }
-}
-
-auto
-client_config::write(std::error_code &error) const noexcept -> void {
-  const std::string config_dir = get_config_dir_default(error);
-  if (!error)
-    write(config_dir, error);
 }
 
 [[nodiscard]] auto
@@ -507,11 +476,11 @@ get_index_files(const remote_data_resources &remote,
 get_metadata_file(const remote_data_resources &remote,
                   const std::string &dirname,
                   const download_policy_t download_policy) -> std::error_code {
-  auto &lgr = transferase::logger::instance();
   const auto stem = remote.get_metadata_target_stem();
   const auto metadata_file = std::format("{}.json", stem);
   const auto local_metadata_file =
     std::filesystem::path{dirname} / client_config::metadata_filename_default;
+  auto &lgr = transferase::logger::instance();
 
   std::error_code error;
   const bool metadata_file_exists =
@@ -551,11 +520,20 @@ get_metadata_file(const remote_data_resources &remote,
 }
 
 auto
-client_config::configure(const std::string &config_dir,
-                         const std::vector<std::string> &genomes,
-                         const std::string &system_config_dir,
+client_config::configure(const std::vector<std::string> &genomes,
                          const download_policy_t download_policy,
+                         std::string config_dir, std::string sys_config_dir,
                          std::error_code &error) const noexcept -> void {
+  if (sys_config_dir.empty()) {
+    sys_config_dir = get_default_sys_config_dir(error);
+    if (error)
+      return;
+  }
+  if (config_dir.empty()) {
+    config_dir = get_default_config_dir(error);
+    if (error)
+      return;
+  }
   auto &lgr = logger::instance();
 
   const bool valid = validate(error);
@@ -563,7 +541,7 @@ client_config::configure(const std::string &config_dir,
     return;
 
   lgr.debug("Making config directories");
-  error = make_directories(config_dir);
+  make_directories(config_dir, error);
   if (error) {
     error = client_config_error_code::error_creating_directories;
     lgr.debug("Error creating directories: {}", error);
@@ -571,15 +549,14 @@ client_config::configure(const std::string &config_dir,
   }
 
   lgr.debug("Writing configuration file");
-  write(config_dir, error);
+  save(config_dir, error);
   if (error) {
-    error = client_config_error_code::error_writing_config_file;
     lgr.debug("Error writing config file: {}", error);
     return;
   }
 
   const auto remotes =
-    transferase::get_remote_data_resources(system_config_dir, error);
+    transferase::get_remote_data_resources(sys_config_dir, error);
   if (error) {
     error = client_config_error_code::error_identifying_remote_resources;
     lgr.debug("Error identifying remote server: {}", error);
@@ -622,40 +599,6 @@ client_config::configure(const std::string &config_dir,
     error = client_config_error_code::genome_index_download_error;
 
   return;
-}
-
-auto
-client_config::configure(const std::string &config_dir,
-                         const std::vector<std::string> &genomes,
-                         const download_policy_t download_policy,
-                         std::error_code &error) const noexcept -> void {
-  const auto system_config_dir = get_default_system_config_dir(error);
-  if (error) {
-    error = client_config_error_code::error_obtaining_sytem_config_dir;
-    return;
-  }
-  configure(config_dir, genomes, system_config_dir, download_policy, error);
-}
-
-auto
-client_config::configure(const std::vector<std::string> &genomes,
-                         const download_policy_t download_policy,
-                         std::error_code &error) const noexcept -> void {
-  const auto config_dir = get_config_dir_default(error);
-  if (error)
-    return;
-  configure(config_dir, genomes, download_policy, error);
-}
-
-auto
-client_config::configure(const std::vector<std::string> &genomes,
-                         const std::string &system_config_dir,
-                         const download_policy_t download_policy,
-                         std::error_code &error) const noexcept -> void {
-  const auto config_dir = get_config_dir_default(error);
-  if (error)
-    return;
-  configure(config_dir, genomes, system_config_dir, download_policy, error);
 }
 
 /// Validate that the client config makes sense. This must be done
