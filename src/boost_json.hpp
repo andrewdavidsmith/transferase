@@ -25,6 +25,7 @@
 #define SRC_BOOST_JSON_HPP_
 
 auto
+// cppcheck-suppress unusedFunction
 boost_json_empty() -> int;
 
 #endif  // SRC_BOOST_JSON_HPP_
