@@ -24,6 +24,8 @@
 #ifndef SRC_CONFIG_FILE_UTILS_HPP_
 #define SRC_CONFIG_FILE_UTILS_HPP_
 
+#include "utilities.hpp"
+
 #include <boost/describe.hpp>
 #include <boost/mp11/algorithm.hpp>  // for mp_for_each
 
@@ -40,11 +42,17 @@
 
 namespace transferase {
 
+[[nodiscard]] auto
+parse_config_file_as_key_val(const std::string &filename,
+                             std::error_code &error) noexcept
+  -> std::vector<std::tuple<std::string, std::string>>;
+
 [[nodiscard]] inline auto
 format_as_config(const auto &t) -> std::string {
   using T = std::remove_cvref_t<decltype(t)>;
   using members =
-    boost::describe::describe_members<T, boost::describe::mod_any_access>;
+    boost::describe::describe_members<T, boost::describe::mod_any_access |
+                                           boost::describe::mod_inherited>;
   std::string r;
   boost::mp11::mp_for_each<members>([&](const auto &member) {
     std::string name(member.name);
@@ -58,25 +66,47 @@ format_as_config(const auto &t) -> std::string {
   return r;
 }
 
+inline auto
+assign_member_impl(auto &t, const std::string &value) {
+  std::istringstream(value) >> t;
+}
+
+inline auto
+assign_member(auto &t, const std::string_view name, const auto &value) {
+  namespace bd = boost::describe;
+  using T = std::remove_cvref_t<decltype(t)>;
+  using Md = bd::describe_members<T, bd::mod_any_access | bd::mod_inherited>;
+  boost::mp11::mp_for_each<Md>([&](const auto &D) {
+    if (name == D.name)
+      assign_member_impl(t.*D.pointer, value);
+  });
+}
+
+inline auto
+parse_config_file(auto &t, const std::string &filename,
+                  std::error_code &error) -> void {
+  const auto key_vals = parse_config_file_as_key_val(filename, error);
+  if (error)
+    return;
+  // attempt to assign each value to some variable of the class
+  for (const auto &[key, val] : key_vals) {
+    std::string name(key);
+    std::ranges::replace(name, '-', '_');
+    assign_member(t, name, val);
+  }
+}
+
 [[nodiscard]] inline auto
-write_config_file(const auto &args, [[maybe_unused]] const std::string &header =
-                                      "") -> std::error_code {
-  [[maybe_unused]] static constexpr auto header_width = 78;
-
-  std::ofstream out(args.config_file);
-  if (!out) {
-    const auto ec = std::make_error_code(std::errc(errno));
-    std::println("Failed to open config file {}: {}", args.config_file, ec);
-    return ec;
-  }
-
-  std::print(out, "{}", format_as_config(args));
-  if (!out) {
-    const auto ec = std::make_error_code(std::errc(errno));
-    std::println("Failed to write config file {}: {}", args.config_file, ec);
-    return ec;
-  }
-  return {};
+// cppcheck-suppress unusedFunction
+write_config_file(const auto &obj,
+                  const std::string &config_file) -> std::error_code {
+  std::ofstream out(config_file);
+  if (!out)
+    return std::make_error_code(std::errc(errno));
+  std::print(out, "{}", format_as_config(obj));
+  if (!out)
+    return std::make_error_code(std::errc(errno));
+  return std::error_code{};
 }
 
 }  // namespace transferase
