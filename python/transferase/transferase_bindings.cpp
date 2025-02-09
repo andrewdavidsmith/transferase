@@ -31,8 +31,6 @@ implementations.  When in doubt, consult the module reference at the
 location listed above.
 )";
 
-#include "client_config_python.hpp"
-
 #include "client_config_bindings.hpp"
 #include "genome_index_bindings.hpp"
 #include "genomic_interval_bindings.hpp"
@@ -49,7 +47,7 @@ location listed above.
 #include <level_element.hpp>
 #include <logger.hpp>
 #include <methylome.hpp>
-#include <methylome_client.hpp>
+#include <methylome_client_remote.hpp>
 #include <methylome_directory.hpp>
 #include <query_container.hpp>
 
@@ -97,13 +95,8 @@ NB_MODULE(transferase, the_module) {
       .value("missing", transferase::download_policy_t::missing)
       .value("update", transferase::download_policy_t::update);
 
-  /// ADS: leaving out of v0.4.0 bindings. This will probably be
-  /// removed because the functionality should be wrapped up in the
-  /// client itself, with the 'config' part just happening as
-  /// static/class functionality before instantiation.
-  //
-  // auto ClientConfig = nb::class_<transferase::client_config_python>(
-  //   the_module, "ClientConfig", "Class to help configuring transferase");
+  auto ClientConfig = nb::class_<transferase::client_config>(
+    the_module, "ClientConfig", "Class to help configuring transferase");
 
   auto GenomicInterval = nb::class_<transferase::genomic_interval>(
     the_module, "GenomicInterval",
@@ -128,16 +121,11 @@ NB_MODULE(transferase, the_module) {
     the_module, "LevelContainerCovered",
     "A container for methylation levels with information about covered sites");
 
-  /// ADS: leaving out of v0.4.0 bindings
-  // auto MethylomeDirectory = nb::class_<transferase::methylome_directory>(
-  // the_module, "MethylomeDirectory",
-  // "Directory on local system containing methylomes");
-
-  auto MethylomeClient = nb::class_<transferase::methylome_client>(
+  auto MethylomeClient = nb::class_<transferase::methylome_client_remote>(
     the_module, "MethylomeClient",
     "Client to get data from a remote methylome server");
 
-  // client_config_bindings(ClientConfig);
+  client_config_bindings(ClientConfig);
 
   genomic_interval_bindings(GenomicInterval);
   genome_index_bindings(GenomeIndex);
