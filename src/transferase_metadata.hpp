@@ -21,12 +21,13 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_METHYLOME_GENOME_MAP_HPP_
-#define SRC_METHYLOME_GENOME_MAP_HPP_
+#ifndef SRC_TRANSFERASE_METADATA_HPP_
+#define SRC_TRANSFERASE_METADATA_HPP_
 
 #include <boost/describe.hpp>
 
 #include <cstdint>
+#include <ranges>
 #include <string>
 #include <system_error>
 #include <type_traits>  // for std::true_type
@@ -36,7 +37,7 @@
 
 namespace transferase {
 
-struct methylome_genome_map {
+struct transferase_metadata {
   std::unordered_map<std::string, std::vector<std::string>>
     genome_to_methylomes;
   std::unordered_map<std::string, std::string> methylome_to_genome;
@@ -47,14 +48,20 @@ struct methylome_genome_map {
 
   [[nodiscard]] static auto
   read(const std::string &json_filename,
-       std::error_code &error) noexcept -> methylome_genome_map;
+       std::error_code &error) noexcept -> transferase_metadata;
 
   [[nodiscard]] auto
-  string() const noexcept -> std::string;
+  available_genomes() const noexcept -> std::vector<std::string> {
+    return genome_to_methylomes | std::views::elements<0> |
+           std::ranges::to<std::vector<std::string>>();
+  }
+
+  [[nodiscard]] auto
+  tostring() const noexcept -> std::string;
 };
 
 // clang-format off
-BOOST_DESCRIBE_STRUCT(methylome_genome_map, (),
+BOOST_DESCRIBE_STRUCT(transferase_metadata, (),
 (
  genome_to_methylomes,
  methylome_to_genome
@@ -63,8 +70,8 @@ BOOST_DESCRIBE_STRUCT(methylome_genome_map, (),
 
 }  // namespace transferase
 
-/// @brief Enum for error codes related to methylome_genome_map
-enum class methylome_genome_map_error_code : std::uint8_t {
+/// @brief Enum for error codes related to transferase_metadata
+enum class transferase_metadata_error_code : std::uint8_t {
   ok = 0,
   error_reading_metadata_json_file = 1,
   error_parsing_metadata_json_file = 2,
@@ -72,12 +79,12 @@ enum class methylome_genome_map_error_code : std::uint8_t {
 };
 
 template <>
-struct std::is_error_code_enum<methylome_genome_map_error_code>
+struct std::is_error_code_enum<transferase_metadata_error_code>
   : public std::true_type {};
 
-struct methylome_genome_map_error_category : std::error_category {
+struct transferase_metadata_error_category : std::error_category {
   // clang-format off
-  auto name() const noexcept -> const char * override { return "methylome_genome_map"; }
+  auto name() const noexcept -> const char * override { return "transferase_metadata"; }
   auto message(int code) const noexcept -> std::string override {
     using std::string_literals::operator""s;
     switch (code) {
@@ -92,9 +99,9 @@ struct methylome_genome_map_error_category : std::error_category {
 };
 
 inline auto
-make_error_code(methylome_genome_map_error_code e) noexcept -> std::error_code {
-  static auto category = methylome_genome_map_error_category{};
+make_error_code(transferase_metadata_error_code e) noexcept -> std::error_code {
+  static auto category = transferase_metadata_error_category{};
   return std::error_code(std::to_underlying(e), category);
 }
 
-#endif  // SRC_METHYLOME_GENOME_MAP_HPP_
+#endif  // SRC_TRANSFERASE_METADATA_HPP_
