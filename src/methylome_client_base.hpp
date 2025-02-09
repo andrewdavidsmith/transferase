@@ -136,7 +136,7 @@ public:
   get_client(std::string config_dir) -> Derived {
     std::error_code error;
     if (config_dir.empty()) {
-      config_dir = client_config::get_config_dir_default(error);
+      config_dir = client_config::get_default_config_dir(error);
       if (error) {
         const auto msg = "[Failed to get default config dir]";
         throw std::system_error(error, msg);
