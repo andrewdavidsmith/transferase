@@ -25,6 +25,7 @@
 #define TEST_UNIT_TEST_UTILS_HPP_
 
 #include <string>
+#include <system_error>
 
 [[nodiscard]] auto
 files_are_identical(const std::string &, const std::string &) -> bool;
@@ -35,5 +36,8 @@ generate_temp_filename(const std::string &prefix,
 
 [[nodiscard]] auto
 generate_unique_dir_name() -> std::string;
+
+auto
+remove_directories(const std::string &dirname, std::error_code &error) -> void;
 
 #endif  // TEST_UNIT_TEST_UTILS_HPP_
