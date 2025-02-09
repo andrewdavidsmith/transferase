@@ -28,13 +28,16 @@
 #include <client_config.hpp>    // IWYU pragma: keep
 #include <download_policy.hpp>  // IWYU pragma: keep
 
+#include "listobject.h"  // for PyList_New
 #include <nanobind/nanobind.h>
-#include <nanobind/operators.h>  // IWYU pragma: keep
-#include <nanobind/stl/string.h>
-#include <nanobind/stl/vector.h>
+#include <nanobind/operators.h>   // IWYU pragma: keep
+#include <nanobind/stl/string.h>  // IWYU pragma: keep
+#include <nanobind/stl/vector.h>  // IWYU pragma: keep
 
 #include <string>
 #include <system_error>
+#include <type_traits>
+#include <utility>
 #include <vector>
 
 namespace nb = nanobind;

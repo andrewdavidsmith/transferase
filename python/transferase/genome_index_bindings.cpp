@@ -26,9 +26,10 @@
 #include <genome_index.hpp>
 #include <genomic_interval.hpp>  // IWYU pragma: keep
 
+#include "listobject.h"  // for PyList_New
 #include <nanobind/nanobind.h>
-#include <nanobind/stl/string.h>
-#include <nanobind/stl/vector.h>
+#include <nanobind/stl/string.h>  // IWYU pragma: keep
+#include <nanobind/stl/vector.h>  // IWYU pragma: keep
 
 #include <string>
 #include <vector>
