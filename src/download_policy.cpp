@@ -24,7 +24,6 @@
 #include "download_policy.hpp"
 
 #include <array>
-#include <cstdint>
 #include <format>
 #include <iostream>
 #include <ranges>
@@ -36,6 +35,7 @@ namespace transferase {
 
 auto
 operator<<(std::ostream &o, const download_policy_t &dp) -> std::ostream & {
+  // NOLINTNEXTLINE(*-array-index)
   return o << download_policy_t_name[std::to_underlying(dp)];
 }
 
@@ -61,5 +61,6 @@ std::formatter<transferase::download_policy_t>::format(
   std::format_context &ctx) const -> std::format_context::iterator {
   return std::format_to(
     ctx.out(), "{}",
+    // NOLINTNEXTLINE(*-array-index)
     transferase::download_policy_t_name[std::to_underlying(dp)]);
 };

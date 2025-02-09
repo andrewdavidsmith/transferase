@@ -69,15 +69,9 @@
 
 #include <boost/describe.hpp>
 
-#include <array>  // for std::array
 #include <cstdint>
-#include <format>  // for std::vector??
-#include <istream>
-#include <ranges>
 #include <string>
-#include <string_view>
 #include <system_error>
-#include <thread>       // for std::formatter??
 #include <type_traits>  // for std::true_type
 #include <utility>      // for std::to_underlying, std::unreachable
 #include <vector>       // IWYU pragma: keep
@@ -110,8 +104,8 @@ struct client_config {
        std::error_code &error) noexcept -> client_config;
 
 #ifndef TRANSFERASE_NOEXCEPT
-  /// Overload of the read function that throws system_error exceptions to serve
-  /// in an API
+  /// Overload of the read function that throws system_error exceptions to
+  /// serve in an API
   [[nodiscard]] static auto
   read(const std::string &config_dir) -> client_config {
     std::error_code error;

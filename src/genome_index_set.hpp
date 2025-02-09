@@ -26,8 +26,9 @@
 
 #include "ring_buffer.hpp"
 
-#include <cstddef>  // for std::size_t
-#include <cstdint>  // for std::uint32_t
+#include <cstddef>   // for std::size_t
+#include <cstdint>   // for std::uint32_t
+#include <iterator>  // for std::size
 #include <memory>
 #include <mutex>
 #include <string>

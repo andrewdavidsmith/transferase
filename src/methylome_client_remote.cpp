@@ -22,28 +22,13 @@
  */
 
 #include "methylome_client_remote.hpp"
-
 #include "client_config.hpp"
-#include "config_file_utils.hpp"
-#include "genome_index.hpp"
-#include "genome_index_set.hpp"
-#include "transferase_metadata.hpp"
-#include "utilities.hpp"
 
 #include <boost/json.hpp>
 
-#include <algorithm>
-#include <cerrno>
-#include <fstream>
-#include <iterator>  // for std::cbegin, std::cend
-#include <memory>    // for std::make_shared
-#include <ranges>
+#include <sstream>
 #include <string>
-#include <string_view>
 #include <system_error>
-#include <tuple>
-#include <unordered_map>
-#include <vector>
 
 namespace transferase {
 
