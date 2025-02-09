@@ -21,12 +21,11 @@
  * SOFTWARE.
  */
 
-#include "unit_test_utils.hpp"
-
 #include <server_config.hpp>
 
 #include <gtest/gtest.h>
 
+#include <string>
 #include <system_error>
 
 using namespace transferase;  // NOLINT

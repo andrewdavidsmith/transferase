@@ -26,10 +26,7 @@
 #include <gtest/gtest.h>
 
 #include <filesystem>
-#include <format>
-#include <fstream>
 #include <iterator>  // for std::size
-#include <stdexcept>
 #include <string>
 #include <system_error>
 #include <vector>

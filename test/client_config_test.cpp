@@ -24,6 +24,7 @@
 #include "unit_test_utils.hpp"
 
 #include <client_config.hpp>
+#include <download_policy.hpp>
 #include <logger.hpp>
 
 #include <gtest/gtest.h>

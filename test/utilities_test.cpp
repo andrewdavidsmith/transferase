@@ -23,9 +23,7 @@
 
 #include <utilities.hpp>
 
-#include <server_config.hpp>
-
-#include "unit_test_utils.hpp"
+#include <logger.hpp>
 
 #include <gtest/gtest.h>
 
