@@ -29,13 +29,17 @@ import os
 from transferase import ClientConfig
 
 def create_temp_directory():
-    """Create a unique temporary directory in /tmp"""
+    """
+    Create a unique temporary directory in /tmp
+    """
     temp_dir = tempfile.mkdtemp(dir="/tmp", prefix="test_")
     return temp_dir
 
 
 def test_client_config_init():
-    """Test the constructor with keywor arguments"""
+    """
+    Test the factory to get a ClientConfig with defaults
+    """
     obj = ClientConfig.default()
     assert obj is not None
 
@@ -49,35 +53,8 @@ def test_assign_and_write_success():
     outdir = create_temp_directory()
     obj = ClientConfig.default()
     obj.hostname = "not-not-kernel.org"
-    assert obj.write(outdir) is None
+    assert obj.save(outdir) is None
     assert os.path.exists(outdir)
     assert os.path.exists(os.path.join(outdir, config_filename))
     if os.path.isdir(outdir):
         shutil.rmtree(outdir)
-
-
-## ADS: Similar to the case for make_directories_failure in
-## test/client_config_test.cpp, the test below can't work on github
-## runners, so it's out for now...
-# def test_run_fail_bad_config_dir():
-#     """
-#     Test that the run function will fail if the config dir makes no sense
-#     """
-#     bad_config_dir_mock = "/dev"
-#     obj = ClientConfig()
-#     obj.config_dir = bad_config_dir_mock
-#     validate_ok = obj.validate()
-#     assert validate_ok is True
-#     with pytest.raises(RuntimeError) as excinfo:
-#         obj.run([], False)
-#     assert "error creating directories" in str(excinfo.value)
-
-
-def test_run_no_genomes_success():
-    """
-    Test that the run function can succeed, no genomes specified
-
-    ADS: functionality being tested is gone; need to update
-    """
-    obj = ClientConfig.default()
-    assert obj is not None
