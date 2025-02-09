@@ -68,7 +68,7 @@ TEST_F(methylome_client_remote_mock, read_failure) {
   EXPECT_THROW(
     {
       [[maybe_unused]] const auto ret =
-        methylome_client_remote::instantiate(config_dir_mock);
+        methylome_client_remote::get_client(config_dir_mock);
     },
     std::system_error);
 }
@@ -76,19 +76,18 @@ TEST_F(methylome_client_remote_mock, read_failure) {
 TEST_F(methylome_client_remote_mock, read_success) {
   EXPECT_NO_THROW({
     const methylome_client_remote client =
-      methylome_client_remote::instantiate(config_dir);
+      methylome_client_remote::get_client(config_dir);
     EXPECT_EQ(client.config.hostname, hostname)
       << client.config.tostring() << "\n";
     EXPECT_EQ(client.config.port, port);
     EXPECT_FALSE(client.config.index_dir.empty());
     EXPECT_FALSE(client.config.metadata_file.empty());
 
-    EXPECT_EQ(std::size(client.lookup.genome_to_methylomes),
-              n_lutions_available);
-    for (const auto &d : client.lookup.genome_to_methylomes)
+    EXPECT_EQ(std::size(client.meta.genome_to_methylomes), n_lutions_available);
+    for (const auto &d : client.meta.genome_to_methylomes)
       EXPECT_EQ(std::size(d.second), n_lutions_tissues);
 
-    EXPECT_EQ(std::size(client.lookup.methylome_to_genome),
+    EXPECT_EQ(std::size(client.meta.methylome_to_genome),
               n_lutions_available * n_lutions_tissues);
   });
 }
