@@ -125,6 +125,32 @@ TEST_F(client_config_mock, validate_success) {
   EXPECT_FALSE(error);
 }
 
+TEST_F(client_config_mock, make_directories_success) {
+  static constexpr auto config_dir_mock = "config_dir";
+
+  client_config cfg;
+  std::error_code defaults_err;
+  cfg.set_defaults(config_dir_mock, defaults_err);
+  EXPECT_FALSE(defaults_err);
+
+  std::error_code error;
+  const bool validate_ok = cfg.validate(error);
+  EXPECT_TRUE(validate_ok);
+  EXPECT_FALSE(error);
+
+  cfg.make_directories(config_dir_mock, error);
+  EXPECT_FALSE(error);
+
+  const auto dir_exists = std::filesystem::is_directory(config_dir_mock, error);
+  EXPECT_FALSE(error);
+  EXPECT_TRUE(dir_exists);
+  if (dir_exists) {
+    const bool remove_ok = std::filesystem::remove_all(config_dir_mock, error);
+    EXPECT_FALSE(error);
+    EXPECT_TRUE(remove_ok);
+  }
+}
+
 TEST_F(client_config_mock, get_defaults_success) {
   static constexpr auto config_dir_mock = "config_dir";
   client_config cfg{};
@@ -140,6 +166,12 @@ TEST_F(client_config_mock, get_defaults_success) {
   EXPECT_FALSE(cfg.hostname.empty());
   EXPECT_FALSE(cfg.port.empty());
   EXPECT_TRUE(cfg.methylome_dir.empty());
+
+  cfg.make_directories(config_dir_mock, error);
+  EXPECT_FALSE(error) << error.message() << "\n";
+
+  cfg.save(config_dir_mock, error);
+  EXPECT_FALSE(error) << error.message() << "\n";
 
   const auto dir_exists = std::filesystem::is_directory(config_dir_mock, error);
   EXPECT_FALSE(error);
@@ -171,32 +203,6 @@ TEST_F(client_config_mock, run_no_genomes_success) {
   cfg.configure(mock_genomes, mock_download_policy, config_dir_mock,
                 sys_config_dir_mock_empty, error);
   EXPECT_FALSE(error) << error.message();
-
-  const auto dir_exists = std::filesystem::is_directory(config_dir_mock, error);
-  EXPECT_FALSE(error);
-  EXPECT_TRUE(dir_exists);
-  if (dir_exists) {
-    const bool remove_ok = std::filesystem::remove_all(config_dir_mock, error);
-    EXPECT_FALSE(error);
-    EXPECT_TRUE(remove_ok);
-  }
-}
-
-TEST_F(client_config_mock, make_directories_success) {
-  static constexpr auto config_dir_mock = "config_dir";
-
-  client_config cfg;
-  std::error_code defaults_err;
-  cfg.set_defaults(config_dir_mock, defaults_err);
-  EXPECT_FALSE(defaults_err);
-
-  std::error_code error;
-  const bool validate_ok = cfg.validate(error);
-  EXPECT_TRUE(validate_ok);
-  EXPECT_FALSE(error);
-
-  cfg.make_directories(config_dir_mock, error);
-  EXPECT_FALSE(error);
 
   const auto dir_exists = std::filesystem::is_directory(config_dir_mock, error);
   EXPECT_FALSE(error);
