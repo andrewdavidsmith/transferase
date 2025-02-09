@@ -32,10 +32,7 @@
 #include <fstream>
 #include <iterator>
 #include <map>
-#include <ranges>
-#include <sstream>
 #include <string>
-#include <string_view>
 #include <system_error>
 #include <utility>  // for std::pair
 
@@ -52,7 +49,7 @@ generate_complex_config(const std::map<std::string, std::string> &key_vals)
   -> std::string {
   std::string config;
   for (const auto &[key, val] : key_vals)
-    config += key + " = " + val + "\n";
+    config += std::format("{} = {}\n", key, val);
   return config;
 }
 
