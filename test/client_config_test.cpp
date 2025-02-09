@@ -115,7 +115,6 @@ TEST_F(client_config_mock, validate_failure) {
 }
 
 TEST_F(client_config_mock, validate_success) {
-
   const auto config_dir = generate_unique_dir_name();
   client_config cfg{};
   std::error_code error;

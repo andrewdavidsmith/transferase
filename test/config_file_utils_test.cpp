@@ -54,27 +54,33 @@ generate_complex_config(const std::map<std::string, std::string> &key_vals)
 }
 
 TEST(config_format_test, format_as_config) {
+  static constexpr auto int_val = 42;
+  static constexpr auto string_val = "example";
   static constexpr auto expected = R"test(int-member = 42
 string-member = example
 )test";
-  test_struct t{42, "example"};
+  test_struct t{int_val, string_val};
   EXPECT_EQ(format_as_config(t), expected);
 }
 
 TEST(config_format_test, assign_member) {
+  static constexpr auto int_val = 42;
+  static constexpr auto string_val = "example";
   test_struct t{};
-  assign_member(t, "int_member", "42");
-  assign_member(t, "string_member", "example");
-  EXPECT_EQ(t.int_member, 42);
-  EXPECT_EQ(t.string_member, "example");
+  assign_member(t, "int_member", int_val);
+  assign_member(t, "string_member", string_val);
+  EXPECT_EQ(t.int_member, int_val);
+  EXPECT_EQ(t.string_member, string_val);
 }
 
 TEST(config_format_test, write_config_file) {
+  static constexpr auto int_val = 42;
+  static constexpr auto string_val = "example";
   static constexpr auto config_file = "complex_config.ini";
   static constexpr auto expected = R"test(int-member = 42
 string-member = example
 )test";
-  test_struct t{42, "example"};
+  test_struct t{int_val, string_val};
   const auto error = write_config_file(t, config_file);
   EXPECT_FALSE(error);
 
@@ -90,8 +96,10 @@ string-member = example
 }
 
 TEST(config_format_test, parse_complex_config) {
+  static constexpr auto int_val = 42;
+  static constexpr auto string_val = "complex_example";
   static constexpr auto config_file = "complex_config.ini";
-  std::map<std::string, std::string> key_vals = {
+  const std::map<std::string, std::string> key_vals = {
     {"int_member", "42"},
     {"string_member", "complex_example"},
     {"invalid_key", "1234"}};
@@ -106,8 +114,8 @@ TEST(config_format_test, parse_complex_config) {
   parse_config_file(t, config_file, error);
 
   EXPECT_FALSE(error);
-  EXPECT_EQ(t.int_member, 42);
-  EXPECT_EQ(t.string_member, "complex_example");
+  EXPECT_EQ(t.int_member, int_val);
+  EXPECT_EQ(t.string_member, string_val);
 
   if (std::filesystem::exists(config_file)) {
     const bool remove_ok = std::filesystem::remove(config_file);
@@ -119,7 +127,7 @@ TEST(config_format_test, parse_config_with_missing_values) {
   static constexpr auto config_file = "missing_values_config.ini";
   const std::map<std::string, std::string> key_vals = {
     {"int_member", ""}, {"string_member", "example"}};
-  std::string config = generate_complex_config(key_vals);
+  const std::string config = generate_complex_config(key_vals);
 
   std::ofstream out(config_file);
   out << config;
@@ -137,11 +145,14 @@ TEST(config_format_test, parse_config_with_missing_values) {
 }
 
 TEST(config_format_test, parse_config_with_invalid_keys) {
+  static constexpr auto int_val = 42;
+  static constexpr auto string_val = "example";
   static constexpr auto config_file = "invalid_keys_config.ini";
-  std::map<std::string, std::string> key_vals = {{"int_member", "42"},
-                                                 {"invalid_key", "1234"},
-                                                 {"string_member", "example"}};
-  std::string config = generate_complex_config(key_vals);
+  const std::map<std::string, std::string> key_vals = {
+    {"int_member", "42"},
+    {"invalid_key", "1234"},
+    {"string_member", "example"}};
+  const std::string config = generate_complex_config(key_vals);
 
   std::ofstream out(config_file);
   out << config;
@@ -152,8 +163,8 @@ TEST(config_format_test, parse_config_with_invalid_keys) {
   parse_config_file(t, config_file, error);
 
   EXPECT_FALSE(error);
-  EXPECT_EQ(t.int_member, 42);
-  EXPECT_EQ(t.string_member, "example");
+  EXPECT_EQ(t.int_member, int_val);
+  EXPECT_EQ(t.string_member, string_val);
   if (std::filesystem::exists(config_file)) {
     const bool remove_ok = std::filesystem::remove(config_file);
     EXPECT_TRUE(remove_ok);
@@ -161,11 +172,13 @@ TEST(config_format_test, parse_config_with_invalid_keys) {
 }
 
 TEST(config_format_test, parse_config_with_special_characters) {
+  static constexpr auto int_val = 42;
+  static constexpr auto string_val = "example";
   static constexpr auto config_file = "special_characters_config.ini";
-  std::map<std::string, std::string> key_vals = {
+  const std::map<std::string, std::string> key_vals = {
     {"int_member", "42"},
     {"string_member", "example_with_special_chars!@#$%^&*()"}};
-  std::string config = generate_complex_config(key_vals);
+  const std::string config = generate_complex_config(key_vals);
 
   std::ofstream out(config_file);
   out << config;
@@ -176,7 +189,7 @@ TEST(config_format_test, parse_config_with_special_characters) {
   parse_config_file(t, config_file, error);
 
   EXPECT_FALSE(error);
-  EXPECT_EQ(t.int_member, 42);
+  EXPECT_EQ(t.int_member, int_val);
   EXPECT_EQ(t.string_member, "example_with_special_chars!@#$%^&*()");
   if (std::filesystem::exists(config_file)) {
     const bool remove_ok = std::filesystem::remove(config_file);
@@ -203,6 +216,8 @@ TEST(config_format_test, parse_config_with_empty_file) {
 }
 
 TEST(config_format_test, parse_config_with_whitespace) {
+  static constexpr auto int_val = 42;
+  static constexpr auto string_val = "example";
   static constexpr auto config_file = "whitespace_config.ini";
   std::map<std::string, std::string> key_vals = {{"int_member", "42"},
                                                  {"string_member", "example"}};
@@ -218,8 +233,8 @@ TEST(config_format_test, parse_config_with_whitespace) {
   parse_config_file(t, config_file, error);
 
   EXPECT_FALSE(error);
-  EXPECT_EQ(t.int_member, 42);
-  EXPECT_EQ(t.string_member, "example");
+  EXPECT_EQ(t.int_member, int_val);
+  EXPECT_EQ(t.string_member, string_val);
   if (std::filesystem::exists(config_file)) {
     const bool remove_ok = std::filesystem::remove(config_file);
     EXPECT_TRUE(remove_ok);
