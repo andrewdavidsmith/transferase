@@ -1,0 +1,7 @@
+hostname = bulbapedia.bulbagarden.net
+port = 9000
+index-dir = indexes
+metadata-file = metadata.json
+# methylome-dir =
+# log-file =
+# log-level = info
