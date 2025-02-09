@@ -23,11 +23,10 @@
 
 #include "client_config_bindings.hpp"
 
-#include "client_config_python.hpp"
-
 #include "bindings_utils.hpp"
 
-#include <client_config.hpp>  // IWYU pragma: keep
+#include <client_config.hpp>    // IWYU pragma: keep
+#include <download_policy.hpp>  // IWYU pragma: keep
 
 #include <nanobind/nanobind.h>
 #include <nanobind/operators.h>  // IWYU pragma: keep
@@ -41,22 +40,22 @@
 namespace nb = nanobind;
 
 auto
-client_config_bindings(nanobind::class_<transferase::client_config_python> &cls)
+client_config_bindings(nanobind::class_<transferase::client_config> &cls)
   -> void {
   using namespace nanobind::literals;  // NOLINT
-  cls
-    .def_static(
-      "default",
-      []() {
-        const auto sys_conf_dir = transferase::find_system_config_dir();
-        auto client = transferase::client_config_python();
-        std::error_code error;
-        client.set_defaults_system_config(sys_conf_dir, error);
-        if (error)
-          throw std::system_error(error);
-        return client;
-      },
-      R"doc(
+  cls.def_static(
+    "default",
+    []() {
+      const auto sys_config_dir = transferase::find_python_sys_config_dir();
+      auto client = transferase::client_config();
+      std::error_code error;
+      const std::string empty_config_dir;
+      client.set_defaults(empty_config_dir, sys_config_dir, error);
+      if (error)
+        throw std::system_error(error);
+      return client;
+    },
+    R"doc(
 
     Constructs a ClientConfig object with reasonable default values
     for the configuration parameters you need to interact with a
@@ -72,12 +71,34 @@ client_config_bindings(nanobind::class_<transferase::client_config_python> &cls)
     aware that it will not change the calling object. You need to
     assign to an object when calling this function.
 
-    )doc")
-    .def("write", &transferase::client_config_python::write_python,
-         "directory"_a = std::string())
-    .def("configure",
-         &transferase::client_config_python::configure_python_system_config,
-         R"doc(
+    )doc");
+  cls.def("save",
+          nb::overload_cast<const std::string &>(
+            &transferase::client_config::save, nb::const_),
+          R"doc(
+
+    Save the configuration set in this object, writing values to files
+    in the specified directory, or the default location of none is
+    specified.
+
+    Parameters
+    ----------
+
+    config_dir (str): The name of a directory to write the
+        configuration. Typically this should be left as the default.
+
+    )doc",
+          "config_dir"_a = std::string());
+  cls.def(
+    "configure",
+    [](const transferase::client_config &self,
+       const std::vector<std::string> &genomes,
+       const transferase::download_policy_t download_policy,
+       const std::string &config_dir) {
+      const auto sys_config_dir = transferase::find_python_sys_config_dir();
+      self.configure(genomes, download_policy, config_dir, sys_config_dir);
+    },
+    R"doc(
 
     Does the work of configuring the client, accepting a list of
     genomes and an indicator to force redownloading. If both arguments
@@ -95,33 +116,77 @@ client_config_bindings(nanobind::class_<transferase::client_config_python> &cls)
     download_policy (DownloadPolicy): Indication of what to
         (re)download.
 
+    config_dir (str): The name of a directory to write the
+        configuration. Typically this should be left as the default.
+
     )doc",
-         "genomes"_a = std::vector<std::string>(),
-         "download_policy"_a = transferase::download_policy_t::missing)
-    .def_rw("hostname", &transferase::client_config_python::hostname,
-            R"doc(
+    "genomes"_a = std::vector<std::string>(),
+    "download_policy"_a = transferase::download_policy_t::missing,
+    "config_dir"_a = std::string{});
+  cls.def_rw("hostname", &transferase::client_config::hostname,
+             R"doc(
 
-    URL or IP address for the remote transferase server. You should
-    only change this if there is a problem setting the server or if
-    you have setup your own server.
+    URL or IP address for the remote transferase server.  Like
+    transferase.usc.edu. This must be a valid hostname. Don't specify
+    a protocol or slashes, just the hostname.  You should only change
+    this if there is a problem setting the server or if you have setup
+    your own server.
 
-    )doc")
-    .def_rw("port", &transferase::client_config_python::port,
-            "Port for the remote transferase server.")
-    .def_rw("index_dir", &transferase::client_config_python::index_dir,
-            "Directory to store genome indexes.")
-    .def_rw("metadata_file", &transferase::client_config_python::metadata_file,
-            "Directory to put files that map MethBase2 accessions to "
-            "biological samples.")
-    .def_rw("methylome_dir", &transferase::client_config_python::methylome_dir,
-            "Directory to search for methylomes stored locally.")
-    .def_rw("log_file", &transferase::client_config_python::log_file,
-            "Log information about transferase events in this file.")
-    .def_rw("log_level", &transferase::client_config_python::log_level,
-            "How much to log {debug, info, warning, error, critical}.")
-    .def("__repr__", &transferase::client_config_python::tostring,
-         "Print the contents of a ClientConfig object.")
-    .doc() = R"doc(
+    )doc");
+  cls.def_rw("port", &transferase::client_config::port,
+             R"doc(
+
+    The server port number. You will find this along with the hostname of
+    the transferase server. If it has been setup using ClientConfig, then
+    you don't have to worry about it.
+
+    )doc");
+  cls.def_rw("index_dir", &transferase::client_config::index_dir,
+             R"doc(
+
+    The directory where genome index files are stored. For human and
+    mouse, this occupies roughly 200MB and for all available genomes
+    the total size is under 3GB. This defaults to
+    '${HOME}/.config/transferase/indexes' and there is no reason to
+    change it unless you are working with your own methylomes and
+    started the data analysis with your own reference genome.
+
+    )doc");
+  cls.def_rw("metadata_file", &transferase::client_config::metadata_file,
+             R"doc(
+
+    This file contains information about available methylomes,
+    reference genomes, and biological sample information for available
+    methylomes. By default this file is pulled from a remote server
+    and can be updated.  As with 'index_dir' there is no reason to
+    change this unless you are working with your own data.
+
+    )doc");
+  cls.def_rw("methylome_dir", &transferase::client_config::methylome_dir,
+             R"doc(
+
+    Directory to search for methylomes stored locally.
+
+    )doc");
+  cls.def_rw("log_file", &transferase::client_config::log_file,
+             R"doc(
+
+    Log information about transferase events in this file.
+
+    )doc");
+  cls.def_rw("log_level", &transferase::client_config::log_level,
+             R"doc(
+
+    How much to log {debug, info, warning, error, critical}.
+
+    )doc");
+  cls.def("__repr__", &transferase::client_config::tostring,
+          R"doc(
+
+    Print the contents of a ClientConfig object.
+
+    )doc");
+  cls.doc() = R"doc(
 
     A ClientConfig object is an interface to use when setting up the
     transferase environment for the first time, or for revising the
