@@ -38,11 +38,11 @@ namespace transferase {
 struct client_config_python : public client_config {
   auto
   configure_python_system_config(const std::vector<std::string> &genomes,
-                                 const download_policy_t download_policy) const
-    -> void;
+                                 const download_policy_t download_policy,
+                                 const std::string &config_dir) const -> void;
 
   auto
-  write_python(const std::string &directory) -> void;
+  save_python(const std::string &directory) -> void;
 
   [[nodiscard]] static auto
   read_python(std::error_code &error) noexcept -> client_config_python;
