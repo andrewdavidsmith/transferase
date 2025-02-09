@@ -72,7 +72,7 @@ get_package_paths() -> std::vector<std::string> {
 }
 
 [[nodiscard]] auto
-find_system_config_dir() -> std::string {
+find_python_sys_config_dir() -> std::string {
   const auto sys_conf_file = get_system_config_filename();
   const auto package_paths = get_package_paths();
   return find_dir(package_paths, sys_conf_file);

@@ -37,7 +37,7 @@ find_dir(const std::vector<std::string> &paths,
 get_package_paths() -> std::vector<std::string>;
 
 [[nodiscard]] auto
-find_system_config_dir() -> std::string;
+find_python_sys_config_dir() -> std::string;
 
 }  // namespace transferase
 
