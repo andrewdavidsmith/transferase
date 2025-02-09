@@ -76,6 +76,7 @@ if(CLANG_TIDY_EXECUTABLE)
     set(CMAKE_CXX_CLANG_TIDY
       clang-tidy
       --quiet
+      --allow-no-checks
       -p ${PROJECT_BINARY_DIR}
     )
   else()
