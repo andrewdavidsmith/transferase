@@ -26,7 +26,6 @@
 #include "connection.hpp"
 #include "logger.hpp"
 #include "server_config.hpp"
-#include "utilities.hpp"
 
 #include <boost/asio.hpp>
 #include <boost/lexical_cast.hpp>

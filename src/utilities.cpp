@@ -23,13 +23,9 @@
 
 #include "utilities.hpp"
 
-#include <cerrno>
-#include <cstdlib>     // for std::getenv
 #include <filesystem>  // for std::filesystem::path, std::filesystem::exists
-#include <fstream>
 #include <string>
 #include <tuple>
-#include <vector>
 
 [[nodiscard]] auto
 split_equals(const std::string &line, std::error_code &error) noexcept

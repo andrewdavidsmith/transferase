@@ -28,9 +28,6 @@
 
 #include "client.hpp"
 #include "client_config.hpp"
-#include "query_container.hpp"
-#include "request.hpp"
-#include "request_type_code.hpp"  // for transferase::request_type_code
 
 #include <boost/describe.hpp>
 

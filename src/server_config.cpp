@@ -22,27 +22,18 @@
  */
 
 #include "server_config.hpp"
-#include "config_file_utils.hpp"
-#include "find_path_to_binary.hpp"
-#include "utilities.hpp"  // for clean_path
+#include "config_file_utils.hpp"  // for transferase::parse_config_file
 
-#include <config.h>
+#include <boost/json.hpp>            // for boost::json::operator<<, boost::...
+#include <boost/mp11/algorithm.hpp>  // for boost::mp11::mp_for_each
 
-#include <boost/json.hpp>
-#include <boost/mp11/algorithm.hpp>
-
-#include <algorithm>  // for std::ranges::replace
 #include <cassert>
 #include <cerrno>
-#include <chrono>  // for std::chrono::operator-
-#include <cstdlib>
+#include <cstdlib>  // for getenv
 #include <filesystem>
-#include <fstream>
-#include <iterator>  // for std::size
 #include <sstream>
 #include <string>
 #include <system_error>
-#include <vector>
 
 [[nodiscard]] static inline auto
 check_and_return_directory(const std::string &dirname,
