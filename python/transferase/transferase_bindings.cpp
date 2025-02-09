@@ -48,13 +48,12 @@ location listed above.
 #include <logger.hpp>
 #include <methylome.hpp>
 #include <methylome_client_remote.hpp>
-#include <methylome_directory.hpp>
 #include <query_container.hpp>
 
 #include <moduleobject.h>
 #include <nanobind/nanobind.h>
-#include <nanobind/stl/string.h>
-#include <nanobind/stl/vector.h>
+#include <nanobind/stl/string.h>  // IWYU pragma: keep
+#include <nanobind/stl/vector.h>  // IWYU pragma: keep
 
 // ADS: the header below has functions to control what is
 // auto-generated in the python docs
