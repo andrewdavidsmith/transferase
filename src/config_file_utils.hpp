@@ -24,8 +24,6 @@
 #ifndef SRC_CONFIG_FILE_UTILS_HPP_
 #define SRC_CONFIG_FILE_UTILS_HPP_
 
-#include "utilities.hpp"
-
 #include <boost/describe.hpp>
 #include <boost/mp11/algorithm.hpp>  // for mp_for_each
 
@@ -35,9 +33,13 @@
 #include <fstream>
 #include <print>
 #include <ranges>  // IWYU pragma: keep
+#include <sstream>
 #include <string>
+#include <string_view>
 #include <system_error>
+#include <tuple>
 #include <type_traits>  // for std::remove_cvref_t
+#include <variant>      // for std::tuple
 #include <vector>
 
 namespace transferase {

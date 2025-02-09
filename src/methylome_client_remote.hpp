@@ -27,30 +27,25 @@
 #include "methylome_client_base.hpp"
 
 #include "client.hpp"
+#include "client_config.hpp"
 #include "query_container.hpp"
 #include "request.hpp"
 #include "request_type_code.hpp"  // for transferase::request_type_code
 
 #include <boost/describe.hpp>
-#include <boost/json.hpp>
 
 #include <cstdint>
-#include <format>
-#include <memory>  // for std::shared_ptr
-#include <sstream>
 #include <string>
 #include <system_error>
-#include <tuple>
 #include <type_traits>  // for std::true_type
 #include <utility>      // for std::to_underlying, std::unreachable
-#include <variant>      // for std::tuple
 #include <vector>
 
 // forward declarations
 namespace transferase {
-struct level_element_covered_t;
 template <typename level_element_type> struct level_container;
-struct genome_index_set;
+struct query_container;
+struct request;
 }  // namespace transferase
 
 namespace transferase {
