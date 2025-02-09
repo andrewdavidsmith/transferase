@@ -292,7 +292,7 @@ command_server_config_main(int argc,
   if (validation_error)
     return EXIT_FAILURE;
 
-  const auto write_err = transferase::write_config_file(args);
+  const auto write_err = transferase::write_config_file(args, args.config_file);
   if (write_err)  // message already reported
     return EXIT_FAILURE;
 
