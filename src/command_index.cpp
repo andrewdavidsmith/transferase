@@ -156,6 +156,7 @@ command_index_main(int argc,
               ec);
     return EXIT_FAILURE;
   }
+  lgr.info("Completed index construction");
 
   return EXIT_SUCCESS;
 }
