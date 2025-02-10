@@ -15,20 +15,19 @@ _transferase_completion() {
         binary_path=$(command -v transferase)
         # If the binary isn't found, just return silently without doing anything
         if [ ! -x "$binary_path" ]; then
-            return 0
+            return
         fi
     fi
 
-    # Get the current word being typed
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
 
     # Get list of subcommands from 'transferase --help'
-    subcommands=$("$binary_path" --help 2>/dev/null | grep -oP '^\s+\K\w+' | tr '\n' ' ')
+    subcommands=$("$binary_path" --help 2>/dev/null | grep -oP '^\s+\K[\w-]+' | tr '\n' ' ')
     # If we're completing the subcommand (the first argument after the command itself)
     if [[ ${COMP_CWORD} -eq 1 ]]; then
         COMPREPLY=($(compgen -W "${subcommands}" -- "$cur"))
-        return 0
+        return
     fi
 
     # Get options for the current subcommand (if available)
@@ -41,19 +40,20 @@ _transferase_completion() {
     if [[ "$prev" =~ ^[^\\-]*-*.*dir ]]; then
         # Attempt to expand filenames/paths/directories
         COMPREPLY=( $(compgen -d -- "$cur") )
-        return 0;
+        return
     fi
 
     # Check if the previous token begins with an unescaped dash and if
     # so, suggest a file or directory
     if [[ "$prev" =~ ^[^\\-]*- ]]; then
         # Attempt to expand filenames/paths/directories
-        COMPREPLY=( $(compgen -f -- "$cur") )
-        return 0;
+        _filedir
+        return
     fi
 
+    compopt +o nospace
     COMPREPLY=($(compgen -W "${options}" -- "$cur"))
-    return 0;
+    return
 }
 
 # Register the completion function for the 'transferase' command and
