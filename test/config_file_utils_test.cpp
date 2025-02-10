@@ -173,7 +173,6 @@ TEST(config_format_test, parse_config_with_invalid_keys) {
 
 TEST(config_format_test, parse_config_with_special_characters) {
   static constexpr auto int_val = 42;
-  static constexpr auto string_val = "example";
   static constexpr auto config_file = "special_characters_config.ini";
   const std::map<std::string, std::string> key_vals = {
     {"int_member", "42"},
