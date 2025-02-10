@@ -371,7 +371,7 @@ struct command_format_argset : argset_base<command_format_argset> {
 
   std::string methylation_input{};
   std::string methylome_name{};
-  std::string methylome_outdir{};
+  std::string methylome_dir{};
   log_level_t log_level{};
   bool zip{false};
 
@@ -384,7 +384,7 @@ struct command_format_argset : argset_base<command_format_argset> {
         {"Methylome name", methylome_name},
         {"Genome", genome_name},
         {"Index directory", index_directory},
-        {"Methylome directory", methylome_outdir},
+        {"Methylome directory", methylome_dir},
         {"Zip", std::format("{}", zip)},
         // clang-format on
       });
@@ -421,7 +421,7 @@ struct command_format_argset : argset_base<command_format_argset> {
        "methylation input file")
       ("index-dir,x", po::value(&index_directory),
        "genome index directory")
-      ("methylome-dir,d", po::value(&methylome_outdir)->required(),
+      ("methylome-dir,d", po::value(&methylome_dir)->required(),
        "methylome output directory")
       ("genome,g", po::value(&genome_name)->required(), "genome name")
       ("zip,z", po::bool_switch(&zip), "zip the output")
@@ -484,12 +484,11 @@ command_format_main(int argc,
 
   args.log_options();
 
-  std::error_code index_error;
   const auto index =
-    genome_index::read(args.index_directory, args.genome_name, index_error);
-  if (index_error) {
+    genome_index::read(args.index_directory, args.genome_name, error);
+  if (error) {
     lgr.error("Failed to read genome index {} {}: {}", args.index_directory,
-              args.genome_name, index_error);
+              args.genome_name, error);
     return EXIT_FAILURE;
   }
 
@@ -513,9 +512,9 @@ command_format_main(int argc,
 
   methylome meth{std::move(meth_data), methylome_metadata{}};
 
-  const auto meth_init_err = meth.init_metadata(index);
-  if (meth_init_err) {
-    lgr.error("Error initializing methylome metadata: {}", meth_init_err);
+  error = meth.init_metadata(index);
+  if (error) {
+    lgr.error("Error initializing methylome metadata: {}", error);
     return EXIT_FAILURE;
   }
 
@@ -523,11 +522,17 @@ command_format_main(int argc,
   // effected as data is written
   meth.meta.is_compressed = args.zip;
 
-  std::error_code write_err;
-  meth.write(args.methylome_outdir, args.methylome_name, write_err);
-  if (write_err) {
-    lgr.error("Error writing methylome {} {}: {}", args.methylome_outdir,
-              args.methylome_name, write_err);
+  // Check on the output directory; if it doesn't exist, make it
+  validate_output_directory(args.methylome_dir, error);
+  if (error) {
+    lgr.error("Terminating due to error");
+    return EXIT_FAILURE;
+  }
+
+  meth.write(args.methylome_dir, args.methylome_name, error);
+  if (error) {
+    lgr.error("Error writing methylome {} {}: {}", args.methylome_dir,
+              args.methylome_name, error);
     return EXIT_FAILURE;
   }
 
