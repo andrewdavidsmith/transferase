@@ -26,16 +26,29 @@
 
 #include "methylome_client_base.hpp"
 
-#include "genome_index.hpp"
+#include "client_config.hpp"
+#include "genome_index_set.hpp"
 #include "methylome.hpp"
 #include "query_container.hpp"
 #include "request.hpp"
+#include "request_type_code.hpp"
 
 #include <boost/describe.hpp>
-#include <boost/json.hpp>
 
+#include <cstdint>
+#include <memory>
 #include <string>
+#include <system_error>
+#include <type_traits>
+#include <utility>
 #include <vector>
+
+// forward declarations
+namespace transferase {
+struct genome_index;
+struct level_element_covered_t;
+template <typename level_element_type> struct level_container;
+}  // namespace transferase
 
 namespace transferase {
 
