@@ -25,26 +25,26 @@
 
 #include <query_container.hpp>
 
-#include <pybind11/operators.h>  // IWYU pragma: keep
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>  // IWYU pragma: keep
+#include <nanobind/nanobind.h>
+#include <nanobind/operators.h>   // IWYU pragma: keep
+#include <nanobind/stl/string.h>  // IWYU pragma: keep
 
 #include <cstdint>  // for std::uint32_t
 #include <format>
 #include <string>
 
-namespace py = pybind11;
+namespace nb = nanobind;
 
 auto
-query_container_bindings(py::class_<transferase::query_container> &cls)
+query_container_bindings(nb::class_<transferase::query_container> &cls)
   -> void {
-  cls.def(py::init<>())
+  cls.def(nb::init<>())
     .def("__len__",
          [](const transferase::query_container &self) -> std::uint32_t {
            return transferase::size(self);
          })
-    .def(pybind11::self == pybind11::self)
-    .def(pybind11::self != pybind11::self)
+    .def(nanobind::self == nanobind::self)
+    .def(nanobind::self != nanobind::self)
     .def("__repr__",
          [](const transferase::query_container &self) -> std::string {
            return std::format("<QueryContainer size={}>",

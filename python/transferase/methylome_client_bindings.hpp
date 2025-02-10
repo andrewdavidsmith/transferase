@@ -24,14 +24,14 @@
 #ifndef PYTHON_TRANSFERASE_METHYLOME_CLIENT_BINDINGS_HPP_
 #define PYTHON_TRANSFERASE_METHYLOME_CLIENT_BINDINGS_HPP_
 
-#include <pybind11/pybind11.h>
+#include <nanobind/nanobind.h>
 
 namespace transferase {
-class methylome_client;
+class methylome_client_remote;
 }  // namespace transferase
 
 auto
-methylome_client_bindings(pybind11::class_<transferase::methylome_client> &cls)
-  -> void;
+methylome_client_bindings(
+  nanobind::class_<transferase::methylome_client_remote> &cls) -> void;
 
 #endif  // PYTHON_TRANSFERASE_METHYLOME_CLIENT_BINDINGS_HPP_

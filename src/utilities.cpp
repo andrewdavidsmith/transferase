@@ -23,30 +23,9 @@
 
 #include "utilities.hpp"
 
-#include <cerrno>
-#include <cstdlib>     // for std::getenv
 #include <filesystem>  // for std::filesystem::path, std::filesystem::exists
-#include <fstream>
 #include <string>
 #include <tuple>
-#include <vector>
-
-namespace transferase {
-
-[[nodiscard]] auto
-get_server_config_dir_default(std::error_code &ec) -> std::string {
-  static const auto config_dir_rhs =
-    std::filesystem::path(".config/transferase");
-  static const auto env_home = std::getenv("HOME");
-  if (!env_home) {
-    ec = std::make_error_code(std::errc{errno});
-    return {};
-  }
-  const std::filesystem::path config_dir = env_home / config_dir_rhs;
-  return config_dir;
-}
-
-}  // namespace transferase
 
 [[nodiscard]] auto
 split_equals(const std::string &line, std::error_code &error) noexcept
@@ -80,68 +59,4 @@ clean_path(const std::string &s, std::error_code &ec) -> std::string {
   if (ec)
     return {};
   return p.string();
-}
-
-[[nodiscard]]
-auto
-check_output_file(const std::string &filename) -> std::error_code {
-  std::error_code ec;
-  // get the full name
-  const auto canonical = std::filesystem::weakly_canonical(filename, ec);
-  if (ec)
-    return ec;
-
-  // check if this is a directory
-  const bool already_exists = std::filesystem::exists(canonical);
-  if (already_exists) {
-    const bool is_dir = std::filesystem::is_directory(canonical, ec);
-    if (ec)
-      return ec;
-    if (is_dir)
-      return std::error_code{output_file_error_code::is_a_directory};
-    return {};
-  }
-
-  // if it doesn't already exist, test if it's writable
-  // if (!already_exists) // ADS: would be redundant for now
-  {
-    std::ofstream out_test(canonical);
-    if (!out_test)
-      ec = output_file_error_code::failed_to_open;
-    [[maybe_unused]] std::error_code unused{};
-    const bool out_test_exits = std::filesystem::exists(canonical, unused);
-    if (out_test_exits) {
-      [[maybe_unused]]
-      const bool removed = std::filesystem::remove(canonical, unused);
-    }
-    return ec;
-  }
-  // ADS: somehow need to check if an existing file can be written
-  // without modifying it??
-
-  return {};
-}
-
-[[nodiscard]] auto
-parse_config_file(const std::string &filename, std::error_code &error) noexcept
-  -> std::vector<std::tuple<std::string, std::string>> {
-  std::ifstream in(filename);
-  if (!in) {
-    error = std::make_error_code(std::errc(errno));
-    return {};
-  }
-
-  std::vector<std::tuple<std::string, std::string>> key_val;
-  std::string line;
-  while (getline(in, line)) {
-    line = rlstrip(line);
-    // ignore empty lines and those beginning with '#'
-    if (!line.empty() && line[0] != '#') {
-      const auto [k, v] = split_equals(line, error);
-      if (error)
-        return {};
-      key_val.emplace_back(k, v);
-    }
-  }
-  return key_val;
 }

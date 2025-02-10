@@ -71,3 +71,18 @@ generate_unique_dir_name() -> std::string {
            std::to_string(dis(gen))))
     .string();
 }
+
+auto
+remove_directories(const std::string &dirname, std::error_code &error) -> void {
+  const auto dir_exists = std::filesystem::is_directory(dirname, error);
+  if (error)
+    return;
+  // EXPECT_FALSE(error);
+  // EXPECT_TRUE(dir_exists);
+  if (dir_exists) {
+    [[maybe_unused]] const bool remove_ok =
+      std::filesystem::remove_all(dirname, error);
+    if (error)
+      return;
+  }
+}

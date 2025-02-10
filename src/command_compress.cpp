@@ -78,7 +78,7 @@ command_compress_main(int argc,
   static const auto description_msg =
     std::format("{}\n{}", rstrip(description), rstrip(examples));
 
-  std::string methylome_directory{};
+  std::string methylome_dir{};
   std::string methylome_name{};
   std::string methylome_outdir{};
   transferase::log_level_t log_level{};
@@ -90,7 +90,7 @@ command_compress_main(int argc,
   // clang-format off
   desc.add_options()
     ("help,h", "print this message and exit")
-    ("methylome-dir,d", po::value(&methylome_directory)->required(), "input methylome directory")
+    ("methylome-dir,d", po::value(&methylome_dir)->required(), "input methylome directory")
     ("methylome,m", po::value(&methylome_name)->required(), "methylome name/accession")
     ("output-dir,o", po::value(&methylome_outdir)->required(),
      "methylome output directory")
@@ -127,7 +127,7 @@ command_compress_main(int argc,
 
   std::vector<std::tuple<std::string, std::string>> args_to_log{
     // clang-format off
-    {"Methylome input directory", methylome_directory},
+    {"Methylome input directory", methylome_dir},
     {"Methylome output directory", methylome_outdir},
     {"Methylome name", methylome_name},
     {"Uncompress", std::format("{}", uncompress)},
@@ -137,11 +137,10 @@ command_compress_main(int argc,
 
   std::error_code ec;
   const auto read_start = std::chrono::high_resolution_clock::now();
-  auto meth =
-    transferase::methylome::read(methylome_directory, methylome_name, ec);
+  auto meth = transferase::methylome::read(methylome_dir, methylome_name, ec);
   const auto read_stop = std::chrono::high_resolution_clock::now();
   if (ec) {
-    lgr.error("Error reading methylome {} {}: {}", methylome_directory,
+    lgr.error("Error reading methylome {} {}: {}", methylome_dir,
               methylome_name, ec);
     return EXIT_FAILURE;
   }

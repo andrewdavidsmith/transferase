@@ -41,11 +41,9 @@ options you must specify will differ.
 static constexpr auto examples = R"(
 Examples:
 
-xfr query -s example.com -x index_dir -g hg38 -m methylome_name \
-    -o output.bed -i input.bed
+xfr query -g hg38 -m methylome_name -o output.bed -i input.bed
 
-xfr query -c config_file.toml -g hg38 -m methylome_name \
-    -o output.bed -i input.bed
+xfr query -g hg38 -m methylome_name -o output.bed -i input.bed
 
 xfr query --local -x index_dir -g hg38 -d methylome_dir \
     -m methylome_name -o output.bed -i input.bed
@@ -131,7 +129,7 @@ struct query_argset : argset_base<query_argset> {
   [[nodiscard]] static auto
   get_default_config_file_impl() -> std::string {
     std::error_code ec;
-    const auto config_dir = client_config::get_config_dir_default(ec);
+    const auto config_dir = client_config::get_default_config_dir(ec);
     return client_config::get_config_file(config_dir, ec);
   }
 

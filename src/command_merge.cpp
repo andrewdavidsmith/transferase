@@ -84,7 +84,7 @@ command_merge_main(int argc,
   using transferase::shared_from_cout;
 
   log_level_t log_level{};
-  std::string methylome_directory{};
+  std::string methylome_dir{};
   std::string methylome_outdir{};
   std::string merged_name{};
 
@@ -96,7 +96,7 @@ command_merge_main(int argc,
     ("help,h", "print this message and exit")
     ("methylomes,m", po::value<std::vector<std::string>>()->multitoken()->required(),
      "names of methylomes to merge")
-    ("methylome-dir,d", po::value(&methylome_directory)->required(), "methylome input directory")
+    ("methylome-dir,d", po::value(&methylome_dir)->required(), "methylome input directory")
     ("output-dir,o", po::value(&methylome_outdir)->required(), "methylome output directory")
     ("name,n", po::value(&merged_name)->required(), "merged methylome name")
     ("log-level,v", po::value(&log_level)->default_value(logger::default_level),
@@ -135,7 +135,7 @@ command_merge_main(int argc,
     // clang-format off
     {"Output directory", methylome_outdir},
     {"Merged methylome name", merged_name},
-    {"Input directory", methylome_directory},
+    {"Methylome directory", methylome_dir},
     {"Number of methylomes to merge", std::format("{}", n_methylomes)},
     // clang-format on
   };
@@ -154,11 +154,11 @@ command_merge_main(int argc,
   // empty methylome, so we need a real one outside the loop
   const auto &last_methylome = methylome_names.back();
   auto read_start = std::chrono::high_resolution_clock::now();
-  auto meth = methylome::read(methylome_directory, last_methylome, ec);
+  auto meth = methylome::read(methylome_dir, last_methylome, ec);
   auto read_stop = std::chrono::high_resolution_clock::now();
   read_time += duration(read_start, read_stop);
   if (ec) {
-    lgr.error("Error reading methylome {} {}: {}", methylome_directory,
+    lgr.error("Error reading methylome {} {}: {}", methylome_dir,
               last_methylome, ec);
     return EXIT_FAILURE;
   }
@@ -171,12 +171,11 @@ command_merge_main(int argc,
   for (const auto &name :
        methylome_names | std::views::take(n_methylomes - 1)) {
     read_start = std::chrono::high_resolution_clock::now();
-    const auto tmp_meth = methylome::read(methylome_directory, name, ec);
+    const auto tmp_meth = methylome::read(methylome_dir, name, ec);
     read_stop = std::chrono::high_resolution_clock::now();
     read_time += duration(read_start, read_stop);
     if (ec) {
-      lgr.error("Error reading methylome {}: {}", methylome_directory, name,
-                ec);
+      lgr.error("Error reading methylome {}: {}", methylome_dir, name, ec);
       return EXIT_FAILURE;
     }
     const auto is_consistent = meth.is_consistent(tmp_meth);

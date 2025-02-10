@@ -35,31 +35,35 @@
 namespace transferase {
 
 [[nodiscard]] auto
-methylome_set::get_methylome(const std::string &accession, std::error_code &ec)
+methylome_set::get_methylome(const std::string &methylome_name,
+                             std::error_code &ec)
   -> std::shared_ptr<methylome> {
   // ADS: error code passed by reference; make sure it starts out ok
   ec = std::error_code{};
 
-  if (!methylome::is_valid_name(accession)) {
-    ec = methylome_error_code::invalid_accession;
+  if (!methylome::is_valid_name(methylome_name)) {
+    ec = methylome_error_code::invalid_methylome_name;
     return nullptr;
   }
 
   std::scoped_lock lock{mtx};
 
   // Easy case: methylome is already loaded
-  const auto meth_itr = accession_to_methylome.find(accession);
-  if (meth_itr != std::cend(accession_to_methylome))
+  const auto meth_itr = accession_to_methylome.find(methylome_name);
+  if (meth_itr != std::cend(accession_to_methylome)) {
+    // current methylome becomes the most recently used
+    accessions.move_to_front(methylome_name);
     return meth_itr->second;
+  }
 
   // ADS: we need to load a methylome; make sure the file exists;
   // probably should check the directory in batch
-  if (!methylome::files_exist(methylome_directory, accession)) {
+  if (!methylome::files_exist(methylome_dir, methylome_name)) {
     ec = methylome_error_code::methylome_not_found;
     return nullptr;
   }
 
-  auto loaded_meth = methylome::read(methylome_directory, accession, ec);
+  auto loaded_meth = methylome::read(methylome_dir, methylome_name, ec);
   if (ec) {
     // ADS: need to ensure the error code is sensibly propagated
     return nullptr;
@@ -67,7 +71,7 @@ methylome_set::get_methylome(const std::string &accession, std::error_code &ec)
 
   // remove loaded methylomes if we need to make room
   if (accessions.full()) {
-    const auto to_eject_itr = accession_to_methylome.find(accessions.front());
+    const auto to_eject_itr = accession_to_methylome.find(accessions.back());
     if (to_eject_itr == std::cend(accession_to_methylome)) {
       ec = methylome_error_code::error_reading_methylome;
       return nullptr;
@@ -78,7 +82,7 @@ methylome_set::get_methylome(const std::string &accession, std::error_code &ec)
   }
 
   const auto insertion_result = accession_to_methylome.emplace(
-    accession, std::make_shared<methylome>(std::move(loaded_meth)));
+    methylome_name, std::make_shared<methylome>(std::move(loaded_meth)));
   if (!insertion_result.second) {
     ec = methylome_error_code::unknown_error;
     return nullptr;
@@ -86,7 +90,7 @@ methylome_set::get_methylome(const std::string &accession, std::error_code &ec)
 
   // ADS: if we are here, then everything went ok and we can insert
   // the accession into the ring buffer
-  accessions.push_back(accession);
+  accessions.push(methylome_name);
 
   return insertion_result.first->second;
 }

@@ -22,9 +22,10 @@
  */
 
 #include "server.hpp"
+
 #include "connection.hpp"
 #include "logger.hpp"
-#include "utilities.hpp"
+#include "server_config.hpp"
 
 #include <boost/asio.hpp>
 #include <boost/lexical_cast.hpp>
@@ -59,7 +60,7 @@ namespace transferase {
 get_daemon_filename(const std::string &filename,
                     std::error_code &ec) -> std::string {
   static constexpr auto system_dir = "/var/tmp/transferase";
-  auto dirname = get_server_config_dir_default(ec);
+  auto dirname = server_config::get_default_config_dir(ec);
   if (dirname.empty() || ec)
     // Could not get the config dir, so go with a system dir
     dirname = system_dir;

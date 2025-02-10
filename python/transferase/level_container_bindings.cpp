@@ -26,8 +26,10 @@
 #include <level_container.hpp>
 #include <level_element.hpp>
 
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>  // IWYU pragma: keep
+#include <nanobind/nanobind.h>
+#include <nanobind/stl/string.h>
+#include <nanobind/stl/tuple.h>
+#include <nanobind/stl/vector.h>
 
 #include <cstddef>  // for std::size_t
 #include <cstdint>  // for std::uint32_t
@@ -37,7 +39,7 @@
 #include <tuple>
 #include <variant>  // for std::tuple
 
-namespace py = pybind11;
+namespace nb = nanobind;
 
 namespace transferase {
 
@@ -57,11 +59,11 @@ level_element_covered_t_to_tuple(const level_element_covered_t &self)
 
 auto
 level_container_bindings(
-  py::class_<transferase::level_container<transferase::level_element_t>> &cls)
+  nb::class_<transferase::level_container<transferase::level_element_t>> &cls)
   -> void {
-  using namespace pybind11::literals;  // NOLINT
+  using namespace nanobind::literals;  // NOLINT
   namespace xfr = transferase;
-  cls.def(py::init<>())
+  cls.def(nb::init<>())
     .def(
       "__getitem__",
       [](const xfr::level_container<xfr::level_element_t> &self,
@@ -146,11 +148,11 @@ level_container_bindings(
 
 auto
 level_container_covered_bindings(
-  py::class_<transferase::level_container<transferase::level_element_covered_t>>
+  nb::class_<transferase::level_container<transferase::level_element_covered_t>>
     &cls) -> void {
-  using namespace pybind11::literals;  // NOLINT
+  using namespace nanobind::literals;  // NOLINT
   namespace xfr = transferase;
-  cls.def(py::init<>())
+  cls.def(nb::init<>())
     .def(
       "__getitem__",
       [](const xfr::level_container<xfr::level_element_covered_t> &self,

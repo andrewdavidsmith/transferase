@@ -24,14 +24,12 @@
 #ifndef PYTHON_TRANSFERASE_CLIENT_CONFIG_BINDINGS_HPP_
 #define PYTHON_TRANSFERASE_CLIENT_CONFIG_BINDINGS_HPP_
 
-#include <pybind11/pybind11.h>
+#include <client_config.hpp>
 
-namespace transferase {
-struct client_config_python;
-}
+#include <nanobind/nanobind.h>
 
 auto
-client_config_bindings(pybind11::class_<transferase::client_config_python> &cls)
+client_config_bindings(nanobind::class_<transferase::client_config> &cls)
   -> void;
 
 #endif  // PYTHON_TRANSFERASE_CLIENT_CONFIG_BINDINGS_HPP_

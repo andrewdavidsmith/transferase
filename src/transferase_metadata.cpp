@@ -21,7 +21,9 @@
  * SOFTWARE.
  */
 
-#include "methylome_genome_map.hpp"
+#include "transferase_metadata.hpp"
+
+#include "methylome.hpp"
 
 #include <boost/json.hpp>
 
@@ -39,15 +41,19 @@
 namespace transferase {
 
 [[nodiscard]] auto
-methylome_genome_map::get_genome(
+transferase_metadata::get_genome(
   const std::vector<std::string> &methylome_names,
   std::error_code &error) const noexcept -> std::string {
+  [[maybe_unused]] const bool all_valid =
+    methylome::are_valid_names(methylome_names, error);
+  if (error)
+    return {};
   std::string genome;
   for (const auto &name : methylome_names) {
     const auto genome_itr = methylome_to_genome.find(name);
     if (genome_itr == std::cend(methylome_to_genome)) {
       // ERROR not found
-      error = std::make_error_code(std::errc::invalid_argument);
+      error = transferase_metadata_error_code::methylome_not_found;
       return {};
     }
     if (!genome.empty() && genome != genome_itr->second) {
@@ -62,53 +68,53 @@ methylome_genome_map::get_genome(
 }
 
 [[nodiscard]] auto
-methylome_genome_map::read(const std::string &json_filename,
+transferase_metadata::read(const std::string &json_filename,
                            std::error_code &error) noexcept
-  -> methylome_genome_map {
+  -> transferase_metadata {
   std::ifstream in(json_filename);
   if (!in) {
-    error = methylome_genome_map_error_code::error_reading_metadata_json_file;
+    error = transferase_metadata_error_code::error_reading_metadata_json_file;
     return {};
   }
 
   const auto filesize = static_cast<std::streamsize>(
     std::filesystem::file_size(json_filename, error));
   if (error) {
-    error = methylome_genome_map_error_code::error_reading_metadata_json_file;
+    error = transferase_metadata_error_code::error_reading_metadata_json_file;
     return {};
   }
 
   std::string payload(filesize, '\0');
   if (!in.read(payload.data(), filesize)) {
-    error = methylome_genome_map_error_code::error_reading_metadata_json_file;
+    error = transferase_metadata_error_code::error_reading_metadata_json_file;
     return {};
   }
 
   std::map<std::string, std::map<std::string, std::string>> data;
   boost::json::parse_into(data, payload, error);
   if (error) {
-    error = methylome_genome_map_error_code::error_parsing_metadata_json_file;
+    error = transferase_metadata_error_code::error_parsing_metadata_json_file;
     return {};
   }
 
-  methylome_genome_map l;
+  transferase_metadata m;
   std::ranges::for_each(data, [&](const auto &d) {
-    l.genome_to_methylomes.emplace(
+    m.genome_to_methylomes.emplace(
       d.first, d.second | std::views::elements<0> |
                  std::ranges::to<std::vector<std::string>>());
   });
 
-  for (const auto &genome : l.genome_to_methylomes) {
+  for (const auto &genome : m.genome_to_methylomes) {
     const auto &genome_name = genome.first;
     for (const auto &methylome_name : genome.second)
-      l.methylome_to_genome.emplace(methylome_name, genome_name);
+      m.methylome_to_genome.emplace(methylome_name, genome_name);
   }
 
-  return l;
+  return m;
 }
 
 [[nodiscard]] auto
-methylome_genome_map::string() const noexcept -> std::string {
+transferase_metadata::tostring() const noexcept -> std::string {
   std::ostringstream o;
   if (!(o << boost::json::value_from(*this)))
     o.clear();

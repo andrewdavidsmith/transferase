@@ -28,16 +28,12 @@
   Functions declared here are used by multiple source files
  */
 
-#include <boost/describe.hpp>
-#include <boost/mp11/algorithm.hpp>
-
 #include <algorithm>  // IWYU pragma: keep
 #include <cctype>     // for isgraph, std::isgraph
 #include <chrono>
 #include <cstdint>   // for std::uint32_t
 #include <iterator>  // for std::size
 #include <ranges>
-#include <sstream>
 #include <string>
 #include <string_view>
 #include <system_error>
@@ -46,13 +42,6 @@
 #include <utility>
 #include <variant>  // for std::tuple
 #include <vector>
-
-namespace transferase {
-
-[[nodiscard]] auto
-get_server_config_dir_default(std::error_code &ec) -> std::string;
-
-}  // namespace transferase
 
 [[nodiscard]] auto
 clean_path(const std::string &s, std::error_code &ec) -> std::string;
@@ -95,53 +84,6 @@ rlstrip(const std::string &s) noexcept -> std::string {
 [[nodiscard]] auto
 split_equals(const std::string &line, std::error_code &error) noexcept
   -> std::tuple<std::string, std::string>;
-
-[[nodiscard]] auto
-parse_config_file(const std::string &filename, std::error_code &error) noexcept
-  -> std::vector<std::tuple<std::string, std::string>>;
-
-template <class T>
-auto
-assign_member_impl(T &t, const std::string_view value) -> std::error_code {
-  std::istringstream is(std::string(std::cbegin(value), std::cend(value)));
-  if (is >> t)
-    return {};
-  return std::make_error_code(std::errc::invalid_argument);
-}
-
-template <class Scope>
-auto
-assign_member(Scope &scope, const std::string_view name,
-              const std::string_view value) -> std::error_code {
-  namespace dsc = boost::describe;
-  // ADS: below, the (mod_public | mod_inherited) makes visible all
-  // public members and those from a base class. Added when using
-  // client_config_python inherting from client_config.
-  using Md = dsc::describe_members<Scope, dsc::mod_public | dsc::mod_inherited>;
-  std::error_code error{};
-  boost::mp11::mp_for_each<Md>([&](const auto &D) {
-    if (!error && name == D.name)
-      error = assign_member_impl(scope.*D.pointer, value);
-  });
-  return error;
-}
-
-[[nodiscard]] inline auto
-assign_members(const auto &key_val, auto &obj) -> std::error_code {
-  std::error_code error;
-  for (const auto &[key, value] : key_val) {
-    std::string name(key);
-    std::ranges::replace(name, '-', '_');
-    error = assign_member(obj, name, value);
-    if (error)
-      return {};
-  }
-  return error;
-}
-
-[[nodiscard]]
-auto
-check_output_file(const std::string &filename) -> std::error_code;
 
 enum class output_file_error_code : std::uint8_t {
   ok = 0,

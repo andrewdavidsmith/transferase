@@ -24,7 +24,7 @@
 #ifndef PYTHON_TRANSFERASE_METHYLOME_DIRECTORY_BINDINGS_HPP_
 #define PYTHON_TRANSFERASE_METHYLOME_DIRECTORY_BINDINGS_HPP_
 
-#include <pybind11/pybind11.h>
+#include <nanobind/nanobind.h>
 
 namespace transferase {
 class methylome_directory;
@@ -32,6 +32,6 @@ class methylome_directory;
 
 auto
 methylome_directory_bindings(
-  pybind11::class_<transferase::methylome_directory> &cls) -> void;
+  nanobind::class_<transferase::methylome_directory> &cls) -> void;
 
 #endif  // PYTHON_TRANSFERASE_METHYLOME_DIRECTORY_BINDINGS_HPP_

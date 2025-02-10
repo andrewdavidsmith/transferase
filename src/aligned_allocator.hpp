@@ -33,7 +33,9 @@ template <class T> struct aligned_allocator {
   typedef T value_type;
 
 #ifndef _TRANSFERASE_NOEXCEPT
+
   [[nodiscard]] auto
+  // cppcheck-suppress unusedFunction
   allocate(const std::size_t n) -> T * {
     if (n > std::numeric_limits<std::size_t>::max() / sizeof(T))
       throw std::bad_array_new_length();
@@ -44,7 +46,9 @@ template <class T> struct aligned_allocator {
     throw std::bad_alloc();
   }
 #else
+
   [[nodiscard]] auto
+  // cppcheck-suppress unusedFunction
   allocate(const std::size_t n) noexcept -> T * {
     if (n > std::numeric_limits<std::size_t>::max() / sizeof(T))
       return nullptr;
@@ -57,6 +61,7 @@ template <class T> struct aligned_allocator {
 #endif
 
   auto
+  // cppcheck-suppress unusedFunction
   deallocate(T *p, [[maybe_unused]] const std::size_t n) noexcept -> void {
     std::free(p);
   }

@@ -25,8 +25,9 @@
 
 #include <remote_data_resource.hpp>  // for get_system_config_filename
 
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>  // IWYU pragma: keep
+#include <nanobind/nanobind.h>
+#include <nanobind/stl/string.h>
+#include <nanobind/stl/vector.h>
 
 #include <filesystem>
 #include <format>
@@ -34,7 +35,7 @@
 #include <string>
 #include <vector>
 
-namespace py = pybind11;
+namespace nb = nanobind;
 
 namespace transferase {
 
@@ -62,16 +63,16 @@ find_dir(const std::vector<std::string> &paths,
 
 [[nodiscard]] auto
 get_package_paths() -> std::vector<std::string> {
-  py::object path = py::module::import("sys").attr("path");
+  nb::object path = nb::module_::import_("sys").attr("path");
   std::vector<std::string> paths;
   // cppcheck-suppress useStlAlgorithm
   for (const auto &p : path)
-    paths.emplace_back(p.cast<std::string>());
+    paths.emplace_back(nb::cast<std::string>(p));
   return paths;
 }
 
 [[nodiscard]] auto
-find_system_config_dir() -> std::string {
+find_python_sys_config_dir() -> std::string {
   const auto sys_conf_file = get_system_config_filename();
   const auto package_paths = get_package_paths();
   return find_dir(package_paths, sys_conf_file);

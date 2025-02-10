@@ -54,6 +54,7 @@ xfr server -s localhost -d methylomes -x indexes
 #include "logger.hpp"
 #include "request.hpp"
 #include "server.hpp"
+#include "server_config.hpp"
 #include "utilities.hpp"
 
 #include <boost/describe.hpp>
@@ -83,7 +84,7 @@ struct server_argset : argset_base<server_argset> {
   static auto
   get_default_config_file_impl() -> std::string {
     std::error_code ec;
-    const auto config_dir = get_server_config_dir_default(ec);
+    const auto config_dir = server_config::get_default_config_dir(ec);
     if (ec)
       return {};
     return std::filesystem::path{config_dir} / default_config_filename;

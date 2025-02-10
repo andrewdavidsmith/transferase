@@ -119,7 +119,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "StaticAnalysis")
   message(STATUS "Using the 'StaticAnalysis' build type")
 
   # Options on
-  set(BUILD_PYTHON on)
+  set(BUILD_PYTHON off)  ## Until we can wrangle nanobind
   set(ENABLE_UNIT_TESTS on)
   set(ENABLE_STATIC_ANALYSIS on)
 

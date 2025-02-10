@@ -26,6 +26,7 @@
 
 #include "arguments.hpp"
 #include "client_config.hpp"
+#include "download_policy.hpp"
 #include "logger.hpp"
 
 #include <boost/program_options.hpp>

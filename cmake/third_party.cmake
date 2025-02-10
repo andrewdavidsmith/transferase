@@ -70,17 +70,48 @@ else()
   find_package(ZLIB REQUIRED)
 endif()
 
-# Python and Pybind11
+# Python and nanobind
 if(BUILD_PYTHON)
-  # Python3
-  find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
-  message(STATUS "Python3 include dir: ${Python3_INCLUDE_DIRS}")
-  message(STATUS "Python3 libraries: ${Python3_LIBRARIES}")
-  message(STATUS "Python3 version: ${Python3_VERSION}")
-  message(STATUS "Python3 SOABI: ${Python3_SOABI}")
+  message(STATUS "Configuring nanobind for Python API")
 
-  # Pybind11
-  find_package(pybind11 REQUIRED)
+  ## Try to find nanobind on the system first
+  # For nanobind before Python; seems to work with ordinary
+  # 'Development' but Development.Module is recommended
+  set(DEV_MODULE Development.Module)
+
+  # Python has to be available before nanobind
+  find_package(Python COMPONENTS Interpreter ${DEV_MODULE} REQUIRED)
+  message(STATUS "Python include dir: ${Python_INCLUDE_DIRS}")
+  message(STATUS "Python libraries: ${Python_LIBRARIES}")
+  message(STATUS "Python version: ${Python_VERSION}")
+  message(STATUS "Python SOABI: ${Python_SOABI}")
+
+  # Detect the installed nanobind package
+  execute_process(
+    COMMAND "${Python_EXECUTABLE}" -m nanobind --cmake_dir
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    OUTPUT_VARIABLE nanobind_ROOT
+    ERROR_QUIET
+  )
+  if (nanobind_ROOT)
+    message(STATUS "Found nanobind on the system")
+  else()
+    message(STATUS "Configuring to clone nanobind")
+    # Didn't find nanobind so try to clone it
+    include(ExternalProject)
+    ExternalProject_Add(
+      nanobind
+      GIT_REPOSITORY https://github.com/wjakob/nanobind.git
+      GIT_TAG master
+      CMAKE_ARGS
+      -DCMAKE_INSTALL_PREFIX=${PROJECT_BINARY_DIR}/src/nanobind
+      -DCMAKE_BUILD_TYPE=Release
+    )
+  endif()
+  # Now try to import nanobind; if this step is not done here, then in
+  # python/CMakeLists.txt the
+  # nanobind_build_library(nanobind-static-abi3) will fail.
+  find_package(nanobind CONFIG)
 endif()
 
 # Boost components
@@ -102,6 +133,22 @@ include(FindCurses)  # This should be in the modules dir
 set(CURSES_NEED_NCURSES TRUE)
 find_package(Curses)
 if(CURSES_FOUND AND CURSES_HAVE_NCURSES_H)
+  # ADS: Currently the ncurses library on the build development needs
+  # to link with the GPM library; this is not optimal, but also not a
+  # priority now.
+  set(GPM_LIB_NAME gpm)
+  if (USE_STATIC_LIBS)
+    set(GPM_LIB_NAME libgpm.a)
+  endif()
+  find_library(GPM_LIB ${GPM_LIB_NAME} NO_CACHE)
+  if (GPM_LIB STREQUAL GPM_LIB-NOTFOUND)
+    message(STATUS "Failed to find GPM lib: ${GPM_LIB_NAME}")
+  else()
+    message(STATUS
+      "Found GPM library: ${GPM_LIB_NAME}; check static vs. shared linkage"
+    )
+    list(APPEND CURSES_LIBRARIES ${GPM_LIB})
+  endif()
   ## ADS: above, the header used in the sources is <ncurses.h> and not
   ## <curses.h> or <ncurses/curses.h>
   add_compile_definitions(HAVE_NCURSES)

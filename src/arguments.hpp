@@ -74,10 +74,16 @@ template <typename T> struct argset_base {
   // clang-format off
   auto self() -> T & {return static_cast<T &>(*this);}
   auto self() const -> const T & {return static_cast<const T &>(*this);}
-  auto log_options() const { self().log_options_impl(); }
   // clang-format on
 
+  auto
+  // cppcheck-suppress unusedFunction
+  log_options() const {
+    self().log_options_impl();
+  }
+
   [[nodiscard]] static auto
+  // cppcheck-suppress unusedFunction
   get_default_config_file() -> std::string {
     return T::get_default_config_file_impl();
   }

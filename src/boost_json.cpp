@@ -28,6 +28,7 @@
 #endif
 
 auto
+// cppcheck-suppress unusedFunction
 boost_json_empty() -> int {
   return 0;
 }

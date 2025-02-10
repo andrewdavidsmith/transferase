@@ -25,12 +25,11 @@ static constexpr auto warning_message = R"(
 https://github.com/andrewdavidsmith/transferase
 
 The following documentation is automatically generated from the Python
-bindings files. It may be incomplete, incorrect or include features that
-are considered implementation detail and may vary between Python implementations.
-When in doubt, consult the module reference at the location listed above.
+bindings files. It may be incomplete, incorrect or include features
+that are considered implementation detail and may vary between Python
+implementations.  When in doubt, consult the module reference at the
+location listed above.
 )";
-
-#include "client_config_python.hpp"
 
 #include "client_config_bindings.hpp"
 #include "genome_index_bindings.hpp"
@@ -38,29 +37,35 @@ When in doubt, consult the module reference at the location listed above.
 #include "level_container_bindings.hpp"
 #include "methylome_bindings.hpp"
 #include "methylome_client_bindings.hpp"
-#include "methylome_directory_bindings.hpp"
+#include "methylome_client_local_bindings.hpp"
 #include "query_container_bindings.hpp"
 
 #include <client_config.hpp>  // IWYU pragma: keep
+#include <download_policy.hpp>
 #include <genome_index.hpp>
 #include <genomic_interval.hpp>
 #include <level_container.hpp>
 #include <level_element.hpp>
 #include <logger.hpp>
 #include <methylome.hpp>
-#include <methylome_client.hpp>
-#include <methylome_directory.hpp>
+#include <methylome_client_local.hpp>
+#include <methylome_client_remote.hpp>
 #include <query_container.hpp>
 
 #include <moduleobject.h>
+#include <nanobind/nanobind.h>
+#include <nanobind/stl/string.h>  // IWYU pragma: keep
+#include <nanobind/stl/vector.h>  // IWYU pragma: keep
+
 // ADS: the header below has functions to control what is
 // auto-generated in the python docs
-#include <pybind11/options.h>  // IWYU pragma: keep
-#include <pybind11/pybind11.h>
+// #include <nanobind/options.h>  // IWYU pragma: keep
 
 #include <string>
+#include <type_traits>  // for std::is_lvalue_reference_v
+#include <utility>      // for std::move
 
-namespace py = pybind11;
+namespace nb = nanobind;
 
 auto
 initialize_transferase() -> void {
@@ -68,14 +73,14 @@ initialize_transferase() -> void {
                                 transferase::log_level_t::error);
 }
 
-PYBIND11_MODULE(transferase, the_module) {
-  py::options options;
-  options.disable_function_signatures();
+NB_MODULE(transferase, the_module) {
+  // nb::options options;
+  // options.disable_function_signatures();
   the_module.doc() = warning_message;
 
   initialize_transferase();
 
-  auto LogLevel = py::enum_<transferase::log_level_t>(the_module, "LogLevel")
+  auto LogLevel = nb::enum_<transferase::log_level_t>(the_module, "LogLevel")
                     .value("debug", transferase::log_level_t::debug)
                     .value("info", transferase::log_level_t::info)
                     .value("warning", transferase::log_level_t::warning)
@@ -87,45 +92,44 @@ PYBIND11_MODULE(transferase, the_module) {
   });
 
   auto DownloadPolicy =
-    py::enum_<transferase::download_policy_t>(the_module, "DownloadPolicy")
+    nb::enum_<transferase::download_policy_t>(the_module, "DownloadPolicy")
       .value("none", transferase::download_policy_t::none)
       .value("all", transferase::download_policy_t::all)
       .value("missing", transferase::download_policy_t::missing)
       .value("update", transferase::download_policy_t::update);
 
-  auto ClientConfig = py::class_<transferase::client_config_python>(
+  auto ClientConfig = nb::class_<transferase::client_config>(
     the_module, "ClientConfig", "Class to help configuring transferase");
 
-  auto GenomicInterval = py::class_<transferase::genomic_interval>(
+  auto GenomicInterval = nb::class_<transferase::genomic_interval>(
     the_module, "GenomicInterval",
     "Representation of a genomic interval as chrom, start, stop (zero-based, "
     "half-open)");
 
-  auto GenomeIndex = py::class_<transferase::genome_index>(
+  auto GenomeIndex = nb::class_<transferase::genome_index>(
     the_module, "GenomeIndex", "An index of CpG sites in a genome");
 
-  auto Methylome = py::class_<transferase::methylome>(
+  auto Methylome = nb::class_<transferase::methylome>(
     the_module, "Methylome", "Representation of a methylome");
 
-  auto QueryContainer = py::class_<transferase::query_container>(
+  auto QueryContainer = nb::class_<transferase::query_container>(
     the_module, "QueryContainer", "A container for a methylome query");
 
   auto LevelContainer =
-    py::class_<transferase::level_container<transferase::level_element_t>>(
+    nb::class_<transferase::level_container<transferase::level_element_t>>(
       the_module, "LevelContainer", "A container for methylation levels");
 
-  auto LevelContainerCovered = py::class_<
+  auto LevelContainerCovered = nb::class_<
     transferase::level_container<transferase::level_element_covered_t>>(
     the_module, "LevelContainerCovered",
     "A container for methylation levels with information about covered sites");
 
-  auto MethylomeDirectory = py::class_<transferase::methylome_directory>(
-    the_module, "MethylomeDirectory",
-    "Directory on local system containing methylomes");
-
-  auto MethylomeClient = py::class_<transferase::methylome_client>(
+  auto MethylomeClient = nb::class_<transferase::methylome_client_remote>(
     the_module, "MethylomeClient",
     "Client to get data from a remote methylome server");
+
+  auto MethylomeClientLocal = nb::class_<transferase::methylome_client_local>(
+    the_module, "MethylomeClientLocal", "Client to get data stored locally");
 
   client_config_bindings(ClientConfig);
 
@@ -137,6 +141,6 @@ PYBIND11_MODULE(transferase, the_module) {
   level_container_bindings(LevelContainer);
   level_container_covered_bindings(LevelContainerCovered);
 
-  methylome_directory_bindings(MethylomeDirectory);
+  methylome_client_local_bindings(MethylomeClientLocal);
   methylome_client_bindings(MethylomeClient);
 }

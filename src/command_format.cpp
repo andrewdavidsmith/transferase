@@ -357,7 +357,7 @@ struct command_format_argset : argset_base<command_format_argset> {
   [[nodiscard]] static auto
   get_default_config_file_impl() -> std::string {
     std::error_code ec;
-    const auto config_dir = client_config::get_config_dir_default(ec);
+    const auto config_dir = client_config::get_default_config_dir(ec);
     return client_config::get_config_file(config_dir, ec);
   }
 
@@ -450,10 +450,10 @@ command_format_main(int argc,
     std::format("{}\n{}", rstrip(description), rstrip(examples));
 
   transferase::command_format_argset args;
-  auto ec = args.parse(argc, argv, usage, about_msg, description_msg);
-  if (ec == argument_error_code::help_requested)
+  auto error = args.parse(argc, argv, usage, about_msg, description_msg);
+  if (error == argument_error_code::help_requested)
     return EXIT_SUCCESS;
-  if (ec)
+  if (error)
     return EXIT_FAILURE;
 
   using transferase::counts_file_format;
@@ -475,21 +475,21 @@ command_format_main(int argc,
 
   if (args.index_directory.empty()) {
     args.index_directory =
-      transferase::client_config::get_index_dir_default(ec);
-    if (ec) {
-      lgr.error("Failure identifying index directory: {}", ec.message());
+      transferase::client_config::get_default_index_dir(error);
+    if (error) {
+      lgr.error("Failure identifying index directory: {}", error.message());
       return EXIT_FAILURE;
     }
   }
 
   args.log_options();
 
-  std::error_code index_ec;
+  std::error_code index_error;
   const auto index =
-    genome_index::read(args.index_directory, args.genome_name, index_ec);
-  if (index_ec) {
+    genome_index::read(args.index_directory, args.genome_name, index_error);
+  if (index_error) {
     lgr.error("Failed to read genome index {} {}: {}", args.index_directory,
-              args.genome_name, index_ec);
+              args.genome_name, index_error);
     return EXIT_FAILURE;
   }
 

@@ -295,6 +295,12 @@ struct methylome {
     return std::ranges::all_of(
       methylome_name, [](const auto c) { return std::isalnum(c) || c == '_'; });
   }
+
+  /// @brief Returns true iff all methylome names are valid (at present:
+  /// contains only alphanumeric and underscore).
+  [[nodiscard]] static auto
+  are_valid_names(const std::vector<std::string> &methylome_names,
+                  std::error_code &error) noexcept -> bool;
 };
 
 }  // namespace transferase
@@ -312,7 +318,7 @@ template <> struct std::hash<transferase::methylome> {
 /// @brief Enum for error codes related to methylome
 enum class methylome_error_code : std::uint8_t {
   ok = 0,
-  invalid_accession = 1,
+  invalid_methylome_name = 1,
   invalid_methylome_data = 2,
   error_reading_methylome = 3,
   error_writing_methylome = 4,
@@ -330,7 +336,7 @@ struct methylome_error_category : std::error_category {
     using std::string_literals::operator""s;
     switch (code) {
     case 0: return "ok"s;
-    case 1: return "invalid accession"s;
+    case 1: return "invalid methylome name"s;
     case 2: return "invalid methylome data"s;
     case 3: return "error reading methylome"s;
     case 4: return "error writing methylome"s;

@@ -26,7 +26,9 @@
 
 #include "ring_buffer.hpp"
 
-#include <cstdint>  // for std::uint32_t
+#include <cstddef>   // for std::size_t
+#include <cstdint>   // for std::uint32_t
+#include <iterator>  // for std::size
 #include <memory>
 #include <mutex>
 #include <string>
@@ -55,6 +57,11 @@ struct genome_index_set {
   [[nodiscard]] auto
   get_genome_index(const std::string &genome_name,
                    std::error_code &ec) -> std::shared_ptr<genome_index>;
+
+  [[nodiscard]] auto
+  size() const noexcept -> std::size_t {
+    return std::size(name_to_index);
+  }
 
   static constexpr std::uint32_t default_max_live_genome_indexes{8};
 

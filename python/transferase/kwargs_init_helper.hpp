@@ -26,19 +26,18 @@
 
 #include <boost/describe.hpp>
 #include <boost/mp11.hpp>
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>  // IWYU pragma: keep
+#include <nanobind/nanobind.h>
 
 #include <format>
 #include <string>
 #include <string_view>
 
-namespace py = pybind11;
+namespace nb = nanobind;
 
 template <class T>
 auto
 assign_member_impl(T &t, const std::string_view /*name*/,
-                   const py::handle &value) -> void {
+                   const nb::handle &value) -> void {
   t = value.cast<T>();  // may throw cast_error
 }
 
@@ -46,14 +45,14 @@ assign_member_impl(T &t, const std::string_view /*name*/,
 template <class T>
 auto
 assign_member_impl(const T & /*t*/, const std::string_view name,
-                   const py::handle & /*value*/) -> void {
+                   const nb::handle & /*value*/) -> void {
   throw std::invalid_argument(std::format("{}: cannot be modified", name));
 }
 
 template <class Scope>
 auto
 assign_member(Scope &scope, const std::string_view name,
-              const py::handle &value) -> void {
+              const nb::handle &value) -> void {
   using Md =
     boost::describe::describe_members<Scope, boost::describe::mod_public>;
   bool found = false;
@@ -69,15 +68,15 @@ assign_member(Scope &scope, const std::string_view name,
 
 template <typename T>
 [[nodiscard]] auto
-kwargs_init_helper(const py::kwargs &kwargs) -> T {
+kwargs_init_helper(const nb::kwargs &kwargs) -> T {
   T t{};
   for (const auto &k : kwargs) {
     const auto name = k.first.cast<std::string>();  // may throw cast_error
     try {
       assign_member(t, name, k.second);
     }
-    catch (py::cast_error &e) {
-      throw pybind11::type_error(std::format("incorrect value for {}", name));
+    catch (nb::cast_error &e) {
+      throw nanobind::type_error(std::format("incorrect value for {}", name));
     }
   }
   return t;
