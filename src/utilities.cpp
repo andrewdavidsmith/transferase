@@ -23,6 +23,8 @@
 
 #include "utilities.hpp"
 
+#include "logger.hpp"
+
 #include <filesystem>  // for std::filesystem::path, std::filesystem::exists
 #include <string>
 #include <tuple>
@@ -59,4 +61,24 @@ clean_path(const std::string &s, std::error_code &ec) -> std::string {
   if (ec)
     return {};
   return p.string();
+}
+
+auto
+validate_output_directory(const std::string &dirname,
+                          std::error_code &error) -> void {
+  auto &lgr = transferase::logger::instance();
+  const bool dir_exists = std::filesystem::exists(dirname, error);
+  if (error) {
+    lgr.error("Filesystem error {}: {}", dirname, error);
+    return;
+  }
+  if (!dir_exists) {
+    const bool dirs_ok = std::filesystem::create_directories(dirname, error);
+    if (error) {
+      lgr.error("Failed to create directory {}: {}", dirname, error);
+      return;
+    }
+    const auto status = dirs_ok ? "created" : "exists";
+    lgr.debug("Output directory {}: {}", dirname, status);
+  }
 }
