@@ -58,8 +58,7 @@ xfr list /path/to/some_directory ../relative/path
 #include <vector>
 
 auto
-command_list_main(int argc,
-                  char *argv[])  // NOLINT(cppcoreguidelines-avoid-c-arrays)
+command_list_main(int argc, char *argv[])  // NOLINT(*-c-arrays)
   -> int {
   static constexpr auto command = "list";
   static const auto usage =
@@ -83,7 +82,8 @@ command_list_main(int argc,
     ("indexes-only,x", po::bool_switch(&show_only_indexes), "show only cpg indexes")
     ("methylomes-only,m", po::bool_switch(&show_only_methylomes), "show only methylomes")
     ("directories,d", po::value<std::vector<std::string>>()->required(),
-     "search these directories (flag is optional)")
+     "search these directories "
+     "(this optional flag helps with directory name completion)")
     ("verbose,v", po::bool_switch(&verbose), "print more info")
     // clang-format on
     ;
