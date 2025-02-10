@@ -67,7 +67,7 @@ TEST(config_format_test, assign_member) {
   static constexpr auto int_val = 42;
   static constexpr auto string_val = "example";
   test_struct t{};
-  assign_member(t, "int_member", int_val);
+  assign_member(t, "int_member", std::format("{}", int_val));
   assign_member(t, "string_member", string_val);
   EXPECT_EQ(t.int_member, int_val);
   EXPECT_EQ(t.string_member, string_val);
