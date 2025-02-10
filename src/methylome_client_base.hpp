@@ -158,16 +158,8 @@ public:
   get_levels(const std::vector<std::string> &methylome_names,
              const query_container &query, std::error_code &error)
     const noexcept -> std::vector<level_container<lvl_elem_t>> {
-    request_type_code req_type = request_type_code::intervals;
-    if constexpr (std::is_same_v<lvl_elem_t, level_element_covered_t>)
-      req_type = request_type_code::intervals_covered;
-    const auto [_, index_hash] =
-      get_genome_and_index_hash(methylome_names, error);
-    if (error)
-      return {};
-    const auto req =
-      request{req_type, index_hash, size(query), methylome_names};
-    return self().template get_levels_derived<lvl_elem_t>(req, query, error);
+    return self().template get_levels_derived<lvl_elem_t>(methylome_names,
+                                                          query, error);
   }
 
 #ifndef TRANSFERASE_NOEXCEPT
@@ -191,15 +183,8 @@ public:
   get_levels(const std::vector<std::string> &methylome_names,
              const std::uint32_t bin_size, std::error_code &error)
     const noexcept -> std::vector<level_container<lvl_elem_t>> {
-    request_type_code req_type = request_type_code::bins;
-    if constexpr (std::is_same_v<lvl_elem_t, level_element_covered_t>)
-      req_type = request_type_code::bins_covered;
-    const auto [_, index_hash] =
-      get_genome_and_index_hash(methylome_names, error);
-    if (error)
-      return {};
-    const auto req = request{req_type, index_hash, bin_size, methylome_names};
-    return self().template get_levels_derived<lvl_elem_t>(req, error);
+    return self().template get_levels_derived<lvl_elem_t>(methylome_names,
+                                                          bin_size, error);
   }
 
 #ifndef TRANSFERASE_NOEXCEPT
@@ -223,6 +208,37 @@ protected:
 
   auto
   validate_derived() const = delete;
+
+  template <typename lvl_elem_t>
+  [[nodiscard]] auto
+  get_levels_derived(const std::vector<std::string> &methylome_names,
+                     const query_container &query, std::error_code &error)
+    const noexcept -> std::vector<level_container<lvl_elem_t>> = delete;
+
+  template <typename lvl_elem_t>
+  [[nodiscard]] auto
+  get_levels_derived(const std::vector<std::string> &methylome_names,
+                     const std::uint32_t bin_size, std::error_code &error)
+    const noexcept -> std::vector<level_container<lvl_elem_t>>;
+
+  [[nodiscard]] auto
+  get_index_hash(const std::string &genome_name,
+                 std::error_code &error) const noexcept -> std::uint64_t {
+    const auto index = indexes->get_genome_index(genome_name, error);
+    if (error)  // ADS: need to confirm error code here
+      return 0;
+    return index->get_hash();
+  }
+
+  [[nodiscard]] auto
+  get_genome_and_index_hash(const std::vector<std::string> &methylome_names,
+                            std::error_code &error) const noexcept
+    -> std::tuple<std::string, std::uint64_t> {
+    const auto genome_name = meta.get_genome(methylome_names, error);
+    if (error)  // ADS: need to confirm error code here
+      return {std::string{}, 0};
+    return {genome_name, get_index_hash(genome_name, error)};
+  }
 
 private:
   // internal function
@@ -259,25 +275,6 @@ private:
       return {};
     }
     return client;
-  }
-
-  [[nodiscard]] auto
-  get_index_hash(const std::string &genome_name,
-                 std::error_code &error) const noexcept -> std::uint64_t {
-    const auto index = indexes->get_genome_index(genome_name, error);
-    if (error)  // ADS: need to confirm error code here
-      return 0;
-    return index->get_hash();
-  }
-
-  [[nodiscard]] auto
-  get_genome_and_index_hash(const std::vector<std::string> &methylome_names,
-                            std::error_code &error) const noexcept
-    -> std::tuple<std::string, std::uint64_t> {
-    const auto genome_name = meta.get_genome(methylome_names, error);
-    if (error)  // ADS: need to confirm error code here
-      return {std::string{}, 0};
-    return {genome_name, get_index_hash(genome_name, error)};
   }
 
 public:
