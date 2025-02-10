@@ -59,11 +59,46 @@ public:
   auto
   validate_derived(std::error_code &error) noexcept -> void;
 
-  // private:
+  // intervals: takes a query
   template <typename lvl_elem_t>
   [[nodiscard]] auto
-  get_levels_derived(const request &req, const query_container &query,
-                     std::error_code &error) const noexcept
+  get_levels_derived(const std::vector<std::string> &methylome_names,
+                     const query_container &query, std::error_code &error)
+    const noexcept -> std::vector<level_container<lvl_elem_t>> {
+    request_type_code req_type = request_type_code::intervals;
+    if constexpr (std::is_same_v<lvl_elem_t, level_element_covered_t>)
+      req_type = request_type_code::intervals_covered;
+    const auto [_, index_hash] =
+      get_genome_and_index_hash(methylome_names, error);
+    if (error)
+      return {};
+    const auto req =
+      request{req_type, index_hash, size(query), methylome_names};
+    return get_levels_impl<lvl_elem_t>(req, query, error);
+  }
+
+  // bins: takes an index
+  template <typename lvl_elem_t>
+  [[nodiscard]] auto
+  get_levels_derived(const std::vector<std::string> &methylome_names,
+                     const std::uint32_t bin_size, std::error_code &error)
+    const noexcept -> std::vector<level_container<lvl_elem_t>> {
+    request_type_code req_type = request_type_code::bins;
+    if constexpr (std::is_same_v<lvl_elem_t, level_element_covered_t>)
+      req_type = request_type_code::bins_covered;
+    const auto [_, index_hash] =
+      get_genome_and_index_hash(methylome_names, error);
+    if (error)
+      return {};
+    const auto req = request{req_type, index_hash, bin_size, methylome_names};
+    return get_levels_impl<lvl_elem_t>(req, error);
+  }
+
+private:
+  template <typename lvl_elem_t>
+  [[nodiscard]] auto
+  get_levels_impl(const request &req, const query_container &query,
+                  std::error_code &error) const noexcept
     -> std::vector<level_container<lvl_elem_t>> {
     intervals_client<lvl_elem_t> cl(config.hostname, config.port, req, query);
     error = cl.run();
@@ -74,7 +109,7 @@ public:
 
   template <typename lvl_elem_t>
   [[nodiscard]] auto
-  get_levels_derived(const request &req, std::error_code &error) const noexcept
+  get_levels_impl(const request &req, std::error_code &error) const noexcept
     -> std::vector<level_container<lvl_elem_t>> {
     bins_client<lvl_elem_t> cl(config.hostname, config.port, req);
     error = cl.run();
@@ -83,6 +118,7 @@ public:
     return cl.take_levels(error);
   }
 
+public:
   BOOST_DESCRIBE_CLASS(methylome_client_remote,
                        (methylome_client_remote_parent), (), (), ())
 };
