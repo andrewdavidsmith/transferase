@@ -28,8 +28,10 @@
 #include <boost/beast.hpp>
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <chrono>
 #include <filesystem>
+#include <ranges>
 #include <string>
 #include <utility>
 
@@ -91,8 +93,17 @@ TEST(download_test, receive_download_timeout) {
   }
 }
 
+[[nodiscard]] static auto
+to_string(const auto &maplike) -> std::string {
+  const auto fmt_pair = [](const auto &pairlike) -> std::string {
+    return std::format(R"("{}":"{}"\n)", pairlike.first, pairlike.second);
+  };
+  return maplike | std::views::transform(fmt_pair) |
+         std::views::join_with(',') | std::ranges::to<std::string>();
+}
+
 TEST(download_test, download_non_existent_file) {
-  const std::chrono::milliseconds connect_timeout{3'000};   // 2s
+  const std::chrono::milliseconds connect_timeout{3'000};   // 3s
   const std::chrono::milliseconds download_timeout{3'000};  // 3s
   // ADS: note the prefix slash below
   const std::filesystem::path target{generate_temp_filename("/file", "txt")};
@@ -120,9 +131,11 @@ TEST(download_test, download_non_existent_file) {
     (ec.value() == std::to_underlying(boost::beast::error::timeout));
 
   // Only check things if a timeout didn't happen
-  EXPECT_TRUE(timeout_happened || bad_target);
-  EXPECT_TRUE(headers.contains("Status"));
-  EXPECT_TRUE(headers.contains("Reason"));
+  EXPECT_TRUE(timeout_happened || bad_target) << to_string(headers);
+  EXPECT_TRUE(timeout_happened || headers.contains("Status"))
+    << to_string(headers);
+  EXPECT_TRUE(timeout_happened || headers.contains("Reason"))
+    << to_string(headers);
 
   // randomly generated filename should not exist as a uri
   EXPECT_TRUE(timeout_happened || headers.at("Status") == "404");
