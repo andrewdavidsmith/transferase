@@ -24,25 +24,26 @@
 #ifndef SRC_METHYLOME_CLIENT_REMOTE_HPP_
 #define SRC_METHYLOME_CLIENT_REMOTE_HPP_
 
-#include "methylome_client_base.hpp"
-
 #include "client.hpp"
 #include "client_config.hpp"
+#include "methylome_client_base.hpp"
+#include "query_container.hpp"
+#include "request.hpp"
+#include "request_type_code.hpp"
 
 #include <boost/describe.hpp>
 
 #include <cstdint>
 #include <string>
 #include <system_error>
-#include <type_traits>  // for std::true_type
-#include <utility>      // for std::to_underlying, std::unreachable
+#include <type_traits>
+#include <utility>
 #include <vector>
 
 // forward declarations
 namespace transferase {
+struct level_element_covered_t;
 template <typename level_element_type> struct level_container;
-struct query_container;
-struct request;
 }  // namespace transferase
 
 namespace transferase {
