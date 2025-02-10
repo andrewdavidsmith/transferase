@@ -9,17 +9,18 @@ because for my own local methylomes it allows me to access them very
 quicly. You just need to make sure that you know the proper hostname
 or IP address, and that the port is not blocked. Try some port over
 5000, and run the `hostname` command to get the name to use as your
-server. If you are on one system, such as an interactive session on
-a cluster, you can just use `localhost` as the hostname.
+server. If you are on one system, such as an interactive session on a
+cluster (even your laptop), you can just use `localhost` as the
+hostname.
 
 Installation
 ------------
 
 The instructions here assume that you are installing from a package
-like the STGZ or Debian package associated with a transferase release.
-If you build transferase from source, the installation should allow
-you to get the same outcome. The commands will begin by assuming the
-STGZ file, where the v7.7.7 is just a placeholder:
+like the STGZ, RPM or Debian package for a transferase release.  If
+you build transferase from source, the installation with make or cmake
+should allow you to get the same outcome. The commands will begin by
+assuming the STGZ file, where the v7.7.7 is just a placeholder:
 
 ```console
 sh transferase-7.7.7-Linux.sh --prefix=${PREFIX}
@@ -207,13 +208,13 @@ while it is receiving and responding to clients.
 * Auxiliary value: the purpose of this value depends on the request
   type. In general this determines the size of subsequent query data
   to be received from the client and allows for data buffers to be
-  allocated dynamically to prevent overflow vulnerabilities. Auxiliary
-  values are uninteger 64-bit integers, and any will be parsed. But
-  these values are restricted when validating requests (i.e.,
-  currently between 100 and 2000000; see `min-bin-size` and
-  `max-intervals` above), to prevent large queries that might lead to
-  performance reduction or DoS. Any value outside the allowed range
-  will result in failure to validate the request.
+  allocated dynamically to prevent overflows (and associated
+  vulnerabilities). Auxiliary values are uninteger 64-bit integers,
+  and any will be parsed. But these values are restricted when
+  validating requests (i.e., currently between 100 and 2000000; see
+  `min-bin-size` and `max-intervals` above), to prevent large queries
+  that might lead to performance reduction or DoS. Any value outside
+  the allowed range will result in failure to validate the request.
 
 * Dataset labels: This is contiguous data with a unique terminator
   character. This data is composed of strings separated by a unique
