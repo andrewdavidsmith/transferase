@@ -23,8 +23,6 @@
 
 #include "methylome_client_bindings.hpp"
 
-// #include "bindings_utils.hpp"
-
 #include <methylome_client_remote.hpp>
 
 #include <client_config.hpp>
@@ -67,10 +65,21 @@ methylome_client_bindings(nb::class_<transferase::methylome_client_remote> &cls)
   cls.def("__repr__", &xfr::methylome_client_remote::tostring);
   cls.def("available_genomes",
           nb::overload_cast<>(&xfr::methylome_client_remote::available_genomes,
-                              nb::const_));
+                              nb::const_),
+          R"doc(
+
+    Get a list of the genomes that are available to be configured.
+
+    )doc");
   cls.def("configured_genomes",
           nb::overload_cast<>(&xfr::methylome_client_remote::configured_genomes,
-                              nb::const_));
+                              nb::const_),
+          R"doc(
+
+    Get a list of the genomes that are already configured for this
+    MethylomeClient.
+
+    )doc");
   cls.def("get_levels",
           nb::overload_cast<const std::vector<std::string> &,
                             const xfr::query_container &>(
