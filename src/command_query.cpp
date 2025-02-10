@@ -466,6 +466,7 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
       ? do_intervals_query(args, index, interface, methylome_names,
                            request_type)
       : do_bins_query(args, index, interface, methylome_names, request_type);
+  lgr.info("Completed query with status: {}", error);
 
   return error ? EXIT_FAILURE : EXIT_SUCCESS;
 }
