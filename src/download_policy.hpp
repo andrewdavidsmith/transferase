@@ -77,4 +77,4 @@ struct std::formatter<transferase::download_policy_t>
          std::format_context &ctx) const -> std::format_context::iterator;
 };
 
-#endif
+#endif  // SRC_DOWNLOAD_POLICY_HPP_
