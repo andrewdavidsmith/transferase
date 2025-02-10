@@ -65,8 +65,7 @@ xfr index -v debug -x /path/to/index_directory -g hg38.fa
 #include <vector>
 
 auto
-command_index_main(int argc,
-                   char *argv[])  // NOLINT(cppcoreguidelines-avoid-c-arrays)
+command_index_main(int argc, char *argv[])  // NOLINT(*-c-arrays)
   -> int {
   static constexpr auto command = "index";
   static const auto usage =
@@ -87,9 +86,12 @@ command_index_main(int argc,
   desc.add_options()
     // clang-format off
     ("help,h", "print this message and exit")
-    ("genome,g", po::value(&genome_filename)->required(), "genome_file")
-    ("index-dir,x", po::value(&index_directory)->required(), "index output directory")
-    ("log-level,v", po::value(&log_level)->default_value(transferase::logger::default_level),
+    ("genome,g", po::value(&genome_filename)->required(),
+     "genome_file")
+    ("index-dir,x", po::value(&index_directory)->required(),
+     "index output directory")
+    ("log-level,v", po::value(&log_level)
+     ->default_value(transferase::logger::default_level),
      "{debug, info, warning, error, critical}")
     // clang-format on
     ;
@@ -127,10 +129,10 @@ command_index_main(int argc,
   };
   transferase::log_args<transferase::log_level_t::info>(args_to_log);
 
-  std::error_code ec;
+  std::error_code error;
   const auto genome_name =
-    transferase::genome_index::parse_genome_name(genome_filename, ec);
-  if (ec) {
+    transferase::genome_index::parse_genome_name(genome_filename, error);
+  if (error) {
     lgr.error("Failed to parse genome name from: {}", genome_filename);
     return EXIT_FAILURE;
   }
@@ -138,22 +140,29 @@ command_index_main(int argc,
 
   const auto constr_start = std::chrono::high_resolution_clock::now();
   const auto index =
-    transferase::genome_index::make_genome_index(genome_filename, ec);
+    transferase::genome_index::make_genome_index(genome_filename, error);
   const auto constr_stop = std::chrono::high_resolution_clock::now();
-  if (ec) {
-    if (ec == std::errc::no_such_file_or_directory)
+  if (error) {
+    if (error == std::errc::no_such_file_or_directory)
       lgr.error("Genome file not found: {}", genome_filename);
     else
-      lgr.error("Error constructing index: {}", ec);
+      lgr.error("Error constructing index: {}", error);
     return EXIT_FAILURE;
   }
   lgr.debug("Index construction time: {:.3}s",
             duration(constr_start, constr_stop));
 
-  index.write(index_directory, genome_name, ec);
-  if (ec) {
+  // Check on the output directory; if it doesn't exist, make it
+  validate_output_directory(index_directory, error);
+  if (error) {
+    lgr.error("Terminating due to error");
+    return EXIT_FAILURE;
+  }
+
+  index.write(index_directory, genome_name, error);
+  if (error) {
     lgr.error("Error writing cpg index {} {}: {}", index_directory, genome_name,
-              ec);
+              error);
     return EXIT_FAILURE;
   }
   lgr.info("Completed index construction");
