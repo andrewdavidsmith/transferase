@@ -85,6 +85,10 @@ rlstrip(const std::string &s) noexcept -> std::string {
 split_equals(const std::string &line, std::error_code &error) noexcept
   -> std::tuple<std::string, std::string>;
 
+auto
+validate_output_directory(const std::string &dirname,
+                          std::error_code &error) -> void;
+
 enum class output_file_error_code : std::uint8_t {
   ok = 0,
   is_a_directory = 1,
