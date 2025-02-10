@@ -37,6 +37,7 @@ location listed above.
 #include "level_container_bindings.hpp"
 #include "methylome_bindings.hpp"
 #include "methylome_client_bindings.hpp"
+#include "methylome_client_local_bindings.hpp"
 #include "query_container_bindings.hpp"
 
 #include <client_config.hpp>  // IWYU pragma: keep
@@ -47,6 +48,7 @@ location listed above.
 #include <level_element.hpp>
 #include <logger.hpp>
 #include <methylome.hpp>
+#include <methylome_client_local.hpp>
 #include <methylome_client_remote.hpp>
 #include <query_container.hpp>
 
@@ -126,6 +128,9 @@ NB_MODULE(transferase, the_module) {
     the_module, "MethylomeClient",
     "Client to get data from a remote methylome server");
 
+  auto MethylomeClientLocal = nb::class_<transferase::methylome_client_local>(
+    the_module, "MethylomeClientLocal", "Client to get data stored locally");
+
   client_config_bindings(ClientConfig);
 
   genomic_interval_bindings(GenomicInterval);
@@ -136,7 +141,6 @@ NB_MODULE(transferase, the_module) {
   level_container_bindings(LevelContainer);
   level_container_covered_bindings(LevelContainerCovered);
 
-  /// ADS: leaving out of v0.4.0 bindings
-  // methylome_directory_bindings(MethylomeDirectory);
+  methylome_client_local_bindings(MethylomeClientLocal);
   methylome_client_bindings(MethylomeClient);
 }
