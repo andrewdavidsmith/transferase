@@ -40,7 +40,7 @@ ReadWritePaths=/var/tmp/
 # The location of the config file below depends on the insallation
 # prefix.
 ExecStart=transferase server \
-  --config-file=/usr/local/share/transferase/transferase_server_config.toml
+  --config-file=/usr/local/share/transferase/transferase_server_config.conf
 
 # Probably don't need any editing below here
 CapabilityBoundingSet=

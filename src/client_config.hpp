@@ -84,7 +84,7 @@ struct client_config {
   static constexpr auto metadata_filename_default = "metadata.json";
   static constexpr auto index_dirname_default = "indexes";
   static constexpr auto client_config_filename_default =
-    "transferase_client_config.toml";
+    "transferase_client_config.conf";
   static constexpr auto client_log_filename_default = "transferase.log";
 
   std::string hostname;

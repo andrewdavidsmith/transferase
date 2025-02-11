@@ -131,14 +131,14 @@ ReadWritePaths=/var/tmp/
 # The location of the config file below depends on the insallation
 # prefix.
 ExecStart=transferase server \
-  --config-file=/usr/local/share/transferase/transferase_server_config.toml
+  --config-file=/usr/local/share/transferase/transferase_server_config.conf
 ```
 
 The requirement on the user and group is that they have read and write
 access to the appropriate files and directories. The
 `ReadWritePaths` is where the log file will go, and this is
 specified inside the transferase config file
-`transferase_server_config.toml` (this can be changed, but must
+`transferase_server_config.conf` (this can be changed, but must
 exist and be readable by the chosen user).
 
 Running detached
