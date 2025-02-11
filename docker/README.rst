@@ -42,7 +42,7 @@ The following are probably desirable to provide to the container:
 
 Here is one way to accomplish the above. Assume ``xfr_dir`` has
 subdirectories named ``methylomes``, ``indexes`` and a config file
-named ``transferase_server_config.toml``:
+named ``transferase_server_config.conf``:
 
 .. code:: console
 
@@ -54,7 +54,7 @@ named ``transferase_server_config.toml``:
            -x /transferase/indexes \
            -d /transferase/methylomes \
            -l /transferase/transferase_server.log \
-           -c /transferase/transferase_server_config.toml
+           -c /transferase/transferase_server_config.conf
 
 The network is passed to the container with the ``--net=host`` option to
 ``docker run``. The ``id`` command is used to set the username and group

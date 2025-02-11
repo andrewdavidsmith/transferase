@@ -41,7 +41,7 @@ namespace transferase {
 
 struct server_config {
   static constexpr auto server_config_filename_default =
-    "transferase_server_config.toml";
+    "transferase_server_config.conf";
 
   std::string hostname;
   std::string port;

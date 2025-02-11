@@ -79,7 +79,7 @@ namespace transferase {
 
 struct server_argset : argset_base<server_argset> {
   static constexpr auto default_config_filename =
-    "transferase_server_config.toml";
+    "transferase_server_config.conf";
 
   static auto
   get_default_config_file_impl() -> std::string {

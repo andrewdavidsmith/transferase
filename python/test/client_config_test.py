@@ -49,7 +49,7 @@ def test_assign_and_write_success():
     Test that data members of the created object can be assigned to
     and that writing succeeds
     """
-    config_filename = "transferase_client_config.toml"
+    config_filename = "transferase_client_config.conf"
     outdir = create_temp_directory()
     obj = ClientConfig.default()
     obj.hostname = "not-not-kernel.org"

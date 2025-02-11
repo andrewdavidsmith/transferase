@@ -43,7 +43,7 @@ first generate it in a user directory then copy it there.
 static constexpr auto examples = R"(
 Examples:
 
-xfr server-config -c /path/to/server_config_file.toml \
+xfr server-config -c /path/to/server_config_file.conf \
     --hostname=org.kernel.not \
     --port=65536 \
     --methylome-dir=/data/methylomes \
