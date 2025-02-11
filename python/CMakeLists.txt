@@ -76,9 +76,9 @@ if(PACKAGE_PYTHON)
   endforeach()
 
   ## Configuration for distributing is mutually independent with tests
-  # Copy the python/pyproject.conf to the build directory
-  configure_file(${PROJECT_SOURCE_DIR}/python/pyproject.conf
-    ${PROJECT_BINARY_DIR}/python/pyproject.conf COPYONLY)
+  # Copy the python/pyproject.toml to the build directory
+  configure_file(${PROJECT_SOURCE_DIR}/python/pyproject.toml
+    ${PROJECT_BINARY_DIR}/python/pyproject.toml COPYONLY)
   # Copy the hatch_build.py script to the build directory so that the
   # custom build hook can be used by 'hatch build'
   configure_file(${PROJECT_SOURCE_DIR}/python/hatch_build.py
