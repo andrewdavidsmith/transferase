@@ -182,7 +182,7 @@ while it is receiving and responding to clients.
   for a pre-determined numbers of bytes; no reads will continue
   "until" some pattern of types has been seen.
 
-* Request headers are by definition exactly 512 Bytes.
+* Request headers are by definition exactly 512 bytes.
 
 * Each request header has the following structure:
 
@@ -224,7 +224,7 @@ while it is receiving and responding to clients.
   or absolute directory path in a filesystem are allowed.  These
   labels are typically 10 characters each and the total space they may
   consume is limited by the total request header size of 512
-  Bytes. When each label is parsed from the request header, they are
+  bytes. When each label is parsed from the request header, they are
   copied into dynamically sized strings. Parsing will fail if
   incorrect characters are seen here, and validation of the request as
   a whole will not be attempted. Characters or bytes that could
