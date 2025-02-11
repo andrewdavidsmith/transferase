@@ -43,13 +43,15 @@ determined.
 static constexpr auto examples = R"(
 Examples:
 
-xfr check -x index_dir -d methylome_dir -g hg38 -m SRX012345 SRX612345
+xfr check -x index_dir -d methylome_dir
 )";
 
 #include "genome_index.hpp"
+#include "genome_index_set.hpp"
 #include "logger.hpp"
 #include "metadata_is_consistent.hpp"
 #include "methylome.hpp"
+#include "methylome_set.hpp"
 #include "utilities.hpp"
 
 #include <boost/program_options.hpp>
@@ -58,6 +60,7 @@ xfr check -x index_dir -d methylome_dir -g hg38 -m SRX012345 SRX612345
 #include <format>
 #include <iostream>
 #include <iterator>  // for std::cbegin, std::cend
+#include <memory>    // for std::shared_ptr
 #include <print>
 #include <ranges>
 #include <string>
@@ -79,8 +82,9 @@ command_check_main(int argc,
   static const auto description_msg =
     std::format("{}\n{}", rstrip(description), rstrip(examples));
 
-  std::string index_directory{};
+  std::string index_dir{};
   std::string genome_name{};
+  std::string methylome_name{};
   std::string methylome_dir{};
   transferase::log_level_t log_level{};
 
@@ -90,12 +94,12 @@ command_check_main(int argc,
   desc.add_options()
     // clang-format off
     ("help,h", "print this message and exit")
-    ("index-dir,x", po::value(&index_directory)->required(), "genome index directory")
-    ("genome,g", po::value(&genome_name)->required(), "genome name")
+    ("index-dir,x", po::value(&index_dir)->required(), "genome index directory")
+    ("genome,g", po::value(&genome_name), "genome name (default: all in directory)")
     ("methylome-dir,d", po::value(&methylome_dir)->required(),
      "directory containing methylomes")
-    ("methylomes,m", po::value<std::vector<std::string>>()->multitoken()->required(),
-     "methylome names")
+    ("methylome,m", po::value(&methylome_name),
+     "name of a methylome (default: all in directory)")
     ("log-level,v", po::value(&log_level)->default_value(transferase::logger::default_level),
      "{debug, info, warning, error, critical}")
     // clang-format on
@@ -119,58 +123,108 @@ command_check_main(int argc,
     return EXIT_FAILURE;
   }
 
-  auto &lgr = transferase::logger::instance(transferase::shared_from_cout(),
-                                            command, log_level);
+  namespace xfr = transferase;
+
+  auto &lgr =
+    xfr::logger::instance(xfr::shared_from_cout(), command, log_level);
   if (!lgr) {
     const auto status = lgr.get_status();
     std::println("Failure initializing logging: {}.", status.message());
     return EXIT_FAILURE;
   }
 
-  const auto methylomes = vm["methylomes"].as<std::vector<std::string>>();
+  std::error_code error;
 
-  const auto joined = methylomes | std::views::join_with(',');
-  std::vector<std::tuple<std::string, std::string>> args_to_log{
+  std::vector<std::string> methylome_names;
+  if (methylome_name.empty()) {
+    methylome_names = xfr::methylome::list(methylome_dir, error);
+    if (error) {
+      lgr.error("Error reading methylome directory {}: {}", methylome_dir,
+                error);
+      return EXIT_FAILURE;
+    }
+  }
+  else
+    methylome_names = {methylome_name};
+
+  std::vector<std::string> genome_names;
+  if (genome_name.empty()) {
+    genome_names = xfr::genome_index::list(index_dir, error);
+    if (error) {
+      lgr.error("Error reading genome index directory {}: {}", index_dir,
+                error);
+      return EXIT_FAILURE;
+    }
+  }
+  else
+    genome_names = {genome_name};
+
+  const auto joined_methylomes = methylome_names | std::views::join_with(',');
+  const auto joined_genomes = genome_names | std::views::join_with(',');
+  const std::vector<std::tuple<std::string, std::string>> args_to_log{
     // clang-format off
-    {"Index directory", index_directory},
-    {"Genome", genome_name},
+    {"Index directory", index_dir},
+    {"Genomes", std::string(std::cbegin(joined_genomes),
+                            std::cend(joined_genomes))},
     {"Methylome directory", methylome_dir},
-    {"Methylomes", std::string(std::cbegin(joined), std::cend(joined))},
+    {"Methylomes", std::string(std::cbegin(joined_methylomes),
+                               std::cend(joined_methylomes))},
     // clang-format on
   };
-  transferase::log_args<transferase::log_level_t::info>(args_to_log);
+  xfr::log_args<xfr::log_level_t::info>(args_to_log);
 
-  std::error_code index_read_err;
-  const auto index = transferase::genome_index::read(
-    index_directory, genome_name, index_read_err);
-  if (index_read_err) {
-    lgr.error("Failed to read genome index {} {}: {}", index_directory,
-              genome_name, index_read_err);
+  xfr::genome_index_set indexes(index_dir);
+  if (error) {
+    lgr.error("Failed to initialize genome index set: {}", error);
     return EXIT_FAILURE;
   }
-  const auto genome_index_consistency = index.is_consistent();
-  lgr.info("Index data and metadata consistent: {}", genome_index_consistency);
+
+  bool all_genomes_consitent = true;
+  for (const auto &genome_name : genome_names) {
+    const auto index = indexes.get_genome_index(genome_name, error);
+    if (error) {
+      lgr.error("Failed to read genome index {}: {}", genome_name, error);
+      return EXIT_FAILURE;
+    }
+    const auto genome_index_consistency = index->is_consistent();
+    lgr.info("Index data and metadata consistent for {}: {}", genome_name,
+             genome_index_consistency);
+    all_genomes_consitent = all_genomes_consitent && genome_index_consistency;
+  }
+
+  xfr::methylome_set methylomes(methylome_dir);
+  if (error) {
+    lgr.error("Failed to initialize methylome set: {}", error);
+    return EXIT_FAILURE;
+  }
 
   bool all_methylomes_consitent = true;
   bool all_methylomes_metadata_consitent = true;
-  for (const auto &methylome_name : methylomes) {
-    std::error_code ec;
-    const auto meth =
-      transferase::methylome::read(methylome_dir, methylome_name, ec);
-    if (ec) {
-      lgr.error("Failed to read methylome {}: {}", methylome_name, ec);
+  for (const auto &methylome_name : methylome_names) {
+    const auto methylome = methylomes.get_methylome(methylome_name, error);
+    if (error) {
+      lgr.error("Failed to read methylome {}: {}", methylome_name, error);
       return EXIT_FAILURE;
     }
+    const auto methylome_consistency = methylome->is_consistent();
+    lgr.info("Methylome data and metadata consistent for {}: {}",
+             methylome_name, methylome_consistency);
+    lgr.info("Methylome methylation levels: {}",
+             methylome->global_levels_covered());
 
-    lgr.info("Methylome methylation levels: {}", meth.global_levels_covered());
-
-    const auto methylome_consistency = meth.is_consistent();
-    lgr.info("Methylome data and metadata are consistent: {}",
-             methylome_consistency);
     all_methylomes_consitent =
       all_methylomes_consitent && methylome_consistency;
 
-    const auto metadata_consistency = metadata_is_consistent(meth, index);
+    const auto genome_name = methylome->get_genome_name();
+    const auto index = indexes.get_genome_index(genome_name, error);
+    if (error) {
+      lgr.error("Failed to get genome index {} required by methylome {}: {}",
+                genome_name, methylome_name, error);
+      return EXIT_FAILURE;
+    }
+
+    const auto metadata_consistency =
+      metadata_is_consistent(*methylome, *index);
     lgr.info("Methylome and index metadata consistent: {}",
              metadata_consistency);
     all_methylomes_metadata_consitent =
@@ -181,7 +235,7 @@ command_check_main(int argc,
   lgr.info("all methylome metadata consistent: {}",
            all_methylomes_metadata_consitent);
 
-  const auto ret_val = genome_index_consistency && all_methylomes_consitent &&
+  const auto ret_val = all_genomes_consitent && all_methylomes_consitent &&
                        all_methylomes_metadata_consitent;
 
   return ret_val ? EXIT_SUCCESS : EXIT_FAILURE;
