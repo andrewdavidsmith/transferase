@@ -48,10 +48,10 @@ jobs:
 
     - name: Run cppcheck
       run: |
-        ${CONDA}/bin/cppcheck \
+        cppcheck \
           --quiet \
           --enable=all \
           --check-level=exhaustive \
           --inline-suppr \
-          --suppressions-list=.cppcheck_suppress
+          --suppressions-list=.cppcheck_suppress \
           $(git ls-files '*.*pp')
