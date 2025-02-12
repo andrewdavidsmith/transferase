@@ -175,24 +175,6 @@ client_config::get_default_index_dir(std::error_code &error) -> std::string {
   return check_and_return_directory(config_dir, index_dirname_default, error);
 }
 
-[[nodiscard]] inline auto
-get_dir_default_impl(const std::string &dirname,
-                     std::error_code &error) -> std::string {
-  const auto config_dir_local = client_config::get_default_config_dir(error);
-  if (error)
-    return {};
-  return check_and_return_directory(config_dir_local, dirname, error);
-}
-
-[[nodiscard]] inline auto
-get_file_default_impl(const std::string &filename,
-                      std::error_code &error) -> std::string {
-  const auto config_dir_local = client_config::get_default_config_dir(error);
-  if (error)
-    return {};
-  return check_and_return_file(config_dir_local, filename, error);
-}
-
 [[nodiscard]] auto
 client_config::get_config_file(const std::string &config_dir,
                                std::error_code &error) -> std::string {
@@ -215,17 +197,8 @@ client_config::set_defaults(std::string config_dir,
 
   hostname = default_hostname;
   port = default_port;
-
-  const auto dirname = (fs::path{config_dir} / index_dirname_default).string();
-  index_dir = get_dir_default_impl(dirname, error);
-  if (error)
-    return;
-
-  const auto filename =
-    (fs::path{config_dir} / metadata_filename_default).string();
-  metadata_file = get_file_default_impl(filename, error);
-  if (error)
-    return;
+  index_dir = (fs::path{config_dir} / index_dirname_default).string();
+  metadata_file = (fs::path{config_dir} / metadata_filename_default).string();
 }
 
 auto
@@ -327,6 +300,7 @@ client_config::read(std::string config_dir,
     if (error)
       return {};
   }
+
   // Get the config filename
   const auto config_file = get_config_file(config_dir, error);
   if (error)
@@ -335,6 +309,23 @@ client_config::read(std::string config_dir,
   parse_config_file(config, config_file, error);
   if (error)
     return {};
+
+  // ADS: pay attention to paths here -- source of headaches.
+  if (!config.index_dir.empty())
+    config.index_dir = (std::filesystem::path{config_dir} / config.index_dir)
+                         .lexically_normal()
+                         .string();
+
+  if (!config.metadata_file.empty()) {
+    config.metadata_file =
+      (std::filesystem::path{config_dir} / config.metadata_file)
+        .lexically_normal()
+        .string();
+    config.meta = transferase_metadata::read(config.metadata_file, error);
+    if (error)
+      return {};
+  }
+
   return config;
 }
 

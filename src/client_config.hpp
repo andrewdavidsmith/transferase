@@ -66,6 +66,7 @@
 // full logger needs to be seen for 'mp11' and 'describe'
 #include "download_policy.hpp"  // IWYU pragma: keep
 #include "logger.hpp"           // IWYU pragma: keep
+#include "transferase_metadata.hpp"
 
 #include <boost/describe.hpp>
 
@@ -87,6 +88,7 @@ struct client_config {
     "transferase_client_config.conf";
   static constexpr auto client_log_filename_default = "transferase.log";
 
+  transferase_metadata meta;
   std::string hostname;
   std::string port;
   std::string index_dir;
@@ -97,6 +99,11 @@ struct client_config {
 
   [[nodiscard]] auto
   tostring() const -> std::string;
+
+  [[nodiscard]] auto
+  available_genomes() const noexcept -> std::vector<std::string> {
+    return meta.available_genomes();
+  }
 
   /// Read the client configuration.
   [[nodiscard]] static auto
@@ -216,6 +223,7 @@ enum class client_config_error_code : std::uint8_t {
   error_identifying_transferase_server = 6,
   invalid_client_config_information = 7,
   error_obtaining_sytem_config_dir = 8,
+  failed_to_read_transferase_metadata_file = 9,
 };
 
 template <>
@@ -237,6 +245,7 @@ struct client_config_error_category : std::error_category {
     case 6: return "error identifying transferase server"s;
     case 7: return "invalid client config information"s;
     case 8: return "error obtaining system config dir"s;
+    case 9: return "failed to read transferase metadata file"s;
     }
     std::unreachable();
   }
