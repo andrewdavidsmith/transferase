@@ -49,8 +49,9 @@ jobs:
     - name: Run cppcheck
       run: |
         ${CONDA}/bin/cppcheck \
-          --std=c++23 \
+          --quiet \
           --enable=all \
           --check-level=exhaustive \
-          --suppressions-list=.cppcheck_suppress \
+          --inline-suppr \
+          --suppressions-list=.cppcheck_suppress
           $(git ls-files '*.*pp')
