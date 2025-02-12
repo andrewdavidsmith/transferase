@@ -72,7 +72,6 @@ client_config_bindings(nanobind::class_<transferase::client_config> &cls)
     If you use this function on an instance (client.default()) be
     aware that it will not change the calling object. You need to
     assign to an object when calling this function.
-
     )doc");
   cls.def("save",
           nb::overload_cast<const std::string &>(
@@ -87,7 +86,6 @@ client_config_bindings(nanobind::class_<transferase::client_config> &cls)
 
     config_dir (str): The name of a directory to write the
         configuration. Typically this should be left as the default.
-
     )doc",
           "config_dir"_a = std::string());
   cls.def(
@@ -117,11 +115,15 @@ client_config_bindings(nanobind::class_<transferase::client_config> &cls)
 
     config_dir (str): The name of a directory to write the configuration.
         Typically this should be left as the default.
-
     )doc",
     "genomes"_a = std::vector<std::string>{},
     "download_policy"_a = transferase::download_policy_t::missing,
     "config_dir"_a = std::string{});
+  cls.def("available_genomes", &transferase::client_config::available_genomes,
+          R"doc(
+    Get a list of available genomes that can be configured by a request
+    to a remote server.
+    )doc");
   cls.def_rw("hostname", &transferase::client_config::hostname,
              R"doc(
     URL or IP address for the remote transferase server.  Like
@@ -129,14 +131,12 @@ client_config_bindings(nanobind::class_<transferase::client_config> &cls)
     a protocol or slashes, just the hostname.  You should only change
     this if there is a problem setting the server or if you have setup
     your own server.
-
     )doc");
   cls.def_rw("port", &transferase::client_config::port,
              R"doc(
     The server port number. You will find this along with the hostname of
     the transferase server. If it has been setup using ClientConfig, then
     you don't have to worry about it.
-
     )doc");
   cls.def_rw("index_dir", &transferase::client_config::index_dir,
              R"doc(
@@ -146,7 +146,6 @@ client_config_bindings(nanobind::class_<transferase::client_config> &cls)
     '${HOME}/.config/transferase/indexes' and there is no reason to
     change it unless you are working with your own methylomes and
     started the data analysis with your own reference genome.
-
     )doc");
   cls.def_rw("metadata_file", &transferase::client_config::metadata_file,
              R"doc(
@@ -155,27 +154,22 @@ client_config_bindings(nanobind::class_<transferase::client_config> &cls)
     By default this file is pulled from a remote server and can be updated.
     As with 'index_dir' there is no reason to change this unless you are
     working with your own data.
-
     )doc");
   cls.def_rw("methylome_dir", &transferase::client_config::methylome_dir,
              R"doc(
     Directory to search for methylomes stored locally.
-
     )doc");
   cls.def_rw("log_file", &transferase::client_config::log_file,
              R"doc(
     Log information about transferase events in this file.
-
     )doc");
   cls.def_rw("log_level", &transferase::client_config::log_level,
              R"doc(
     How much to log {debug, info, warning, error, critical}.
-
     )doc");
   cls.def("__repr__", &transferase::client_config::tostring,
           R"doc(
     Print the contents of a ClientConfig object.
-
     )doc");
   cls.doc() = R"doc(
     A ClientConfig object is an interface to use when setting up the
