@@ -56,7 +56,7 @@ methylome_client_remote::validate_derived(std::error_code &error) noexcept
     return;
   }
   if (config.metadata_file.empty()) {
-    error = methylome_client_base_error_code::metadata_not_found;
+    error = methylome_client_base_error_code::transferase_metadata_not_found;
     return;
   }
 }
