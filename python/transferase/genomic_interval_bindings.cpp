@@ -91,8 +91,6 @@ genomic_interval_bindings(nanobind::class_<transferase::genomic_interval> &cls)
             "Index out of range: ch_id={}, n_chroms={}", self.ch_id, n_chroms));
         return nb::make_tuple(index.meta.chrom_order[self.ch_id], self.start,
                               self.stop);
-        // return std::format("{}\t{}\t{}", index.meta.chrom_order[self.ch_id],
-        //                    self.start, self.stop);
       },
       R"doc(
 
