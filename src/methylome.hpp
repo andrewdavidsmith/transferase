@@ -102,27 +102,30 @@ struct methylome {
   operator=(methylome &&) noexcept = default;
 
   /// @brief Read a methylome object from a filesystem.
-  /// @param directory Directory where the methylome files can be found.
+  /// @param directory_name Directory where the methylome files can be
+  /// found.
   /// @param methylome_name Read the methylome for the sample or accession.
   /// @param error An error code that is set for any error while reading.
   /// @return A methylome object.
   [[nodiscard]] static auto
-  read(const std::string &dirname, const std::string &methylome_name,
+  read(const std::string &directory_name, const std::string &methylome_name,
        std::error_code &error) noexcept -> methylome;
 
 #ifndef TRANSFERASE_NOEXCEPT
   /// @brief Read a methylome object from a filesystem.
-  /// @param directory Directory where the methylome files can be found.
+  /// @param directory_name Directory where the methylome files can be found.
   /// @param methylome_name Read the methylome for the sample or accession.
   /// @return A methylome object.
   /// @throw std::system_error if any error is encountered while reading.
   static auto
-  read(const std::string &dirname,
+  read(const std::string &directory_name,
        const std::string &methylome_name) -> methylome {
     std::error_code error;
-    auto meth = read(dirname, methylome_name, error);
+    auto meth = read(directory_name, methylome_name, error);
     if (error)
-      throw std::system_error(error);
+      throw std::system_error(
+        error, std::format("directory_name={}, methylome_name={}",
+                           directory_name, methylome_name));
     return meth;
   }
 #endif
@@ -162,25 +165,28 @@ struct methylome {
   }
 
   /// @brief Write this methylome to the filesystem.
-  /// @param directory The directory in where this methylome should be written.
+  /// @param directory_name The directory in where this methylome
+  /// should be written.
   /// @param methylome_name The name of the methylome; determines filenames
   /// written.
   /// @param error An error code that is set if any error encountered while
   /// writing
   auto
-  write(const std::string &outdir, const std::string &methylome_name,
+  write(const std::string &directory_name, const std::string &methylome_name,
         std::error_code &error) const noexcept -> void;
 
 #ifndef TRANSFERASE_NOEXCEPT
   /// @brief Write this methylome to the filesystem.
-  /// @param directory The directory in where this methylome should be written.
+  /// @param directory_name The directory in where this methylome
+  /// should be written.
   /// @param methylome_name The name of the methylome; determines filenames
   /// written.
   /// @throw std::system_error if any error is encountered while writing.
   auto
-  write(const std::string &outdir, const std::string &name) const -> void {
+  write(const std::string &directory_name,
+        const std::string &name) const -> void {
     std::error_code error;
-    write(outdir, name, error);
+    write(directory_name, name, error);
     if (error)
       throw std::system_error(error);
   }
@@ -251,7 +257,7 @@ struct methylome {
   }
 
   /// @brief Returns true iff the methylome files exist for the given name.
-  /// @param directory The directory in which to look for files.
+  /// @param directory_name The directory in which to look for files.
   /// @param methylome_name The name of the methylome to look for.
   [[nodiscard]] static auto
   files_exist(const std::string &directory,
@@ -259,25 +265,25 @@ struct methylome {
 
   /// @brief List the names of methylomes that can be read from the
   /// given directory.
-  /// @param directory The directory in which to look.
+  /// @param directory_name The directory in which to look.
   /// @param error An error code set if any error is encountered while
   /// searching the directory.
   /// @return A vector of strings holding methylome names.
   [[nodiscard]] static auto
-  list(const std::string &dirname,
+  list(const std::string &directory_name,
        std::error_code &error) noexcept -> std::vector<std::string>;
 
 #ifndef TRANSFERASE_NOEXCEPT
   /// @brief List the names of methylomes that can be read from the given
   /// directory.
-  /// @param directory The directory in which to look.
+  /// @param directory_name The directory in which to look.
   /// @return A vector of strings holding methylome names.
   /// @throw std::system_error if any error is encountered while searching
   /// the directory.
   [[nodiscard]] static auto
-  list(const std::string &dirname) -> std::vector<std::string> {
+  list(const std::string &directory_name) -> std::vector<std::string> {
     std::error_code error;
-    auto methylome_names = list(dirname, error);
+    auto methylome_names = list(directory_name, error);
     if (error)
       throw std::system_error(error);
     return methylome_names;
