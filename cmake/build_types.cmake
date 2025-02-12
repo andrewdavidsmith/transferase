@@ -123,6 +123,31 @@ endif()
 if(CMAKE_BUILD_TYPE STREQUAL "StaticAnalysis")
   message(STATUS "Using the 'StaticAnalysis' build type")
 
+  # If no specific static analysis is requested, do them all
+  if(NOT RUN_CPPCHECK AND NOT RUN_IWYU AND
+     NOT RUN_CPPLINT  AND NOT RUN_CLANG_TIDY)
+    set(RUN_CPPCHECK on)
+    set(RUN_IWYU on)
+    set(RUN_CPPLINT on)
+    set(RUN_CLANG_TIDY on)
+  endif()
+
+  set(STATIC_ANALYSIS_CHECKS "")
+  if(RUN_CPPCHECK)
+    list(APPEND STATIC_ANALYSIS_CHECKS "cppcheck")
+  endif()
+  if(RUN_CPPLINT)
+    list(APPEND STATIC_ANALYSIS_CHECKS "cpplint")
+  endif()
+  if(RUN_IWYU)
+    list(APPEND STATIC_ANALYSIS_CHECKS "iwyu")
+  endif()
+  if(RUN_CLANG_TIDY)
+    list(APPEND STATIC_ANALYSIS_CHECKS "clang-tidy")
+  endif()
+
+  message(STATUS "Requested static analysis: ${STATIC_ANALYSIS_CHECKS}")
+
   # Options on
   set(BUILD_PYTHON off)  ## Until we can wrangle nanobind
   set(ENABLE_UNIT_TESTS on)
