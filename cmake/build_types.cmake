@@ -28,7 +28,12 @@ list(APPEND CMAKE_BUILD_TYPES
 )
 
 if(NOT ${CMAKE_BUILD_TYPE} IN_LIST CMAKE_BUILD_TYPES)
-  message(FATAL_ERROR "Build type not found: ${CMAKE_BUILD_TYPE}")
+  string(REPLACE ";"  "\n - " BUILD_TYPES_FORMATTED "${CMAKE_BUILD_TYPES}")
+  string(PREPEND BUILD_TYPES_FORMATTED "\n - ")
+  message("Build type not found: ${CMAKE_BUILD_TYPE}\n"
+    "Options are: ${BUILD_TYPES_FORMATTED}"
+  )
+  message(FATAL_ERROR "Terminating due to incorrect build type")
 endif()
 
 # Release
