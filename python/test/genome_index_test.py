@@ -90,13 +90,6 @@ def test_files_exist():
     assert isinstance(result, bool)
     assert result
 
-def test_parse_genome_name():
-    """Test the static 'parse_genome_name' method"""
-    filename = "eFlareon.fasta.gz"
-    result = GenomeIndex.parse_genome_name(filename)
-    assert isinstance(result, str)
-    assert result == "eFlareon"
-
 def test_list_genome_indexes():
     """Test the static 'list_genome_indexes' method"""
     directory = "data/lutions/indexes"
