@@ -57,8 +57,21 @@ change_permissions_to_no_write(const std::filesystem::path &dir)
 }
 
 [[nodiscard]] auto
-write_should_fail(const std::filesystem::path &dir,
-                  std::error_code &ec) -> bool {
+change_permissions_to_write(const std::filesystem::path &dir)
+  -> std::error_code {
+  std::error_code ec;
+  // clang-format off
+  namespace fs = std::filesystem;
+  fs::permissions(dir, (fs::perms::owner_write |
+                        fs::perms::group_write),
+                  fs::perm_options::replace, ec);
+  // clang-format on
+  return ec;
+}
+
+[[nodiscard]] auto
+write_should_fail(const std::filesystem::path &dir, std::error_code &ec)
+  -> bool {
   bool write_failed = false;
   std::filesystem::path file = dir / "test_file.txt";
   std::ofstream test_file(file);
@@ -162,7 +175,8 @@ TEST(methylome_test, invalid_write) {
   static constexpr auto methylome_name = "eFlareon_brain";
 
   std::error_code ec;
-  const auto output_directory = generate_unique_dir_name();
+  const auto output_directory = generate_unique_dir_name() + "_MMMMMMMM";
+
   std::filesystem::create_directory(output_directory, ec);
   if (ec)
     return;
@@ -172,8 +186,11 @@ TEST(methylome_test, invalid_write) {
     return;
 
   const auto proceed_this_test = write_should_fail(output_directory, ec);
-  if (ec || !proceed_this_test)
+  if (ec || !proceed_this_test) {
+    remove_directories(output_directory, ec);
+    EXPECT_FALSE(ec);
     return;
+  }
 
   const auto meth = methylome::read(methylome_directory, methylome_name, ec);
   EXPECT_FALSE(ec);
@@ -204,9 +221,10 @@ TEST(methylome_test, invalid_write) {
     EXPECT_TRUE(remove_ok);
   }
 
-  const bool remove_ok = std::filesystem::remove_all(output_directory, ec);
+  ec = change_permissions_to_write(output_directory);
   EXPECT_FALSE(ec);
-  EXPECT_TRUE(remove_ok);
+  remove_directories(output_directory, ec);
+  EXPECT_FALSE(ec);
 }
 
 TEST(methylome_test, init_metadata) {
