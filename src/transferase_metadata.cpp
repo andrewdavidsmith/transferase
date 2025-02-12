@@ -71,29 +71,34 @@ transferase_metadata::get_genome(
 transferase_metadata::read(const std::string &json_filename,
                            std::error_code &error) noexcept
   -> transferase_metadata {
+  constexpr auto read_error = transferase_metadata_error_code::
+    error_reading_transferase_metadata_json_file;
+  constexpr auto parse_error = transferase_metadata_error_code::
+    error_parsing_transferase_metadata_json_file;
+
   std::ifstream in(json_filename);
   if (!in) {
-    error = transferase_metadata_error_code::error_reading_metadata_json_file;
+    error = read_error;
     return {};
   }
 
   const auto filesize = static_cast<std::streamsize>(
     std::filesystem::file_size(json_filename, error));
   if (error) {
-    error = transferase_metadata_error_code::error_reading_metadata_json_file;
+    error = read_error;
     return {};
   }
 
   std::string payload(filesize, '\0');
   if (!in.read(payload.data(), filesize)) {
-    error = transferase_metadata_error_code::error_reading_metadata_json_file;
+    error = read_error;
     return {};
   }
 
   std::map<std::string, std::map<std::string, std::string>> data;
   boost::json::parse_into(data, payload, error);
   if (error) {
-    error = transferase_metadata_error_code::error_parsing_metadata_json_file;
+    error = parse_error;
     return {};
   }
 
