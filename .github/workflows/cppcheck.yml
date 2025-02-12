@@ -44,7 +44,7 @@ jobs:
 
     - name: Install cppcheck
       run: |
-        conda install -c conda-forge cppcheck
+        conda install -c conda-forge cppcheck>=2.16
 
     - name: Run cppcheck
       run: |
