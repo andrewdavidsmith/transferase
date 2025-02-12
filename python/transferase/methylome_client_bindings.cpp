@@ -50,35 +50,22 @@ methylome_client_bindings(nb::class_<transferase::methylome_client_remote> &cls)
   namespace xfr = transferase;         // NOLINT
   cls.def_static("get_client", &xfr::methylome_client_remote::get_client,
                  R"doc(
-
     Get a MethylomeClient initialized with settings already configured
     by the current user.
-
     )doc",
                  "config_dir"_a = std::string{});
   cls.def_rw("config", &xfr::methylome_client_remote::config,
              R"doc(
-
     The ClientConfig object associated with this MethylomeClient.
 
     )doc");
   cls.def("__repr__", &xfr::methylome_client_remote::tostring);
-  cls.def("available_genomes",
-          nb::overload_cast<>(&xfr::methylome_client_remote::available_genomes,
-                              nb::const_),
-          R"doc(
-
-    Get a list of the genomes that are available to be configured.
-
-    )doc");
   cls.def("configured_genomes",
           nb::overload_cast<>(&xfr::methylome_client_remote::configured_genomes,
                               nb::const_),
           R"doc(
-
     Get a list of the genomes that are already configured for this
     MethylomeClient.
-
     )doc");
   cls.def("get_levels",
           nb::overload_cast<const std::vector<std::string> &,
@@ -86,7 +73,6 @@ methylome_client_bindings(nb::class_<transferase::methylome_client_remote> &cls)
             &xfr::methylome_client_remote::get_levels<xfr::level_element_t>,
             nb::const_),
           R"doc(
-
     Make a query for methylation levels in each of a given set of
     intervals, specified depending on query type.
 
@@ -104,7 +90,6 @@ methylome_client_bindings(nb::class_<transferase::methylome_client_remote> &cls)
         list of GenomicInterval objects using a GenomeIndex. These
         must be valid for the genome associated with the given
         methylome names.
-
     )doc",
           "methylome_names"_a, "query"_a);
   cls.def(
@@ -113,7 +98,6 @@ methylome_client_bindings(nb::class_<transferase::methylome_client_remote> &cls)
       &xfr::methylome_client_remote::get_levels<xfr::level_element_t>,
       nb::const_),
     R"doc(
-
     Make a query for methylation levels in each non-overlapping
     genomic interval of the given size.
 
@@ -130,7 +114,6 @@ methylome_client_bindings(nb::class_<transferase::methylome_client_remote> &cls)
     bin_size (int): A values specifying the size of non-overlapping
         intervals to request levels for. There is a minimum size,
         likely between 100 and 200 to prevent server overload.
-
     )doc",
     "methylome_names"_a, "bin_size"_a);
   cls.def(
@@ -140,7 +123,6 @@ methylome_client_bindings(nb::class_<transferase::methylome_client_remote> &cls)
       &xfr::methylome_client_remote::get_levels<xfr::level_element_covered_t>,
       nb::const_),
     R"doc(
-
     Make a query for methylation levels and number of sites with reads
     in each of a given set of intervals, specified depending on query
     type.
@@ -159,7 +141,6 @@ methylome_client_bindings(nb::class_<transferase::methylome_client_remote> &cls)
         list of GenomicInterval objects using a GenomeIndex. These
         must be valid for the genome associated with the given
         methylome names.
-
     )doc",
     "methylome_names"_a, "query"_a);
   cls.def(
@@ -168,7 +149,6 @@ methylome_client_bindings(nb::class_<transferase::methylome_client_remote> &cls)
       &xfr::methylome_client_remote::get_levels<xfr::level_element_covered_t>,
       nb::const_),
     R"doc(
-
     Make a query for methylation levels, along with information about
     the number of sites covered by reads, in each non-overlapping
     genomic interval of the given size.
@@ -186,11 +166,9 @@ methylome_client_bindings(nb::class_<transferase::methylome_client_remote> &cls)
     bin_size (int): A values specifying the size of non-overlapping
         intervals to request levels for. There is a minimum size,
         likely between 100 and 200 to prevent server overload.
-
     )doc",
     "methylome_names"_a, "bin_size"_a);
   cls.doc() = R"doc(
-
     A MethylomeClient is an interface for querying a remote
     transferase server. Using the MethylomeClient to make queries
     ensures that the client and server are always communicating about
@@ -199,7 +177,6 @@ methylome_client_bindings(nb::class_<transferase::methylome_client_remote> &cls)
     haplotypes. If you have not already setup transferase using
     the ClientConfig class (or with command line tools), then instances
     of this class might be very difficult to use.
-
     )doc"
     //
     ;
