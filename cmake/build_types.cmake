@@ -24,7 +24,7 @@
 set(CMAKE_BUILD_TYPES "Build;Debug;Release;RelWithDebInfo;MinSizeRel")
 # The custom build types defined below
 list(APPEND CMAKE_BUILD_TYPES
-  "ReleasePython;UnitTests;PythonTests;StaticAnalysis"
+  "ReleasePython;Test;TestPython;StaticAnalysis"
 )
 
 if(NOT ${CMAKE_BUILD_TYPE} IN_LIST CMAKE_BUILD_TYPES)
@@ -89,9 +89,9 @@ if(CMAKE_BUILD_TYPE STREQUAL "ReleasePython")
   set(STRIP_SUB_LIST "")
 endif()
 
-# UnitTests
-if(CMAKE_BUILD_TYPE STREQUAL "UnitTests")
-  message(STATUS "Using the UnitTests build type")
+# Test
+if(CMAKE_BUILD_TYPE STREQUAL "Test")
+  message(STATUS "Using the Test build type")
 
   # Options on
   set(ENABLE_UNIT_TESTS on)
@@ -101,9 +101,9 @@ if(CMAKE_BUILD_TYPE STREQUAL "UnitTests")
   set(STRIP_PATHS_FROM_BINARIES off)
 endif()
 
-# PythonTests
-if(CMAKE_BUILD_TYPE STREQUAL "PythonTests")
-  message(STATUS "Using the 'PythonTests' build type")
+# TestPython
+if(CMAKE_BUILD_TYPE STREQUAL "TestPython")
+  message(STATUS "Using the 'TestPython' build type")
 
   # Options on
   set(BUILD_PYTHON on)
