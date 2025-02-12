@@ -70,8 +70,8 @@ change_permissions_to_write(const std::filesystem::path &dir)
 }
 
 [[nodiscard]] auto
-write_should_fail(const std::filesystem::path &dir, std::error_code &ec)
-  -> bool {
+write_should_fail(const std::filesystem::path &dir,
+                  std::error_code &ec) -> bool {
   bool write_failed = false;
   std::filesystem::path file = dir / "test_file.txt";
   std::ofstream test_file(file);
@@ -175,7 +175,7 @@ TEST(methylome_test, invalid_write) {
   static constexpr auto methylome_name = "eFlareon_brain";
 
   std::error_code ec;
-  const auto output_directory = generate_unique_dir_name() + "_MMMMMMMM";
+  const auto output_directory = generate_unique_dir_name();
 
   std::filesystem::create_directory(output_directory, ec);
   if (ec)
