@@ -25,4 +25,9 @@ constVariablePointer
 checkersReport
 unknownMacro
 unmatchedSuppression
+# Ignore unused function because it's too hard to get right
 unusedFunction
+# Ignore unused struct member because this won't go unnoticed anyway
+unusedStructMember
+# Ignore missing includes because if they are real things won't build
+missingInclude
