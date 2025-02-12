@@ -10,7 +10,7 @@ RUN git clone https://github.com/andrewdavidsmith/transferase.git \
     && cd /build/transferase \
     && cmake -B build \
     -DCMAKE_CXX_COMPILER=g++ \
-    -DCMAKE_BUILD_TYPE=Distribute \
+    -DCMAKE_BUILD_TYPE=Release \
     && cmake --build build -j${NUM_JOBS} \
     && cmake --install build --prefix /transferase
 

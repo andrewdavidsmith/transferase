@@ -24,16 +24,16 @@
 set(CMAKE_BUILD_TYPES "Build;Debug;Release;RelWithDebInfo;MinSizeRel")
 # The custom build types defined below
 list(APPEND CMAKE_BUILD_TYPES
-  "Distribute;DistributePython;UnitTests;PythonTests;StaticAnalysis"
+  "ReleasePython;UnitTests;PythonTests;StaticAnalysis"
 )
 
 if(NOT ${CMAKE_BUILD_TYPE} IN_LIST CMAKE_BUILD_TYPES)
   message(FATAL_ERROR "Build type not found: ${CMAKE_BUILD_TYPE}")
 endif()
 
-# Distribute
-if(CMAKE_BUILD_TYPE STREQUAL "Distribute")
-  message(STATUS "Using the Distribute build type")
+# Release
+if(CMAKE_BUILD_TYPE STREQUAL "Release")
+  message(STATUS "Using the Release build type")
 
   # Check compatibility
   if(BUILD_PYTHON OR
@@ -42,7 +42,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Distribute")
       ENABLE_CODE_COVERAGE OR
       ENABLE_PYTHON_UNIT_TESTS OR
       ENABLE_SANITIZING)
-    message(FATAL_ERROR "Specified options are incompatible with 'Distribute'")
+    message(FATAL_ERROR "Specified options are incompatible with 'Release'")
   endif()
 
   # Inherit compile flags from 'Release'
@@ -59,9 +59,9 @@ if(CMAKE_BUILD_TYPE STREQUAL "Distribute")
   set(STRIP_SUB_LIST "")
 endif()
 
-# DistributePython
-if(CMAKE_BUILD_TYPE STREQUAL "DistributePython")
-  message(STATUS "Using the DistributePython build type")
+# ReleasePython
+if(CMAKE_BUILD_TYPE STREQUAL "ReleasePython")
+  message(STATUS "Using the ReleasePython build type")
 
   # Check compatibility
   if(UNIT_TESTS OR
@@ -70,7 +70,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "DistributePython")
       ENABLE_PYTHON_UNIT_TESTS OR
       ENABLE_SANITIZING)
     message(FATAL_ERROR
-      "Specified options are incompatible with 'DistributePython'")
+      "Specified options are incompatible with 'ReleasePython'")
   endif()
 
   # Inherit compile flags from 'Release'
