@@ -26,6 +26,7 @@
 #include <client_config.hpp>
 #include <download_policy.hpp>
 #include <logger.hpp>
+#include <transferase_metadata.hpp>
 
 #include <gtest/gtest.h>
 
@@ -35,6 +36,7 @@
 #include <stdexcept>
 #include <string>
 #include <system_error>
+#include <unordered_map>
 #include <vector>
 
 using namespace transferase;  // NOLINT

@@ -28,9 +28,10 @@
 #include <boost/beast.hpp>
 #include <gtest/gtest.h>
 
-#include <algorithm>
+#include <algorithm>  // IWYU pragma: keep
 #include <chrono>
 #include <filesystem>
+#include <format>
 #include <ranges>
 #include <string>
 #include <utility>
