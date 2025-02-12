@@ -56,8 +56,7 @@ genome_index_bindings(nb::class_<transferase::genome_index> &cls) -> void {
         found.
 
     genome_name (str): Read the index for the genome with this name.
-
-      )doc",
+    )doc",
                 "directory"_a, "genome_name"_a)
     .def("write",
          nb::overload_cast<const std::string &, const std::string &>(
@@ -72,7 +71,6 @@ genome_index_bindings(nb::class_<transferase::genome_index> &cls) -> void {
 
     genome_name (str): The name of the genome; determines filenames
         written.
-
     )doc",
          "directory"_a, "name"_a)
     .def("make_query", &transferase::genome_index::make_query, R"doc(
@@ -84,8 +82,7 @@ genome_index_bindings(nb::class_<transferase::genome_index> &cls) -> void {
 
     intervals (list[GenomicInterval]): A list of GenomicInterval
         objects, assumed to be sorted within each chromosome.
-
-      )doc",
+    )doc",
          "intervals"_a)
     .def_static("make_genome_index",
                 nb::overload_cast<const std::string &>(
@@ -98,8 +95,7 @@ genome_index_bindings(nb::class_<transferase::genome_index> &cls) -> void {
 
     genome_file (str): Filename for a reference genome in FASTA format
         (can be gzipped).
-
-      )doc",
+    )doc",
                 "genome_file"_a)
     .def_static("files_exist", &transferase::genome_index::files_exist,
                 R"doc(
@@ -111,8 +107,7 @@ genome_index_bindings(nb::class_<transferase::genome_index> &cls) -> void {
     directory (str): Directory to check.
 
     genome_name (str): Name of the genome to look for.
-
-      )doc",
+    )doc",
                 "directory"_a, "genome_name"_a)
     .def_static("list_genome_indexes",
                 nb::overload_cast<const std::string &>(
@@ -124,8 +119,7 @@ genome_index_bindings(nb::class_<transferase::genome_index> &cls) -> void {
     ----------
 
     directory (str): Directory to list.
-
-      )doc",
+    )doc",
                 "directory"_a)
     //
     ;
