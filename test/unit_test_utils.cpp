@@ -45,8 +45,8 @@ files_are_identical(const std::string &fn1, const std::string &fn2) -> bool {
 }
 
 [[nodiscard]] auto
-generate_temp_filename(const std::string &prefix, const std::string &suffix)
-  -> std::string {
+generate_temp_filename(const std::string &prefix,
+                       const std::string &suffix) -> std::string {
   const auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(
                         std::chrono::system_clock::now().time_since_epoch())
                         .count();
