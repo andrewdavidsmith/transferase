@@ -44,14 +44,14 @@ jobs:
 
     - name: Install cppcheck
       run: |
-        conda install -c conda-forge cppcheck>=2.16
+        pip install cppcheck
 
     - name: Run cppcheck
       run: |
-        ${CONDA}/bin/cppcheck \
+        cppcheck \
           --quiet \
           --enable=all \
           --check-level=exhaustive \
           --inline-suppr \
-          --suppressions-list=.cppcheck_suppress
+          --suppressions-list=.cppcheck_suppress \
           $(git ls-files '*.*pp')
