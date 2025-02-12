@@ -44,85 +44,122 @@ namespace transferase {
 struct query_container;
 template <typename level_element_type> struct level_container;
 
-inline auto
-methylome_write(const methylome &self, const std::string &directory,
-                const std::string &methylome_name) {
-  self.write(directory, methylome_name);
-}
-
 }  // namespace transferase
 
 namespace nb = nanobind;
-
-[[nodiscard]] static inline auto
-transferase_methylome_read(const std::string &directory,
-                           const std::string &methylome_name)
-  -> transferase::methylome {
-  std::error_code ec;
-  auto meth = transferase::methylome::read(directory, methylome_name, ec);
-  if (ec)
-    throw std::system_error(ec, std::format("directory={}, methylome_name={}",
-                                            directory, methylome_name));
-  return meth;
-}
 
 auto
 methylome_bindings(nb::class_<transferase::methylome> &cls) -> void {
   using namespace nanobind::literals;  // NOLINT
   cls.def(nb::init<>())
-    .def_static("read", &transferase_methylome_read, "directory"_a,
-                "methylome_name"_a)
-    .def("is_consistent",
-         [](const transferase::methylome &self) -> bool {
-           return self.is_consistent();
-         })
+    .def_static("read",
+                nb::overload_cast<const std::string &, const std::string &>(
+                  &transferase::methylome::read),
+                R"doc(
+    Read a methylome object from the filesystem.
+
+    Parameters
+    ----------
+
+    directory_name (str): Directory where the methylome is stored.
+
+    methylome_name (str): Name of the methylome to read.
+    )doc",
+                "directory_name"_a, "methylome_name"_a)
     .def(
       "is_consistent",
-      [](const transferase::methylome &self,
-         const transferase::methylome &other) -> bool {
-        return self.is_consistent(other);
-      },
-      "other"_a)
-    .def("write", &transferase::methylome_write, "directory"_a, "name"_a)
+      nb::overload_cast<>(&transferase::methylome::is_consistent, nb::const_),
+      R"doc(
+    Returns true if and only if a methylome is internally consistent.
+    )doc")
+    .def("is_consistent",
+         nb::overload_cast<const transferase::methylome &>(
+           &transferase::methylome::is_consistent, nb::const_),
+         R"doc(
+    Returns true iff two methylomes are consistent with each
+    other. This means they are the same size, and are based on the
+    same reference genome.
+
+    Parameters
+    ----------
+
+    other (Methylome): The other methylome to check for consistency
+        with self.
+    )doc",
+         "other"_a);
+  cls
+    .def("write",
+         nb::overload_cast<const std::string &, const std::string &>(
+           &transferase::methylome::write, nb::const_),
+         R"doc(
+    Write this methylome to a directory.
+
+    Parameters
+    ----------
+
+    directory_name (str): The directory in where this methylome should
+        be written.
+
+    methylome_name (str): The name of the methylome; determines
+        filenames written.
+    )doc",
+         "directory_name"_a, "methylome_name"_a)
     .def(
       "init_metadata",
       [](transferase::methylome &self,
          const transferase::genome_index &index) -> void {
-        const std::error_code ec = self.init_metadata(index);
-        if (ec)
-          throw std::system_error(ec);
+        const auto error = self.init_metadata(index);
+        if (error)
+          throw std::system_error(error);
       },
+      R"doc(
+    Initialize the metadata associated with this methylome.
+    This information is used while constructing a methylome and is
+    based on the given GenomeIndex.
+
+    Parameters
+    ----------
+
+    index (GenomeIndex): A GenomeIndex created from the exact same
+        reference genome as was used to map the reads when producing
+        this Methylome.
+    )doc",
       "index"_a)
     .def("update_metadata",
          [](transferase::methylome &self) -> void {
-           const std::error_code ec = self.update_metadata();
-           if (ec)
-             throw std::system_error(ec);
+           const auto error = self.update_metadata();
+           if (error)
+             throw std::system_error(error);
          })
     .def("add", &transferase::methylome::add, "other"_a)
-    .def("__repr__", &transferase::methylome::tostring)
+    .def("__repr__", &transferase::methylome::tostring,
+         R"doc(
+    Generate a string representation of a methylome in JSON format.
+      )doc")
     .def("get_levels",
-         [](const transferase::methylome &self,
-            const transferase::query_container &query) {
-           return self.get_levels<transferase::level_element_t>(query);
-         })
+         nb::overload_cast<const transferase::query_container &>(
+           &transferase::methylome::get_levels<transferase::level_element_t>,
+           nb::const_),
+         "query"_a)
+    .def(
+      "get_levels",
+      nb::overload_cast<const std::uint32_t, const transferase::genome_index &>(
+        &transferase::methylome::get_levels<transferase::level_element_t>,
+        nb::const_),
+      "bin_size"_a, "genome_index"_a)
     .def("get_levels_covered",
-         [](const transferase::methylome &self,
-            const transferase::query_container &query) {
-           return self.get_levels<transferase::level_element_covered_t>(query);
-         })
-    .def("get_levels",
-         [](const transferase::methylome &self, const std::uint32_t bin_size,
-            const transferase::genome_index &index) {
-           return self.get_levels<transferase::level_element_t>(bin_size,
-                                                                index);
-         })
-    .def("get_levels_covered",
-         [](const transferase::methylome &self, const std::uint32_t bin_size,
-            const transferase::genome_index &index) {
-           return self.get_levels<transferase::level_element_covered_t>(
-             bin_size, index);
-         })
+         nb::overload_cast<const transferase::query_container &>(
+           &transferase::methylome::get_levels<
+             transferase::level_element_covered_t>,
+           nb::const_),
+         "query"_a)
+    .def(
+      "get_levels_covered",
+      nb::overload_cast<const std::uint32_t, const transferase::genome_index &>(
+        &transferase::methylome::get_levels<
+          transferase::level_element_covered_t>,
+        nb::const_),
+      "bin_size"_a, "genome_index"_a)
     .def("global_levels",
          [](const transferase::methylome &self)
            -> std::tuple<std::uint32_t, std::uint32_t> {
