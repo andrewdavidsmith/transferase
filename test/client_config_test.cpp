@@ -213,3 +213,19 @@ TEST_F(client_config_mock, run_no_genomes_success) {
     EXPECT_TRUE(remove_ok);
   }
 }
+
+TEST_F(client_config_mock, read_metadata_success) {
+  constexpr auto n_lutions = 3;
+  const auto lutions_config_dir = "data/lutions";
+  std::error_code error;
+  client_config cfg = client_config::read(lutions_config_dir);
+  EXPECT_FALSE(error) << lutions_config_dir << "\n";
+
+  const bool validate_ok = cfg.validate(error);
+  EXPECT_TRUE(validate_ok);
+  EXPECT_FALSE(error) << error.message();
+
+  const auto all_genomes = cfg.meta.available_genomes();
+  EXPECT_FALSE(all_genomes.empty()) << cfg.metadata_file << "\n";
+  EXPECT_EQ(std::size(all_genomes), n_lutions);
+}
