@@ -25,7 +25,7 @@
 
 #include "logger.hpp"
 
-#include <filesystem>  // for std::filesystem::path, std::filesystem::exists
+#include <filesystem>
 #include <string>
 #include <tuple>
 
@@ -60,7 +60,7 @@ clean_path(const std::string &s, std::error_code &ec) -> std::string {
   p = std::filesystem::weakly_canonical(p, ec);
   if (ec)
     return {};
-  return p.string();
+  return p.lexically_normal().string();
 }
 
 auto
