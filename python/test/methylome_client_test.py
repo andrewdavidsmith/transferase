@@ -51,3 +51,5 @@ def test_reset_to_default_config():
     obj = MethylomeClient.get_client(config_dir)
     obj_tmp = obj
     assert obj_tmp == obj
+    if os.path.isdir(config_dir_tmp):
+        shutil.rmtree(config_dir_tmp)
