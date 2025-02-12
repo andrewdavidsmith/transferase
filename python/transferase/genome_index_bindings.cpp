@@ -36,39 +36,6 @@
 
 namespace nb = nanobind;
 
-namespace transferase {
-
-[[nodiscard]] inline auto
-genome_index_parse_genome_name(const std::string &filename) -> std::string {
-  return transferase::genome_index::parse_genome_name(filename);
-}
-
-[[nodiscard]] inline auto
-genome_index_list_genome_indexes(const std::string &directory)
-  -> std::vector<std::string> {
-  return transferase::genome_index::list_genome_indexes(directory);
-}
-
-[[nodiscard]] inline auto
-genome_index_make_genome_index(const std::string &genome_file)
-  -> transferase::genome_index {
-  return transferase::genome_index::make_genome_index(genome_file);
-}
-
-inline auto
-genome_index_write(const transferase::genome_index &self,
-                   const std::string &outdir, const std::string &genome_name) {
-  self.write(outdir, genome_name);
-}
-
-[[nodiscard]] inline auto
-genome_index_read(const std::string &dirname,
-                  const std::string &genome_name) -> genome_index {
-  return genome_index::read(dirname, genome_name);
-}
-
-};  // namespace transferase
-
 auto
 genome_index_bindings(nb::class_<transferase::genome_index> &cls) -> void {
   using namespace nanobind::literals;  // NOLINT
@@ -76,26 +43,90 @@ genome_index_bindings(nb::class_<transferase::genome_index> &cls) -> void {
     .def("is_consistent", &transferase::genome_index::is_consistent)
     .def("__hash__", &transferase::genome_index::get_hash)
     .def("__repr__", &transferase::genome_index::tostring)
-    .def_static("read", &transferase::genome_index_read, "dirname"_a,
-                "genome_name"_a)
-    .def("write", &transferase::genome_index_write, "outdir"_a, "name"_a)
-    .def("make_query", &transferase::genome_index::make_query,
-         nb::arg("intervals").noconvert())
+    .def_static("read",
+                nb::overload_cast<const std::string &, const std::string &>(
+                  &transferase::genome_index::read),
+                R"doc(
+    Read a a GenomeIndex object from a directory.
+
+    Parameters
+    ----------
+
+    directory (str): Directory where the genome_index files can be
+        found.
+
+    genome_name (str): Read the index for the genome with this name.
+
+      )doc",
+                "directory"_a, "genome_name"_a)
+    .def("write",
+         nb::overload_cast<const std::string &, const std::string &>(
+           &transferase::genome_index::write, nb::const_),
+         R"doc(
+    Write this GenomeIndex to a directory.
+
+    Parameters
+    ----------
+
+    directory (str): The directory in which to write the GenomeIndex.
+
+    genome_name (str): The name of the genome; determines filenames
+        written.
+
+    )doc",
+         "directory"_a, "name"_a)
+    .def("make_query", &transferase::genome_index::make_query, R"doc(
+    Construct a QueryContainer object for a given list of GenomicInterval
+    objects.
+
+    Parameters
+    ----------
+
+    intervals (list[GenomicInterval]): A list of GenomicInterval
+        objects, assumed to be sorted within each chromosome.
+
+      )doc",
+         "intervals"_a)
     .def_static("make_genome_index",
                 nb::overload_cast<const std::string &>(
                   &transferase::genome_index::make_genome_index),
-                "Create a genome index from a reference genome",
+                R"doc(
+    Create a genome index from a reference genome.
+
+    Parameters
+    ----------
+
+    genome_file (str): Filename for a reference genome in FASTA format
+        (can be gzipped).
+
+      )doc",
                 "genome_file"_a)
     .def_static("files_exist", &transferase::genome_index::files_exist,
-                "Check if genome index files exist in a directory.",
+                R"doc(
+    Check if genome index files exist in a directory.
+
+    Parameters
+    ----------
+
+    directory (str): Directory to check.
+
+    genome_name (str): Name of the genome to look for.
+
+      )doc",
                 "directory"_a, "genome_name"_a)
-    .def_static(
-      "parse_genome_name", &transferase::genome_index_parse_genome_name,
-      "Parse the genome name from a FASTA format reference genome file.",
-      "filename"_a)
     .def_static("list_genome_indexes",
-                &transferase::genome_index_list_genome_indexes,
-                "List all CpG indexes in a directory.", "directory"_a)
+                nb::overload_cast<const std::string &>(
+                  &transferase::genome_index::list_genome_indexes),
+                R"doc(
+    Get a list of names of all genome indexes in a directory.
+
+    Parameters
+    ----------
+
+    directory (str): Directory to list.
+
+      )doc",
+                "directory"_a)
     //
     ;
 }
