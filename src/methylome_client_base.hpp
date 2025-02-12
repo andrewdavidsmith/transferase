@@ -61,9 +61,8 @@ enum class methylome_client_base_error_code : std::uint8_t {
   error_reading_config_file = 1,
   required_config_values_not_found = 2,
   index_dir_not_found = 3,
-  metadata_not_found = 4,
-  failed_to_read_index_dir = 5,
-  failed_to_read_metadata_file = 6,
+  failed_to_read_index_dir = 4,
+  transferase_metadata_not_found = 5,
 };
 
 template <>
@@ -80,9 +79,8 @@ struct methylome_client_base_error_category : std::error_category {
     case 1: return "error reading default config file"s;
     case 2: return "required config values not found"s;
     case 3: return "index dir not found"s;
-    case 4: return "metadata not found"s;
-    case 5: return "failed to read index dir"s;
-    case 6: return "failed to read metadata file"s;
+    case 4: return "failed to read index dir"s;
+    case 5: return "transferase metadata not found"s;
     }
     std::unreachable();
   }
@@ -102,7 +100,6 @@ template <typename Derived> class methylome_client_base {
 public:
   client_config config;
   std::shared_ptr<genome_index_set> indexes;
-  transferase_metadata meta;
 
   // clang-format off
   auto self() -> Derived & {return static_cast<Derived &>(*this);}
@@ -112,11 +109,6 @@ public:
   [[nodiscard]] auto
   tostring() const noexcept -> std::string {
     return self().tostring_derived();
-  }
-
-  [[nodiscard]] auto
-  available_genomes() const noexcept -> std::vector<std::string> {
-    return meta.available_genomes();
   }
 
 #ifndef TRANSFERASE_NOEXCEPT
@@ -234,7 +226,7 @@ protected:
   get_genome_and_index_hash(const std::vector<std::string> &methylome_names,
                             std::error_code &error) const noexcept
     -> std::tuple<std::string, std::uint64_t> {
-    const auto genome_name = meta.get_genome(methylome_names, error);
+    const auto genome_name = config.meta.get_genome(methylome_names, error);
     if (error)  // ADS: need to confirm error code here
       return {std::string{}, 0};
     return {genome_name, get_index_hash(genome_name, error)};
@@ -246,6 +238,8 @@ private:
   get_client_impl(const std::string &config_dir,
                   std::error_code &error) -> Derived {
     Derived client;
+    // The client_config::read function should read the transferase
+    // metadata if possible
     client.config = client_config::read(config_dir, error);
     if (error)
       return {};
@@ -255,25 +249,12 @@ private:
     if (error)
       return {};
 
-    // read the values from filesystem
+    // No error associated with bad index dir; that should be taken care of
+    // elsewhere
+    if (!client.config.index_dir.empty())
+      client.indexes =
+        std::make_shared<genome_index_set>(client.config.index_dir);
 
-    // No error associated with bad index dir
-    const auto index_dir_path = std::filesystem::path{client.config.index_dir};
-    if (!index_dir_path.is_absolute())
-      client.config.index_dir = (config_dir / index_dir_path).string();
-    client.indexes =
-      std::make_shared<genome_index_set>(client.config.index_dir);
-
-    const auto metadata_path =
-      std::filesystem::path{client.config.metadata_file};
-    if (!metadata_path.is_absolute())
-      client.config.metadata_file = (config_dir / metadata_path).string();
-    client.meta =
-      transferase_metadata::read(client.config.metadata_file, error);
-    if (error) {
-      error = methylome_client_base_error_code::failed_to_read_metadata_file;
-      return {};
-    }
     return client;
   }
 
