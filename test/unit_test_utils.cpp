@@ -45,8 +45,8 @@ files_are_identical(const std::string &fn1, const std::string &fn2) -> bool {
 }
 
 [[nodiscard]] auto
-generate_temp_filename(const std::string &prefix,
-                       const std::string &suffix) -> std::string {
+generate_temp_filename(const std::string &prefix, const std::string &suffix)
+  -> std::string {
   const auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(
                         std::chrono::system_clock::now().time_since_epoch())
                         .count();
@@ -74,15 +74,12 @@ generate_unique_dir_name() -> std::string {
 
 auto
 remove_directories(const std::string &dirname, std::error_code &error) -> void {
-  const auto dir_exists = std::filesystem::is_directory(dirname, error);
-  if (error)
+  const auto dir_exists = std::filesystem::exists(dirname, error);
+  if (error || !dir_exists)
     return;
-  // EXPECT_FALSE(error);
-  // EXPECT_TRUE(dir_exists);
-  if (dir_exists) {
-    [[maybe_unused]] const bool remove_ok =
-      std::filesystem::remove_all(dirname, error);
-    if (error)
-      return;
-  }
+  const auto dir_is_dir = std::filesystem::is_directory(dirname, error);
+  if (error || !dir_is_dir)
+    return;
+  [[maybe_unused]] const bool remove_ok =
+    std::filesystem::remove_all(dirname, error);
 }
