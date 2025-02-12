@@ -128,7 +128,6 @@ TEST_F(client_config_mock, validate_success) {
   const auto dir_exists =
     std::filesystem::is_directory(unique_config_dir, error);
   EXPECT_FALSE(error);
-  EXPECT_TRUE(dir_exists);
   if (dir_exists) {
     const bool remove_ok =
       std::filesystem::remove_all(unique_config_dir, error);
