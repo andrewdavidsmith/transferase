@@ -32,6 +32,7 @@
 #include <cstdint>
 #include <filesystem>
 #include <iterator>
+#include <memory>
 #include <string>
 #include <system_error>
 #include <unordered_map>

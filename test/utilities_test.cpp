@@ -29,7 +29,6 @@
 
 #include <string>
 #include <system_error>
-#include <utility>
 
 using namespace transferase;  // NOLINT
 using std::string_literals::operator""s;

@@ -41,6 +41,7 @@ protected:
   TearDown() -> void override {}
 
 public:
+  // cppcheck-suppress unusedStructMember
   std::string metadata_filename{"data/lutions/metadata.json"};
   std::uint32_t n_lutions_available{3};
   std::uint32_t n_lutions_tissues{3};
@@ -49,7 +50,7 @@ public:
 TEST_F(transferase_metadata_mock, read_failure) {
   static constexpr auto list_file_mock = ".../asdf.not_json";
   std::error_code error;
-  const transferase_metadata mg =
+  [[maybe_unused]] const transferase_metadata mg =
     transferase_metadata::read(list_file_mock, error);
   EXPECT_TRUE(error);
 }
