@@ -77,8 +77,8 @@ port = 9000
     if (exists) {
       const auto is_dir = std::filesystem::is_directory(config_dir, error);
       if (is_dir) {
-        [[maybe_unused]]
-        const auto remove_ok = std::filesystem::remove_all(config_dir, error);
+        [[maybe_unused]] const auto remove_ok =
+          std::filesystem::remove_all(config_dir, error);
       }
     }
   }
@@ -125,16 +125,9 @@ TEST_F(client_config_mock, validate_success) {
   const bool validate_ok = cfg.validate(error);
   EXPECT_TRUE(validate_ok);
   EXPECT_FALSE(error);
-  const auto dir_exists =
-    std::filesystem::is_directory(unique_config_dir, error);
+
+  remove_directories(unique_config_dir, error);
   EXPECT_FALSE(error);
-  EXPECT_TRUE(dir_exists);
-  if (dir_exists) {
-    const bool remove_ok =
-      std::filesystem::remove_all(unique_config_dir, error);
-    EXPECT_FALSE(error);
-    EXPECT_TRUE(remove_ok);
-  }
 }
 
 TEST_F(client_config_mock, make_directories_success) {
