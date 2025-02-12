@@ -73,8 +73,8 @@ BOOST_DESCRIBE_STRUCT(transferase_metadata, (),
 /// @brief Enum for error codes related to transferase_metadata
 enum class transferase_metadata_error_code : std::uint8_t {
   ok = 0,
-  error_reading_metadata_json_file = 1,
-  error_parsing_metadata_json_file = 2,
+  error_reading_transferase_metadata_json_file = 1,
+  error_parsing_transferase_metadata_json_file = 2,
   methylome_not_found = 3,
 };
 
@@ -89,8 +89,8 @@ struct transferase_metadata_error_category : std::error_category {
     using std::string_literals::operator""s;
     switch (code) {
     case 0: return "ok"s;
-    case 1: return "error reading metadata json file"s;
-    case 2: return "error parsing metadata json file"s;
+    case 1: return "error reading transferase metadata json file"s;
+    case 2: return "error parsing transferase metadata json file"s;
     case 3: return "methylome not found"s;
     }
     std::unreachable();
