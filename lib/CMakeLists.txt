@@ -21,7 +21,6 @@
 # SOFTWARE.
 
 file(GLOB cpp_files "*.cpp")
-list(FILTER cpp_files EXCLUDE REGEX "transferase.cpp")
 
 # Gather all the object files that will be put in the static library
 # and prepare to compile them.
@@ -32,6 +31,7 @@ foreach(cpp_file ${cpp_files})
   ## Below is to make sure 'config.h' is visible for includes and any
   ## of the headers for configured libraries
   target_include_directories(${BASE_NAME} PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${PROJECT_BINARY_DIR}
     ${Boost_INCLUDE_DIRS}
     ${ZLIB_INCLUDE_DIRS}
@@ -47,39 +47,10 @@ if(BOOST_JSON_NO_LIB)
   target_compile_definitions(boost_json PRIVATE BOOST_JSON_NO_LIB)
 endif()
 
-## Make sure that the command_select.cpp source can see the header for
-## ncurses if the ncurses library was found
-if(CURSES_FOUND)
-  target_include_directories(command_select PRIVATE ${CURSES_INCLUDE_DIRS})
-endif()
-
 # Create the initial static library linking the individual objects
 add_library(transferase_system STATIC)
+target_include_directories(transferase_system PUBLIC
+  ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
 target_link_options(transferase_system PRIVATE ${GLOBAL_LINKER_OPTIONS})
 target_link_libraries(transferase_system PRIVATE ${LIBRARY_OBJECTS})
-
-# ADS: this approach is the most reliable way so far to have the alias
-# both installed properly and linked the same way as tranferase.
-set(TRANSFERASE_NAMES "transferase")
-if(BUILD_XFR_ALIAS)
-  list(APPEND TRANSFERASE_NAMES "xfr")
-endif()
-
-# Create the executable
-foreach(name ${TRANSFERASE_NAMES})
-  add_executable(${name} transferase.cpp)
-  # Make sure that the 'config.h' is visible to include
-  target_include_directories(${name} PRIVATE ${PROJECT_BINARY_DIR})
-  target_link_libraries(${name} PRIVATE
-    transferase_system
-    ZLIB::ZLIB
-    ${Boost_LIBRARIES}
-    Threads::Threads
-  )
-  if(CURSES_FOUND)
-    target_link_libraries(${name} PRIVATE ${CURSES_LIBRARIES})
-  endif()
-
-  target_link_options(${name} PRIVATE ${GLOBAL_LINKER_OPTIONS})
-  target_compile_options(${name} PRIVATE ${GLOBAL_COMPILE_OPTIONS})
-endforeach()
