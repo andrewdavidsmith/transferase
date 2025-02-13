@@ -86,6 +86,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "ReleasePython")
 
   # Options
   set(BUILD_PYTHON on)
+  set(BUILD_CLI off)
   set(PACKAGE_PYTHON on)
   set(ENABLE_LTO on)
   set(USE_STATIC_LIBS on)
@@ -111,6 +112,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "TestPython")
   message(STATUS "Using the 'TestPython' build type")
 
   # Options on
+  set(BUILD_CLI off)
   set(BUILD_PYTHON on)
   set(ENABLE_PYTHON_UNIT_TESTS on)
 
