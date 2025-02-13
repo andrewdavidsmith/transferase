@@ -103,6 +103,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Test")
 
   # Options on
   set(ENABLE_UNIT_TESTS on)
+  set(BUILD_CLI on)
 
   # Options off
   set(CONFIGURE_FOR_DISTRIBUTION off)
