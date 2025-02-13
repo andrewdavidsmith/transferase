@@ -21,12 +21,12 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_COMMAND_FORMAT_HPP_
-#define SRC_COMMAND_FORMAT_HPP_
+#ifndef CLI_COMMAND_FORMAT_HPP_
+#define CLI_COMMAND_FORMAT_HPP_
 
 auto
 command_format_main(int argc,
                     char *argv[])  // NOLINT(cppcoreguidelines-avoid-c-arrays)
   -> int;
 
-#endif  // SRC_COMMAND_FORMAT_HPP_
+#endif  // CLI_COMMAND_FORMAT_HPP_

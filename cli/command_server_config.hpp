@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_COMMAND_SERVER_CONFIG_HPP_
-#define SRC_COMMAND_SERVER_CONFIG_HPP_
+#ifndef CLI_COMMAND_SERVER_CONFIG_HPP_
+#define CLI_COMMAND_SERVER_CONFIG_HPP_
 
 auto
 command_server_config_main(
@@ -30,4 +30,4 @@ command_server_config_main(
   char *argv[])  // NOLINT(cppcoreguidelines-avoid-c-arrays)
   -> int;
 
-#endif  // SRC_COMMAND_SERVER_CONFIG_HPP_
+#endif  // CLI_COMMAND_SERVER_CONFIG_HPP_

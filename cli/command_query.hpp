@@ -21,10 +21,10 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_COMMAND_QUERY_HPP_
-#define SRC_COMMAND_QUERY_HPP_
+#ifndef CLI_COMMAND_QUERY_HPP_
+#define CLI_COMMAND_QUERY_HPP_
 
 auto
 command_query_main(int argc, char *argv[]) -> int;  // NOLINT
 
-#endif  // SRC_COMMAND_QUERY_HPP_
+#endif  // CLI_COMMAND_QUERY_HPP_

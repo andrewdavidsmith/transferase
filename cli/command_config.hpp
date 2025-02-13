@@ -21,11 +21,11 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_COMMAND_CONFIG_HPP_
-#define SRC_COMMAND_CONFIG_HPP_
+#ifndef CLI_COMMAND_CONFIG_HPP_
+#define CLI_COMMAND_CONFIG_HPP_
 
 auto
 command_config_main(int argc, char *argv[])
   -> int;  // NOLINT(cppcoreguidelines-avoid-c-arrays)
 
-#endif  // SRC_COMMAND_CONFIG_HPP_
+#endif  // CLI_COMMAND_CONFIG_HPP_
