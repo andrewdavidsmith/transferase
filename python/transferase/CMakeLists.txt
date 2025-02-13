@@ -46,15 +46,18 @@ foreach(cpp_file ${cpp_files})
   list(APPEND LIBRARY_OBJECTS ${BASE_NAME})
 endforeach()
 
-# Create the final static library by linking the previous parts
+# Create the static library by linking the previous parts
 add_library(transferase_bindings STATIC transferase_bindings.cpp)
 target_link_libraries(transferase_bindings PUBLIC ${LIBRARY_OBJECTS})
 
-# Compile an extension library
-add_library(${LIBRARY_NAME} MODULE transferase_bindings)
+# Compile the extension library
+add_library(${LIBRARY_NAME} MODULE transferase_bindings.cpp)
 target_link_libraries(${LIBRARY_NAME} PUBLIC
   nanobind-static-abi3
   transferase_system
+  ZLIB::ZLIB
+  ${Boost_LIBRARIES}
+  ${LIBRARY_OBJECTS}
 )
 
 # (nanobind) set the default symbol visibility to 'hidden'
