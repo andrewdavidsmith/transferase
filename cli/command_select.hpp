@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_COMMAND_SELECT_HPP_
-#define SRC_COMMAND_SELECT_HPP_
+#ifndef CLI_COMMAND_SELECT_HPP_
+#define CLI_COMMAND_SELECT_HPP_
 
 #ifdef HAVE_NCURSES
 
@@ -33,4 +33,4 @@ command_select_main(int argc,
 
 #endif  // HAVE_NCURSES
 
-#endif  // SRC_COMMAND_SELECT_HPP_
+#endif  // CLI_COMMAND_SELECT_HPP_

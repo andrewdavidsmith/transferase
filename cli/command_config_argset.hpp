@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_COMMAND_CONFIG_ARGSET_HPP_
-#define SRC_COMMAND_CONFIG_ARGSET_HPP_
+#ifndef CLI_COMMAND_CONFIG_ARGSET_HPP_
+#define CLI_COMMAND_CONFIG_ARGSET_HPP_
 
 #include "arguments.hpp"
 #include "client_config.hpp"
@@ -121,4 +121,4 @@ struct command_config_argset : argset_base<command_config_argset> {
 
 }  // namespace transferase
 
-#endif  // SRC_COMMAND_CONFIG_ARGSET_HPP_
+#endif  // CLI_COMMAND_CONFIG_ARGSET_HPP_
