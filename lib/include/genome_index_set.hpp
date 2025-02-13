@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_GENOME_INDEX_SET_HPP_
-#define SRC_GENOME_INDEX_SET_HPP_
+#ifndef LIB_INCLUDE_GENOME_INDEX_SET_HPP_
+#define LIB_INCLUDE_GENOME_INDEX_SET_HPP_
 
 #include "ring_buffer.hpp"
 
@@ -109,4 +109,4 @@ make_error_code(genome_index_set_error_code e) -> std::error_code {
   return std::error_code(std::to_underlying(e), category);
 }
 
-#endif  // SRC_GENOME_INDEX_SET_HPP_
+#endif  // LIB_INCLUDE_GENOME_INDEX_SET_HPP_

@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_METADATA_IS_CONSISTENT_HPP_
-#define SRC_METADATA_IS_CONSISTENT_HPP_
+#ifndef LIB_INCLUDE_METADATA_IS_CONSISTENT_HPP_
+#define LIB_INCLUDE_METADATA_IS_CONSISTENT_HPP_
 
 namespace transferase {
 
@@ -35,4 +35,4 @@ metadata_is_consistent(const methylome &meth,
 
 }  // namespace transferase
 
-#endif  // SRC_METADATA_IS_CONSISTENT_HPP_
+#endif  // LIB_INCLUDE_METADATA_IS_CONSISTENT_HPP_

@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_BINS_WRITER_HPP_
-#define SRC_BINS_WRITER_HPP_
+#ifndef LIB_INCLUDE_BINS_WRITER_HPP_
+#define LIB_INCLUDE_BINS_WRITER_HPP_
 
 #include "writer_base.hpp"
 
@@ -61,4 +61,4 @@ struct bins_writer : public writer_base<bins_writer> {
 
 }  // namespace transferase
 
-#endif  // SRC_BINS_WRITER_HPP_
+#endif  // LIB_INCLUDE_BINS_WRITER_HPP_

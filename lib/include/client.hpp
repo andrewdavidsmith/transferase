@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_CLIENT_HPP_
-#define SRC_CLIENT_HPP_
+#ifndef LIB_INCLUDE_CLIENT_HPP_
+#define LIB_INCLUDE_CLIENT_HPP_
 
 #include "level_container.hpp"
 #include "logger.hpp"
@@ -448,4 +448,4 @@ private:
 
 }  // namespace transferase
 
-#endif  // SRC_CLIENT_HPP_
+#endif  // LIB_INCLUDE_CLIENT_HPP_

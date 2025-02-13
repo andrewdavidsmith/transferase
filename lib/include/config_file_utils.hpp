@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_CONFIG_FILE_UTILS_HPP_
-#define SRC_CONFIG_FILE_UTILS_HPP_
+#ifndef LIB_INCLUDE_CONFIG_FILE_UTILS_HPP_
+#define LIB_INCLUDE_CONFIG_FILE_UTILS_HPP_
 
 #include <boost/describe.hpp>
 #include <boost/mp11/algorithm.hpp>  // for mp_for_each
@@ -113,4 +113,4 @@ write_config_file(const auto &obj,
 
 }  // namespace transferase
 
-#endif  // SRC_CONFIG_FILE_UTILS_HPP_
+#endif  // LIB_INCLUDE_CONFIG_FILE_UTILS_HPP_

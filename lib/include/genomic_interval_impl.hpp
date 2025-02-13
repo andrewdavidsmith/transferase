@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_GENOMIC_INTERVAL_IMPL_HPP_
-#define SRC_GENOMIC_INTERVAL_IMPL_HPP_
+#ifndef LIB_INCLUDE_GENOMIC_INTERVAL_IMPL_HPP_
+#define LIB_INCLUDE_GENOMIC_INTERVAL_IMPL_HPP_
 
 #ifdef UNIT_TEST
 #define STATIC
@@ -44,4 +44,4 @@ parse(const genome_index_metadata &meta, const std::string &line,
 
 }  // namespace transferase
 
-#endif  // SRC_GENOMIC_INTERVAL_IMPL_HPP_
+#endif  // LIB_INCLUDE_GENOMIC_INTERVAL_IMPL_HPP_

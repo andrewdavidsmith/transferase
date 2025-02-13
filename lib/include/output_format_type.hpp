@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_OUTPUT_FORMAT_TYPE_HPP_
-#define SRC_OUTPUT_FORMAT_TYPE_HPP_
+#ifndef LIB_INCLUDE_OUTPUT_FORMAT_TYPE_HPP_
+#define LIB_INCLUDE_OUTPUT_FORMAT_TYPE_HPP_
 
 #include <array>
 #include <cstdint>
@@ -72,4 +72,4 @@ struct std::formatter<transferase::output_format_t>
   }
 };
 
-#endif  // SRC_OUTPUT_FORMAT_TYPE_HPP_
+#endif  // LIB_INCLUDE_OUTPUT_FORMAT_TYPE_HPP_

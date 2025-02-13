@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_COUNTS_FILE_FORMAT_IMPL_HPP_
-#define SRC_COUNTS_FILE_FORMAT_IMPL_HPP_
+#ifndef LIB_INCLUDE_COUNTS_FILE_FORMAT_IMPL_HPP_
+#define LIB_INCLUDE_COUNTS_FILE_FORMAT_IMPL_HPP_
 
 #ifdef UNIT_TEST
 #define STATIC
@@ -44,4 +44,4 @@ is_xcounts_format(const std::string &filename) -> bool;
 
 }  // namespace transferase
 
-#endif  // SRC_COUNTS_FILE_FORMAT_IMPL_HPP_
+#endif  // LIB_INCLUDE_COUNTS_FILE_FORMAT_IMPL_HPP_

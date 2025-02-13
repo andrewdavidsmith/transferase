@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_HASH_HPP_
-#define SRC_HASH_HPP_
+#ifndef LIB_INCLUDE_HASH_HPP_
+#define LIB_INCLUDE_HASH_HPP_
 
 #include <zlib.h>
 
@@ -57,4 +57,4 @@ get_adler(const std::string &filename, std::error_code &ec) -> std::uint64_t;
 
 }  // namespace transferase
 
-#endif  // SRC_HASH_HPP_
+#endif  // LIB_INCLUDE_HASH_HPP_

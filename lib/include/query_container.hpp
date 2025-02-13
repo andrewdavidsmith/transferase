@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_QUERY_CONTAINER_HPP_
-#define SRC_QUERY_CONTAINER_HPP_
+#ifndef LIB_INCLUDE_QUERY_CONTAINER_HPP_
+#define LIB_INCLUDE_QUERY_CONTAINER_HPP_
 
 #include "query_element.hpp"
 
@@ -104,4 +104,4 @@ size(const query_container &query) {
 
 }  // namespace transferase
 
-#endif  // SRC_QUERY_CONTAINER_HPP_
+#endif  // LIB_INCLUDE_QUERY_CONTAINER_HPP_

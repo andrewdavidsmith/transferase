@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_METHYLOME_SET_HPP_
-#define SRC_METHYLOME_SET_HPP_
+#ifndef LIB_INCLUDE_METHYLOME_SET_HPP_
+#define LIB_INCLUDE_METHYLOME_SET_HPP_
 
 #include "lru_tracker.hpp"
 
@@ -69,4 +69,4 @@ struct methylome_set {
 
 }  // namespace transferase
 
-#endif  // SRC_METHYLOME_SET_HPP_
+#endif  // LIB_INCLUDE_METHYLOME_SET_HPP_

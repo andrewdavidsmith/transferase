@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_SERVER_HPP_
-#define SRC_SERVER_HPP_
+#ifndef LIB_INCLUDE_SERVER_HPP_
+#define LIB_INCLUDE_SERVER_HPP_
 
 #include "request_handler.hpp"
 
@@ -122,4 +122,4 @@ make_error_code(server_error_code e) -> std::error_code {
   return std::error_code(std::to_underlying(e), category);
 }
 
-#endif  // SRC_SERVER_HPP_
+#endif  // LIB_INCLUDE_SERVER_HPP_

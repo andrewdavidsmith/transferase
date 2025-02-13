@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_ARGUMENTS_HPP_
-#define SRC_ARGUMENTS_HPP_
+#ifndef LIB_INCLUDE_ARGUMENTS_HPP_
+#define LIB_INCLUDE_ARGUMENTS_HPP_
 
 #include <boost/exception/diagnostic_information.hpp>
 #include <boost/program_options.hpp>
@@ -146,4 +146,4 @@ template <typename T> struct argset_base {
   }
 };
 
-#endif  // SRC_ARGUMENTS_HPP_
+#endif  // LIB_INCLUDE_ARGUMENTS_HPP_

@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_METHYLOME_DATA_HPP_
-#define SRC_METHYLOME_DATA_HPP_
+#ifndef LIB_INCLUDE_METHYLOME_DATA_HPP_
+#define LIB_INCLUDE_METHYLOME_DATA_HPP_
 
 #if not defined(__APPLE__) && not defined(__MACH__)
 #include "aligned_allocator.hpp"
@@ -211,4 +211,4 @@ template <> struct std::hash<transferase::methylome_data> {
   }
 };
 
-#endif  // SRC_METHYLOME_DATA_HPP_
+#endif  // LIB_INCLUDE_METHYLOME_DATA_HPP_

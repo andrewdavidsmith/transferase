@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_REQUEST_TYPE_CODE_HPP_
-#define SRC_REQUEST_TYPE_CODE_HPP_
+#ifndef LIB_INCLUDE_REQUEST_TYPE_CODE_HPP_
+#define LIB_INCLUDE_REQUEST_TYPE_CODE_HPP_
 
 #include <array>
 #include <cstdint>  // for std::uint32_t
@@ -65,4 +65,4 @@ struct std::formatter<transferase::request_type_code>
   }
 };
 
-#endif  // SRC_REQUEST_TYPE_CODE_HPP_
+#endif  // LIB_INCLUDE_REQUEST_TYPE_CODE_HPP_

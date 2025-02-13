@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_METHYLOME_HPP_
-#define SRC_METHYLOME_HPP_
+#ifndef LIB_INCLUDE_METHYLOME_HPP_
+#define LIB_INCLUDE_METHYLOME_HPP_
 
 #include "level_container.hpp"
 #include "level_element.hpp"
@@ -360,4 +360,4 @@ make_error_code(methylome_error_code e) noexcept -> std::error_code {
   return std::error_code(std::to_underlying(e), category);
 }
 
-#endif  // SRC_METHYLOME_HPP_
+#endif  // LIB_INCLUDE_METHYLOME_HPP_

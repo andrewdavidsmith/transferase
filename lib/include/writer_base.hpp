@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_WRITER_BASE_HPP_
-#define SRC_WRITER_BASE_HPP_
+#ifndef LIB_INCLUDE_WRITER_BASE_HPP_
+#define LIB_INCLUDE_WRITER_BASE_HPP_
 
 #include "output_format_type.hpp"
 
@@ -108,4 +108,4 @@ template <typename T> struct writer_base {
 
 }  // namespace transferase
 
-#endif  // SRC_WRITER_BASE_HPP_
+#endif  // LIB_INCLUDE_WRITER_BASE_HPP_

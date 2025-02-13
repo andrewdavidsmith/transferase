@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_DOWNLOAD_HPP_
-#define SRC_DOWNLOAD_HPP_
+#ifndef LIB_INCLUDE_DOWNLOAD_HPP_
+#define LIB_INCLUDE_DOWNLOAD_HPP_
 
 #include <chrono>
 #include <string>
@@ -113,4 +113,4 @@ get_timestamp(const download_request &dr)
 
 }  // namespace transferase
 
-#endif  // SRC_DOWNLOAD_HPP_
+#endif  // LIB_INCLUDE_DOWNLOAD_HPP_

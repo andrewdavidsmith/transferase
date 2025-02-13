@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_REQUEST_IMPL_HPP_
-#define SRC_REQUEST_IMPL_HPP_
+#ifndef LIB_INCLUDE_REQUEST_IMPL_HPP_
+#define LIB_INCLUDE_REQUEST_IMPL_HPP_
 
 #ifdef UNIT_TEST
 #define STATIC
@@ -43,4 +43,4 @@ compose(char *first, char const *last, const request &req) -> std::error_code;
 
 }  // namespace transferase
 
-#endif  // SRC_REQUEST_IMPL_HPP_
+#endif  // LIB_INCLUDE_REQUEST_IMPL_HPP_

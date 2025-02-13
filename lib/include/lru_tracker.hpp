@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_LRU_TRACKER_HPP_
-#define SRC_LRU_TRACKER_HPP_
+#ifndef LIB_INCLUDE_LRU_TRACKER_HPP_
+#define LIB_INCLUDE_LRU_TRACKER_HPP_
 
 #include <cassert>
 #include <cstddef>
@@ -106,4 +106,4 @@ private:
 
 }  // namespace transferase
 
-#endif  // SRC_LRU_TRACKER_HPP_
+#endif  // LIB_INCLUDE_LRU_TRACKER_HPP_

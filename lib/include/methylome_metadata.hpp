@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_METHYLOME_METADATA_HPP_
-#define SRC_METHYLOME_METADATA_HPP_
+#ifndef LIB_INCLUDE_METHYLOME_METADATA_HPP_
+#define LIB_INCLUDE_METHYLOME_METADATA_HPP_
 
 #include <boost/describe.hpp>  // for BOOST_DESCRIBE_STRUCT
 
@@ -124,4 +124,4 @@ struct std::formatter<transferase::methylome_metadata>
   }
 };
 
-#endif  // SRC_METHYLOME_METADATA_HPP_
+#endif  // LIB_INCLUDE_METHYLOME_METADATA_HPP_

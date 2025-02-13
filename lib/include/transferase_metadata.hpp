@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_TRANSFERASE_METADATA_HPP_
-#define SRC_TRANSFERASE_METADATA_HPP_
+#ifndef LIB_INCLUDE_TRANSFERASE_METADATA_HPP_
+#define LIB_INCLUDE_TRANSFERASE_METADATA_HPP_
 
 #include <boost/describe.hpp>
 
@@ -104,4 +104,4 @@ make_error_code(transferase_metadata_error_code e) noexcept -> std::error_code {
   return std::error_code(std::to_underlying(e), category);
 }
 
-#endif  // SRC_TRANSFERASE_METADATA_HPP_
+#endif  // LIB_INCLUDE_TRANSFERASE_METADATA_HPP_

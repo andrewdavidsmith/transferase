@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_SERVER_CONFIG_HPP_
-#define SRC_SERVER_CONFIG_HPP_
+#ifndef LIB_INCLUDE_SERVER_CONFIG_HPP_
+#define LIB_INCLUDE_SERVER_CONFIG_HPP_
 
 // ADS: Not sure why logger is needed below, but it might be that the
 // full logger needs to be seen for 'mp11' and 'describe'
@@ -147,4 +147,4 @@ make_error_code(server_config_error_code e) -> std::error_code {
   return std::error_code(std::to_underlying(e), category);
 }
 
-#endif  // SRC_SERVER_CONFIG_HPP_
+#endif  // LIB_INCLUDE_SERVER_CONFIG_HPP_
