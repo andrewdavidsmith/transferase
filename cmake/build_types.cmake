@@ -36,6 +36,8 @@ if(NOT ${CMAKE_BUILD_TYPE} IN_LIST CMAKE_BUILD_TYPES)
   message(FATAL_ERROR "Terminating due to incorrect build type")
 endif()
 
+set(BUILD_CLI on)
+
 # Release
 if(CMAKE_BUILD_TYPE STREQUAL "Release")
   message(STATUS "Using the Release build type")
@@ -90,7 +92,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "ReleasePython")
   set(PACKAGE_PYTHON on)
   set(ENABLE_LTO on)
   set(USE_STATIC_LIBS on)
-  set(CONFIGURE_FOR_DISTRIBUTION off)
+  set(CONFIGURE_FOR_DISTRIBUTION on)
   set(STRIP_PATHS_FROM_BINARIES on)
   set(STRIP_SUB_LIST "")
 endif()
