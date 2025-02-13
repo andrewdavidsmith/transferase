@@ -60,6 +60,13 @@ else()
   message(FATAL_ERROR "Operatoring system not recognized: ${CMAKE_SYSTEM_NAME}")
 endif()
 
+if (STRIP_PATHS_FROM_BINARIES)
+  # Remove project source directory information from text section
+  list(APPEND STRIP_SUB_LIST "${PROJECT_SOURCE_DIR}/=/")
+  # Replace any home dir prefix in paths
+  list(APPEND STRIP_SUB_LIST "$ENV{HOME}/=/")
+endif()
+
 # For custom STGZ generator
 set(CPACK_STGZ_HEADER_FILE
   "${CMAKE_SOURCE_DIR}/modules/CPack.STGZ_Header.sh.in")
