@@ -41,6 +41,7 @@ foreach(cpp_file ${cpp_files})
     ${Boost_LIBRARIES}
     Threads::Threads
     transferase_system
+    transferase_cli
     unit_test_utils
   )
   # make sure 'config.h' is available to include
