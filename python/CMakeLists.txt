@@ -100,7 +100,7 @@ if(PACKAGE_PYTHON)
   add_custom_target(PYTHON_BUILD_WHL ALL
     COMMAND hatch build -t wheel
     WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/python
-    DEPENDS ${LIBRARY_NAME}_ext
+    DEPENDS ${LIBRARY_NAME}
     COMMENT "Use hatch to build the Python package inside the build tree"
   )
   execute_process(COMMAND
