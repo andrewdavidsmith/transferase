@@ -10,6 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     container: andrewdavidsmith/transferase-build
     steps:
+      - uses: actions/checkout@v4
       - name: Configure a release build that uses GCC
         run: |
           cmake -B Release \
