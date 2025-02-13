@@ -37,6 +37,9 @@ if(NOT ${CMAKE_BUILD_TYPE} IN_LIST CMAKE_BUILD_TYPES)
 endif()
 
 set(BUILD_CLI on)
+if(BUILD_PYTHON)
+  set(BUILD_CLI off)
+endif()
 
 # Release
 if(CMAKE_BUILD_TYPE STREQUAL "Release")
