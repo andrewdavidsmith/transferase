@@ -49,6 +49,13 @@ if(CURSES_FOUND)
   target_include_directories(command_select PRIVATE ${CURSES_INCLUDE_DIRS})
 endif()
 
+# Create the initial static library linking the individual objects
+add_library(transferase_cli STATIC)
+target_include_directories(transferase_cli PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_options(transferase_cli PRIVATE ${GLOBAL_LINKER_OPTIONS})
+target_link_libraries(transferase_cli PRIVATE ${LIBRARY_OBJECTS})
+
+
 # ADS: this approach is the most reliable way so far to have the alias
 # both installed properly and linked the same way as tranferase.
 set(TRANSFERASE_NAMES "transferase")
@@ -63,7 +70,7 @@ foreach(name ${TRANSFERASE_NAMES})
   target_include_directories(${name} PRIVATE ${PROJECT_BINARY_DIR})
   target_link_libraries(${name} PRIVATE
     transferase_system
-    ${LIBRARY_OBJECTS}
+    transferase_cli
     ZLIB::ZLIB
     ${Boost_LIBRARIES}
     Threads::Threads
