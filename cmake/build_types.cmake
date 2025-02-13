@@ -24,7 +24,7 @@
 set(CMAKE_BUILD_TYPES "Build;Debug;Release;RelWithDebInfo;MinSizeRel")
 # The custom build types defined below
 list(APPEND CMAKE_BUILD_TYPES
-  "ReleasePython;Test;TestPython;StaticAnalysis"
+  "PythonRelease;Tests;PythonTests;StaticAnalysis"
 )
 
 if(NOT ${CMAKE_BUILD_TYPE} IN_LIST CMAKE_BUILD_TYPES)
@@ -43,7 +43,7 @@ endif()
 
 # Release
 if(CMAKE_BUILD_TYPE STREQUAL "Release")
-  message(STATUS "Using the Release build type")
+  message(STATUS "Using the 'Release' build type")
 
   # Check compatibility
   if(BUILD_PYTHON OR
@@ -69,9 +69,9 @@ if(CMAKE_BUILD_TYPE STREQUAL "Release")
   set(STRIP_SUB_LIST "")
 endif()
 
-# ReleasePython
-if(CMAKE_BUILD_TYPE STREQUAL "ReleasePython")
-  message(STATUS "Using the ReleasePython build type")
+# PythonRelease
+if(CMAKE_BUILD_TYPE STREQUAL "PythonRelease")
+  message(STATUS "Using the 'PythonRelease' build type")
 
   # Check compatibility
   if(UNIT_TESTS OR
@@ -80,7 +80,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "ReleasePython")
       ENABLE_PYTHON_UNIT_TESTS OR
       ENABLE_SANITIZING)
     message(FATAL_ERROR
-      "Specified options are incompatible with 'ReleasePython'")
+      "Specified options are incompatible with 'PythonRelease'")
   endif()
 
   # Inherit compile flags from 'Release'
@@ -100,9 +100,9 @@ if(CMAKE_BUILD_TYPE STREQUAL "ReleasePython")
   set(STRIP_SUB_LIST "")
 endif()
 
-# Test
-if(CMAKE_BUILD_TYPE STREQUAL "Test")
-  message(STATUS "Using the Test build type")
+# Tests
+if(CMAKE_BUILD_TYPE STREQUAL "Tests")
+  message(STATUS "Using the 'Tests' build type")
 
   # Options on
   set(ENABLE_UNIT_TESTS on)
@@ -113,9 +113,9 @@ if(CMAKE_BUILD_TYPE STREQUAL "Test")
   set(STRIP_PATHS_FROM_BINARIES off)
 endif()
 
-# TestPython
-if(CMAKE_BUILD_TYPE STREQUAL "TestPython")
-  message(STATUS "Using the 'TestPython' build type")
+# PythonTests
+if(CMAKE_BUILD_TYPE STREQUAL "PythonTests")
+  message(STATUS "Using the 'PythonTests' build type")
 
   # Options on
   set(BUILD_CLI off)
