@@ -8,14 +8,8 @@ on:
 jobs:
   ubuntu-build:
     runs-on: ubuntu-latest
-    container: andrewdavidsmith/gcc-cmake-boost
+    container: andrewdavidsmith/transferase-build
     steps:
-      - uses: actions/checkout@v4
-      - name: Install dependencies
-        run: |
-          apt-get update
-          apt-get install -y zlib1g-dev libgtest-dev
-
       - name: Configure a release build that uses GCC
         run: |
           cmake -B Release \
