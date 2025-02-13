@@ -27,14 +27,10 @@ find_package(Threads REQUIRED)
 set(BOOST_COMPONENTS program_options context)
 
 # Boost.JSON
-if(BUILD_PYTHON)
-  ## Building python lib needs -fPIC and Boost.json has an issue with
-  ## this so BOOST_JSON_NO_LIB will be passed to sources and turn on
-  ## header-only for Boost.json
-  set(BOOST_JSON_NO_LIB on)
-else()
-  list(APPEND BOOST_COMPONENTS json)
-endif()
+## Building python lib needs -fPIC and Boost.json has an issue with
+## this so BOOST_JSON_NO_LIB will be passed to sources and turn on
+## header-only for Boost.json
+set(BOOST_JSON_NO_LIB on)
 
 # ZLib
 if(BUILD_PYTHON)
