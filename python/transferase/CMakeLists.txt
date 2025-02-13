@@ -51,31 +51,32 @@ add_library(transferase_bindings STATIC transferase_bindings.cpp)
 target_link_libraries(transferase_bindings PUBLIC ${LIBRARY_OBJECTS})
 
 # Compile an extension library
-add_library(${LIBRARY_NAME}_ext MODULE transferase_bindings)
-target_link_libraries(${LIBRARY_NAME}_ext PUBLIC
+add_library(${LIBRARY_NAME} MODULE transferase_bindings)
+target_link_libraries(${LIBRARY_NAME} PUBLIC
   nanobind-static-abi3
   transferase_system
 )
 
 # (nanobind) set the default symbol visibility to 'hidden'
-nanobind_set_visibility(${LIBRARY_NAME}_ext)
+nanobind_set_visibility(${LIBRARY_NAME})
 
 if(STRIP_PATHS_FROM_BINARIES)
+  message(STATUS "Strip paths from binaries: ${STRIP_PATHS_FROM_BINARIES}")
   # (nanobind) strip unneeded symbols and debug info from the binary
   # (only active in release builds)
-  nanobind_strip(${LIBRARY_NAME}_ext)
+  nanobind_strip(${LIBRARY_NAME})
 endif()
 
-# (nanobind) set the Python extension suffix
-nanobind_extension(${LIBRARY_NAME}_ext)
-
 # nanobind docs suggest this is a good idea
-nanobind_disable_stack_protector(${LIBRARY_NAME}_ext)
+nanobind_disable_stack_protector(${LIBRARY_NAME})
+
+# (nanobind) set the Python extension suffix
+nanobind_extension(${LIBRARY_NAME})
 
 set(GLOBAL_COMPILE_OPTIONS_FOR_NANOBIND ${GLOBAL_COMPILE_OPTIONS})
 list(REMOVE_ITEM GLOBAL_COMPILE_OPTIONS_FOR_NANOBIND "-Wpedantic")
 target_compile_options(
-  ${LIBRARY_NAME}_ext
+  ${LIBRARY_NAME}
   PRIVATE
   ${GLOBAL_COMPILE_OPTIONS_FOR_NANOBIND}
 )
@@ -83,7 +84,7 @@ target_compile_options(
 set(GLOBAL_LINKER_OPTIONS_FOR_NANOBIND ${GLOBAL_LINKER_OPTIONS})
 list(APPEND GLOBAL_LINKER_OPTIONS_FOR_NANOBIND "-Wno-odr")
 target_link_options(
-  ${LIBRARY_NAME}_ext
+  ${LIBRARY_NAME}
   PRIVATE
   ${GLOBAL_LINKER_OPTIONS_FOR_NANOBIND}
 )
