@@ -30,17 +30,11 @@ set(LIBRARY_OBJECTS "")
 foreach(cpp_file ${cpp_files})
   get_filename_component(BASE_NAME ${cpp_file} NAME_WE)
   add_library(${BASE_NAME} OBJECT ${cpp_file})
-  # Make sure the individual bindings compile jobs can see the
-  # transferase headers and also the config.h header in the binary dir
-  target_include_directories(${BASE_NAME} PRIVATE
-    ${PROJECT_BINARY_DIR}
-    ${PROJECT_SOURCE_DIR}/src
-  )
   # Below, link to the nanobind module to get the headers; similar for
   # boost. These headers might not be located otherwise
-  target_link_libraries(${BASE_NAME} PRIVATE
-    nanobind-static
-    ${Boost_LIBRARIES}
+  target_link_libraries(${BASE_NAME} PUBLIC
+    nanobind-static-abi3
+    transferase_system
   )
   set(GLOBAL_COMPILE_OPTIONS_FOR_NANOBIND ${GLOBAL_COMPILE_OPTIONS})
   list(REMOVE_ITEM GLOBAL_COMPILE_OPTIONS_FOR_NANOBIND "-Wpedantic")
@@ -53,52 +47,43 @@ foreach(cpp_file ${cpp_files})
 endforeach()
 
 # Create the final static library by linking the previous parts
-add_library(transferase_bindings STATIC)
-target_link_libraries(transferase_bindings PRIVATE ${LIBRARY_OBJECTS})
+add_library(transferase_bindings STATIC transferase_bindings.cpp)
+target_link_libraries(transferase_bindings PUBLIC ${LIBRARY_OBJECTS})
 
-# Make the package shared library by applying the bindings functions;
-# use the py_ prefix because otherwise there might be name clash with
-# the main 'transferase' target in a different directory.
-nanobind_add_module(
-  py_${LIBRARY_NAME}
-  NB_STATIC STABLE_ABI LTO
-  transferase_bindings.cpp
-)
-# Make sure the compile job for the module can see the transferase
-# headers and also the config.h header in the binary dir
-target_include_directories(py_${LIBRARY_NAME} PRIVATE
-  ${PROJECT_BINARY_DIR}
-  ${PROJECT_SOURCE_DIR}/src
-)
-
-# ADS: below, need the Boost_LIBRARIES because otherwise problems
-# arise with undefined symols for jump_fcontext, ontop_fcontext and
-# others related to boost context at runtime within the Python
-# interpreter. Not sure it makes sense. I think it's related to the
-# fact that the header from
-target_link_libraries(py_${LIBRARY_NAME} PRIVATE
-  transferase_bindings
+# Compile an extension library
+add_library(${LIBRARY_NAME}_ext MODULE transferase_bindings)
+target_link_libraries(${LIBRARY_NAME}_ext PUBLIC
+  nanobind-static-abi3
   transferase_system
-  nanobind-static
-  ZLIB::ZLIB
 )
+
+# (nanobind) set the default symbol visibility to 'hidden'
+nanobind_set_visibility(${LIBRARY_NAME}_ext)
+
+if(STRIP_PATHS_FROM_BINARIES)
+  # (nanobind) strip unneeded symbols and debug info from the binary
+  # (only active in release builds)
+  nanobind_strip(${LIBRARY_NAME}_ext)
+endif()
+
+# (nanobind) set the Python extension suffix
+nanobind_extension(${LIBRARY_NAME}_ext)
+
+# nanobind docs suggest this is a good idea
+nanobind_disable_stack_protector(${LIBRARY_NAME}_ext)
+
 set(GLOBAL_COMPILE_OPTIONS_FOR_NANOBIND ${GLOBAL_COMPILE_OPTIONS})
 list(REMOVE_ITEM GLOBAL_COMPILE_OPTIONS_FOR_NANOBIND "-Wpedantic")
 target_compile_options(
-  py_${LIBRARY_NAME}
+  ${LIBRARY_NAME}_ext
   PRIVATE
   ${GLOBAL_COMPILE_OPTIONS_FOR_NANOBIND}
 )
+
 set(GLOBAL_LINKER_OPTIONS_FOR_NANOBIND ${GLOBAL_LINKER_OPTIONS})
 list(APPEND GLOBAL_LINKER_OPTIONS_FOR_NANOBIND "-Wno-odr")
 target_link_options(
-  py_${LIBRARY_NAME}
+  ${LIBRARY_NAME}_ext
   PRIVATE
   ${GLOBAL_LINKER_OPTIONS_FOR_NANOBIND}
-)
-
-set_target_properties(py_${LIBRARY_NAME}
-  PROPERTIES
-  LIBRARY_OUTPUT_NAME ${LIBRARY_NAME}
-  SKIP_BUILD_RPATH TRUE
 )
