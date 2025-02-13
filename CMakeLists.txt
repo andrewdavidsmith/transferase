@@ -115,13 +115,14 @@ endif()
 
 message(STATUS "Finished global compile and linker configuration")
 
-add_subdirectory(src)
+add_subdirectory(lib)
+if(BUILD_CLI)
+  add_subdirectory(cli)
+  include(cmake/install.cmake)
+endif()
 if(ENABLE_UNIT_TESTS)
   add_subdirectory(test)
 endif()
 if(BUILD_PYTHON)
   add_subdirectory(python)
 endif()
-
-# Putting install at the end
-include(cmake/install.cmake)
