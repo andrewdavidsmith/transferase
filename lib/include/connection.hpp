@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_CONNECTION_HPP_
-#define SRC_CONNECTION_HPP_
+#ifndef LIB_INCLUDE_CONNECTION_HPP_
+#define LIB_INCLUDE_CONNECTION_HPP_
 
 #include "logger.hpp"
 #include "query_container.hpp"
@@ -145,4 +145,4 @@ struct connection : public std::enable_shared_from_this<connection> {
 
 }  // namespace transferase
 
-#endif  // SRC_CONNECTION_HPP_
+#endif  // LIB_INCLUDE_CONNECTION_HPP_

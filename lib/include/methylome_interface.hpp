@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_METHYLOME_INTERFACE_HPP_
-#define SRC_METHYLOME_INTERFACE_HPP_
+#ifndef LIB_INCLUDE_METHYLOME_INTERFACE_HPP_
+#define LIB_INCLUDE_METHYLOME_INTERFACE_HPP_
 
 #include "client.hpp"
 #include "genome_index.hpp"
@@ -142,4 +142,4 @@ BOOST_DESCRIBE_STRUCT(methylome_interface, (),
 
 }  // namespace transferase
 
-#endif  // SRC_METHYLOME_INTERFACE_HPP_
+#endif  // LIB_INCLUDE_METHYLOME_INTERFACE_HPP_

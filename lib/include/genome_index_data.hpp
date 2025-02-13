@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_GENOME_INDEX_DATA_HPP_
-#define SRC_GENOME_INDEX_DATA_HPP_
+#ifndef LIB_INCLUDE_GENOME_INDEX_DATA_HPP_
+#define LIB_INCLUDE_GENOME_INDEX_DATA_HPP_
 
 #if not defined(__APPLE__) && not defined(__MACH__)
 #include "aligned_allocator.hpp"
@@ -170,4 +170,4 @@ make_error_code(genome_index_data_error_code e) noexcept -> std::error_code {
   return std::error_code(std::to_underlying(e), category);
 }
 
-#endif  // SRC_GENOME_INDEX_DATA_HPP_
+#endif  // LIB_INCLUDE_GENOME_INDEX_DATA_HPP_

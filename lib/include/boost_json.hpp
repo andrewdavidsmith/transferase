@@ -21,11 +21,11 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_BOOST_JSON_HPP_
-#define SRC_BOOST_JSON_HPP_
+#ifndef LIB_INCLUDE_BOOST_JSON_HPP_
+#define LIB_INCLUDE_BOOST_JSON_HPP_
 
 auto
 // cppcheck-suppress unusedFunction
 boost_json_empty() -> int;
 
-#endif  // SRC_BOOST_JSON_HPP_
+#endif  // LIB_INCLUDE_BOOST_JSON_HPP_

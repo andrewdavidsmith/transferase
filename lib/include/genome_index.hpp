@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_GENOME_INDEX_HPP_
-#define SRC_GENOME_INDEX_HPP_
+#ifndef LIB_INCLUDE_GENOME_INDEX_HPP_
+#define LIB_INCLUDE_GENOME_INDEX_HPP_
 
 #include "genome_index_data.hpp"
 #include "genome_index_metadata.hpp"
@@ -334,4 +334,4 @@ make_error_code(genome_index_error_code e) -> std::error_code {
   return std::error_code(std::to_underlying(e), category);
 }
 
-#endif  // SRC_GENOME_INDEX_HPP_
+#endif  // LIB_INCLUDE_GENOME_INDEX_HPP_

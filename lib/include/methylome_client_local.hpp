@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_METHYLOME_CLIENT_LOCAL_HPP_
-#define SRC_METHYLOME_CLIENT_LOCAL_HPP_
+#ifndef LIB_INCLUDE_METHYLOME_CLIENT_LOCAL_HPP_
+#define LIB_INCLUDE_METHYLOME_CLIENT_LOCAL_HPP_
 
 #include "methylome_client_base.hpp"
 
@@ -177,4 +177,4 @@ make_error_code(methylome_client_local_error_code e) noexcept
   return std::error_code(std::to_underlying(e), category);
 }
 
-#endif  // SRC_METHYLOME_CLIENT_LOCAL_HPP_
+#endif  // LIB_INCLUDE_METHYLOME_CLIENT_LOCAL_HPP_

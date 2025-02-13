@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_CHROM_RANGE_HPP_
-#define SRC_CHROM_RANGE_HPP_
+#ifndef LIB_INCLUDE_CHROM_RANGE_HPP_
+#define LIB_INCLUDE_CHROM_RANGE_HPP_
 
 #include <cstdint>  // for std::uint32_t
 
@@ -42,4 +42,4 @@ struct chrom_range_t {
 
 }  // namespace transferase
 
-#endif  // SRC_CHROM_RANGE_HPP_
+#endif  // LIB_INCLUDE_CHROM_RANGE_HPP_

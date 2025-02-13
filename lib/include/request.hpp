@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_REQUEST_HPP_
-#define SRC_REQUEST_HPP_
+#ifndef LIB_INCLUDE_REQUEST_HPP_
+#define LIB_INCLUDE_REQUEST_HPP_
 
 #include "request_type_code.hpp"
 
@@ -162,4 +162,4 @@ make_error_code(request_error_code e) -> std::error_code {
   return std::error_code(std::to_underlying(e), category);
 }
 
-#endif  // SRC_REQUEST_HPP_
+#endif  // LIB_INCLUDE_REQUEST_HPP_

@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_ZLIB_ADAPTER_HPP_
-#define SRC_ZLIB_ADAPTER_HPP_
+#ifndef LIB_INCLUDE_ZLIB_ADAPTER_HPP_
+#define LIB_INCLUDE_ZLIB_ADAPTER_HPP_
 
 #include <zlib.h>
 
@@ -249,4 +249,4 @@ read_gzfile_into_buffer(const std::string &filename)
 
 }  // namespace transferase
 
-#endif  // SRC_ZLIB_ADAPTER_HPP_
+#endif  // LIB_INCLUDE_ZLIB_ADAPTER_HPP_

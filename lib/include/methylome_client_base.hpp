@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_METHYLOME_CLIENT_BASE_HPP_
-#define SRC_METHYLOME_CLIENT_BASE_HPP_
+#ifndef LIB_INCLUDE_METHYLOME_CLIENT_BASE_HPP_
+#define LIB_INCLUDE_METHYLOME_CLIENT_BASE_HPP_
 
 #include "client_config.hpp"
 #include "genome_index.hpp"  // for genome_index::list
@@ -279,4 +279,4 @@ tag_invoke(const boost::json::value_from_tag &, boost::json::value &v,
 
 }  // namespace transferase
 
-#endif  // SRC_METHYLOME_CLIENT_BASE_HPP_
+#endif  // LIB_INCLUDE_METHYLOME_CLIENT_BASE_HPP_

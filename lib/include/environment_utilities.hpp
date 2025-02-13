@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_ENVIRONMENT_UTILITIES_HPP_
-#define SRC_ENVIRONMENT_UTILITIES_HPP_
+#ifndef LIB_INCLUDE_ENVIRONMENT_UTILITIES_HPP_
+#define LIB_INCLUDE_ENVIRONMENT_UTILITIES_HPP_
 
 #include <string>
 #include <system_error>
@@ -44,4 +44,4 @@ get_version() -> std::string;
 
 }  // namespace transferase
 
-#endif  // SRC_ENVIRONMENT_UTILITIES_HPP_
+#endif  // LIB_INCLUDE_ENVIRONMENT_UTILITIES_HPP_

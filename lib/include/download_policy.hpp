@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_DOWNLOAD_POLICY_HPP_
-#define SRC_DOWNLOAD_POLICY_HPP_
+#ifndef LIB_INCLUDE_DOWNLOAD_POLICY_HPP_
+#define LIB_INCLUDE_DOWNLOAD_POLICY_HPP_
 
 #include <boost/describe.hpp>
 
@@ -77,4 +77,4 @@ struct std::formatter<transferase::download_policy_t>
          std::format_context &ctx) const -> std::format_context::iterator;
 };
 
-#endif  // SRC_DOWNLOAD_POLICY_HPP_
+#endif  // LIB_INCLUDE_DOWNLOAD_POLICY_HPP_

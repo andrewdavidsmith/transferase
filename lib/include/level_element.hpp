@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_LEVEL_ELEMENT_HPP_
-#define SRC_LEVEL_ELEMENT_HPP_
+#ifndef LIB_INCLUDE_LEVEL_ELEMENT_HPP_
+#define LIB_INCLUDE_LEVEL_ELEMENT_HPP_
 
 #include <cstdint>
 #include <format>
@@ -110,4 +110,4 @@ struct std::formatter<transferase::level_element_covered_t>
   }
 };
 
-#endif  // SRC_LEVEL_ELEMENT_HPP_
+#endif  // LIB_INCLUDE_LEVEL_ELEMENT_HPP_

@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_RESPONSE_HPP_
-#define SRC_RESPONSE_HPP_
+#ifndef LIB_INCLUDE_RESPONSE_HPP_
+#define LIB_INCLUDE_RESPONSE_HPP_
 
 #include "level_container.hpp"
 
@@ -172,4 +172,4 @@ struct response_payload {
 
 }  // namespace transferase
 
-#endif  // SRC_RESPONSE_HPP_
+#endif  // LIB_INCLUDE_RESPONSE_HPP_

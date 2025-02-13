@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_METHYLOME_CLIENT_REMOTE_HPP_
-#define SRC_METHYLOME_CLIENT_REMOTE_HPP_
+#ifndef LIB_INCLUDE_METHYLOME_CLIENT_REMOTE_HPP_
+#define LIB_INCLUDE_METHYLOME_CLIENT_REMOTE_HPP_
 
 #include "client.hpp"
 #include "client_config.hpp"
@@ -172,4 +172,4 @@ make_error_code(methylome_client_remote_error_code e) noexcept
   return std::error_code(std::to_underlying(e), category);
 }
 
-#endif  // SRC_METHYLOME_CLIENT_REMOTE_HPP_
+#endif  // LIB_INCLUDE_METHYLOME_CLIENT_REMOTE_HPP_

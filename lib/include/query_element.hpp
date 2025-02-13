@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_QUERY_ELEMENT_HPP_
-#define SRC_QUERY_ELEMENT_HPP_
+#ifndef LIB_INCLUDE_QUERY_ELEMENT_HPP_
+#define LIB_INCLUDE_QUERY_ELEMENT_HPP_
 
 #include <compare>
 #include <cstdint>  // for std::uint32_t
@@ -40,4 +40,4 @@ struct query_element {
 
 }  // namespace transferase
 
-#endif  // SRC_QUERY_ELEMENT_HPP_
+#endif  // LIB_INCLUDE_QUERY_ELEMENT_HPP_

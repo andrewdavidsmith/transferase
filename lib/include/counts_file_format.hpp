@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_COUNTS_FILE_FORMAT_HPP_
-#define SRC_COUNTS_FILE_FORMAT_HPP_
+#ifndef LIB_INCLUDE_COUNTS_FILE_FORMAT_HPP_
+#define LIB_INCLUDE_COUNTS_FILE_FORMAT_HPP_
 
 // ADS: code here is to handle the different counts file formats used
 // by dnmtools and others, including determining format, validating
@@ -65,4 +65,4 @@ get_meth_file_format(const std::string &filename)
 
 }  // namespace transferase
 
-#endif  // SRC_COUNTS_FILE_FORMAT_HPP_
+#endif  // LIB_INCLUDE_COUNTS_FILE_FORMAT_HPP_

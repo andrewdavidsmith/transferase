@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_REQUEST_HANDLER_HPP_
-#define SRC_REQUEST_HANDLER_HPP_
+#ifndef LIB_INCLUDE_REQUEST_HANDLER_HPP_
+#define LIB_INCLUDE_REQUEST_HANDLER_HPP_
 
 #include "genome_index_set.hpp"
 #include "methylome_set.hpp"
@@ -85,4 +85,4 @@ struct request_handler {
 
 }  // namespace transferase
 
-#endif  // SRC_REQUEST_HANDLER_HPP_
+#endif  // LIB_INCLUDE_REQUEST_HANDLER_HPP_

@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_FIND_PATH_TO_BINARY_HPP_
-#define SRC_FIND_PATH_TO_BINARY_HPP_
+#ifndef LIB_INCLUDE_FIND_PATH_TO_BINARY_HPP_
+#define LIB_INCLUDE_FIND_PATH_TO_BINARY_HPP_
 
 #include <string>
 
@@ -33,4 +33,4 @@ find_path_to_binary() -> std::string;
 
 }  // namespace transferase
 
-#endif  // SRC_FIND_PATH_TO_BINARY_HPP_
+#endif  // LIB_INCLUDE_FIND_PATH_TO_BINARY_HPP_

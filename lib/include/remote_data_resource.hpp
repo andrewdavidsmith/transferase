@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_REMOTE_DATA_RESOURCE_HPP_
-#define SRC_REMOTE_DATA_RESOURCE_HPP_
+#ifndef LIB_INCLUDE_REMOTE_DATA_RESOURCE_HPP_
+#define LIB_INCLUDE_REMOTE_DATA_RESOURCE_HPP_
 
 #include <boost/describe.hpp>
 
@@ -150,4 +150,4 @@ struct std::formatter<transferase::remote_data_resources>
   }
 };
 
-#endif  // SRC_REMOTE_DATA_RESOURCE_HPP_
+#endif  // LIB_INCLUDE_REMOTE_DATA_RESOURCE_HPP_

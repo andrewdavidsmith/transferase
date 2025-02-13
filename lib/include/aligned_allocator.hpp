@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_ALIGNED_ALLOCATOR_HPP_
-#define SRC_ALIGNED_ALLOCATOR_HPP_
+#ifndef LIB_INCLUDE_ALIGNED_ALLOCATOR_HPP_
+#define LIB_INCLUDE_ALIGNED_ALLOCATOR_HPP_
 
 #include <cstdlib>
 #include <limits>
@@ -67,4 +67,4 @@ template <class T> struct aligned_allocator {
   }
 };
 
-#endif  // SRC_ALIGNED_ALLOCATOR_HPP_
+#endif  // LIB_INCLUDE_ALIGNED_ALLOCATOR_HPP_

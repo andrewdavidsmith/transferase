@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_LOGGER_HPP_
-#define SRC_LOGGER_HPP_
+#ifndef LIB_INCLUDE_LOGGER_HPP_
+#define LIB_INCLUDE_LOGGER_HPP_
 
 #include "format_error_code.hpp"  // IWYU pragma: keep
 
@@ -299,4 +299,4 @@ struct std::formatter<transferase::log_level_t> : std::formatter<std::string> {
   }
 };
 
-#endif  // SRC_LOGGER_HPP_
+#endif  // LIB_INCLUDE_LOGGER_HPP_

@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_GENOME_INDEX_METADATA_HPP_
-#define SRC_GENOME_INDEX_METADATA_HPP_
+#ifndef LIB_INCLUDE_GENOME_INDEX_METADATA_HPP_
+#define LIB_INCLUDE_GENOME_INDEX_METADATA_HPP_
 
 #include <boost/describe.hpp>  // for BOOST_DESCRIBE_STRUCT
 
@@ -150,4 +150,4 @@ make_error_code(genome_index_metadata_error_code e) noexcept
   return std::error_code(std::to_underlying(e), category);
 }
 
-#endif  // SRC_GENOME_INDEX_METADATA_HPP_
+#endif  // LIB_INCLUDE_GENOME_INDEX_METADATA_HPP_

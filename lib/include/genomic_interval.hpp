@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_GENOMIC_INTERVAL_HPP_
-#define SRC_GENOMIC_INTERVAL_HPP_
+#ifndef LIB_INCLUDE_GENOMIC_INTERVAL_HPP_
+#define LIB_INCLUDE_GENOMIC_INTERVAL_HPP_
 
 #include <algorithm>
 #include <cstdint>
@@ -123,4 +123,4 @@ make_error_code(genomic_interval_error_code e) noexcept -> std::error_code {
   return std::error_code(std::to_underlying(e), category);
 }
 
-#endif  // SRC_GENOMIC_INTERVAL_HPP_
+#endif  // LIB_INCLUDE_GENOMIC_INTERVAL_HPP_

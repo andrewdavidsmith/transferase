@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_FORMAT_ERROR_CODE_HPP_
-#define SRC_FORMAT_ERROR_CODE_HPP_
+#ifndef LIB_INCLUDE_FORMAT_ERROR_CODE_HPP_
+#define LIB_INCLUDE_FORMAT_ERROR_CODE_HPP_
 
 #include <boost/system.hpp>
 
@@ -49,4 +49,4 @@ struct std::formatter<boost::system::error_code> : std::formatter<std::string> {
   }
 };
 
-#endif  // SRC_FORMAT_ERROR_CODE_HPP_
+#endif  // LIB_INCLUDE_FORMAT_ERROR_CODE_HPP_

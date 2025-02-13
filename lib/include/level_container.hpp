@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_LEVEL_CONTAINER_HPP_
-#define SRC_LEVEL_CONTAINER_HPP_
+#ifndef LIB_INCLUDE_LEVEL_CONTAINER_HPP_
+#define LIB_INCLUDE_LEVEL_CONTAINER_HPP_
 
 #include <concepts>          // for std::integral
 #include <cstddef>           // for std::size_t
@@ -94,4 +94,4 @@ size(const level_container<level_element_type> &l) {
 
 }  // namespace transferase
 
-#endif  // SRC_LEVEL_CONTAINER_HPP_
+#endif  // LIB_INCLUDE_LEVEL_CONTAINER_HPP_

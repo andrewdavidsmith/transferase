@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_GENOME_INDEX_DATA_IMPL_HPP_
-#define SRC_GENOME_INDEX_DATA_IMPL_HPP_
+#ifndef LIB_INCLUDE_GENOME_INDEX_DATA_IMPL_HPP_
+#define LIB_INCLUDE_GENOME_INDEX_DATA_IMPL_HPP_
 
 #ifdef UNIT_TEST
 #define STATIC
@@ -45,4 +45,4 @@ make_query_within_chrom(const genome_index_data::vec &positions,
 
 }  // namespace transferase
 
-#endif  // SRC_GENOME_INDEX_DATA_IMPL_HPP_
+#endif  // LIB_INCLUDE_GENOME_INDEX_DATA_IMPL_HPP_

@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_RING_BUFFER_HPP_
-#define SRC_RING_BUFFER_HPP_
+#ifndef LIB_INCLUDE_RING_BUFFER_HPP_
+#define LIB_INCLUDE_RING_BUFFER_HPP_
 
 #include <algorithm>
 #include <cstddef>  // for std::size_t
@@ -61,4 +61,4 @@ template <typename T> struct ring_buffer {
 
 }  // namespace transferase
 
-#endif  // SRC_RING_BUFFER_HPP_
+#endif  // LIB_INCLUDE_RING_BUFFER_HPP_
