@@ -361,6 +361,7 @@ struct command_format_argset : argset_base<command_format_argset> {
     return client_config::get_config_file(config_dir, ec);
   }
 
+  std::string config_dir{};
   std::string hostname{};
   std::string port{};
   std::string log_filename{};
@@ -401,6 +402,7 @@ struct command_format_argset : argset_base<command_format_argset> {
       ("hostname", po::value(&hostname), "none")
       ("port", po::value(&port), "none")
       ("log-file", po::value(&log_filename), "none")
+      ("config-dir", po::value(&config_dir), "none")
       // clang-format on
       ;
     return opts;
