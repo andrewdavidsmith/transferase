@@ -183,12 +183,10 @@ client_config::get_config_file(const std::string &config_dir,
 }
 
 auto
-client_config::set_defaults(std::string config_dir,
-                            const std::string &sys_config_dir,
+client_config::set_defaults(const std::string &sys_config_dir,
                             std::error_code &error) noexcept -> void {
   namespace fs = std::filesystem;
-  if (config_dir.empty())
-    config_dir = get_default_config_dir(error);
+  assert(!config_dir.empty());
 
   const auto [default_hostname, default_port] =
     transferase::get_transferase_server_info(sys_config_dir, error);
@@ -202,33 +200,22 @@ client_config::set_defaults(std::string config_dir,
 }
 
 auto
-client_config::set_defaults(std::string config_dir,
-                            std::error_code &error) noexcept -> void {
-  if (config_dir.empty()) {
-    config_dir = get_default_config_dir(error);
-    if (error)
-      return;
-  }
+client_config::set_defaults(std::error_code &error) noexcept -> void {
+  assert(!config_dir.empty());
   const std::string sys_config_dir = get_default_sys_config_dir(error);
   if (error)
     return;
-  set_defaults(config_dir, sys_config_dir, error);
+  set_defaults(sys_config_dir, error);
 }
 
 /// Create all the directories involved in the client config, if they
 /// do not already exist. If directories exist as files, set the error
 /// code.
 auto
-client_config::make_directories(const std::string &config_dir_arg,
-                                std::error_code &error) const noexcept -> void {
+client_config::make_directories(std::error_code &error) const noexcept -> void {
   namespace fs = std::filesystem;
-  assert(!config_dir_arg.empty());
-
-  const std::string config_dir = fs::weakly_canonical(config_dir_arg, error);
-  if (error)
-    return;
-
   assert(!config_dir.empty());
+  assert(config_dir == fs::weakly_canonical(config_dir).string());
 
   const bool dirs_ok = create_dirs_if_needed(config_dir, error);
   if (error)
@@ -309,16 +296,18 @@ client_config::read(std::string config_dir,
   parse_config_file(config, config_file, error);
   if (error)
     return {};
+  config.config_dir = config_dir;
 
   // ADS: pay attention to paths here -- source of headaches.
   if (!config.index_dir.empty())
-    config.index_dir = (std::filesystem::path{config_dir} / config.index_dir)
-                         .lexically_normal()
-                         .string();
+    config.index_dir =
+      (std::filesystem::path{config.config_dir} / config.index_dir)
+        .lexically_normal()
+        .string();
 
   if (!config.metadata_file.empty()) {
     config.metadata_file =
-      (std::filesystem::path{config_dir} / config.metadata_file)
+      (std::filesystem::path{config.config_dir} / config.metadata_file)
         .lexically_normal()
         .string();
     config.meta = transferase_metadata::read(config.metadata_file, error);
@@ -330,13 +319,8 @@ client_config::read(std::string config_dir,
 }
 
 auto
-client_config::save(std::string config_dir,
-                    std::error_code &error) const noexcept -> void {
-  if (config_dir.empty()) {
-    config_dir = get_default_config_dir(error);
-    if (error)
-      return;
-  }
+client_config::save(std::error_code &error) const noexcept -> void {
+  assert(!config_dir.empty());
   const auto config_file = get_config_file(config_dir, error);
   if (error)
     return;
@@ -511,26 +495,22 @@ get_metadata_file(const remote_data_resources &remote,
 auto
 client_config::configure(const std::vector<std::string> &genomes,
                          const download_policy_t download_policy,
-                         std::string config_dir, std::string sys_config_dir,
+                         std::string sys_config_dir,
                          std::error_code &error) const noexcept -> void {
+  assert(!config_dir.empty());
+  auto &lgr = logger::instance();
   if (sys_config_dir.empty()) {
     sys_config_dir = get_default_sys_config_dir(error);
     if (error)
       return;
   }
-  if (config_dir.empty()) {
-    config_dir = get_default_config_dir(error);
-    if (error)
-      return;
-  }
-  auto &lgr = logger::instance();
 
   const bool valid = validate(error);
   if (!valid || error)
     return;
 
   lgr.debug("Making config directories");
-  make_directories(config_dir, error);
+  make_directories(error);
   if (error) {
     error = client_config_error_code::error_creating_directories;
     lgr.debug("Error creating directories: {}", error);
@@ -538,7 +518,7 @@ client_config::configure(const std::vector<std::string> &genomes,
   }
 
   lgr.debug("Writing configuration file");
-  save(config_dir, error);
+  save(error);
   if (error) {
     lgr.debug("Error writing config file: {}", error);
     return;
