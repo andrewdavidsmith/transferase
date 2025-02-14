@@ -89,6 +89,7 @@ struct client_config {
   static constexpr auto client_log_filename_default = "transferase.log";
 
   transferase_metadata meta;
+  std::string config_dir;
   std::string hostname;
   std::string port;
   std::string index_dir;
@@ -128,8 +129,7 @@ struct client_config {
   /// downloads and verifying consistency.
   auto
   configure(const std::vector<std::string> &genomes,
-            const download_policy_t download_policy, std::string config_dir,
-            std::string sys_config_dir,
+            const download_policy_t download_policy, std::string sys_config_dir,
             std::error_code &error) const noexcept -> void;
 
 #ifndef TRANSFERASE_NOEXCEPT
@@ -138,10 +138,9 @@ struct client_config {
   auto
   configure(const std::vector<std::string> &genomes,
             const download_policy_t download_policy,
-            const std::string &config_dir,
             const std::string &sys_config_dir) const -> void {
     std::error_code error;
-    configure(genomes, download_policy, config_dir, sys_config_dir, error);
+    configure(genomes, download_policy, sys_config_dir, error);
     if (error)
       throw std::system_error(error);
   }
@@ -151,11 +150,11 @@ struct client_config {
   // to look for the system config file since different APIs can't be
   // expected to find things the same way.
   auto
-  set_defaults(std::string config_dir, const std::string &system_config,
+  set_defaults(const std::string &system_config,
                std::error_code &error) noexcept -> void;
 
   auto
-  set_defaults(std::string config_dir, std::error_code &error) noexcept -> void;
+  set_defaults(std::error_code &error) noexcept -> void;
 
   /// Validate that the required instance variables are set properly;
   /// do this before attempting the configuration process.
@@ -165,13 +164,13 @@ struct client_config {
   /// Write the client configuration to the given configuration
   /// directory.
   auto
-  save(std::string config_dir, std::error_code &error) const noexcept -> void;
+  save(std::error_code &error) const noexcept -> void;
 
 #ifndef TRANSFERASE_NOEXCEPT
   /// Write the client configuration to the given configuration
   /// directory, throwing system_error to serve in in an API.
   auto
-  save(const std::string &config_dir) const -> void {
+  save() const -> void {
     std::error_code error;
     save(config_dir, error);
     if (error)
@@ -180,8 +179,7 @@ struct client_config {
 #endif
 
   auto
-  make_directories(const std::string &config_dir_arg,
-                   std::error_code &error) const noexcept -> void;
+  make_directories(std::error_code &error) const noexcept -> void;
 
   [[nodiscard]] static auto
   get_default_index_dir(std::error_code &error) -> std::string;
