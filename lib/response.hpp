@@ -94,7 +94,7 @@ struct response_payload {
     // ADS: slower than needed; copy happening here is not needed
     error = std::error_code{};  // clear this in case it was set
     const auto tot_bytes =
-      std::size(levels) * sizeof(lvl_elem) * size(levels[0]);
+      std::size(levels) * sizeof(lvl_elem) * std::size(levels[0]);
     response_payload rp(tot_bytes);
     std::size_t byte_offset{};
     for (const auto &lvl : levels) {
