@@ -135,6 +135,11 @@ struct query_argset : argset_base<query_argset> {
 
   static constexpr auto log_level_default{log_level_t::info};
   static constexpr auto out_fmt_default{output_format_t::counts};
+
+  // hidden
+  std::string metadata_file{};
+  std::string config_dir;
+
   std::string hostname;
   std::string port;
   std::string methylome_dir;
@@ -149,7 +154,7 @@ struct query_argset : argset_base<query_argset> {
   std::string methylome_names{};
   std::string methylomes_file{};
   std::string genome_name{};
-  std::string metadata_file{};
+
   output_format_t out_fmt{};
   bool count_covered{};
   std::string output_file{};
@@ -185,6 +190,7 @@ struct query_argset : argset_base<query_argset> {
     opts.add_options()
       // clang-format off
       ("metadata-file", po::value(&metadata_file), "none")
+      ("config-dir", po::value(&config_dir), "none")
       // clang-format on
       ;
     return opts;
