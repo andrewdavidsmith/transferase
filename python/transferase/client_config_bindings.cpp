@@ -47,13 +47,12 @@ client_config_bindings(nanobind::class_<transferase::client_config> &cls)
   -> void {
   using namespace nanobind::literals;  // NOLINT
   cls.def_static(
-    "default",
-    []() -> transferase::client_config {
+    "get_config",
+    [](const std::string &config_dir) -> transferase::client_config {
       const auto sys_config_dir = transferase::find_python_sys_config_dir();
-      auto client = transferase::client_config();
       std::error_code error;
-      const std::string empty_config_dir;  // not used
-      client.set_defaults(empty_config_dir, sys_config_dir, error);
+      auto client = transferase::client_config::get_default(
+        config_dir, sys_config_dir, error);
       if (error)
         throw std::system_error(error);
       return client;
@@ -65,45 +64,54 @@ client_config_bindings(nanobind::class_<transferase::client_config> &cls)
     example, you might want to change the log-level to see more
     information:
 
-    >>> client = ClientConfig.default()
+    >>> client = ClientConfig.get_config()
     >>> from transferase import LogLevel
     >>> client.log_level = LogLevel.debug
 
     If you use this function on an instance (client.default()) be
-    aware that it will not change the calling object. You need to
-    assign to an object when calling this function.
+    aware that it will not change the calling object, as this is a
+    static function. You need to assign to an object when calling this
+    function.
+    )doc",
+    "config_dir"_a = std::string{});
+  cls.def("make_paths_absolute",
+          nb::overload_cast<>(&transferase::client_config::make_paths_absolute),
+          R"doc(
+    Makes all paths in the configuration absolute. A very good idea,
+    and likely should be done before calling 'save' if you are not
+    using the default 'config_dir'.
     )doc");
   cls.def("save",
-          nb::overload_cast<const std::string &>(
-            &transferase::client_config::save, nb::const_),
+          nb::overload_cast<>(&transferase::client_config::save, nb::const_),
           R"doc(
-    Save the configuration set in this object, writing values to files
-    in the specified directory, or the default location of none is
-    specified.
-
-    Parameters
-    ----------
-
-    config_dir (str): The name of a directory to write the
-        configuration. Typically this should be left as the default.
-    )doc",
-          "config_dir"_a = std::string());
+    Save the configuration values associated with this object back to
+    the directory associated with this object, which is the value in
+    'config_dir'.  The main reason to use this function is to update a
+    configuration. You would first use 'get_config' to load the
+    ClientConfig object, then modify one of the instance variables,
+    then call 'save'.
+    )doc");
   cls.def(
-    "configure",
+    "install",
     [](const transferase::client_config &self,
        const std::vector<std::string> &genomes,
-       const transferase::download_policy_t download_policy,
-       const std::string &config_dir) -> void {
+       const transferase::download_policy_t download_policy) -> void {
       const auto sys_config_dir = transferase::find_python_sys_config_dir();
-      self.configure(genomes, download_policy, config_dir, sys_config_dir);
+      self.install(genomes, download_policy, sys_config_dir);
     },
     R"doc(
-    Does the work of configuring the client, accepting a list of
-    genomes and an indicator to force redownloading. If both arguments
-    are empty, the configuration will be written but no genome indexes
-    will be downloaded. If you specify genomes, or request a download,
-    this command will take roughly 15-30s per genome, depending on
-    internet speed.
+    Does the work related to downloading information needed by
+    MethylomeClients.  Accepting a list of genomes and an indicator
+    that controls what is (re)downloaded. If both arguments are empty,
+    the configuration will be written but no genome indexes will be
+    downloaded. If you specify genomes, or request a download, this
+    command will take roughly 15-30s per genome, depending on internet
+    speed. The configuration will be written to the directory
+    associated with this object. Typically this should be left as the
+    default. This command makes web requests. Note: before doing an
+    'install' you need a client, so make sure to run 'get_config'
+    first, and then adjust the values how you want before doing the
+    'install'.
 
     Parameters
     ----------
@@ -112,17 +120,17 @@ client_config_bindings(nanobind::class_<transferase::client_config> &cls)
         ["hg38", "mm39", "bosTau9"]
 
     download_policy (DownloadPolicy): Indication of what to (re)download.
-
-    config_dir (str): The name of a directory to write the configuration.
-        Typically this should be left as the default.
     )doc",
     "genomes"_a = std::vector<std::string>{},
-    "download_policy"_a = transferase::download_policy_t::missing,
-    "config_dir"_a = std::string{});
-  cls.def("available_genomes", &transferase::client_config::available_genomes,
-          R"doc(
-    Get a list of available genomes that can be configured by a request
-    to a remote server.
+    "download_policy"_a = transferase::download_policy_t::missing);
+  cls.def_rw("config_dir", &transferase::client_config::config_dir,
+             R"doc(
+    The directory associated with this configuration. This is either
+    the directory from which this configuration was loaded, or a
+    directory that has been assigned by the user. This is also the
+    directory where this configuration will be written using the
+    'save' or 'install' functions, and unless you change the values,
+    this determines the values for 'index_dir' and 'metadata_file'.
     )doc");
   cls.def_rw("hostname", &transferase::client_config::hostname,
              R"doc(
@@ -172,10 +180,15 @@ client_config_bindings(nanobind::class_<transferase::client_config> &cls)
     Print the contents of a ClientConfig object.
     )doc");
   cls.doc() = R"doc(
-    A ClientConfig object is an interface to use when setting up the
-    transferase environment for the first time, or for revising the
-    configuration afterwards, retrieving updated metadata, etc.
+    A ClientConfig object provides an interface to use when setting up
+    the transferase environment for the first time, or for revising
+    the configuration afterwards, retrieving updated metadata, etc.
+    Most users will simply run:
 
+    >>> config = ClientConfig.get_config()
+    >>> config.install(["hg38"])
+
+    Using the defaults and installing the genome they need.
     )doc"
     //
     ;
