@@ -182,30 +182,39 @@ client_config::get_config_file(const std::string &config_dir,
                                error);
 }
 
-auto
-client_config::set_defaults(const std::string &sys_config_dir,
-                            std::error_code &error) noexcept -> void {
+[[nodiscard]] auto
+client_config::get_default(std::string config_dir,
+                           const std::string &sys_config_dir,
+                           std::error_code &error) noexcept -> client_config {
   namespace fs = std::filesystem;
-  assert(!config_dir.empty());
+  if (config_dir.empty()) {
+    config_dir = get_default_config_dir(error);
+    if (error)
+      return {};
+  }
 
   const auto [default_hostname, default_port] =
     transferase::get_transferase_server_info(sys_config_dir, error);
   if (error)
-    return;
+    return {};
 
-  hostname = default_hostname;
-  port = default_port;
-  index_dir = (fs::path{config_dir} / index_dirname_default).string();
-  metadata_file = (fs::path{config_dir} / metadata_filename_default).string();
+  client_config config;
+  config.config_dir = config_dir;
+  config.hostname = default_hostname;
+  config.port = default_port;
+  config.index_dir = (fs::path{config_dir} / index_dirname_default).string();
+  config.metadata_file =
+    (fs::path{config_dir} / metadata_filename_default).string();
+  return config;
 }
 
-auto
-client_config::set_defaults(std::error_code &error) noexcept -> void {
-  assert(!config_dir.empty());
+[[nodiscard]] auto
+client_config::get_default(std::string config_dir,
+                           std::error_code &error) noexcept -> client_config {
   const std::string sys_config_dir = get_default_sys_config_dir(error);
   if (error)
-    return;
-  set_defaults(sys_config_dir, error);
+    return {};
+  return get_default(config_dir, sys_config_dir, error);
 }
 
 /// Create all the directories involved in the client config, if they
@@ -215,7 +224,7 @@ auto
 client_config::make_directories(std::error_code &error) const noexcept -> void {
   namespace fs = std::filesystem;
   assert(!config_dir.empty());
-  assert(config_dir == fs::weakly_canonical(config_dir).string());
+  // assert(config_dir == fs::weakly_canonical(config_dir).string());
 
   const bool dirs_ok = create_dirs_if_needed(config_dir, error);
   if (error)
@@ -319,11 +328,43 @@ client_config::read(std::string config_dir,
 }
 
 auto
-client_config::save(std::error_code &error) const noexcept -> void {
-  assert(!config_dir.empty());
-  const auto config_file = get_config_file(config_dir, error);
+client_config::make_paths_absolute(std::error_code &error) noexcept -> void {
+  const auto make_absolute = [&](std::string &filename) {
+    auto tmp = std::filesystem::absolute(filename, error);
+    if (!error)
+      filename = tmp.string();
+  };
+
+  // config_dir
+  make_absolute(config_dir);
   if (error)
     return;
+
+  // config_dir
+  make_absolute(metadata_file);
+  if (error)
+    return;
+
+  // config_dir
+  make_absolute(index_dir);
+  if (error)
+    return;
+}
+
+auto
+client_config::save(std::error_code &error) const noexcept -> void {
+  assert(!config_dir.empty());
+
+  auto config_file = get_config_file(config_dir, error);
+  if (error)
+    return;
+
+  const bool dir_exists = std::filesystem::exists(config_dir, error);
+  if (!dir_exists) {
+    make_directories(error);
+    if (error)
+      return;
+  }
 
   const bool file_exists = std::filesystem::exists(config_file, error);
   if (error)
@@ -333,7 +374,7 @@ client_config::save(std::error_code &error) const noexcept -> void {
   client_config tmp = *this;
   if (file_exists) {
     // load current config values into a separate object
-    tmp = read(config_dir, error);
+    parse_config_file(tmp, config_file, error);
     if (error)
       return;
     using Md = boost::describe::describe_members<client_config,
@@ -346,6 +387,8 @@ client_config::save(std::error_code &error) const noexcept -> void {
     });
     // always overwrite log level -- no way to know not to
     tmp.log_level = log_level;
+    // set config_dir just in case
+    tmp.config_dir = config_dir;
   }
   error = write_config_file(tmp, config_file);
   if (error)
@@ -493,10 +536,10 @@ get_metadata_file(const remote_data_resources &remote,
 }
 
 auto
-client_config::configure(const std::vector<std::string> &genomes,
-                         const download_policy_t download_policy,
-                         std::string sys_config_dir,
-                         std::error_code &error) const noexcept -> void {
+client_config::install(const std::vector<std::string> &genomes,
+                       const download_policy_t download_policy,
+                       std::string sys_config_dir,
+                       std::error_code &error) const noexcept -> void {
   assert(!config_dir.empty());
   auto &lgr = logger::instance();
   if (sys_config_dir.empty()) {
