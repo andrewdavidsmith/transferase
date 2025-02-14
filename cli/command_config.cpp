@@ -118,8 +118,7 @@ command_config_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
   args.log_options();
 
   const std::string empty_config_dir;
-  xfr::client_config config;
-  config.set_defaults(empty_config_dir, error);
+  auto config = xfr::client_config::get_default(empty_config_dir, error);
   if (error) {
     lgr.error("Error setting default config values: {}.", error);
     return EXIT_FAILURE;
@@ -134,12 +133,12 @@ command_config_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
       return EXIT_FAILURE;
     }
   }
+  config.config_dir = args.config_dir;
 
   const auto genomes = split_comma(args.genomes);
 
   const std::string empty_sys_config_dir;
-  config.configure(genomes, args.download_policy, args.config_dir,
-                   empty_sys_config_dir, error);
+  config.install(genomes, args.download_policy, empty_sys_config_dir, error);
   if (error) {
     lgr.error("Configuration incomplete: {}", error);
     return EXIT_FAILURE;
