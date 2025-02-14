@@ -84,13 +84,12 @@ template <typename level_element_type> struct level_container {
   data() -> char * {
     return reinterpret_cast<char *>(v.data());
   }
-};
 
-template <typename level_element_type>
-[[nodiscard]] inline auto
-size(const level_container<level_element_type> &l) {
-  return std::size(l.v);
-}
+  [[nodiscard]] auto
+  size() const noexcept -> std::size_t {
+    return std::size(v);
+  }
+};
 
 }  // namespace transferase
 
