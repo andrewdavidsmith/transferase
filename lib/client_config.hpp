@@ -124,37 +124,38 @@ struct client_config {
   }
 #endif
 
-  /// The `configure` function performs all the steps of setup for a
-  /// client, making directories, writing configuration files, doing
-  /// downloads and verifying consistency.
+  /// The `install` function performs the steps that involve
+  /// downloads. It will also make directories, write configuration
+  /// files and verifying consistency, if needed.
   auto
-  configure(const std::vector<std::string> &genomes,
-            const download_policy_t download_policy, std::string sys_config_dir,
-            std::error_code &error) const noexcept -> void;
+  install(const std::vector<std::string> &genomes,
+          const download_policy_t download_policy, std::string sys_config_dir,
+          std::error_code &error) const noexcept -> void;
 
 #ifndef TRANSFERASE_NOEXCEPT
-  /// Overload of `configure` for APIs. Throws system_error if an
+  /// Overload of `install` for APIs. Throws system_error if an
   /// error is encountered.
   auto
-  configure(const std::vector<std::string> &genomes,
-            const download_policy_t download_policy,
-            const std::string &sys_config_dir) const -> void {
+  install(const std::vector<std::string> &genomes,
+          const download_policy_t download_policy,
+          const std::string &sys_config_dir) const -> void {
     std::error_code error;
-    configure(genomes, download_policy, sys_config_dir, error);
+    install(genomes, download_policy, sys_config_dir, error);
     if (error)
       throw std::system_error(error);
   }
 #endif
 
-  // The set_defaults functions have overloads that take a directory
+  // The get_default functions have overloads that take a directory
   // to look for the system config file since different APIs can't be
   // expected to find things the same way.
-  auto
-  set_defaults(const std::string &system_config,
-               std::error_code &error) noexcept -> void;
+  [[nodiscard]] static auto
+  get_default(std::string config_dir, const std::string &system_config,
+              std::error_code &error) noexcept -> client_config;
 
-  auto
-  set_defaults(std::error_code &error) noexcept -> void;
+  [[nodiscard]] static auto
+  get_default(std::string config_dir,
+              std::error_code &error) noexcept -> client_config;
 
   /// Validate that the required instance variables are set properly;
   /// do this before attempting the configuration process.
@@ -172,7 +173,20 @@ struct client_config {
   auto
   save() const -> void {
     std::error_code error;
-    save(config_dir, error);
+    save(error);
+    if (error)
+      throw std::system_error(error);
+  }
+#endif
+
+  auto
+  make_paths_absolute(std::error_code &error) noexcept -> void;
+
+#ifndef TRANSFERASE_NOEXCEPT
+  auto
+  make_paths_absolute() -> void {
+    std::error_code error;
+    make_paths_absolute(error);
     if (error)
       throw std::system_error(error);
   }
@@ -194,6 +208,7 @@ struct client_config {
 
 // clang-format off
 BOOST_DESCRIBE_STRUCT(client_config, (), (
+  config_dir,
   hostname,
   port,
   index_dir,
