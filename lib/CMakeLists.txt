@@ -31,7 +31,6 @@ foreach(cpp_file ${cpp_files})
   ## Below is to make sure 'config.h' is visible for includes and any
   ## of the headers for configured libraries
   target_include_directories(${BASE_NAME} PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${PROJECT_BINARY_DIR}
     ${Boost_INCLUDE_DIRS}
     ${ZLIB_INCLUDE_DIRS}
@@ -49,8 +48,6 @@ endif()
 
 # Create the initial static library linking the individual objects
 add_library(transferase_system STATIC)
-target_include_directories(transferase_system PUBLIC
-  ${CMAKE_CURRENT_SOURCE_DIR}/include
-)
+target_include_directories(transferase_system PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_options(transferase_system PRIVATE ${GLOBAL_LINKER_OPTIONS})
 target_link_libraries(transferase_system PRIVATE ${LIBRARY_OBJECTS})
