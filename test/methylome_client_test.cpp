@@ -86,13 +86,10 @@ TEST_F(methylome_client_remote_mock, read_success) {
   EXPECT_FALSE(client->config.metadata_file.empty());
 
   EXPECT_EQ(std::size(client->config.meta.genome_to_methylomes),
-            n_lutions_available)
-    << client->config.meta.tostring();
+            n_lutions_available);
   for (const auto &d : client->config.meta.genome_to_methylomes)
-    EXPECT_EQ(std::size(d.second), n_lutions_tissues)
-      << client->config.meta.tostring();
+    EXPECT_EQ(std::size(d.second), n_lutions_tissues);
 
   EXPECT_EQ(std::size(client->config.meta.methylome_to_genome),
-            n_lutions_available * n_lutions_tissues)
-    << client->config.meta.tostring();
+            n_lutions_available * n_lutions_tissues);
 }
