@@ -52,17 +52,6 @@ split_equals(const std::string &line, std::error_code &error) noexcept
   return {key, value};
 }
 
-[[nodiscard]] auto
-clean_path(const std::string &s, std::error_code &ec) -> std::string {
-  auto p = std::filesystem::absolute(s, ec);
-  if (ec)
-    return {};
-  p = std::filesystem::weakly_canonical(p, ec);
-  if (ec)
-    return {};
-  return p.lexically_normal().string();
-}
-
 auto
 validate_output_directory(const std::string &dirname,
                           std::error_code &error) -> void {
