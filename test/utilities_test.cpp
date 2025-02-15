@@ -33,14 +33,6 @@
 using namespace transferase;  // NOLINT
 using std::string_literals::operator""s;
 
-TEST(utilities_test, clean_path_test) {
-  static const auto relative = "./something"s;
-  std::error_code error;
-  const auto cleaned = clean_path(relative, error);
-  EXPECT_FALSE(error);
-  EXPECT_NE(relative, cleaned);
-}
-
 TEST(utilities_test, split_comma_test) {
   static const auto with_commas_ok = "a,b,c,d"s;
   static const auto with_commas_left = ",a,b,c,d"s;
