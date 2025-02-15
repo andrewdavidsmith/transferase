@@ -47,16 +47,20 @@ level_container_bindings(
   -> void {
   using namespace nanobind::literals;  // NOLINT
   namespace xfr = transferase;
-  cls.def(nb::init<>())
-    .def(
-      "__getitem__",
-      [](const xfr::level_container<xfr::level_element_t> &self,
-         const std::size_t pos) -> std::tuple<std::uint32_t, std::uint32_t> {
-        if (pos >= xfr::size(self))
-          throw std::out_of_range("Index out of range");
-        return std::make_tuple(self[pos].n_meth, self[pos].n_unmeth);
-      },
-      R"doc(
+  cls.def(nb::init<>());
+  cls.def("__len__",
+          [](const xfr::level_container<xfr::level_element_t> &self) {
+            return std::size(self);
+          });
+  cls.def(
+    "__getitem__",
+    [](const xfr::level_container<xfr::level_element_t> &self,
+       const std::size_t pos) -> std::tuple<std::uint32_t, std::uint32_t> {
+      if (pos >= std::size(self))
+        throw std::out_of_range("Index out of range");
+      return std::make_tuple(self[pos].n_meth, self[pos].n_unmeth);
+    },
+    R"doc(
     Access the tuple (n_meth, n_unmeth) of numbers of methylated and
     unmethylated reads for the interval corresponding to the given
     position in the container. These are returned by copy, so access
@@ -69,16 +73,16 @@ level_container_bindings(
         of methylated and unmethylated reads.
 
       )doc",
-      "pos"_a)
-    .def(
-      "get_n_meth",
-      [](const xfr::level_container<xfr::level_element_t> &self,
-         const std::size_t pos) -> std::uint32_t {
-        if (pos >= xfr::size(self))
-          throw std::out_of_range("Index out of range");
-        return self[pos].n_meth;
-      },
-      R"doc(
+    "pos"_a);
+  cls.def(
+    "get_n_meth",
+    [](const xfr::level_container<xfr::level_element_t> &self,
+       const std::size_t pos) -> std::uint32_t {
+      if (pos >= std::size(self))
+        throw std::out_of_range("Index out of range");
+      return self[pos].n_meth;
+    },
+    R"doc(
     Access the number of *methylated* observations for the interval
     corresponding to the given position.
 
@@ -87,18 +91,17 @@ level_container_bindings(
 
     pos (int): The index of the interval for which to get the number
         of *methylated* reads.
-
       )doc",
-      "pos"_a)
-    .def(
-      "get_n_unmeth",
-      [](const xfr::level_container<xfr::level_element_t> &self,
-         const std::size_t pos) -> std::uint32_t {
-        if (pos >= xfr::size(self))
-          throw std::out_of_range("Index out of range");
-        return self[pos].n_unmeth;
-      },
-      R"doc(
+    "pos"_a);
+  cls.def(
+    "get_n_unmeth",
+    [](const xfr::level_container<xfr::level_element_t> &self,
+       const std::size_t pos) -> std::uint32_t {
+      if (pos >= std::size(self))
+        throw std::out_of_range("Index out of range");
+      return self[pos].n_unmeth;
+    },
+    R"doc(
     Access the number of *UNmethylated* observations for the interval
     corresponding to the given position.
 
@@ -107,20 +110,19 @@ level_container_bindings(
 
     pos (int): The index of the interval for which to get the number
         of *UNmethylated* reads.
-
       )doc",
-      "pos"_a)
+    "pos"_a);
+  cls
     .def("__str__",
          [](const xfr::level_container<xfr::level_element_t> &self)
            -> std::string {
-           return std::format("LevelContainer size={}", xfr::size(self));
+           return std::format("LevelContainer size={}", std::size(self));
          })
     .doc() = R"doc(
     A LevelContainer represents methylation levels in each among a
     list of GenomicInterval objects. This is the object type that is
     returned from a transferase query, unless you additionally request
     information about sites covered (see LevelContainerCovered).
-
     )doc"
     //
     ;
@@ -132,18 +134,22 @@ level_container_covered_bindings(
     &cls) -> void {
   using namespace nanobind::literals;  // NOLINT
   namespace xfr = transferase;
-  cls.def(nb::init<>())
-    .def(
-      "__getitem__",
-      [](const xfr::level_container<xfr::level_element_covered_t> &self,
-         const std::size_t pos)
-        -> std::tuple<std::uint32_t, std::uint32_t, std::uint32_t> {
-        if (pos >= xfr::size(self))
-          throw std::out_of_range("Index out of range");
-        return std::make_tuple(self[pos].n_meth, self[pos].n_unmeth,
-                               self[pos].n_covered);
-      },
-      R"doc(
+  cls.def(nb::init<>());
+  cls.def("__len__",
+          [](const xfr::level_container<xfr::level_element_covered_t> &self) {
+            return std::size(self);
+          });
+  cls.def(
+    "__getitem__",
+    [](const xfr::level_container<xfr::level_element_covered_t> &self,
+       const std::size_t pos)
+      -> std::tuple<std::uint32_t, std::uint32_t, std::uint32_t> {
+      if (pos >= std::size(self))
+        throw std::out_of_range("Index out of range");
+      return std::make_tuple(self[pos].n_meth, self[pos].n_unmeth,
+                             self[pos].n_covered);
+    },
+    R"doc(
     Access the tuple (n_meth, n_unmeth, n_covered) of numbers of
     methylated and unmethylated reads, along with number of sites with
     at least one read, for the interval corresponding to the given
@@ -155,18 +161,17 @@ level_container_covered_bindings(
 
     pos (int): The index of the interval for which to get the numbers
         of methylated and unmethylated reads, and covered sites.
-
       )doc",
-      "pos"_a)
-    .def(
-      "get_n_meth",
-      [](const xfr::level_container<xfr::level_element_covered_t> &self,
-         const std::size_t pos) -> std::uint32_t {
-        if (pos >= xfr::size(self))
-          throw std::out_of_range("Index out of range");
-        return self[pos].n_meth;
-      },
-      R"doc(
+    "pos"_a);
+  cls.def(
+    "get_n_meth",
+    [](const xfr::level_container<xfr::level_element_covered_t> &self,
+       const std::size_t pos) -> std::uint32_t {
+      if (pos >= std::size(self))
+        throw std::out_of_range("Index out of range");
+      return self[pos].n_meth;
+    },
+    R"doc(
     Access the number of *methylated* observations for the interval
     corresponding to the given position.
 
@@ -175,18 +180,17 @@ level_container_covered_bindings(
 
     pos (int): The index of the interval for which to get the number
         of *methylated* reads.
-
       )doc",
-      "pos"_a)
-    .def(
-      "get_n_unmeth",
-      [](const xfr::level_container<xfr::level_element_covered_t> &self,
-         const std::size_t pos) -> std::uint32_t {
-        if (pos >= xfr::size(self))
-          throw std::out_of_range("Index out of range");
-        return self[pos].n_unmeth;
-      },
-      R"doc(
+    "pos"_a);
+  cls.def(
+    "get_n_unmeth",
+    [](const xfr::level_container<xfr::level_element_covered_t> &self,
+       const std::size_t pos) -> std::uint32_t {
+      if (pos >= std::size(self))
+        throw std::out_of_range("Index out of range");
+      return self[pos].n_unmeth;
+    },
+    R"doc(
     Access the number of *UNmethylated* observations for the interval
     corresponding to the given position.
 
@@ -195,18 +199,17 @@ level_container_covered_bindings(
 
     pos (int): The index of the interval for which to get the number
         of *UNmethylated* reads.
-
       )doc",
-      "pos"_a)
-    .def(
-      "get_n_covered",
-      [](const xfr::level_container<xfr::level_element_covered_t> &self,
-         const std::size_t pos) -> std::uint32_t {
-        if (pos >= xfr::size(self))
-          throw std::out_of_range("Index out of range");
-        return self[pos].n_covered;
-      },
-      R"doc(
+    "pos"_a);
+  cls.def(
+    "get_n_covered",
+    [](const xfr::level_container<xfr::level_element_covered_t> &self,
+       const std::size_t pos) -> std::uint32_t {
+      if (pos >= std::size(self))
+        throw std::out_of_range("Index out of range");
+      return self[pos].n_covered;
+    },
+    R"doc(
     Access the number of covered sites in the interval corresponding
     to the given position.
 
@@ -215,20 +218,19 @@ level_container_covered_bindings(
 
     pos (int): The index of the interval for which to get the number
         of covered sites.
-
       )doc",
-      "pos"_a)
+    "pos"_a);
+  cls
     .def("__str__",
          [](const xfr::level_container<xfr::level_element_covered_t> &self)
            -> std::string {
-           return std::format("LevelContainerCovered size={}", xfr::size(self));
+           return std::format("LevelContainerCovered size={}", std::size(self));
          })
     .doc() = R"doc(
     A LevelContainerCovered represents methylation levels in each
     among a list of GenomicInterval objects. This is the object type
     that is returned from a transferase query if you request
     information about sites covered.
-
     )doc"
     //
     ;
