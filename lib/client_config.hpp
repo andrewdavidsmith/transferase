@@ -216,9 +216,6 @@ struct client_config {
   make_directories(std::error_code &error) const noexcept -> void;
 
   [[nodiscard]] static auto
-  get_default_index_dir(std::error_code &error) -> std::string;
-
-  [[nodiscard]] static auto
   get_default_config_dir(std::error_code &error) -> std::string;
 
   /// Get the path to the config file (base on dir)

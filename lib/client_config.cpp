@@ -45,26 +45,6 @@
 #include <unordered_map>
 #include <vector>
 
-/// Returns the argument directory name if the directory exists and is
-/// a directory. Otherwise returns the empty string.
-[[nodiscard]] static inline auto
-check_and_return_directory(const std::string &dirname,
-                           std::error_code &error) -> std::string {
-  const bool exists = std::filesystem::exists(dirname, error);
-  if (error)
-    return {};
-  if (!exists)
-    return dirname;
-  const auto is_dir = std::filesystem::is_directory(dirname, error);
-  if (error)
-    return {};
-  if (!is_dir) {
-    error = std::make_error_code(std::errc::not_a_directory);
-    return {};
-  }
-  return dirname;
-}
-
 [[nodiscard]] static inline auto
 get_file_if_not_already_dir(const std::string &filename,
                             std::error_code &error) noexcept -> std::string {
@@ -157,20 +137,7 @@ client_config::get_default_config_dir(std::error_code &error) -> std::string {
     return {};
   const auto dirname =
     std::filesystem::path{env_home_path} / transferase_config_dirname_default;
-  return check_and_return_directory(dirname, error);
-}
-
-[[nodiscard]] auto
-client_config::get_default_index_dir(std::error_code &error) -> std::string {
-  // ADS: need to replace this with functions that take actual config
-  // dir, since the config file in that dir might point to a different
-  // location for the index dir.
-  const auto config_dir = get_default_config_dir(error);
-  if (error)
-    return {};
-  const auto dirname =
-    std::filesystem::path{config_dir} / index_dirname_default;
-  return check_and_return_directory(dirname, error);
+  return dirname.string();
 }
 
 [[nodiscard]] auto
