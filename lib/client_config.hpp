@@ -115,19 +115,19 @@ struct client_config {
 
   /// Get the path to the index directory
   [[nodiscard]] auto
-  get_index_dir() const -> std::string;
+  get_index_dir() const noexcept -> std::string;
 
   /// Get the path to the metadata file
   [[nodiscard]] auto
-  get_metadata_file() const -> std::string;
+  get_metadata_file() const noexcept -> std::string;
 
   /// Get the path to the methylome directory
   [[nodiscard]] auto
-  get_methylome_dir() const -> std::string;
+  get_methylome_dir() const noexcept -> std::string;
 
   /// Get the path to the log file
   [[nodiscard]] auto
-  get_log_file() const -> std::string;
+  get_log_file() const noexcept -> std::string;
 
   [[nodiscard]] auto
   available_genomes() const noexcept -> std::vector<std::string> {
@@ -220,6 +220,10 @@ struct client_config {
 
   [[nodiscard]] static auto
   get_default_config_dir(std::error_code &error) -> std::string;
+
+  /// Get the path to the config file (base on dir)
+  [[nodiscard]] static auto
+  get_config_file(const std::string &config_dir) noexcept -> std::string;
 
   [[nodiscard]] static auto
   get_config_file(const std::string &config_dir,
