@@ -89,27 +89,35 @@ get_file_if_not_already_dir(const std::string &filename,
 
 namespace transferase {
 
+/// Get the path to the config file (base on dir)
+[[nodiscard]] auto
+client_config::get_config_file(const std::string &config_dir) noexcept
+  -> std::string {
+  return (std::filesystem::path(config_dir) / client_config_filename_default)
+    .lexically_normal();
+}
+
 /// Get the path to the index directory
 [[nodiscard]] auto
-client_config::get_index_dir() const -> std::string {
+client_config::get_index_dir() const noexcept -> std::string {
   return (std::filesystem::path(config_dir) / index_dir).lexically_normal();
 }
 
 /// Get the path to the metadata file
 [[nodiscard]] auto
-client_config::get_metadata_file() const -> std::string {
+client_config::get_metadata_file() const noexcept -> std::string {
   return (std::filesystem::path(config_dir) / metadata_file).lexically_normal();
 }
 
 /// Get the path to the methylome directory
 [[nodiscard]] auto
-client_config::get_methylome_dir() const -> std::string {
+client_config::get_methylome_dir() const noexcept -> std::string {
   return (std::filesystem::path(config_dir) / methylome_dir).lexically_normal();
 }
 
 /// Get the path to the log file
 [[nodiscard]] auto
-client_config::get_log_file() const -> std::string {
+client_config::get_log_file() const noexcept -> std::string {
   return (std::filesystem::path(config_dir) / log_file).lexically_normal();
 }
 
