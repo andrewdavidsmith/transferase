@@ -48,8 +48,8 @@ methylome_client_local_bindings(
   nb::class_<transferase::methylome_client_local> &cls) -> void {
   using namespace nanobind::literals;  // NOLINT
   namespace xfr = transferase;         // NOLINT
-  cls.def_static("get_client", &xfr::methylome_client_local::get_client,
-                 R"doc(
+  cls.def(nb::init<const std::string &>(),
+          R"doc(
     Get a MethylomeClientLocal initialized with settings already
     configured by the current user.
 
@@ -59,7 +59,7 @@ methylome_client_local_bindings(
     config_dir (str): [Optional] Directory to look for configuration.
         When not specified, the default is used,
     )doc",
-                 "config_dir"_a = std::string{});
+          "config_dir"_a = std::string{});
   cls.def_rw("config", &xfr::methylome_client_local::config, R"doc(
     The ClientConfig object associated with this MethylomeClientLocal object.
     )doc");

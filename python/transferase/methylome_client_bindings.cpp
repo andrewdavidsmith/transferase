@@ -48,16 +48,15 @@ methylome_client_bindings(nb::class_<transferase::methylome_client_remote> &cls)
   -> void {
   using namespace nanobind::literals;  // NOLINT
   namespace xfr = transferase;         // NOLINT
-  cls.def_static("get_client", &xfr::methylome_client_remote::get_client,
-                 R"doc(
+  cls.def(nb::init<const std::string &>(),
+          R"doc(
     Get a MethylomeClient initialized with settings already configured
     by the current user.
     )doc",
-                 "config_dir"_a = std::string{});
+          "config_dir"_a = std::string{});
   cls.def_rw("config", &xfr::methylome_client_remote::config,
              R"doc(
     The ClientConfig object associated with this MethylomeClient.
-
     )doc");
   cls.def("__repr__", &xfr::methylome_client_remote::tostring);
   cls.def("configured_genomes",
@@ -174,9 +173,9 @@ methylome_client_bindings(nb::class_<transferase::methylome_client_remote> &cls)
     ensures that the client and server are always communicating about
     the exact same reference genome, and not one that differs, for
     example, by inclusion of unassembled fragments or alternate
-    haplotypes. If you have not already setup transferase using
-    the ClientConfig class (or with command line tools), then instances
-    of this class might be very difficult to use.
+    haplotypes. If you have not already setup transferase using the
+    ClientConfig class (or with command line tools), it is possible to
+    use a MethylomeClient, but the process is more complicated.
     )doc"
     //
     ;
