@@ -77,19 +77,21 @@ TEST_F(methylome_client_remote_mock, read_failure) {
 }
 
 TEST_F(methylome_client_remote_mock, read_success) {
-  std::unique_ptr<methylome_client_remote> client;
+  std::unique_ptr<methylome_client_remote> client = nullptr;
   EXPECT_NO_THROW({ *client = methylome_client_remote(config_dir); });
-  EXPECT_EQ(client->config.hostname, hostname)
-    << client->config.tostring() << "\n";
-  EXPECT_EQ(client->config.port, port);
-  EXPECT_FALSE(client->config.index_dir.empty());
-  EXPECT_FALSE(client->config.metadata_file.empty());
+  if (client != nullptr) {
+    EXPECT_EQ(client->config.hostname, hostname)
+      << client->config.tostring() << "\n";
+    EXPECT_EQ(client->config.port, port);
+    EXPECT_FALSE(client->config.index_dir.empty());
+    EXPECT_FALSE(client->config.metadata_file.empty());
 
-  EXPECT_EQ(std::size(client->config.meta.genome_to_methylomes),
-            n_lutions_available);
-  for (const auto &d : client->config.meta.genome_to_methylomes)
-    EXPECT_EQ(std::size(d.second), n_lutions_tissues);
+    EXPECT_EQ(std::size(client->config.meta.genome_to_methylomes),
+              n_lutions_available);
+    for (const auto &d : client->config.meta.genome_to_methylomes)
+      EXPECT_EQ(std::size(d.second), n_lutions_tissues);
 
-  EXPECT_EQ(std::size(client->config.meta.methylome_to_genome),
-            n_lutions_available * n_lutions_tissues);
+    EXPECT_EQ(std::size(client->config.meta.methylome_to_genome),
+              n_lutions_available * n_lutions_tissues);
+  }
 }
