@@ -263,11 +263,6 @@ command_server_main(int argc,
     return EXIT_FAILURE;
 
   if (args.daemonize) {
-    args.pid_file = clean_path(args.pid_file, ec);
-    if (ec) {
-      lgr.error("Failed to get full PID file path {}: {}", args.pid_file, ec);
-      return EXIT_FAILURE;
-    }
     auto s = transferase::server(args.hostname, args.port, args.n_threads,
                                  methylome_dir, index_dir, args.max_resident,
                                  lgr, ec, args.daemonize, args.pid_file);
