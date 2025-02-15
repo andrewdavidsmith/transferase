@@ -182,40 +182,73 @@ client_config::get_config_file(const std::string &config_dir,
                                error);
 }
 
-[[nodiscard]] auto
-client_config::get_default(std::string config_dir,
-                           const std::string &sys_config_dir,
-                           std::error_code &error) noexcept -> client_config {
+client_config::client_config(const std::string &config_dir_arg,
+                             const std::string &sys_config_dir,
+                             std::error_code &error) noexcept :
+  config_dir{config_dir_arg} {
   namespace fs = std::filesystem;
   if (config_dir.empty()) {
     config_dir = get_default_config_dir(error);
     if (error)
-      return {};
+      return;
   }
 
   const auto [default_hostname, default_port] =
     transferase::get_transferase_server_info(sys_config_dir, error);
   if (error)
-    return {};
+    return;
 
-  client_config config;
-  config.config_dir = config_dir;
-  config.hostname = default_hostname;
-  config.port = default_port;
-  config.index_dir = (fs::path{config_dir} / index_dirname_default).string();
-  config.metadata_file =
-    (fs::path{config_dir} / metadata_filename_default).string();
-  return config;
+  hostname = default_hostname;
+  port = default_port;
+  index_dir = (fs::path{config_dir} / index_dirname_default).string();
+  metadata_file = (fs::path{config_dir} / metadata_filename_default).string();
 }
 
-[[nodiscard]] auto
-client_config::get_default(std::string config_dir,
-                           std::error_code &error) noexcept -> client_config {
+client_config::client_config(const std::string &config_dir_arg,
+                             std::error_code &error) noexcept :
+  config_dir{config_dir_arg} {
+  namespace fs = std::filesystem;
+  if (config_dir.empty()) {
+    config_dir = get_default_config_dir(error);
+    if (error)
+      return;
+  }
+
   const std::string sys_config_dir = get_default_sys_config_dir(error);
+  const auto [default_hostname, default_port] =
+    transferase::get_transferase_server_info(sys_config_dir, error);
   if (error)
-    return {};
-  return get_default(config_dir, sys_config_dir, error);
+    return;
+
+  hostname = default_hostname;
+  port = default_port;
+  index_dir = (fs::path{config_dir} / index_dirname_default).string();
+  metadata_file = (fs::path{config_dir} / metadata_filename_default).string();
 }
+
+#ifndef TRANSFERASE_NOEXCEPT
+client_config::client_config(const std::string &config_dir_arg,
+                             const std::string &sys_config_dir) :
+  config_dir{config_dir_arg} {
+  namespace fs = std::filesystem;
+  std::error_code error;
+  if (config_dir.empty()) {
+    config_dir = get_default_config_dir(error);
+    if (error)
+      throw std::system_error(error, "[Error in get_default_config_dir]");
+  }
+
+  const auto [default_hostname, default_port] =
+    transferase::get_transferase_server_info(sys_config_dir, error);
+  if (error)
+    throw std::system_error(error, "[Error in get_transferase_server_info]");
+
+  hostname = default_hostname;
+  port = default_port;
+  index_dir = (fs::path{config_dir} / index_dirname_default).string();
+  metadata_file = (fs::path{config_dir} / metadata_filename_default).string();
+}
+#endif
 
 /// Create all the directories involved in the client config, if they
 /// do not already exist. If directories exist as files, set the error

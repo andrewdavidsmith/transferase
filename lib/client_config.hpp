@@ -98,6 +98,19 @@ struct client_config {
   std::string log_file;
   log_level_t log_level{};
 
+  // The constructor has an overload that take a directory to look for
+  // the system config file since different APIs can't be expected to
+  // find things the same way.
+  client_config(const std::string &config_dir, const std::string &system_config,
+                std::error_code &error) noexcept;
+
+  client_config(const std::string &config_dir, std::error_code &error) noexcept;
+
+#ifndef TRANSFERASE_NOEXCEPT
+  client_config(const std::string &config_dir,
+                const std::string &system_config);
+#endif
+
   [[nodiscard]] auto
   tostring() const -> std::string;
 
@@ -118,8 +131,11 @@ struct client_config {
   read(const std::string &config_dir) -> client_config {
     std::error_code error;
     const auto obj = read(config_dir, error);
-    if (error)
-      throw std::system_error(error);
+    if (error) {
+      const auto message = std::format(
+        "[Error reading client config (config_dir: {})]", config_dir);
+      throw std::system_error(error, message);
+    }
     return obj;
   }
 #endif
@@ -145,17 +161,6 @@ struct client_config {
       throw std::system_error(error);
   }
 #endif
-
-  // The get_default functions have overloads that take a directory
-  // to look for the system config file since different APIs can't be
-  // expected to find things the same way.
-  [[nodiscard]] static auto
-  get_default(std::string config_dir, const std::string &system_config,
-              std::error_code &error) noexcept -> client_config;
-
-  [[nodiscard]] static auto
-  get_default(std::string config_dir,
-              std::error_code &error) noexcept -> client_config;
 
   /// Validate that the required instance variables are set properly;
   /// do this before attempting the configuration process.
@@ -204,6 +209,8 @@ struct client_config {
   [[nodiscard]] static auto
   get_config_file(const std::string &config_dir,
                   std::error_code &error) -> std::string;
+
+  client_config() = default;
 };
 
 // clang-format off
