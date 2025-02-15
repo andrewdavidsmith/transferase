@@ -70,16 +70,15 @@ TEST_F(methylome_client_remote_mock, read_failure) {
   static constexpr auto config_dir_mock = ".../asdf";
   EXPECT_THROW(
     {
-      [[maybe_unused]] const auto ret =
-        methylome_client_remote::get_client(config_dir_mock);
+      [[maybe_unused]] const auto client =
+        methylome_client_remote(config_dir_mock);
     },
     std::system_error);
 }
 
 TEST_F(methylome_client_remote_mock, read_success) {
   methylome_client_remote client{};
-  EXPECT_NO_THROW(
-    { client = methylome_client_remote::get_client(config_dir); });
+  EXPECT_NO_THROW({ client = methylome_client_remote(config_dir); });
   EXPECT_EQ(client.config.hostname, hostname)
     << client.config.tostring() << "\n";
   EXPECT_EQ(client.config.port, port);
