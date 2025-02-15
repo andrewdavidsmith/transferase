@@ -101,11 +101,6 @@ public:
   client_config config;
   std::shared_ptr<genome_index_set> indexes;
 
-  // clang-format off
-  auto self() -> Derived & {return static_cast<Derived &>(*this);}
-  auto self() const -> const Derived & {return static_cast<const Derived &>(*this);}
-  // clang-format on
-
   [[nodiscard]] auto
   tostring() const noexcept -> std::string {
     return self().tostring_derived();
@@ -119,28 +114,6 @@ public:
     if (error)
       throw std::system_error(error);
     return obj;
-  }
-#endif
-
-#ifndef TRANSFERASE_NOEXCEPT
-  // API function
-  [[nodiscard]] static auto
-  get_client(std::string config_dir) -> Derived {
-    std::error_code error;
-    if (config_dir.empty()) {
-      config_dir = client_config::get_default_config_dir(error);
-      if (error) {
-        const auto msg = "[Failed to get default config dir]";
-        throw std::system_error(error, msg);
-      }
-    }
-    auto client = get_client_impl(config_dir, error);
-    if (error) {
-      const auto msg =
-        std::format("[Failed to get client (config dir: {})]", config_dir);
-      throw std::system_error(error, msg);
-    }
-    return client;
   }
 #endif
 
@@ -195,6 +168,35 @@ public:
 #endif
 
 protected:
+  // API function
+  methylome_client_base(std::string config_dir) {
+    std::error_code error;
+    if (config_dir.empty()) {
+      config_dir = client_config::get_default_config_dir(error);
+      if (error) {
+        const auto msg = "[Failed to get default config dir]";
+        throw std::system_error(error, msg);
+      }
+    }
+
+    // client_config should read the transferase metadata if possible
+    config = client_config::read(config_dir);
+
+    // Error for index dir should be taken care of in client_config
+    if (!config.index_dir.empty())
+      indexes = std::make_shared<genome_index_set>(config.index_dir);
+  }
+
+  methylome_client_base() = default;
+  methylome_client_base(const std::string &config_dir,
+                        std::error_code &error) noexcept :
+    config(config_dir, error) {}
+
+  // clang-format off
+  auto self() -> Derived & {return static_cast<Derived &>(*this);}
+  auto self() const -> const Derived & {return static_cast<const Derived &>(*this);}
+  // clang-format on
+
   auto
   tostring_derived() const = delete;
 
@@ -232,33 +234,6 @@ protected:
     return {genome_name, get_index_hash(genome_name, error)};
   }
 
-private:
-  // internal function
-  [[nodiscard]] static auto
-  get_client_impl(const std::string &config_dir,
-                  std::error_code &error) -> Derived {
-    Derived client;
-    // The client_config::read function should read the transferase
-    // metadata if possible
-    client.config = client_config::read(config_dir, error);
-    if (error)
-      return {};
-
-    // validate for derived class
-    client.validate_derived(error);
-    if (error)
-      return {};
-
-    // No error associated with bad index dir; that should be taken care of
-    // elsewhere
-    if (!client.config.index_dir.empty())
-      client.indexes =
-        std::make_shared<genome_index_set>(client.config.index_dir);
-
-    return client;
-  }
-
-public:
   BOOST_DESCRIBE_CLASS(methylome_client_base, (), (config), (), ())
 };
 
