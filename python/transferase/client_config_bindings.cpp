@@ -46,41 +46,27 @@ auto
 client_config_bindings(nanobind::class_<transferase::client_config> &cls)
   -> void {
   using namespace nanobind::literals;  // NOLINT
-  cls.def_static(
-    "get_config",
-    [](const std::string &config_dir) -> transferase::client_config {
+  cls.def(
+    "__init__",
+    [](transferase::client_config *c, const std::string &config_dir) {
       const auto sys_config_dir = transferase::find_python_sys_config_dir();
-      std::error_code error;
-      auto client = transferase::client_config::get_default(
-        config_dir, sys_config_dir, error);
-      if (error)
-        throw std::system_error(error);
-      return client;
+      new (c) transferase::client_config(config_dir, sys_config_dir);
     },
     R"doc(
     Constructs a ClientConfig object with reasonable default values
     for the configuration parameters you need to interact with a
-    transferase server. You can change the values afterwards, for
-    example, you might want to change the log-level to see more
-    information:
+    transferase server. You can change the values afterwards, before
+    calling 'save' to write the values to the configuration file, or
+    'install' to create directories and download data needed for
+    queries to a remote server.
 
-    >>> client = ClientConfig.get_config()
-    >>> from transferase import LogLevel
-    >>> client.log_level = LogLevel.debug
+    Parameters
+    ----------
 
-    If you use this function on an instance (client.default()) be
-    aware that it will not change the calling object, as this is a
-    static function. You need to assign to an object when calling this
-    function.
+    config_dir (str): A directory for the location of configuration
+        files and related data. The default is ok for most users.
     )doc",
     "config_dir"_a = std::string{});
-  cls.def("make_paths_absolute",
-          nb::overload_cast<>(&transferase::client_config::make_paths_absolute),
-          R"doc(
-    Makes all paths in the configuration absolute. A very good idea,
-    and likely should be done before calling 'save' if you are not
-    using the default 'config_dir'.
-    )doc");
   cls.def("save",
           nb::overload_cast<>(&transferase::client_config::save, nb::const_),
           R"doc(
@@ -185,7 +171,7 @@ client_config_bindings(nanobind::class_<transferase::client_config> &cls)
     the configuration afterwards, retrieving updated metadata, etc.
     Most users will simply run:
 
-    >>> config = ClientConfig.get_config()
+    >>> config = ClientConfig()
     >>> config.install(["hg38"])
 
     Using the defaults and installing the genome they need.
