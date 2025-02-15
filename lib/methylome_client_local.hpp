@@ -58,6 +58,14 @@ public:
   typedef methylome_client_base<methylome_client_local>
     methylome_client_local_parent;
 
+  methylome_client_local(const std::string &config_dir) :
+    methylome_client_base(config_dir) {
+    std::error_code error;
+    validate_derived(error);
+    if (error)
+      throw std::system_error(error, "[Failed in local constructor]");
+  }
+
   [[nodiscard]] auto
   tostring_derived() const noexcept -> std::string;
 
