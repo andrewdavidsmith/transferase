@@ -43,9 +43,6 @@
 #include <variant>  // for std::tuple
 #include <vector>
 
-[[nodiscard]] auto
-clean_path(const std::string &s, std::error_code &ec) -> std::string;
-
 [[nodiscard]] inline auto
 split_comma(const auto &s) {
   auto nonempty = [](const auto &x) { return !x.empty(); };
