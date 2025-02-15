@@ -119,7 +119,7 @@ TEST_F(client_config_mock, validate_failure) {
 TEST_F(client_config_mock, validate_success) {
   const auto unique_config_dir = generate_unique_dir_name();
   std::error_code error;
-  auto cfg = client_config::get_default(unique_config_dir, error);
+  client_config cfg(unique_config_dir, error);
   EXPECT_FALSE(error);
   const bool validate_ok = cfg.validate(error);
   EXPECT_TRUE(validate_ok);
@@ -133,7 +133,7 @@ TEST_F(client_config_mock, make_directories_success) {
   static constexpr auto config_dir_mock = "config_dir";
 
   std::error_code defaults_err;
-  auto cfg = client_config::get_default(config_dir_mock, defaults_err);
+  client_config cfg(config_dir_mock, defaults_err);
   EXPECT_FALSE(defaults_err);
 
   std::error_code error;
@@ -158,7 +158,7 @@ TEST_F(client_config_mock, make_directories_success) {
 TEST_F(client_config_mock, get_defaults_success) {
   static constexpr auto config_dir_mock = "config_dir";
   std::error_code error;
-  client_config cfg = client_config::get_default(config_dir_mock, error);
+  client_config cfg(config_dir_mock, error);
   EXPECT_FALSE(error);
   const bool validate_ok = cfg.validate(error);
   EXPECT_TRUE(validate_ok);
@@ -194,7 +194,7 @@ TEST_F(client_config_mock, run_no_genomes_success) {
   const download_policy_t mock_download_policy = download_policy_t::none;
 
   std::error_code error;
-  auto cfg = client_config::get_default(config_dir_mock, error);
+  client_config cfg(config_dir_mock, error);
   EXPECT_FALSE(error);
 
   const bool validate_ok = cfg.validate(error);
