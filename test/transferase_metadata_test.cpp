@@ -62,7 +62,7 @@ TEST_F(transferase_metadata_mock, read_success) {
 
   const transferase_metadata mg =
     transferase_metadata::read(metadata_filename, error);
-  EXPECT_FALSE(error) << error.message() << '\n' << mg.tostring() << '\n';
+  EXPECT_FALSE(error) << error.message() << '\n';
   EXPECT_EQ(std::size(mg.genome_to_methylomes), n_lutions_available);
   for (const auto &d : mg.genome_to_methylomes)
     EXPECT_EQ(std::size(d.second), n_lutions_tissues);
