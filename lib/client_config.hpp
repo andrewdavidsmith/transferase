@@ -84,8 +84,7 @@ struct client_config {
     ".config/transferase";
   static constexpr auto metadata_filename_default = "metadata.json";
   static constexpr auto index_dirname_default = "indexes";
-  static constexpr auto client_config_filename_default =
-    "transferase_client_config.conf";
+  static constexpr auto client_config_filename_default = "transferase.conf";
   static constexpr auto client_log_filename_default = "transferase.log";
 
   transferase_metadata meta;
@@ -113,6 +112,22 @@ struct client_config {
 
   [[nodiscard]] auto
   tostring() const -> std::string;
+
+  /// Get the path to the index directory
+  [[nodiscard]] auto
+  get_index_dir() const -> std::string;
+
+  /// Get the path to the metadata file
+  [[nodiscard]] auto
+  get_metadata_file() const -> std::string;
+
+  /// Get the path to the methylome directory
+  [[nodiscard]] auto
+  get_methylome_dir() const -> std::string;
+
+  /// Get the path to the log file
+  [[nodiscard]] auto
+  get_log_file() const -> std::string;
 
   [[nodiscard]] auto
   available_genomes() const noexcept -> std::vector<std::string> {
