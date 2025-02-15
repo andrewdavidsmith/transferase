@@ -53,7 +53,7 @@ transferase_metadata::get_genome(
     const auto genome_itr = methylome_to_genome.find(name);
     if (genome_itr == std::cend(methylome_to_genome)) {
       // ERROR not found
-      error = transferase_metadata_error_code::methylome_not_found;
+      error = transferase_metadata_error_code::methylome_not_found_in_metadata;
       return {};
     }
     if (!genome.empty() && genome != genome_itr->second) {
@@ -116,14 +116,6 @@ transferase_metadata::read(const std::string &json_filename,
   }
 
   return m;
-}
-
-[[nodiscard]] auto
-transferase_metadata::tostring() const noexcept -> std::string {
-  std::ostringstream o;
-  if (!(o << boost::json::value_from(*this)))
-    o.clear();
-  return o.str();
 }
 
 }  // namespace transferase
