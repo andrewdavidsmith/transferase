@@ -55,9 +55,6 @@ struct transferase_metadata {
     return genome_to_methylomes | std::views::elements<0> |
            std::ranges::to<std::vector<std::string>>();
   }
-
-  [[nodiscard]] auto
-  tostring() const noexcept -> std::string;
 };
 
 // clang-format off
@@ -75,7 +72,7 @@ enum class transferase_metadata_error_code : std::uint8_t {
   ok = 0,
   error_reading_transferase_metadata_json_file = 1,
   error_parsing_transferase_metadata_json_file = 2,
-  methylome_not_found = 3,
+  methylome_not_found_in_metadata = 3,
 };
 
 template <>
@@ -91,7 +88,7 @@ struct transferase_metadata_error_category : std::error_category {
     case 0: return "ok"s;
     case 1: return "error reading transferase metadata json file"s;
     case 2: return "error parsing transferase metadata json file"s;
-    case 3: return "methylome not found"s;
+    case 3: return "methylome not found in metadata"s;
     }
     std::unreachable();
   }
