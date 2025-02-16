@@ -373,29 +373,6 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
     return EXIT_FAILURE;
   }
 
-  std::vector<std::tuple<std::string, std::string>> args_to_log{
-    // clang-format off
-    {"Config dir", cfg.config_dir},
-    {"Hostname", cfg.hostname},
-    {"Port", cfg.port},
-    {"Methylome dir", cfg.methylome_dir},
-    {"Index dir", cfg.index_dir},
-    {"Log file", cfg.log_file},
-    {"Log level", std::format("{}", cfg.log_level)},
-    {"Bin size", std::format("{}", bin_size)},
-    {"Intervals file", intervals_file},
-    {"Count covered", std::format("{}", count_covered)},
-    {"Methylome names", format_methylome_names_brief(methylome_names)},
-    {"Methylomes file", methylomes_file},
-    {"Genome name", genome_name},
-    {"Output file", output_file},
-    {"Output format", std::format("{}", out_fmt)},
-    {"Min reads", std::format("{}", min_reads)},
-    {"Local mode", std::format("{}", local_mode)},
-    // clang-format on
-  };
-  xfr::log_args<xfr::log_level_t::info>(args_to_log);
-
   // validate relationships between arguments
   if (local_mode && cfg.methylome_dir.empty()) {
     const auto msg = R"(Local mode but methylome dir not specified {}: {})";
@@ -430,6 +407,29 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
     lgr.error("Error: specify exactly one of methylomes or methylomes-file");
     return EXIT_FAILURE;
   }
+
+  std::vector<std::tuple<std::string, std::string>> args_to_log{
+    // clang-format off
+    {"Config dir", cfg.config_dir},
+    {"Hostname", cfg.hostname},
+    {"Port", cfg.port},
+    {"Methylome dir", cfg.methylome_dir},
+    {"Index dir", cfg.index_dir},
+    {"Log file", cfg.log_file},
+    {"Log level", std::format("{}", cfg.log_level)},
+    {"Bin size", std::format("{}", bin_size)},
+    {"Intervals file", intervals_file},
+    {"Count covered", std::format("{}", count_covered)},
+    {"Methylome names", format_methylome_names_brief(methylome_names)},
+    {"Methylomes file", methylomes_file},
+    {"Genome name", genome_name},
+    {"Output file", output_file},
+    {"Output format", std::format("{}", out_fmt)},
+    {"Min reads", std::format("{}", min_reads)},
+    {"Local mode", std::format("{}", local_mode)},
+    // clang-format on
+  };
+  xfr::log_args<xfr::log_level_t::info>(args_to_log);
 
   const auto index = xfr::genome_index::read(cfg.index_dir, genome_name, error);
   if (error) {
