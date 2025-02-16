@@ -170,7 +170,7 @@ command_server_main(int argc,
   // on the command line.
   std::error_code error;
   if (!config_file.empty()) {
-    cfg.read_config_file(config_file, error);
+    cfg.read_config_file_no_overwrite(config_file, error);
     if (error) {
       std::println("Failed to read config file {}: {}", config_file, error);
       return EXIT_FAILURE;
