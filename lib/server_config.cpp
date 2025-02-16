@@ -39,60 +39,6 @@
 #include <system_error>
 #include <unordered_map>
 
-[[nodiscard]] static inline auto
-check_and_return_directory(const std::string &dirname,
-                           std::error_code &error) -> std::string {
-  const bool exists = std::filesystem::exists(dirname, error);
-  if (error)
-    return {};
-  if (!exists)
-    return dirname;
-  const auto is_dir = std::filesystem::is_directory(dirname, error);
-  if (error)
-    return {};
-  if (!is_dir) {
-    error = std::make_error_code(std::errc::not_a_directory);
-    return {};
-  }
-  return dirname;
-}
-
-[[nodiscard]] static inline auto
-check_and_return_directory(const std::string &left, const std::string &right,
-                           std::error_code &error) -> std::string {
-  const auto dirname = std::filesystem::path{left} / right;
-  return check_and_return_directory(dirname, error);
-}
-
-[[nodiscard]] static inline auto
-check_and_return_file(const std::string &filename,
-                      std::error_code &error) noexcept -> std::string {
-  const auto status = std::filesystem::status(filename, error);
-  if (error == std::errc::no_such_file_or_directory) {
-    error.clear();
-    return filename;
-  }
-  if (error)
-    return {};
-
-  const auto is_dir = std::filesystem::is_directory(status);
-  // File exists as a dir
-  if (is_dir) {
-    error = std::make_error_code(std::errc::is_a_directory);
-    return {};
-  }
-
-  // File exists but not as dir
-  return filename;
-}
-
-[[nodiscard]] static inline auto
-check_and_return_file(const std::string &left, const std::string &right,
-                      std::error_code &error) -> std::string {
-  const auto joined = std::filesystem::path{left} / right;
-  return check_and_return_file(joined, error);
-}
-
 namespace transferase {
 
 [[nodiscard]] auto
@@ -108,29 +54,30 @@ server_config::get_default_config_dir(std::error_code &error) -> std::string {
   return config_dir;
 }
 
+/// Get the path to the config file (base on dir)
 [[nodiscard]] auto
-server_config::get_dir_default_impl(const std::string &dirname,
-                                    std::error_code &ec) -> std::string {
-  const auto config_dir_local = get_default_config_dir(ec);
-  if (ec)
-    return {};
-  return check_and_return_directory(config_dir_local, dirname, ec);
+server_config::get_config_file(const std::string &config_dir) noexcept
+  -> std::string {
+  return (std::filesystem::path(config_dir) / server_config_filename_default)
+    .lexically_normal();
 }
 
+/// Get the path to the index directory
 [[nodiscard]] auto
-server_config::get_file_default_impl(const std::string &filename,
-                                     std::error_code &ec) -> std::string {
-  const auto config_dir_local = get_default_config_dir(ec);
-  if (ec)
-    return {};
-  return check_and_return_file(config_dir_local, filename, ec);
+server_config::get_index_dir() const noexcept -> std::string {
+  return (std::filesystem::path(config_dir) / index_dir).lexically_normal();
 }
 
+/// Get the path to the methylome directory
 [[nodiscard]] auto
-server_config::get_config_file(const std::string &config_dir,
-                               std::error_code &error) -> std::string {
-  return check_and_return_file(config_dir, server_config_filename_default,
-                               error);
+server_config::get_methylome_dir() const noexcept -> std::string {
+  return (std::filesystem::path(config_dir) / methylome_dir).lexically_normal();
+}
+
+/// Get the path to the log file
+[[nodiscard]] auto
+server_config::get_log_file() const noexcept -> std::string {
+  return (std::filesystem::path(config_dir) / log_file).lexically_normal();
 }
 
 auto
@@ -185,41 +132,6 @@ server_config::read(const std::string &config_file,
   if (error)
     return {};
   return tmp;
-}
-
-auto
-server_config::write(const std::string &config_dir,
-                     std::error_code &error) const noexcept -> void {
-  assert(!config_dir.empty());
-  const auto config_file = get_config_file(config_dir, error);
-  if (error)
-    return;
-
-  const bool file_exists = std::filesystem::exists(config_file, error);
-  if (error)
-    return;
-
-  server_config tmp = *this;
-  if (file_exists) {
-    // load current config values into a separate object
-    tmp = read(config_dir, error);
-    if (error)
-      return;
-    using Md =
-      boost::describe::describe_members<server_config,
-                                        boost::describe::mod_any_access>;
-    // All non-empty string values from the current object
-    boost::mp11::mp_for_each<Md>([&](const auto &D) {
-      if constexpr (std::is_same_v<decltype(D), std::string>)
-        if (!((*this).*D.pointer.empty()))
-          tmp.*D.pointer = (*this).*D.pointer;
-    });
-    // always overwrite log level -- no way to know not to
-    tmp.log_level = log_level;
-  }
-  error = write_config_file(tmp, config_file);
-  if (error)
-    error = server_config_error_code::error_writing_config_file;
 }
 
 [[nodiscard]] auto
