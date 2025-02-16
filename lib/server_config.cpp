@@ -24,7 +24,8 @@
 #include "server_config.hpp"
 #include "config_file_utils.hpp"  // for transferase::parse_config_file
 
-#include <boost/json.hpp>            // for boost::json::operator<<, boost::...
+#include "nlohmann/json.hpp"
+
 #include <boost/mp11/algorithm.hpp>  // for boost::mp11::mp_for_each
 
 #include <algorithm>
@@ -223,10 +224,8 @@ server_config::write(const std::string &config_dir,
 
 [[nodiscard]] auto
 server_config::tostring() const -> std::string {
-  std::ostringstream o;
-  if (!(o << boost::json::value_from(*this)))
-    o.clear();
-  return o.str();
+  nlohmann::json data = *this;
+  return data.dump();
 }
 
 /// Validate that the client config makes sense. This must be done
