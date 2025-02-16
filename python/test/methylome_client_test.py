@@ -33,22 +33,17 @@ def create_temp_directory():
     temp_dir = tempfile.mkdtemp(dir="/tmp", prefix="test_")
     return temp_dir
 
-def test_methylome_client_no_constructor():
-    """MethylomeClient is not directly constructible"""
-    with pytest.raises(TypeError) as exc_info:
-        obj = MethylomeClient()
-
 def test_methylome_client_factory():
     """Get a MethylomeClient"""
     config_dir = "data/lutions"
-    obj = MethylomeClient.get_client(config_dir)
+    obj = MethylomeClient(config_dir)
     assert hasattr(obj, "config"), "Object is missing 'config'"
 
 def test_reset_to_default_config():
     """Reset the configuration to the default"""
     config_dir = "data/lutions"
     config_dir_tmp = create_temp_directory()
-    obj = MethylomeClient.get_client(config_dir)
+    obj = MethylomeClient(config_dir)
     obj_tmp = obj
     assert obj_tmp == obj
     if os.path.isdir(config_dir_tmp):
