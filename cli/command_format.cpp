@@ -47,7 +47,6 @@ Examples:
 xfr format -g hg38 -d output_dir -m SRX012345.xsym.gz
 )";
 
-#include "arguments.hpp"
 #include "client_config.hpp"
 #include "counts_file_format.hpp"
 #include "format_error_code.hpp"  // IWYU pragma: keep
@@ -353,93 +352,10 @@ process_cpg_sites_counts(const std::string &infile, const genome_index &index)
   return {methylome_data{std::move(cpgs_flat)}, std::error_code{}};
 }
 
-struct command_format_argset : argset_base<command_format_argset> {
-  [[nodiscard]] static auto
-  get_default_config_file_impl() -> std::string {
-    std::error_code ec;
-    const auto config_dir = client_config::get_default_config_dir(ec);
-    return client_config::get_config_file(config_dir, ec);
-  }
-
-  std::string config_dir{};
-  std::string hostname{};
-  std::string port{};
-  std::string log_filename{};
-  std::string metadata_file{};
-
-  std::string index_directory{};
-  std::string genome_name{};
-
-  std::string methylation_input{};
-  std::string methylome_name{};
-  std::string methylome_dir{};
-  log_level_t log_level{};
-  bool zip{false};
-
-  auto
-  log_options_impl() const {
-    transferase::log_args<log_level_t::info>(
-      std::vector<std::tuple<std::string, std::string>>{
-        // clang-format off
-        {"Methylation", methylation_input},
-        {"Methylome name", methylome_name},
-        {"Genome", genome_name},
-        {"Index directory", index_directory},
-        {"Methylome directory", methylome_dir},
-        {"Zip", std::format("{}", zip)},
-        // clang-format on
-      });
-  }
-
-  [[nodiscard]] auto
-  set_hidden_impl() -> boost::program_options::options_description {
-    namespace po = boost::program_options;
-    using po::value;
-    po::options_description opts;
-    opts.add_options()
-      // clang-format off
-      ("metadata-file", po::value(&metadata_file), "none")
-      ("hostname", po::value(&hostname), "none")
-      ("port", po::value(&port), "none")
-      ("log-file", po::value(&log_filename), "none")
-      ("config-dir", po::value(&config_dir), "none")
-      // clang-format on
-      ;
-    return opts;
-  }
-
-  [[nodiscard]] auto
-  set_opts_impl() -> boost::program_options::options_description {
-    namespace po = boost::program_options;
-    using po::value;
-    boost::program_options::options_description opts("Options");
-    opts.add_options()
-      // clang-format off
-      ("help,h", "print this message and exit")
-      ("config-file,c",
-       po::value(&config_file)->default_value(get_default_config_file(), ""),
-       "use specified config file")
-      ("meth-file,m", po::value(&methylation_input)->required(),
-       "methylation input file")
-      ("index-dir,x", po::value(&index_directory),
-       "genome index directory")
-      ("methylome-dir,d", po::value(&methylome_dir)->required(),
-       "methylome output directory")
-      ("genome,g", po::value(&genome_name)->required(), "genome name")
-      ("zip,z", po::bool_switch(&zip), "zip the output")
-      ("log-level,v", po::value(&log_level)->default_value(logger::default_level),
-       "{debug, info, warning, error, critical}")
-      // clang-format on
-      ;
-    return opts;
-  }
-};
-
 }  // namespace transferase
 
 auto
-command_format_main(int argc,
-                    char *argv[])  // NOLINT(cppcoreguidelines-avoid-c-arrays)
+command_format_main(int argc, char *argv[])  // NOLINT(*-avoid-c-arrays)
   -> int {
   const auto command_start = std::chrono::high_resolution_clock::now();
 
@@ -451,68 +367,123 @@ command_format_main(int argc,
   static const auto description_msg =
     std::format("{}\n{}", rstrip(description), rstrip(examples));
 
-  transferase::command_format_argset args;
-  auto error = args.parse(argc, argv, usage, about_msg, description_msg);
-  if (error == argument_error_code::help_requested)
-    return EXIT_SUCCESS;
-  if (error)
-    return EXIT_FAILURE;
+  namespace xfr = transferase;
 
-  using transferase::counts_file_format;
-  using transferase::genome_index;
-  using transferase::get_meth_file_format;
-  using transferase::log_level_t;
-  using transferase::logger;
-  using transferase::methylome;
-  using transferase::methylome_metadata;
+  std::string config_dir{};
+  std::string index_dir{};
+  std::string genome_name{};
+  std::string methylation_input{};
+  std::string methylome_name{};
+  std::string methylome_dir{};
+  xfr::log_level_t log_level{};
+  bool zip{false};
+
+  std::error_code error;
+  const std::string default_config_dir =
+    xfr::client_config::get_default_config_dir(error);
+  if (error) {
+    std::println("Failed to identify default config dir: {}", error);
+    return EXIT_FAILURE;
+  }
+
+  namespace po = boost::program_options;
+
+  po::options_description opts("Options");
+  opts.add_options()
+    // clang-format off
+    ("help,h", "print this message and exit")
+    ("config-dir,c", po::value(&config_dir), "specify a config directory")
+    ("meth-file,m", po::value(&methylation_input)->required(), "methylation input file")
+    ("index-dir,x", po::value(&index_dir), "genome index directory")
+    ("methylome-dir,d", po::value(&methylome_dir)->required(), "methylome output directory")
+    ("genome,g", po::value(&genome_name)->required(), "genome name")
+    ("zip,z", po::bool_switch(&zip), "zip the output")
+    ("log-level,v", po::value(&log_level)->default_value(xfr::logger::default_level),
+     "{debug, info, warning, error, critical}")
+    // clang-format on
+    ;
+  po::variables_map vm;
+  try {
+    po::store(po::parse_command_line(argc, argv, opts), vm);
+    if (vm.count("help") || argc == 1) {
+      std::println("{}\n{}", about_msg, usage);
+      opts.print(std::cout);
+      std::println("\n{}", description_msg);
+      return EXIT_SUCCESS;
+    }
+    po::notify(vm);
+  }
+  catch (po::error &e) {
+    std::println("{}", e.what());
+    std::println("{}\n{}", about_msg, usage);
+    opts.print(std::cout);
+    std::println("\n{}", description_msg);
+    return EXIT_FAILURE;
+  }
 
   auto &lgr =
-    logger::instance(transferase::shared_from_cout(), command, args.log_level);
+    xfr::logger::instance(xfr::shared_from_cout(), command, log_level);
   if (!lgr) {
     std::println("Failure initializing logging: {}.", lgr.get_status());
     return EXIT_FAILURE;
   }
 
-  args.methylome_name = methylome::parse_methylome_name(args.methylation_input);
+  std::vector<std::tuple<std::string, std::string>> args_to_log{
+    // clang-format off
+    {"Config dir", config_dir},
+    {"Index dir", index_dir},
+    {"Genome name", genome_name},
+    {"Methylation input", methylation_input},
+    {"Methylome name", methylome_name},
+    {"Methylome dir", methylome_dir},
+    {"Compress output", std::format("{}", zip)},
+    // clang-format on
+  };
+  xfr::log_args<transferase::log_level_t::info>(args_to_log);
 
-  if (args.index_directory.empty()) {
-    args.index_directory =
-      transferase::client_config::get_default_index_dir(error);
+  methylome_name = xfr::methylome::parse_methylome_name(methylation_input);
+
+  if (index_dir.empty()) {
+    lgr.debug("Index dir not specified. Looking for value in config");
+    if (config_dir.empty()) {
+      config_dir = default_config_dir;
+      lgr.debug("Config dir not specified. Using default: {}", config_dir);
+    }
+    const xfr::client_config config(config_dir, error);
     if (error) {
-      lgr.error("Failure identifying index directory: {}", error.message());
+      lgr.error("Error reading config dir: {}", error);
       return EXIT_FAILURE;
     }
+    index_dir = config.get_index_dir();
+    lgr.debug("Using index dir: {}", index_dir);
   }
 
-  args.log_options();
-
-  const auto index =
-    genome_index::read(args.index_directory, args.genome_name, error);
+  const auto index = xfr::genome_index::read(index_dir, genome_name, error);
   if (error) {
-    lgr.error("Failed to read genome index {} {}: {}", args.index_directory,
-              args.genome_name, error);
+    lgr.error("Failed to read genome index {} {}: {}", index_dir, genome_name,
+              error);
     return EXIT_FAILURE;
   }
 
   const auto [format_id, format_err] =
-    get_meth_file_format(args.methylation_input);
-  if (format_err || format_id == counts_file_format::none) {
-    lgr.error("Failed to identify file type for: {}", args.methylation_input);
+    xfr::get_meth_file_format(methylation_input);
+  if (format_err || format_id == xfr::counts_file_format::none) {
+    lgr.error("Failed to identify file type for: {}", methylation_input);
     return EXIT_FAILURE;
   }
   lgr.info("Input file format: {}", message(format_id));
 
   auto [meth_data, meth_data_err] =
-    (format_id == counts_file_format::xcounts)
-      ? process_cpg_sites_xcounts(args.methylation_input, index)
-      : process_cpg_sites_counts(args.methylation_input, index);
+    (format_id == xfr::counts_file_format::xcounts)
+      ? process_cpg_sites_xcounts(methylation_input, index)
+      : process_cpg_sites_counts(methylation_input, index);
 
   if (meth_data_err) {
     lgr.error("Error generating methylome: {}", meth_data_err);
     return EXIT_FAILURE;
   }
 
-  methylome meth{std::move(meth_data), methylome_metadata{}};
+  xfr::methylome meth{std::move(meth_data), xfr::methylome_metadata{}};
 
   error = meth.init_metadata(index);
   if (error) {
@@ -522,19 +493,19 @@ command_format_main(int argc,
 
   // ADS: this is where compression status is determined, and then
   // effected as data is written
-  meth.meta.is_compressed = args.zip;
+  meth.meta.is_compressed = zip;
 
   // Check on the output directory; if it doesn't exist, make it
-  validate_output_directory(args.methylome_dir, error);
+  validate_output_directory(methylome_dir, error);
   if (error) {
     lgr.error("Terminating due to error");
     return EXIT_FAILURE;
   }
 
-  meth.write(args.methylome_dir, args.methylome_name, error);
+  meth.write(methylome_dir, methylome_name, error);
   if (error) {
-    lgr.error("Error writing methylome {} {}: {}", args.methylome_dir,
-              args.methylome_name, error);
+    lgr.error("Error writing methylome {} {}: {}", methylome_dir,
+              methylome_name, error);
     return EXIT_FAILURE;
   }
 
