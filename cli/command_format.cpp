@@ -2,7 +2,7 @@
  *
  * Copyright (c) 2024 Andrew D Smith
  *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * n is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
@@ -68,6 +68,7 @@ xfr format -g hg38 -d output_dir -m SRX012345.xsym.gz
 #include <cstdint>  // for std::uint32_t, std::uint64_t, std::int32_t
 #include <cstdlib>  // for EXIT_FAILURE, abort, EXIT_SUCCESS
 #include <format>
+#include <iostream>
 #include <iterator>  // for std::cbegin, std::size
 #include <limits>
 #include <print>
