@@ -21,8 +21,8 @@
 # SOFTWARE.
 
 # Test sources in this directory need to see the headers from the
-# project sources
-include_directories(${PROJECT_SOURCE_DIR}/src)
+# project sources -- they should get them by linking to the libs
+
 # The test sources need UNIT_TEST defined for the preprocessor but
 # this is set globally in cmake/unit_tests.cmake
 
