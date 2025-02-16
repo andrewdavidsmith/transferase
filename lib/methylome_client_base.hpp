@@ -169,7 +169,7 @@ public:
 
 protected:
   // API function
-  methylome_client_base(std::string config_dir) {
+  explicit methylome_client_base(std::string config_dir) {
     std::error_code error;
     if (config_dir.empty()) {
       config_dir = client_config::get_default_config_dir(error);

@@ -56,10 +56,12 @@ xfr config -s example.com -p 5009 --genomes hg38,mm39
 
 #include <cstdlib>
 #include <format>
+#include <iostream>
 #include <print>
 #include <string>
 #include <string_view>
 #include <system_error>
+#include <vector>
 
 auto
 command_config_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
