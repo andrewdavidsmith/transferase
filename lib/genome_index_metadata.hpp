@@ -24,6 +24,8 @@
 #ifndef LIB_GENOME_INDEX_METADATA_HPP_
 #define LIB_GENOME_INDEX_METADATA_HPP_
 
+#include "nlohmann/json.hpp"
+
 #include <boost/describe.hpp>  // for BOOST_DESCRIBE_STRUCT
 
 #include <cstdint>  // for uint32_t, int32_t
@@ -87,6 +89,11 @@ struct genome_index_metadata {
     const auto wo_extn = (std::filesystem::path{directory} / name).string();
     return std::format("{}{}", wo_extn, filename_extension);
   }
+
+  NLOHMANN_DEFINE_TYPE_INTRUSIVE(genome_index_metadata, version, host, user,
+                                 creation_time, index_hash, genome_name, n_cpgs,
+                                 chrom_index, chrom_order, chrom_size,
+                                 chrom_offset)
 };
 
 // clang-format off
