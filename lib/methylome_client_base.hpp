@@ -27,13 +27,13 @@
 #include "client_config.hpp"
 #include "genome_index.hpp"  // for genome_index::list
 #include "genome_index_set.hpp"
+#include "nlohmann/json.hpp"
 #include "query_container.hpp"  // for transferase::size
 #include "request.hpp"
 #include "request_type_code.hpp"  // for transferase::request_type_code
 #include "transferase_metadata.hpp"
 
 #include <boost/describe.hpp>
-#include <boost/json.hpp>
 #include <boost/mp11.hpp>
 
 #include <cstdint>
@@ -234,23 +234,10 @@ protected:
     return {genome_name, get_index_hash(genome_name, error)};
   }
 
+  NLOHMANN_DEFINE_TYPE_INTRUSIVE(methylome_client_base, config)
+
   BOOST_DESCRIBE_CLASS(methylome_client_base, (), (config), (), ())
 };
-
-template <
-  class T,
-  class D1 = boost::describe::describe_members<
-    T, boost::describe::mod_any_access | boost::describe::mod_inherited>,
-  class D2 = boost::describe::describe_members<T, boost::describe::mod_private>,
-  class En = std::enable_if_t<boost::mp11::mp_empty<D2>::value &&
-                              !std::is_union<T>::value>>
-auto
-tag_invoke(const boost::json::value_from_tag &, boost::json::value &v,
-           const T &t) -> void {
-  auto &obj = v.emplace_object();
-  boost::mp11::mp_for_each<D1>(
-    [&](auto D) { obj[D.name] = boost::json::value_from(t.*D.pointer); });
-}
 
 }  // namespace transferase
 

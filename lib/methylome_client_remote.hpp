@@ -27,6 +27,7 @@
 #include "client.hpp"
 #include "client_config.hpp"
 #include "methylome_client_base.hpp"
+#include "nlohmann/json.hpp"
 #include "query_container.hpp"
 #include "request.hpp"
 #include "request_type_code.hpp"
@@ -129,6 +130,7 @@ private:
   }
 
 public:
+  NLOHMANN_DEFINE_TYPE_INTRUSIVE(methylome_client_remote, config)
   BOOST_DESCRIBE_CLASS(methylome_client_remote,
                        (methylome_client_remote_parent), (), (), ())
 };

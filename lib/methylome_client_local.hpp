@@ -29,6 +29,7 @@
 #include "client_config.hpp"
 #include "genome_index_set.hpp"
 #include "methylome.hpp"
+#include "nlohmann/json.hpp"
 #include "query_container.hpp"
 #include "request.hpp"
 #include "request_type_code.hpp"
@@ -144,6 +145,7 @@ private:
   }
 
 public:
+  NLOHMANN_DEFINE_TYPE_INTRUSIVE(methylome_client_local, config)
   BOOST_DESCRIBE_CLASS(methylome_client_local, (methylome_client_local_parent),
                        (), (), ())
 };
