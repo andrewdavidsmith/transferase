@@ -40,7 +40,7 @@ def test_client_config_init():
     """
     Test the factory to get a ClientConfig with defaults
     """
-    obj = ClientConfig.default()
+    obj = ClientConfig()
     assert obj is not None
 
 
@@ -49,11 +49,12 @@ def test_assign_and_write_success():
     Test that data members of the created object can be assigned to
     and that writing succeeds
     """
-    config_filename = "transferase_client_config.conf"
+    config_filename = "transferase.conf"
     outdir = create_temp_directory()
-    obj = ClientConfig.default()
+    obj = ClientConfig()
     obj.hostname = "not-not-kernel.org"
-    assert obj.save(outdir) is None
+    obj.config_dir = outdir
+    assert obj.save() is None
     assert os.path.exists(outdir)
     assert os.path.exists(os.path.join(outdir, config_filename))
     if os.path.isdir(outdir):
