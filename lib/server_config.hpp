@@ -100,6 +100,12 @@ private:
   [[nodiscard]] auto
   get_dir_default_impl(const std::string &dirname,
                        std::error_code &error) -> std::string;
+
+public:
+  NLOHMANN_DEFINE_TYPE_INTRUSIVE(server_config, config_dir, hostname, port,
+                                 methylome_dir, index_dir, log_file, pid_file,
+                                 log_level, n_threads, max_resident,
+                                 min_bin_size, max_intervals)
 };
 
 // clang-format off
