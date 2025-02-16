@@ -55,7 +55,6 @@ xfr query --local -d methylome_dir -x index_dir -g hg38 \
     -m methylome_name -o output.bed -b 1000
 )";
 
-#include "arguments.hpp"
 #include "bins_writer.hpp"
 #include "client_config.hpp"
 #include "genome_index.hpp"
@@ -123,123 +122,6 @@ read_methylomes_file(const std::string &filename,
   return names;
 }
 
-namespace transferase {
-
-struct query_argset : argset_base<query_argset> {
-  [[nodiscard]] static auto
-  get_default_config_file_impl() -> std::string {
-    std::error_code ec;
-    const auto config_dir = client_config::get_default_config_dir(ec);
-    return client_config::get_config_file(config_dir, ec);
-  }
-
-  static constexpr auto log_level_default{log_level_t::info};
-  static constexpr auto out_fmt_default{output_format_t::counts};
-
-  // hidden
-  std::string metadata_file{};
-  std::string config_dir;
-
-  std::string hostname;
-  std::string port;
-  std::string methylome_dir;
-  std::string index_dir;
-  std::string log_file;
-  log_level_t log_level{};
-  std::uint32_t min_reads{1};
-
-  bool local_mode{};
-  std::uint32_t bin_size{};
-  std::string intervals_file{};
-  std::string methylome_names{};
-  std::string methylomes_file{};
-  std::string genome_name{};
-
-  output_format_t out_fmt{};
-  bool count_covered{};
-  std::string output_file{};
-
-  auto
-  log_options_impl() const {
-    transferase::log_args<transferase::log_level_t::info>(
-      std::vector<std::tuple<std::string, std::string>>{
-        // clang-format off
-        {"hostname", std::format("{}", hostname)},
-        {"port", std::format("{}", port)},
-        {"methylome_dir", std::format("{}", methylome_dir)},
-        {"index_dir", std::format("{}", index_dir)},
-        {"log_file", std::format("{}", log_file)},
-        {"log_level", std::format("{}", log_level)},
-        {"local_mode", std::format("{}", local_mode)},
-        {"bin_size", std::format("{}", bin_size)},
-        {"methylome_names", format_methylome_names_brief(methylome_names)},
-        {"intervals_file", std::format("{}", intervals_file)},
-        {"count_covered", std::format("{}", count_covered)},
-        {"out_fmt", std::format("{}", out_fmt)},
-        {"min_reads", std::format("{}", min_reads)},
-        {"output_file", std::format("{}", output_file)},
-        // clang-format on
-      });
-  }
-
-  [[nodiscard]] auto
-  set_hidden_impl() -> boost::program_options::options_description {
-    namespace po = boost::program_options;
-    using po::value;
-    po::options_description opts;
-    opts.add_options()
-      // clang-format off
-      ("metadata-file", po::value(&metadata_file), "none")
-      ("config-dir", po::value(&config_dir), "none")
-      // clang-format on
-      ;
-    return opts;
-  }
-
-  [[nodiscard]] auto
-  set_opts_impl() -> boost::program_options::options_description {
-    namespace po = boost::program_options;
-    using po::value;
-    po::options_description opts("Options");
-    opts.add_options()
-      // clang-format off
-      ("help,h", "print this message and exit")
-      ("config-file,c",
-       po::value(&config_file)->default_value(get_default_config_file(), ""),
-       "use specified config file")
-      ("local", po::bool_switch(&local_mode), "run in local mode")
-      ("bin-size,b", po::value(&bin_size), "size of genomic bins")
-      ("intervals-file,i", po::value(&intervals_file), "intervals file")
-      ("genome,g", po::value(&genome_name)->required(), "genome name")
-      ("methylomes,m", po::value(&methylome_names),
-       "methylome names (comma separated)")
-      ("methylomes-file,M", po::value(&methylomes_file),
-       "methylomes file (text file; one methylome per line)")
-      ("out-file,o", po::value(&output_file)->required(), "output file")
-      ("covered,C", po::bool_switch(&count_covered),
-       "count covered sites for each interval")
-      ("out-fmt,f", po::value(&out_fmt)->default_value(out_fmt_default, "1"),
-       "output format {counts=1, bedgraph=2, dataframe=3, dfscores=4}")
-      ("min-reads,r", po::value(&min_reads)->default_value(1),
-       "for fractional output, require this many reads")
-      ("hostname,s", po::value(&hostname), "server hostname")
-      ("port,p", po::value(&port), "server port")
-      ("methylome-dir,d", po::value(&methylome_dir),
-       "methylome directory (local mode only)")
-      ("index-dir,x", po::value(&index_dir),
-       "genome index directory")
-      ("log-level,v", po::value(&log_level)->default_value(log_level_default),
-       "{debug, info, warning, error, critical}")
-      ("log-file,l", po::value(&log_file)->value_name("[arg]"),
-       "log file name (defaults: print to screen)")
-      // clang-format on
-      ;
-    return opts;
-  }
-};
-
-}  // namespace transferase
-
 /// Read query intervals, check that they are sorted and valid
 [[nodiscard]] static auto
 read_intervals(const transferase::genome_index &index,
@@ -267,14 +149,18 @@ read_intervals(const transferase::genome_index &index,
 }
 
 [[nodiscard]] static auto
-do_intervals_query(const auto &args, const transferase::genome_index &index,
+do_intervals_query(const std::string &intervals_file, const bool count_covered,
+                   const transferase::output_format_t out_fmt,
+                   const std::uint32_t min_reads,
+                   const std::string &output_file,
+                   const transferase::genome_index &index,
                    const transferase::methylome_interface &interface,
                    const std::vector<std::string> &methylome_names,
                    const transferase::request_type_code &request_type) {
   auto &lgr = transferase::logger::instance();
   // Read query intervals and validate them
   std::error_code error;
-  const auto intervals = read_intervals(index, args.intervals_file, error);
+  const auto intervals = read_intervals(index, intervals_file, error);
   if (error)
     return error;  // error message handled already
 
@@ -293,7 +179,7 @@ do_intervals_query(const auto &args, const transferase::genome_index &index,
   using transferase::level_element_covered_t;
   using transferase::level_element_t;
   const auto results =
-    args.count_covered
+    count_covered
       ? interface.get_levels<level_element_covered_t>(req, query, error)
       : interface.get_levels<level_element_t>(req, query, error);
   if (error) {
@@ -306,11 +192,11 @@ do_intervals_query(const auto &args, const transferase::genome_index &index,
 
   const auto outmgr = transferase::intervals_writer{
     // clang-format off
-    args.output_file,
+    output_file,
     index,
-    args.out_fmt,
+    out_fmt,
     methylome_names,
-    args.min_reads,
+    min_reads,
     intervals,
     // clang-format on
   };
@@ -329,20 +215,23 @@ do_intervals_query(const auto &args, const transferase::genome_index &index,
 }
 
 [[nodiscard]] static auto
-do_bins_query(const auto &args, const transferase::genome_index &index,
+do_bins_query(const std::uint32_t bin_size, const bool count_covered,
+              const transferase::output_format_t out_fmt,
+              const std::uint32_t min_reads, const std::string &output_file,
+              const transferase::genome_index &index,
               const transferase::methylome_interface &interface,
               const std::vector<std::string> &methylome_names,
               const transferase::request_type_code &request_type) {
   auto &lgr = transferase::logger::instance();
   // Read query intervals and validate them
   const auto req = transferase::request{request_type, index.get_hash(),
-                                        args.bin_size, methylome_names};
+                                        bin_size, methylome_names};
   std::error_code error;
   const auto query_start{std::chrono::high_resolution_clock::now()};
   using transferase::level_element_covered_t;
   using transferase::level_element_t;
   const auto results =
-    args.count_covered
+    count_covered
       ? interface.get_levels<level_element_covered_t>(req, index, error)
       : interface.get_levels<level_element_t>(req, index, error);
   if (error) {
@@ -355,12 +244,12 @@ do_bins_query(const auto &args, const transferase::genome_index &index,
 
   const auto outmgr = transferase::bins_writer{
     // clang-format off
-    args.output_file,
+    output_file,
     index,
-    args.out_fmt,
+    out_fmt,
     methylome_names,
-    args.min_reads,
-    args.bin_size,
+    min_reads,
+    bin_size,
     // clang-format on
   };
   // outmgr.min_reads = args.min_reads;
@@ -386,92 +275,206 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
   static const auto description_msg =
     std::format("{}\n{}", rstrip(description), rstrip(examples));
 
-  transferase::query_argset args;
-  const auto ecc = args.parse(argc, argv, usage, about_msg, description_msg);
-  if (ecc == argument_error_code::help_requested)
-    return EXIT_SUCCESS;
-  if (ecc)
-    return EXIT_FAILURE;
+  namespace xfr = transferase;
 
-  auto &lgr = transferase::logger::instance(transferase::shared_from_cout(),
-                                            command, args.log_level);
+  // arguments that can be set in the client_config are held there
+  xfr::client_config cfg;
+
+  // arguments that determine the type of computation done on the
+  // server and the type of data communicated
+  std::uint32_t bin_size{};
+  std::string intervals_file;
+  bool count_covered{false};
+
+  // the two possible sources of names of methylomes to query
+  std::string methylome_names;
+  std::string methylomes_file;
+
+  // the genome associated with the methylomes -- could come from a
+  // lookup in transferase metadata
+  std::string genome_name;
+
+  // where to put the output and in what format
+  std::string output_file;
+  xfr::output_format_t out_fmt{};
+  std::uint32_t min_reads{1};  // relevant for dfscores
+
+  // run in local mode
+  bool local_mode{};
+
+  // get the default config directory to use as a fallback
+  std::error_code default_config_dir_error;
+  cfg.config_dir =
+    xfr::client_config::get_default_config_dir(default_config_dir_error);
+
+  namespace po = boost::program_options;
+
+  po::options_description opts("Options");
+  opts.add_options()
+    // clang-format off
+    ("help,h", "print this message and exit")
+    ("config-dir,c", po::value(&cfg.config_dir), "specify a config directory")
+    ("local", po::bool_switch(&local_mode), "run in local mode")
+    ("bin-size,b", po::value(&bin_size), "size of genomic bins")
+    ("intervals-file,i", po::value(&intervals_file), "intervals file")
+    ("genome,g", po::value(&genome_name)->required(), "genome name")
+    ("methylomes,m", po::value(&methylome_names),
+     "methylome names (comma separated)")
+    ("methylomes-file,M", po::value(&methylomes_file),
+     "methylomes file (text file; one methylome per line)")
+    ("out-file,o", po::value(&output_file)->required(), "output file")
+    ("covered,C", po::bool_switch(&count_covered),
+     "count covered sites for each interval")
+    ("out-fmt,f", po::value(&out_fmt)->default_value(xfr::output_format_t::counts, "1"),
+     "output format {counts=1, bedgraph=2, dataframe=3, dfscores=4}")
+    ("min-reads,r", po::value(&min_reads)->default_value(1),
+     "for fractional output, require this many reads")
+    ("hostname,s", po::value(&cfg.hostname), "server hostname")
+    ("port,p", po::value(&cfg.port), "server port")
+    ("methylome-dir,d", po::value(&cfg.methylome_dir),
+     "methylome directory (local mode only)")
+    ("index-dir,x", po::value(&cfg.index_dir),
+     "genome index directory")
+    ("log-level,v", po::value(&cfg.log_level)->default_value(xfr::log_level_t::info),
+     "{debug, info, warning, error, critical}")
+    ("log-file,l", po::value(&cfg.log_file)->value_name("[arg]"),
+     "log file name (defaults: print to screen)")
+    // clang-format on
+    ;
+  po::variables_map vm;
+  try {
+    po::store(po::parse_command_line(argc, argv, opts), vm);
+    if (vm.count("help") || argc == 1) {
+      std::println("{}\n{}", about_msg, usage);
+      opts.print(std::cout);
+      std::println("\n{}", description_msg);
+      return EXIT_SUCCESS;
+    }
+    po::notify(vm);
+  }
+  catch (po::error &e) {
+    std::println("{}", e.what());
+    return EXIT_FAILURE;
+  }
+
+  // Attempting to load values from config file in cfg.config_dir but
+  // deferring error reporting as all values might have been specified
+  // on the command line. If the user didn't specify a config dir,
+  // this will try to parse from the default.
+  std::error_code error;
+  cfg.read_config_file_no_overwrite(error);
+
+  auto &lgr =
+    xfr::logger::instance(xfr::shared_from_cout(), command, cfg.log_level);
   if (!lgr) {
     std::println("Failure initializing logging: {}.", lgr.get_status());
     return EXIT_FAILURE;
   }
 
-  args.log_options();
+  std::vector<std::tuple<std::string, std::string>> args_to_log{
+    // clang-format off
+    {"Config dir", cfg.config_dir},
+    {"Hostname", cfg.hostname},
+    {"Port", cfg.port},
+    {"Methylome dir", cfg.methylome_dir},
+    {"Index dir", cfg.index_dir},
+    {"Log file", cfg.log_file},
+    {"Log level", std::format("{}", cfg.log_level)},
+    {"Bin size", std::format("{}", bin_size)},
+    {"Intervals file", intervals_file},
+    {"Count covered", std::format("{}", count_covered)},
+    {"Methylome names", format_methylome_names_brief(methylome_names)},
+    {"Methylomes file", methylomes_file},
+    {"Genome name", genome_name},
+    {"Output file", output_file},
+    {"Output format", std::format("{}", out_fmt)},
+    {"Min reads", std::format("{}", min_reads)},
+    {"Local mode", std::format("{}", local_mode)},
+    // clang-format on
+  };
+  xfr::log_args<transferase::log_level_t::info>(args_to_log);
 
   // validate relationships between arguments
-  if (args.local_mode && args.methylome_dir.empty()) {
-    lgr.error("Error: local mode requires a methylomes directory");
+  if (local_mode && cfg.methylome_dir.empty()) {
+    const auto msg = R"(Local mode but methylome dir not specified {}: {})";
+    if (default_config_dir_error)
+      lgr.debug(msg, "; failed to parse config: {}", default_config_dir_error);
+    else
+      lgr.debug(msg, "; not found in config: {}", cfg.config_dir);
     return EXIT_FAILURE;
   }
-  if (args.index_dir.empty()) {
-    lgr.error(
-      "Error: specify index directory on command line or in config file");
+  if (!local_mode && (cfg.hostname.empty() || cfg.port.empty())) {
+    const auto msg = R"(Remote mode but hostname or port not specified {} {})";
+    if (default_config_dir_error)
+      lgr.debug(msg, "; failed to parse config: ", default_config_dir_error);
+    else
+      lgr.debug(msg, "; not found in config: ", cfg.config_dir);
     return EXIT_FAILURE;
   }
-  if ((args.bin_size == 0) == args.intervals_file.empty()) {
+
+  if (cfg.index_dir.empty()) {
+    const auto msg = R"(Index dir not specified)";
+    if (default_config_dir_error)
+      lgr.debug(msg, "; failed to parse config: ", default_config_dir_error);
+    else
+      lgr.debug(msg, "; not found in config: ", cfg.config_dir);
+    return EXIT_FAILURE;
+  }
+  if ((bin_size == 0) == intervals_file.empty()) {
     lgr.error("Error: specify exactly one of bins-size or intervals-file");
     return EXIT_FAILURE;
   }
-  if (args.methylome_names.empty() == args.methylomes_file.empty()) {
+  if (methylome_names.empty() == methylomes_file.empty()) {
     lgr.error("Error: specify exactly one of methylomes or methylomes-file");
     return EXIT_FAILURE;
   }
 
-  std::error_code ec;
-  const auto index =
-    transferase::genome_index::read(args.index_dir, args.genome_name, ec);
-  if (ec) {
-    lgr.error("Failed to read genome index {} {}: {}", args.index_dir,
-              args.genome_name, ec);
+  const auto index = xfr::genome_index::read(cfg.index_dir, genome_name, error);
+  if (error) {
+    lgr.error("Failed to read genome index {} {}: {}", cfg.index_dir,
+              genome_name, error);
     return EXIT_FAILURE;
   }
 
-  const auto interface = transferase::methylome_interface{
+  const auto interface = xfr::methylome_interface{
     // directory
-    args.local_mode ? args.methylome_dir : std::string{},
+    local_mode ? cfg.methylome_dir : std::string{},
     // hostname
-    args.hostname,
+    cfg.hostname,
     // port number
-    args.port,
+    cfg.port,
   };
 
   // get methylome names either parsed from command line or in a file
-  const auto methylome_names =
-    !args.methylomes_file.empty()
-      ? read_methylomes_file(args.methylomes_file, ec)
-      : split_comma(args.methylome_names);
-  if (ec) {
-    lgr.error("Error reading methylomes file {}: {}", args.methylomes_file, ec);
+  const auto methylomes = !methylomes_file.empty()
+                            ? read_methylomes_file(methylomes_file, error)
+                            : split_comma(methylome_names);
+  if (error) {
+    lgr.error("Error reading methylomes file {}: {}", methylomes_file, error);
     return EXIT_FAILURE;
   }
 
   // validate the methylome names
-  const auto invalid_name = std::ranges::find_if_not(
-    methylome_names, &transferase::methylome::is_valid_name);
-  if (invalid_name != std::cend(methylome_names)) {
+  const auto invalid_name =
+    std::ranges::find_if_not(methylomes, &xfr::methylome::is_valid_name);
+  if (invalid_name != std::cend(methylomes)) {
     lgr.error("Error: invalid methylome name \"{}\"", *invalid_name);
     return EXIT_FAILURE;
   }
 
-  using transferase::level_element_covered_t;
-  using transferase::level_element_t;
-  using transferase::request_type_code;
-
-  const bool intervals_query = (args.bin_size == 0);
+  const bool intervals_query = (bin_size == 0);
   const auto request_type =
-    intervals_query ? (args.count_covered ? request_type_code::intervals_covered
-                                          : request_type_code::intervals)
-                    : (args.count_covered ? request_type_code::bins_covered
-                                          : request_type_code::bins);
-  const auto error =
+    intervals_query ? (count_covered ? xfr::request_type_code::intervals_covered
+                                     : xfr::request_type_code::intervals)
+                    : (count_covered ? xfr::request_type_code::bins_covered
+                                     : xfr::request_type_code::bins);
+  error =
     intervals_query
-      ? do_intervals_query(args, index, interface, methylome_names,
+      ? do_intervals_query(intervals_file, count_covered, out_fmt, min_reads,
+                           output_file, index, interface, methylomes,
                            request_type)
-      : do_bins_query(args, index, interface, methylome_names, request_type);
+      : do_bins_query(bin_size, count_covered, out_fmt, min_reads, output_file,
+                      index, interface, methylomes, request_type);
   lgr.info("Completed query with status: {}", error);
 
   return error ? EXIT_FAILURE : EXIT_SUCCESS;
