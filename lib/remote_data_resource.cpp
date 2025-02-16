@@ -24,10 +24,9 @@
 #include "remote_data_resource.hpp"
 #include "find_path_to_binary.hpp"
 #include "logger.hpp"
+#include "nlohmann/json.hpp"
 
 #include <config.h>  // for VERSION, DATADIR, PROJECT_NAME
-
-#include <boost/json.hpp>
 
 #include <filesystem>
 #include <fstream>
@@ -68,29 +67,12 @@ get_transferase_server_info_impl(const std::string &data_dir,
     error = std::make_error_code(std::errc::not_a_directory);
     return {};
   }
-
-  const auto filesize =
-    static_cast<std::streamsize>(std::filesystem::file_size(json_file, error));
-  if (error) {
-    lgr.debug("Bad system config file: {}", json_file.string());
+  const nlohmann::json data = nlohmann::json::parse(in, nullptr, false);
+  if (data.is_discarded()) {
+    error = std::make_error_code(std::errc::invalid_argument);
     return {};
   }
-
-  std::string payload(filesize, '\0');
-  if (!in.read(payload.data(), filesize)) {
-    error = std::make_error_code(std::errc::bad_file_descriptor);
-    lgr.debug("Failure reading file: {}", json_file.string());
-    return {};
-  }
-
-  system_config sc;
-  boost::json::parse_into(sc, payload, error);
-  if (error) {
-    lgr.debug("Malformed JSON for system config {}: {}", json_file.string(),
-              error);
-    return {};
-  }
-
+  system_config sc = data;
   return {sc.hostname, sc.port};
 }
 
@@ -150,38 +132,19 @@ get_remote_data_resources_impl(const std::string &data_dir,
     lgr.debug("Not a directory: {}", data_dir);
     return {};
   }
-
   const auto json_file =
     std::filesystem::path{data_dir} / get_system_config_filename();
-
   std::ifstream in(json_file);
   if (!in) {
     error = std::make_error_code(std::errc::not_a_directory);
     return {};
   }
-
-  const auto filesize =
-    static_cast<std::streamsize>(std::filesystem::file_size(json_file, error));
-  if (error) {
-    lgr.debug("Bad system config file: {}", json_file.string());
+  const nlohmann::json data = nlohmann::json::parse(in, nullptr, false);
+  if (data.is_discarded()) {
+    error = std::make_error_code(std::errc::invalid_argument);
     return {};
   }
-
-  std::string payload(filesize, '\0');
-  if (!in.read(payload.data(), filesize)) {
-    error = std::make_error_code(std::errc::bad_file_descriptor);
-    lgr.debug("Failure reading file: {}", json_file.string());
-    return {};
-  }
-
-  system_config sc;
-  boost::json::parse_into(sc, payload, error);
-  if (error) {
-    lgr.debug("Malformed JSON for system config {}: {}", json_file.string(),
-              error);
-    return {};
-  }
-
+  system_config sc = data;
   return sc.resources;
 }
 

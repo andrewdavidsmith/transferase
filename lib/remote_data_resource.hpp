@@ -24,6 +24,8 @@
 #ifndef LIB_REMOTE_DATA_RESOURCE_HPP_
 #define LIB_REMOTE_DATA_RESOURCE_HPP_
 
+#include "nlohmann/json.hpp"
+
 #include <boost/describe.hpp>
 
 #include <filesystem>
@@ -60,6 +62,8 @@ struct remote_data_resources {
   form_url(const auto &file) const {
     return std::format("{}:{}{}", host, port, file);
   }
+
+  NLOHMANN_DEFINE_TYPE_INTRUSIVE(remote_data_resources, host, port, path)
 };
 BOOST_DESCRIBE_STRUCT(remote_data_resources, (), (host, port, path))
 
@@ -67,6 +71,7 @@ struct system_config {
   std::string hostname;
   std::string port;
   std::vector<remote_data_resources> resources;
+  NLOHMANN_DEFINE_TYPE_INTRUSIVE(system_config, hostname, port, resources)
 };
 
 BOOST_DESCRIBE_STRUCT(system_config, (), (hostname, port, resources))
