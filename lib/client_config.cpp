@@ -39,6 +39,7 @@
 #include <filesystem>
 #include <format>
 #include <iterator>  // for std::size
+#include <ranges>
 #include <sstream>
 #include <string>
 #include <system_error>
@@ -273,7 +274,6 @@ client_config::read(std::string config_dir,
     if (error)
       return {};
   }
-
   // Get the config filename
   const auto config_file = get_config_file(config_dir, error);
   if (error)
@@ -289,8 +289,44 @@ client_config::read(std::string config_dir,
     if (error)
       return {};
   }
-
   return config;
+}
+
+auto
+client_config::read_config_file_no_overwrite(std::error_code &error) noexcept
+  -> void {
+  namespace fs = std::filesystem;
+  // If config dir is empty, get the default
+  if (config_dir.empty()) {
+    config_dir = get_default_config_dir(error);
+    if (error)
+      return;
+  }
+  // Get the config filename
+  const auto config_file = get_config_file(config_dir, error);
+  if (error)
+    return;
+  // Parse as vector of pairs of strings
+  const auto key_vals = parse_config_file_as_key_val(config_file, error);
+  if (error)
+    return;
+
+  // Convert to unordered map
+  std::unordered_map<std::string, std::string> key_val_map;
+  std::ranges::for_each(
+    key_vals, [&key_val_map](const auto &kv) { key_val_map.insert(kv); });
+
+  const auto do_assign = [&](auto &var, std::string name) {
+    std::ranges::replace(name, '_', '-');
+    if (key_val_map.contains(name) && var.empty())
+      var = key_val_map[name];
+  };
+  do_assign(hostname, "hostname");
+  do_assign(port, "port");
+  do_assign(index_dir, "index_dir");
+  do_assign(metadata_file, "metadata_file");
+  do_assign(methylome_dir, "methylome_dir");
+  do_assign(log_file, "log_file");
 }
 
 auto
