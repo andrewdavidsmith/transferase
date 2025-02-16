@@ -139,6 +139,10 @@ struct client_config {
   read(std::string config_dir,
        std::error_code &error) noexcept -> client_config;
 
+  /// Initialize any empty values by reading the config file
+  auto
+  read_config_file_no_overwrite(std::error_code &error) noexcept -> void;
+
 #ifndef TRANSFERASE_NOEXCEPT
   /// Overload of the read function that throws system_error exceptions to
   /// serve in an API
