@@ -24,8 +24,7 @@
 #include "methylome_metadata.hpp"
 
 #include "environment_utilities.hpp"
-
-#include <boost/json.hpp>
+#include "nlohmann/json.hpp"
 
 #include <cerrno>
 #include <filesystem>
@@ -60,24 +59,12 @@ methylome_metadata::read(const std::string &json_filename,
     ec = std::make_error_code(std::errc(errno));
     return {};
   }
-
-  const auto filesize =
-    static_cast<std::streamsize>(std::filesystem::file_size(json_filename, ec));
-  if (ec)
-    return {};
-
-  std::string payload(filesize, '\0');
-  if (!in.read(payload.data(), filesize)) {
-    ec = std::make_error_code(std::errc(errno));
+  const nlohmann::json data = nlohmann::json::parse(in, nullptr, false);
+  if (data.is_discarded()) {
+    ec = std::make_error_code(std::errc::invalid_argument);
     return {};
   }
-
-  methylome_metadata mm;
-  boost::json::parse_into(mm, payload, ec);
-  if (ec)
-    return {};
-
-  ec = std::error_code{};
+  methylome_metadata mm = data;
   return mm;
 }
 
@@ -103,17 +90,15 @@ methylome_metadata::write(const std::string &json_filename) const
   std::ofstream out(json_filename);
   if (!out)
     return std::make_error_code(std::errc(errno));
-  if (!(out << boost::json::value_from(*this)))
+  if (!(out << tostring()))
     return std::make_error_code(std::errc(errno));
   return {};
 }
 
 [[nodiscard]] auto
 methylome_metadata::tostring() const -> std::string {
-  std::ostringstream o;
-  if (!(o << boost::json::value_from(*this)))
-    o.clear();
-  return o.str();
+  nlohmann::json data = *this;
+  return data.dump();
 }
 
 }  // namespace transferase

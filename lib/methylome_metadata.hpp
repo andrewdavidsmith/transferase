@@ -24,6 +24,8 @@
 #ifndef LIB_METHYLOME_METADATA_HPP_
 #define LIB_METHYLOME_METADATA_HPP_
 
+#include "nlohmann/json.hpp"
+
 #include <boost/describe.hpp>  // for BOOST_DESCRIBE_STRUCT
 
 #include <cstdint>  // for uint32_t, uint64_t
@@ -95,6 +97,10 @@ struct methylome_metadata {
     const auto wo_extn = (std::filesystem::path{directory} / name).string();
     return std::format("{}{}", wo_extn, filename_extension);
   }
+
+  NLOHMANN_DEFINE_TYPE_INTRUSIVE(methylome_metadata, version, host, user,
+                                 creation_time, methylome_hash, index_hash,
+                                 genome_name, n_cpgs, is_compressed)
 };
 
 // clang-format off
