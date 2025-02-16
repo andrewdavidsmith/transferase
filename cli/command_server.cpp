@@ -49,7 +49,6 @@ Examples:
 xfr server -s localhost -d methylomes -x indexes
 )";
 
-#include "arguments.hpp"
 #include "format_error_code.hpp"  // IWYU pragma: keep
 #include "logger.hpp"
 #include "request.hpp"
@@ -57,7 +56,6 @@ xfr server -s localhost -d methylomes -x indexes
 #include "server_config.hpp"
 #include "utilities.hpp"
 
-#include <boost/describe.hpp>
 #include <boost/program_options.hpp>
 
 #include <cstdint>
@@ -75,123 +73,9 @@ xfr server -s localhost -d methylomes -x indexes
 #include <variant>
 #include <vector>
 
-namespace transferase {
-
-struct server_argset : argset_base<server_argset> {
-  static constexpr auto default_config_filename =
-    "transferase_server_config.conf";
-
-  static auto
-  get_default_config_file_impl() -> std::string {
-    std::error_code ec;
-    const auto config_dir = server_config::get_default_config_dir(ec);
-    if (ec)
-      return {};
-    return std::filesystem::path{config_dir} / default_config_filename;
-  }
-
-  static constexpr auto log_level_default{log_level_t::info};
-  static constexpr auto n_threads_default{1};
-  static constexpr auto max_resident_default = 32;
-  std::string hostname;
-  std::string port;
-  std::string methylome_dir;
-  std::string index_dir;
-  std::string log_file;
-  std::string pid_file;
-  transferase::log_level_t log_level{};
-  std::uint32_t n_threads{};
-  std::uint32_t max_resident{};
-  bool daemonize{};
-
-  auto
-  log_options_impl() const {
-    transferase::log_args<transferase::log_level_t::info>(
-      std::vector<std::tuple<std::string, std::string>>{
-        // clang-format off
-        {"hostname", std::format("{}", hostname)},
-        {"port", std::format("{}", port)},
-        {"methylome_dir", std::format("{}", methylome_dir)},
-        {"index_dir", std::format("{}", index_dir)},
-        {"log_file", std::format("{}", log_file)},
-        {"log_level", std::format("{}", log_level)},
-        {"n_threads", std::format("{}", n_threads)},
-        {"max_resident", std::format("{}", max_resident)},
-        {"min_bin_size", std::format("{}", request::min_bin_size)},
-        {"max_intervals", std::format("{}", request::max_intervals)},
-        {"daemonize", std::format("{}", daemonize)},
-        {"pid-file", std::format("{}", pid_file)},
-        // clang-format on
-      });
-  }
-
-  [[nodiscard]] auto
-  set_hidden_impl() -> boost::program_options::options_description {
-    return {};
-  }
-
-  [[nodiscard]] auto
-  set_opts_impl() -> boost::program_options::options_description {
-    namespace po = boost::program_options;
-    using po::value;
-    po::options_description opts("Command line or config file");
-    opts.add_options()
-      // clang-format off
-      ("help,h", "print this message and exit")
-      ("config-file,c",
-       value(&config_file)
-       ->default_value(get_default_config_file(), ""),
-       "use specified config file")
-      ("hostname,s", value(&hostname)->required(),
-       "server hostname (required)")
-      ("port,p", value(&port)->required(), "server port")
-      ("methylome-dir,d", value(&methylome_dir)->required(), "methylome directory")
-      ("index-dir,x", value(&index_dir)->required(), "genome index directory")
-      ("max-resident,r",
-       value(&max_resident)->default_value(max_resident_default),
-       "max resident methylomes")
-      ("n-threads,t", value(&n_threads)->default_value(n_threads_default),
-       "number of threads")
-      ("min-bin-size",
-       value(&transferase::request::min_bin_size)
-       ->default_value(transferase::request::min_bin_size_default),
-       "minimum size of bins for queries")
-      ("max-intervals",
-       value(&transferase::request::max_intervals)
-       ->default_value(transferase::request::max_intervals_default),
-       "maximum number of intervals in a query")
-      ("log-level,v", value(&log_level)->default_value(log_level_default),
-       "{debug, info, warning, error, critical}")
-      ("log-file,l", value(&log_file)->default_value("", "screen"),
-       "log file name")
-      ("daemonize", po::bool_switch(&daemonize),
-       "daemonize the server")
-      ("pid-file", value(&pid_file)->default_value("", "none"),
-       "Filename to use for the PID  when daemonizing")
-      // clang-format on
-      ;
-    return opts;
-  }
-};
-
-// clang-format off
-BOOST_DESCRIBE_STRUCT(server_argset, (), (
-  hostname,
-  port,
-  methylome_dir,
-  index_dir,
-  log_file,
-  log_level,
-  n_threads,
-  max_resident,
-  pid_file
-)
-)
-// clang-format on
-
 [[nodiscard]] static auto
 check_directory(const auto &dirname, std::error_code &ec) -> std::string {
-  auto &lgr = logger::instance();
+  auto &lgr = transferase::logger::instance();
   const auto canonical_dir = std::filesystem::canonical(dirname, ec);
   if (ec || canonical_dir.empty()) {
     lgr.error("Failed to get canonical directory for {}: {}", dirname, ec);
@@ -211,8 +95,6 @@ check_directory(const auto &dirname, std::error_code &ec) -> std::string {
   return canonical_dir;
 }
 
-}  // namespace transferase
-
 auto
 command_server_main(int argc,
                     char *argv[])  // NOLINT(cppcoreguidelines-avoid-c-arrays)
@@ -225,59 +107,140 @@ command_server_main(int argc,
   static const auto description_msg =
     std::format("{}\n{}", rstrip(description), rstrip(examples));
 
-  using transferase::check_directory;
-  using transferase::log_level_t;
-  using transferase::logger;
+  namespace xfr = transferase;
 
-  transferase::server_argset args;
-  auto ec = args.parse(argc, argv, usage, about_msg, description_msg);
-  if (ec == argument_error_code::help_requested)
-    return EXIT_SUCCESS;
-  if (ec)
+  xfr::server_config cfg;
+  std::string config_file;
+  bool daemonize{};
+
+  // get the default config directory to use as a fallback
+  std::error_code default_config_dir_error;
+  const std::string default_config_dir =
+    xfr::server_config::get_default_config_dir(default_config_dir_error);
+  if (default_config_dir_error) {
+    std::println("Failed to identify default config dir: {}",
+                 default_config_dir_error);
     return EXIT_FAILURE;
+  }
 
-  if (args.daemonize && args.log_file.empty()) {
+  namespace po = boost::program_options;
+
+  po::options_description opts("Options");
+  opts.add_options()
+    // clang-format off
+    ("help,h", "print this message and exit")
+    ("config-file,c", po::value(&config_file),
+     "read configuration from this file")
+    ("hostname,s", po::value(&cfg.hostname), "server hostname")
+    ("port,p", po::value(&cfg.port), "server port")
+    ("methylome-dir,d", po::value(&cfg.methylome_dir), "methylome directory")
+    ("index-dir,x", po::value(&cfg.index_dir), "genome index directory")
+    ("max-resident,r", po::value(&cfg.max_resident), "max resident methylomes")
+    ("n-threads,t", po::value(&cfg.n_threads), "number of threads")
+    ("min-bin-size", po::value(&xfr::request::min_bin_size),
+     "minimum size of bins for queries")
+    ("max-intervals", po::value(&xfr::request::max_intervals),
+     "maximum number of intervals in a query")
+    ("log-level,v", po::value(&cfg.log_level),
+     "{debug, info, warning, error, critical}")
+    ("log-file,l", po::value(&cfg.log_file), "log file name")
+    ("daemonize", po::bool_switch(&daemonize), "daemonize the server")
+    ("pid-file", po::value(&cfg.pid_file)->default_value("", "none"),
+     "Filename to use for the PID  when daemonizing")
+    // clang-format on
+    ;
+  po::variables_map vm;
+  try {
+    po::store(po::parse_command_line(argc, argv, opts), vm);
+    if (vm.count("help") || argc == 1) {
+      std::println("{}\n{}", about_msg, usage);
+      opts.print(std::cout);
+      std::println("\n{}", description_msg);
+      return EXIT_SUCCESS;
+    }
+    po::notify(vm);
+  }
+  catch (po::error &e) {
+    std::println("{}", e.what());
+    return EXIT_FAILURE;
+  }
+
+  // Attempting to load values from config file in cfg.config_file but
+  // deferring error reporting as all values might have been specified
+  // on the command line.
+  std::error_code error;
+  if (!config_file.empty()) {
+    cfg.read_config_file(config_file, error);
+    if (error) {
+      std::println("Failed to read config file {}: {}", config_file, error);
+      return EXIT_FAILURE;
+    }
+  }
+
+  if (daemonize && cfg.log_file.empty()) {
     std::println("A log file with write perms is needed to daemonize");
     return EXIT_FAILURE;
   }
 
   std::shared_ptr<std::ostream> log_file =
-    args.log_file.empty()
+    cfg.log_file.empty()
       ? std::make_shared<std::ostream>(std::cout.rdbuf())
-      : std::make_shared<std::ofstream>(args.log_file, std::ios::app);
+      : std::make_shared<std::ofstream>(cfg.log_file, std::ios::app);
 
-  auto &lgr = logger::instance(log_file, command, args.log_level);
+  auto &lgr = xfr::logger::instance(log_file, command, cfg.log_level);
   if (!lgr) {
     std::println("Failure initializing logging: {}.", lgr.get_status());
     return EXIT_FAILURE;
   }
 
-  args.log_options();
+  std::vector<std::tuple<std::string, std::string>> args_to_log{
+    // clang-format off
+    {"Config file", config_file},
+    {"Hostname", cfg.hostname},
+    {"Port", cfg.port},
+    {"Methylome dir", cfg.methylome_dir},
+    {"Index dir", cfg.index_dir},
+    {"Log file", cfg.log_file},
+    {"Pid file", cfg.pid_file},
+    {"Log level", std::format("{}", cfg.log_level)},
+    {"N threads", std::format("{}", cfg.n_threads)},
+    {"Max resident", std::format("{}", cfg.max_resident)},
+    {"Min bin size", std::format("{}", cfg.min_bin_size)},
+    {"Max intervals", std::format("{}", cfg.max_intervals)},
+    // clang-format on
+  };
 
-  const auto methylome_dir = check_directory(args.methylome_dir, ec);
-  if (ec)
+  xfr::log_args<transferase::log_level_t::info>(args_to_log);
+
+  const bool cfg_is_valid = cfg.validate(error);
+  if (!cfg_is_valid || error) {
+    lgr.error("Invalid server configuration: {}", error);
+    return EXIT_FAILURE;
+  }
+
+  const auto methylome_dir = check_directory(cfg.methylome_dir, error);
+  if (error)
     return EXIT_FAILURE;
 
-  const auto index_dir = check_directory(args.index_dir, ec);
-  if (ec)
+  const auto index_dir = check_directory(cfg.index_dir, error);
+  if (error)
     return EXIT_FAILURE;
 
-  if (args.daemonize) {
-    auto s = transferase::server(args.hostname, args.port, args.n_threads,
-                                 methylome_dir, index_dir, args.max_resident,
-                                 lgr, ec, args.daemonize, args.pid_file);
-    if (ec) {
-      lgr.error("Failure daemonizing server: {}", ec);
+  if (daemonize) {
+    auto s = xfr::server(cfg.hostname, cfg.port, cfg.n_threads, methylome_dir,
+                         index_dir, cfg.max_resident, lgr, error, daemonize,
+                         cfg.pid_file);
+    if (error) {
+      lgr.error("Failure daemonizing server: {}", error);
       return EXIT_FAILURE;
     }
     s.run();
   }
   else {
-    auto s =
-      transferase::server(args.hostname, args.port, args.n_threads,
-                          methylome_dir, index_dir, args.max_resident, lgr, ec);
-    if (ec) {
-      lgr.error("Failure initializing server: {}", ec);
+    auto s = xfr::server(cfg.hostname, cfg.port, cfg.n_threads, methylome_dir,
+                         index_dir, cfg.max_resident, lgr, error);
+    if (error) {
+      lgr.error("Failure initializing server: {}", error);
       return EXIT_FAILURE;
     }
     s.run();
