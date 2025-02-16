@@ -34,6 +34,7 @@
 #include <sstream>
 #include <string>
 #include <system_error>
+#include <unordered_map>
 
 [[nodiscard]] static inline auto
 check_and_return_directory(const std::string &dirname,
