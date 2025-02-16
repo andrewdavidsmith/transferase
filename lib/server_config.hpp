@@ -56,6 +56,18 @@ struct server_config {
   std::uint32_t min_bin_size{};
   std::uint32_t max_intervals{};
 
+  /// Get the path to the index directory
+  [[nodiscard]] auto
+  get_index_dir() const noexcept -> std::string;
+
+  /// Get the path to the methylome directory
+  [[nodiscard]] auto
+  get_methylome_dir() const noexcept -> std::string;
+
+  /// Get the path to the log file
+  [[nodiscard]] auto
+  get_log_file() const noexcept -> std::string;
+
   /// Initialize any empty values by reading the config file
   auto
   read_config_file_no_overwrite(const std::string &config_file,
@@ -75,8 +87,7 @@ struct server_config {
   get_default_config_dir(std::error_code &error) -> std::string;
 
   [[nodiscard]] static auto
-  get_config_file(const std::string &config_dir,
-                  std::error_code &error) -> std::string;
+  get_config_file(const std::string &config_dir) -> std::string;
 
   [[nodiscard]] auto
   tostring() const -> std::string;
@@ -86,22 +97,6 @@ struct server_config {
   [[nodiscard]] auto
   validate(std::error_code &error) const noexcept -> bool;
 
-  /// Write the server configuration to the given configuration
-  /// directory.
-  auto
-  write(const std::string &config_dir,
-        std::error_code &error) const noexcept -> void;
-
-private:
-  [[nodiscard]] auto
-  get_file_default_impl(const std::string &filename,
-                        std::error_code &error) -> std::string;
-
-  [[nodiscard]] auto
-  get_dir_default_impl(const std::string &dirname,
-                       std::error_code &error) -> std::string;
-
-public:
   NLOHMANN_DEFINE_TYPE_INTRUSIVE(server_config, config_dir, hostname, port,
                                  methylome_dir, index_dir, log_file, pid_file,
                                  log_level, n_threads, max_resident,
