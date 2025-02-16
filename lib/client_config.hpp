@@ -66,6 +66,7 @@
 // full logger needs to be seen for 'mp11' and 'describe'
 #include "download_policy.hpp"  // IWYU pragma: keep
 #include "logger.hpp"           // IWYU pragma: keep
+#include "nlohmann/json.hpp"    // IWYU pragma: keep
 #include "transferase_metadata.hpp"
 
 #include <boost/describe.hpp>
@@ -232,6 +233,10 @@ struct client_config {
                   std::error_code &error) -> std::string;
 
   client_config() = default;
+
+  NLOHMANN_DEFINE_TYPE_INTRUSIVE(client_config, config_dir, hostname, port,
+                                 index_dir, metadata_file, methylome_dir,
+                                 log_file, log_level)
 };
 
 // clang-format off

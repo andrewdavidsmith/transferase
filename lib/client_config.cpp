@@ -27,11 +27,10 @@
 #include "find_path_to_binary.hpp"
 #include "genome_index_data.hpp"
 #include "genome_index_metadata.hpp"
+#include "nlohmann/json.hpp"
 #include "remote_data_resource.hpp"
 
 #include <config.h>
-
-#include <boost/json.hpp>
 
 #include <algorithm>
 #include <cassert>
@@ -376,10 +375,8 @@ client_config::save(std::error_code &error) const noexcept -> void {
 
 [[nodiscard]] auto
 client_config::tostring() const -> std::string {
-  std::ostringstream o;
-  if (!(o << boost::json::value_from(*this)))
-    o.clear();
-  return o.str();
+  nlohmann::json data = *this;
+  return data.dump();
 }
 
 [[nodiscard]] static auto
