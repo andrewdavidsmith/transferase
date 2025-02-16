@@ -32,7 +32,7 @@
 #include <cerrno>
 #include <cstdlib>  // for getenv
 #include <filesystem>
-#include <range>  // IWYU pragma: keep
+#include <ranges>  // IWYU pragma: keep
 #include <sstream>
 #include <string>
 #include <system_error>
