@@ -47,10 +47,10 @@ xfr select -o output_file.txt -g hg38
 )";
 
 #include "client_config.hpp"
+#include "nlohmann/json.hpp"
 #include "utilities.hpp"
 
 #include <boost/container/detail/std_fwd.hpp>  // for std::pair
-#include <boost/json.hpp>
 #include <boost/program_options.hpp>
 
 #include <ncurses.h>
@@ -88,28 +88,16 @@ load_data(const std::string &json_filename, std::error_code &error)
     error = std::make_error_code(std::errc(errno));
     return {};
   }
-
-  const auto filesize = static_cast<std::streamsize>(
-    std::filesystem::file_size(json_filename, error));
-  if (error)
-    return {};
-
-  std::string payload(filesize, '\0');
-  if (!in.read(payload.data(), filesize)) {
-    error = std::make_error_code(std::errc(errno));
+  const nlohmann::json payload = nlohmann::json::parse(in, nullptr, false);
+  if (payload.is_discarded()) {
+    error = std::make_error_code(std::errc::invalid_argument);
     return {};
   }
-
-  std::map<std::string, std::map<std::string, std::string>> data;
-  boost::json::parse_into(data, payload, error);
-  if (error) {
-    error = std::make_error_code(std::errc(errno));
-    return {};
-  }
+  std::map<std::string, std::map<std::string, std::string>> data = payload;
 
   typedef std::vector<std::pair<std::string, std::string>> vec_key_val;
   std::map<std::string, vec_key_val> r;
-  std::ranges::for_each(data, [&](const auto &d) {
+  std::ranges::for_each(entire_file, [&](const auto &d) {
     r.emplace(d.first, d.second | std::ranges::to<vec_key_val>());
   });
   return r;
@@ -488,8 +476,8 @@ main_loop(const std::vector<std::pair<std::string, std::string>> &data)
 }
 
 [[nodiscard]] auto
-write_output(const auto &data, std::string &json_filename) -> std::error_code {
-  std::ofstream out(json_filename);
+write_output(const auto &data, std::string &filename) -> std::error_code {
+  std::ofstream out(filename);
   if (!out)
     return std::make_error_code(std::errc(errno));
   for (const auto &d : data)
