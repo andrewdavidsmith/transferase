@@ -25,6 +25,7 @@
 #define LIB_LOGGER_HPP_
 
 #include "format_error_code.hpp"  // IWYU pragma: keep
+#include "nlohmann/json.hpp"      // IWYU pragma: keep
 
 #include <boost/describe.hpp>  // for BOOST_DESCRIBE_ENUM
 
@@ -76,6 +77,15 @@ BOOST_DESCRIBE_ENUM(
   error,
   critical
 )
+// clang-format on
+
+// clang-format off
+NLOHMANN_JSON_SERIALIZE_ENUM(log_level_t, {
+    {log_level_t::debug, "debug"},
+    {log_level_t::info, "info"},
+    {log_level_t::warning, "warning"},
+    {log_level_t::critical, "critical"},
+  })
 // clang-format on
 
 static constexpr auto level_name = std::array{
