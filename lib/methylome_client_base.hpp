@@ -110,7 +110,7 @@ public:
   [[nodiscard]] auto
   configured_genomes() const -> std::vector<std::string> {
     std::error_code error;
-    auto obj = genome_index::list(config.index_dir, error);
+    auto obj = genome_index::list(config.get_index_dir(), error);
     if (error)
       throw std::system_error(error);
     return obj;
@@ -184,7 +184,7 @@ protected:
 
     // Error for index dir should be taken care of in client_config
     if (!config.index_dir.empty())
-      indexes = std::make_shared<genome_index_set>(config.index_dir);
+      indexes = std::make_shared<genome_index_set>(config.get_index_dir());
   }
 
   methylome_client_base() = default;
