@@ -129,6 +129,50 @@ server_config::get_config_file(const std::string &config_dir,
                                error);
 }
 
+auto
+server_config::read_config_file_no_overwrite(
+  const std::string &config_file, std::error_code &error) noexcept -> void {
+  namespace fs = std::filesystem;
+  // If config dir is empty, get the default
+  if (config_file.empty()) {
+    error = std::make_error_code(std::errc::no_such_file_or_directory);
+    return;
+  }
+
+  // Parse as vector of pairs of strings
+  const auto key_vals = parse_config_file_as_key_val(config_file, error);
+  if (error)
+    return;
+
+  // Convert to unordered map
+  std::unordered_map<std::string, std::string> key_val_map;
+  std::ranges::for_each(
+    key_vals, [&key_val_map](const auto &kv) { key_val_map.insert(kv); });
+
+  const auto do_assign_if_empty = [&](auto &var, std::string name) {
+    std::ranges::replace(name, '_', '-');
+    if (key_val_map.contains(name) && var.empty())
+      var = key_val_map[name];
+  };
+  do_assign_if_empty(config_dir, "config_dir");
+  do_assign_if_empty(hostname, "hostname");
+  do_assign_if_empty(port, "port");
+  do_assign_if_empty(methylome_dir, "methylome_dir");
+  do_assign_if_empty(index_dir, "index_dir");
+  do_assign_if_empty(log_file, "log_file");
+  do_assign_if_empty(pid_file, "pid_file");
+
+  const auto do_assign_if_zero = [&](auto &var, std::string name) {
+    std::ranges::replace(name, '_', '-');
+    if (key_val_map.contains(name) && var == 0)
+      std::istringstream(key_val_map[name]) >> var;
+  };
+  do_assign_if_zero(n_threads, "n_threads");
+  do_assign_if_zero(max_resident, "max_resident");
+  do_assign_if_zero(min_bin_size, "min_bin_size");
+  do_assign_if_zero(max_intervals, "max_intervals");
+}
+
 [[nodiscard]] auto
 server_config::read(const std::string &config_file,
                     std::error_code &error) noexcept -> server_config {
@@ -187,21 +231,44 @@ server_config::tostring() const -> std::string {
 /// download any config data.
 [[nodiscard]] auto
 server_config::validate(std::error_code &error) const noexcept -> bool {
-  // validate the hostname
+  static constexpr auto max_n_threads = 256;
+  static constexpr auto max_max_resident = 8192;
+
   if (hostname.empty()) {
     error = server_config_error_code::invalid_server_config_information;
     return false;
   }
-  // validate the port
+
   if (port.empty()) {
     error = server_config_error_code::invalid_server_config_information;
     return false;
   }
-  // validate the index_dir
+
+  {
+    // validate the port
+    std::istringstream is(port);
+    std::uint16_t port_value{};
+    if (!(is >> port_value)) {
+      error = server_config_error_code::invalid_server_config_information;
+      return false;
+    }
+  }
+
   if (index_dir.empty()) {
     error = server_config_error_code::invalid_server_config_information;
     return false;
   }
+
+  if (n_threads == 0 || n_threads > max_n_threads) {
+    error = server_config_error_code::invalid_server_config_information;
+    return false;
+  }
+
+  if (max_resident == 0 || max_resident > max_max_resident) {
+    error = server_config_error_code::invalid_server_config_information;
+    return false;
+  }
+
   return true;
 }
 

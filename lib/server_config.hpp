@@ -41,19 +41,25 @@ namespace transferase {
 
 struct server_config {
   static constexpr auto server_config_filename_default =
-    "transferase_server_config.conf";
+    "transferase_server.conf";
 
+  std::string config_dir;
   std::string hostname;
   std::string port;
   std::string methylome_dir;
   std::string index_dir;
   std::string log_file;
   std::string pid_file;
-  std::string log_level;
-  std::string n_threads;
-  std::string max_resident;
-  std::string min_bin_size;
-  std::string max_intervals;
+  log_level_t log_level{};
+  std::uint32_t n_threads{};
+  std::uint32_t max_resident{};
+  std::uint32_t min_bin_size{};
+  std::uint32_t max_intervals{};
+
+  /// Initialize any empty values by reading the config file
+  auto
+  read_config_file_no_overwrite(const std::string &config_file,
+                                std::error_code &error) noexcept -> void;
 
   /// Read the server configuration.
   [[nodiscard]] static auto
@@ -98,6 +104,7 @@ private:
 
 // clang-format off
 BOOST_DESCRIBE_STRUCT(server_config, (), (
+  config_dir,
   hostname,
   port,
   methylome_dir,
