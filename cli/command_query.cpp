@@ -431,9 +431,10 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
   };
   xfr::log_args<xfr::log_level_t::info>(args_to_log);
 
-  const auto index = xfr::genome_index::read(cfg.index_dir, genome_name, error);
+  const auto index =
+    xfr::genome_index::read(cfg.get_index_dir(), genome_name, error);
   if (error) {
-    lgr.error("Failed to read genome index {} {}: {}", cfg.index_dir,
+    lgr.error("Failed to read genome index {} {}: {}", cfg.get_index_dir(),
               genome_name, error);
     return EXIT_FAILURE;
   }
