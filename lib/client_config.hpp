@@ -71,6 +71,7 @@
 #include <boost/describe.hpp>
 
 #include <cstdint>
+#include <format>
 #include <string>
 #include <system_error>
 #include <type_traits>  // for std::true_type

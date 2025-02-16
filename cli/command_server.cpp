@@ -58,7 +58,6 @@ xfr server -s localhost -d methylomes -x indexes
 
 #include <boost/program_options.hpp>
 
-#include <cstdint>
 #include <cstdlib>  // for EXIT_FAILURE, EXIT_SUCCESS
 #include <filesystem>
 #include <format>

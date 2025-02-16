@@ -49,6 +49,7 @@ xfr config -s example.com -p 5009 --genomes hg38,mm39
 )";
 
 #include "client_config.hpp"
+#include "download_policy.hpp"
 #include "logger.hpp"
 #include "utilities.hpp"
 
@@ -61,6 +62,8 @@ xfr config -s example.com -p 5009 --genomes hg38,mm39
 #include <string>
 #include <string_view>
 #include <system_error>
+#include <tuple>
+#include <variant>  // for std::tuple
 #include <vector>
 
 auto
