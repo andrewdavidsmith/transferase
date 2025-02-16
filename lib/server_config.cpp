@@ -27,10 +27,12 @@
 #include <boost/json.hpp>            // for boost::json::operator<<, boost::...
 #include <boost/mp11/algorithm.hpp>  // for boost::mp11::mp_for_each
 
+#include <algorithm>
 #include <cassert>
 #include <cerrno>
 #include <cstdlib>  // for getenv
 #include <filesystem>
+#include <range>  // IWYU pragma: keep
 #include <sstream>
 #include <string>
 #include <system_error>
