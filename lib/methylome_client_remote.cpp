@@ -22,9 +22,9 @@
  */
 
 #include "methylome_client_remote.hpp"
-#include "client_config.hpp"
 
-#include <boost/json.hpp>
+#include "client_config.hpp"
+#include "nlohmann/json.hpp"
 
 #include <sstream>
 #include <string>
@@ -34,10 +34,8 @@ namespace transferase {
 
 [[nodiscard]] auto
 methylome_client_remote::tostring_derived() const noexcept -> std::string {
-  std::ostringstream o;
-  if (!(o << boost::json::value_from(*this)))
-    o.clear();
-  return o.str();
+  nlohmann::json data = *this;
+  return data.dump();
 }
 
 auto
