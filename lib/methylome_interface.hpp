@@ -27,9 +27,8 @@
 #include "client.hpp"
 #include "genome_index.hpp"
 #include "methylome.hpp"
+#include "nlohmann/json.hpp"
 #include "request.hpp"
-
-#include <boost/json.hpp>
 
 #include <string>
 #include <vector>
@@ -44,10 +43,8 @@ public:
 
   [[nodiscard]] auto
   tostring() const noexcept -> std::string {
-    std::ostringstream o;
-    if (!(o << boost::json::value_from(*this)))
-      o.clear();
-    return o.str();
+    nlohmann::json data = *this;
+    return data.dump();
   }
 
   // intervals: takes a query
@@ -129,6 +126,8 @@ private:
     }
     return results;
   }
+  NLOHMANN_DEFINE_TYPE_INTRUSIVE(methylome_interface, directory, hostname,
+                                 port_number)
 };
 
 // clang-format off
