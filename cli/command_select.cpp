@@ -97,7 +97,7 @@ load_data(const std::string &json_filename, std::error_code &error)
 
   typedef std::vector<std::pair<std::string, std::string>> vec_key_val;
   std::map<std::string, vec_key_val> r;
-  std::ranges::for_each(entire_file, [&](const auto &d) {
+  std::ranges::for_each(data, [&](const auto &d) {
     r.emplace(d.first, d.second | std::ranges::to<vec_key_val>());
   });
   return r;
