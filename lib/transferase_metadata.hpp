@@ -24,6 +24,8 @@
 #ifndef LIB_TRANSFERASE_METADATA_HPP_
 #define LIB_TRANSFERASE_METADATA_HPP_
 
+#include "nlohmann/json.hpp"
+
 #include <boost/describe.hpp>
 
 #include <cstdint>
@@ -55,6 +57,8 @@ struct transferase_metadata {
     return genome_to_methylomes | std::views::elements<0> |
            std::ranges::to<std::vector<std::string>>();
   }
+  NLOHMANN_DEFINE_TYPE_INTRUSIVE(transferase_metadata, genome_to_methylomes,
+                                 methylome_to_genome)
 };
 
 // clang-format off

@@ -24,8 +24,7 @@
 #include "transferase_metadata.hpp"
 
 #include "methylome.hpp"
-
-#include <boost/json.hpp>
+#include "nlohmann/json.hpp"
 
 #include <algorithm>
 #include <filesystem>
@@ -80,26 +79,12 @@ transferase_metadata::read(const std::string &json_filename,
     error = read_error;
     return {};
   }
-
-  const auto filesize = static_cast<std::streamsize>(
-    std::filesystem::file_size(json_filename, error));
-  if (error) {
-    error = read_error;
-    return {};
-  }
-
-  std::string payload(filesize, '\0');
-  if (!in.read(payload.data(), filesize)) {
-    error = read_error;
-    return {};
-  }
-
-  std::map<std::string, std::map<std::string, std::string>> data;
-  boost::json::parse_into(data, payload, error);
-  if (error) {
+  const nlohmann::json payload = nlohmann::json::parse(in, nullptr, false);
+  if (payload.is_discarded()) {
     error = parse_error;
     return {};
   }
+  std::map<std::string, std::map<std::string, std::string>> data = payload;
 
   transferase_metadata m;
   std::ranges::for_each(data, [&](const auto &d) {
