@@ -24,8 +24,7 @@
 #include "genome_index_metadata.hpp"
 
 #include "environment_utilities.hpp"
-
-#include <boost/json.hpp>
+#include "nlohmann/json.hpp"
 
 #include <algorithm>
 #include <cerrno>
@@ -68,10 +67,8 @@ genome_index_metadata::get_n_bins(const std::uint32_t bin_size) const noexcept
 
 [[nodiscard]] auto
 genome_index_metadata::tostring() const noexcept -> std::string {
-  std::ostringstream o;
-  if (!(o << boost::json::value_from(*this)))
-    o.clear();
-  return o.str();
+  nlohmann::json data = *this;
+  return data.dump();
 }
 
 [[nodiscard]] auto
@@ -95,25 +92,12 @@ genome_index_metadata::read(const std::string &json_filename,
     ec = std::make_error_code(std::errc(errno));
     return {};
   }
-
-  const auto filesize =
-    static_cast<std::streamsize>(std::filesystem::file_size(json_filename, ec));
-  if (ec)
-    return {};
-
-  std::string payload(filesize, '\0');
-  if (!in.read(payload.data(), filesize)) {
-    ec = std::make_error_code(std::errc(errno));
+  const nlohmann::json data = nlohmann::json::parse(in, nullptr, false);
+  if (data.is_discarded()) {
+    ec = std::make_error_code(std::errc::invalid_argument);
     return {};
   }
-
-  genome_index_metadata meta;
-  boost::json::parse_into(meta, payload, ec);
-  if (ec) {
-    ec = genome_index_metadata_error_code::failure_parsing_json;
-    return {};
-  }
-
+  genome_index_metadata meta = data;
   return meta;
 }
 
@@ -139,7 +123,7 @@ genome_index_metadata::write(const std::string &json_filename) const noexcept
   std::ofstream out(json_filename);
   if (!out)
     return std::make_error_code(std::errc(errno));
-  if (!(out << boost::json::value_from(*this)))
+  if (!(out << tostring()))
     return std::make_error_code(std::errc(errno));
   return {};
 }
