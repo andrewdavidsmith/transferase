@@ -60,6 +60,7 @@ xfr query --local -d methylome_dir -x index_dir -g hg38 \
 #include "genome_index.hpp"
 #include "genomic_interval.hpp"
 #include "intervals_writer.hpp"
+#include "level_container.hpp"
 #include "level_element.hpp"
 #include "logger.hpp"
 #include "methylome.hpp"
@@ -393,7 +394,7 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
     {"Local mode", std::format("{}", local_mode)},
     // clang-format on
   };
-  xfr::log_args<transferase::log_level_t::info>(args_to_log);
+  xfr::log_args<xfr::log_level_t::info>(args_to_log);
 
   // validate relationships between arguments
   if (local_mode && cfg.methylome_dir.empty()) {

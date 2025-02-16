@@ -33,13 +33,14 @@
 
 #include <boost/json.hpp>
 
+#include <algorithm>
 #include <cassert>
 #include <chrono>  // for std::chrono::operator-
 #include <cstdlib>
 #include <filesystem>
 #include <format>
 #include <iterator>  // for std::size
-#include <ranges>
+#include <ranges>    // IWYU pragma: keep
 #include <sstream>
 #include <string>
 #include <system_error>
