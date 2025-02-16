@@ -66,6 +66,7 @@ xfr server-config -c /path/to/server_config_file.conf \
 #include <cstdlib>
 #include <filesystem>
 #include <format>
+#include <iostream>
 #include <iterator>  // for std::cend
 #include <print>
 #include <ranges>  // for std::ranges::find

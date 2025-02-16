@@ -78,6 +78,7 @@ xfr query --local -d methylome_dir -x index_dir -g hg38 \
 #include <cstdlib>
 #include <format>
 #include <fstream>
+#include <iostream>
 #include <iterator>  // for std::size, for std::cbegin
 #include <print>
 #include <ranges>
