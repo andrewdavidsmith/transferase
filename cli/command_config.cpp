@@ -48,11 +48,11 @@ Examples:
 xfr config -s example.com -p 5009 --genomes hg38,mm39
 )";
 
-#include "arguments.hpp"
 #include "client_config.hpp"
-#include "command_config_argset.hpp"
 #include "logger.hpp"
 #include "utilities.hpp"
+
+#include <boost/program_options.hpp>
 
 #include <cstdlib>
 #include <format>
@@ -61,34 +61,12 @@ xfr config -s example.com -p 5009 --genomes hg38,mm39
 #include <string_view>
 #include <system_error>
 
-static auto
-set_params_from_args(const transferase::command_config_argset &args,
-                     transferase::client_config &config) {
-  if (!args.config.hostname.empty())
-    config.hostname = args.config.hostname;
-
-  if (!args.config.port.empty())
-    config.port = args.config.port;
-
-  if (!args.config.index_dir.empty())
-    config.index_dir = args.config.index_dir;
-
-  if (!args.config.metadata_file.empty())
-    config.metadata_file = args.config.metadata_file;
-
-  if (!args.config.methylome_dir.empty())
-    config.methylome_dir = args.config.methylome_dir;
-
-  if (!args.config.log_file.empty())
-    config.log_file = args.config.log_file;
-
-  // Set this one anyway, because it will take the default if the user
-  // doesn't specify it.
-  config.log_level = args.config.log_level;
-}
-
 auto
 command_config_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
+  static constexpr auto log_level_default{transferase::log_level_t::info};
+  static constexpr auto download_policy_default{
+    transferase::download_policy_t::missing};
+
   static constexpr auto command = "config";
   static const auto usage =
     std::format("Usage: xfr {} [options]\n", rstrip(command));
@@ -99,44 +77,101 @@ command_config_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
 
   namespace xfr = transferase;
 
-  xfr::command_config_argset args;
-  auto error = args.parse(argc, argv, usage, about_msg, description_msg);
-  if (error == argument_error_code::help_requested)
-    return EXIT_SUCCESS;
-  if (error)
+  xfr::client_config cfg;
+  std::string genomes_arg{};
+  bool quiet{false};
+  bool debug{false};
+  bool do_defaults{false};
+  xfr::download_policy_t download_policy{};
+
+  namespace po = boost::program_options;
+  po::options_description opts("Options");
+  opts.add_options()
+    // clang-format off
+    ("help,h", "print this message and exit")
+    ("config-dir,c", po::value(&cfg.config_dir),
+     "name of config directory; see help for default")
+    ("hostname,s", po::value(&cfg.hostname), "transferase server hostname")
+    ("port,p", po::value(&cfg.port), "transferase server port")
+    ("genomes,g", po::value(&genomes_arg),
+     "download index files for these genomes "
+     "(comma separated list, e.g. hg38,mm39)")
+    ("index-dir,x", po::value(&cfg.index_dir),
+     "name of a directory to store genome index files")
+    ("methylome-dir,d", po::value(&cfg.methylome_dir),
+     "name of a local directory to search for methylomes")
+    ("metadata-file,L", po::value(&cfg.metadata_file),
+     "name of the MethBase2 metadata file")
+    ("log-level,v", po::value(&cfg.log_level)->default_value(log_level_default, ""),
+     "{debug, info, warning, error, critical}")
+    ("log-file,l", po::value(&cfg.log_file),
+     "log file name (default: console)")
+    ("download,M", po::value(&download_policy)
+     ->default_value(download_policy_default, ""),
+     "download policy (none,missing,update,all)")
+    ("default", po::bool_switch(&do_defaults), "only do the default configuration")
+    ("quiet", po::bool_switch(&quiet), "only report errors")
+    ("debug", po::bool_switch(&debug), "report debug information")
+    // clang-format on
+    ;
+  po::variables_map vm;
+  try {
+    po::store(po::parse_command_line(argc, argv, opts), vm);
+    if (vm.count("help") || argc == 1) {
+      std::println("{}\n{}", about_msg, usage);
+      opts.print(std::cout);
+      std::println("\n{}", description_msg);
+      return EXIT_SUCCESS;
+    }
+    po::notify(vm);
+  }
+  catch (po::error &e) {
+    std::println("{}", e.what());
     return EXIT_FAILURE;
+  }
 
   auto &lgr = xfr::logger::instance(xfr::shared_from_cout(), command,
-                                    args.debug   ? xfr::log_level_t::debug
-                                    : args.quiet ? xfr::log_level_t::error
-                                                 : xfr::log_level_t::info);
+                                    debug   ? xfr::log_level_t::debug
+                                    : quiet ? xfr::log_level_t::error
+                                            : xfr::log_level_t::info);
   if (!lgr) {
     std::println("Failure initializing logging: {}.", lgr.get_status());
     return EXIT_FAILURE;
   }
 
-  args.log_options();
+  std::vector<std::tuple<std::string, std::string>> args_to_log{
+    // clang-format off
+    {"Config dir", cfg.config_dir},
+    {"Hostname", cfg.hostname},
+    {"Port", cfg.port},
+    {"Methylome dir", cfg.methylome_dir},
+    {"Index dir", cfg.index_dir},
+    {"Log file", cfg.log_file},
+    {"Log level", std::format("{}", cfg.log_level)},
+    // clang-format on
+  };
+  xfr::log_args<transferase::log_level_t::info>(args_to_log);
 
-  if (args.config_dir.empty()) {
-    args.config_dir = xfr::client_config::get_default_config_dir(error);
+  std::error_code error;
+
+  if (cfg.config_dir.empty()) {
+    cfg.config_dir = xfr::client_config::get_default_config_dir(error);
     if (error) {
       lgr.error("Error obtaining config dir: {}.", error);
       return EXIT_FAILURE;
     }
   }
 
-  xfr::client_config config(args.config_dir, error);
+  xfr::client_config config(cfg.config_dir, error);
   if (error) {
     lgr.error("Error setting default config values: {}.", error);
     return EXIT_FAILURE;
   }
 
-  set_params_from_args(args, config);
-
-  const auto genomes = split_comma(args.genomes);
+  const auto genomes = split_comma(genomes_arg);
 
   const std::string empty_sys_config_dir;
-  config.install(genomes, args.download_policy, empty_sys_config_dir, error);
+  config.install(genomes, download_policy, empty_sys_config_dir, error);
   if (error) {
     lgr.error("Configuration incomplete: {}", error);
     return EXIT_FAILURE;
