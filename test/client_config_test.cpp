@@ -231,3 +231,28 @@ TEST_F(client_config_mock, read_metadata_success) {
   EXPECT_FALSE(all_genomes.empty()) << cfg.metadata_file << "\n";
   EXPECT_EQ(std::size(all_genomes), n_lutions);
 }
+
+TEST_F(client_config_mock, re_read_config_file_success) {
+  constexpr auto mock_hostname = "some_hostname.org";
+  constexpr auto mock_methylome_dir = "some_dir";
+  const auto lutions_config_dir = "data/lutions";
+  client_config cfg;
+  cfg.config_dir = lutions_config_dir;
+  cfg.hostname = mock_hostname;
+  cfg.methylome_dir = mock_methylome_dir;
+  EXPECT_EQ(cfg.hostname, mock_hostname);
+  EXPECT_EQ(cfg.methylome_dir, mock_methylome_dir);
+  EXPECT_EQ(cfg.port, "");
+  EXPECT_EQ(cfg.index_dir, "");
+  EXPECT_EQ(cfg.metadata_file, "");
+
+  std::error_code error;
+  cfg.read_config_file_no_overwrite(error);
+  EXPECT_FALSE(error) << error.message() << "\n";
+
+  EXPECT_EQ(cfg.hostname, mock_hostname);
+  EXPECT_EQ(cfg.methylome_dir, mock_methylome_dir);
+  EXPECT_EQ(cfg.port, "9000");
+  EXPECT_EQ(cfg.index_dir, "indexes");
+  EXPECT_EQ(cfg.metadata_file, "metadata.json");
+}
