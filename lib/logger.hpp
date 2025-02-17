@@ -27,8 +27,6 @@
 #include "format_error_code.hpp"  // IWYU pragma: keep
 #include "nlohmann/json.hpp"      // IWYU pragma: keep
 
-#include <boost/describe.hpp>  // for BOOST_DESCRIBE_ENUM
-
 #include <array>
 #include <cassert>
 #include <chrono>
@@ -38,6 +36,7 @@
 #include <format>
 #include <iostream>
 #include <iterator>  // for size, distance
+#include <map>
 #include <memory>
 #include <mutex>
 #include <ranges>
@@ -68,16 +67,15 @@ enum class log_level_t : std::uint8_t {
   critical,
 };
 
-// clang-format off
-BOOST_DESCRIBE_ENUM(
-  log_level_t,
-  debug,
-  info,
-  warning,
-  error,
-  critical
-)
-// clang-format on
+static const std::map<std::string, log_level_t> log_level_cli11{
+  // clang-format off
+  {"debug", log_level_t::debug},
+  {"info", log_level_t::info},
+  {"warning", log_level_t::warning},
+  {"error", log_level_t::error},
+  {"critical", log_level_t::critical},
+  // clang-format on
+};
 
 // clang-format off
 NLOHMANN_JSON_SERIALIZE_ENUM(log_level_t, {
