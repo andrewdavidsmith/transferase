@@ -38,7 +38,7 @@
 
 #include <config.h>  // for VERSION
 
-#include <boost/program_options.hpp>
+#include "CLI11/CLI11.hpp"
 
 #include <algorithm>
 #include <array>
@@ -96,8 +96,7 @@ format_help(const std::string &description,
 }
 
 int
-main(int argc, char *argv[])  // NOLINT(cppcoreguidelines-avoid-c-arrays)
-{
+main(int argc, char *argv[]) {  // NOLINT(*-c-arrays)
   static constexpr auto program = "transferase";
 
   std::set_terminate([]() {
@@ -105,32 +104,12 @@ main(int argc, char *argv[])  // NOLINT(cppcoreguidelines-avoid-c-arrays)
     std::abort();
   });
 
-  std::string command;
-  namespace po = boost::program_options;
-
-  po::options_description arguments;
-  arguments.add_options()
-    // clang-format off
-    ("command", po::value(&command))
-    ("subargs", po::value<std::vector<std::string>>())
-    // clang-format on
-    ;
-  // positional; one for "command" and the rest in "subargs"
-  po::positional_options_description p;
-  p.add("command", 1).add("subargs", -1);
-
-  po::variables_map vm;
-  po::store(po::command_line_parser(argc, argv)
-              .options(arguments)
-              .positional(p)
-              .allow_unregistered()
-              .run(),
-            vm);
-  if (!vm.count("command")) {
+  if (argc <= 1) {
     format_help(program, commands);
     return EXIT_SUCCESS;
   }
-  po::notify(vm);
+
+  std::string command = argv[1];
 
   const auto cmd_itr = std::ranges::find_if(
     commands, [&command](const auto &c) { return get<0>(c) == command; });
