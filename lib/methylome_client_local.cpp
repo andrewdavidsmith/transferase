@@ -26,8 +26,6 @@
 #include "client_config.hpp"
 #include "nlohmann/json.hpp"
 
-#include <memory>
-#include <sstream>
 #include <string>
 #include <system_error>
 

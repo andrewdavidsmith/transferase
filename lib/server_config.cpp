@@ -25,17 +25,16 @@
 
 #include "nlohmann/json.hpp"
 
-#include <algorithm>
 #include <cassert>
 #include <cerrno>
 #include <cstdlib>  // for getenv
 #include <filesystem>
 #include <fstream>
-#include <ranges>  // IWYU pragma: keep
+#include <iterator>  // for std::size
+#include <ranges>    // IWYU pragma: keep
 #include <sstream>
 #include <string>
 #include <system_error>
-#include <unordered_map>
 
 namespace transferase {
 

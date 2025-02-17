@@ -26,6 +26,8 @@
 
 #include "logger.hpp"  // IWYU pragma: keep
 
+#include "nlohmann/json.hpp"
+
 #include <cstdint>
 #include <string>
 #include <system_error>

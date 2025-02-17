@@ -27,7 +27,6 @@
 #include "nlohmann/json.hpp"
 
 #include <algorithm>
-#include <filesystem>
 #include <fstream>
 #include <iterator>
 #include <map>
