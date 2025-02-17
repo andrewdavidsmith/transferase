@@ -103,8 +103,7 @@ command_check_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
     ->required()
     ->check(CLI::ExistingDirectory);
   app.add_option("-g,--genome", genome_name,
-                 "genome name (default: all in directory)")
-    ->required();
+                 "genome name (default: all in directory)");
   app.add_option("-d,--methylome-dir", methylome_dir,
                  "directory containing methylomes")
     ->required()
