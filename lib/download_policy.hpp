@@ -24,12 +24,11 @@
 #ifndef LIB_DOWNLOAD_POLICY_HPP_
 #define LIB_DOWNLOAD_POLICY_HPP_
 
-#include <boost/describe.hpp>
-
 #include <array>
 #include <cstdint>
 #include <format>
 #include <iostream>
+#include <map>
 #include <string>
 #include <string_view>
 
@@ -42,22 +41,21 @@ enum class download_policy_t : std::uint8_t {
   all = 3,
 };
 
-// clang-format off
-BOOST_DESCRIBE_ENUM(
-  download_policy_t,
-  none,
-  missing,
-  update,
-  all
-)
-// clang-format on
-
 static constexpr auto download_policy_t_name = std::array{
   // clang-format off
   std::string_view{"none"},
   std::string_view{"missing"},
   std::string_view{"update"},
   std::string_view{"all"},
+  // clang-format on
+};
+
+static const std::map<std::string, download_policy_t> download_policy_cli11{
+  // clang-format off
+  {"none", download_policy_t::none},
+  {"missing", download_policy_t::missing},
+  {"update", download_policy_t::update},
+  {"all", download_policy_t::all},
   // clang-format on
 };
 
