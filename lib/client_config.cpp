@@ -302,11 +302,6 @@ client_config::read_config_file(const std::string &config_file,
     error = client_config_error_code::invalid_client_config_file;
     return {};
   }
-  if (!config.metadata_file.empty()) {
-    config.meta = transferase_metadata::read(config.get_metadata_file(), error);
-    if (error)
-      return {};
-  }
   return config;
 }
 
@@ -358,7 +353,7 @@ client_config::save(std::error_code &error) const noexcept -> void {
   if (error)
     return;
 
-  auto config_file = get_config_file(config_dir, error);
+  const auto config_file = get_config_file(config_dir, error);
   if (error)
     return;
 
