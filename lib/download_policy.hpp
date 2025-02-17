@@ -24,6 +24,8 @@
 #ifndef LIB_DOWNLOAD_POLICY_HPP_
 #define LIB_DOWNLOAD_POLICY_HPP_
 
+#include "nlohmann/json.hpp"  // IWYU pragma: keep
+
 #include <array>
 #include <cstdint>
 #include <format>
