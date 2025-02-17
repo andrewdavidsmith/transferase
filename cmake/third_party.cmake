@@ -24,13 +24,7 @@ message(STATUS "Locating REQUIRED third-party packages")
 
 find_package(Threads REQUIRED)
 
-set(BOOST_COMPONENTS program_options context)
-
-# Boost.JSON
-## Building python lib needs -fPIC and Boost.json has an issue with
-## this so BOOST_JSON_NO_LIB will be passed to sources and turn on
-## header-only for Boost.json
-set(BOOST_JSON_NO_LIB on)
+set(BOOST_COMPONENTS context)
 
 # ZLib
 if(BUILD_PYTHON)
@@ -113,7 +107,7 @@ endif()
 # Boost components
 find_package(
   Boost
-  1.85.0 REQUIRED
+  1.83.0 REQUIRED
   COMPONENTS
   ${BOOST_COMPONENTS}
 )
