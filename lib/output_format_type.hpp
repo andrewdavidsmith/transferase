@@ -28,6 +28,7 @@
 #include <cstdint>
 #include <format>
 #include <iostream>
+#include <map>
 #include <string>
 #include <string_view>
 #include <utility>  // for std::to_underlying
@@ -49,6 +50,16 @@ static constexpr auto output_format_t_name = std::array{
   std::string_view{"bedgraph"},
   std::string_view{"dataframe"},
   std::string_view{"dfscores"},
+  // clang-format on
+};
+
+static const std::map<std::string, output_format_t> output_format_cli11{
+  // clang-format off
+  {"none", output_format_t::none},
+  {"counts", output_format_t::counts},
+  {"bedgraph", output_format_t::bedgraph},
+  {"dataframe", output_format_t::dataframe},
+  {"dfscores", output_format_t::dataframe_scores},
   // clang-format on
 };
 
