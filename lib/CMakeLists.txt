@@ -39,13 +39,6 @@ foreach(cpp_file ${cpp_files})
   list(APPEND LIBRARY_OBJECTS ${BASE_NAME})
 endforeach()
 
-## Passing BOOST_JSON_NO_LIB to the boost_json library will turn on
-## header-only mode, which is required for -fPIC, which is required
-## for building the Python library.
-if(BOOST_JSON_NO_LIB)
-  target_compile_definitions(boost_json PRIVATE BOOST_JSON_NO_LIB)
-endif()
-
 # Create the initial static library linking the individual objects
 add_library(transferase_system STATIC)
 target_include_directories(transferase_system PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
