@@ -1,7 +1,10 @@
-hostname = bulbapedia.bulbagarden.net
-port = 9000
-index-dir = indexes
-metadata-file = metadata.json
-# methylome-dir =
-# log-file =
-# log-level = info
+{
+    "config_dir": "data/lutions",
+    "hostname": "bulbapedia.bulbagarden.net",
+    "port": "9000",
+    "index_dir": "indexes",
+    "metadata_file": "metadata.json",
+    "methylome_dir": "",
+    "log_file": "",
+    "log_level": "info"
+}
