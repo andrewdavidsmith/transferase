@@ -69,7 +69,7 @@ xfr config -s example.com -p 5009 --genomes hg38,mm39
 auto
 command_config_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
   static constexpr auto log_level_default = "info";
-  static constexpr auto download_policy_default = "missing";
+  const std::string download_policy_default = "missing";
 
   static constexpr auto command = "config";
   static const auto usage =
