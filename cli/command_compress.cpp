@@ -52,7 +52,7 @@ xfr compress -u -d methylome_dir -m methylome_name -o output_dir
 #include "methylome_metadata.hpp"
 #include "utilities.hpp"  // duration()
 
-#include <boost/program_options.hpp>
+#include "CLI11/CLI11.hpp"
 
 #include <chrono>
 #include <cstdlib>  // for EXIT_FAILURE, EXIT_SUCCESS
@@ -67,12 +67,10 @@ xfr compress -u -d methylome_dir -m methylome_name -o output_dir
 #include <vector>
 
 auto
-command_compress_main(int argc,
-                      char *argv[])  // NOLINT(cppcoreguidelines-avoid-c-arrays)
-  -> int {
+command_compress_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
   static constexpr auto command = "compress";
   static const auto usage =
-    std::format("Usage: xfr {} [options]\n", rstrip(command));
+    std::format("Usage: xfr {} [options]", rstrip(command));
   static const auto about_msg =
     std::format("xfr {}: {}", rstrip(command), rstrip(about));
   static const auto description_msg =
@@ -84,42 +82,41 @@ command_compress_main(int argc,
   transferase::log_level_t log_level{};
   bool uncompress{false};
 
-  namespace po = boost::program_options;
+  namespace xfr = transferase;
 
-  po::options_description desc("Options");
+  CLI::App app{about_msg};
+  argv = app.ensure_utf8(argv);
+  app.usage(usage);
+  if (argc >= 2)
+    app.footer(description_msg);
+  app.get_formatter()->column_width(40);
+  app.get_formatter()->label("REQUIRED", "REQD");
   // clang-format off
-  desc.add_options()
-    ("help,h", "print this message and exit")
-    ("methylome-dir,d", po::value(&methylome_dir)->required(), "input methylome directory")
-    ("methylome,m", po::value(&methylome_name)->required(), "methylome name/accession")
-    ("output-dir,o", po::value(&methylome_outdir)->required(),
-     "methylome output directory")
-    ("uncompress,u", po::bool_switch(&uncompress), "uncompress the file")
-    ("log-level,v", po::value(&log_level)->default_value(transferase::logger::default_level),
-     "{debug, info, warning, error, critical}")
-    ;
+  app.add_option("-d,--methylome-dir", methylome_dir, "input methylome directory")
+    ->required()
+    ->check(CLI::ExistingDirectory);
+  app.add_option("-m,--methylome", methylome_name, "methylome name/accession")
+    ->required();
+  app.add_option("-o,--output-dir", methylome_outdir, "methylome output directory")
+    ->required()
+    ->check(CLI::ExistingDirectory);
+  app.add_option("-u,--uncompress", uncompress, "uncompress the file");
+  app.add_option("-v,--log-level", log_level, "{debug, info, warning, error, critical}")
+    ->option_text("ENUM")
+    ->default_str("info")
+    ->description("{debug, info, warning, error, critical}")
+    ->transform(CLI::CheckedTransformer(xfr::log_level_cli11, CLI::ignore_case));
   // clang-format on
-  try {
-    po::variables_map vm;
-    po::store(po::parse_command_line(argc, argv, desc), vm);
-    if (vm.count("help") || argc == 1) {
-      std::println("{}\n{}", about_msg, usage);
-      desc.print(std::cout);
-      std::println("\n{}", description_msg);
-      return EXIT_SUCCESS;
-    }
-    po::notify(vm);
-  }
-  catch (po::error &e) {
-    std::println("{}", e.what());
-    std::println("{}\n{}", about_msg, usage);
-    desc.print(std::cout);
-    std::println("\n{}", description_msg);
-    return EXIT_FAILURE;
+
+  if (argc < 2) {
+    std::println("{}", app.help());
+    return EXIT_SUCCESS;
   }
 
-  auto &lgr = transferase::logger::instance(transferase::shared_from_cout(),
-                                            command, log_level);
+  CLI11_PARSE(app, argc, argv);
+
+  auto &lgr =
+    xfr::logger::instance(xfr::shared_from_cout(), command, log_level);
   if (!lgr) {
     std::println("Failure initializing logging: {}.", lgr.get_status());
     return EXIT_FAILURE;
@@ -133,11 +130,11 @@ command_compress_main(int argc,
     {"Uncompress", std::format("{}", uncompress)},
     // clang-format on
   };
-  transferase::log_args<transferase::log_level_t::info>(args_to_log);
+  xfr::log_args<xfr::log_level_t::info>(args_to_log);
 
   std::error_code ec;
   const auto read_start = std::chrono::high_resolution_clock::now();
-  auto meth = transferase::methylome::read(methylome_dir, methylome_name, ec);
+  auto meth = xfr::methylome::read(methylome_dir, methylome_name, ec);
   const auto read_stop = std::chrono::high_resolution_clock::now();
   if (ec) {
     lgr.error("Error reading methylome {} {}: {}", methylome_dir,

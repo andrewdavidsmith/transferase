@@ -56,7 +56,7 @@ xfr server -s localhost -d methylomes -x indexes
 #include "server_config.hpp"
 #include "utilities.hpp"
 
-#include <boost/program_options.hpp>
+#include "CLI11/CLI11.hpp"
 
 #include <cstdlib>  // for EXIT_FAILURE, EXIT_SUCCESS
 #include <filesystem>
@@ -95,12 +95,10 @@ check_directory(const auto &dirname, std::error_code &ec) -> std::string {
 }
 
 auto
-command_server_main(int argc,
-                    char *argv[])  // NOLINT(cppcoreguidelines-avoid-c-arrays)
-  -> int {
+command_server_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
   static constexpr auto command = "server";
   static const auto usage =
-    std::format("Usage: xfr {} [options]\n", rstrip(command));
+    std::format("Usage: xfr {} [options]", rstrip(command));
   static const auto about_msg =
     std::format("xfr {}: {}", rstrip(command), rstrip(about));
   static const auto description_msg =
@@ -110,7 +108,7 @@ command_server_main(int argc,
 
   xfr::server_config cfg;
   std::string config_file;
-  bool daemonize{};
+  bool daemonize{false};
 
   // get the default config directory to use as a fallback
   std::error_code default_config_dir_error;
@@ -122,53 +120,56 @@ command_server_main(int argc,
     return EXIT_FAILURE;
   }
 
-  namespace po = boost::program_options;
+  CLI::App app{about_msg};
+  argv = app.ensure_utf8(argv);
+  app.usage(usage);
+  if (argc >= 2)
+    app.footer(description_msg);
+  app.get_formatter()->column_width(40);
+  app.get_formatter()->label("REQUIRED", "REQD");
+  // clang-format off
+  app.add_option("-c,--config-file", config_file,
+                 "read configuration from this file")
+    ->check(CLI::ExistingFile);
+  app.add_option("-s,--hostname", cfg.hostname, "server hostname");
+  app.add_option("-p,--port", cfg.port, "server port");
+  app.add_option("-d,--methylome-dir", cfg.methylome_dir, "methylome directory")
+    ->check(CLI::ExistingDirectory);
+  app.add_option("-x,--index-dir", cfg.index_dir, "genome index directory")
+    ->check(CLI::ExistingDirectory);
+  app.add_option("-r,--max-resident", cfg.max_resident, "max resident methylomes");
+  app.add_option("-t,--n-threads", cfg.n_threads, "number of threads");
+  app.add_option("--min-bin-size", xfr::request::min_bin_size,
+                 "minimum size of bins for queries");
+  app.add_option("--max-intervals", xfr::request::max_intervals,
+                 "maximum number of intervals in a query");
+  app.add_option("-v,--log-level", cfg.log_level,
+                 "{debug, info, warning, error, critical}")
+    ->option_text("ENUM [info]")
+    ->default_str("info")
+    ->transform(CLI::CheckedTransformer(xfr::log_level_cli11, CLI::ignore_case));
+  app.add_option("-l,--log-file", cfg.log_file,
+                 "log file name");
+  app.add_option("--pid-file", cfg.pid_file,
+                 "Filename to use for the PID  when daemonizing");
+  app.add_flag("--daemonize", daemonize, "daemonize the server");
+  // clang-format on
 
-  po::options_description opts("Options");
-  opts.add_options()
-    // clang-format off
-    ("help,h", "print this message and exit")
-    ("config-file,c", po::value(&config_file),
-     "read configuration from this file")
-    ("hostname,s", po::value(&cfg.hostname), "server hostname")
-    ("port,p", po::value(&cfg.port), "server port")
-    ("methylome-dir,d", po::value(&cfg.methylome_dir), "methylome directory")
-    ("index-dir,x", po::value(&cfg.index_dir), "genome index directory")
-    ("max-resident,r", po::value(&cfg.max_resident), "max resident methylomes")
-    ("n-threads,t", po::value(&cfg.n_threads), "number of threads")
-    ("min-bin-size", po::value(&xfr::request::min_bin_size),
-     "minimum size of bins for queries")
-    ("max-intervals", po::value(&xfr::request::max_intervals),
-     "maximum number of intervals in a query")
-    ("log-level,v", po::value(&cfg.log_level),
-     "{debug, info, warning, error, critical}")
-    ("log-file,l", po::value(&cfg.log_file), "log file name")
-    ("daemonize", po::bool_switch(&daemonize), "daemonize the server")
-    ("pid-file", po::value(&cfg.pid_file)->default_value("", "none"),
-     "Filename to use for the PID  when daemonizing")
-    // clang-format on
-    ;
-  po::variables_map vm;
-  try {
-    po::store(po::parse_command_line(argc, argv, opts), vm);
-    if (vm.count("help") || argc == 1) {
-      std::println("{}\n{}", about_msg, usage);
-      opts.print(std::cout);
-      std::println("\n{}", description_msg);
-      return EXIT_SUCCESS;
-    }
-    po::notify(vm);
+  if (argc < 2) {
+    std::println("{}", app.help());
+    return EXIT_SUCCESS;
   }
-  catch (po::error &e) {
-    std::println("{}", e.what());
-    return EXIT_FAILURE;
-  }
+  CLI11_PARSE(app, argc, argv);
 
   // Attempting to load values from config file in cfg.config_file but
   // deferring error reporting as all values might have been specified
   // on the command line.
   std::error_code error;
   if (!config_file.empty()) {
+    // make any assigned paths absolute so that subsequent composition
+    // with any config_dir will not overwrite any relative path
+    // specified on the command line.
+    cfg.make_paths_absolute();
     cfg.read_config_file_no_overwrite(config_file, error);
     if (error) {
       std::println("Failed to read config file {}: {}", config_file, error);

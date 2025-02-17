@@ -54,7 +54,7 @@ xfr check -x index_dir -d methylome_dir
 #include "methylome_set.hpp"
 #include "utilities.hpp"
 
-#include <boost/program_options.hpp>
+#include "CLI11/CLI11.hpp"
 
 #include <cstdlib>  // for EXIT_FAILURE, EXIT_SUCCESS
 #include <format>
@@ -71,59 +71,58 @@ xfr check -x index_dir -d methylome_dir
 #include <vector>
 
 auto
-command_check_main(int argc,
-                   char *argv[])  // NOLINT(cppcoreguidelines-avoid-c-arrays)
-  -> int {
+command_check_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
   static constexpr auto command = "check";
   static const auto usage =
-    std::format("Usage: xfr {} [options]\n", rstrip(command));
+    std::format("Usage: xfr {} [options]", rstrip(command));
   static const auto about_msg =
     std::format("xfr {}: {}", rstrip(command), rstrip(about));
   static const auto description_msg =
     std::format("{}\n{}", rstrip(description), rstrip(examples));
 
+  namespace xfr = transferase;
+
   std::string index_dir{};
   std::string genome_name{};
-  std::string methylome_name{};
+  std::vector<std::string> methylome_names;
   std::string methylome_dir{};
-  transferase::log_level_t log_level{};
+  xfr::log_level_t log_level{};
 
-  namespace po = boost::program_options;
+  CLI::App app{about_msg};
+  argv = app.ensure_utf8(argv);
+  app.usage(usage);
+  if (argc >= 2)
+    app.footer(description_msg);
+  app.get_formatter()->column_width(40);
+  app.get_formatter()->label("REQUIRED", "REQD");
+  // clang-format off
+  app.add_option("-x,--index-dir", index_dir,
+                 "genome index directory")
+    ->required()
+    ->check(CLI::ExistingDirectory);
+  app.add_option("-g,--genome", genome_name,
+                 "genome name (default: all in directory)")
+    ->required();
+  app.add_option("-d,--methylome-dir", methylome_dir,
+                 "directory containing methylomes")
+    ->required()
+    ->check(CLI::ExistingDirectory);
+  app.add_option("-m,--methylomes", methylome_names,
+                 "names of methylome (default: all in directory)");
+  app.add_option("-v,--log-level", log_level,
+                 "{debug, info, warning, error, critical}")
+    ->option_text("ENUM")
+    ->default_str("info")
+    ->description("{debug, info, warning, error, critical}")
+    ->transform(CLI::CheckedTransformer(xfr::log_level_cli11, CLI::ignore_case));
+  // clang-format on
 
-  po::options_description desc("Options");
-  desc.add_options()
-    // clang-format off
-    ("help,h", "print this message and exit")
-    ("index-dir,x", po::value(&index_dir)->required(), "genome index directory")
-    ("genome,g", po::value(&genome_name), "genome name (default: all in directory)")
-    ("methylome-dir,d", po::value(&methylome_dir)->required(),
-     "directory containing methylomes")
-    ("methylome,m", po::value(&methylome_name),
-     "name of a methylome (default: all in directory)")
-    ("log-level,v", po::value(&log_level)->default_value(transferase::logger::default_level),
-     "{debug, info, warning, error, critical}")
-    // clang-format on
-    ;
-  po::variables_map vm;
-  try {
-    po::store(po::parse_command_line(argc, argv, desc), vm);
-    if (vm.count("help") || argc == 1) {
-      std::println("{}\n{}", about_msg, usage);
-      desc.print(std::cout);
-      std::println("\n{}", description_msg);
-      return EXIT_SUCCESS;
-    }
-    po::notify(vm);
+  if (argc < 2) {
+    std::println("{}", app.help());
+    return EXIT_SUCCESS;
   }
-  catch (po::error &e) {
-    std::println("{}", e.what());
-    std::println("{}\n{}", about_msg, usage);
-    desc.print(std::cout);
-    std::println("\n{}", description_msg);
-    return EXIT_FAILURE;
-  }
 
-  namespace xfr = transferase;
+  CLI11_PARSE(app, argc, argv);
 
   auto &lgr =
     xfr::logger::instance(xfr::shared_from_cout(), command, log_level);
@@ -135,8 +134,7 @@ command_check_main(int argc,
 
   std::error_code error;
 
-  std::vector<std::string> methylome_names;
-  if (methylome_name.empty()) {
+  if (methylome_names.empty()) {
     methylome_names = xfr::methylome::list(methylome_dir, error);
     if (error) {
       lgr.error("Error reading methylome directory {}: {}", methylome_dir,
@@ -144,8 +142,6 @@ command_check_main(int argc,
       return EXIT_FAILURE;
     }
   }
-  else
-    methylome_names = {methylome_name};
 
   std::vector<std::string> genome_names;
   if (genome_name.empty()) {

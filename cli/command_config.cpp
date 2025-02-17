@@ -53,7 +53,7 @@ xfr config -s example.com -p 5009 --genomes hg38,mm39
 #include "logger.hpp"
 #include "utilities.hpp"
 
-#include <boost/program_options.hpp>
+#include "CLI11/CLI11.hpp"
 
 #include <cstdlib>
 #include <format>
@@ -68,13 +68,12 @@ xfr config -s example.com -p 5009 --genomes hg38,mm39
 
 auto
 command_config_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
-  static constexpr auto log_level_default{transferase::log_level_t::info};
-  static constexpr auto download_policy_default{
-    transferase::download_policy_t::missing};
+  static constexpr auto log_level_default = "info";
+  static constexpr auto download_policy_default = "missing";
 
   static constexpr auto command = "config";
   static const auto usage =
-    std::format("Usage: xfr {} [options]\n", rstrip(command));
+    std::format("Usage: xfr {} [options]", rstrip(command));
   static const auto about_msg =
     std::format("xfr {}: {}", rstrip(command), rstrip(about));
   static const auto description_msg =
@@ -82,6 +81,9 @@ command_config_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
 
   namespace xfr = transferase;
 
+  // ADS: paths should not be made absolute here since these paths
+  // will not be used in this app but instead be written as specified
+  // into the config file.
   xfr::client_config cfg;
   std::string genomes_arg{};
   bool quiet{false};
@@ -89,51 +91,53 @@ command_config_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
   bool do_defaults{false};
   xfr::download_policy_t download_policy{};
 
-  namespace po = boost::program_options;
-  po::options_description opts("Options");
-  opts.add_options()
-    // clang-format off
-    ("help,h", "print this message and exit")
-    ("config-dir,c", po::value(&cfg.config_dir),
-     "name of config directory; see help for default")
-    ("hostname,s", po::value(&cfg.hostname), "transferase server hostname")
-    ("port,p", po::value(&cfg.port), "transferase server port")
-    ("genomes,g", po::value(&genomes_arg),
-     "download index files for these genomes "
-     "(comma separated list, e.g. hg38,mm39)")
-    ("index-dir,x", po::value(&cfg.index_dir),
-     "name of a directory to store genome index files")
-    ("methylome-dir,d", po::value(&cfg.methylome_dir),
-     "name of a local directory to search for methylomes")
-    ("metadata-file,L", po::value(&cfg.metadata_file),
-     "name of the MethBase2 metadata file")
-    ("log-level,v", po::value(&cfg.log_level)->default_value(log_level_default, ""),
-     "{debug, info, warning, error, critical}")
-    ("log-file,l", po::value(&cfg.log_file),
-     "log file name (default: console)")
-    ("download,M", po::value(&download_policy)
-     ->default_value(download_policy_default, ""),
-     "download policy (none,missing,update,all)")
-    ("default", po::bool_switch(&do_defaults), "only do the default configuration")
-    ("quiet", po::bool_switch(&quiet), "only report errors")
-    ("debug", po::bool_switch(&debug), "report debug information")
-    // clang-format on
-    ;
-  po::variables_map vm;
-  try {
-    po::store(po::parse_command_line(argc, argv, opts), vm);
-    if (vm.count("help") || argc == 1) {
-      std::println("{}\n{}", about_msg, usage);
-      opts.print(std::cout);
-      std::println("\n{}", description_msg);
-      return EXIT_SUCCESS;
-    }
-    po::notify(vm);
+  CLI::App app{about_msg};
+  argv = app.ensure_utf8(argv);
+  app.usage(usage);
+  if (argc >= 2)
+    app.footer(description_msg);
+  app.get_formatter()->column_width(40);
+  app.get_formatter()->label("REQUIRED", "REQD");
+  // clang-format off
+  app.add_option("-c,--config-dir", cfg.config_dir,
+                 "name of config directory; see help for default");
+  app.add_option("-s,--hostname", cfg.hostname, "transferase server hostname");
+  app.add_option("-p,--port", cfg.port, "transferase server port");
+  app.add_option("-g,--genomes", genomes_arg,
+                 "download index files for these genomes "
+                 "(comma separated list, e.g. hg38,mm39)");
+  app.add_option("-x,--index-dir", cfg.index_dir,
+                 "name of a directory to store genome index files");
+  app.add_option("-d,--methylome-dir", cfg.methylome_dir,
+                 "name of a local directory to search for methylomes");
+  app.add_option("-L,--metadata-file", cfg.metadata_file,
+                 "name of the MethBase2 metadata file");
+  app.add_option("-v,--log-level", cfg.log_level,
+                 "{debug, info, warning, error, critical}")
+    ->option_text("ENUM [info]")
+    ->default_str(log_level_default)
+    ->transform(CLI::CheckedTransformer(xfr::log_level_cli11, CLI::ignore_case));
+  app.add_option("-l,--log-file", cfg.log_file,
+                 "log file name (defaults: print to screen)");
+  app.add_option("-M,--download", download_policy,
+                 "download policy (none, missing, update, all)")
+    ->option_text("ENUM [info]")
+    ->default_str(download_policy_default)
+    ->transform(CLI::CheckedTransformer(xfr::download_policy_cli11, CLI::ignore_case));
+  app.add_flag("--default", do_defaults, "only do the default configuration");
+  const auto quiet_opt =
+    app.add_flag("--quiet", quiet, "only report errors")
+    ->option_text(" ");
+  app.add_flag("--debug", debug, "report debug information")
+    ->option_text(" ")
+    ->excludes(quiet_opt);
+  // clang-format on
+
+  if (argc < 2) {
+    std::println("{}", app.help());
+    return EXIT_SUCCESS;
   }
-  catch (po::error &e) {
-    std::println("{}", e.what());
-    return EXIT_FAILURE;
-  }
+  CLI11_PARSE(app, argc, argv);
 
   auto &lgr = xfr::logger::instance(xfr::shared_from_cout(), command,
                                     debug   ? xfr::log_level_t::debug

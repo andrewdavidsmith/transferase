@@ -43,7 +43,7 @@ xfr list /path/to/some_directory ../relative/path
 #include "methylome.hpp"
 #include "utilities.hpp"
 
-#include <boost/program_options.hpp>
+#include "CLI11/CLI11.hpp"
 
 #include <algorithm>
 #include <cstdlib>  // for EXIT_FAILURE, EXIT_SUCCESS
@@ -62,54 +62,45 @@ command_list_main(int argc, char *argv[])  // NOLINT(*-c-arrays)
   -> int {
   static constexpr auto command = "list";
   static const auto usage =
-    std::format("Usage: xfr {} [options]\n", rstrip(command));
+    std::format("Usage: xfr {} [options]", rstrip(command));
   static const auto about_msg =
     std::format("xfr {}: {}", rstrip(command), rstrip(about));
   static const auto description_msg =
     std::format("{}\n{}", rstrip(description), rstrip(examples));
 
   bool verbose{false};
-
-  namespace po = boost::program_options;
   bool show_only_indexes{true};
   bool show_only_methylomes{true};
   std::vector<std::string> directories;
 
-  po::options_description desc("Options");
-  desc.add_options()
-    // clang-format off
-    ("help,h", "print this message and exit")
-    ("indexes-only,x", po::bool_switch(&show_only_indexes), "show only cpg indexes")
-    ("methylomes-only,m", po::bool_switch(&show_only_methylomes), "show only methylomes")
-    ("directories,d", po::value<std::vector<std::string>>()->required(),
-     "search these directories "
-     "(this optional flag helps with directory name completion)")
-    ("verbose,v", po::bool_switch(&verbose), "print more info")
-    // clang-format on
-    ;
-  po::positional_options_description p;
-  p.add("directories", -1);
-  po::variables_map vm;
-  try {
-    po::store(
-      po::command_line_parser(argc, argv).options(desc).positional(p).run(),
-      vm);
-    if (vm.count("help") || argc == 1) {
-      std::println("{}\n{}", about_msg, usage);
-      desc.print(std::cout);
-      std::println("\n{}", description_msg);
-      return EXIT_SUCCESS;
-    }
-    po::notify(vm);
-    directories = vm["directories"].as<std::vector<std::string>>();
+  CLI::App app{about_msg};
+  argv = app.ensure_utf8(argv);
+  app.usage(usage);
+  if (argc >= 2)
+    app.footer(description_msg);
+  app.get_formatter()->column_width(40);
+  app.get_formatter()->label("REQUIRED", "REQD");
+  // clang-format off
+  const auto indexes_only_opt =
+    app.add_flag("-x,--indexes-only", show_only_indexes,
+                 "show only cpg indexes")
+    ->option_text(" ");
+  app.add_flag("-m,--methylomes-only", show_only_methylomes,
+               "show only methylomes")
+    ->option_text(" ")
+    ->excludes(indexes_only_opt);
+  app.add_option("-d,--directories", directories,
+                 "search these directories")
+    ->required();
+  app.add_flag("-v,--verbose", verbose, "print more info");
+  // clang-format on
+
+  if (argc < 2) {
+    std::println("{}", app.help());
+    return EXIT_SUCCESS;
   }
-  catch (po::error &e) {
-    std::println("{}", e.what());
-    std::println("{}\n{}", about_msg, usage);
-    desc.print(std::cout);
-    std::println("\n{}", description_msg);
-    return EXIT_FAILURE;
-  }
+
+  CLI11_PARSE(app, argc, argv);
 
   std::error_code ec;
   std::vector<std::string> canonical_directories;
