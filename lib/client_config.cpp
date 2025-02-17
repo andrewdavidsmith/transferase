@@ -22,7 +22,6 @@
  */
 
 #include "client_config.hpp"
-#include "config_file_utils.hpp"
 #include "download.hpp"
 #include "find_path_to_binary.hpp"
 #include "genome_index_data.hpp"
@@ -38,6 +37,7 @@
 #include <cstdlib>
 #include <filesystem>
 #include <format>
+#include <fstream>
 #include <iterator>  // for std::size
 #include <ranges>    // IWYU pragma: keep
 #include <sstream>
@@ -69,6 +69,22 @@ get_file_if_not_already_dir(const std::string &filename,
 }
 
 namespace transferase {
+
+auto
+client_config::make_paths_absolute() noexcept -> void {
+  namespace fs = std::filesystem;
+  // errors in absolute are for std::bad_alloc
+  std::error_code ignored_error;
+  if (!index_dir.empty())
+    index_dir = fs::absolute(index_dir, ignored_error).string();
+  if (!metadata_file.empty())
+    metadata_file = fs::absolute(metadata_file, ignored_error).string();
+  if (!methylome_dir.empty())
+    methylome_dir = fs::absolute(methylome_dir, ignored_error).string();
+  if (!log_file.empty())
+    log_file = fs::absolute(log_file, ignored_error).string();
+  assert(!ignored_error);
+}
 
 /// Get the path to the config file (base on dir)
 [[nodiscard]] auto
@@ -265,6 +281,36 @@ client_config::make_directories(std::error_code &error) const noexcept -> void {
 }
 
 [[nodiscard]] auto
+client_config::read_config_file(const std::string &config_file,
+                                std::error_code &error) noexcept
+  -> client_config {
+  std::ifstream in(config_file);
+  if (!in) {
+    error = client_config_error_code::failed_to_read_client_config_file;
+    return {};
+  }
+  const nlohmann::json data = nlohmann::json::parse(in, nullptr, false);
+  if (data.is_discarded()) {
+    error = client_config_error_code::failed_to_parse_client_config_file;
+    return {};
+  }
+  client_config config;
+  try {
+    config = data;
+  }
+  catch (const std::exception &e) {
+    error = client_config_error_code::invalid_client_config_file;
+    return {};
+  }
+  if (!config.metadata_file.empty()) {
+    config.meta = transferase_metadata::read(config.get_metadata_file(), error);
+    if (error)
+      return {};
+  }
+  return config;
+}
+
+[[nodiscard]] auto
 client_config::read(std::string config_dir,
                     std::error_code &error) noexcept -> client_config {
   namespace fs = std::filesystem;
@@ -278,55 +324,30 @@ client_config::read(std::string config_dir,
   const auto config_file = get_config_file(config_dir, error);
   if (error)
     return {};
-  client_config config;
-  parse_config_file(config, config_file, error);
-  if (error)
-    return {};
-  config.config_dir = config_dir;
 
-  if (!config.metadata_file.empty()) {
-    config.meta = transferase_metadata::read(config.get_metadata_file(), error);
-    if (error)
-      return {};
-  }
-  return config;
+  return read_config_file(config_file, error);
 }
 
 auto
 client_config::read_config_file_no_overwrite(std::error_code &error) noexcept
   -> void {
-  namespace fs = std::filesystem;
-  // If config dir is empty, get the default
-  if (config_dir.empty()) {
-    config_dir = get_default_config_dir(error);
-    if (error)
-      return;
-  }
-  // Get the config filename
-  const auto config_file = get_config_file(config_dir, error);
+  const auto tmp = client_config::read(config_dir, error);
   if (error)
     return;
-  // Parse as vector of pairs of strings
-  const auto key_vals = parse_config_file_as_key_val(config_file, error);
-  if (error)
-    return;
-
-  // Convert to unordered map
-  std::unordered_map<std::string, std::string> key_val_map;
-  std::ranges::for_each(
-    key_vals, [&key_val_map](const auto &kv) { key_val_map.insert(kv); });
-
-  const auto do_assign = [&](auto &var, std::string name) {
-    std::ranges::replace(name, '_', '-');
-    if (key_val_map.contains(name) && var.empty())
-      var = key_val_map[name];
-  };
-  do_assign(hostname, "hostname");
-  do_assign(port, "port");
-  do_assign(index_dir, "index_dir");
-  do_assign(metadata_file, "metadata_file");
-  do_assign(methylome_dir, "methylome_dir");
-  do_assign(log_file, "log_file");
+  if (config_dir.empty())
+    config_dir = tmp.config_dir;
+  if (hostname.empty())
+    hostname = tmp.hostname;
+  if (port.empty())
+    port = tmp.port;
+  if (index_dir.empty())
+    index_dir = tmp.index_dir;
+  if (metadata_file.empty())
+    metadata_file = tmp.metadata_file;
+  if (methylome_dir.empty())
+    methylome_dir = tmp.methylome_dir;
+  if (log_file.empty())
+    log_file = tmp.log_file;
 }
 
 auto
@@ -348,8 +369,9 @@ client_config::save(std::error_code &error) const noexcept -> void {
   // ADS: need to extract this pattern of updates intead of writes.
   client_config tmp = *this;
   if (file_exists) {
-    // load current config values into a separate object
-    parse_config_file(tmp, config_file, error);
+    tmp = client_config::read_config_file(config_file, error);
+    if (error)
+      return;
     // assign variables to tmp if they are not empty
     if (!config_dir.empty())
       tmp.config_dir = config_dir;
@@ -368,15 +390,23 @@ client_config::save(std::error_code &error) const noexcept -> void {
     // always overwrite log level -- no way to know not to
     tmp.log_level = log_level;
   }
-  error = write_config_file(tmp, config_file);
-  if (error)
+
+  std::ofstream out(config_file);
+  if (!out) {
+    error = client_config_error_code::error_writing_config_file;
+    return;
+  }
+  const std::string payload = tmp.tostring();
+  out.write(payload.data(), std::size(payload));
+  if (!out)
     error = client_config_error_code::error_writing_config_file;
 }
 
 [[nodiscard]] auto
 client_config::tostring() const -> std::string {
+  static constexpr auto n_indent = 4;
   nlohmann::json data = *this;
-  return data.dump();
+  return std::format("{}\n", data.dump(n_indent));
 }
 
 [[nodiscard]] static auto
@@ -620,6 +650,11 @@ client_config::validate(std::error_code &error) const noexcept -> bool {
     return false;
   }
   return true;
+}
+
+auto
+client_config::load_transferase_metadata(std::error_code &error) -> void {
+  meta = transferase_metadata::read(get_metadata_file(), error);
 }
 
 }  // namespace transferase
