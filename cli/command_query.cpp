@@ -270,6 +270,8 @@ do_bins_query(const std::uint32_t bin_size, const bool count_covered,
 
 auto
 command_query_main(int argc, char *argv[]) -> int {  // NOLINT
+  static constexpr auto log_level_default = transferase::log_level_t::info;
+  static constexpr auto out_fmt_default = transferase::output_format_t::counts;
   static constexpr auto command = "query";
   static const auto usage = std::format("Usage: xfr {} [options]", command);
   static const auto about_msg =
@@ -281,6 +283,7 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
 
   // arguments that can be set in the client_config are held there
   xfr::client_config cfg;
+  cfg.log_level = log_level_default;
 
   // arguments that determine the type of computation done on the
   // server and the type of data communicated
@@ -298,7 +301,7 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
 
   // where to put the output and in what format
   std::string output_file;
-  xfr::output_format_t out_fmt{};
+  xfr::output_format_t out_fmt{out_fmt_default};
   std::uint32_t min_reads{1};  // relevant for dfscores
 
   // run in local mode
@@ -338,8 +341,7 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
                "count covered sites for each interval");
   app.add_option("-f,--out-fmt", out_fmt,
                  "output format {counts=1, bedgraph=2, dataframe=3, dfscores=4}")
-    ->option_text("ENUM")
-    ->default_str("counts")
+    ->option_text(std::format("ENUM [{}]", out_fmt_default))
     ->transform(CLI::CheckedTransformer(xfr::output_format_cli11, CLI::ignore_case));
   app.add_option("-r,--min-reads", min_reads,
                  "for fractional output, require this many reads");
@@ -354,8 +356,7 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
                  "log file name (defaults: print to screen)");
   app.add_option("-v,--log-level", cfg.log_level,
                  "{debug, info, warning, error, critical}")
-    ->option_text("ENUM [info]")
-    ->default_str("info")
+    ->option_text(std::format("ENUM [{}]", log_level_default))
     ->transform(CLI::CheckedTransformer(xfr::log_level_cli11, CLI::ignore_case));
   // clang-format on
 

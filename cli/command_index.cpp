@@ -65,8 +65,8 @@ xfr index -v debug -x /path/to/index_directory -g hg38.fa
 #include <vector>
 
 auto
-command_index_main(int argc, char *argv[])  // NOLINT(*-c-arrays)
-  -> int {
+command_index_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
+  static constexpr auto log_level_default = transferase::log_level_t::info;
   static constexpr auto command = "index";
   static const auto usage =
     std::format("Usage: xfr {} [options]", rstrip(command));
@@ -80,7 +80,7 @@ command_index_main(int argc, char *argv[])  // NOLINT(*-c-arrays)
   std::string genome_filename{};
   std::string index_file{};
   std::string index_directory{};
-  xfr::log_level_t log_level{};
+  xfr::log_level_t log_level{log_level_default};
 
   CLI::App app{about_msg};
   argv = app.ensure_utf8(argv);
@@ -96,8 +96,7 @@ command_index_main(int argc, char *argv[])  // NOLINT(*-c-arrays)
                  "index output directory")->required();
   app.add_option("-v,--log-level", log_level,
                  "{debug, info, warning, error, critical}")
-    ->option_text("ENUM [info]")
-    ->default_str("info")
+    ->option_text(std::format("ENUM [{}]", log_level_default))
     ->transform(CLI::CheckedTransformer(xfr::log_level_cli11, CLI::ignore_case));
   // clang-format on
 

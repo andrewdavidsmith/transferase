@@ -75,6 +75,7 @@ xfr server-config -c /path/to/server_config_file.json \
 auto
 command_server_config_main(int argc, char *argv[])  // NOLINT(*-c-arrays)
   -> int {
+  static constexpr auto log_level_default = transferase::log_level_t::info;
   static constexpr auto command = "server-config";
   static const auto usage =
     std::format("Usage: xfr {} [options]", rstrip(command));
@@ -89,6 +90,9 @@ command_server_config_main(int argc, char *argv[])  // NOLINT(*-c-arrays)
   // will not be used in this app but instead be written as specified
   // into the config file.
   xfr::server_config cfg;
+  cfg.min_bin_size = xfr::request::min_bin_size_default;
+  cfg.max_intervals = xfr::request::max_intervals_default;
+  cfg.log_level = log_level_default;
 
   CLI::App app{about_msg};
   argv = app.ensure_utf8(argv);
@@ -112,8 +116,7 @@ command_server_config_main(int argc, char *argv[])  // NOLINT(*-c-arrays)
     ->required();
   app.add_option("-v,--log-level", cfg.log_level,
                  "{debug, info, warning, error, critical}")
-    ->option_text("ENUM [debug]")
-    ->default_str("debug")
+    ->option_text(std::format("ENUM [{}]", log_level_default))
     ->transform(CLI::CheckedTransformer(xfr::log_level_cli11, CLI::ignore_case));
   app.add_option("-l,--log-file", cfg.log_file,
                  "log file name");

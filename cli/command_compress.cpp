@@ -68,6 +68,7 @@ xfr compress -u -d methylome_dir -m methylome_name -o output_dir
 
 auto
 command_compress_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
+  static constexpr auto log_level_default = transferase::log_level_t::info;
   static constexpr auto command = "compress";
   static const auto usage =
     std::format("Usage: xfr {} [options]", rstrip(command));
@@ -79,7 +80,7 @@ command_compress_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
   std::string methylome_dir{};
   std::string methylome_name{};
   std::string methylome_outdir{};
-  transferase::log_level_t log_level{};
+  transferase::log_level_t log_level{log_level_default};
   bool uncompress{false};
 
   namespace xfr = transferase;
@@ -102,9 +103,7 @@ command_compress_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
     ->check(CLI::ExistingDirectory);
   app.add_option("-u,--uncompress", uncompress, "uncompress the file");
   app.add_option("-v,--log-level", log_level, "{debug, info, warning, error, critical}")
-    ->option_text("ENUM")
-    ->default_str("info")
-    ->description("{debug, info, warning, error, critical}")
+    ->option_text(std::format("ENUM [{}]", log_level_default))
     ->transform(CLI::CheckedTransformer(xfr::log_level_cli11, CLI::ignore_case));
   // clang-format on
 
