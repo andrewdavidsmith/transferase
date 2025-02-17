@@ -26,8 +26,6 @@
 
 #include "nlohmann/json.hpp"
 
-#include <boost/describe.hpp>
-
 #include <filesystem>
 #include <format>
 #include <string>
@@ -65,7 +63,6 @@ struct remote_data_resources {
 
   NLOHMANN_DEFINE_TYPE_INTRUSIVE(remote_data_resources, host, port, path)
 };
-BOOST_DESCRIBE_STRUCT(remote_data_resources, (), (host, port, path))
 
 struct system_config {
   std::string hostname;
@@ -73,8 +70,6 @@ struct system_config {
   std::vector<remote_data_resources> resources;
   NLOHMANN_DEFINE_TYPE_INTRUSIVE(system_config, hostname, port, resources)
 };
-
-BOOST_DESCRIBE_STRUCT(system_config, (), (hostname, port, resources))
 
 [[nodiscard]] auto
 get_system_config_filename() -> std::string;
