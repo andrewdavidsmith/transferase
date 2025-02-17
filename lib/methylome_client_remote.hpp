@@ -32,8 +32,6 @@
 #include "request.hpp"
 #include "request_type_code.hpp"
 
-#include <boost/describe.hpp>
-
 #include <cstdint>
 #include <format>
 #include <string>
@@ -131,8 +129,6 @@ private:
 
 public:
   NLOHMANN_DEFINE_TYPE_INTRUSIVE(methylome_client_remote, config)
-  BOOST_DESCRIBE_CLASS(methylome_client_remote,
-                       (methylome_client_remote_parent), (), (), ())
 };
 
 }  // namespace transferase

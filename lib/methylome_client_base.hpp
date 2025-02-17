@@ -33,9 +33,6 @@
 #include "request_type_code.hpp"  // for transferase::request_type_code
 #include "transferase_metadata.hpp"
 
-#include <boost/describe.hpp>
-#include <boost/mp11.hpp>
-
 #include <cstdint>
 #include <format>
 #include <memory>  // for std::shared_ptr
@@ -235,8 +232,6 @@ protected:
   }
 
   NLOHMANN_DEFINE_TYPE_INTRUSIVE(methylome_client_base, config)
-
-  BOOST_DESCRIBE_CLASS(methylome_client_base, (), (config), (), ())
 };
 
 }  // namespace transferase
