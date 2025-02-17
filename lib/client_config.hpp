@@ -69,8 +69,6 @@
 #include "nlohmann/json.hpp"    // IWYU pragma: keep
 #include "transferase_metadata.hpp"
 
-#include <boost/describe.hpp>
-
 #include <cstdint>
 #include <format>
 #include <string>
@@ -86,7 +84,8 @@ struct client_config {
     ".config/transferase";
   static constexpr auto metadata_filename_default = "metadata.json";
   static constexpr auto index_dirname_default = "indexes";
-  static constexpr auto client_config_filename_default = "transferase.conf";
+  static constexpr auto client_config_filename_default =
+    "transferase_client.json";
   static constexpr auto client_log_filename_default = "transferase.log";
 
   transferase_metadata meta;
@@ -131,6 +130,10 @@ struct client_config {
   [[nodiscard]] auto
   get_log_file() const noexcept -> std::string;
 
+  /// Read the transferase metadata file
+  auto
+  load_transferase_metadata(std::error_code &error) -> void;
+
   [[nodiscard]] auto
   available_genomes() const noexcept -> std::vector<std::string> {
     return meta.available_genomes();
@@ -144,6 +147,11 @@ struct client_config {
   /// Initialize any empty values by reading the config file
   auto
   read_config_file_no_overwrite(std::error_code &error) noexcept -> void;
+
+  /// Initialize all values from a given config file
+  [[nodiscard]] static auto
+  read_config_file(const std::string &config_file,
+                   std::error_code &error) noexcept -> client_config;
 
 #ifndef TRANSFERASE_NOEXCEPT
   /// Overload of the read function that throws system_error exceptions to
@@ -206,17 +214,7 @@ struct client_config {
 #endif
 
   auto
-  make_paths_absolute(std::error_code &error) noexcept -> void;
-
-#ifndef TRANSFERASE_NOEXCEPT
-  auto
-  make_paths_absolute() -> void {
-    std::error_code error;
-    make_paths_absolute(error);
-    if (error)
-      throw std::system_error(error);
-  }
-#endif
+  make_paths_absolute() noexcept -> void;
 
   auto
   make_directories(std::error_code &error) const noexcept -> void;
@@ -239,20 +237,6 @@ struct client_config {
                                  log_file, log_level)
 };
 
-// clang-format off
-BOOST_DESCRIBE_STRUCT(client_config, (), (
-  config_dir,
-  hostname,
-  port,
-  index_dir,
-  metadata_file,
-  methylome_dir,
-  log_file,
-  log_level
-)
-)
-// clang-format on
-
 [[nodiscard]] auto
 get_default_sys_config_dir(std::error_code &error) noexcept -> std::string;
 
@@ -270,6 +254,9 @@ enum class client_config_error_code : std::uint8_t {
   invalid_client_config_information = 7,
   error_obtaining_sytem_config_dir = 8,
   failed_to_read_transferase_metadata_file = 9,
+  failed_to_read_client_config_file = 10,
+  failed_to_parse_client_config_file = 11,
+  invalid_client_config_file = 12,
 };
 
 template <>
@@ -292,6 +279,9 @@ struct client_config_error_category : std::error_category {
     case 7: return "invalid client config information"s;
     case 8: return "error obtaining system config dir"s;
     case 9: return "failed to read transferase metadata file"s;
+    case 10: return "failed to read client config file"s;
+    case 11: return "failed to parse client config file"s;
+    case 12: return "invalid client config file"s;
     }
     std::unreachable();
   }
