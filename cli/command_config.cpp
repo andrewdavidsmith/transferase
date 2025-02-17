@@ -114,14 +114,14 @@ command_config_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
                  "name of the MethBase2 metadata file");
   app.add_option("-v,--log-level", cfg.log_level,
                  "{debug, info, warning, error, critical}")
-    ->option_text("ENUM [info]")
+    ->option_text(std::format("ENUM [{}]", log_level_default))
     ->default_str(log_level_default)
     ->transform(CLI::CheckedTransformer(xfr::log_level_cli11, CLI::ignore_case));
   app.add_option("-l,--log-file", cfg.log_file,
                  "log file name (defaults: print to screen)");
   app.add_option("-M,--download", download_policy,
                  "download policy (none, missing, update, all)")
-    ->option_text("ENUM [info]")
+    ->option_text(std::format("ENUM [{}]", download_policy_default))
     ->default_str(download_policy_default)
     ->transform(CLI::CheckedTransformer(xfr::download_policy_cli11, CLI::ignore_case));
   app.add_flag("--default", do_defaults, "only do the default configuration");
