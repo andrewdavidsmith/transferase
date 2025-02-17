@@ -25,9 +25,7 @@
 #define CLI_COMMAND_SERVER_CONFIG_HPP_
 
 auto
-command_server_config_main(
-  int argc,
-  char *argv[])  // NOLINT(cppcoreguidelines-avoid-c-arrays)
-  -> int;
+command_server_config_main(int argc,
+                           char *argv[]) -> int;  // NOLINT(*-c-arrays)
 
 #endif  // CLI_COMMAND_SERVER_CONFIG_HPP_
