@@ -24,12 +24,7 @@
 #ifndef LIB_SERVER_CONFIG_HPP_
 #define LIB_SERVER_CONFIG_HPP_
 
-// ADS: Not sure why logger is needed below, but it might be that the
-// full logger needs to be seen for 'mp11' and 'describe'
-
 #include "logger.hpp"  // IWYU pragma: keep
-
-#include <boost/describe.hpp>
 
 #include <cstdint>
 #include <string>
@@ -41,7 +36,7 @@ namespace transferase {
 
 struct server_config {
   static constexpr auto server_config_filename_default =
-    "transferase_server.conf";
+    "transferase_server.json";
 
   std::string config_dir;
   std::string hostname;
@@ -78,6 +73,10 @@ struct server_config {
   read(const std::string &config_file,
        std::error_code &error) noexcept -> server_config;
 
+  /// Write the configuration to a file
+  [[nodiscard]] auto
+  write(const std::string &config_file) const -> std::error_code;
+
   /// Set the server configuration by writing the config file.
   auto
   configure(const std::string &config_file,
@@ -87,10 +86,13 @@ struct server_config {
   get_default_config_dir(std::error_code &error) -> std::string;
 
   [[nodiscard]] static auto
-  get_config_file(const std::string &config_dir) -> std::string;
+  get_config_file(const std::string &config_dir) noexcept -> std::string;
 
   [[nodiscard]] auto
   tostring() const -> std::string;
+
+  auto
+  make_paths_absolute() noexcept -> void;
 
   /// Validate that the required instance variables are set properly;
   /// do this before attempting the configuration process.
@@ -103,31 +105,16 @@ struct server_config {
                                  min_bin_size, max_intervals)
 };
 
-// clang-format off
-BOOST_DESCRIBE_STRUCT(server_config, (), (
-  config_dir,
-  hostname,
-  port,
-  methylome_dir,
-  index_dir,
-  log_file,
-  pid_file,
-  log_level,
-  n_threads,
-  max_resident,
-  min_bin_size,
-  max_intervals
-)
-)
-// clang-format on
-
 }  // namespace transferase
 
 /// @brief Enum for error codes related to server configuration
 enum class server_config_error_code : std::uint8_t {
   ok = 0,
-  error_writing_config_file = 1,
+  error_writing_server_config_file = 1,
   invalid_server_config_information = 2,
+  failed_to_read_server_config_file = 3,
+  failed_to_parse_server_config_file = 4,
+  invalid_server_config_file = 5,
 };
 
 template <>
@@ -141,8 +128,11 @@ struct server_config_error_category : std::error_category {
     using std::string_literals::operator""s;
     switch (code) {
     case 0: return "ok"s;
-    case 1: return "error writing config file"s;
+    case 1: return "error writing server config file"s;
     case 2: return "invalid server config information"s;
+    case 3: return "failed to read server config file"s;
+    case 4: return "failed to parse server config file"s;
+    case 5: return "invalid server config file"s;
     }
     std::unreachable();
   }
