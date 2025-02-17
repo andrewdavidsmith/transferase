@@ -96,6 +96,7 @@ check_directory(const auto &dirname, std::error_code &ec) -> std::string {
 
 auto
 command_server_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
+  static constexpr auto log_level_default = transferase::log_level_t::debug;
   static constexpr auto command = "server";
   static const auto usage =
     std::format("Usage: xfr {} [options]", rstrip(command));
@@ -107,6 +108,7 @@ command_server_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
   namespace xfr = transferase;
 
   xfr::server_config cfg;
+  cfg.log_level = log_level_default;
   std::string config_file;
   bool daemonize{false};
 
@@ -145,8 +147,7 @@ command_server_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
                  "maximum number of intervals in a query");
   app.add_option("-v,--log-level", cfg.log_level,
                  "{debug, info, warning, error, critical}")
-    ->option_text("ENUM [info]")
-    ->default_str("info")
+    ->option_text(std::format("ENUM [{}]", log_level_default))
     ->transform(CLI::CheckedTransformer(xfr::log_level_cli11, CLI::ignore_case));
   app.add_option("-l,--log-file", cfg.log_file,
                  "log file name");

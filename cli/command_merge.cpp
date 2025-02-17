@@ -67,6 +67,7 @@ xfr merge -o merged.m16 -i SRX0123*.m16
 
 auto
 command_merge_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
+  static constexpr auto log_level_default = transferase::log_level_t::info;
   static constexpr auto command = "merge";
   static const auto usage =
     std::format("Usage: xfr {} [options]", rstrip(command));
@@ -101,9 +102,7 @@ command_merge_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
   app.add_option("-n,--name", merged_name, "merged methylome name")
     ->required();
   app.add_option("-v,--log-level", log_level, "{debug, info, warning, error, critical}")
-    ->option_text("ENUM")
-    ->default_str("info")
-    ->description("{debug, info, warning, error, critical}")
+    ->option_text(std::format("ENUM [{}]", log_level_default))
     ->transform(CLI::CheckedTransformer(xfr::log_level_cli11, CLI::ignore_case));
   // clang-format on
 

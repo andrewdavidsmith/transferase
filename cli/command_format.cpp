@@ -358,7 +358,7 @@ process_cpg_sites_counts(const std::string &infile, const genome_index &index)
 auto
 command_format_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
   const auto command_start = std::chrono::high_resolution_clock::now();
-
+  static constexpr auto log_level_default = transferase::log_level_t::info;
   static constexpr auto command = "format";
   static const auto usage =
     std::format("Usage: xfr {} [options]", rstrip(command));
@@ -375,7 +375,7 @@ command_format_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
   std::string methylation_input{};
   std::string methylome_name{};
   std::string methylome_dir{};
-  xfr::log_level_t log_level{};
+  xfr::log_level_t log_level{log_level_default};
   bool zip{false};
 
   std::error_code error;
@@ -413,8 +413,7 @@ command_format_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
   app.add_flag("-z,--zip", zip, "zip the output");
   app.add_option("-v,--log-level", log_level,
                  "{debug, info, warning, error, critical}")
-    ->option_text("ENUM [info]")
-    ->default_str("info")
+    ->option_text(std::format("ENUM [{}]", log_level_default))
     ->transform(CLI::CheckedTransformer(xfr::log_level_cli11, CLI::ignore_case));
   // clang-format on
 
