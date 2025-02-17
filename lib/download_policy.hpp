@@ -41,12 +41,13 @@ enum class download_policy_t : std::uint8_t {
   all = 3,
 };
 
+using std::literals::string_view_literals::operator""sv;
 static constexpr auto download_policy_t_name = std::array{
   // clang-format off
-  std::string_view{"none"},
-  std::string_view{"missing"},
-  std::string_view{"update"},
-  std::string_view{"all"},
+  "none"sv,
+  "missing"sv,
+  "update"sv,
+  "all"sv,
   // clang-format on
 };
 
@@ -58,6 +59,15 @@ static const std::map<std::string, download_policy_t> download_policy_cli11{
   {"all", download_policy_t::all},
   // clang-format on
 };
+
+// clang-format off
+NLOHMANN_JSON_SERIALIZE_ENUM(log_level_t, {
+    {download_policy_t::none, "none"},
+    {download_policy_t::missing, "missing"},
+    {download_policy_t::update, "update"},
+    {download_policy_t::all, "all"},
+  })
+// clang-format on
 
 auto
 operator<<(std::ostream &o, const download_policy_t &dp) -> std::ostream &;
