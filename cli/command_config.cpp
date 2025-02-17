@@ -153,10 +153,12 @@ command_config_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
     {"Config dir", cfg.config_dir},
     {"Hostname", cfg.hostname},
     {"Port", cfg.port},
-    {"Methylome dir", cfg.methylome_dir},
     {"Index dir", cfg.index_dir},
+    {"Methylome dir", cfg.methylome_dir},
+    {"Metadata file", cfg.metadata_file},
     {"Log file", cfg.log_file},
     {"Log level", std::format("{}", cfg.log_level)},
+    {"Download policy", std::format("{}", download_policy)},
     // clang-format on
   };
   xfr::log_args<transferase::log_level_t::info>(args_to_log);
