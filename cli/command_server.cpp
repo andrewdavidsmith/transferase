@@ -49,6 +49,7 @@ Examples:
 xfr server -s localhost -d methylomes -x indexes
 )";
 
+#include "cli_common.hpp"
 #include "format_error_code.hpp"  // IWYU pragma: keep
 #include "logger.hpp"
 #include "request.hpp"
@@ -63,6 +64,7 @@ xfr server -s localhost -d methylomes -x indexes
 #include <format>
 #include <fstream>
 #include <iostream>
+#include <map>
 #include <memory>  // std::make_shared
 #include <print>
 #include <string>
@@ -127,7 +129,7 @@ command_server_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
   app.usage(usage);
   if (argc >= 2)
     app.footer(description_msg);
-  app.get_formatter()->column_width(40);
+  app.get_formatter()->column_width(column_width_default);
   app.get_formatter()->label("REQUIRED", "REQD");
   // clang-format off
   app.add_option("-c,--config-file", config_file,

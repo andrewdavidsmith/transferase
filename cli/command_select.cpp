@@ -46,6 +46,7 @@ Examples:
 xfr select -o output_file.txt -g hg38
 )";
 
+#include "cli_common.hpp"
 #include "client_config.hpp"
 #include "nlohmann/json.hpp"
 #include "utilities.hpp"
@@ -62,12 +63,12 @@ xfr select -o output_file.txt -g hg38
 #include <cstdint>
 #include <cstdio>  // for std::getchar
 #include <cstdlib>
-#include <filesystem>
 #include <format>
 #include <fstream>
 #include <iostream>
 #include <iterator>
 #include <map>
+#include <memory>
 #include <print>
 #include <ranges>
 #include <regex>
@@ -116,8 +117,7 @@ get_to_show(const auto &filtered, const auto disp_start, const auto disp_end) {
   return std::ranges::subrange(i + disp_start, i + disp_end);
 }
 
-[[nodiscard]]
-static inline auto
+[[nodiscard]] static inline auto
 format_current_entry(const auto &entry, const auto horiz_pos, const auto max_x,
                      const auto margin) {
   if (horiz_pos > std::ssize(entry.second))
@@ -535,7 +535,7 @@ command_select_main(int argc, char *argv[]) -> int {  // NOLINT
   app.usage(usage);
   if (argc >= 2)
     app.footer(description_msg);
-  app.get_formatter()->column_width(40);
+  app.get_formatter()->column_width(column_width_default);
   app.get_formatter()->label("REQUIRED", "REQD");
   // clang-format off
   app.add_option("-g,--genome", genome_name, "use this genome")->required();

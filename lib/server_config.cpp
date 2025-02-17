@@ -161,7 +161,7 @@ server_config::write(const std::string &config_file) const -> std::error_code {
   if (!out)
     return server_config_error_code::error_writing_server_config_file;
   const std::string payload = tostring();
-  out.write(payload.data(), std::size(payload));
+  out.write(payload.data(), static_cast<std::streamsize>(std::size(payload)));
   if (!out)
     return server_config_error_code::error_writing_server_config_file;
   return {};

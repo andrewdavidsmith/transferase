@@ -390,7 +390,7 @@ client_config::save(std::error_code &error) const noexcept -> void {
     return;
   }
   const std::string payload = tmp.tostring();
-  out.write(payload.data(), std::size(payload));
+  out.write(payload.data(), static_cast<std::streamsize>(std::size(payload)));
   if (!out)
     error = client_config_error_code::error_writing_config_file;
 }

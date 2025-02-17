@@ -38,8 +38,6 @@
 
 #include <config.h>  // for VERSION
 
-#include "CLI11/CLI11.hpp"
-
 #include <algorithm>
 #include <array>
 #include <cstdlib>     // for EXIT_FAILURE
@@ -53,7 +51,6 @@
 #include <string_view>  // for string_view
 #include <tuple>
 #include <variant>  // for std::tuple
-#include <vector>
 
 typedef std::function<int(int, char **)> main_fun;
 typedef std::tuple<std::string_view, main_fun, std::string_view> cmd;
@@ -109,9 +106,10 @@ main(int argc, char *argv[]) {  // NOLINT(*-c-arrays)
     return EXIT_SUCCESS;
   }
 
-  std::string command = argv[1];
+  std::string command = argv[1];  // NOLINT(*-pointer-arithmetic)
 
   const auto cmd_itr = std::ranges::find_if(
+    // NOLINTNEXTLINE(*-pointer-arithmetic)
     commands, [&command](const auto &c) { return get<0>(c) == command; });
 
   if (cmd_itr == std::cend(commands)) {

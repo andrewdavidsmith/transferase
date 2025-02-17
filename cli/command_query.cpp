@@ -56,6 +56,7 @@ xfr query --local -d methylome_dir -x index_dir -g hg38 \
 )";
 
 #include "bins_writer.hpp"
+#include "cli_common.hpp"
 #include "client_config.hpp"
 #include "genome_index.hpp"
 #include "genomic_interval.hpp"
@@ -79,8 +80,9 @@ xfr query --local -d methylome_dir -x index_dir -g hg38 \
 #include <cstdlib>
 #include <format>
 #include <fstream>
-#include <iostream>
 #include <iterator>  // for std::size, for std::cbegin
+#include <map>
+#include <memory>
 #include <print>
 #include <ranges>
 #include <string>
@@ -317,7 +319,7 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
   app.usage(usage);
   if (argc >= 2)
     app.footer(description_msg);
-  app.get_formatter()->column_width(40);
+  app.get_formatter()->column_width(column_width_default);
   app.get_formatter()->label("REQUIRED", "REQD");
   // clang-format off
   app.add_option("-c,--config-dir", cfg.config_dir, "specify a config directory");
