@@ -45,6 +45,7 @@ Examples:
 xfr index -v debug -x /path/to/index_directory -g hg38.fa
 )";
 
+#include "cli_common.hpp"
 #include "format_error_code.hpp"  // IWYU pragma: keep
 #include "genome_index.hpp"
 #include "logger.hpp"
@@ -54,7 +55,8 @@ xfr index -v debug -x /path/to/index_directory -g hg38.fa
 
 #include <chrono>
 #include <format>
-#include <iostream>
+#include <map>
+#include <memory>
 #include <print>
 #include <stdlib.h>  // for EXIT_FAILURE, EXIT_SUCCESS
 #include <string>
@@ -87,7 +89,7 @@ command_index_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
   app.usage(usage);
   if (argc >= 2)
     app.footer(description_msg);
-  app.get_formatter()->column_width(40);
+  app.get_formatter()->column_width(column_width_default);
   app.get_formatter()->label("REQUIRED", "REQD");
   // clang-format off
   app.add_option("-g,--genome", genome_filename,

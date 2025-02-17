@@ -46,6 +46,7 @@ Examples:
 xfr check -x index_dir -d methylome_dir
 )";
 
+#include "cli_common.hpp"
 #include "genome_index.hpp"
 #include "genome_index_set.hpp"
 #include "logger.hpp"
@@ -58,9 +59,9 @@ xfr check -x index_dir -d methylome_dir
 
 #include <cstdlib>  // for EXIT_FAILURE, EXIT_SUCCESS
 #include <format>
-#include <iostream>
 #include <iterator>  // for std::cbegin, std::cend
-#include <memory>    // for std::shared_ptr
+#include <map>
+#include <memory>  // for std::shared_ptr
 #include <print>
 #include <ranges>
 #include <string>
@@ -94,7 +95,7 @@ command_check_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
   app.usage(usage);
   if (argc >= 2)
     app.footer(description_msg);
-  app.get_formatter()->column_width(40);
+  app.get_formatter()->column_width(column_width_default);
   app.get_formatter()->label("REQUIRED", "REQD");
   // clang-format off
   app.add_option("-x,--index-dir", index_dir,

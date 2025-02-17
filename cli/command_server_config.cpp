@@ -51,6 +51,7 @@ xfr server-config -c /path/to/server_config_file.json \
     --pid-file=/var/tmp/TRANSFERASE_SERVER_PID
 )";
 
+#include "cli_common.hpp"
 #include "logger.hpp"
 #include "request.hpp"
 #include "server_config.hpp"
@@ -58,19 +59,15 @@ xfr server-config -c /path/to/server_config_file.json \
 
 #include "CLI11/CLI11.hpp"
 
-#include <algorithm>  // for std::ranges::replace
 #include <cstdlib>
 #include <filesystem>
 #include <format>
-#include <iostream>
-#include <iterator>  // for std::cend
+#include <map>
+#include <memory>
 #include <print>
-#include <ranges>  // for std::ranges::find
 #include <string>
 #include <string_view>
 #include <system_error>
-#include <type_traits>  // for std::remove_cvref
-#include <vector>
 
 auto
 command_server_config_main(int argc, char *argv[])  // NOLINT(*-c-arrays)
@@ -99,7 +96,7 @@ command_server_config_main(int argc, char *argv[])  // NOLINT(*-c-arrays)
   app.usage(usage);
   if (argc >= 2)
     app.footer(description_msg);
-  app.get_formatter()->column_width(40);
+  app.get_formatter()->column_width(column_width_default);
   app.get_formatter()->label("REQUIRED", "REQD");
   // clang-format off
   app.add_option("-c,--config-dir", cfg.config_dir,

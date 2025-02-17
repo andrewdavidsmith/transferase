@@ -35,6 +35,7 @@
 #include "request_type_code.hpp"
 
 #include <cstdint>
+#include <format>  // for std::vector??
 #include <memory>
 #include <string>
 #include <system_error>

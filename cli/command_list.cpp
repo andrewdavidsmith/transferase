@@ -38,6 +38,7 @@ Examples:
 xfr list /path/to/some_directory ../relative/path
 )";
 
+#include "cli_common.hpp"
 #include "format_error_code.hpp"  // IWYU pragma: keep
 #include "genome_index.hpp"
 #include "methylome.hpp"
@@ -50,6 +51,7 @@ xfr list /path/to/some_directory ../relative/path
 #include <filesystem>
 #include <format>
 #include <iostream>
+#include <memory>
 #include <print>
 #include <ranges>  // IWYU pragma: keep
 #include <string>
@@ -78,7 +80,7 @@ command_list_main(int argc, char *argv[])  // NOLINT(*-c-arrays)
   app.usage(usage);
   if (argc >= 2)
     app.footer(description_msg);
-  app.get_formatter()->column_width(40);
+  app.get_formatter()->column_width(column_width_default);
   app.get_formatter()->label("REQUIRED", "REQD");
   // clang-format off
   const auto indexes_only_opt =

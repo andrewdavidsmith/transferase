@@ -47,6 +47,7 @@ Examples:
 xfr format -g hg38 -d output_dir -m SRX012345.xsym.gz
 )";
 
+#include "cli_common.hpp"
 #include "client_config.hpp"
 #include "counts_file_format.hpp"
 #include "format_error_code.hpp"  // IWYU pragma: keep
@@ -68,9 +69,10 @@ xfr format -g hg38 -d output_dir -m SRX012345.xsym.gz
 #include <cstdint>  // for std::uint32_t, std::uint64_t, std::int32_t
 #include <cstdlib>  // for EXIT_FAILURE, abort, EXIT_SUCCESS
 #include <format>
-#include <iostream>
 #include <iterator>  // for std::cbegin, std::size
 #include <limits>
+#include <map>
+#include <memory>
 #include <print>
 #include <sstream>
 #include <string>
@@ -391,7 +393,7 @@ command_format_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
   app.usage(usage);
   if (argc >= 2)
     app.footer(description_msg);
-  app.get_formatter()->column_width(40);
+  app.get_formatter()->column_width(column_width_default);
   app.get_formatter()->label("REQUIRED", "REQD");
   // clang-format off
   const auto config_dir_opt =

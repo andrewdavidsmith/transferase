@@ -48,6 +48,7 @@ Examples:
 xfr config -s example.com -p 5009 --genomes hg38,mm39
 )";
 
+#include "cli_common.hpp"
 #include "client_config.hpp"
 #include "download_policy.hpp"
 #include "logger.hpp"
@@ -57,7 +58,8 @@ xfr config -s example.com -p 5009 --genomes hg38,mm39
 
 #include <cstdlib>
 #include <format>
-#include <iostream>
+#include <map>
+#include <memory>
 #include <print>
 #include <string>
 #include <string_view>
@@ -98,7 +100,7 @@ command_config_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
   app.usage(usage);
   if (argc >= 2)
     app.footer(description_msg);
-  app.get_formatter()->column_width(40);
+  app.get_formatter()->column_width(column_width_default);
   app.get_formatter()->label("REQUIRED", "REQD");
   // clang-format off
   app.add_option("-c,--config-dir", cfg.config_dir,
