@@ -31,16 +31,14 @@
 
 #include <config.h>
 
-#include <algorithm>
 #include <cassert>
 #include <chrono>  // for std::chrono::operator-
 #include <cstdlib>
+#include <exception>  // for std::exception
 #include <filesystem>
 #include <format>
 #include <fstream>
 #include <iterator>  // for std::size
-#include <ranges>    // IWYU pragma: keep
-#include <sstream>
 #include <string>
 #include <system_error>
 #include <unordered_map>

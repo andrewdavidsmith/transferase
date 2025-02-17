@@ -34,7 +34,6 @@
 #include <functional>  // for std::plus
 #include <iterator>    // for std::cbegin
 #include <numeric>     // for std::adjacent_difference
-#include <sstream>
 #include <string>
 #include <system_error>
 #include <tuple>  // for std::tie, std::tuple
