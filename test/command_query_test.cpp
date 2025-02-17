@@ -65,13 +65,11 @@ TEST(command_query_test, intervals_basic_local_test) {
     output_file,
     // clang-format on
   };
-  const int command_argc = sizeof(argv) / sizeof(argv[0]);
+  const int argc = sizeof(argv) / sizeof(argv[0]);
 
   // Run the main function
-  // NOLINTBEGIN(cppcoreguidelines-pro-type-const-cast)
-  const int result =
-    command_query_main(command_argc, const_cast<char **>(argv.data()));
-  // NOLINTEND(cppcoreguidelines-pro-type-const-cast)
+  // NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast)
+  const int result = command_query_main(argc, const_cast<char **>(argv.data()));
 
   // Check that the output file is created
   EXPECT_EQ(result, EXIT_SUCCESS);
@@ -119,13 +117,11 @@ TEST(command_query_test, intervals_basic_local_test_scores) {
     "bedgraph",
     // clang-format on
   };
-  const int command_argc = static_cast<int>(std::size(argv));
+  const int argc = static_cast<int>(std::size(argv));
 
   // Run the main function
-  // NOLINTBEGIN(cppcoreguidelines-pro-type-const-cast)
-  const int result =
-    command_query_main(command_argc, const_cast<char **>(argv.data()));
-  // NOLINTEND(cppcoreguidelines-pro-type-const-cast)
+  // NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast)
+  const int result = command_query_main(argc, const_cast<char **>(argv.data()));
 
   // Check that the output file is created
   EXPECT_EQ(result, EXIT_SUCCESS);
@@ -142,9 +138,11 @@ TEST(command_query_test, intervals_basic_local_test_scores) {
 
 TEST(command_query_test, intervals_failing_remote_test) {
   // Input files for test
+  static constexpr auto genome_name = "pAntiquusx";
   static constexpr auto index_file = "data/pAntiquusx.cpg_idx";
-  static constexpr auto accession = "SRX012346";
+  static constexpr auto methylome_name = "SRX012346";
   static constexpr auto intervals_file = "data/pAntiquusx_promoters.bed";
+  static constexpr auto bad_port = "123";
   // Output filename and expected output
   static constexpr auto output_file = "data/remote_output_file.bed";
 
@@ -155,27 +153,27 @@ TEST(command_query_test, intervals_failing_remote_test) {
     "-s",
     "localhost",
     "-p",
-    "5000",
+    bad_port,
+    "-g",
+    genome_name,
     "-x",
     index_file,
     "-i",
     intervals_file,
-    "-a",
-    accession,
+    "-m",
+    methylome_name,
     "-o",
     output_file,
     // clang-format on
   };
-  const int command_argc = sizeof(argv) / sizeof(argv[0]);
+  const int argc = sizeof(argv) / sizeof(argv[0]);
 
   // Run the main function
-  // NOLINTBEGIN(cppcoreguidelines-pro-type-const-cast)
-  const int result =
-    command_query_main(command_argc, const_cast<char **>(argv.data()));
-  // NOLINTEND(cppcoreguidelines-pro-type-const-cast)
+  // NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast)
+  const int result = command_query_main(argc, const_cast<char **>(argv.data()));
 
   // Check that the output file is created
-  EXPECT_EQ(result, EXIT_FAILURE);
+  EXPECT_NE(result, EXIT_SUCCESS);
   EXPECT_FALSE(std::filesystem::exists(output_file));
 
   // Clean up: delete test files
@@ -215,13 +213,11 @@ TEST(command_query_test, bins_basic_local_test) {
     "100",
     // clang-format on
   };
-  const int command_argc = sizeof(argv) / sizeof(argv[0]);
+  const int argc = sizeof(argv) / sizeof(argv[0]);
 
   // Run the main function
-  // NOLINTBEGIN(cppcoreguidelines-pro-type-const-cast)
-  const int result =
-    command_query_main(command_argc, const_cast<char **>(argv.data()));
-  // NOLINTEND(cppcoreguidelines-pro-type-const-cast)
+  // NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast)
+  const int result = command_query_main(argc, const_cast<char **>(argv.data()));
 
   // Check that the output file is created
   EXPECT_EQ(result, EXIT_SUCCESS);
