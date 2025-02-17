@@ -26,8 +26,6 @@
 
 #include "nlohmann/json.hpp"
 
-#include <boost/describe.hpp>  // for BOOST_DESCRIBE_STRUCT
-
 #include <cstdint>  // for uint32_t, uint64_t
 #include <filesystem>
 #include <format>
@@ -102,21 +100,6 @@ struct methylome_metadata {
                                  creation_time, methylome_hash, index_hash,
                                  genome_name, n_cpgs, is_compressed)
 };
-
-// clang-format off
-BOOST_DESCRIBE_STRUCT(methylome_metadata, (),
-(
- version,
- host,
- user,
- creation_time,
- methylome_hash,
- index_hash,
- genome_name,
- n_cpgs,
- is_compressed
-))
-// clang-format on
 
 }  // namespace transferase
 
