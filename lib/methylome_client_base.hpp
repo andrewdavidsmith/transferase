@@ -178,6 +178,15 @@ protected:
 
     // client_config should read the transferase metadata if possible
     config = client_config::read(config_dir);
+    const auto metadata_file = config.get_metadata_file();
+    if (!metadata_file.empty()) {
+      config.load_transferase_metadata(error);
+      if (error) {
+        const auto msg =
+          std::format("[Failed to read metadata: {}]", metadata_file);
+        throw std::system_error(error, msg);
+      }
+    }
 
     // Error for index dir should be taken care of in client_config
     if (!config.index_dir.empty())
