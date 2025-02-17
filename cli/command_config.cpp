@@ -68,8 +68,9 @@ xfr config -s example.com -p 5009 --genomes hg38,mm39
 
 auto
 command_config_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
-  static constexpr auto log_level_default = "info";
-  const std::string download_policy_default = "missing";
+  static constexpr auto log_level_default = transferase::log_level_t::info;
+  static constexpr auto download_policy_default =
+    transferase::download_policy_t::missing;
 
   static constexpr auto command = "config";
   static const auto usage =
@@ -85,11 +86,12 @@ command_config_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
   // will not be used in this app but instead be written as specified
   // into the config file.
   xfr::client_config cfg;
+  cfg.log_level = log_level_default;
   std::string genomes_arg{};
   bool quiet{false};
   bool debug{false};
   bool do_defaults{false};
-  xfr::download_policy_t download_policy{};
+  xfr::download_policy_t download_policy{download_policy_default};
 
   CLI::App app{about_msg};
   argv = app.ensure_utf8(argv);
@@ -115,14 +117,12 @@ command_config_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
   app.add_option("-v,--log-level", cfg.log_level,
                  "{debug, info, warning, error, critical}")
     ->option_text(std::format("ENUM [{}]", log_level_default))
-    ->default_str(log_level_default)
     ->transform(CLI::CheckedTransformer(xfr::log_level_cli11, CLI::ignore_case));
   app.add_option("-l,--log-file", cfg.log_file,
                  "log file name (defaults: print to screen)");
   app.add_option("-M,--download", download_policy,
                  "download policy (none, missing, update, all)")
     ->option_text(std::format("ENUM [{}]", download_policy_default))
-    ->default_str(download_policy_default)
     ->transform(CLI::CheckedTransformer(xfr::download_policy_cli11, CLI::ignore_case));
   app.add_flag("--default", do_defaults, "only do the default configuration");
   const auto quiet_opt =
