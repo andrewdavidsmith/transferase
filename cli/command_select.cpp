@@ -50,8 +50,7 @@ xfr select -o output_file.txt -g hg38
 #include "nlohmann/json.hpp"
 #include "utilities.hpp"
 
-#include <boost/container/detail/std_fwd.hpp>  // for std::pair
-#include <boost/program_options.hpp>
+#include "CLI11/CLI11.hpp"
 
 #include <ncurses.h>
 
@@ -520,7 +519,7 @@ auto
 command_select_main(int argc, char *argv[]) -> int {  // NOLINT
   static constexpr auto command = "select";
   static const auto usage =
-    std::format("Usage: xfr {} [options]\n", rstrip(command));
+    std::format("Usage: xfr {} [options]", rstrip(command));
   static const auto about_msg =
     std::format("xfr {}: {}", rstrip(command), rstrip(about));
   static const auto description_msg =
@@ -531,36 +530,32 @@ command_select_main(int argc, char *argv[]) -> int {  // NOLINT
   std::string output_file;
   std::string config_dir;
 
-  namespace po = boost::program_options;
+  CLI::App app{about_msg};
+  argv = app.ensure_utf8(argv);
+  app.usage(usage);
+  if (argc >= 2)
+    app.footer(description_msg);
+  app.get_formatter()->column_width(40);
+  app.get_formatter()->label("REQUIRED", "REQD");
+  // clang-format off
+  app.add_option("-g,--genome", genome_name, "use this genome")->required();
+  app.add_option("-o,--output", output_file, "output file")->required();
+  const auto input_file_opt =
+    app.add_option("-i,--input-file", input_file, "specify an input file")
+    ->option_text("TEXT:FILE")
+    ->check(CLI::ExistingFile);
+  app.add_option("-c,--config-dir", config_dir, "specify a config directory")
+    ->option_text("TEXT:DIR")
+    ->check(CLI::ExistingDirectory)
+    ->excludes(input_file_opt);
+  // clang-format on
 
-  po::options_description desc("Options");
-  desc.add_options()
-    // clang-format off
-    ("help,h", "print this message and exit")
-    ("genome,g", po::value(&genome_name)->required(), "use this genome (required)")
-    ("output,o", po::value(&output_file)->required(), "output file (required)")
-    ("input-file,i", po::value(&input_file), "specify an input file")
-    ("config-dir,c", po::value(&config_dir), "specify a config directory")
-    // clang-format on
-    ;
-  po::variables_map vm;
-  try {
-    po::store(po::parse_command_line(argc, argv, desc), vm);
-    if (vm.count("help") || argc == 1) {
-      std::println("{}\n{}", about_msg, usage);
-      desc.print(std::cout);
-      std::println("\n{}", description_msg);
-      return EXIT_SUCCESS;
-    }
-    po::notify(vm);
+  if (argc < 2) {
+    std::println("{}", app.help());
+    return EXIT_SUCCESS;
   }
-  catch (po::error &e) {
-    std::println("{}", e.what());
-    std::println("{}\n{}", about_msg, usage);
-    desc.print(std::cout);
-    std::println("\n{}", description_msg);
-    return EXIT_FAILURE;
-  }
+
+  CLI11_PARSE(app, argc, argv);
 
   try {
     using transferase::client_config;

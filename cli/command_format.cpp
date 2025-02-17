@@ -60,7 +60,7 @@ xfr format -g hg38 -d output_dir -m SRX012345.xsym.gz
 #include "utilities.hpp"
 #include "zlib_adapter.hpp"
 
-#include <boost/program_options.hpp>
+#include "CLI11/CLI11.hpp"
 
 #include <cctype>  // for std::isdigit
 #include <charconv>
@@ -356,13 +356,12 @@ process_cpg_sites_counts(const std::string &infile, const genome_index &index)
 }  // namespace transferase
 
 auto
-command_format_main(int argc, char *argv[])  // NOLINT(*-avoid-c-arrays)
-  -> int {
+command_format_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
   const auto command_start = std::chrono::high_resolution_clock::now();
 
   static constexpr auto command = "format";
   static const auto usage =
-    std::format("Usage: xfr {} [options]\n", rstrip(command));
+    std::format("Usage: xfr {} [options]", rstrip(command));
   static const auto about_msg =
     std::format("xfr {}: {}", rstrip(command), rstrip(about));
   static const auto description_msg =
@@ -387,40 +386,43 @@ command_format_main(int argc, char *argv[])  // NOLINT(*-avoid-c-arrays)
     return EXIT_FAILURE;
   }
 
-  namespace po = boost::program_options;
+  CLI::App app{about_msg};
+  argv = app.ensure_utf8(argv);
+  app.usage(usage);
+  if (argc >= 2)
+    app.footer(description_msg);
+  app.get_formatter()->column_width(40);
+  app.get_formatter()->label("REQUIRED", "REQD");
+  // clang-format off
+  const auto config_dir_opt =
+    app.add_option("-c,--config-dir", config_dir,
+                   "specify a config directory")
+    ->option_text("TEXT:DIR")
+    ->check(CLI::ExistingDirectory);
+  app.add_option("-m,--meth-file", methylation_input,
+                 "methylation input file")
+    ->required();
+  app.add_option("-x,--index-dir", index_dir, "genome index directory")
+    ->option_text("TEXT:DIR")
+    ->excludes(config_dir_opt)
+    ->check(CLI::ExistingDirectory);
+  app.add_option("-d,--methylome-dir", methylome_dir, "methylome output directory")
+    ->required();
+  app.add_option("-g,--genome", genome_name, "genome name")
+    ->required();
+  app.add_flag("-z,--zip", zip, "zip the output");
+  app.add_option("-v,--log-level", log_level,
+                 "{debug, info, warning, error, critical}")
+    ->option_text("ENUM [info]")
+    ->default_str("info")
+    ->transform(CLI::CheckedTransformer(xfr::log_level_cli11, CLI::ignore_case));
+  // clang-format on
 
-  po::options_description opts("Options");
-  opts.add_options()
-    // clang-format off
-    ("help,h", "print this message and exit")
-    ("config-dir,c", po::value(&config_dir), "specify a config directory")
-    ("meth-file,m", po::value(&methylation_input)->required(), "methylation input file")
-    ("index-dir,x", po::value(&index_dir), "genome index directory")
-    ("methylome-dir,d", po::value(&methylome_dir)->required(), "methylome output directory")
-    ("genome,g", po::value(&genome_name)->required(), "genome name")
-    ("zip,z", po::bool_switch(&zip), "zip the output")
-    ("log-level,v", po::value(&log_level)->default_value(xfr::logger::default_level),
-     "{debug, info, warning, error, critical}")
-    // clang-format on
-    ;
-  po::variables_map vm;
-  try {
-    po::store(po::parse_command_line(argc, argv, opts), vm);
-    if (vm.count("help") || argc == 1) {
-      std::println("{}\n{}", about_msg, usage);
-      opts.print(std::cout);
-      std::println("\n{}", description_msg);
-      return EXIT_SUCCESS;
-    }
-    po::notify(vm);
+  if (argc < 2) {
+    std::println("{}", app.help());
+    return EXIT_SUCCESS;
   }
-  catch (po::error &e) {
-    std::println("{}", e.what());
-    std::println("{}\n{}", about_msg, usage);
-    opts.print(std::cout);
-    std::println("\n{}", description_msg);
-    return EXIT_FAILURE;
-  }
+  CLI11_PARSE(app, argc, argv);
 
   auto &lgr =
     xfr::logger::instance(xfr::shared_from_cout(), command, log_level);

@@ -39,7 +39,7 @@ configuration file in the specified directory with a default name.
 static constexpr auto examples = R"(
 Examples:
 
-xfr server-config -c /path/to/server_config_file.conf \
+xfr server-config -c /path/to/server_config_file.json \
     --hostname=org.kernel.not \
     --port=65536 \
     --methylome-dir=/data/methylomes \
@@ -51,15 +51,12 @@ xfr server-config -c /path/to/server_config_file.conf \
     --pid-file=/var/tmp/TRANSFERASE_SERVER_PID
 )";
 
-#include "config_file_utils.hpp"
 #include "logger.hpp"
 #include "request.hpp"
 #include "server_config.hpp"
 #include "utilities.hpp"
 
-#include <boost/describe.hpp>
-#include <boost/mp11/algorithm.hpp>  // for boost::mp11::mp_for_each
-#include <boost/program_options.hpp>
+#include "CLI11/CLI11.hpp"
 
 #include <algorithm>  // for std::ranges::replace
 #include <cstdlib>
@@ -75,30 +72,12 @@ xfr server-config -c /path/to/server_config_file.conf \
 #include <type_traits>  // for std::remove_cvref
 #include <vector>
 
-[[nodiscard]] inline auto
-check_empty_values(const auto &t, const std::vector<std::string> &allowed_empty)
-  -> std::vector<std::string> {
-  using T = std::remove_cvref_t<decltype(t)>;
-  using members =
-    boost::describe::describe_members<T, boost::describe::mod_any_access>;
-  std::vector<std::string> r;
-  boost::mp11::mp_for_each<members>([&](const auto &member) {
-    std::string name(member.name);
-    std::ranges::replace(name, '_', '-');
-    const auto value = std::format("{}", t.*member.pointer);
-    const auto itr = std::ranges::find(allowed_empty, name);
-    if (value.empty() && itr == std::cend(allowed_empty))
-      r.push_back(name);
-  });
-  return r;
-}
-
 auto
 command_server_config_main(int argc, char *argv[])  // NOLINT(*-c-arrays)
   -> int {
   static constexpr auto command = "server-config";
   static const auto usage =
-    std::format("Usage: xfr {} [options]\n", rstrip(command));
+    std::format("Usage: xfr {} [options]", rstrip(command));
   static const auto about_msg =
     std::format("xfr {}: {}", rstrip(command), rstrip(about));
   static const auto description_msg =
@@ -106,55 +85,62 @@ command_server_config_main(int argc, char *argv[])  // NOLINT(*-c-arrays)
 
   namespace xfr = transferase;
 
+  // ADS: paths should not be made absolute here since these paths
+  // will not be used in this app but instead be written as specified
+  // into the config file.
   xfr::server_config cfg;
 
-  namespace po = boost::program_options;
+  CLI::App app{about_msg};
+  argv = app.ensure_utf8(argv);
+  app.usage(usage);
+  if (argc >= 2)
+    app.footer(description_msg);
+  app.get_formatter()->column_width(40);
+  app.get_formatter()->label("REQUIRED", "REQD");
+  // clang-format off
+  app.add_option("-c,--config-dir", cfg.config_dir,
+                 "write specified configuration to this directory")
+    ->required();
+  app.add_option("-s,--hostname", cfg.hostname, "server hostname")
+    ->required();
+  app.add_option("-p,--port", cfg.port, "server port")->required();
+  app.add_option("-d,--methylome-dir", cfg.methylome_dir,
+                 "methylome directory")
+    ->required();
+  app.add_option("-x,--index-dir", cfg.index_dir,
+                 "genome index file directory")
+    ->required();
+  app.add_option("-v,--log-level", cfg.log_level,
+                 "{debug, info, warning, error, critical}")
+    ->option_text("ENUM [debug]")
+    ->default_str("debug")
+    ->transform(CLI::CheckedTransformer(xfr::log_level_cli11, CLI::ignore_case));
+  app.add_option("-l,--log-file", cfg.log_file,
+                 "log file name");
+  app.add_option("-r,--max-resident", cfg.max_resident,
+                 "max methylomes resident in memory at once")
+    ->required();
+  app.add_option("-t,--n-threads", cfg.n_threads,
+                 "number of threads to use (one per connection)")
+    ->required();
+  app.add_option("-b,--min-bin-size", cfg.min_bin_size,
+                 "Minimum bin size for a request")
+    ->default_str(std::format("{}", xfr::request::min_bin_size_default));
+  app.add_option("-i,--max-intervals", cfg.max_intervals,
+                 "Maximum number of intervals in a request")
+    ->default_str(std::format("{}", xfr::request::max_intervals_default));
+  app.add_option("-P,--pid-file", cfg.pid_file,
+                 "Filename to use for the PID when daemonizing");
+  // clang-format on
 
-  po::options_description opts("Options");
-  opts.add_options()
-    // clang-format off
-    ("help,h", "print this message and exit")
-    ("config-dir,c", po::value(&cfg.config_dir)->required(),
-     "write specified configuration to this directory")
-    ("hostname,s", po::value(&cfg.hostname)->required(), "server hostname")
-    ("port,p", po::value(&cfg.port)->required(), "server port")
-    ("methylome-dir,d", po::value(&cfg.methylome_dir)->required(),
-     "methylome directory")
-    ("index-dir,x", po::value(&cfg.index_dir)->required(),
-     "genome index file directory")
-    ("log-level,v", po::value(&cfg.log_level)
-     ->default_value(xfr::log_level_t::debug), "{debug, info, warning, error, critical}")
-    ("log-file,l", po::value(&cfg.log_file)->required(), "log file name")
-    ("max-resident,r", po::value(&cfg.max_resident)->required(),
-     "max methylomes resident in memory at once")
-    ("n-threads,t", po::value(&cfg.n_threads)->required(),
-     "number of threads to use (one per connection)")
-    ("min-bin-size,b", po::value(&cfg.min_bin_size)
-     ->default_value(xfr::request::min_bin_size_default), "Minimum bin size for a request")
-    ("max-intervals,i", po::value(&cfg.max_intervals)
-     ->default_value(xfr::request::max_intervals_default), "Maximum number of intervals in a request")
-    ("pid-file,P", po::value(&cfg.pid_file), "Filename to use for the PID when daemonizing")
-    // clang-format on
-    ;
-  po::variables_map vm;
-  try {
-    po::store(po::parse_command_line(argc, argv, opts), vm);
-    if (vm.count("help") || argc == 1) {
-      std::println("{}\n{}", about_msg, usage);
-      opts.print(std::cout);
-      std::println("\n{}", description_msg);
-      return EXIT_SUCCESS;
-    }
-    po::notify(vm);
+  if (argc < 2) {
+    std::println("{}", app.help());
+    return EXIT_SUCCESS;
   }
-  catch (po::error &e) {
-    std::println("{}", e.what());
-    return EXIT_FAILURE;
-  }
+  CLI11_PARSE(app, argc, argv);
 
   std::error_code error;
-  const auto config_file =
-    xfr::server_config::get_config_file(cfg.config_dir, error);
+  const auto config_file = xfr::server_config::get_config_file(cfg.config_dir);
   if (error) {
     std::println("Failed to get config file for {}: {}", cfg.config_dir, error);
     return EXIT_FAILURE;
@@ -190,9 +176,9 @@ command_server_config_main(int argc, char *argv[])  // NOLINT(*-c-arrays)
     return EXIT_FAILURE;
   }
 
-  const auto write_err = transferase::write_config_file(cfg, config_file);
+  const auto write_err = cfg.write(config_file);
   if (write_err) {
-    std::println("Error writing config file {}: {}", config_file, write_err);
+    std::println("Error: {} ({})", config_file, write_err);
     return EXIT_FAILURE;
   }
 

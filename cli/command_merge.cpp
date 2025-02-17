@@ -49,7 +49,7 @@ xfr merge -o merged.m16 -i SRX0123*.m16
 #include "methylome.hpp"
 #include "utilities.hpp"
 
-#include <boost/program_options.hpp>
+#include "CLI11/CLI11.hpp"
 
 #include <chrono>
 #include <cstdlib>  // for EXIT_FAILURE, EXIT_SUCCESS
@@ -66,69 +66,61 @@ xfr merge -o merged.m16 -i SRX0123*.m16
 #include <vector>
 
 auto
-command_merge_main(int argc,
-                   char *argv[])  // NOLINT(cppcoreguidelines-avoid-c-arrays)
-  -> int {
+command_merge_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
   static constexpr auto command = "merge";
   static const auto usage =
-    std::format("Usage: xfr {} [options]\n", rstrip(command));
+    std::format("Usage: xfr {} [options]", rstrip(command));
   static const auto about_msg =
     std::format("xfr {}: {}", rstrip(command), rstrip(about));
   static const auto description_msg =
     std::format("{}\n{}", rstrip(description), rstrip(examples));
 
-  using transferase::log_args;
-  using transferase::log_level_t;
-  using transferase::logger;
-  using transferase::methylome;
-  using transferase::shared_from_cout;
+  namespace xfr = transferase;
 
-  log_level_t log_level{};
+  xfr::log_level_t log_level{};
   std::string methylome_dir{};
   std::string methylome_outdir{};
   std::string merged_name{};
+  std::vector<std::string> methylome_names;
 
-  namespace po = boost::program_options;
+  CLI::App app{about_msg};
+  argv = app.ensure_utf8(argv);
+  app.usage(usage);
+  if (argc >= 2)
+    app.footer(description_msg);
+  app.get_formatter()->column_width(40);
+  app.get_formatter()->label("REQUIRED", "REQD");
+  // clang-format off
+  app.add_option("-m,--methylomes", methylome_names, "names of methylomes to merge");
+  app.add_option("-d,--methylome-dir", methylome_dir, "input methylome directory")
+    ->required()
+    ->check(CLI::ExistingDirectory);
+  app.add_option("-o,--output-dir", methylome_outdir, "methylome output directory")
+    ->required()
+    ->check(CLI::ExistingDirectory);
+  app.add_option("-n,--name", merged_name, "merged methylome name")
+    ->required();
+  app.add_option("-v,--log-level", log_level, "{debug, info, warning, error, critical}")
+    ->option_text("ENUM")
+    ->default_str("info")
+    ->description("{debug, info, warning, error, critical}")
+    ->transform(CLI::CheckedTransformer(xfr::log_level_cli11, CLI::ignore_case));
+  // clang-format on
 
-  po::options_description desc("Options");
-  desc.add_options()
-    // clang-format off
-    ("help,h", "print this message and exit")
-    ("methylomes,m", po::value<std::vector<std::string>>()->multitoken()->required(),
-     "names of methylomes to merge")
-    ("methylome-dir,d", po::value(&methylome_dir)->required(), "methylome input directory")
-    ("output-dir,o", po::value(&methylome_outdir)->required(), "methylome output directory")
-    ("name,n", po::value(&merged_name)->required(), "merged methylome name")
-    ("log-level,v", po::value(&log_level)->default_value(logger::default_level),
-     "{debug, info, warning, error, critical}")
-    // clang-format on
-    ;
-  po::variables_map vm;
-  try {
-    po::store(po::parse_command_line(argc, argv, desc), vm);
-    if (vm.count("help") || argc == 1) {
-      std::println("{}\n{}", about_msg, usage);
-      desc.print(std::cout);
-      std::println("\n{}", description_msg);
-      return EXIT_SUCCESS;
-    }
-    po::notify(vm);
-  }
-  catch (po::error &e) {
-    std::println("{}", e.what());
-    std::println("{}\n{}", about_msg, usage);
-    desc.print(std::cout);
-    std::println("\n{}", description_msg);
-    return EXIT_FAILURE;
+  if (argc < 2) {
+    std::println("{}", app.help());
+    return EXIT_SUCCESS;
   }
 
-  auto &lgr = logger::instance(shared_from_cout(), command, log_level);
+  CLI11_PARSE(app, argc, argv);
+
+  auto &lgr =
+    xfr::logger::instance(xfr::shared_from_cout(), command, log_level);
   if (!lgr) {
     std::println("Failure initializing logging: {}.", lgr.get_status());
     return EXIT_FAILURE;
   }
 
-  const auto methylome_names = vm["methylomes"].as<std::vector<std::string>>();
   const auto n_methylomes = std::size(methylome_names);
 
   std::vector<std::tuple<std::string, std::string>> args_to_log{
@@ -139,14 +131,14 @@ command_merge_main(int argc,
     {"Number of methylomes to merge", std::format("{}", n_methylomes)},
     // clang-format on
   };
-  log_args<log_level_t::info>(args_to_log);
+  xfr::log_args<xfr::log_level_t::info>(args_to_log);
 
   std::vector<std::tuple<std::string, std::string>> filenames_to_log;
   for (const auto [i, filename] : std::views::enumerate(methylome_names))
     filenames_to_log.emplace_back(std::format("Methylome{}", i), filename);
-  log_args<log_level_t::debug>(filenames_to_log);
+  xfr::log_args<xfr::log_level_t::debug>(filenames_to_log);
 
-  std::error_code ec;
+  std::error_code error;
   double read_time{};
 
   // ADS: first read the last methylome in the input files list as we only
@@ -154,12 +146,12 @@ command_merge_main(int argc,
   // empty methylome, so we need a real one outside the loop
   const auto &last_methylome = methylome_names.back();
   auto read_start = std::chrono::high_resolution_clock::now();
-  auto meth = methylome::read(methylome_dir, last_methylome, ec);
+  auto meth = xfr::methylome::read(methylome_dir, last_methylome, error);
   auto read_stop = std::chrono::high_resolution_clock::now();
   read_time += duration(read_start, read_stop);
-  if (ec) {
+  if (error) {
     lgr.error("Error reading methylome {} {}: {}", methylome_dir,
-              last_methylome, ec);
+              last_methylome, error);
     return EXIT_FAILURE;
   }
 
@@ -171,11 +163,11 @@ command_merge_main(int argc,
   for (const auto &name :
        methylome_names | std::views::take(n_methylomes - 1)) {
     read_start = std::chrono::high_resolution_clock::now();
-    const auto tmp_meth = methylome::read(methylome_dir, name, ec);
+    const auto tmp_meth = xfr::methylome::read(methylome_dir, name, error);
     read_stop = std::chrono::high_resolution_clock::now();
     read_time += duration(read_start, read_stop);
-    if (ec) {
-      lgr.error("Error reading methylome {}: {}", methylome_dir, name, ec);
+    if (error) {
+      lgr.error("Error reading methylome {}: {}", methylome_dir, name, error);
       return EXIT_FAILURE;
     }
     const auto is_consistent = meth.is_consistent(tmp_meth);
@@ -189,18 +181,18 @@ command_merge_main(int argc,
     merge_time += duration(merge_start, merge_stop);
   }
 
-  ec = meth.update_metadata();
-  if (ec) {
-    lgr.error("Error updating metadata: {}", ec);
+  error = meth.update_metadata();
+  if (error) {
+    lgr.error("Error updating metadata: {}", error);
     return EXIT_FAILURE;
   }
 
   const auto write_start = std::chrono::high_resolution_clock::now();
-  meth.write(methylome_outdir, merged_name, ec);
+  meth.write(methylome_outdir, merged_name, error);
   const auto write_stop = std::chrono::high_resolution_clock::now();
-  if (ec) {
+  if (error) {
     lgr.error("Error writing methylome {} {}: {}", methylome_outdir,
-              merged_name, ec);
+              merged_name, error);
     return EXIT_FAILURE;
   }
   const auto write_time = duration(write_start, write_stop);
@@ -212,7 +204,7 @@ command_merge_main(int argc,
     {"write time", std::format("{:.3}s", write_time)},
     // clang-format on
   };
-  log_args<log_level_t::debug>(timing_to_log);
+  xfr::log_args<xfr::log_level_t::debug>(timing_to_log);
 
   return EXIT_SUCCESS;
 }

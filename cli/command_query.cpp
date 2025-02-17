@@ -70,7 +70,7 @@ xfr query --local -d methylome_dir -x index_dir -g hg38 \
 #include "request_type_code.hpp"
 #include "utilities.hpp"
 
-#include <boost/program_options.hpp>
+#include "CLI11/CLI11.hpp"
 
 #include <algorithm>  // IWYU pragma: keep
 #include <cerrno>     // for errno
@@ -271,7 +271,7 @@ do_bins_query(const std::uint32_t bin_size, const bool count_covered,
 auto
 command_query_main(int argc, char *argv[]) -> int {  // NOLINT
   static constexpr auto command = "query";
-  static const auto usage = std::format("Usage: xfr {} [options]\n", command);
+  static const auto usage = std::format("Usage: xfr {} [options]", command);
   static const auto about_msg =
     std::format("xfr {}: {}", rstrip(command), rstrip(about));
   static const auto description_msg =
@@ -309,62 +309,73 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
   cfg.config_dir =
     xfr::client_config::get_default_config_dir(default_config_dir_error);
 
-  namespace po = boost::program_options;
+  CLI::App app{about_msg};
+  argv = app.ensure_utf8(argv);
+  app.usage(usage);
+  if (argc >= 2)
+    app.footer(description_msg);
+  app.get_formatter()->column_width(40);
+  app.get_formatter()->label("REQUIRED", "REQD");
+  // clang-format off
+  app.add_option("-c,--config-dir", cfg.config_dir, "specify a config directory");
+  const auto local_mode_opt =
+    app.add_flag("-L,--local", local_mode, "run in local mode");
+  const auto intervals_file_opt =
+    app.add_option("-i,--intervals-file", intervals_file, "intervals file");
+  app.add_option("-b,--bin-size", bin_size, "size of genomic bins")
+    ->excludes(intervals_file_opt);
+  app.add_option("-g,--genome", genome_name, "genome name")
+    ->required();
+  const auto methylome_names_opt =
+    app.add_option("-m,--methylomes", methylome_names,
+                   "methylome names (comma separated)");
+  app.add_option("-M,--methylomes-file", methylomes_file,
+                 "methylomes file (text file; one methylome per line)")
+    ->excludes(methylome_names_opt)
+    ->check(CLI::ExistingFile);
+  app.add_option("-o,--out-file", output_file, "output file");
+  app.add_flag("-C,--covered", count_covered,
+               "count covered sites for each interval");
+  app.add_option("-f,--out-fmt", out_fmt,
+                 "output format {counts=1, bedgraph=2, dataframe=3, dfscores=4}")
+    ->option_text("ENUM")
+    ->default_str("counts")
+    ->transform(CLI::CheckedTransformer(xfr::output_format_cli11, CLI::ignore_case));
+  app.add_option("-r,--min-reads", min_reads,
+                 "for fractional output, require this many reads");
+  app.add_option("-s,--hostname", cfg.hostname, "server hostname");
+  app.add_option("-p,--port", cfg.port, "server port");
+  app.add_option("-d,--methylome-dir", cfg.methylome_dir,
+                 "methylome directory (local mode only)")
+    ->needs(local_mode_opt);
+  app.add_option("-x,--index-dir", cfg.index_dir,
+                 "genome index directory");
+  app.add_option("-l,--log-file", cfg.log_file,
+                 "log file name (defaults: print to screen)");
+  app.add_option("-v,--log-level", cfg.log_level,
+                 "{debug, info, warning, error, critical}")
+    ->option_text("ENUM [info]")
+    ->default_str("info")
+    ->transform(CLI::CheckedTransformer(xfr::log_level_cli11, CLI::ignore_case));
+  // clang-format on
 
-  po::options_description opts("Options");
-  opts.add_options()
-    // clang-format off
-    ("help,h", "print this message and exit")
-    ("config-dir,c", po::value(&cfg.config_dir), "specify a config directory")
-    ("local", po::bool_switch(&local_mode), "run in local mode")
-    ("bin-size,b", po::value(&bin_size), "size of genomic bins")
-    ("intervals-file,i", po::value(&intervals_file), "intervals file")
-    ("genome,g", po::value(&genome_name)->required(), "genome name")
-    ("methylomes,m", po::value(&methylome_names),
-     "methylome names (comma separated)")
-    ("methylomes-file,M", po::value(&methylomes_file),
-     "methylomes file (text file; one methylome per line)")
-    ("out-file,o", po::value(&output_file)->required(), "output file")
-    ("covered,C", po::bool_switch(&count_covered),
-     "count covered sites for each interval")
-    ("out-fmt,f", po::value(&out_fmt)->default_value(xfr::output_format_t::counts, "1"),
-     "output format {counts=1, bedgraph=2, dataframe=3, dfscores=4}")
-    ("min-reads,r", po::value(&min_reads)->default_value(1),
-     "for fractional output, require this many reads")
-    ("hostname,s", po::value(&cfg.hostname), "server hostname")
-    ("port,p", po::value(&cfg.port), "server port")
-    ("methylome-dir,d", po::value(&cfg.methylome_dir),
-     "methylome directory (local mode only)")
-    ("index-dir,x", po::value(&cfg.index_dir),
-     "genome index directory")
-    ("log-level,v", po::value(&cfg.log_level)->default_value(xfr::log_level_t::info),
-     "{debug, info, warning, error, critical}")
-    ("log-file,l", po::value(&cfg.log_file)->value_name("[arg]"),
-     "log file name (defaults: print to screen)")
-    // clang-format on
-    ;
-  po::variables_map vm;
-  try {
-    po::store(po::parse_command_line(argc, argv, opts), vm);
-    if (vm.count("help") || argc == 1) {
-      std::println("{}\n{}", about_msg, usage);
-      opts.print(std::cout);
-      std::println("\n{}", description_msg);
-      return EXIT_SUCCESS;
-    }
-    po::notify(vm);
+  if (argc < 2) {
+    std::println("{}", app.help());
+    return EXIT_SUCCESS;
   }
-  catch (po::error &e) {
-    std::println("{}", e.what());
-    return EXIT_FAILURE;
-  }
+  CLI11_PARSE(app, argc, argv);
+
+  // make any assigned paths absolute so that subsequent composition
+  // with any config_dir will not overwrite any relative path
+  // specified on the command line.
+  cfg.make_paths_absolute();
 
   // Attempting to load values from config file in cfg.config_dir but
   // deferring error reporting as all values might have been specified
   // on the command line. If the user didn't specify a config dir,
   // this will try to parse from the default.
-  std::error_code error;
-  cfg.read_config_file_no_overwrite(error);
+  std::error_code read_config_file_error;
+  cfg.read_config_file_no_overwrite(read_config_file_error);
 
   auto &lgr =
     xfr::logger::instance(xfr::shared_from_cout(), command, cfg.log_level);
@@ -431,6 +442,7 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
   };
   xfr::log_args<xfr::log_level_t::info>(args_to_log);
 
+  std::error_code error;
   const auto index =
     xfr::genome_index::read(cfg.get_index_dir(), genome_name, error);
   if (error) {

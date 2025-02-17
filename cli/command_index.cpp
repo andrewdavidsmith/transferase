@@ -50,7 +50,7 @@ xfr index -v debug -x /path/to/index_directory -g hg38.fa
 #include "logger.hpp"
 #include "utilities.hpp"
 
-#include <boost/program_options.hpp>
+#include "CLI11/CLI11.hpp"
 
 #include <chrono>
 #include <format>
@@ -69,53 +69,46 @@ command_index_main(int argc, char *argv[])  // NOLINT(*-c-arrays)
   -> int {
   static constexpr auto command = "index";
   static const auto usage =
-    std::format("Usage: xfr {} [options]\n", rstrip(command));
+    std::format("Usage: xfr {} [options]", rstrip(command));
   static const auto about_msg =
     std::format("xfr {}: {}", rstrip(command), rstrip(about));
   static const auto description_msg =
     std::format("{}\n{}", rstrip(description), rstrip(examples));
 
+  namespace xfr = transferase;
+
   std::string genome_filename{};
   std::string index_file{};
   std::string index_directory{};
-  transferase::log_level_t log_level{};
+  xfr::log_level_t log_level{};
 
-  namespace po = boost::program_options;
+  CLI::App app{about_msg};
+  argv = app.ensure_utf8(argv);
+  app.usage(usage);
+  if (argc >= 2)
+    app.footer(description_msg);
+  app.get_formatter()->column_width(40);
+  app.get_formatter()->label("REQUIRED", "REQD");
+  // clang-format off
+  app.add_option("-g,--genome", genome_filename,
+                 "genome_file")->required();
+  app.add_option("-x,--index-dir", index_directory,
+                 "index output directory")->required();
+  app.add_option("-v,--log-level", log_level,
+                 "{debug, info, warning, error, critical}")
+    ->option_text("ENUM [info]")
+    ->default_str("info")
+    ->transform(CLI::CheckedTransformer(xfr::log_level_cli11, CLI::ignore_case));
+  // clang-format on
 
-  po::options_description desc("Options");
-  desc.add_options()
-    // clang-format off
-    ("help,h", "print this message and exit")
-    ("genome,g", po::value(&genome_filename)->required(),
-     "genome_file")
-    ("index-dir,x", po::value(&index_directory)->required(),
-     "index output directory")
-    ("log-level,v", po::value(&log_level)
-     ->default_value(transferase::logger::default_level),
-     "{debug, info, warning, error, critical}")
-    // clang-format on
-    ;
-  try {
-    po::variables_map vm;
-    po::store(po::parse_command_line(argc, argv, desc), vm);
-    if (vm.count("help") || argc == 1) {
-      std::println("{}\n{}", about_msg, usage);
-      desc.print(std::cout);
-      std::println("\n{}", description_msg);
-      return EXIT_SUCCESS;
-    }
-    po::notify(vm);
+  if (argc < 2) {
+    std::println("{}", app.help());
+    return EXIT_SUCCESS;
   }
-  catch (po::error &e) {
-    std::println("{}", e.what());
-    std::println("{}\n{}", about_msg, usage);
-    desc.print(std::cout);
-    std::println("\n{}", description_msg);
-    return EXIT_FAILURE;
-  }
+  CLI11_PARSE(app, argc, argv);
 
-  auto &lgr = transferase::logger::instance(transferase::shared_from_cout(),
-                                            command, log_level);
+  auto &lgr =
+    xfr::logger::instance(xfr::shared_from_cout(), command, log_level);
   if (!lgr) {
     lgr.error("Failure initializing logging: {}.", lgr.get_status());
     return EXIT_FAILURE;
@@ -127,11 +120,11 @@ command_index_main(int argc, char *argv[])  // NOLINT(*-c-arrays)
     {"Index directory", index_directory},
     // clang-format on
   };
-  transferase::log_args<transferase::log_level_t::info>(args_to_log);
+  xfr::log_args<xfr::log_level_t::info>(args_to_log);
 
   std::error_code error;
   const auto genome_name =
-    transferase::genome_index::parse_genome_name(genome_filename, error);
+    xfr::genome_index::parse_genome_name(genome_filename, error);
   if (error) {
     lgr.error("Failed to parse genome name from: {}", genome_filename);
     return EXIT_FAILURE;
@@ -140,7 +133,7 @@ command_index_main(int argc, char *argv[])  // NOLINT(*-c-arrays)
 
   const auto constr_start = std::chrono::high_resolution_clock::now();
   const auto index =
-    transferase::genome_index::make_genome_index(genome_filename, error);
+    xfr::genome_index::make_genome_index(genome_filename, error);
   const auto constr_stop = std::chrono::high_resolution_clock::now();
   if (error) {
     if (error == std::errc::no_such_file_or_directory)
