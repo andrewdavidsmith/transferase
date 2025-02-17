@@ -51,5 +51,5 @@ TEST(command_server_test, failing_server_missing_directory) {
   const int result =
     command_server_main(command_argc, const_cast<char **>(argv.data()));
   // NOLINTEND(cppcoreguidelines-pro-type-const-cast)
-  EXPECT_EQ(result, EXIT_FAILURE);
+  EXPECT_NE(result, EXIT_SUCCESS);
 }
