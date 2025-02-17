@@ -130,15 +130,6 @@ private:
                                  port_number)
 };
 
-// clang-format off
-BOOST_DESCRIBE_STRUCT(methylome_interface, (),
-(
- directory,
- hostname,
- port_number
-))
-// clang-format on
-
 }  // namespace transferase
 
 #endif  // LIB_METHYLOME_INTERFACE_HPP_
