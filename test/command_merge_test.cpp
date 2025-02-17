@@ -73,13 +73,11 @@ TEST(command_merge_test, basic_local_test) {
     "debug",
     // clang-format on
   };
-  const int command_argc = sizeof(argv) / sizeof(argv[0]);
+  const int argc = sizeof(argv) / sizeof(argv[0]);
 
   // Run the main function
-  // NOLINTBEGIN(cppcoreguidelines-pro-type-const-cast)
-  const int result =
-    command_merge_main(command_argc, const_cast<char **>(argv.data()));
-  // NOLINTEND(cppcoreguidelines-pro-type-const-cast)
+  // NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast)
+  const int result = command_merge_main(argc, const_cast<char **>(argv.data()));
   EXPECT_EQ(result, EXIT_SUCCESS);
 
   std::error_code ec;
