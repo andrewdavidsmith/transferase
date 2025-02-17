@@ -63,7 +63,7 @@ static const std::map<std::string, download_policy_t> download_policy_cli11{
 };
 
 // clang-format off
-NLOHMANN_JSON_SERIALIZE_ENUM(log_level_t, {
+NLOHMANN_JSON_SERIALIZE_ENUM(download_policy_t, {
     {download_policy_t::none, "none"},
     {download_policy_t::missing, "missing"},
     {download_policy_t::update, "update"},
