@@ -26,8 +26,6 @@
 
 #include "nlohmann/json.hpp"
 
-#include <boost/describe.hpp>
-
 #include <cstdint>
 #include <ranges>
 #include <string>
@@ -57,17 +55,13 @@ struct transferase_metadata {
     return genome_to_methylomes | std::views::elements<0> |
            std::ranges::to<std::vector<std::string>>();
   }
+
+  [[nodiscard]] auto
+  tostring() const -> std::string;
+
   NLOHMANN_DEFINE_TYPE_INTRUSIVE(transferase_metadata, genome_to_methylomes,
                                  methylome_to_genome)
 };
-
-// clang-format off
-BOOST_DESCRIBE_STRUCT(transferase_metadata, (),
-(
- genome_to_methylomes,
- methylome_to_genome
-))
-// clang-format on
 
 }  // namespace transferase
 

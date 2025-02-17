@@ -102,4 +102,11 @@ transferase_metadata::read(const std::string &json_filename,
   return m;
 }
 
+[[nodiscard]] auto
+transferase_metadata::tostring() const -> std::string {
+  static constexpr auto n_indent = 4;
+  nlohmann::json data = *this;
+  return data.dump(n_indent);
+}
+
 }  // namespace transferase
