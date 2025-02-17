@@ -46,13 +46,16 @@ protected:
   SetUp() -> void override {
     static const std::string last_dir_part = "transferase";
     logger::instance(shared_from_cout(), "none", log_level_t::debug);
-    const std::string payload = R"config(hostname = bulbapedia.bulbagarden.net
-port = 9000
-# index-dir =
-# metadata-file =
-# methylome-dir =
-# log-file =
-# log-level = info
+    const std::string payload = R"config({
+    "config_dir": "",
+    "hostname": "bulbapedia.bulbagarden.net",
+    "index_dir": "",
+    "log_file": "",
+    "log_level": "debug",
+    "metadata_file": "",
+    "methylome_dir": "",
+    "port": "9000"
+}
 )config";
     config_dir = (std::filesystem::current_path() / last_dir_part).string();
     const bool config_dir_exists = std::filesystem::exists(config_dir);
@@ -226,8 +229,12 @@ TEST_F(client_config_mock, read_metadata_success) {
   EXPECT_TRUE(validate_ok);
   EXPECT_FALSE(error) << error.message();
 
+  cfg.load_transferase_metadata(error);
+  EXPECT_FALSE(error) << cfg.tostring() << "\t" << error << "\n";
+
   const auto all_genomes = cfg.meta.available_genomes();
-  EXPECT_FALSE(all_genomes.empty()) << cfg.metadata_file << "\n";
+  EXPECT_FALSE(all_genomes.empty()) << cfg.meta.tostring() << "\n"
+                                    << cfg.metadata_file << "\n";
   EXPECT_EQ(std::size(all_genomes), n_lutions);
 }
 
@@ -249,9 +256,9 @@ TEST_F(client_config_mock, re_read_config_file_success) {
   cfg.read_config_file_no_overwrite(error);
   EXPECT_FALSE(error) << error.message() << "\n";
 
-  EXPECT_EQ(cfg.hostname, mock_hostname);
-  EXPECT_EQ(cfg.methylome_dir, mock_methylome_dir);
-  EXPECT_EQ(cfg.port, "9000");
-  EXPECT_EQ(cfg.index_dir, "indexes");
-  EXPECT_EQ(cfg.metadata_file, "metadata.json");
+  EXPECT_EQ(cfg.hostname, mock_hostname) << cfg.tostring() << "\n";
+  EXPECT_EQ(cfg.methylome_dir, mock_methylome_dir) << cfg.tostring() << "\n";
+  EXPECT_EQ(cfg.port, "9000") << cfg.tostring() << "\n";
+  EXPECT_EQ(cfg.index_dir, "indexes") << cfg.tostring() << "\n";
+  EXPECT_EQ(cfg.metadata_file, "metadata.json") << cfg.tostring() << "\n";
 }
