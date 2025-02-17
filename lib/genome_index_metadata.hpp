@@ -26,8 +26,6 @@
 
 #include "nlohmann/json.hpp"
 
-#include <boost/describe.hpp>  // for BOOST_DESCRIBE_STRUCT
-
 #include <cstdint>  // for uint32_t, int32_t
 #include <filesystem>
 #include <format>
@@ -95,23 +93,6 @@ struct genome_index_metadata {
                                  chrom_index, chrom_order, chrom_size,
                                  chrom_offset)
 };
-
-// clang-format off
-BOOST_DESCRIBE_STRUCT(genome_index_metadata, (),
-(
- version,
- host,
- user,
- creation_time,
- index_hash,
- genome_name,
- n_cpgs,
- chrom_index,
- chrom_order,
- chrom_size,
- chrom_offset
-))
-// clang-format on
 
 }  // namespace transferase
 
