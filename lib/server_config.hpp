@@ -37,12 +37,14 @@
 namespace transferase {
 
 struct server_config {
+  static constexpr auto max_n_threads = 1024;
+  static constexpr auto max_max_resident = 8192;
   static constexpr auto server_config_filename_default =
     "transferase_server.json";
 
   std::string config_dir;
   std::string hostname;
-  std::string port;
+  std::uint16_t port{};
   std::string methylome_dir;
   std::string index_dir;
   std::string log_file;
