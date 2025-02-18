@@ -96,8 +96,9 @@ methylome_metadata::write(const std::string &json_filename) const
 
 [[nodiscard]] auto
 methylome_metadata::tostring() const -> std::string {
+  static constexpr auto n_indent = 4;
   nlohmann::json data = *this;
-  return data.dump();
+  return data.dump(n_indent);
 }
 
 }  // namespace transferase

@@ -66,8 +66,9 @@ genome_index_metadata::get_n_bins(const std::uint32_t bin_size) const noexcept
 
 [[nodiscard]] auto
 genome_index_metadata::tostring() const noexcept -> std::string {
+  static constexpr auto n_indent = 4;
   nlohmann::json data = *this;
-  return data.dump();
+  return data.dump(n_indent);
 }
 
 [[nodiscard]] auto

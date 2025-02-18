@@ -43,8 +43,9 @@ public:
 
   [[nodiscard]] auto
   tostring() const noexcept -> std::string {
+    static constexpr auto n_indent = 4;
     nlohmann::json data = *this;
-    return data.dump();
+    return data.dump(n_indent);
   }
 
   // intervals: takes a query
