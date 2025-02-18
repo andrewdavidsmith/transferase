@@ -395,6 +395,7 @@ command_format_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
     app.footer(description_msg);
   app.get_formatter()->column_width(column_width_default);
   app.get_formatter()->label("REQUIRED", "REQD");
+  app.set_help_flag("-h,--help", "Print a detailed help message and exit");
   // clang-format off
   const auto config_dir_opt =
     app.add_option("-c,--config-dir", config_dir,

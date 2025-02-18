@@ -537,6 +537,7 @@ command_select_main(int argc, char *argv[]) -> int {  // NOLINT
     app.footer(description_msg);
   app.get_formatter()->column_width(column_width_default);
   app.get_formatter()->label("REQUIRED", "REQD");
+  app.set_help_flag("-h,--help", "Print a detailed help message and exit");
   // clang-format off
   app.add_option("-g,--genome", genome_name, "use this genome")->required();
   app.add_option("-o,--output", output_file, "output file")->required();
