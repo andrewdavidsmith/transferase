@@ -131,6 +131,7 @@ command_server_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
     app.footer(description_msg);
   app.get_formatter()->column_width(column_width_default);
   app.get_formatter()->label("REQUIRED", "REQD");
+  app.set_help_flag("-h,--help", "Print a detailed help message and exit");
   // clang-format off
   app.add_option("-c,--config-file", config_file,
                  "read configuration from this file")
@@ -200,7 +201,7 @@ command_server_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
     // clang-format off
     {"Config file", config_file},
     {"Hostname", cfg.hostname},
-    {"Port", cfg.port},
+    {"Port", std::format("{}", cfg.port)},
     {"Methylome dir", cfg.methylome_dir},
     {"Index dir", cfg.index_dir},
     {"Log file", cfg.log_file},
@@ -230,9 +231,9 @@ command_server_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
     return EXIT_FAILURE;
 
   if (daemonize) {
-    auto s = xfr::server(cfg.hostname, cfg.port, cfg.n_threads, methylome_dir,
-                         index_dir, cfg.max_resident, lgr, error, daemonize,
-                         cfg.pid_file);
+    auto s = xfr::server(cfg.hostname, std::format("{}", cfg.port),
+                         cfg.n_threads, methylome_dir, index_dir,
+                         cfg.max_resident, lgr, error, daemonize, cfg.pid_file);
     if (error) {
       lgr.error("Failure daemonizing server: {}", error);
       return EXIT_FAILURE;
@@ -240,8 +241,9 @@ command_server_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
     s.run();
   }
   else {
-    auto s = xfr::server(cfg.hostname, cfg.port, cfg.n_threads, methylome_dir,
-                         index_dir, cfg.max_resident, lgr, error);
+    auto s =
+      xfr::server(cfg.hostname, std::format("{}", cfg.port), cfg.n_threads,
+                  methylome_dir, index_dir, cfg.max_resident, lgr, error);
     if (error) {
       lgr.error("Failure initializing server: {}", error);
       return EXIT_FAILURE;
