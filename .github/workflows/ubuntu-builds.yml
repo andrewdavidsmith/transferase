@@ -10,31 +10,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install dependencies
-        run: |
-          apt-get update && \
-          apt-get install -y --no-install-recommends \
-          autoconf \
-          automake \
-          binutils \
-          ca-certificates \
-          cmake \
-          g++-14 \
-          gcc-14 \
-          git \
-          libboost-all-dev \
-          libc6-dev \
-          libgmp-dev \
-          libgtest-dev \
-          libisl-dev \
-          libmpc-dev \
-          libmpfr-dev \
-          libssl-dev \
-          make \
-          ninja-build \
-          wget \
-          zlib1g-dev \
-          git
       - name: Configure
         run: |
           cmake -B build \
