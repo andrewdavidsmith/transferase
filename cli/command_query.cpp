@@ -326,16 +326,21 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
   const auto local_mode_opt =
     app.add_flag("-L,--local", local_mode, "run in local mode");
   const auto intervals_file_opt =
-    app.add_option("-i,--intervals-file", intervals_file, "intervals file");
+    app.add_option("-i,--intervals-file", intervals_file, "intervals file")
+    ->option_text("FILE")
+    ->check(CLI::ExistingFile);
   app.add_option("-b,--bin-size", bin_size, "size of genomic bins")
+    ->option_text("UINT")
     ->excludes(intervals_file_opt);
   app.add_option("-g,--genome", genome_name, "genome name")
     ->required();
   const auto methylome_names_opt =
     app.add_option("-m,--methylomes", methylome_names,
-                   "methylome names (comma separated)");
+                   "methylome names (comma separated)")
+    ->option_text("TEXT");
   app.add_option("-M,--methylomes-file", methylomes_file,
                  "methylomes file (text file; one methylome per line)")
+    ->option_text("FILE")
     ->excludes(methylome_names_opt)
     ->check(CLI::ExistingFile);
   app.add_option("-o,--out-file", output_file, "output file");
@@ -351,7 +356,9 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
   app.add_option("-p,--port", cfg.port, "server port");
   app.add_option("-d,--methylome-dir", cfg.methylome_dir,
                  "methylome directory (local mode only)")
-    ->needs(local_mode_opt);
+    ->option_text("DIR")
+    ->needs(local_mode_opt)
+    ->check(CLI::ExistingDirectory);
   app.add_option("-x,--index-dir", cfg.index_dir,
                  "genome index directory");
   app.add_option("-l,--log-file", cfg.log_file,
