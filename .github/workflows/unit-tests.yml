@@ -11,26 +11,23 @@ on:
 jobs:
   ubuntu-unit-tests:
     runs-on: ubuntu-latest
-    container: andrewdavidsmith/gcc-cmake-boost
     steps:
       - uses: actions/checkout@v4
       - name: Install dependencies
         run: |
-          apt-get update
-          apt-get install -y zlib1g-dev libgtest-dev ca-certificates
-
-      - name: Configure for unit tests as Build with GCC
+          sudo apt-get update
+          sudo apt-get install -y libboost-all-dev
+          sudo apt-get install zlib1g-dev
+      - name: Configure for unit tests
         run: |
           cmake -B build \
           -DCMAKE_VERBOSE_MAKEFILE=on \
-          -DCMAKE_CXX_COMPILER=g++ \
+          -DCMAKE_CXX_COMPILER=g++-14 \
           -DCMAKE_BUILD_TYPE=Tests
-
-      - name: Build the system
+      - name: Build
         run: |
           cmake --build build -j4
-
-      - name: Run the unit tests
+      - name: Run the tests
         run: |
           export LD_LIBRARY_PATH=/usr/local/lib
           ctest --test-dir build --output-on-failure
