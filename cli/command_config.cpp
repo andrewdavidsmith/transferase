@@ -102,27 +102,28 @@ command_config_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
     app.footer(description_msg);
   app.get_formatter()->column_width(column_width_default);
   app.get_formatter()->label("REQUIRED", "REQD");
+  app.set_help_flag("-h,--help", "Print a detailed help message and exit");
   // clang-format off
   app.add_option("-c,--config-dir", cfg.config_dir,
                  "name of config directory; see help for default");
   app.add_option("-s,--hostname", cfg.hostname, "transferase server hostname");
   app.add_option("-p,--port", cfg.port, "transferase server port");
-  app.add_option("-g,--genomes", genomes_arg,
-                 "download index files for these genomes "
-                 "(comma separated list, e.g. hg38,mm39)");
   app.add_option("-x,--index-dir", cfg.index_dir,
                  "name of a directory to store genome index files");
-  app.add_option("-d,--methylome-dir", cfg.methylome_dir,
-                 "name of a local directory to search for methylomes");
   app.add_option("-L,--metadata-file", cfg.metadata_file,
                  "name of the MethBase2 metadata file");
+  app.add_option("-d,--methylome-dir", cfg.methylome_dir,
+                 "name of a local directory to search for methylomes");
   app.add_option("-v,--log-level", cfg.log_level,
                  "{debug, info, warning, error, critical}")
     ->option_text(std::format("ENUM [{}]", log_level_default))
     ->transform(CLI::CheckedTransformer(xfr::log_level_cli11, CLI::ignore_case));
   app.add_option("-l,--log-file", cfg.log_file,
-                 "log file name (defaults: print to screen)");
-  app.add_option("-M,--download", download_policy,
+                 "log file name (default: print to screen)");
+  app.add_option("-g,--genomes", genomes_arg,
+                 "download index files for these genomes "
+                 "(comma separated list, e.g. hg38,mm39)");
+  app.add_option("--download", download_policy,
                  "download policy (none, missing, update, all)")
     ->option_text(std::format("ENUM [{}]", download_policy_default))
     ->transform(CLI::CheckedTransformer(xfr::download_policy_cli11, CLI::ignore_case));
@@ -154,12 +155,12 @@ command_config_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
     // clang-format off
     {"Config dir", cfg.config_dir},
     {"Hostname", cfg.hostname},
-    {"Port", cfg.port},
+    {"Port", std::to_string(cfg.port)},
     {"Index dir", cfg.index_dir},
     {"Methylome dir", cfg.methylome_dir},
     {"Metadata file", cfg.metadata_file},
     {"Log file", cfg.log_file},
-    {"Log level", std::format("{}", cfg.log_level)},
+    {"Log level", to_string(cfg.log_level)},
     {"Download policy", std::format("{}", download_policy)},
     // clang-format on
   };
