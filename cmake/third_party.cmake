@@ -24,6 +24,10 @@ message(STATUS "Locating REQUIRED third-party packages")
 
 find_package(Threads REQUIRED)
 
+if(POLICY CMP0167)
+  cmake_policy(SET CMP0167 NEW)
+endif()
+
 set(BOOST_COMPONENTS context)
 
 # ZLib
