@@ -26,6 +26,7 @@
 
 #include "nlohmann/json.hpp"
 
+#include <cstdint>
 #include <filesystem>
 #include <format>
 #include <string>
@@ -38,7 +39,7 @@ namespace transferase {
 
 struct remote_data_resources {
   std::string host;
-  std::string port;
+  std::uint16_t port{};
   std::string path;
 
   [[nodiscard]] auto
@@ -66,7 +67,7 @@ struct remote_data_resources {
 
 struct system_config {
   std::string hostname;
-  std::string port;
+  std::uint16_t port{};
   std::vector<remote_data_resources> resources;
   NLOHMANN_DEFINE_TYPE_INTRUSIVE(system_config, hostname, port, resources)
 };
@@ -76,11 +77,11 @@ get_system_config_filename() -> std::string;
 
 [[nodiscard]] auto
 get_transferase_server_info(std::error_code &error) noexcept
-  -> std::tuple<std::string, std::string>;
+  -> std::tuple<std::string, std::uint16_t>;
 
 #ifndef TRANSFERASE_NOEXCEPT
 [[nodiscard]] inline auto
-get_transferase_server_info() -> std::tuple<std::string, std::string> {
+get_transferase_server_info() -> std::tuple<std::string, std::uint16_t> {
   std::error_code error;
   auto res = get_transferase_server_info(error);
   if (error)
@@ -92,12 +93,12 @@ get_transferase_server_info() -> std::tuple<std::string, std::string> {
 [[nodiscard]] auto
 get_transferase_server_info(const std::string &data_dir,
                             std::error_code &error) noexcept
-  -> std::tuple<std::string, std::string>;
+  -> std::tuple<std::string, std::uint16_t>;
 
 #ifndef TRANSFERASE_NOEXCEPT
 [[nodiscard]] inline auto
 get_transferase_server_info(const std::string &data_dir)
-  -> std::tuple<std::string, std::string> {
+  -> std::tuple<std::string, std::uint16_t> {
   std::error_code error;
   auto res = get_transferase_server_info(data_dir, error);
   if (error)
