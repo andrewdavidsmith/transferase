@@ -128,7 +128,7 @@ server_config::read_config_file_no_overwrite(
     config_dir = tmp.config_dir;
   if (hostname.empty())
     hostname = tmp.hostname;
-  if (port.empty())
+  if (port == 0)
     port = tmp.port;
   if (index_dir.empty())
     index_dir = tmp.index_dir;
@@ -151,8 +151,9 @@ server_config::read_config_file_no_overwrite(
 
 [[nodiscard]] auto
 server_config::tostring() const -> std::string {
+  static constexpr auto n_indent = 4;
   nlohmann::json data = *this;
-  return data.dump();
+  return data.dump(n_indent);
 }
 
 [[nodiscard]] auto
@@ -172,27 +173,14 @@ server_config::write(const std::string &config_file) const -> std::error_code {
 /// download any config data.
 [[nodiscard]] auto
 server_config::validate(std::error_code &error) const noexcept -> bool {
-  static constexpr auto max_n_threads = 256;
-  static constexpr auto max_max_resident = 8192;
-
   if (hostname.empty()) {
     error = server_config_error_code::invalid_server_config_information;
     return false;
   }
 
-  if (port.empty()) {
+  if (port == 0) {
     error = server_config_error_code::invalid_server_config_information;
     return false;
-  }
-
-  {
-    // validate the port
-    std::istringstream is(port);
-    std::uint16_t port_value{};
-    if (!(is >> port_value)) {
-      error = server_config_error_code::invalid_server_config_information;
-      return false;
-    }
   }
 
   if (index_dir.empty()) {
@@ -206,6 +194,16 @@ server_config::validate(std::error_code &error) const noexcept -> bool {
   }
 
   if (max_resident == 0 || max_resident > max_max_resident) {
+    error = server_config_error_code::invalid_server_config_information;
+    return false;
+  }
+
+  if (min_bin_size == 0) {
+    error = server_config_error_code::invalid_server_config_information;
+    return false;
+  }
+
+  if (max_intervals == 0) {
     error = server_config_error_code::invalid_server_config_information;
     return false;
   }
