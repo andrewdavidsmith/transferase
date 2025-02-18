@@ -169,7 +169,7 @@ get_meth_file_format(const std::string &filename)
   if (is_xcounts_format(filename))
     return {counts_file_format::xcounts, {}};
 
-  return {counts_file_format::none, {}};
+  return {counts_file_format::unknown, {}};
 }
 
 }  // namespace transferase

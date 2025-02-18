@@ -29,7 +29,9 @@
 // format and parsing lines.
 
 #include <cstdint>
+#include <format>
 #include <string>
+#include <string_view>
 #include <system_error>
 #include <tuple>
 #include <utility>  // std::unreachable
@@ -37,23 +39,19 @@
 namespace transferase {
 
 enum class counts_file_format : std::uint8_t {
-  none = 0,
+  unknown = 0,
   xcounts = 1,
   counts = 2,
 };
 
-[[nodiscard]] inline auto
-message(const counts_file_format format_code) -> std::string {
-  using std::string_literals::operator""s;
+using std::literals::string_view_literals::operator""sv;
+static constexpr auto counts_file_format_name = std::array{
   // clang-format off
-  switch (format_code) {
-  case counts_file_format::none: return "not known"s;
-  case counts_file_format::xcounts: return "xcounts"s;
-  case counts_file_format::counts: return "counts"s;
-  }
+  "unknown"sv,
+  "xcounts"sv,
+  "counts"sv,
   // clang-format on
-  std::unreachable();  // hopefully this is unreacheable
-}
+};
 
 [[nodiscard]] auto
 parse_counts_line(const std::string &line, std::uint32_t &pos,
@@ -64,5 +62,17 @@ get_meth_file_format(const std::string &filename)
   -> std::tuple<counts_file_format, std::error_code>;
 
 }  // namespace transferase
+
+template <>
+struct std::formatter<transferase::counts_file_format>
+  : std::formatter<std::string> {
+  auto
+  format(const transferase::counts_file_format &ff,
+         std::format_context &ctx) const {
+    const auto u = std::to_underlying(ff);
+    return std::format_to(ctx.out(), "{}",
+                          transferase::counts_file_format_name[u]);
+  }
+};
 
 #endif  // LIB_COUNTS_FILE_FORMAT_HPP_

@@ -471,11 +471,11 @@ command_format_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
 
   const auto [format_id, format_err] =
     xfr::get_meth_file_format(methylation_input);
-  if (format_err || format_id == xfr::counts_file_format::none) {
+  if (format_err || format_id == xfr::counts_file_format::unknown) {
     lgr.error("Failed to identify file type for: {}", methylation_input);
     return EXIT_FAILURE;
   }
-  lgr.info("Input file format: {}", message(format_id));
+  lgr.info("Input file format: {}", format_id);
 
   auto [meth_data, meth_data_err] =
     (format_id == xfr::counts_file_format::xcounts)
