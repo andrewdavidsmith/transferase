@@ -57,8 +57,6 @@ namespace transferase {
   - message
 */
 
-using std::literals::string_view_literals::operator""sv;
-
 enum class log_level_t : std::uint8_t {
   debug,
   info,
@@ -86,6 +84,7 @@ NLOHMANN_JSON_SERIALIZE_ENUM(log_level_t, {
   })
 // clang-format on
 
+using std::literals::string_view_literals::operator""sv;
 static constexpr auto level_name = std::array{
   // clang-format off
   "debug"sv,
@@ -93,6 +92,17 @@ static constexpr auto level_name = std::array{
   "warning"sv,
   "error"sv,
   "critical"sv,
+  // clang-format on
+};
+
+using std::literals::string_literals::operator""s;
+static constexpr auto level_name_str = std::array{
+  // clang-format off
+  "debug"s,
+  "info"s,
+  "warning"s,
+  "error"s,
+  "critical"s,
   // clang-format on
 };
 
@@ -298,10 +308,16 @@ log_args(std::ranges::input_range auto &&key_value_pairs) {
 
 }  // namespace transferase
 
+[[nodiscard]] inline auto
+to_string(const transferase::log_level_t l) -> std::string {
+  const auto u = std::to_underlying(l);
+  return transferase::level_name_str[u];
+}
+
 template <>
 struct std::formatter<transferase::log_level_t> : std::formatter<std::string> {
   auto
-  format(const transferase::log_level_t &lvl, std::format_context &ctx) const {
+  format(const transferase::log_level_t lvl, std::format_context &ctx) const {
     const auto l = std::to_underlying(lvl);
     return std::format_to(ctx.out(), "{}", transferase::level_name[l]);
   }
