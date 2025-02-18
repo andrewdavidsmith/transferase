@@ -47,7 +47,7 @@ get_system_config_filename() -> std::string {
 [[nodiscard]] static inline auto
 get_transferase_server_info_impl(const std::string &data_dir,
                                  std::error_code &error) noexcept
-  -> std::tuple<std::string, std::uint16_t> {
+  -> std::tuple<std::string, std::string> {
   auto &lgr = transferase::logger::instance();
   const bool is_dir = std::filesystem::is_directory(data_dir, error);
   if (error) {
@@ -80,7 +80,7 @@ get_transferase_server_info_impl(const std::string &data_dir,
 /// the transferase server.
 [[nodiscard]] auto
 get_transferase_server_info(std::error_code &error) noexcept
-  -> std::tuple<std::string, std::uint16_t> {
+  -> std::tuple<std::string, std::string> {
   // ADS: this function prints error messages itself, so no need to
   // log based on error code returned
   static const auto exe_path = find_path_to_binary();
@@ -112,7 +112,7 @@ get_transferase_server_info(std::error_code &error) noexcept
 [[nodiscard]] auto
 get_transferase_server_info(const std::string &data_dir,
                             std::error_code &error) noexcept
-  -> std::tuple<std::string, std::uint16_t> {
+  -> std::tuple<std::string, std::string> {
   return get_transferase_server_info_impl(data_dir, error);
 }
 

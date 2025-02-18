@@ -331,7 +331,7 @@ client_config::read_config_file_no_overwrite(std::error_code &error) noexcept
     config_dir = tmp.config_dir;
   if (hostname.empty())
     hostname = tmp.hostname;
-  if (port == 0)
+  if (port.empty())
     port = tmp.port;
   if (index_dir.empty())
     index_dir = tmp.index_dir;
@@ -370,7 +370,7 @@ client_config::save(std::error_code &error) const noexcept -> void {
       tmp.config_dir = config_dir;
     if (!hostname.empty())
       tmp.hostname = hostname;
-    if (port == 0)
+    if (port.empty())
       tmp.port = port;
     if (!index_dir.empty())
       tmp.index_dir = index_dir;
@@ -445,8 +445,7 @@ download_index_files(
     const auto data_file =
       std::format("{}{}", stem, genome_index_data::filename_extension);
 
-    const download_request dr{remote.host, std::to_string(remote.port),
-                              data_file, dirname};
+    const download_request dr{remote.host, remote.port, data_file, dirname};
     const auto local_index_file =
       std::filesystem::path{dirname} / std::format("{}.cpg_idx", genome);
 
@@ -470,16 +469,16 @@ download_index_files(
       lgr.debug("Reason: policy={}, file_exists={}, is_outdated={}",
                 download_policy, index_file_exists, is_outdated);
 
-      const auto [data_hdr, data_err] = download(
-        {remote.host, std::to_string(remote.port), data_file, dirname});
+      const auto [data_hdr, data_err] =
+        download({remote.host, remote.port, data_file, dirname});
       if (data_err)
         return dl_err(data_hdr, data_err, remote.form_url(data_file));
 
       const auto meta_file =
         std::format("{}{}", stem, genome_index_metadata::filename_extension);
       lgr.debug(R"(Download: {} to "{}")", remote.form_url(meta_file), dirname);
-      const auto [meta_hdr, meta_err] = download(
-        {remote.host, std::to_string(remote.port), meta_file, dirname});
+      const auto [meta_hdr, meta_err] =
+        download({remote.host, remote.port, meta_file, dirname});
       if (meta_err)
         return dl_err(meta_hdr, meta_err, remote.form_url(meta_file));
     }
@@ -508,7 +507,7 @@ download_metadata_file(
   // remote is newer?
   const download_request dr{
     remote.host,
-    std::to_string(remote.port),
+    remote.port,
     metadata_file,
     dirname,
   };
@@ -629,7 +628,7 @@ client_config::validate(std::error_code &error) const noexcept -> bool {
     return false;
   }
   // validate the port
-  if (port == 0) {
+  if (port.empty()) {
     error = client_config_error_code::invalid_client_config_information;
     return false;
   }

@@ -45,7 +45,7 @@ methylome_client_remote::validate_derived(std::error_code &error) noexcept
     error = methylome_client_remote_error_code::hostname_not_found;
     return;
   }
-  if (config.port == 0) {
+  if (config.port.empty()) {
     error = methylome_client_remote_error_code::port_not_found;
     return;
   }

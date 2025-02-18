@@ -44,7 +44,7 @@ struct server_config {
 
   std::string config_dir;
   std::string hostname;
-  std::uint16_t port{};
+  std::string port{};
   std::string methylome_dir;
   std::string index_dir;
   std::string log_file;

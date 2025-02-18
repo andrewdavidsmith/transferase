@@ -410,7 +410,7 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
       lgr.debug(msg, "; not found in config: {}", cfg.config_dir);
     return EXIT_FAILURE;
   }
-  if (!local_mode && (cfg.hostname.empty() || cfg.port == 0)) {
+  if (!local_mode && (cfg.hostname.empty() || cfg.port.empty())) {
     const auto msg = R"(Remote mode but hostname or port not specified {} {})";
     if (default_config_dir_error)
       lgr.debug(msg, "; failed to parse config: ", default_config_dir_error);
@@ -440,7 +440,7 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
     // clang-format off
     {"Config dir", cfg.config_dir},
     {"Hostname", cfg.hostname},
-    {"Port", std::to_string(cfg.port)},
+    {"Port", cfg.port},
     {"Methylome dir", cfg.methylome_dir},
     {"Index dir", cfg.index_dir},
     {"Log file", cfg.log_file},
@@ -474,7 +474,7 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
     // hostname
     cfg.hostname,
     // port number
-    std::to_string(cfg.port),
+    cfg.port,
   };
 
   // get methylome names either parsed from command line or in a file

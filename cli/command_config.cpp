@@ -151,21 +151,6 @@ command_config_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
     return EXIT_FAILURE;
   }
 
-  std::vector<std::tuple<std::string, std::string>> args_to_log{
-    // clang-format off
-    {"Config dir", cfg.config_dir},
-    {"Hostname", cfg.hostname},
-    {"Port", std::to_string(cfg.port)},
-    {"Index dir", cfg.index_dir},
-    {"Methylome dir", cfg.methylome_dir},
-    {"Metadata file", cfg.metadata_file},
-    {"Log file", cfg.log_file},
-    {"Log level", to_string(cfg.log_level)},
-    {"Download policy", std::format("{}", download_policy)},
-    // clang-format on
-  };
-  xfr::log_args<transferase::log_level_t::info>(args_to_log);
-
   std::error_code error;
 
   if (cfg.config_dir.empty()) {
@@ -181,6 +166,21 @@ command_config_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
     lgr.error("Error setting default config values: {}.", error);
     return EXIT_FAILURE;
   }
+
+  std::vector<std::tuple<std::string, std::string>> args_to_log{
+    // clang-format off
+    {"Config dir", cfg.config_dir},
+    {"Hostname", cfg.hostname},
+    {"Port", cfg.port},
+    {"Index dir", cfg.index_dir},
+    {"Methylome dir", cfg.methylome_dir},
+    {"Metadata file", cfg.metadata_file},
+    {"Log file", cfg.log_file},
+    {"Log level", to_string(cfg.log_level)},
+    {"Download policy", std::format("{}", download_policy)},
+    // clang-format on
+  };
+  xfr::log_args<transferase::log_level_t::info>(args_to_log);
 
   const auto genomes = split_comma(genomes_arg);
 

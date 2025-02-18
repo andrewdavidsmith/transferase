@@ -128,7 +128,7 @@ server_config::read_config_file_no_overwrite(
     config_dir = tmp.config_dir;
   if (hostname.empty())
     hostname = tmp.hostname;
-  if (port == 0)
+  if (port.empty())
     port = tmp.port;
   if (index_dir.empty())
     index_dir = tmp.index_dir;
@@ -178,7 +178,7 @@ server_config::validate(std::error_code &error) const noexcept -> bool {
     return false;
   }
 
-  if (port == 0) {
+  if (port.empty()) {
     error = server_config_error_code::invalid_server_config_information;
     return false;
   }
