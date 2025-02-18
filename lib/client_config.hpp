@@ -91,7 +91,7 @@ struct client_config {
   transferase_metadata meta;
   std::string config_dir;
   std::string hostname;
-  std::string port;
+  std::uint16_t port{};
   std::string index_dir;
   std::string metadata_file;
   std::string methylome_dir;
