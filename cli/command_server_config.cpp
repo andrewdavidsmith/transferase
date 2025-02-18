@@ -39,15 +39,15 @@ configuration file in the specified directory with a default name.
 static constexpr auto examples = R"(
 Examples:
 
-xfr server-config -c /path/to/server_config_file.json \
+xfr server-config -c a_server_config_dir \
     --hostname=org.kernel.not \
-    --port=65536 \
-    --methylome-dir=/data/methylomes \
-    --index-dir=/data/indexes \
+    --port=5003 \
+    --methylome-dir=my_methylomes \
+    --index-dir=my_indexes \
     --log-file=/var/tmp/transferase_server.log \
     --log-level=debug \
-    --max-resident=1984 \
-    --n-threads=9000 \
+    --max-resident=4096 \
+    --n-threads=128 \
     --pid-file=/var/tmp/TRANSFERASE_SERVER_PID
 )";
 
@@ -98,6 +98,7 @@ command_server_config_main(int argc, char *argv[])  // NOLINT(*-c-arrays)
     app.footer(description_msg);
   app.get_formatter()->column_width(column_width_default);
   app.get_formatter()->label("REQUIRED", "REQD");
+  app.set_help_flag("-h,--help", "Print a detailed help message and exit");
   // clang-format off
   app.add_option("-c,--config-dir", cfg.config_dir,
                  "write specified configuration to this directory")
@@ -119,10 +120,12 @@ command_server_config_main(int argc, char *argv[])  // NOLINT(*-c-arrays)
                  "log file name");
   app.add_option("-r,--max-resident", cfg.max_resident,
                  "max methylomes resident in memory at once")
-    ->required();
+    ->required()
+    ->check(CLI::Range(1, xfr::server_config::max_max_resident));
   app.add_option("-t,--n-threads", cfg.n_threads,
                  "number of threads to use (one per connection)")
-    ->required();
+    ->required()
+    ->check(CLI::Range(1, xfr::server_config::max_n_threads));
   app.add_option("-b,--min-bin-size", cfg.min_bin_size,
                  "Minimum bin size for a request")
     ->default_str(std::format("{}", xfr::request::min_bin_size_default));
