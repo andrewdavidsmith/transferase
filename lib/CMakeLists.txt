@@ -43,4 +43,10 @@ endforeach()
 add_library(transferase_system STATIC)
 target_include_directories(transferase_system PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_options(transferase_system PRIVATE ${GLOBAL_LINKER_OPTIONS})
-target_link_libraries(transferase_system PRIVATE ${LIBRARY_OBJECTS})
+# Specify all libraries here. In case of dynamic linking they need to
+# have the proper order on the compiler command
+target_link_libraries(transferase_system PRIVATE
+  ${LIBRARY_OBJECTS}
+  ZLIB::ZLIB
+  ${Boost_LIBRARIES}
+)

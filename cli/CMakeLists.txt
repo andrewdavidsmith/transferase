@@ -53,7 +53,13 @@ endif()
 add_library(transferase_cli STATIC)
 target_include_directories(transferase_cli PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_options(transferase_cli PRIVATE ${GLOBAL_LINKER_OPTIONS})
-target_link_libraries(transferase_cli PRIVATE ${LIBRARY_OBJECTS})
+# Specify all libraries here. In case of dynamic linking they need to
+# have the proper order on the compiler command
+target_link_libraries(transferase_cli PRIVATE
+  ${LIBRARY_OBJECTS}
+  ZLIB::ZLIB
+  ${Boost_LIBRARIES}
+)
 
 
 # ADS: this approach is the most reliable way so far to have the alias
