@@ -22,7 +22,7 @@
 
 # to find the version of cmake do
 # $ cmake --version
-cmake_minimum_required(VERSION 3.30)
+cmake_minimum_required(VERSION 3.28)
 project(
   transferase
   VERSION 0.4.0
