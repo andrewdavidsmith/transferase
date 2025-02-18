@@ -321,10 +321,9 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
     app.footer(description_msg);
   app.get_formatter()->column_width(column_width_default);
   app.get_formatter()->label("REQUIRED", "REQD");
+  app.set_help_flag("-h,--help", "Print a detailed help message and exit");
   // clang-format off
   app.add_option("-c,--config-dir", cfg.config_dir, "specify a config directory");
-  const auto local_mode_opt =
-    app.add_flag("-L,--local", local_mode, "run in local mode");
   const auto intervals_file_opt =
     app.add_option("-i,--intervals-file", intervals_file, "intervals file")
     ->option_text("FILE")
@@ -352,17 +351,25 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
     ->transform(CLI::CheckedTransformer(xfr::output_format_cli11, CLI::ignore_case));
   app.add_option("-r,--min-reads", min_reads,
                  "for fractional output, require this many reads");
-  app.add_option("-s,--hostname", cfg.hostname, "server hostname");
-  app.add_option("-p,--port", cfg.port, "server port");
+  const auto hostname_opt =
+    app.add_option("-s,--hostname", cfg.hostname, "server hostname")
+    ->option_text("TEXT");
+  app.add_option("-p,--port", cfg.port, "server port")
+    ->option_text("UINT")
+    ->needs(hostname_opt);
+  const auto local_mode_opt =
+    app.add_flag("-L,--local", local_mode, "run in local mode")
+    ->option_text(" ")
+    ->excludes(hostname_opt);
   app.add_option("-d,--methylome-dir", cfg.methylome_dir,
-                 "methylome directory (local mode only)")
+                 "methylome directory for local mode")
     ->option_text("DIR")
     ->needs(local_mode_opt)
     ->check(CLI::ExistingDirectory);
   app.add_option("-x,--index-dir", cfg.index_dir,
                  "genome index directory");
   app.add_option("-l,--log-file", cfg.log_file,
-                 "log file name (defaults: print to screen)");
+                 "log file name (default: print to screen)");
   app.add_option("-v,--log-level", cfg.log_level,
                  "{debug, info, warning, error, critical}")
     ->option_text(std::format("ENUM [{}]", log_level_default))
@@ -403,7 +410,7 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
       lgr.debug(msg, "; not found in config: {}", cfg.config_dir);
     return EXIT_FAILURE;
   }
-  if (!local_mode && (cfg.hostname.empty() || cfg.port.empty())) {
+  if (!local_mode && (cfg.hostname.empty() || cfg.port == 0)) {
     const auto msg = R"(Remote mode but hostname or port not specified {} {})";
     if (default_config_dir_error)
       lgr.debug(msg, "; failed to parse config: ", default_config_dir_error);
@@ -433,7 +440,7 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
     // clang-format off
     {"Config dir", cfg.config_dir},
     {"Hostname", cfg.hostname},
-    {"Port", cfg.port},
+    {"Port", std::to_string(cfg.port)},
     {"Methylome dir", cfg.methylome_dir},
     {"Index dir", cfg.index_dir},
     {"Log file", cfg.log_file},
@@ -467,7 +474,7 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
     // hostname
     cfg.hostname,
     // port number
-    cfg.port,
+    std::to_string(cfg.port),
   };
 
   // get methylome names either parsed from command line or in a file
