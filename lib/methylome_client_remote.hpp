@@ -27,10 +27,11 @@
 #include "client.hpp"
 #include "client_config.hpp"
 #include "methylome_client_base.hpp"
-#include "nlohmann/json.hpp"
 #include "query_container.hpp"
 #include "request.hpp"
 #include "request_type_code.hpp"
+
+#include "nlohmann/json.hpp"
 
 #include <cstdint>
 #include <format>
@@ -109,7 +110,8 @@ private:
   get_levels_impl(const request &req, const query_container &query,
                   std::error_code &error) const noexcept
     -> std::vector<level_container<lvl_elem_t>> {
-    intervals_client<lvl_elem_t> cl(config.hostname, config.port, req, query);
+    intervals_client<lvl_elem_t> cl(config.hostname,
+                                    std::to_string(config.port), req, query);
     error = cl.run();
     if (error)
       return {};
@@ -120,7 +122,8 @@ private:
   [[nodiscard]] auto
   get_levels_impl(const request &req, std::error_code &error) const noexcept
     -> std::vector<level_container<lvl_elem_t>> {
-    bins_client<lvl_elem_t> cl(config.hostname, config.port, req);
+    bins_client<lvl_elem_t> cl(config.hostname, std::to_string(config.port),
+                               req);
     error = cl.run();
     if (error)
       return {};

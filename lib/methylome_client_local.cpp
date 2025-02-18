@@ -33,8 +33,9 @@ namespace transferase {
 
 [[nodiscard]] auto
 methylome_client_local::tostring_derived() const noexcept -> std::string {
+  static constexpr auto n_indent = 4;
   nlohmann::json data = *this;
-  return data.dump();
+  return data.dump(n_indent);
 }
 
 auto

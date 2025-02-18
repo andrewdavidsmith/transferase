@@ -33,8 +33,9 @@ namespace transferase {
 
 [[nodiscard]] auto
 methylome_client_remote::tostring_derived() const noexcept -> std::string {
+  static constexpr auto n_indent = 4;
   nlohmann::json data = *this;
-  return data.dump();
+  return data.dump(n_indent);
 }
 
 auto
@@ -44,7 +45,7 @@ methylome_client_remote::validate_derived(std::error_code &error) noexcept
     error = methylome_client_remote_error_code::hostname_not_found;
     return;
   }
-  if (config.port.empty()) {
+  if (config.port == 0) {
     error = methylome_client_remote_error_code::port_not_found;
     return;
   }
