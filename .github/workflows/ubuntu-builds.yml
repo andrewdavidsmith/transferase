@@ -8,26 +8,43 @@ on:
 jobs:
   ubuntu-build:
     runs-on: ubuntu-latest
-    container: andrewdavidsmith/gcc-cmake-boost
     steps:
       - uses: actions/checkout@v4
       - name: Install dependencies
         run: |
-          apt-get update
-          apt-get install -y zlib1g-dev libgtest-dev
-
-      - name: Configure a release build that uses GCC
+          apt-get update && \
+          apt-get install -y --no-install-recommends \
+          autoconf \
+          automake \
+          binutils \
+          ca-certificates \
+          cmake \
+          g++-14 \
+          gcc-14 \
+          git \
+          libboost-all-dev \
+          libc6-dev \
+          libgmp-dev \
+          libgtest-dev \
+          libisl-dev \
+          libmpc-dev \
+          libmpfr-dev \
+          libssl-dev \
+          make \
+          ninja-build \
+          wget \
+          zlib1g-dev \
+          git
+      - name: Configure
         run: |
-          cmake -B Release \
+          cmake -B build \
           -DCMAKE_VERBOSE_MAKEFILE=on \
-          -DCMAKE_CXX_COMPILER=g++ \
+          -DCMAKE_CXX_COMPILER=g++-14 \
           -DCMAKE_BUILD_TYPE=Release
-
-      - name: Build the system
+      - name: Build
         run: |
-          cmake --build Release -j4
-
+          cmake --build build -j4
       - name: Check that it runs
         run: |
           export LD_LIBRARY_PATH=/usr/local/lib
-          ./Release/cli/transferase
+          ./build/cli/transferase
