@@ -28,24 +28,27 @@ configure a transferase client
 )";
 
 static constexpr auto description = R"(
-This command does the configuration to faciliate other commands,
-reducing the number of command line arguments by putting them in
-configuration file. Note that this configuration is not needed, as all
-arguments can be specified on the command line and index files can be
-downloaded separately. The default config directory is
+Configure transferase on your system, reducing the amount of
+information needed for each query. The default config directory is
 '${HOME}/.config/transferase'. This command will also retrieve other
 data. It will get index files that are used to accelerate queries. And
-it will retrieve a file with MethBase2 metadata. If you run the
-command again, the default behavior regarding downloads is to only
-retrieve requested files if they are not already present. On a
-subsequent configuration, you can request to re-download/update any of
-the files obtained during the initial configuration.
+it will retrieve a file with MethBase2 metadata. This command has
+modes that allow you to update an existing configuration or reset a
+configuration to default values. Note: configuration is not strictly
+needed, as most other commands can run with all information provided
+on the command line.
 )";
 
 static constexpr auto examples = R"(
 Examples:
 
+xfr config --defaults
+
+xfr config --genomes hg38,mm39
+
 xfr config -s example.com -p 5009 --genomes hg38,mm39
+
+xfr config --update -s localhost
 )";
 
 #include "cli_common.hpp"
@@ -92,7 +95,9 @@ command_config_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
   std::string genomes_arg{};
   bool quiet{false};
   bool debug{false};
-  bool do_defaults{false};
+  bool update_config{false};
+  bool no_defaults{false};
+  bool all_defaults{false};
   xfr::download_policy_t download_policy{download_policy_default};
 
   CLI::App app{about_msg};
@@ -127,7 +132,13 @@ command_config_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
                  "download policy (none, missing, update, all)")
     ->option_text(std::format("ENUM [{}]", download_policy_default))
     ->transform(CLI::CheckedTransformer(xfr::download_policy_cli11, CLI::ignore_case));
-  app.add_flag("--default", do_defaults, "only do the default configuration");
+  const auto all_defaults_opt =
+    app.add_flag("--defaults", all_defaults, "allow all default config values")
+    ->option_text(" ");
+  app.add_flag("--no-defaults", no_defaults, "use no defaults for missing values")
+    ->option_text(" ")
+    ->excludes(all_defaults_opt);
+  app.add_flag("--update", update_config, "keep values previously configured");
   const auto quiet_opt =
     app.add_flag("--quiet", quiet, "only report errors")
     ->option_text(" ");
@@ -163,22 +174,25 @@ command_config_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
     lgr.debug("Taking default value for config dir: {}", cfg.config_dir);
   }
 
-  // load any previously set values in the same config directory
-  if (cfg.config_file_exists()) {
+  // If the user is requesting not to Unless the users is load any previously
+  // set values in the same config directory
+  if (update_config && cfg.config_file_exists()) {
+    lgr.debug("Loading unspecified values from previous config file: {}",
+              cfg.get_config_file(cfg.config_dir));
     cfg.read_config_file_no_overwrite(error);
     if (error) {
       lgr.error("Error setting default config values: {}.", error);
       return EXIT_FAILURE;
     }
-    lgr.debug("Loaded unspecified values from previous config file: {}",
-              cfg.get_config_file(cfg.config_dir));
   }
 
-  // In case any args are left unspecified that can be provided,
-  // assign the default values.
-  lgr.debug("Assigning defaults to remaining unspecified required values");
+  // If the user is allowing defeaults, any args are left unspecified
+  // that can be defaulted are.
   const std::string empty_sys_config_dir;
-  cfg.assign_defaults_to_missing(empty_sys_config_dir, error);
+  if (!no_defaults) {
+    lgr.debug("Assigning defaults to remaining unspecified required values");
+    cfg.assign_defaults_to_missing(empty_sys_config_dir, error);
+  }
 
   const std::vector<std::tuple<std::string, std::string>> args_to_log{
     // clang-format off
