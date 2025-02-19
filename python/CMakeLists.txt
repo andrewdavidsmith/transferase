@@ -22,6 +22,47 @@
 
 message(STATUS "Configuring to build Python API")
 
+## Try to find nanobind on the system first
+# For nanobind before Python; seems to work with ordinary
+# 'Development' but Development.Module is recommended
+set(DEV_MODULE Development.Module)
+
+# Python has to be available before nanobind
+find_package(Python COMPONENTS Interpreter ${DEV_MODULE} REQUIRED)
+message(STATUS "Python include dir: ${Python_INCLUDE_DIRS}")
+message(STATUS "Python libraries: ${Python_LIBRARIES}")
+message(STATUS "Python version: ${Python_VERSION}")
+message(STATUS "Python SOABI: ${Python_SOABI}")
+
+message(STATUS "Configuring nanobind for Python API")
+
+# Detect the installed nanobind package
+execute_process(
+  COMMAND "${Python_EXECUTABLE}" -m nanobind --cmake_dir
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+  OUTPUT_VARIABLE nanobind_ROOT
+  ERROR_QUIET
+)
+if (nanobind_ROOT)
+  message(STATUS "Found nanobind on the system")
+else()
+  message(STATUS "Configuring to clone nanobind")
+  # Didn't find nanobind so try to clone it
+  include(ExternalProject)
+  ExternalProject_Add(
+    nanobind
+    GIT_REPOSITORY https://github.com/wjakob/nanobind.git
+    GIT_TAG master
+    CMAKE_ARGS
+    -DCMAKE_INSTALL_PREFIX=${PROJECT_BINARY_DIR}/src/nanobind
+    -DCMAKE_BUILD_TYPE=Release
+  )
+endif()
+# Now try to import nanobind; if this step is not done here, then in
+# python/CMakeLists.txt the
+# nanobind_build_library(nanobind-static-abi3) will fail.
+find_package(nanobind CONFIG)
+
 # Setup the Python include and lib directories
 include_directories(${Python_INCLUDE_DIRS})
 link_directories(${Python_LIBRARIES})
