@@ -516,7 +516,7 @@ register_signals() {
 }
 
 auto
-command_select_main(int argc, char *argv[]) -> int {  // NOLINT
+command_select_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
   static constexpr auto command = "select";
   static const auto usage =
     std::format("Usage: xfr {} [options]", rstrip(command));
@@ -612,6 +612,15 @@ command_select_main(int argc, char *argv[]) -> int {  // NOLINT
     return EXIT_FAILURE;
   }
 
+  return EXIT_SUCCESS;
+}
+
+#else
+
+#include <print>
+auto
+command_select_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
+  std::println("the 'select' command was not built");
   return EXIT_SUCCESS;
 }
 
