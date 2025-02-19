@@ -23,8 +23,6 @@
 
 #include "command_select.hpp"
 
-#ifdef HAVE_NCURSES
-
 static constexpr auto about = R"(
 select methylomes based on metadata related to biological samples
 )";
@@ -45,6 +43,17 @@ Examples:
 
 xfr select -o output_file.txt -g hg38
 )";
+
+#ifndef HAVE_NCURSES
+
+#include <print>
+auto
+command_select_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
+  std::println("the 'select' command was not built");
+  return EXIT_SUCCESS;
+}
+
+#else
 
 #include "cli_common.hpp"
 #include "client_config.hpp"
@@ -612,15 +621,6 @@ command_select_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
     return EXIT_FAILURE;
   }
 
-  return EXIT_SUCCESS;
-}
-
-#else
-
-#include <print>
-auto
-command_select_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
-  std::println("the 'select' command was not built");
   return EXIT_SUCCESS;
 }
 
