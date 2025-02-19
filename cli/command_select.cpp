@@ -48,7 +48,9 @@ xfr select -o output_file.txt -g hg38
 
 #include <print>
 auto
-command_select_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
+command_select_main([[maybe_unused]] int argc,
+                    [[maybe_unused]] char *argv[])
+  -> int {  // NOLINT(*-c-arrays)
   std::println("the 'select' command was not built");
   return EXIT_SUCCESS;
 }
