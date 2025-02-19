@@ -24,13 +24,7 @@
 #ifndef CLI_COMMAND_SELECT_HPP_
 #define CLI_COMMAND_SELECT_HPP_
 
-#ifdef HAVE_NCURSES
-
 auto
-command_select_main(int argc,
-                    char *argv[])  // NOLINT(cppcoreguidelines-avoid-c-arrays)
-  -> int;
-
-#endif  // HAVE_NCURSES
+command_select_main(int argc, char *argv[]) -> int;  // NOLINT(*-c-arrays)
 
 #endif  // CLI_COMMAND_SELECT_HPP_
