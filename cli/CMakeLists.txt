@@ -24,7 +24,7 @@ file(GLOB cpp_files "*.cpp")
 
 # Remove things that will be handled later
 list(FILTER cpp_files EXCLUDE REGEX "transferase.cpp")
-list(FILTER cpp_files EXCLUDE REGEX "command_select.cpp")
+# list(FILTER cpp_files EXCLUDE REGEX "command_select.cpp")
 
 # Gather all the object files that will be put in the static library
 # and prepare to compile them.
@@ -38,6 +38,12 @@ foreach(cpp_file ${cpp_files})
   target_link_libraries(${BASE_NAME} PRIVATE transferase_system)
   list(APPEND LIBRARY_OBJECTS ${BASE_NAME})
 endforeach()
+
+# add_library(command_select OBJECT command_select.cpp)
+# target_compile_options(command_select PRIVATE ${GLOBAL_COMPILE_OPTIONS})
+# target_include_directories(command_select PRIVATE ${PROJECT_SOURCE_DIR}/lib)
+# target_link_libraries(command_select PRIVATE transferase_system)
+# list(APPEND LIBRARY_OBJECTS command_select)
 
 # Curses
 include(FindCurses)  # This should be in the modules dir
@@ -61,15 +67,8 @@ if(CURSES_FOUND AND CURSES_HAVE_NCURSES_H)
   # ADS: need <ncurses.h> and not <curses.h> or <ncurses/curses.h>
   message(STATUS "Found ncurses header: ${CURSES_HAVE_NCURSES_H}")
   message(STATUS "Found ncurses libraries: ${CURSES_LIBRARIES}")
-  add_library(command_select OBJECT command_select.cpp)
   target_compile_definitions(command_select PRIVATE HAVE_NCURSES)
-  target_compile_options(command_select PRIVATE ${GLOBAL_COMPILE_OPTIONS})
-  target_include_directories(command_select PRIVATE
-    ${CURSES_INCLUDE_DIRS}
-    ${PROJECT_SOURCE_DIR}/lib
-  )
-  target_link_libraries(command_select PRIVATE transferase_system)
-  list(APPEND LIBRARY_OBJECTS command_select)
+  target_include_directories(command_select PRIVATE ${CURSES_INCLUDE_DIRS})
 else()
   message(STATUS "NCurses not found: 'select' will be disabled")
 endif()
