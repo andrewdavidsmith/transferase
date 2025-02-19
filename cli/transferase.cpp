@@ -94,11 +94,6 @@ int
 main(int argc, char *argv[]) {  // NOLINT(*-c-arrays)
   static constexpr auto program = "transferase";
 
-  std::set_terminate([]() {
-    std::println(std::cerr, "Terminating due to critical error");
-    std::abort();
-  });
-
   if (argc <= 1) {
     format_help(program, commands);
     return EXIT_SUCCESS;
