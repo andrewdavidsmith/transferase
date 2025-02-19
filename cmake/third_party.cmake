@@ -22,14 +22,6 @@
 
 message(STATUS "Locating REQUIRED third-party packages")
 
-find_package(Threads REQUIRED)
-
-if(POLICY CMP0167)
-  cmake_policy(SET CMP0167 NEW)
-endif()
-
-set(BOOST_COMPONENTS context)
-
 # ZLib
 if(BUILD_PYTHON)
   # Typically ZLib isn't built with -fPIC, but it's small so we can
@@ -106,48 +98,4 @@ if(BUILD_PYTHON)
   # python/CMakeLists.txt the
   # nanobind_build_library(nanobind-static-abi3) will fail.
   find_package(nanobind CONFIG)
-endif()
-
-# Boost components
-find_package(
-  Boost
-  1.83.0 REQUIRED
-  COMPONENTS
-  ${BOOST_COMPONENTS}
-)
-message(STATUS "Boost version: ${Boost_VERSION_STRING}")
-message(STATUS "Boost include dirs: ${Boost_INCLUDE_DIRS}")
-message(STATUS "Boost library dirs: ${Boost_LIBRARY_DIRS}")
-
-# Optional libraries
-message(STATUS "Locating OPTIONAL third-party packages")
-
-# Curses
-include(FindCurses)  # This should be in the modules dir
-set(CURSES_NEED_NCURSES TRUE)
-find_package(Curses)
-if(CURSES_FOUND AND CURSES_HAVE_NCURSES_H)
-  # ADS: Currently the ncurses library on the build development needs
-  # to link with the GPM library; this is not optimal, but also not a
-  # priority now.
-  set(GPM_LIB_NAME gpm)
-  if (USE_STATIC_LIBS)
-    set(GPM_LIB_NAME libgpm.a)
-  endif()
-  find_library(GPM_LIB ${GPM_LIB_NAME} NO_CACHE)
-  if (GPM_LIB STREQUAL GPM_LIB-NOTFOUND)
-    message(STATUS "Failed to find GPM lib: ${GPM_LIB_NAME}")
-  else()
-    message(STATUS
-      "Found GPM library: ${GPM_LIB_NAME}; check static vs. shared linkage"
-    )
-    list(APPEND CURSES_LIBRARIES ${GPM_LIB})
-  endif()
-  ## ADS: above, the header used in the sources is <ncurses.h> and not
-  ## <curses.h> or <ncurses/curses.h>
-  add_compile_definitions(HAVE_NCURSES)
-  message(STATUS "Found ncurses header: ${CURSES_HAVE_NCURSES_H}")
-  message(STATUS "Found ncurses libraries: ${CURSES_LIBRARIES}")
-else()
-  message(STATUS "NCurses not found: 'select' command will not be built")
 endif()
