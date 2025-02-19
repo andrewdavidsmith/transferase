@@ -59,9 +59,7 @@ const auto commands = std::array{
   cmd{"config", command_config_main, "configure a client for remote queries"},
   cmd{"server-config", command_server_config_main, "generate a server config file"},
   cmd{"list", command_list_main, "list methylome or indexs in a directory"},
-#ifdef HAVE_NCURSES
   cmd{"select", command_select_main, "select methylomes from those available"},
-#endif
   cmd{"index", command_index_main, "make an index for a reference genome"},
   cmd{"format", command_format_main, "format a methylome file"},
   cmd{"check", command_check_main, "perform checks on methylome and index files"},
