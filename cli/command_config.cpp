@@ -153,21 +153,34 @@ command_config_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
 
   std::error_code error;
 
+  // get the config dir if it's empty
   if (cfg.config_dir.empty()) {
     cfg.config_dir = xfr::client_config::get_default_config_dir(error);
     if (error) {
-      lgr.error("Error obtaining config dir: {}.", error);
+      lgr.error("Error obtaining config dir: {}", error);
       return EXIT_FAILURE;
     }
+    lgr.debug("Taking default value for config dir: {}", cfg.config_dir);
   }
 
-  xfr::client_config config(cfg.config_dir, error);
-  if (error) {
-    lgr.error("Error setting default config values: {}.", error);
-    return EXIT_FAILURE;
+  // load any previously set values in the same config directory
+  if (cfg.config_file_exists()) {
+    cfg.read_config_file_no_overwrite(error);
+    if (error) {
+      lgr.error("Error setting default config values: {}.", error);
+      return EXIT_FAILURE;
+    }
+    lgr.debug("Loaded unspecified values from previous config file: {}",
+              cfg.get_config_file(cfg.config_dir));
   }
 
-  std::vector<std::tuple<std::string, std::string>> args_to_log{
+  // In case any args are left unspecified that can be provided,
+  // assign the default values.
+  lgr.debug("Assigning defaults to remaining unspecified required values");
+  const std::string empty_sys_config_dir;
+  cfg.assign_defaults_to_missing(empty_sys_config_dir, error);
+
+  const std::vector<std::tuple<std::string, std::string>> args_to_log{
     // clang-format off
     {"Config dir", cfg.config_dir},
     {"Hostname", cfg.hostname},
@@ -184,8 +197,7 @@ command_config_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
 
   const auto genomes = split_comma(genomes_arg);
 
-  const std::string empty_sys_config_dir;
-  config.install(genomes, download_policy, empty_sys_config_dir, error);
+  cfg.install(genomes, download_policy, empty_sys_config_dir, error);
   if (error) {
     lgr.error("Configuration incomplete: {}", error);
     return EXIT_FAILURE;
