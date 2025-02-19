@@ -26,8 +26,9 @@
 #include "find_path_to_binary.hpp"
 #include "genome_index_data.hpp"
 #include "genome_index_metadata.hpp"
-#include "nlohmann/json.hpp"
 #include "remote_data_resource.hpp"
+
+#include "nlohmann/json.hpp"
 
 #include <config.h>
 
@@ -161,6 +162,30 @@ client_config::get_config_file(const std::string &config_dir,
   const auto joined =
     std::filesystem::path{config_dir} / client_config_filename_default;
   return get_file_if_not_already_dir(joined, error);
+}
+
+auto
+client_config::assign_defaults_to_missing(std::string sys_config_dir,
+                                          std::error_code &error) -> void {
+  if (hostname.empty() || port.empty()) {
+    if (sys_config_dir.empty()) {
+      sys_config_dir = get_default_sys_config_dir(error);
+      if (error)
+        return;
+    }
+    const auto [default_hostname, default_port] =
+      transferase::get_transferase_server_info(sys_config_dir, error);
+    if (error)
+      return;
+    if (hostname.empty())
+      hostname = default_hostname;
+    if (port.empty())
+      port = default_port;
+  }
+  if (index_dir.empty())
+    index_dir = index_dirname_default;
+  if (metadata_file.empty())
+    metadata_file = metadata_filename_default;
 }
 
 client_config::client_config(const std::string &config_dir_arg,
@@ -370,7 +395,7 @@ client_config::save(std::error_code &error) const noexcept -> void {
       tmp.config_dir = config_dir;
     if (!hostname.empty())
       tmp.hostname = hostname;
-    if (port.empty())
+    if (!port.empty())
       tmp.port = port;
     if (!index_dir.empty())
       tmp.index_dir = index_dir;
@@ -648,6 +673,12 @@ client_config::validate(std::error_code &error) const noexcept -> bool {
 auto
 client_config::load_transferase_metadata(std::error_code &error) -> void {
   meta = transferase_metadata::read(get_metadata_file(), error);
+}
+
+[[nodiscard]] auto
+client_config::config_file_exists() const -> bool {
+  return !config_dir.empty() &&
+         std::filesystem::exists(get_config_file(config_dir));
 }
 
 }  // namespace transferase

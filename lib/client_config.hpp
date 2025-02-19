@@ -112,6 +112,13 @@ struct client_config {
 #endif
 
   [[nodiscard]] auto
+  config_file_exists() const -> bool;
+
+  auto
+  assign_defaults_to_missing(std::string sys_config_dir,
+                             std::error_code &error) -> void;
+
+  [[nodiscard]] auto
   tostring() const -> std::string;
 
   /// Get the path to the index directory
