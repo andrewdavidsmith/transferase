@@ -71,8 +71,8 @@ command_list_main(int argc, char *argv[])  // NOLINT(*-c-arrays)
     std::format("{}\n{}", rstrip(description), rstrip(examples));
 
   bool verbose{false};
-  bool show_only_indexes{true};
-  bool show_only_methylomes{true};
+  bool show_only_indexes{false};
+  bool show_only_methylomes{false};
   std::vector<std::string> directories;
 
   CLI::App app{about_msg};
