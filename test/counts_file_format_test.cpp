@@ -153,13 +153,13 @@ TEST(get_meth_file_format_tests, xcounts_format_test) {
   EXPECT_TRUE(remove_ok);
 }
 
-TEST(get_meth_file_format_tests, none_format_test) {
-  static constexpr auto filename = "none_format_file.txt";
+TEST(get_meth_file_format_tests, unknown_format_test) {
+  static constexpr auto filename = "unknown_format_file.txt";
   std::ofstream outfile(filename);
   outfile << "#comment\ninvalid_line\n";
   outfile.close();
   const auto [format, ec] = get_meth_file_format(filename);
-  EXPECT_EQ(format, counts_file_format::none);
+  EXPECT_EQ(format, counts_file_format::unknown);
   EXPECT_FALSE(ec);
   const auto remove_ok = std::filesystem::remove(filename);
   EXPECT_TRUE(remove_ok);
