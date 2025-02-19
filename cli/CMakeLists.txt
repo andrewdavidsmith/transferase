@@ -22,8 +22,9 @@
 
 file(GLOB cpp_files "*.cpp")
 
-# Can't have this among the sources or a name will clash
+# Remove things that will be handled later
 list(FILTER cpp_files EXCLUDE REGEX "transferase.cpp")
+list(FILTER cpp_files EXCLUDE REGEX "command_select.cpp")
 
 # Gather all the object files that will be put in the static library
 # and prepare to compile them.
@@ -31,22 +32,47 @@ set(LIBRARY_OBJECTS "")
 foreach(cpp_file ${cpp_files})
   get_filename_component(BASE_NAME ${cpp_file} NAME_WE)
   add_library(${BASE_NAME} OBJECT ${cpp_file})
-  ## Below is to make sure 'config.h' is visible for includes and any
-  ## of the headers for configured libraries
-  target_include_directories(${BASE_NAME} PRIVATE
-    ${PROJECT_BINARY_DIR}
-    ${Boost_INCLUDE_DIRS}
-    ${ZLIB_INCLUDE_DIRS}
-  )
-  target_link_libraries(${BASE_NAME} PRIVATE transferase_system)
+  # Below: make sure 'config.h' is visible
+  target_include_directories(${BASE_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/lib)
   target_compile_options(${BASE_NAME} PRIVATE ${GLOBAL_COMPILE_OPTIONS})
   list(APPEND LIBRARY_OBJECTS ${BASE_NAME})
 endforeach()
 
-## Make sure that the command_select.cpp source can see the header for
-## ncurses if the ncurses library was found
-if(CURSES_FOUND)
-  target_include_directories(command_select PRIVATE ${CURSES_INCLUDE_DIRS})
+# Curses
+include(FindCurses)  # This should be in the modules dir
+set(CURSES_NEED_NCURSES TRUE)
+find_package(Curses)
+if(CURSES_FOUND AND CURSES_HAVE_NCURSES_H)
+  # Make sure that the command_select.cpp source can see the header for
+  # ncurses if the ncurses library was found
+
+  # ADS: Currently the ncurses library on the build development needs
+  # to link with the GPM library; this is not optimal, but also not a
+  # priority now.
+  set(GPM_LIB_NAME gpm)
+  if (USE_STATIC_LIBS)
+    set(GPM_LIB_NAME libgpm.a)
+  endif()
+  find_library(GPM_LIB ${GPM_LIB_NAME} NO_CACHE)
+  if (GPM_LIB STREQUAL GPM_LIB-NOTFOUND)
+    message(STATUS "Failed to find GPM lib: ${GPM_LIB_NAME}")
+  else()
+    message(STATUS "Found GPM library: ${GPM_LIB_NAME}")
+    list(APPEND CURSES_LIBRARIES ${GPM_LIB})
+  endif()
+  ## ADS: need <ncurses.h> and not <curses.h> or <ncurses/curses.h>
+  # add_compile_definitions(HAVE_NCURSES)
+  message(STATUS "Found ncurses header: ${CURSES_HAVE_NCURSES_H}")
+  message(STATUS "Found ncurses libraries: ${CURSES_LIBRARIES}")
+  get_filename_component(BASE_NAME command_select.cpp NAME_WE)
+  add_library(command_select OBJECT command_select.cpp)
+  target_compile_definitions(command_select PRIVATE HAVE_NCURSES)
+  target_include_directories(command_select PUBLIC ${CURSES_INCLUDE_DIRS})
+  target_link_libraries(command_select PRIVATE transferase_system)
+  target_compile_options(command_select PRIVATE ${GLOBAL_COMPILE_OPTIONS})
+  list(APPEND LIBRARY_OBJECTS command_select)
+else()
+  message(STATUS "NCurses not found: 'select' command will not be built")
 endif()
 
 # Create the initial static library linking the individual objects
@@ -55,12 +81,7 @@ target_include_directories(transferase_cli PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_options(transferase_cli PRIVATE ${GLOBAL_LINKER_OPTIONS})
 # Specify all libraries here. In case of dynamic linking they need to
 # have the proper order on the compiler command
-target_link_libraries(transferase_cli PRIVATE
-  ${LIBRARY_OBJECTS}
-  ZLIB::ZLIB
-  ${Boost_LIBRARIES}
-)
-
+target_link_libraries(transferase_cli PUBLIC ${LIBRARY_OBJECTS})
 
 # ADS: this approach is the most reliable way so far to have the alias
 # both installed properly and linked the same way as tranferase.
@@ -74,13 +95,7 @@ foreach(name ${TRANSFERASE_NAMES})
   add_executable(${name} transferase.cpp)
   # Make sure that the 'config.h' is visible to include
   target_include_directories(${name} PRIVATE ${PROJECT_BINARY_DIR})
-  target_link_libraries(${name} PRIVATE
-    transferase_system
-    transferase_cli
-    ZLIB::ZLIB
-    ${Boost_LIBRARIES}
-    Threads::Threads
-  )
+  target_link_libraries(${name} PRIVATE transferase_system transferase_cli)
   if(CURSES_FOUND)
     target_link_libraries(${name} PRIVATE ${CURSES_LIBRARIES})
   endif()
