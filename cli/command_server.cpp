@@ -113,6 +113,8 @@ command_server_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
   cfg.min_bin_size = xfr::request::min_bin_size_default;
   cfg.max_intervals = xfr::request::max_intervals_default;
   cfg.log_level = log_level_default;
+  cfg.max_resident = xfr::server_config::default_max_resident;
+  cfg.n_threads = xfr::server_config::default_n_threads;
   std::string config_file;
   bool daemonize{false};
 
