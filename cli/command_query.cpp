@@ -93,12 +93,15 @@ xfr query --local -d methylome_dir -x index_dir -g hg38 \
 #include <vector>
 
 [[nodiscard]] static inline auto
-format_methylome_names_brief(const std::string &methylome_names)
+format_methylome_names_brief(const std::vector<std::string> &names)
   -> std::string {
   static constexpr auto max_names_width = 50;
-  if (std::size(methylome_names) > max_names_width)
-    return methylome_names.substr(0, max_names_width - 3) + "...";
-  return methylome_names;
+  const auto joined =
+    names | std::views::join_with(' ') | std::ranges::to<std::string>();
+  if (std::size(joined) > max_names_width)
+    return std::format("{}...{} ({} methylomes)", names.front(), names.back(),
+                       std::size(names));
+  return joined;
 }
 
 [[nodiscard]] inline auto
@@ -270,6 +273,24 @@ do_bins_query(const std::uint32_t bin_size, const bool count_covered,
   return std::error_code{};
 }
 
+[[nodiscard]] static inline auto
+get_methylome_names(std::vector<std::string> &&possibly_methylome_names,
+                    std::error_code &error) -> std::vector<std::string> {
+  if (possibly_methylome_names.size() > 1)
+    return possibly_methylome_names;
+  const bool is_file =
+    std::filesystem::exists(possibly_methylome_names.front()) &&
+    std::filesystem::is_regular_file(possibly_methylome_names.front());
+  if (is_file) {
+    const auto names_from_file =
+      read_methylomes_file(possibly_methylome_names.front(), error);
+    if (!error)
+      return names_from_file;
+    return {};
+  }
+  return possibly_methylome_names;
+}
+
 auto
 command_query_main(int argc, char *argv[]) -> int {  // NOLINT
   static constexpr auto log_level_default = transferase::log_level_t::info;
@@ -294,8 +315,8 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
   bool count_covered{false};
 
   // the two possible sources of names of methylomes to query
-  std::string methylome_names;
-  std::string methylomes_file;
+  std::vector<std::string> methylome_names;
+  // std::string methylomes_file;
 
   // the genome associated with the methylomes -- could come from a
   // lookup in transferase metadata
@@ -333,15 +354,9 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
     ->excludes(intervals_file_opt);
   app.add_option("-g,--genome", genome_name, "genome name")
     ->required();
-  const auto methylome_names_opt =
-    app.add_option("-m,--methylomes", methylome_names,
-                   "methylome names (comma separated)")
-    ->option_text("TEXT");
-  app.add_option("-M,--methylomes-file", methylomes_file,
-                 "methylomes file (text file; one methylome per line)")
-    ->option_text("FILE")
-    ->excludes(methylome_names_opt)
-    ->check(CLI::ExistingFile);
+  app.add_option("-m,--methylomes", methylome_names,
+                 "names of methylomes or a file with one per line")
+    ->required();
   app.add_option("-o,--out-file", output_file, "output file");
   app.add_flag("-C,--covered", count_covered,
                "count covered sites for each interval");
@@ -431,33 +446,6 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
     lgr.error("Error: specify exactly one of bins-size or intervals-file");
     return EXIT_FAILURE;
   }
-  if (methylome_names.empty() == methylomes_file.empty()) {
-    lgr.error("Error: specify exactly one of methylomes or methylomes-file");
-    return EXIT_FAILURE;
-  }
-
-  std::vector<std::tuple<std::string, std::string>> args_to_log{
-    // clang-format off
-    {"Config dir", cfg.config_dir},
-    {"Hostname", cfg.hostname},
-    {"Port", cfg.port},
-    {"Methylome dir", cfg.methylome_dir},
-    {"Index dir", cfg.index_dir},
-    {"Log file", cfg.log_file},
-    {"Log level", std::format("{}", cfg.log_level)},
-    {"Bin size", std::format("{}", bin_size)},
-    {"Intervals file", intervals_file},
-    {"Count covered", std::format("{}", count_covered)},
-    {"Methylome names", format_methylome_names_brief(methylome_names)},
-    {"Methylomes file", methylomes_file},
-    {"Genome name", genome_name},
-    {"Output file", output_file},
-    {"Output format", std::format("{}", out_fmt)},
-    {"Min reads", std::format("{}", min_reads)},
-    {"Local mode", std::format("{}", local_mode)},
-    // clang-format on
-  };
-  xfr::log_args<xfr::log_level_t::info>(args_to_log);
 
   std::error_code error;
   const auto index =
@@ -478,11 +466,11 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
   };
 
   // get methylome names either parsed from command line or in a file
-  const auto methylomes = !methylomes_file.empty()
-                            ? read_methylomes_file(methylomes_file, error)
-                            : split_comma(methylome_names);
+  const auto methylomes =
+    get_methylome_names(std::move(methylome_names), error);
   if (error) {
-    lgr.error("Error reading methylomes file {}: {}", methylomes_file, error);
+    lgr.error("Error identifying methylomes from {}: {}",
+              format_methylome_names_brief(methylome_names), error);
     return EXIT_FAILURE;
   }
 
@@ -493,6 +481,28 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
     lgr.error("Error: invalid methylome name \"{}\"", *invalid_name);
     return EXIT_FAILURE;
   }
+
+  std::vector<std::tuple<std::string, std::string>> args_to_log{
+    // clang-format off
+    {"Config dir", cfg.config_dir},
+    {"Hostname", cfg.hostname},
+    {"Port", cfg.port},
+    {"Methylome dir", cfg.methylome_dir},
+    {"Index dir", cfg.index_dir},
+    {"Log file", cfg.log_file},
+    {"Log level", std::format("{}", cfg.log_level)},
+    {"Bin size", std::format("{}", bin_size)},
+    {"Intervals file", intervals_file},
+    {"Count covered", std::format("{}", count_covered)},
+    {"Methylome names", format_methylome_names_brief(methylomes)},
+    {"Genome name", genome_name},
+    {"Output file", output_file},
+    {"Output format", std::format("{}", out_fmt)},
+    {"Min reads", std::format("{}", min_reads)},
+    {"Local mode", std::format("{}", local_mode)},
+    // clang-format on
+  };
+  xfr::log_args<xfr::log_level_t::info>(args_to_log);
 
   const bool intervals_query = (bin_size == 0);
   const auto request_type =
