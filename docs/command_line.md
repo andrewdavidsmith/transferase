@@ -181,8 +181,8 @@ intervals file your query with a bin size. Here is an example, using
 some of the other options:
 
 ```console
-xfr query -g hg38 -m SRX096522,SRX096523 -b 10000 \
-    -o results_df.txt --out-fmt dfscores --covered --min-reads 10
+xfr query -g hg38 -b 10000 -o results_df.txt --out-fmt dfscores --covered \
+    --min-reads 10 -m SRX096522 SRX096523
 ```
 
 The output should look like this:
@@ -415,18 +415,19 @@ will be almost instantaneous.
 
 Assuming you started the server in a different terminal window as
 explained above, you will need to generate a configuration to query
-it. Here is the command:
+it. This command will do the configuration and also download the genome
+index for hg38:
 
 ```console
-xfr config -c my_config -s localhost -p 5000
+xfr config -c my_config -s localhost -p 5000 -g hg38
 ```
 
 With this configuration, you can do a query almost exactly as if you
 were querying MethBase2 on the transferase server:
 
 ```console
-xfr query -c my_config/transferase_client_config.txt \
-    -g hg38 -m SRX9531739 -o output.bed -i cpgIslandExtUnmasked_hg38.bed3
+xfr query -c my_config -g hg38 \
+    -m SRX9531739 -o output.bed -i cpgIslandExtUnmasked_hg38.bed3
 ```
 
 In this case, from the perspective of your query, "SRX9531739" is not
