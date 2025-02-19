@@ -25,6 +25,8 @@
 #define CLI_COMMAND_SELECT_HPP_
 
 auto
-command_select_main(int argc, char *argv[]) -> int;  // NOLINT(*-c-arrays)
+command_select_main([[maybe_unused]] int argc,
+                    [[maybe_unused]] char *argv[])  // NOLINT(*-c-arrays)
+  -> int;
 
 #endif  // CLI_COMMAND_SELECT_HPP_
