@@ -139,13 +139,13 @@ server_config::read_config_file_no_overwrite(
   if (pid_file.empty())
     pid_file = tmp.pid_file;
 
-  if (n_threads != 0)
+  if (n_threads == 0)
     n_threads = tmp.n_threads;
-  if (max_resident != 0)
+  if (max_resident == 0)
     max_resident = tmp.max_resident;
-  if (min_bin_size != 0)
+  if (min_bin_size == 0)
     min_bin_size = tmp.min_bin_size;
-  if (max_intervals != 0)
+  if (max_intervals == 0)
     max_intervals = tmp.max_intervals;
 }
 
