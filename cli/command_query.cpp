@@ -518,7 +518,10 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
                            request_type)
       : do_bins_query(bin_size, count_covered, out_fmt, min_reads, output_file,
                       index, interface, methylomes, request_type);
-  lgr.info("Completed query with status: {}", error);
+  // ADS: below is because error code '0' is printed as "Undefined
+  // error" on macos.
+  lgr.info("Completed query with status: {}",
+           error ? error.message() : "Success");
 
   return error ? EXIT_FAILURE : EXIT_SUCCESS;
 }
