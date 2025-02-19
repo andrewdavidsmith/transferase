@@ -35,17 +35,15 @@ foreach(cpp_file ${cpp_files})
   # Below: make sure 'config.h' is visible
   target_include_directories(${BASE_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/lib)
   target_compile_options(${BASE_NAME} PRIVATE ${GLOBAL_COMPILE_OPTIONS})
+  target_link_libraries(${BASE_NAME} PRIVATE transferase_system)
   list(APPEND LIBRARY_OBJECTS ${BASE_NAME})
 endforeach()
 
 # Curses
 include(FindCurses)  # This should be in the modules dir
-set(CURSES_NEED_NCURSES TRUE)
+set(CURSES_NEED_NCURSES true)
 find_package(Curses)
 if(CURSES_FOUND AND CURSES_HAVE_NCURSES_H)
-  # Make sure that the command_select.cpp source can see the header for
-  # ncurses if the ncurses library was found
-
   # ADS: Currently the ncurses library on the build development needs
   # to link with the GPM library; this is not optimal, but also not a
   # priority now.
@@ -57,22 +55,23 @@ if(CURSES_FOUND AND CURSES_HAVE_NCURSES_H)
   if (GPM_LIB STREQUAL GPM_LIB-NOTFOUND)
     message(STATUS "Failed to find GPM lib: ${GPM_LIB_NAME}")
   else()
-    message(STATUS "Found GPM library: ${GPM_LIB_NAME}")
+    message(STATUS "Found GPM library: ${GPM_LIB_NAME} (check if correct)")
     list(APPEND CURSES_LIBRARIES ${GPM_LIB})
   endif()
-  ## ADS: need <ncurses.h> and not <curses.h> or <ncurses/curses.h>
-  # add_compile_definitions(HAVE_NCURSES)
+  # ADS: need <ncurses.h> and not <curses.h> or <ncurses/curses.h>
   message(STATUS "Found ncurses header: ${CURSES_HAVE_NCURSES_H}")
   message(STATUS "Found ncurses libraries: ${CURSES_LIBRARIES}")
-  get_filename_component(BASE_NAME command_select.cpp NAME_WE)
   add_library(command_select OBJECT command_select.cpp)
   target_compile_definitions(command_select PRIVATE HAVE_NCURSES)
-  target_include_directories(command_select PUBLIC ${CURSES_INCLUDE_DIRS})
-  target_link_libraries(command_select PRIVATE transferase_system)
   target_compile_options(command_select PRIVATE ${GLOBAL_COMPILE_OPTIONS})
+  target_include_directories(command_select PRIVATE
+    ${CURSES_INCLUDE_DIRS}
+    ${PROJECT_SOURCE_DIR}/lib
+  )
+  target_link_libraries(command_select PRIVATE transferase_system)
   list(APPEND LIBRARY_OBJECTS command_select)
 else()
-  message(STATUS "NCurses not found: 'select' command will not be built")
+  message(STATUS "NCurses not found: 'select' will be disabled")
 endif()
 
 # Create the initial static library linking the individual objects
