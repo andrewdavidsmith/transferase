@@ -92,8 +92,8 @@ command_list_main(int argc, char *argv[])  // NOLINT(*-c-arrays)
                "show only methylomes")
     ->option_text(" ")
     ->excludes(indexes_only_opt);
-  app.add_option("-d,--directories", directories,
-                 "search these directories")
+  app.add_option("directories", directories,
+                 "names of directories to search")
     ->required();
   app.add_flag("-v,--verbose", verbose, "print more info");
   // clang-format on
