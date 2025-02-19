@@ -345,7 +345,9 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
   app.get_formatter()->label("REQUIRED", "REQD");
   app.set_help_flag("-h,--help", "Print a detailed help message and exit");
   // clang-format off
-  app.add_option("-c,--config-dir", cfg.config_dir, "specify a config directory");
+  app.add_option("-c,--config-dir", cfg.config_dir, "specify a config directory")
+    ->option_text("TEXT:DIR")
+    ->check(CLI::ExistingDirectory);
   const auto intervals_file_opt =
     app.add_option("-i,--intervals-file", intervals_file, "intervals file")
     ->option_text("FILE")
@@ -384,8 +386,6 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
     ->check(CLI::ExistingDirectory);
   app.add_option("-x,--index-dir", cfg.index_dir,
                  "genome index directory");
-  app.add_option("-l,--log-file", cfg.log_file,
-                 "log file name (default: print to screen)");
   app.add_option("-v,--log-level", cfg.log_level,
                  "{debug, info, warning, error, critical}")
     ->option_text(std::format("ENUM [{}]", log_level_default))
@@ -490,7 +490,6 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
     {"Port", cfg.port},
     {"Methylome dir", cfg.methylome_dir},
     {"Index dir", cfg.index_dir},
-    {"Log file", cfg.log_file},
     {"Log level", std::format("{}", cfg.log_level)},
     {"Bin size", std::format("{}", bin_size)},
     {"Intervals file", intervals_file},
