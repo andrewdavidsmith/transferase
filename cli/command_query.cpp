@@ -89,6 +89,7 @@ xfr query --local -d methylome_dir -x index_dir -g hg38 \
 #include <string_view>
 #include <system_error>
 #include <tuple>
+#include <utility>
 #include <variant>  // for std::tuple
 #include <vector>
 
