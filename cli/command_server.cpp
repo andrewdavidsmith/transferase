@@ -110,6 +110,8 @@ command_server_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
   namespace xfr = transferase;
 
   xfr::server_config cfg;
+  cfg.min_bin_size = xfr::request::min_bin_size_default;
+  cfg.max_intervals = xfr::request::max_intervals_default;
   cfg.log_level = log_level_default;
   std::string config_file;
   bool daemonize{false};
@@ -197,6 +199,20 @@ command_server_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
     return EXIT_FAILURE;
   }
 
+  const bool cfg_is_valid = cfg.validate(error);
+  if (!cfg_is_valid || error) {
+    lgr.error("Invalid server configuration: {}", error);
+    return EXIT_FAILURE;
+  }
+
+  const auto methylome_dir = check_directory(cfg.methylome_dir, error);
+  if (error)
+    return EXIT_FAILURE;
+
+  const auto index_dir = check_directory(cfg.index_dir, error);
+  if (error)
+    return EXIT_FAILURE;
+
   std::vector<std::tuple<std::string, std::string>> args_to_log{
     // clang-format off
     {"Config file", config_file},
@@ -215,20 +231,6 @@ command_server_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
   };
 
   xfr::log_args<transferase::log_level_t::info>(args_to_log);
-
-  const bool cfg_is_valid = cfg.validate(error);
-  if (!cfg_is_valid || error) {
-    lgr.error("Invalid server configuration: {}", error);
-    return EXIT_FAILURE;
-  }
-
-  const auto methylome_dir = check_directory(cfg.methylome_dir, error);
-  if (error)
-    return EXIT_FAILURE;
-
-  const auto index_dir = check_directory(cfg.index_dir, error);
-  if (error)
-    return EXIT_FAILURE;
 
   if (daemonize) {
     auto s = xfr::server(cfg.hostname, cfg.port, cfg.n_threads, methylome_dir,
