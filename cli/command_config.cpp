@@ -110,7 +110,9 @@ command_config_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
   app.set_help_flag("-h,--help", "Print a detailed help message and exit");
   // clang-format off
   app.add_option("-c,--config-dir", cfg.config_dir,
-                 "name of config directory; see help for default");
+                 "name of config directory; see help for default")
+    ->option_text("TEXT")
+    ->check(!CLI::ExistingFile);
   app.add_option("-s,--hostname", cfg.hostname, "transferase server hostname");
   app.add_option("-p,--port", cfg.port, "transferase server port");
   app.add_option("-x,--index-dir", cfg.index_dir,
