@@ -1,6 +1,8 @@
 name: Build transferase on macOS for x86
 
 on:
+  pull_request:
+    branches: [ "main" ]
   workflow_dispatch:
 
 jobs:
