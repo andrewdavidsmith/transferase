@@ -26,6 +26,7 @@
 #include <methylome_client_remote.hpp>
 
 #include <client_config.hpp>
+#include <genomic_interval.hpp>
 #include <level_element.hpp>
 #include <methylome_client_base.hpp>
 #include <query_container.hpp>
@@ -59,6 +60,14 @@ methylome_client_bindings(nb::class_<transferase::methylome_client_remote> &cls)
     The ClientConfig object associated with this MethylomeClient.
     )doc");
   cls.def("__repr__", &xfr::methylome_client_remote::tostring);
+  cls.def(
+    "get_index_dir",
+    [](const xfr::methylome_client_remote &self) -> std::string {
+      return self.config.get_index_dir();
+    },
+    R"doc(
+    Get the index directory for this MethylomeClient.
+    )doc");
   cls.def("configured_genomes",
           nb::overload_cast<>(&xfr::methylome_client_remote::configured_genomes,
                               nb::const_),
@@ -72,8 +81,10 @@ methylome_client_bindings(nb::class_<transferase::methylome_client_remote> &cls)
             &xfr::methylome_client_remote::get_levels<xfr::level_element_t>,
             nb::const_),
           R"doc(
-    Make a query for methylation levels in each of a given set of
-    intervals, specified depending on query type.
+    Query the server for methylation levels in each query interval and
+    for each methylome in the list. For repeated queries using the
+    same set of intervals, using a QueryContainer is the most
+    efficient.
 
     Parameters
     ----------
@@ -91,14 +102,39 @@ methylome_client_bindings(nb::class_<transferase::methylome_client_remote> &cls)
         methylome names.
     )doc",
           "methylome_names"_a, "query"_a);
+  cls.def("get_levels",
+          nb::overload_cast<const std::vector<std::string> &,
+                            const std::vector<xfr::genomic_interval> &>(
+            &xfr::methylome_client_remote::get_levels<xfr::level_element_t>,
+            nb::const_),
+          R"doc(
+    Query the server for methylation levels in each given genomic
+    interval and for each methylome in the list.  This function
+    internally constructs a QueryContainer.
+
+    Parameters
+    ----------
+
+    methylome_names (list[str]): A list of methylome names. These must
+        be the names of methylomes that exist on the server. These
+        will usually be SRA accession numbers, and the server will
+        immediately reject any names that include letters other than
+        [a-zA-Z0-9_].  Queries involving too many methylomes will be
+        rejected; this number is roughly 45.
+
+    intervals (list[GenomicInterval]): A list of GenomicInterval
+        objects from the same reference genome as the methylomes in
+        methylome_names.
+    )doc",
+          "methylome_names"_a, "intervals"_a);
   cls.def(
     "get_levels",
     nb::overload_cast<const std::vector<std::string> &, const std::uint32_t>(
       &xfr::methylome_client_remote::get_levels<xfr::level_element_t>,
       nb::const_),
     R"doc(
-    Make a query for methylation levels in each non-overlapping
-    genomic interval of the given size.
+    Query the server for methylation levels in each non-overlapping
+    genomic interval of the given size and for each specified methylome.
 
     Parameters
     ----------
@@ -122,9 +158,10 @@ methylome_client_bindings(nb::class_<transferase::methylome_client_remote> &cls)
       &xfr::methylome_client_remote::get_levels<xfr::level_element_covered_t>,
       nb::const_),
     R"doc(
-    Make a query for methylation levels and number of sites with reads
-    in each of a given set of intervals, specified depending on query
-    type.
+    Query the server for methylation levels in each query interval and
+    for each methylome in the list. For repeated queries using the
+    same set of intervals, using a QueryContainer is the most
+    efficient.
 
     Parameters
     ----------
@@ -144,13 +181,41 @@ methylome_client_bindings(nb::class_<transferase::methylome_client_remote> &cls)
     "methylome_names"_a, "query"_a);
   cls.def(
     "get_levels_covered",
+    nb::overload_cast<const std::vector<std::string> &,
+                      const std::vector<xfr::genomic_interval> &>(
+      &xfr::methylome_client_remote::get_levels<xfr::level_element_covered_t>,
+      nb::const_),
+    R"doc(
+    Query the server for methylation levels in each given genomic
+    interval and for each methylome in the list. Additionally returns
+    information about the number of sites covered by reads in each
+    interval. This function internally constructs a QueryContainer.
+
+    Parameters
+    ----------
+
+    methylome_names (list[str]): A list of methylome names. These must
+        be the names of methylomes that exist on the server. These
+        will usually be SRA accession numbers, and the server will
+        immediately reject any names that include letters other than
+        [a-zA-Z0-9_].  Queries involving too many methylomes will be
+        rejected; this number is roughly 45.
+
+    intervals (list[GenomicInterval]): A list of GenomicInterval
+        objects from the same reference genome as the methylomes in
+        methylome_names.
+    )doc",
+    "methylome_names"_a, "intervals"_a);
+  cls.def(
+    "get_levels_covered",
     nb::overload_cast<const std::vector<std::string> &, const std::uint32_t>(
       &xfr::methylome_client_remote::get_levels<xfr::level_element_covered_t>,
       nb::const_),
     R"doc(
-    Make a query for methylation levels, along with information about
-    the number of sites covered by reads, in each non-overlapping
-    genomic interval of the given size.
+    Query the server for methylation levels in each non-overlapping
+    genomic interval of the given size and for each specified
+    methylome.  Additionally returns information about the number of
+    sites covered by reads in each interval.
 
     Parameters
     ----------
