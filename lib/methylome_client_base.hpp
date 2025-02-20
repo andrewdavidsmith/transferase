@@ -27,11 +27,13 @@
 #include "client_config.hpp"
 #include "genome_index.hpp"  // for genome_index::list
 #include "genome_index_set.hpp"
-#include "nlohmann/json.hpp"
+#include "genomic_interval.hpp"
 #include "query_container.hpp"  // for transferase::size
 #include "request.hpp"
 #include "request_type_code.hpp"  // for transferase::request_type_code
 #include "transferase_metadata.hpp"
+
+#include "nlohmann/json.hpp"
 
 #include <cstdint>
 #include <format>
@@ -139,6 +141,32 @@ public:
   }
 #endif
 
+  // intervals: takes a list of genomic intervals
+  template <typename lvl_elem_t>
+  [[nodiscard]] auto
+  get_levels(const std::vector<std::string> &methylome_names,
+             const std::vector<genomic_interval> &intervals,
+             std::error_code &error) const noexcept
+    -> std::vector<level_container<lvl_elem_t>> {
+    return self().template get_levels_derived<lvl_elem_t>(methylome_names,
+                                                          intervals, error);
+  }
+
+#ifndef TRANSFERASE_NOEXCEPT
+  // intervals: takes a list of genomic intervals
+  template <typename lvl_elem_t>
+  auto
+  get_levels(const std::vector<std::string> &methylome_names,
+             const std::vector<genomic_interval> &intervals) const
+    -> std::vector<level_container<lvl_elem_t>> {
+    std::error_code error;
+    auto result = get_levels<lvl_elem_t>(methylome_names, intervals, error);
+    if (error)
+      throw std::system_error(error);
+    return result;
+  }
+#endif
+
   // bins: takes an index
   template <typename lvl_elem_t>
   [[nodiscard]] auto
@@ -214,6 +242,13 @@ protected:
   get_levels_derived(const std::vector<std::string> &methylome_names,
                      const query_container &query, std::error_code &error)
     const noexcept -> std::vector<level_container<lvl_elem_t>> = delete;
+
+  template <typename lvl_elem_t>
+  [[nodiscard]] auto
+  get_levels_derived(const std::vector<std::string> &methylome_names,
+                     const std::vector<genomic_interval> &intervals,
+                     std::error_code &error) const noexcept
+    -> std::vector<level_container<lvl_elem_t>> = delete;
 
   template <typename lvl_elem_t>
   [[nodiscard]] auto

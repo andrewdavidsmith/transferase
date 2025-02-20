@@ -26,6 +26,7 @@
 
 #include "client.hpp"
 #include "client_config.hpp"
+#include "genomic_interval.hpp"
 #include "methylome_client_base.hpp"
 #include "query_container.hpp"
 #include "request.hpp"
@@ -82,6 +83,29 @@ public:
       get_genome_and_index_hash(methylome_names, error);
     if (error)
       return {};
+    const auto req =
+      request{req_type, index_hash, size(query), methylome_names};
+    return get_levels_impl<lvl_elem_t>(req, query, error);
+  }
+
+  // intervals: takes a vector of genomic intervals
+  template <typename lvl_elem_t>
+  [[nodiscard]] auto
+  get_levels_derived(const std::vector<std::string> &methylome_names,
+                     const std::vector<genomic_interval> &intervals,
+                     std::error_code &error) const noexcept
+    -> std::vector<level_container<lvl_elem_t>> {
+    request_type_code req_type = request_type_code::intervals;
+    if constexpr (std::is_same_v<lvl_elem_t, level_element_covered_t>)
+      req_type = request_type_code::intervals_covered;
+    const auto [genome_name, index_hash] =
+      get_genome_and_index_hash(methylome_names, error);
+    if (error)
+      return {};
+    const auto index = indexes->get_genome_index(genome_name, error);
+    if (error)
+      return {};
+    const auto query = index->make_query(intervals);
     const auto req =
       request{req_type, index_hash, size(query), methylome_names};
     return get_levels_impl<lvl_elem_t>(req, query, error);
