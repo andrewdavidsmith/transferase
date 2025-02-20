@@ -24,9 +24,7 @@
 #ifndef LIB_GENOME_INDEX_DATA_HPP_
 #define LIB_GENOME_INDEX_DATA_HPP_
 
-#if not defined(__APPLE__) && not defined(__MACH__)
 #include "aligned_allocator.hpp"
-#endif
 #include "query_container.hpp"
 
 #include <cstddef>  // for std::size_t
@@ -52,11 +50,7 @@ struct genome_index_data {
   static constexpr auto filename_extension{".cpg_idx"};
 
   typedef std::uint32_t genome_pos_t;
-#if not defined(__APPLE__) && not defined(__MACH__)
   typedef std::vector<genome_pos_t, aligned_allocator<genome_pos_t>> vec;
-#else
-  typedef std::vector<genome_pos_t> vec;
-#endif
 
   explicit genome_index_data(
     const std::initializer_list<genome_index_data::vec> &l) : positions(l) {}

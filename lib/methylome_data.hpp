@@ -24,10 +24,7 @@
 #ifndef LIB_METHYLOME_DATA_HPP_
 #define LIB_METHYLOME_DATA_HPP_
 
-#if not defined(__APPLE__) && not defined(__MACH__)
 #include "aligned_allocator.hpp"
-#endif
-
 #include "level_container.hpp"
 
 #include <algorithm>
@@ -76,11 +73,7 @@ struct mcount_pair {
 struct methylome_data {
   static constexpr auto filename_extension{".m16"};
 
-#if not defined(__APPLE__) && not defined(__MACH__)
   typedef std::vector<mcount_pair, aligned_allocator<mcount_pair>> vec;
-#else
-  typedef std::vector<mcount_pair> vec;
-#endif
 
   methylome_data() = default;
   explicit methylome_data(methylome_data::vec &&cpgs) : cpgs{std::move(cpgs)} {}
