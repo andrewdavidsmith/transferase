@@ -208,7 +208,6 @@ do_intervals_query(const std::string &intervals_file, const bool count_covered,
     intervals,
     // clang-format on
   };
-  // outmgr.min_reads = args.min_reads;
 
   const auto output_start{std::chrono::high_resolution_clock::now()};
   error = write_output(outmgr, results);
@@ -260,7 +259,6 @@ do_bins_query(const std::uint32_t bin_size, const bool count_covered,
     bin_size,
     // clang-format on
   };
-  // outmgr.min_reads = args.min_reads;
 
   const auto output_start{std::chrono::high_resolution_clock::now()};
   error = write_output(outmgr, results);
