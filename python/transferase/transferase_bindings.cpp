@@ -57,90 +57,83 @@ location listed above.
 #include <nanobind/stl/string.h>  // IWYU pragma: keep
 #include <nanobind/stl/vector.h>  // IWYU pragma: keep
 
-// ADS: the header below has functions to control what is
-// auto-generated in the python docs
-// #include <nanobind/options.h>  // IWYU pragma: keep
-
 #include <string>
 #include <type_traits>  // for std::is_lvalue_reference_v
 #include <utility>      // for std::move
 
-namespace nb = nanobind;
-
 auto
 initialize_transferase() -> void {
-  transferase::logger::instance(transferase::shared_from_cout(), "Transferase",
-                                transferase::log_level_t::error);
+  namespace xfr = transferase;
+  xfr::logger::instance(xfr::shared_from_cout(), "Transferase",
+                        xfr::log_level_t::error);
 }
 
 NB_MODULE(transferase, the_module) {
-  // nb::options options;
-  // options.disable_function_signatures();
+  namespace nb = nanobind;
+  namespace xfr = transferase;
+
   the_module.doc() = warning_message;
 
   initialize_transferase();
 
-  auto LogLevel = nb::enum_<transferase::log_level_t>(the_module, "LogLevel")
-                    .value("debug", transferase::log_level_t::debug)
-                    .value("info", transferase::log_level_t::info)
-                    .value("warning", transferase::log_level_t::warning)
-                    .value("error", transferase::log_level_t::error)
-                    .value("critical", transferase::log_level_t::critical);
+  auto LogLevel = nb::enum_<xfr::log_level_t>(the_module, "LogLevel")
+                    .value("debug", xfr::log_level_t::debug)
+                    .value("info", xfr::log_level_t::info)
+                    .value("warning", xfr::log_level_t::warning)
+                    .value("error", xfr::log_level_t::error)
+                    .value("critical", xfr::log_level_t::critical);
 
-  the_module.def("set_log_level", [](const transferase::log_level_t lvl) {
-    transferase::logger::instance().set_level(lvl);
+  the_module.def("set_log_level", [](const xfr::log_level_t lvl) {
+    xfr::logger::instance().set_level(lvl);
   });
 
-  auto DownloadPolicy =
-    nb::enum_<transferase::download_policy_t>(the_module, "DownloadPolicy")
-      .value("none", transferase::download_policy_t::none)
-      .value("all", transferase::download_policy_t::all)
-      .value("missing", transferase::download_policy_t::missing)
-      .value("update", transferase::download_policy_t::update);
+  auto DLPolicy = nb::enum_<xfr::download_policy_t>(the_module, "DLPolicy")
+                    .value("none", xfr::download_policy_t::none)
+                    .value("all", xfr::download_policy_t::all)
+                    .value("missing", xfr::download_policy_t::missing)
+                    .value("update", xfr::download_policy_t::update);
 
-  auto ClientConfig = nb::class_<transferase::client_config>(
-    the_module, "ClientConfig", "Class to help configuring transferase");
+  auto MConfig = nb::class_<xfr::client_config>(
+    the_module, "MConfig", "Class to help configuring transferase");
 
-  auto GenomicInterval = nb::class_<transferase::genomic_interval>(
+  auto GenomicInterval = nb::class_<xfr::genomic_interval>(
     the_module, "GenomicInterval",
     "Representation of a genomic interval as chrom, start, stop (zero-based, "
     "half-open)");
 
-  auto GenomeIndex = nb::class_<transferase::genome_index>(
+  auto GenomeIndex = nb::class_<xfr::genome_index>(
     the_module, "GenomeIndex", "An index of CpG sites in a genome");
 
-  auto Methylome = nb::class_<transferase::methylome>(
-    the_module, "Methylome", "Representation of a methylome");
+  auto Methylome = nb::class_<xfr::methylome>(the_module, "Methylome",
+                                              "Representation of a methylome");
 
-  auto QueryContainer = nb::class_<transferase::query_container>(
-    the_module, "QueryContainer", "A container for a methylome query");
+  auto Query = nb::class_<xfr::query_container>(
+    the_module, "Query", "A container for a methylome query");
 
-  auto LevelContainer =
-    nb::class_<transferase::level_container<transferase::level_element_t>>(
-      the_module, "LevelContainer", "A container for methylation levels");
+  auto MLevels = nb::class_<xfr::level_container<xfr::level_element_t>>(
+    the_module, "MLevels", "A container for methylation levels");
 
-  auto LevelContainerCovered = nb::class_<
-    transferase::level_container<transferase::level_element_covered_t>>(
-    the_module, "LevelContainerCovered",
+  auto MLevelsCovered = nb::class_<
+    xfr::level_container<xfr::level_element_covered_t>>(
+    the_module, "MLevelsCovered",
     "A container for methylation levels with information about covered sites");
 
-  auto MethylomeClient = nb::class_<transferase::methylome_client_remote>(
-    the_module, "MethylomeClient",
-    "Client to get data from a remote methylome server");
+  auto MClient = nb::class_<xfr::methylome_client_remote>(
+    the_module, "MClient", "Client to get data from a remote methylome server");
 
-  auto MethylomeClientLocal = nb::class_<transferase::methylome_client_local>(
-    the_module, "MethylomeClientLocal", "Client to get data stored locally");
+  auto MClientLocal = nb::class_<xfr::methylome_client_local>(
+    the_module, "MClientLocal", "Client to get data stored locally");
 
-  client_config_bindings(ClientConfig);
+  client_config_bindings(MConfig);
 
   genomic_interval_bindings(GenomicInterval);
   genome_index_bindings(GenomeIndex);
   methylome_bindings(Methylome);
-  query_container_bindings(QueryContainer);
+  query_container_bindings(Query);
 
-  level_container_bindings(LevelContainer);
-  level_container_covered_bindings(LevelContainerCovered);
+  level_container_bindings(MLevels);
+  level_container_covered_bindings(MLevelsCovered);
 
-  methylome_client_local_bindings(MethylomeClientLocal);
-  methylome_client_bindings(MethylomeClient);
+  methylome_client_local_bindings(MClientLocal);
+  methylome_client_bindings(MClient);
 }
