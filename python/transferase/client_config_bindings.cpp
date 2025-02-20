@@ -73,9 +73,9 @@ client_config_bindings(nanobind::class_<transferase::client_config> &cls)
     Save the configuration values associated with this object back to
     the directory associated with this object, which is the value in
     'config_dir'.  The main reason to use this function is to update a
-    configuration. You would first use 'get_config' to load the
-    ClientConfig object, then modify one of the instance variables,
-    then call 'save'.
+    configuration. You would first use ClientConfig() to load an
+    object. Then modify one of the instance variables, then call
+    'save'.
     )doc");
   cls.def(
     "install",
@@ -87,12 +87,12 @@ client_config_bindings(nanobind::class_<transferase::client_config> &cls)
     },
     R"doc(
     Does the work related to downloading information needed by
-    MethylomeClients.  Accepting a list of genomes and an indicator
-    that controls what is (re)downloaded. If both arguments are empty,
-    the configuration will be written but no genome indexes will be
-    downloaded. If you specify genomes, or request a download, this
-    command will take roughly 15-30s per genome, depending on internet
-    speed. The configuration will be written to the directory
+    MethylomeClient objects.  Accepts a list of genomes and an
+    indicator that determines what to download. If both arguments are
+    empty, the configuration will be written but no genome indexes
+    will be downloaded. If you specify genomes, or request a download,
+    this command will take roughly 15-30s per genome, depending on
+    internet speed. The configuration will be written to the directory
     associated with this object. Typically this should be left as the
     default. This command makes web requests. Note: before doing an
     'install' you need a client, so make sure to run 'get_config'
@@ -122,9 +122,9 @@ client_config_bindings(nanobind::class_<transferase::client_config> &cls)
              R"doc(
     URL or IP address for the remote transferase server.  Like
     transferase.usc.edu. This must be a valid hostname. Don't specify
-    a protocol or slashes, just the hostname.  You should only change
-    this if there is a problem setting the server or if you have setup
-    your own server.
+    a protocol or slashes, just the hostname.  An IP address is also
+    ok.  You should only change this if there is a problem setting the
+    server or if you have setup your own server.
     )doc");
   cls.def_rw("port", &transferase::client_config::port,
              R"doc(
