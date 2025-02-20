@@ -22,28 +22,28 @@
 
 import pytest
 
-from transferase import QueryContainer
+from transferase import Query
 
 @pytest.fixture
 def query_containers():
     """Fixture to set up initial data for tests"""
-    # Initialize QueryContainer objects
-    query_container1 = QueryContainer()
-    query_container2 = QueryContainer()
-    return query_container1, query_container2
+    # Initialize Query objects
+    query1 = Query()
+    query2 = Query()
+    return query1, query2
 
 def test_init_empty(query_containers):
     """Test length zero"""
-    query_container1, _ = query_containers
-    assert len(query_container1) == 0
+    query1, _ = query_containers
+    assert len(query1) == 0
 
 def test_repr(query_containers):
     """Test the __repr__ method"""
-    query_container1, _ = query_containers
-    repr_str = repr(query_container1)
-    assert "<QueryContainer size=0>" in repr_str
+    query1, _ = query_containers
+    repr_str = repr(query1)
+    assert "<Query size=0>" in repr_str
 
 def test_eq(query_containers):
     """Test the equality operator"""
-    query_container1, query_container2 = query_containers
-    assert query_container1 == query_container2
+    query1, query2 = query_containers
+    assert query1 == query2
