@@ -25,6 +25,7 @@
 #define LIB_CLIENT_HPP_
 
 #include "level_container.hpp"
+#include "level_container_md.hpp"
 #include "logger.hpp"
 #include "query_container.hpp"
 #include "request.hpp"
@@ -60,14 +61,17 @@ public:
 
   [[nodiscard]] auto
   get_levels(std::error_code &error) const noexcept
-    -> std::vector<level_container<level_element>> {
-    return resp_payload.to_levels<level_element>(resp_hdr, error);
+    -> const level_container_md<level_element> & {
+    return resp_payload;  // .template to_levels<level_element>(resp_hdr,
+                          // error);
   }
 
   [[nodiscard]] auto
   take_levels(std::error_code &error) const noexcept
-    -> std::vector<level_container<level_element>> {
-    return resp_payload.to_levels<level_element>(resp_hdr, error);
+    -> const level_container_md<level_element> & {
+    // -> const std::vector<level_container<level_element>> & {
+    return resp_payload;  // .template to_levels<level_element>(resp_hdr,
+                          // error);
   }
 
 protected:
@@ -101,7 +105,8 @@ private:
   auto
   prepare_to_read_response_payload() -> void {
     // get space for query_container
-    resp_payload.payload.resize(get_incoming_n_bytes());
+    // resp_payload.payload.resize(get_incoming_n_bytes());
+    resp_payload.v.resize(resp_hdr.rows * resp_hdr.cols);
     incoming_bytes_remaining = get_incoming_n_bytes();  // init counters
     incoming_bytes_received = 0;
   }
@@ -130,7 +135,8 @@ private:
 
   response_header_buffer resp_hdr_buf{};
   response_header resp_hdr{};
-  response_payload resp_payload{};
+  // response_payload resp_payload{};
+  level_container_md<level_element> resp_payload{};
 
   std::error_code status{};
 
