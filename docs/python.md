@@ -1,146 +1,109 @@
 # Python usage examples
 
-This document is the first shot at very rudimentary usage docs for the
-Python API. These are intended for people who are testing the
-software. I expect this document to evolve and then disappear as real
-documentation is written for the transferase Python API. This API is
-entirely through C++ bindings, so any `.py` files in might find in the
-repo are not part of the API, and would just be for the build process.
-
 First we import the transferase module so we can set our preferred log
-level for the session. Setting it to 'debug' let's us see
-everything. It will be a lot of information, most actually for
-debugging.
+level for the session or in your Python scripts. Setting it to 'debug'
+let's us see everything. It will be a lot of information, most of it
+actually for debugging.
 
 ```python
 import transferase
 from transferase import LogLevel
-
 transferase.set_log_level(LogLevel.debug)
 ```
 
-Next we import the MethylomeClient class. This is our interface to the
-transferase server. We need to use the class to set up our
-environment.
+Next we want to set up transferase for the user (i.e., you) on the
+host system (e.g., your laptop). The following will do a default
+setup, and might take up to a minute:
+
+```python
+from transferase import ClientConfig
+config = ClientConfig()
+config.install(["hg38"])
+```
+
+This will create files in `~/.config/transferase` which are safe to
+delete because you can just run the same command again anytime.
+
+You can select other genomes (e.g., mm39, rn7, bosTau9, etc.). If the
+genomes don't exist or are not on the server, you should see a
+'RuntimeError' indicating a problem downloading. The server can't tell
+the difference between a totally invalid genome assembly name, one
+that is possibly misspelled, and a real one that simply isn't on the
+server. You can find the list of available genomes by checking out
+MethBase2 through the UCSC Genome Browser.
+
+With the setup completed, we can get a client object:
 
 ```python
 from transferase import MethylomeClient
+client = MethylomeClient()
 ```
 
-We next configure transferase and install any genomes we will use. We
-will use the default configuration and ask for hg38, but first we will
-produce an error (you don't need the try block -- feel free to watch
-it crash):
-
-```python
-try:
-    MethylomeClient.config(["hg399"])
-except RuntimeError as err:
-    print(f"Error: {err}")
-```
-
-This should succeed as long as the server is responding and has the
-files for 'hg38', which it should.
-
-```python
-MethylomeClient.config(["hg38"])
-```
-
-With the configuration finished, we can instantiate a client.
-
-```python
-client = MethylomeClient.init()
-```
-
-The client allows us to make queries. Our query will be based on a set
-of genomic intervals, as usually stored in a BED format file. However,
-before working with the genomic intervals we need to first load a
-genome index, which guarantees that we are working with the exact same
-reference genome as the transferase server we will contact.
+The client object is what makes the queries. Our query will be based
+on a set of genomic intervals, which you would get from BED format
+file. However, before working with the genomic intervals we need to
+first load a genome index, which guarantees that we are working with
+the exact reference genome that the transferase server expects.
 
 ```python
 from transferase import GenomeIndex
-```
-
-This should fail because the genome doesn't exist:
-
-```python
-try:
-    genome_index = GenomeIndex.read(client.index_dir, "hg399")
-except RuntimeError as err:
-    print(f"Error: {err}")
-```
-
-But this should succeed because we configured 'hg38':
-
-```python
-genome_index = GenomeIndex.read(client.index_dir, "hg38")
+genome_index = GenomeIndex.read(client.get_index_dir(), "hg38")
 ```
 
 We will now read genomic intervals. If you have a BED format file for
-hg38, for example ~100k intervals (you can do up to over 1M, but it
-will be slower), you can use it. Otherwise you can find the
-`intervals.bed.gz` in the docs directory of the repo (should be where
-you found this file), unpack it and put it in your working directory.
+hg38, for example around 100k intervals, you can use it. Otherwise you
+can find the `intervals.bed.gz` in the docs directory of the repo
+(likely alongside this file), gunzip it and put it in your working
+directory.
 
 ```python
 from transferase import GenomicInterval
 intervals = GenomicInterval.read(genome_index, "intervals.bed")
 ```
 
-From this we make the query object.
+At this point we can do a query:
+
+```python
+levels = client.get_levels(["ERX9474770","ERX9474769"], intervals)
+```
+
+The following loop will allow us to see the first 10 methylation
+levels that were retrieved for the first of the two methylomes in our
+query:
+
+```python
+print("\n".join([str(levels[0][i]) for i in range(10)]))
+```
+
+It should look like this:
+
+```console
+(4, 1)
+(1, 471)
+(0, 0)
+(45, 29)
+(0, 0)
+(334, 346)
+(62, 1581)
+(51, 1755)
+(74, 664)
+(199, 1753)
+```
+
+If you are doing multiple queries that involve the same set of genomic
+intervals, it's more efficient to make a 'QueryContainer' object out
+of them. This is done internally by the query above, but the work to
+do it can be skipped if they you already have them. Here is an
+example:
 
 ```python
 query = genome_index.make_query(intervals)
+levels = client.get_levels(["ERX9474770","ERX9474769"], query)
 ```
 
-The following should fail because a list is expected as the argument
-type to 'get_levels':
-
-```python
-try:
-    levels = client.get_levels("ERX9474770,ERX9474769", query)
-except TypeError as err:
-    print(err)
-```
-
-The following should fail because a the name format is invalid; it
-should be alphanumeric, possibly with underscore:
-
-```python
-try:
-    levels = client.get_levels(["ERX9474770,ERX9474769"], query)
-except RuntimeError as err:
-    print(f"Error: {err}")
-```
-
-And this should fail because the methylome doesn't exist:
-
-```python
-try:
-    levels = client.get_levels(["asdf"], query)
-except RuntimeError as err:
-    print(f"Error: {err}")
-```
-
-But this should succeed:
-
-```python
-levels = client.get_levels(["ERX9474770", "ERX9474769"], query)
-```
-
-And now the see the methylation levels that were just retrieved, just
-the first 10 intervals for each of the two methylomes in our query:
-
-```python
-for methylome_results in levels:
-    for i in range(10):
-        print(methylome_results[i])
-    print()
-```
-
-This will show us the levels along with the original intervals, where
-the `to_string` function retrieves chromosome names:
+If you want to see the methylation levels alongside the original
+genomic intervals, including printing the chromosome names for each
+genomic interval, you can do it as follows:
 
 ```python
 for methylome_results in levels:
