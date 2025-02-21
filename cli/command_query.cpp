@@ -83,7 +83,6 @@ xfr query --local -d methylome_dir -x index_dir -g hg38 \
 #include <fstream>
 #include <iterator>  // for std::size, for std::cbegin
 #include <map>
-#include <memory>
 #include <print>
 #include <ranges>
 #include <string>
@@ -274,7 +273,7 @@ do_bins_query(const std::uint32_t bin_size, const bool count_covered,
 }
 
 [[nodiscard]] static inline auto
-get_methylome_names(std::vector<std::string> &possibly_methylome_names,
+get_methylome_names(const std::vector<std::string> &possibly_methylome_names,
                     std::error_code &error) -> std::vector<std::string> {
   if (possibly_methylome_names.size() > 1)
     return possibly_methylome_names;
@@ -466,8 +465,7 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
   };
 
   // get methylome names either parsed from command line or in a file
-  const auto methylomes =
-    get_methylome_names(std::move(methylome_names), error);
+  const auto methylomes = get_methylome_names(methylome_names, error);
   if (error) {
     lgr.error("Error identifying methylomes from {}: {}",
               format_methylome_names_brief(methylome_names), error);
