@@ -26,7 +26,7 @@ import tempfile
 import os
 
 
-from transferase import ClientConfig
+from transferase import MConfig
 
 def create_temp_directory():
     """
@@ -38,9 +38,9 @@ def create_temp_directory():
 
 def test_client_config_init():
     """
-    Test the factory to get a ClientConfig with defaults
+    Test the factory to get a MConfig with defaults
     """
-    obj = ClientConfig()
+    obj = MConfig()
     assert obj is not None
 
 
@@ -51,7 +51,7 @@ def test_assign_and_write_success():
     """
     config_filename = "transferase_client.json"
     outdir = create_temp_directory()
-    obj = ClientConfig()
+    obj = MConfig()
     obj.hostname = "not-not-kernel.org"
     obj.config_dir = outdir
     assert obj.save() is None
