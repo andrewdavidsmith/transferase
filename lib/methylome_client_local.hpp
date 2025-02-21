@@ -168,6 +168,11 @@ private:
     return results;
   }
 
+  [[nodiscard]] auto
+  get_genome_and_index_hash(const std::vector<std::string> &methylome_names,
+                            std::error_code &error) const noexcept
+    -> std::tuple<std::string, std::uint64_t>;
+
 public:
   NLOHMANN_DEFINE_TYPE_INTRUSIVE(methylome_client_local, config)
 };
@@ -180,6 +185,7 @@ enum class methylome_client_local_error_code : std::uint8_t {
   error_reading_config_file = 1,
   required_config_values_not_found = 2,
   methylome_dir_not_found_in_config = 3,
+  inconsistent_methylome_metadata = 4,
 };
 
 template <>
@@ -196,6 +202,7 @@ struct methylome_client_local_error_category : std::error_category {
     case 1: return "error reading default config file"s;
     case 2: return "required config values not found"s;
     case 3: return "methylome dir not found in config"s;
+    case 4: return "inconsistent methylome metadata"s;
     }
     std::unreachable();
   }
