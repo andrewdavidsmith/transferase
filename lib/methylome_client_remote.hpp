@@ -152,6 +152,16 @@ private:
     return cl.take_levels(error);
   }
 
+  [[nodiscard]] auto
+  get_genome_and_index_hash(const std::vector<std::string> &methylome_names,
+                            std::error_code &error) const noexcept
+    -> std::tuple<std::string, std::uint64_t> {
+    const auto genome_name = config.meta.get_genome(methylome_names, error);
+    if (error)  // ADS: need to confirm error code here
+      return {std::string{}, 0};
+    return {genome_name, get_index_hash(genome_name, error)};
+  }
+
 public:
   NLOHMANN_DEFINE_TYPE_INTRUSIVE(methylome_client_remote, config)
 };
