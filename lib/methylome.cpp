@@ -195,4 +195,18 @@ methylome::parse_methylome_name(const std::string &filename) noexcept
   return dot == std::string::npos ? s : s.replace(dot, std::string::npos, "");
 }
 
+/// @brief Get the genome information associated with the given methylome
+/// name, without instantiating a methylome object.
+[[nodiscard]] auto
+methylome::get_genome_info(
+  const std::string &methylome_dir, const std::string &methylome_name,
+  std::error_code &error) noexcept -> std::tuple<std::string, std::uint64_t> {
+  assert(!methylome_name.empty());
+  const auto meta =
+    methylome_metadata::read(methylome_dir, methylome_name, error);
+  if (error)
+    return {{}, {}};
+  return {meta.genome_name, meta.index_hash};
+}
+
 }  // namespace transferase
