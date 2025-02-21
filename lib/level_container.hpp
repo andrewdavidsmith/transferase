@@ -64,11 +64,11 @@ template <typename level_element_type> struct level_container {
   // clang-format on
 
   [[nodiscard]] auto
-  get_means(const std::uint32_t min_reads) const -> std::vector<double> {
+  get_wmeans(const std::uint32_t min_reads) const -> std::vector<double> {
     std::vector<double> u(std::size(v));
     std::ranges::transform(
       v, std::begin(u), [min_reads](const auto &val) -> double {
-        return val.n_reads() >= min_reads ? val.get_level() : -1.0;
+        return val.n_reads() >= min_reads ? val.get_wmean() : -1.0;
       });
     return u;
   }
