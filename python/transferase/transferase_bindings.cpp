@@ -25,10 +25,9 @@ static constexpr auto warning_message = R"(
 https://github.com/andrewdavidsmith/transferase
 
 The following documentation is automatically generated from the Python
-bindings files. It may be incomplete, incorrect or include features
-that are considered implementation detail and may vary between Python
-implementations.  When in doubt, consult the module reference at the
-location listed above.
+bindings files. It may be incomplete, incorrect or include features that are
+considered implementation detail and may vary between Python implementations.
+When in doubt, consult the module reference at the location listed above.
 )";
 
 #include "client_config_bindings.hpp"
@@ -107,8 +106,8 @@ NB_MODULE(transferase, the_module) {
   auto Methylome = nb::class_<xfr::methylome>(the_module, "Methylome",
                                               "Representation of a methylome");
 
-  auto Query = nb::class_<xfr::query_container>(
-    the_module, "Query", "A container for a methylome query");
+  auto MQuery = nb::class_<xfr::query_container>(
+    the_module, "MQuery", "A container for a methylome query");
 
   auto MLevels = nb::class_<xfr::level_container<xfr::level_element_t>>(
     the_module, "MLevels", "A container for methylation levels");
@@ -129,7 +128,7 @@ NB_MODULE(transferase, the_module) {
   genomic_interval_bindings(GenomicInterval);
   genome_index_bindings(GenomeIndex);
   methylome_bindings(Methylome);
-  query_container_bindings(Query);
+  query_container_bindings(MQuery);
 
   level_container_bindings(MLevels);
   level_container_covered_bindings(MLevelsCovered);
