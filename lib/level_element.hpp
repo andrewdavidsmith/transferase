@@ -51,6 +51,13 @@ struct level_element_t {
     return n_meth + n_unmeth;
   }
 
+  /// Methylation level: the number of methylated observations divided by the
+  /// number of unmethylated observations.
+  [[nodiscard]] constexpr auto
+  get_level() const noexcept -> double {
+    return static_cast<double>(n_meth) / std::max(1u, n_meth + n_unmeth);
+  }
+
   auto
   operator<=>(const level_element_t &) const = default;
 };
@@ -79,6 +86,13 @@ struct level_element_covered_t {
   [[nodiscard]] constexpr auto
   n_reads() const noexcept -> std::uint32_t {
     return n_meth + n_unmeth;
+  }
+
+  /// Methylation level: the number of methylated observations divided by the
+  /// number of unmethylated observations.
+  [[nodiscard]] constexpr auto
+  get_level() const noexcept -> double {
+    return static_cast<double>(n_meth) / std::max(1u, n_meth + n_unmeth);
   }
 
   auto
