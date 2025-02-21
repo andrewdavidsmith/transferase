@@ -117,7 +117,7 @@ level_container_bindings(
        const std::size_t pos) -> double {
       if (pos >= std::size(self))
         throw std::out_of_range("Index out of range");
-      return self[pos].get_level();
+      return self[pos].get_wmean();
     },
     R"doc(
     Get the weighted mean methylation level for the interval corresponding to
@@ -259,7 +259,7 @@ level_container_covered_bindings(
        const std::size_t pos) -> double {
       if (pos >= std::size(self))
         throw std::out_of_range("Index out of range");
-      return self[pos].get_level();
+      return self[pos].get_wmean();
     },
     R"doc(
     Get the weighted mean methylation level for the interval corresponding to
