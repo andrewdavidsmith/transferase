@@ -50,19 +50,19 @@ methylome_client_local_bindings(
   namespace xfr = transferase;         // NOLINT
   cls.def(nb::init<const std::string &>(),
           R"doc(
-    Get a MethylomeClientLocal initialized with settings already
-    configured by the current user.
+    Get a MClientLocal initialized with settings already configured by the
+    current user.
 
     Parameters
     ----------
 
-    config_dir (str): [Optional] Directory to look for configuration.
-        This is used primarily for default locations of genome indexes
-        and directories where methylomes are stored.
+    config_dir (str): [Optional] Directory to look for configuration.  This is
+        used primarily for default locations of genome indexes and directories
+        where methylomes are stored.
     )doc",
           "config_dir"_a = std::string{});
   cls.def_rw("config", &xfr::methylome_client_local::config, R"doc(
-    The ClientConfig object associated with this MethylomeClientLocal object.
+    The MConfig object associated with this MClientLocal object.
     )doc");
   cls.def("__repr__", &xfr::methylome_client_local::tostring);
   cls.def(
@@ -71,14 +71,14 @@ methylome_client_local_bindings(
       return self.config.get_index_dir();
     },
     R"doc(
-    Get the index directory for this MethylomeClientLocal.
+    Get the index directory for this MClientLocal.
     )doc");
   cls.def("configured_genomes",
           nb::overload_cast<>(&xfr::methylome_client_local::configured_genomes,
                               nb::const_),
           R"doc(
     Get a list of the genomes that are already configured for this
-    MethylomeClientLocal.
+    MClientLocal.
     )doc");
   cls.def("get_levels",
           nb::overload_cast<const std::vector<std::string> &,
@@ -86,67 +86,63 @@ methylome_client_local_bindings(
             &xfr::methylome_client_local::get_levels<xfr::level_element_t>,
             nb::const_),
           R"doc(
-    Query a local directory for methylation levels in each of a given
-    set of intervals and for each methylome in the list. For repeated
-    queries using the same set of intervals, using a QueryContainer is
-    the most efficient.
+    Query a local directory for methylation levels in each of a given set of
+    intervals and for each methylome in the list. For repeated queries using
+    the same set of intervals, using a MQuery is the most efficient.
 
     Parameters
     ----------
 
-    methylome_names (list[str]): A list of methylome names. These must
-        be the names of methylomes that exist in the methylome directory
-        for this MethylomeClientLocal.
+    methylomes (list[str]): A list of methylome names. These must be the names
+        of methylomes that exist in the methylome directory for this
+        MClientLocal.
 
-    query (QueryContainer): A QueryContainer object constructed from a
-        list of GenomicInterval objects using a GenomeIndex. These
-        must be valid for the genome associated with the given
-        methylome names.
+    query (MQuery): A MQuery object constructed from a list of GenomicInterval
+        objects using a GenomeIndex. These must be valid for the genome
+        associated with the given methylome names.
     )doc",
-          "methylome_names"_a, "query"_a);
+          "methylomes"_a, "query"_a);
   cls.def("get_levels",
           nb::overload_cast<const std::vector<std::string> &,
                             const std::vector<xfr::genomic_interval> &>(
             &xfr::methylome_client_local::get_levels<xfr::level_element_t>,
             nb::const_),
           R"doc(
-    Query a local directory for methylation levels in each given
-    genomic interval and for each methylome in the list.  This
-    function internally constructs a QueryContainer.
+    Query a local directory for methylation levels in each given genomic
+    interval and for each methylome in the list.  This function internally
+    constructs a MQuery.
 
     Parameters
     ----------
 
-    methylome_names (list[str]): A list of methylome names. These must
-        be the names of methylomes that exist in the methylome directory
-        for this MethylomeClientLocal.
+    methylomes (list[str]): A list of methylome names. These must be the names
+        of methylomes that exist in the methylome directory for this
+        MClientLocal.
 
-    intervals (list[GenomicInterval]): A list of GenomicInterval
-        objects from the same reference genome as the methylomes in
-        methylome_names.
+    intervals (list[GenomicInterval]): A list of GenomicInterval objects from
+        the same reference genome as the methylomes in methylomes.
     )doc",
-          "methylome_names"_a, "intervals"_a);
+          "methylomes"_a, "intervals"_a);
   cls.def(
     "get_levels",
     nb::overload_cast<const std::vector<std::string> &, const std::uint32_t>(
       &xfr::methylome_client_local::get_levels<xfr::level_element_t>,
       nb::const_),
     R"doc(
-    Query a local directory for methylation levels in each
-    non-overlapping genomic interval of the given size and for each
-    specified methylome.
+    Query a local directory for methylation levels in each non-overlapping
+    genomic interval of the given size and for each specified methylome.
 
     Parameters
     ----------
 
-    methylome_names (list[str]): A list of methylome names. These must
-        be the names of methylomes that exist in the methylome directory
-        for this MethylomeClientLocal.
+    methylomes (list[str]): A list of methylome names. These must be the names
+        of methylomes that exist in the methylome directory for this
+        MClientLocal.
 
-    bin_size (int): A values specifying the size of non-overlapping
-        intervals to request levels for.
+    bin_size (int): A values specifying the size of non-overlapping intervals
+        to request levels for.
     )doc",
-    "methylome_names"_a, "bin_size"_a);
+    "methylomes"_a, "bin_size"_a);
   cls.def(
     "get_levels_covered",
     nb::overload_cast<const std::vector<std::string> &,
@@ -154,25 +150,24 @@ methylome_client_local_bindings(
       &xfr::methylome_client_local::get_levels<xfr::level_element_covered_t>,
       nb::const_),
     R"doc(
-    Query a local directory for methylation levels in each of a given
-    set of intervals and for each methylome in the list. For repeated
-    queries using the same set of intervals, using a QueryContainer is
-    the most efficient.  Additionally returns information about the
-    number of sites covered by reads in each interval.
+    Query a local directory for methylation levels in each of a given set of
+    intervals and for each methylome in the list. For repeated queries using
+    the same set of intervals, using a MQuery is the most efficient.
+    Additionally returns information about the number of sites covered by
+    reads in each interval.
 
     Parameters
     ----------
 
-    methylome_names (list[str]): A list of methylome names. These must
-        be the names of methylomes that exist in the methylome directory
-        for this MethylomeClientLocal.
+    methylomes (list[str]): A list of methylome names. These must be the names
+        of methylomes that exist in the methylome directory for this
+        MClientLocal.
 
-    query (QueryContainer): A QueryContainer object constructed from a
-        list of GenomicInterval objects using a GenomeIndex. These
-        must be valid for the genome associated with the given
-        methylome names.
+    query (MQuery): A MQuery object constructed from a list of GenomicInterval
+        objects using a GenomeIndex. These must be valid for the genome
+        associated with the given methylome names.
     )doc",
-    "methylome_names"_a, "query"_a);
+    "methylomes"_a, "query"_a);
   cls.def(
     "get_levels_covered",
     nb::overload_cast<const std::vector<std::string> &,
@@ -180,50 +175,49 @@ methylome_client_local_bindings(
       &xfr::methylome_client_local::get_levels<xfr::level_element_covered_t>,
       nb::const_),
     R"doc(
-    Query a local directory for methylation levels in each given
-    genomic interval and for each methylome in the list.  This
-    function internally constructs a QueryContainer.  Additionally
-    returns information about the number of sites covered by reads in
-    each interval.
+    Query a local directory for methylation levels in each given genomic
+    interval and for each methylome in the list.  This function internally
+    constructs a MQuery.  Additionally returns information about the number of
+    sites covered by reads in each interval.
 
     Parameters
     ----------
 
-    methylome_names (list[str]): A list of methylome names. These must
-        be the names of methylomes that exist in the methylome directory
-        for this MethylomeClientLocal.
+    methylomes (list[str]): A list of methylome names. These must be the names
+        of methylomes that exist in the methylome directory for this
+        MClientLocal.
 
-    intervals (list[GenomicInterval]): A list of GenomicInterval
-        objects from the same reference genome as the methylomes in
-        methylome_names.
+    intervals (list[GenomicInterval]): A list of GenomicInterval objects from
+        the same reference genome as the methylomes in methylomes.
     )doc",
-    "methylome_names"_a, "intervals"_a);
+    "methylomes"_a, "intervals"_a);
   cls.def(
     "get_levels_covered",
     nb::overload_cast<const std::vector<std::string> &, const std::uint32_t>(
       &xfr::methylome_client_local::get_levels<xfr::level_element_covered_t>,
       nb::const_),
     R"doc(
-    Query a local directory for methylation levels in each
-    non-overlapping genomic interval of the given size and for each
-    specified methylome.  Additionally returns information about the
-    number of sites covered by reads in each interval.
+    Query a local directory for methylation levels in each non-overlapping
+    genomic interval of the given size and for each specified methylome.
+    Additionally returns information about the number of sites covered by
+    reads in each interval.
 
     Parameters
     ----------
 
-    methylome_names (list[str]): A list of methylome names. These must
-        be the names of methylomes that exist in the methylome directory
-        for this MethylomeClientLocal.
+    methylomes (list[str]): A list of methylome names. These must be the names
+        of methylomes that exist in the methylome directory for this
+        MClientLocal.
 
-    bin_size (int): A values specifying the size of non-overlapping
-        intervals to request levels for. There is a minimum size,
-        likely between 100 and 200 to prevent server overload.
+    bin_size (int): A values specifying the size of non-overlapping intervals
+        to request levels for. There is a minimum size, likely between 100 and
+        200 to prevent server overload.
     )doc",
-    "methylome_names"_a, "bin_size"_a);
+    "methylomes"_a, "bin_size"_a);
+
   cls.doc() = R"doc(
-    A MethylomeClientLocal is an interface for querying methylomes stored
-    in local directory.
+    A MClientLocal object is an interface for querying methylomes stored in
+    local directory.
     )doc"
     //
     ;
