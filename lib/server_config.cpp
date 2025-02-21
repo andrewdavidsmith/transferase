@@ -32,7 +32,6 @@
 #include <fstream>
 #include <iterator>  // for std::size
 #include <ranges>    // IWYU pragma: keep
-#include <sstream>
 #include <string>
 #include <system_error>
 

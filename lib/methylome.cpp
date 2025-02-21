@@ -28,6 +28,7 @@
 #include "methylome_data.hpp"
 #include "methylome_metadata.hpp"
 
+#include <cassert>
 #include <filesystem>
 #include <iterator>
 #include <ranges>

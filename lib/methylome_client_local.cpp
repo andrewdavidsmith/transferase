@@ -26,6 +26,8 @@
 #include "client_config.hpp"
 #include "nlohmann/json.hpp"
 
+#include <cassert>
+#include <iterator>  // std::size
 #include <string>
 #include <system_error>
 #include <tuple>

@@ -78,6 +78,7 @@ xfr query --local -d methylome_dir -x index_dir -g hg38 \
 #include <chrono>
 #include <cstdint>
 #include <cstdlib>
+#include <filesystem>
 #include <format>
 #include <fstream>
 #include <iterator>  // for std::size, for std::cbegin
@@ -97,7 +98,7 @@ xfr query --local -d methylome_dir -x index_dir -g hg38 \
 format_methylome_names_brief(const std::vector<std::string> &names)
   -> std::string {
   static constexpr auto max_names_width = 50;
-  const auto joined =
+  auto joined =
     names | std::views::join_with(' ') | std::ranges::to<std::string>();
   if (std::size(joined) > max_names_width)
     return std::format("{}...{} ({} methylomes)", names.front(), names.back(),
@@ -273,7 +274,7 @@ do_bins_query(const std::uint32_t bin_size, const bool count_covered,
 }
 
 [[nodiscard]] static inline auto
-get_methylome_names(std::vector<std::string> &&possibly_methylome_names,
+get_methylome_names(std::vector<std::string> &possibly_methylome_names,
                     std::error_code &error) -> std::vector<std::string> {
   if (possibly_methylome_names.size() > 1)
     return possibly_methylome_names;
@@ -281,7 +282,7 @@ get_methylome_names(std::vector<std::string> &&possibly_methylome_names,
     std::filesystem::exists(possibly_methylome_names.front()) &&
     std::filesystem::is_regular_file(possibly_methylome_names.front());
   if (is_file) {
-    const auto names_from_file =
+    auto names_from_file =
       read_methylomes_file(possibly_methylome_names.front(), error);
     if (!error)
       return names_from_file;
