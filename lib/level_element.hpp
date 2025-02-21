@@ -88,10 +88,10 @@ struct level_element_covered_t {
     return n_meth + n_unmeth;
   }
 
-  /// Methylation level: the number of methylated observations divided by the
-  /// number of unmethylated observations.
+  /// Get the weighted mean methylation level: the number of methylated
+  /// observations divided by the number of unmethylated observations.
   [[nodiscard]] constexpr auto
-  get_level() const noexcept -> double {
+  get_wmean() const noexcept -> double {
     return static_cast<double>(n_meth) / std::max(1u, n_meth + n_unmeth);
   }
 

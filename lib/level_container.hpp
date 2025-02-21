@@ -24,11 +24,14 @@
 #ifndef LIB_LEVEL_CONTAINER_HPP_
 #define LIB_LEVEL_CONTAINER_HPP_
 
+#include <algorithm>
 #include <concepts>          // for std::integral
 #include <cstddef>           // for std::size_t
+#include <cstdint>           // for std::uint32_t
 #include <initializer_list>  // for std::begin, std::end
 #include <iterator>          // for std::size, std::cbegin, std::cend
-#include <utility>           // for std::move
+#include <ranges>
+#include <utility>  // for std::move
 #include <vector>
 
 namespace transferase {
@@ -59,6 +62,16 @@ template <typename level_element_type> struct level_container {
   [[nodiscard]] auto operator[](size_type pos) -> level_element_type& {return v[pos];}
   [[nodiscard]] auto operator[](size_type pos) const -> const level_element_type& {return v[pos];}
   // clang-format on
+
+  [[nodiscard]] auto
+  get_means(const std::uint32_t min_reads) const -> std::vector<double> {
+    std::vector<double> u(std::size(v));
+    std::ranges::transform(
+      v, std::begin(u), [min_reads](const auto &val) -> double {
+        return val.n_reads() >= min_reads ? val.get_level() : -1.0;
+      });
+    return u;
+  }
 
   auto
   resize(const auto new_size) {
