@@ -51,13 +51,13 @@ methylome_client_bindings(nb::class_<transferase::methylome_client_remote> &cls)
   namespace xfr = transferase;         // NOLINT
   cls.def(nb::init<const std::string &>(),
           R"doc(
-    Get a MethylomeClient initialized with settings already configured
-    by the current user.
+    Instantiate a MClient object with settings already configured by the
+    current user.
     )doc",
           "config_dir"_a = std::string{});
   cls.def_rw("config", &xfr::methylome_client_remote::config,
              R"doc(
-    The ClientConfig object associated with this MethylomeClient.
+    The MConfig object associated with this MClient.
     )doc");
   cls.def("__repr__", &xfr::methylome_client_remote::tostring);
   cls.def(
@@ -66,14 +66,13 @@ methylome_client_bindings(nb::class_<transferase::methylome_client_remote> &cls)
       return self.config.get_index_dir();
     },
     R"doc(
-    Get the index directory for this MethylomeClient.
+    Get the index directory for this MClient.
     )doc");
   cls.def("configured_genomes",
           nb::overload_cast<>(&xfr::methylome_client_remote::configured_genomes,
                               nb::const_),
           R"doc(
-    Get a list of the genomes that are already configured for this
-    MethylomeClient.
+    Get a list of the genomes that are already configured for this MClient.
     )doc");
   cls.def("get_levels",
           nb::overload_cast<const std::vector<std::string> &,
@@ -81,76 +80,71 @@ methylome_client_bindings(nb::class_<transferase::methylome_client_remote> &cls)
             &xfr::methylome_client_remote::get_levels<xfr::level_element_t>,
             nb::const_),
           R"doc(
-    Query the server for methylation levels in each query interval and
-    for each methylome in the list. For repeated queries using the
-    same set of intervals, using a QueryContainer is the most
-    efficient.
+    Query the server for methylation levels in each query interval and for
+    each methylome in the list. For repeated queries using the same set of
+    intervals, using a MQuery is the most efficient.
 
     Parameters
     ----------
 
-    methylome_names (list[str]): A list of methylome names. These must
-        be the names of methylomes that exist on the server. These
-        will usually be SRA accession numbers, and the server will
-        immediately reject any names that include letters other than
-        [a-zA-Z0-9_].  Queries involving too many methylomes will be
-        rejected; this number is roughly 45.
+    methylomes (list[str]): A list of methylome names. These must be the names
+        of methylomes that exist on the server. These will usually be SRA
+        accession numbers, and the server will immediately reject any names
+        that include letters other than [a-zA-Z0-9_].  Queries involving too
+        many methylomes will be rejected; this number is roughly 45.
 
-    query (QueryContainer): A QueryContainer object constructed from a
-        list of GenomicInterval objects using a GenomeIndex. These
-        must be valid for the genome associated with the given
-        methylome names.
+    query (MQuery): A MQuery object constructed from a list of GenomicInterval
+        objects using a GenomeIndex. These must be valid for the genome
+        associated with the given methylome names.
     )doc",
-          "methylome_names"_a, "query"_a);
+          "methylomes"_a, "query"_a);
   cls.def("get_levels",
           nb::overload_cast<const std::vector<std::string> &,
                             const std::vector<xfr::genomic_interval> &>(
             &xfr::methylome_client_remote::get_levels<xfr::level_element_t>,
             nb::const_),
           R"doc(
-    Query the server for methylation levels in each given genomic
-    interval and for each methylome in the list.  This function
-    internally constructs a QueryContainer.
+    Query the server for methylation levels in each given genomic interval and
+    for each methylome in the list.  This function internally constructs a
+    MQuery.
 
     Parameters
     ----------
 
-    methylome_names (list[str]): A list of methylome names. These must
-        be the names of methylomes that exist on the server. These
-        will usually be SRA accession numbers, and the server will
-        immediately reject any names that include letters other than
-        [a-zA-Z0-9_].  Queries involving too many methylomes will be
-        rejected; this number is roughly 45.
+    methylomes (list[str]): A list of methylome names. These must be the names
+        of methylomes that exist on the server. These will usually be SRA
+        accession numbers, and the server will immediately reject any names
+        that include letters other than [a-zA-Z0-9_].  Queries involving too
+        many methylomes will be rejected; this number is roughly 45.
 
-    intervals (list[GenomicInterval]): A list of GenomicInterval
-        objects from the same reference genome as the methylomes in
-        methylome_names.
+    intervals (list[GenomicInterval]): A list of GenomicInterval objects from
+        the same reference genome as the methylomes in methylomes.
     )doc",
-          "methylome_names"_a, "intervals"_a);
+          "methylomes"_a, "intervals"_a);
   cls.def(
     "get_levels",
     nb::overload_cast<const std::vector<std::string> &, const std::uint32_t>(
       &xfr::methylome_client_remote::get_levels<xfr::level_element_t>,
       nb::const_),
     R"doc(
-    Query the server for methylation levels in each non-overlapping
-    genomic interval of the given size and for each specified methylome.
+
+    Query the server for methylation levels in each non-overlapping genomic
+    interval of the given size and for each specified methylome.
 
     Parameters
     ----------
 
-    methylome_names (list[str]): A list of methylome names. These must
-        be the names of methylomes that exist on the server. These
-        will usually be SRA accession numbers, and the server will
-        immediately reject any names that include letters other than
-        [a-zA-Z0-9_].  Queries involving too many methylomes will be
-        rejected; this number is roughly 45.
+    methylomes (list[str]): A list of methylome names. These must be the names
+        of methylomes that exist on the server. These will usually be SRA
+        accession numbers, and the server will immediately reject any names
+        that include letters other than [a-zA-Z0-9_].  Queries involving too
+        many methylomes will be rejected; this number is roughly 45.
 
-    bin_size (int): A values specifying the size of non-overlapping
-        intervals to request levels for. There is a minimum size,
-        likely between 100 and 200 to prevent server overload.
+    bin_size (int): A values specifying the size of non-overlapping intervals
+        to request levels for. There is a minimum size, likely between 100 and
+        200 to prevent server overload.
     )doc",
-    "methylome_names"_a, "bin_size"_a);
+    "methylomes"_a, "bin_size"_a);
   cls.def(
     "get_levels_covered",
     nb::overload_cast<const std::vector<std::string> &,
@@ -158,27 +152,24 @@ methylome_client_bindings(nb::class_<transferase::methylome_client_remote> &cls)
       &xfr::methylome_client_remote::get_levels<xfr::level_element_covered_t>,
       nb::const_),
     R"doc(
-    Query the server for methylation levels in each query interval and
-    for each methylome in the list. For repeated queries using the
-    same set of intervals, using a QueryContainer is the most
-    efficient.
+    Query the server for methylation levels in each query interval and for
+    each methylome in the list. For repeated queries using the same set of
+    intervals, using a MQuery is the most efficient.
 
     Parameters
     ----------
 
-    methylome_names (list[str]): A list of methylome names. These must
-        be the names of methylomes that exist on the server. These
-        will usually be SRA accession numbers, and the server will
-        immediately reject any names that include letters other than
-        [a-zA-Z0-9_].  Queries involving too many methylomes will be
-        rejected; this number is roughly 45.
+    methylomes (list[str]): A list of methylome names. These must be the names
+        of methylomes that exist on the server. These will usually be SRA
+        accession numbers, and the server will immediately reject any names
+        that include letters other than [a-zA-Z0-9_].  Queries involving too
+        many methylomes will be rejected; this number is roughly 45.
 
-    query (QueryContainer): A QueryContainer object constructed from a
-        list of GenomicInterval objects using a GenomeIndex. These
-        must be valid for the genome associated with the given
-        methylome names.
+    query (MQuery): A MQuery object constructed from a list of GenomicInterval
+        objects using a GenomeIndex. These must be valid for the genome
+        associated with the given methylome names.
     )doc",
-    "methylome_names"_a, "query"_a);
+    "methylomes"_a, "query"_a);
   cls.def(
     "get_levels_covered",
     nb::overload_cast<const std::vector<std::string> &,
@@ -186,61 +177,57 @@ methylome_client_bindings(nb::class_<transferase::methylome_client_remote> &cls)
       &xfr::methylome_client_remote::get_levels<xfr::level_element_covered_t>,
       nb::const_),
     R"doc(
-    Query the server for methylation levels in each given genomic
-    interval and for each methylome in the list. Additionally returns
-    information about the number of sites covered by reads in each
-    interval. This function internally constructs a QueryContainer.
+    Query the server for methylation levels in each given genomic interval and
+    for each methylome in the list. Additionally returns information about the
+    number of sites covered by reads in each interval. This function
+    internally constructs a MQuery.
 
     Parameters
     ----------
 
-    methylome_names (list[str]): A list of methylome names. These must
-        be the names of methylomes that exist on the server. These
-        will usually be SRA accession numbers, and the server will
-        immediately reject any names that include letters other than
-        [a-zA-Z0-9_].  Queries involving too many methylomes will be
-        rejected; this number is roughly 45.
+    methylomes (list[str]): A list of methylome names. These must be the names
+        of methylomes that exist on the server. These will usually be SRA
+        accession numbers, and the server will immediately reject any names
+        that include letters other than [a-zA-Z0-9_].  Queries involving too
+        many methylomes will be rejected; this number is roughly 45.
 
-    intervals (list[GenomicInterval]): A list of GenomicInterval
-        objects from the same reference genome as the methylomes in
-        methylome_names.
+    intervals (list[GenomicInterval]): A list of GenomicInterval objects from
+        the same reference genome as the methylomes in methylomes.
     )doc",
-    "methylome_names"_a, "intervals"_a);
+    "methylomes"_a, "intervals"_a);
   cls.def(
     "get_levels_covered",
     nb::overload_cast<const std::vector<std::string> &, const std::uint32_t>(
       &xfr::methylome_client_remote::get_levels<xfr::level_element_covered_t>,
       nb::const_),
     R"doc(
-    Query the server for methylation levels in each non-overlapping
-    genomic interval of the given size and for each specified
-    methylome.  Additionally returns information about the number of
-    sites covered by reads in each interval.
+    Query the server for methylation levels in each non-overlapping genomic
+    interval of the given size and for each specified methylome.  Additionally
+    returns information about the number of sites covered by reads in each
+    interval.
 
     Parameters
     ----------
 
-    methylome_names (list[str]): A list of methylome names. These must
-        be the names of methylomes that exist on the server. These
-        will usually be SRA accession numbers, and the server will
-        immediately reject any names that include letters other than
-        [a-zA-Z0-9_].  Queries involving too many methylomes will be
-        rejected; this number is roughly 45.
+    methylomes (list[str]): A list of methylome names. These must be the names
+        of methylomes that exist on the server. These will usually be SRA
+        accession numbers, and the server will immediately reject any names
+        that include letters other than [a-zA-Z0-9_].  Queries involving too
+        many methylomes will be rejected; this number is roughly 45.
 
-    bin_size (int): A values specifying the size of non-overlapping
-        intervals to request levels for. There is a minimum size,
-        likely between 100 and 200 to prevent server overload.
+    bin_size (int): A values specifying the size of non-overlapping intervals
+        to request levels for. There is a minimum size, likely between 100 and
+        200 to prevent server overload.
     )doc",
-    "methylome_names"_a, "bin_size"_a);
+    "methylomes"_a, "bin_size"_a);
   cls.doc() = R"doc(
-    A MethylomeClient is an interface for querying a remote
-    transferase server. Using the MethylomeClient to make queries
-    ensures that the client and server are always communicating about
-    the exact same reference genome, and not one that differs, for
-    example, by inclusion of unassembled fragments or alternate
-    haplotypes. If you have not already setup transferase using the
-    ClientConfig class (or with command line tools), it is possible to
-    use a MethylomeClient, but the process is more complicated.
+    A MClient is an interface for querying a remote transferase server. Using
+    the MClient to make queries ensures that the client and server are always
+    communicating about the exact same reference genome, and not one that
+    differs, for example, by inclusion of unassembled fragments or alternate
+    haplotypes. If you have not already setup transferase using the MConfig
+    class (or with command line tools), it is possible to use a MClient, but
+    the process is more complicated.
     )doc"
     //
     ;
