@@ -35,6 +35,7 @@
 #include <genomic_interval.hpp>
 #include <iterator>   // for std::ssize
 #include <stdexcept>  // for std::out_of_range include <string>
+#include <string>
 #include <vector>
 
 namespace nb = nanobind;

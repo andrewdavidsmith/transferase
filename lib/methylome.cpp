@@ -33,6 +33,7 @@
 #include <ranges>
 #include <string>
 #include <system_error>
+#include <tuple>
 #include <unordered_set>
 #include <vector>
 

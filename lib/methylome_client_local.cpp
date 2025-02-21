@@ -28,6 +28,8 @@
 
 #include <string>
 #include <system_error>
+#include <tuple>
+#include <vector>
 
 namespace transferase {
 

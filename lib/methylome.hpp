@@ -36,6 +36,7 @@
 #include <format>
 #include <string>
 #include <system_error>
+#include <tuple>
 #include <type_traits>
 #include <utility>
 #include <variant>  // for std::hash
