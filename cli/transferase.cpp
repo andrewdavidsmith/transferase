@@ -41,7 +41,6 @@
 #include <algorithm>
 #include <array>
 #include <cstdlib>     // for EXIT_FAILURE
-#include <exception>   // for std::set_terminate
 #include <functional>  // for function
 #include <iostream>
 #include <iterator>  // for cend, cbegin
