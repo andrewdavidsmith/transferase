@@ -35,8 +35,8 @@ When in doubt, consult the module reference at the location listed above.
 #include "genomic_interval_bindings.hpp"
 #include "level_container_bindings.hpp"
 #include "methylome_bindings.hpp"
-#include "methylome_client_bindings.hpp"
 #include "methylome_client_local_bindings.hpp"
+#include "methylome_client_remote_bindings.hpp"
 #include "query_container_bindings.hpp"
 
 #include <client_config.hpp>  // IWYU pragma: keep
@@ -134,5 +134,5 @@ NB_MODULE(transferase, the_module) {
   level_container_covered_bindings(MLevelsCovered);
 
   methylome_client_local_bindings(MClientLocal);
-  methylome_client_bindings(MClient);
+  methylome_client_remote_bindings(MClient);
 }

@@ -21,7 +21,7 @@
  * SOFTWARE.
  */
 
-#include "methylome_client_bindings.hpp"
+#include "methylome_client_remote_bindings.hpp"
 
 #include <methylome_client_remote.hpp>
 
@@ -45,8 +45,8 @@
 namespace nb = nanobind;
 
 auto
-methylome_client_bindings(nb::class_<transferase::methylome_client_remote> &cls)
-  -> void {
+methylome_client_remote_bindings(
+  nb::class_<transferase::methylome_client_remote> &cls) -> void {
   using namespace nanobind::literals;  // NOLINT
   namespace xfr = transferase;         // NOLINT
   cls.def(nb::init<const std::string &>(),
