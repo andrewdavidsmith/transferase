@@ -26,16 +26,19 @@
 
 #include "client.hpp"
 #include "client_config.hpp"
-#include "genomic_interval.hpp"
+#include "genome_index.hpp"
+#include "genome_index_set.hpp"
 #include "methylome_client_base.hpp"
 #include "query_container.hpp"
 #include "request.hpp"
 #include "request_type_code.hpp"
+#include "transferase_metadata.hpp"
 
 #include "nlohmann/json.hpp"
 
 #include <cstdint>
 #include <format>
+#include <memory>
 #include <string>
 #include <system_error>
 #include <tuple>
@@ -45,6 +48,7 @@
 
 // forward declarations
 namespace transferase {
+struct genomic_interval;
 struct level_element_covered_t;
 template <typename level_element_type> struct level_container;
 }  // namespace transferase
