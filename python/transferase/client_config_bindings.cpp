@@ -89,9 +89,8 @@ client_config_bindings(nanobind::class_<transferase::client_config> &cls)
     or request a download, this command will take roughly 15-30s per genome,
     depending on internet speed. The configuration will be written to the
     directory associated with this object. Typically this should be left as
-    the default. This command makes web requests. Note: before doing an
-    'install' you need a client, so make sure to run 'get_config' first, and
-    then adjust the values how you want before doing the 'install'.
+    the default. This command could make web requests unless 'download_policy'
+    is set to 'DLPolicy.none'.
 
     Parameters
     ----------
