@@ -116,13 +116,13 @@ level_container_bindings(
     .def("__str__",
          [](const xfr::level_container<xfr::level_element_t> &self)
            -> std::string {
-           return std::format("LevelContainer size={}", std::size(self));
+           return std::format("MLevels size={}", std::size(self));
          })
     .doc() = R"doc(
-    A LevelContainer represents methylation levels in each among a
+    A MLevels represents methylation levels in each among a
     list of GenomicInterval objects. This is the object type that is
     returned from a transferase query, unless you additionally request
-    information about sites covered (see LevelContainerCovered).
+    information about sites covered (see MLevelsCovered).
     )doc"
     //
     ;
@@ -224,10 +224,10 @@ level_container_covered_bindings(
     .def("__str__",
          [](const xfr::level_container<xfr::level_element_covered_t> &self)
            -> std::string {
-           return std::format("LevelContainerCovered size={}", std::size(self));
+           return std::format("MLevelsCovered size={}", std::size(self));
          })
     .doc() = R"doc(
-    A LevelContainerCovered represents methylation levels in each
+    A MLevelsCovered represents methylation levels in each
     among a list of GenomicInterval objects. This is the object type
     that is returned from a transferase query if you request
     information about sites covered.
