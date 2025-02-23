@@ -26,6 +26,7 @@ jobs:
         -DCMAKE_EXE_LINKER_FLAGS="-L$(brew --prefix)/lib" \
         -DZLIB_LIBRARY=$(brew --prefix zlib)/lib/libz.a \
         -DCMAKE_CXX_COMPILER=g++-14 \
+        -DBUILD_CLI=on \
         -DCMAKE_BUILD_TYPE=Release
     - name: Build transferase
       run: |
