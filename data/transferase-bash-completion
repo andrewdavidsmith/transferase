@@ -53,9 +53,6 @@ _transferase_completion() {
         return
     fi
 
-    # nosort is to keep the options at the start of the list, since the
-    # sorting ignores dashes
-    compopt -o nosort
     COMPREPLY=($(compgen -W "${options}" -- "$cur"))
     COMPREPLY+=($(compgen -f -- "$cur"))
     return
