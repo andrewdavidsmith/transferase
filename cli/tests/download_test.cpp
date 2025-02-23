@@ -23,7 +23,7 @@
 
 #include <download.hpp>
 
-#include "unit_test_utils.hpp"
+#include "unit_test_utils_cli.hpp"
 
 #include <boost/beast.hpp>
 #include <gtest/gtest.h>

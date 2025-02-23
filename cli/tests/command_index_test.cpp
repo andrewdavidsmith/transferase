@@ -23,7 +23,7 @@
 
 #include <command_index.hpp>
 
-#include "unit_test_utils.hpp"
+#include "unit_test_utils_cli.hpp"
 
 #include <gtest/gtest.h>
 

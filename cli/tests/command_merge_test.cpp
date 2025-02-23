@@ -23,7 +23,7 @@
 
 #include <command_merge.hpp>
 
-#include "unit_test_utils.hpp"
+#include "unit_test_utils_cli.hpp"
 
 #include <methylome_data.hpp>
 #include <methylome_metadata.hpp>
