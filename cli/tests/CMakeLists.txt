@@ -25,7 +25,7 @@
 
 message(STATUS "Enabling unit tests for cli")
 
-add_library(unit_test_utils OBJECT unit_test_utils.cpp unit_test_utils.hpp)
+add_library(unit_test_utils_cli OBJECT unit_test_utils_cli.cpp unit_test_utils_cli.hpp)
 
 file(GLOB cpp_files "*_test.cpp")
 
@@ -41,7 +41,7 @@ foreach(cpp_file ${cpp_files})
     Threads::Threads
     transferase_system
     transferase_cli
-    unit_test_utils
+    unit_test_utils_cli
   )
   # Make sure 'config.h' is available and headers in 'lib' we are testing.
   target_include_directories(${BASE_NAME} PRIVATE
@@ -59,7 +59,7 @@ endforeach()
 # dir might not exit.
 file(CREATE_LINK
   ${PROJECT_SOURCE_DIR}/test_data
-  ${PROJECT_BINARY_DIR}/lib/tests/data
+  ${PROJECT_BINARY_DIR}/cli/tests/data
   SYMBOLIC
 )
 
