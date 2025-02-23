@@ -23,15 +23,12 @@
 
 #include "client_config.hpp"
 #include "download.hpp"
-#include "find_path_to_binary.hpp"
 #include "genome_index_data.hpp"
 #include "genome_index_metadata.hpp"
 #include "remote_data_resource.hpp"
 #include "system_config.hpp"
 
 #include "nlohmann/json.hpp"
-
-#include <config.h>
 
 #include <cassert>
 #include <chrono>  // for std::chrono::operator-
@@ -286,8 +283,8 @@ client_config::read_config_file(const std::string &config_file,
 }
 
 [[nodiscard]] auto
-client_config::read(std::string config_dir,
-                    std::error_code &error) noexcept -> client_config {
+client_config::read(std::string config_dir, std::error_code &error) noexcept
+  -> client_config {
   namespace fs = std::filesystem;
   // If config dir is empty, get the default
   if (config_dir.empty()) {
@@ -417,10 +414,11 @@ check_is_outdated(const download_request &dr,
 }
 
 [[nodiscard]] static auto
-download_index_files(
-  const remote_data_resource &remote, const std::vector<std::string> &genomes,
-  const std::string &dirname,
-  const download_policy_t download_policy) -> std::error_code {
+download_index_files(const remote_data_resource &remote,
+                     const std::vector<std::string> &genomes,
+                     const std::string &dirname,
+                     const download_policy_t download_policy)
+  -> std::error_code {
   auto &lgr = transferase::logger::instance();
   for (const auto &genome : genomes) {
     const auto stem = remote.form_index_target_stem(genome);
@@ -469,9 +467,10 @@ download_index_files(
 }
 
 [[nodiscard]] static auto
-download_metadata_file(
-  const remote_data_resource &remote, const std::string &dirname,
-  const download_policy_t download_policy) -> std::error_code {
+download_metadata_file(const remote_data_resource &remote,
+                       const std::string &dirname,
+                       const download_policy_t download_policy)
+  -> std::error_code {
   const auto metadata_file = remote.form_metadata_target();
   const auto local_metadata_file =
     std::filesystem::path{dirname} / client_config::metadata_filename_default;
@@ -542,7 +541,7 @@ client_config::install(const std::vector<std::string> &genomes,
   }
 
   const system_config sys_conf(sys_config_dir);
-  const auto remotes = sys_conf.get_remote_resources();
+  const auto &remotes = sys_conf.get_remote_resources();
   const auto metadata_dir =
     (std::filesystem::path(config_dir) / metadata_file).parent_path().string();
   // Do the downloads, attempting each remote resources server in the

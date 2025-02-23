@@ -29,12 +29,12 @@
 
 #include <config.h>  // for VERSION, DATADIR, PROJECT_NAME
 
+#include <cerrno>
 #include <filesystem>
 #include <fstream>
 #include <stdexcept>  // std::runtime_error
 #include <string>
 #include <system_error>  // std::error_code and std::system_error
-#include <tuple>
 #include <vector>
 
 namespace transferase {
