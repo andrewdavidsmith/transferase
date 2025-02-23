@@ -23,8 +23,10 @@ _transferase_completion() {
     prev="${COMP_WORDS[COMP_CWORD-1]}"
 
     # Get list of subcommands from 'transferase --help'
-    subcommands=$("$binary_path" --help 2>/dev/null | grep -oP '^\s+\K[\w-]+' | tr '\n' ' ')
-    # If we're completing the subcommand (the first argument after the command itself)
+    subcommands=$("$binary_path" --help 2>/dev/null | \
+                      grep -oP '^\s+\K[\w-]+' | tr '\n' ' ')
+    # If we're completing the subcommand (the first argument after the command
+    # itself)
     if [[ ${COMP_CWORD} -eq 1 ]]; then
         COMPREPLY=($(compgen -W "${subcommands}" -- "$cur"))
         return
@@ -38,21 +40,24 @@ _transferase_completion() {
     # Check if the previous token begins with an unescaped dash and
     # has the suffix dir, and if so, suggest a directory
     if [[ "$prev" =~ ^[^\\-]*-*.*dir ]]; then
-        # Attempt to expand filenames/paths/directories
+        # Attempt to expand directory names
         COMPREPLY=( $(compgen -d -- "$cur") )
         return
     fi
 
-    # Check if the previous token begins with an unescaped dash and if
-    # so, suggest a file or directory
-    if [[ "$prev" =~ ^[^\\-]*- ]]; then
+    # Check if the previous token begins with an unescaped dash and
+    # has the suffix 'file', and if so, suggest a file or directory
+    if [[ "$prev" =~ ^[^\\-]*-*.*file ]]; then
         # Attempt to expand filenames/paths/directories
-        _filedir
+        COMPREPLY=( $(compgen -f -- "$cur") )
         return
     fi
 
-    compopt +o nospace
+    # nosort is to keep the options at the start of the list, since the
+    # sorting ignores dashes
+    compopt -o nosort
     COMPREPLY=($(compgen -W "${options}" -- "$cur"))
+    COMPREPLY+=($(compgen -f -- "$cur"))
     return
 }
 
