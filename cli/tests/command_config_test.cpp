@@ -32,7 +32,7 @@
 #include <string>
 
 TEST(command_config_test, run_success) {
-  static constexpr auto config_dir = "config";
+  static constexpr auto config_dir = "a_config_dir";
   static constexpr auto argv = std::array{
     // clang-format off
     "config",
@@ -46,13 +46,12 @@ TEST(command_config_test, run_success) {
     "5000",
     // clang-format on
   };
-  // NOLINT(cppcoreguidelines-narrowing-conversions)
+  // NOLINTNEXTLINE(*-narrowing-conversions)
   const int argc = static_cast<int>(std::size(argv));
 
   EXPECT_EQ(argv[0], "config");
-  // NOLINTBEGIN(cppcoreguidelines-pro-type-const-cast)
+  // NOLINTNEXTLINE(*-const-cast)
   const int ret = command_config_main(argc, const_cast<char **>(argv.data()));
-  // NOLINTEND(cppcoreguidelines-pro-type-const-cast)
   EXPECT_EQ(ret, EXIT_SUCCESS);
 
   const std::filesystem::path config_path{config_dir};
