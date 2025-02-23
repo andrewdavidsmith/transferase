@@ -119,7 +119,7 @@ if(PACKAGE_PYTHON)
     COMMAND hatch build -t wheel
     WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/python
     DEPENDS ${LIBRARY_NAME}
-    COMMENT "Use hatch to build the Python package inside the build tree"
+    COMMENT "Using 'hatch' to build the Python package in the build tree"
   )
   execute_process(COMMAND
     python3 ${PROJECT_SOURCE_DIR}/python/get_python_tag.py
