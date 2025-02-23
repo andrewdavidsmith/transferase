@@ -22,6 +22,9 @@
 
 nanobind_build_library(nanobind-static-abi3)
 
+set(NANOBIND_COMPILE_OPTIONS ${GLOBAL_COMPILE_OPTIONS})
+list(REMOVE_ITEM NANOBIND_COMPILE_OPTIONS "-Wpedantic")
+
 file(GLOB cpp_files "*.cpp")
 list(FILTER cpp_files EXCLUDE REGEX "transferase_bindings.cpp")
 
@@ -30,18 +33,12 @@ set(LIBRARY_OBJECTS "")
 foreach(cpp_file ${cpp_files})
   get_filename_component(BASE_NAME ${cpp_file} NAME_WE)
   add_library(${BASE_NAME} OBJECT ${cpp_file})
-  # Below, link to the nanobind module to get the headers; similar for
-  # boost. These headers might not be located otherwise.
   target_link_libraries(${BASE_NAME} PUBLIC
     nanobind-static-abi3
     transferase_system
   )
-  set(GLOBAL_COMPILE_OPTIONS_FOR_NANOBIND ${GLOBAL_COMPILE_OPTIONS})
-  list(REMOVE_ITEM GLOBAL_COMPILE_OPTIONS_FOR_NANOBIND "-Wpedantic")
-  target_compile_options(
-    ${BASE_NAME}
-    PRIVATE
-    ${GLOBAL_COMPILE_OPTIONS_FOR_NANOBIND}
+  target_compile_options(${BASE_NAME} PRIVATE
+    ${NANOBIND_COMPILE_OPTIONS}
   )
   list(APPEND LIBRARY_OBJECTS ${BASE_NAME})
 endforeach()
@@ -50,28 +47,18 @@ endforeach()
 add_library(transferase_bindings STATIC transferase_bindings.cpp)
 target_link_libraries(transferase_bindings PUBLIC ${LIBRARY_OBJECTS})
 
-# Make the package shared library by applying the bindings functions;
-# use the py_ prefix because otherwise there might be name clash with
-# the main 'transferase' target in a different directory.
+# Make the package shared library by applying the bindings functions
 nanobind_add_module(
   ${LIBRARY_NAME}
   NB_STATIC STABLE_ABI LTO
   transferase_bindings.cpp
 )
 
-# the options below are set by nanobind_strip if build type is Release
-# or MinSizeRel
-if (APPLE)
-  target_link_options(${LIBRARY_NAME} PRIVATE -Wl,-dead_strip -Wl,-x -Wl,-S)
-elseif (NOT WIN32)
-  target_link_options(${LIBRARY_NAME} PRIVATE -Wl,-s)
-endif()
+nanobind_strip(${LIBRARY_NAME})
 
 # Compile the extension library
 target_link_libraries(${LIBRARY_NAME} PUBLIC transferase_bindings)
 
-set(GLOBAL_COMPILE_OPTIONS_FOR_NANOBIND ${GLOBAL_COMPILE_OPTIONS})
-list(REMOVE_ITEM GLOBAL_COMPILE_OPTIONS_FOR_NANOBIND "-Wpedantic")
 target_compile_options(
   ${LIBRARY_NAME}
   PRIVATE
