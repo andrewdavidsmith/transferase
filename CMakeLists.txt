@@ -91,9 +91,10 @@ endif()
 
 if(ENABLE_UNIT_TESTS OR ENABLE_PYTHON_UNIT_TESTS)
   include(cmake/unit_tests.cmake)
-  if(ENABLE_CODE_COVERAGE)
-    include(cmake/code_coverage.cmake)
-  endif()
+endif()
+
+if(ENABLE_CODE_COVERAGE)
+  include(cmake/code_coverage.cmake)
 endif()
 
 # Seems this needs to come after some third-party deps are found
