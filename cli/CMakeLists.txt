@@ -39,12 +39,6 @@ foreach(cpp_file ${cpp_files})
   list(APPEND LIBRARY_OBJECTS ${BASE_NAME})
 endforeach()
 
-# add_library(command_select OBJECT command_select.cpp)
-# target_compile_options(command_select PRIVATE ${GLOBAL_COMPILE_OPTIONS})
-# target_include_directories(command_select PRIVATE ${PROJECT_SOURCE_DIR}/lib)
-# target_link_libraries(command_select PRIVATE transferase_system)
-# list(APPEND LIBRARY_OBJECTS command_select)
-
 # Curses
 include(FindCurses)  # This should be in the modules dir
 set(CURSES_NEED_NCURSES true)
@@ -100,3 +94,13 @@ foreach(name ${TRANSFERASE_NAMES})
   target_link_options(${name} PRIVATE ${GLOBAL_LINKER_OPTIONS})
   target_compile_options(${name} PRIVATE ${GLOBAL_COMPILE_OPTIONS})
 endforeach()
+
+if(TEST_CLI)
+  # The UNIT_TEST preprocessor variable turns off the static and inline
+  # on several functions so they can be tested; all sources could need this.
+  add_compile_definitions(UNIT_TEST)
+  enable_testing()
+  find_package(GTest REQUIRED)
+  include(GoogleTest)
+  add_subdirectory(tests)
+endif()
