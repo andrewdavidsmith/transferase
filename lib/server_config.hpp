@@ -76,8 +76,20 @@ struct server_config {
 
   /// Read the server configuration.
   [[nodiscard]] static auto
-  read(const std::string &config_file,
-       std::error_code &error) noexcept -> server_config;
+  read(const std::string &config_file, std::error_code &error) noexcept
+    -> server_config;
+
+#ifndef TRANSFERASE_NOEXCEPT
+  /// Read the server configuration.
+  [[nodiscard]] static auto
+  read(const std::string &config_file) -> server_config {
+    std::error_code error;
+    auto result = read(config_file, error);
+    if (error)
+      throw std::system_error(error);
+    return result;
+  }
+#endif
 
   /// Write the configuration to a file
   [[nodiscard]] auto
