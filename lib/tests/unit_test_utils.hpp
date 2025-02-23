@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef TEST_UNIT_TEST_UTILS_HPP_
-#define TEST_UNIT_TEST_UTILS_HPP_
+#ifndef LIB_TESTS_UNIT_TEST_UTILS_HPP_
+#define LIB_TESTS_UNIT_TEST_UTILS_HPP_
 
 #include <string>
 #include <system_error>
@@ -41,4 +41,4 @@ generate_unique_dir_name() -> std::string;
 auto
 remove_directories(const std::string &dirname, std::error_code &error) -> void;
 
-#endif  // TEST_UNIT_TEST_UTILS_HPP_
+#endif  // LIB_TESTS_UNIT_TEST_UTILS_HPP_

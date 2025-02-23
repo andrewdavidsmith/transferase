@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef TEST_UNIT_TEST_UTILS_CLI_HPP_
-#define TEST_UNIT_TEST_UTILS_CLI_HPP_
+#ifndef CLI_TESTS_UNIT_TEST_UTILS_CLI_HPP_
+#define CLI_TESTS_UNIT_TEST_UTILS_CLI_HPP_
 
 #include <string>
 #include <system_error>
@@ -41,4 +41,4 @@ auto
 remove_directories_cli(const std::string &dirname,
                        std::error_code &error) -> void;
 
-#endif  // TEST_UNIT_TEST_UTILS_CLI_HPP_
+#endif  // CLI_TESTS_UNIT_TEST_UTILS_CLI_HPP_
