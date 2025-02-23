@@ -23,7 +23,7 @@
 # Test sources in this directory need to see the headers from the
 # project sources -- they should get them by linking to the libs
 
-message(STATUS "Enabling unit tests")
+message(STATUS "Enabling unit tests for lib")
 
 add_library(unit_test_utils OBJECT unit_test_utils.cpp unit_test_utils.hpp)
 
