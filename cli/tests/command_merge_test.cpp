@@ -93,7 +93,7 @@ TEST(command_merge_test, basic_local_test) {
   const auto data_exists = std::filesystem::exists(output_data_fn, ec);
   EXPECT_FALSE(ec);
   EXPECT_TRUE(data_exists);
-  EXPECT_TRUE(files_are_identical(output_data_fn, expected_output_data_file));
+  EXPECT_TRUE(files_are_identical_cli(output_data_fn, expected_output_data_file));
   if (meta_exists && data_exists) {
     auto remove_ok = std::filesystem::remove(output_data_fn, ec);
     EXPECT_TRUE(remove_ok);

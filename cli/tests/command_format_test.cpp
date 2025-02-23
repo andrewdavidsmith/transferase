@@ -81,7 +81,7 @@ TEST(command_format_test, basic_test) {
 
   const auto expected_data_outfile =
     methylome_data::compose_filename(methylome_directory, methylome_name);
-  EXPECT_TRUE(files_are_identical(data_outfile, expected_data_outfile));
+  EXPECT_TRUE(files_are_identical_cli(data_outfile, expected_data_outfile));
 
   if (std::filesystem::exists(data_outfile, ec)) {
     const auto remove_ok = std::filesystem::remove(data_outfile, ec);

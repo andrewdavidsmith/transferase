@@ -175,7 +175,7 @@ TEST(methylome_test, invalid_write) {
   static constexpr auto methylome_name = "eFlareon_brain";
 
   std::error_code ec;
-  const auto output_directory = generate_unique_dir_name();
+  const auto output_directory = generate_unique_dir_name_cli();
 
   std::filesystem::create_directory(output_directory, ec);
   if (ec)
@@ -187,7 +187,7 @@ TEST(methylome_test, invalid_write) {
 
   const auto proceed_this_test = write_should_fail(output_directory, ec);
   if (ec || !proceed_this_test) {
-    remove_directories(output_directory, ec);
+    remove_directories_cli(output_directory, ec);
     EXPECT_FALSE(ec);
     return;
   }
@@ -223,7 +223,7 @@ TEST(methylome_test, invalid_write) {
 
   ec = change_permissions_to_write(output_directory);
   EXPECT_FALSE(ec);
-  remove_directories(output_directory, ec);
+  remove_directories_cli(output_directory, ec);
   EXPECT_FALSE(ec);
 }
 

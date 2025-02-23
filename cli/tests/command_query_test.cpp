@@ -75,7 +75,7 @@ TEST(command_query_test, intervals_basic_local_test) {
   EXPECT_EQ(result, EXIT_SUCCESS);
   std::error_code ignored_ec;
   EXPECT_TRUE(std::filesystem::exists(output_file, ignored_ec));
-  EXPECT_TRUE(files_are_identical(output_file, expected_output_file));
+  EXPECT_TRUE(files_are_identical_cli(output_file, expected_output_file));
 
   // Clean up: delete test files
   if (std::filesystem::exists(output_file)) {
@@ -126,7 +126,7 @@ TEST(command_query_test, intervals_basic_local_test_scores) {
   // Check that the output file is created
   EXPECT_EQ(result, EXIT_SUCCESS);
   EXPECT_TRUE(std::filesystem::exists(output_file));
-  EXPECT_FALSE(files_are_identical(output_file, unexpected_output_file));
+  EXPECT_FALSE(files_are_identical_cli(output_file, unexpected_output_file));
 
   // Clean up: delete test files
   std::error_code ignored_ec;
@@ -225,7 +225,7 @@ TEST(command_query_test, bins_basic_local_test) {
   EXPECT_TRUE(std::filesystem::exists(output_file, ignored_ec));
 
   const bool output_files_identical =
-    files_are_identical(output_file, expected_output_file);
+    files_are_identical_cli(output_file, expected_output_file);
   EXPECT_TRUE(output_files_identical);
 
   // Clean up: delete test files only if tests pass
