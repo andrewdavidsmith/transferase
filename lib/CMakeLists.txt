@@ -61,3 +61,13 @@ target_link_libraries(transferase_system PUBLIC
   Threads::Threads
   ${Boost_LIBRARIES}
 )
+
+if(TEST_LIB)
+  # The UNIT_TEST preprocessor variable turns off the static and inline
+  # on several functions so they can be tested; all sources could need this.
+  add_compile_definitions(UNIT_TEST)
+  enable_testing()
+  find_package(GTest REQUIRED)
+  include(GoogleTest)
+  add_subdirectory(tests)
+endif()
