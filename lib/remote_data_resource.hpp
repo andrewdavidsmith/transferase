@@ -29,124 +29,53 @@
 #include <filesystem>
 #include <format>
 #include <string>
-#include <system_error>
 #include <tuple>
 #include <variant>  // for std::tuple
 #include <vector>
 
 namespace transferase {
 
-struct remote_data_resources {
-  std::string host;
+struct remote_data_resource {
+  std::string hostname;
   std::string port;
   std::string path;
 
+  auto
+  operator<=>(const remote_data_resource &other) const = default;
+
+  /// Used to identify both the remote url and local relative path for index
+  /// files without the extension.
   [[nodiscard]] auto
   form_index_target_stem(const auto &genome) const {
     return (std::filesystem::path{path} / "indexes" / genome).string();
   }
 
+  /// Used to identify both the remote url and local relative path
   [[nodiscard]] auto
-  form_metadata_target_stem(const auto &genome) const {
-    return (std::filesystem::path{path} / "metadata/latest" / genome).string();
+  form_metadata_target() const {
+    return (std::filesystem::path{path} / "metadata/latest/metadata.json")
+      .string();
   }
 
+  /// The url is formed given a file path that includes a common directory
+  /// expected to exist on the remote host as well as locally.
   [[nodiscard]] auto
-  get_metadata_target_stem() const {
-    return (std::filesystem::path{path} / "metadata/latest/metadata").string();
+  form_url(const auto &file_with_path) const {
+    return std::format("{}:{}{}", hostname, port, file_with_path);
   }
 
-  [[nodiscard]] auto
-  form_url(const auto &file) const {
-    return std::format("{}:{}{}", host, port, file);
-  }
-
-  NLOHMANN_DEFINE_TYPE_INTRUSIVE(remote_data_resources, host, port, path)
+  NLOHMANN_DEFINE_TYPE_INTRUSIVE(remote_data_resource, hostname, port, path)
 };
-
-struct system_config {
-  std::string hostname;
-  std::string port;
-  std::vector<remote_data_resources> resources;
-  NLOHMANN_DEFINE_TYPE_INTRUSIVE(system_config, hostname, port, resources)
-};
-
-[[nodiscard]] auto
-get_system_config_filename() -> std::string;
-
-[[nodiscard]] auto
-get_transferase_server_info(std::error_code &error) noexcept
-  -> std::tuple<std::string, std::string>;
-
-#ifndef TRANSFERASE_NOEXCEPT
-[[nodiscard]] inline auto
-get_transferase_server_info() -> std::tuple<std::string, std::string> {
-  std::error_code error;
-  auto res = get_transferase_server_info(error);
-  if (error)
-    throw std::system_error(error);
-  return res;
-}
-#endif
-
-[[nodiscard]] auto
-get_transferase_server_info(const std::string &data_dir,
-                            std::error_code &error) noexcept
-  -> std::tuple<std::string, std::string>;
-
-#ifndef TRANSFERASE_NOEXCEPT
-[[nodiscard]] inline auto
-get_transferase_server_info(const std::string &data_dir)
-  -> std::tuple<std::string, std::string> {
-  std::error_code error;
-  auto res = get_transferase_server_info(data_dir, error);
-  if (error)
-    throw std::system_error(error);
-  return res;
-}
-#endif
-
-[[nodiscard]] auto
-get_remote_data_resources(std::error_code &error) noexcept
-  -> std::vector<remote_data_resources>;
-
-#ifndef TRANSFERASE_NOEXCEPT
-[[nodiscard]] inline auto
-get_remote_data_resources() -> std::vector<remote_data_resources> {
-  std::error_code error;
-  auto res = get_remote_data_resources(error);
-  if (error)
-    throw std::system_error(error);
-  return res;
-}
-#endif
-
-[[nodiscard]] auto
-get_remote_data_resources(const std::string &data_dir,
-                          std::error_code &error) noexcept
-  -> std::vector<remote_data_resources>;
-
-#ifndef TRANSFERASE_NOEXCEPT
-[[nodiscard]] inline auto
-get_remote_data_resources(const std::string &data_dir)
-  -> std::vector<remote_data_resources> {
-  std::error_code error;
-  auto res = get_remote_data_resources(data_dir, error);
-  if (error)
-    throw std::system_error(error);
-  return res;
-}
-#endif
 
 }  // namespace transferase
 
 template <>
-struct std::formatter<transferase::remote_data_resources>
+struct std::formatter<transferase::remote_data_resource>
   : std::formatter<std::string> {
   auto
-  format(const transferase::remote_data_resources &r,
+  format(const transferase::remote_data_resource &r,
          std::format_context &ctx) const {
-    return std::format_to(ctx.out(), "{}:{}{}", r.host, r.port, r.path);
+    return std::format_to(ctx.out(), "{}:{}{}", r.hostname, r.port, r.path);
   }
 };
 
