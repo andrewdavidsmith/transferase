@@ -62,7 +62,7 @@ if(USE_STATIC_LIBS)
   include(cmake/static_libs.cmake)
 endif()
 
-if(ENABLE_STATIC_ANALYSIS)
+if(STATIC_ANALYSIS)
   include(cmake/static_analysis.cmake)
 endif()
 

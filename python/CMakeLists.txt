@@ -52,7 +52,7 @@ set(LIBRARY_NAME "transferase")
 add_subdirectory(transferase)
 
 # Configure the tests if requested
-if(ENABLE_PYTHON_UNIT_TESTS)
+if(PYTHON_TESTS)
   add_subdirectory(test)
 endif()
 
