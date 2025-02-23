@@ -23,7 +23,7 @@
 
 #include <download.hpp>
 
-#include "unit_test_utils_cli.hpp"
+#include "unit_test_utils.hpp"
 
 #include <boost/beast.hpp>
 #include <gtest/gtest.h>
@@ -107,7 +107,7 @@ TEST(download_test, download_non_existent_file) {
   const std::chrono::milliseconds connect_timeout{3'000};   // 3s
   const std::chrono::milliseconds download_timeout{3'000};  // 3s
   // ADS: note the prefix slash below
-  const std::filesystem::path target{generate_temp_filename_cli("/file", "txt")};
+  const std::filesystem::path target{generate_temp_filename("/file", "txt")};
   // ADS: need to make sure this will be unique; got caught with an
   // pre-existing filename
   const std::filesystem::path outdir{"/tmp"};
