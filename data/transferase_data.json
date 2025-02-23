@@ -4,12 +4,12 @@
     "resources":
     [
         {
-            "host" : "smithlab.usc.edu",
+            "hostname" : "smithlab.usc.edu",
             "port" : "80",
             "path" : "/lab/public/transferase"
         },
         {
-            "host": "smithlabresearch.org",
+            "hostname": "smithlabresearch.org",
             "port": "80",
             "path": "/transferase"
         }
