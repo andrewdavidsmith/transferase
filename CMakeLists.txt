@@ -51,8 +51,9 @@ include(GNUInstallDirs)
 set(GLOBAL_COMPILE_OPTIONS "")
 set(GLOBAL_LINKER_OPTIONS "")
 
-include(cmake/build_types.cmake)
 include(cmake/config_options.cmake)
+
+# This is happening for all builds, even though it doesn't totally make sense.
 include(cmake/data_config.cmake)
 
 if(USE_STATIC_LIBS)
@@ -67,7 +68,7 @@ endif()
 
 include(cmake/third_party.cmake)
 
-if(CONFIGURE_FOR_DISTRIBUTION)
+if(PACKAGE)
   include(cmake/packaging.cmake)
 endif()
 
@@ -87,10 +88,6 @@ if(ENABLE_LTO)
   else()
     message(FATAL_ERROR "IPO is not supported: ${output}")
   endif()
-endif()
-
-if(ENABLE_UNIT_TESTS OR ENABLE_PYTHON_UNIT_TESTS)
-  include(cmake/unit_tests.cmake)
 endif()
 
 if(ENABLE_CODE_COVERAGE)
