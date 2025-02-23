@@ -62,7 +62,7 @@ endforeach()
 
 # Ensure test data dir is in the right place relative to ctest paths:
 file(CREATE_LINK
-  ${PROJECT_SOURCE_DIR}/test/data
+  ${PROJECT_SOURCE_DIR}/test_data
   ${PROJECT_BINARY_DIR}/python/test/data
   SYMBOLIC
 )
