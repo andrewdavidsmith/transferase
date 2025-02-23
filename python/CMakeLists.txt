@@ -53,6 +53,10 @@ add_subdirectory(transferase)
 
 # Configure the tests if requested
 if(PYTHON_TESTS)
+  # If we are here, we need to setup testing.
+  enable_testing()
+  find_package(GTest REQUIRED)
+  include(GoogleTest)
   add_subdirectory(test)
 endif()
 
