@@ -79,8 +79,8 @@ struct server_config {
 
   /// Read the server configuration.
   [[nodiscard]] static auto
-  read(const std::string &config_file, std::error_code &error) noexcept
-    -> server_config;
+  read(const std::string &config_file,
+       std::error_code &error) noexcept -> server_config;
 
 #ifndef TRANSFERASE_NOEXCEPT
   /// Read the server configuration.
