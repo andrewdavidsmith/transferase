@@ -213,9 +213,11 @@ command_config_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
 
   const auto genomes = split_comma(genomes_arg);
 
-  cfg.install(genomes, download_policy, empty_sys_config_dir, error);
-  if (error) {
-    lgr.error("Configuration incomplete: {}", error);
+  try {
+    cfg.install(genomes, download_policy, empty_sys_config_dir);
+  }
+  catch (const std::exception &e) {
+    lgr.error("Error: {}", e.what());
     return EXIT_FAILURE;
   }
   lgr.debug("Completed configuration with status: {}", error);
