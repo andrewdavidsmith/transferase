@@ -152,6 +152,6 @@ if(PACKAGE_PYTHON)
     COMMAND rm ${INIT_WHL_FILE}
     WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/python/dist
     DEPENDS PYTHON_BUILD_WHL
-    COMMENT "Put the correct tags in the wheel filename (todo: put in one script)"
+    COMMENT "Adding correct tags to wheel filename"
   )
 endif()
