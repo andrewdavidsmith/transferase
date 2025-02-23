@@ -415,32 +415,47 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
     return EXIT_FAILURE;
   }
 
-  // validate relationships between arguments
+  // validate that required data is provided somehow and report the problem
+  // otherwise
   if (local_mode && cfg.methylome_dir.empty()) {
-    const auto msg = R"(Local mode but methylome dir not specified {}: {})";
-    if (default_config_dir_error)
-      lgr.debug(msg, "; failed to parse config: {}", default_config_dir_error);
+    const auto msg = "Local mode but methylome dir not specified.";
+    if (read_config_file_error)
+      lgr.error("{} Failed to read config: {} ({})", msg, cfg.config_dir,
+                read_config_file_error);
+    else if (default_config_dir_error)
+      lgr.error("{} Failed to read default config ({})", msg,
+                default_config_dir_error);
     else
-      lgr.debug(msg, "; not found in config: {}", cfg.config_dir);
+      lgr.error("{} Not found in: {}", msg, cfg.config_dir);
     return EXIT_FAILURE;
   }
+
   if (!local_mode && (cfg.hostname.empty() || cfg.port.empty())) {
-    const auto msg = R"(Remote mode but hostname or port not specified {} {})";
-    if (default_config_dir_error)
-      lgr.debug(msg, "; failed to parse config: ", default_config_dir_error);
+    const auto msg = std::format(R"(Remote mode but hostname={} and port={}.)",
+                                 cfg.hostname, cfg.port);
+    if (read_config_file_error)
+      lgr.error("{} Failed to read config: {} ({})", msg, cfg.config_dir,
+                read_config_file_error);
+    else if (default_config_dir_error)
+      lgr.error("{} Failed to parse default config: {}", msg,
+                default_config_dir_error);
     else
-      lgr.debug(msg, "; not found in config: ", cfg.config_dir);
+      lgr.error("{} Not found in config: {}", msg, cfg.config_dir);
     return EXIT_FAILURE;
   }
 
   if (cfg.index_dir.empty()) {
-    const auto msg = R"(Index dir not specified)";
-    if (default_config_dir_error)
-      lgr.debug(msg, "; failed to parse config: ", default_config_dir_error);
+    const auto msg = "Index dir not specified";
+    if (read_config_file_error)
+      lgr.error("{} failed to parse config: {} ({})", msg, cfg.config_dir,
+                read_config_file_error);
+    else if (default_config_dir_error)
+      lgr.error("{} failed to parse config: ", msg, default_config_dir_error);
     else
-      lgr.debug(msg, "; not found in config: ", cfg.config_dir);
+      lgr.error("{} not found in config: ", msg, cfg.config_dir);
     return EXIT_FAILURE;
   }
+
   if ((bin_size == 0) == intervals_file.empty()) {
     lgr.error("Error: specify exactly one of bins-size or intervals-file");
     return EXIT_FAILURE;
