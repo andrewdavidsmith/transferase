@@ -29,8 +29,13 @@ if(BUILD_XFR_ALIAS)
 endif()
 
 # Versioned JSON file (e.g., /usr/share/transferase)
-set(DATA_SOURCE_DIR ${PROJECT_BINARY_DIR}/share/transferase)
-install(FILES ${DATA_SOURCE_DIR}/transferase_data_${PROJECT_VERSION}.json
+set(DATA_ORIGIN_DIR ${PROJECT_BINARY_DIR}/share/transferase)
+install(FILES ${DATA_ORIGIN_DIR}/transferase_data_${PROJECT_VERSION}.json
+  DESTINATION ${CMAKE_INSTALL_DATADIR}/transferase
+)
+
+# Licenses go in the data dir (e.g., /usr/share/transferase)
+install(FILES ${PROJECT_SOURCE_DIR}/data/LICENSE
   DESTINATION ${CMAKE_INSTALL_DATADIR}/transferase
 )
 
