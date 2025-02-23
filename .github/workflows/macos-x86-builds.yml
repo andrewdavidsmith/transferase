@@ -1,4 +1,4 @@
-name: Build transferase on macOS for x86
+name: Build transferase on macOS
 
 on:
   pull_request:
@@ -6,8 +6,11 @@ on:
   workflow_dispatch:
 
 jobs:
-  macos-x86-build:
-    runs-on: macos-13
+  macos-build:
+    strategy:
+      matrix:
+        os: [macos-13, macos-14, macos-15]
+    runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v3
     - name: Update Homebrew
