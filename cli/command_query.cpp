@@ -43,7 +43,7 @@ Examples:
 
 xfr query -g hg38 -m methylome_name -o output.bed -i input.bed
 
-xfr query -g hg38 -m methylome_name -o output.bed -i input.bed
+xfr query -g hg38 -m methylomes_file.txt -o output.bed -i input.bed
 
 xfr query --local -x index_dir -g hg38 -d methylome_dir \
     -m methylome_name -o output.bed -i input.bed
