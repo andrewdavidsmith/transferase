@@ -123,9 +123,8 @@ server_config::read(const std::string &config_file,
 }
 
 auto
-server_config::read_config_file_no_overwrite(const std::string &config_file,
-                                             std::error_code &error) noexcept
-  -> void {
+server_config::read_config_file_no_overwrite(
+  const std::string &config_file, std::error_code &error) noexcept -> void {
   const auto tmp = server_config::read(config_file, error);
   if (error)
     return;
