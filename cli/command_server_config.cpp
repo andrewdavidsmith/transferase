@@ -179,7 +179,8 @@ command_server_config_main(int argc, char *argv[])  // NOLINT(*-c-arrays)
     return EXIT_FAILURE;
   }
 
-  const auto write_err = cfg.write(config_file);
+  std::error_code write_err;
+  cfg.write(config_file, write_err);
   if (write_err) {
     std::println("Error: {} ({})", config_file, write_err);
     return EXIT_FAILURE;
