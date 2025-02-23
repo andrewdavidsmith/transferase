@@ -133,7 +133,7 @@ if(PACKAGE_PYTHON)
   )
   message(STATUS "Platform version tag: ${PYTHON_VERSION_TAG}")
   message(STATUS "Python ABI tag: ${PYTHON_ABI_TAG}")
-  message(STATUS "Python platform tag: deterined post-build")
+  message(STATUS "Python platform tag: determined post-build")
 
   # The initial wheel filename is determined by the entry in the
   # custom hatch hook that can be found following pyproject.conf
