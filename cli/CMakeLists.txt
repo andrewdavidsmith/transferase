@@ -24,7 +24,6 @@ file(GLOB cpp_files "*.cpp")
 
 # Remove things that will be handled later
 list(FILTER cpp_files EXCLUDE REGEX "transferase.cpp")
-# list(FILTER cpp_files EXCLUDE REGEX "command_select.cpp")
 
 # Gather all the object files that will be put in the static library
 # and prepare to compile them.
