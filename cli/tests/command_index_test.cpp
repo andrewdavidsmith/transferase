@@ -80,7 +80,7 @@ TEST(command_index_test, basic_test) {
 
   const auto expected_data_outfile =
     genome_index_data::compose_filename(index_directory, genome_name);
-  EXPECT_TRUE(files_are_identical(data_outfile, expected_data_outfile));
+  EXPECT_TRUE(files_are_identical_cli(data_outfile, expected_data_outfile));
 
   if (std::filesystem::exists(data_outfile, ec)) {
     const bool remove_ok = std::filesystem::remove(data_outfile, ec);
