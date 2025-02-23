@@ -20,6 +20,7 @@ jobs:
           cmake -B build \
           -DCMAKE_VERBOSE_MAKEFILE=on \
           -DCMAKE_CXX_COMPILER=g++-14 \
+          -DBUILD_CLI=on \
           -DCMAKE_BUILD_TYPE=Release
       - name: Build
         run: |
