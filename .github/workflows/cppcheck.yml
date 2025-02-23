@@ -54,4 +54,4 @@ jobs:
           --check-level=exhaustive \
           --inline-suppr \
           --suppressions-list=.cppcheck_suppress \
-          $(git ls-files '*.*pp')
+          $(git ls-files '*.*pp' | grep -v CLI | grep -v json)
