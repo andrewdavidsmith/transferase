@@ -57,6 +57,9 @@ struct server_config {
   std::uint32_t min_bin_size{};
   std::uint32_t max_intervals{};
 
+  [[nodiscard]] auto
+  operator<=>(const server_config &) const = default;
+
   /// Get the path to the index directory
   [[nodiscard]] auto
   get_index_dir() const noexcept -> std::string;
@@ -92,8 +95,19 @@ struct server_config {
 #endif
 
   /// Write the configuration to a file
-  [[nodiscard]] auto
-  write(const std::string &config_file) const -> std::error_code;
+  auto
+  write(const std::string &config_file, std::error_code &error) const -> void;
+
+#ifndef TRANSFERASE_NOEXCEPT
+  /// Read the server configuration.
+  auto
+  write(const std::string &config_file) const -> void {
+    std::error_code error;
+    write(config_file, error);
+    if (error)
+      throw std::system_error(error);
+  }
+#endif
 
   /// Set the server configuration by writing the config file.
   auto
