@@ -31,3 +31,8 @@ unusedFunction
 unusedStructMember
 # Ignore missing includes because if they are real things won't build
 missingInclude
+# Exclude external files
+*:*CLI11.hpp
+*:*json.hpp
+# Problem caused by external files
+toomanyconfigs
