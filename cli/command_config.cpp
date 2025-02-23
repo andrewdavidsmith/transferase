@@ -60,6 +60,7 @@ xfr config --update -s localhost
 #include "CLI11/CLI11.hpp"
 
 #include <cstdlib>
+#include <exception>
 #include <format>
 #include <map>
 #include <memory>
