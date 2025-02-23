@@ -20,7 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-message(STATUS "Configuring data files needed by all builds")
+message(STATUS "Configuring data files for cli builds")
 if(NOT DEFINED CMAKE_INSTALL_DATADIR)
   message(FATAL_ERROR
     "CMAKE_INSTALL_DATADIR is needed for data configuration but is not defined"
