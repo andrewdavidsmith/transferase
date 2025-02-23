@@ -159,8 +159,7 @@ if(STATIC_ANALYSIS)
 
   # Options on
   set(BUILD_PYTHON off)  ## Until we can wrangle nanobind
-  set(ENABLE_UNIT_TESTS on)
-  set(ENABLE_STATIC_ANALYSIS on)
+  set(UNIT_TESTS on)
   # Options off
   set(STRIP_PATHS_FROM_BINARIES off)
   set(STRIP_SUB_LIST "")
