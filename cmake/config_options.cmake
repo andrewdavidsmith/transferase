@@ -69,10 +69,26 @@ if(BUILD_PYTHON)
       "Specified options incompatible with 'BUILD_PYTHON'")
   endif()
   # Options
-  set(PACKAGE_PYTHON on)
+  set(STRIP_PATHS_FROM_BINARIES on)
+  set(STRIP_SUB_LIST "")
+endif()
+
+# Python
+if(PACKAGE_PYTHON)
+  message(STATUS "Enabling 'PACKAGE_PYTHON'")
+  # Check compatibility
+  if(UNIT_TESTS OR
+      BUILD_CLI OR
+      STATIC_ANALYSIS OR
+      ENABLE_CODE_COVERAGE OR
+      ENABLE_SANITIZING)
+    message(FATAL_ERROR
+      "Specified options incompatible with 'PACKAGE_PYTHON'")
+  endif()
+  # Options on
+  set(BUILD_PYTHON on)
   set(ENABLE_LTO on)
   set(USE_STATIC_LIBS on)
-  set(CONFIGURE_FOR_DISTRIBUTION on)
   set(STRIP_PATHS_FROM_BINARIES on)
   set(STRIP_SUB_LIST "")
 endif()
@@ -110,7 +126,6 @@ if(PYTHON_TESTS)
   set(TEST_LIB off)
   set(TEST_CLI off)
   set(BUILD_CLI off)
-  set(CONFIGURE_FOR_DISTRIBUTION off)
   set(STRIP_PATHS_FROM_BINARIES off)
 endif()
 
@@ -147,7 +162,6 @@ if(STATIC_ANALYSIS)
   set(ENABLE_UNIT_TESTS on)
   set(ENABLE_STATIC_ANALYSIS on)
   # Options off
-  set(CONFIGURE_FOR_DISTRIBUTION off)
   set(STRIP_PATHS_FROM_BINARIES off)
   set(STRIP_SUB_LIST "")
 endif()
