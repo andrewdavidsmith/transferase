@@ -54,8 +54,6 @@ nanobind_add_module(
   transferase_bindings.cpp
 )
 
-nanobind_strip(${LIBRARY_NAME})
-
 # Compile the extension library
 target_link_libraries(${LIBRARY_NAME} PUBLIC transferase_bindings)
 
@@ -66,7 +64,6 @@ target_compile_options(
 )
 
 set(GLOBAL_LINKER_OPTIONS_FOR_NANOBIND ${GLOBAL_LINKER_OPTIONS})
-list(APPEND GLOBAL_LINKER_OPTIONS_FOR_NANOBIND "-Wno-odr")
 target_link_options(
  ${LIBRARY_NAME}
  PRIVATE
