@@ -22,8 +22,8 @@
 
 # configration options for buildling transferase
 
-option(PACKAGE "Enable packaging for release" off)
 option(UNIT_TESTS "Enable unit tests" off)
+option(PACKAGE "Enable packaging for release" off)
 option(STATIC_ANALYSIS "Enable static analysis" off)
 option(STATIC_LIBS "Use static linkage for non-system libs" off)
 option(SANITIZING "Enable sanitizing" off)
@@ -78,6 +78,7 @@ if(PACKAGE_PYTHON)
   message(STATUS "Enabling 'PACKAGE_PYTHON'")
   # Check compatibility
   if(UNIT_TESTS OR
+      PACKAGE OR
       BUILD_CLI OR
       STATIC_ANALYSIS OR
       ENABLE_CODE_COVERAGE OR
