@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  ubuntu-build:
+  build-wheel:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
