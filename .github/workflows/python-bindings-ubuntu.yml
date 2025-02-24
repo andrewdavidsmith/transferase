@@ -1,4 +1,4 @@
-name: Build Python package on Ubuntu
+name: Python bindings on Ubuntu
 
 on:
   pull_request:
