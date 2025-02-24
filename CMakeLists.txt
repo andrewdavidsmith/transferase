@@ -113,7 +113,7 @@ endif()
 
 message(STATUS "Finished global compile and linker configuration")
 
-if(UNIT_TESTS)
+if(GET_GOOGLETEST)
   include(FetchContent)
   FetchContent_Declare(
     googletest
