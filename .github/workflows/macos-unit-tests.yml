@@ -30,6 +30,7 @@ jobs:
         -DZLIB_LIBRARY=$(brew --prefix zlib)/lib/libz.a \
         -DCMAKE_CXX_COMPILER=g++-14 \
         -DUNIT_TESTS=on \
+        -DGET_GOOGLETEST=on \
         -DCMAKE_BUILD_TYPE=Build
     - name: Build transferase
       run: |
