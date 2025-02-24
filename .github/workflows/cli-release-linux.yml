@@ -1,0 +1,32 @@
+name: Build cli for release on Linux
+
+on:
+  workflow_dispatch:
+
+jobs:
+  linux-packages:
+    runs-on: ubuntu-latest
+    container: andrewdavidsmith/transferase-build
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure
+        run: |
+          cmake -B build \
+          -DCMAKE_CXX_COMPILER=g++ \
+          -DPACKAGE=on \
+          -DCMAKE_BUILD_TYPE=Release
+      - name: Build
+        run: |
+          cmake --build build -j4
+      - name: Check that it runs
+        run: |
+          export LD_LIBRARY_PATH=/usr/local/lib
+          ./build/cli/transferase
+      - name: Build packages
+        run: |
+          cpack -B build --config build/CPackConfig.cmake
+      - name: Upload the STGZ
+        uses: actions/upload-artifact@v4
+        with:
+          name: packages
+          path: build/transferase-*-Linux.*
