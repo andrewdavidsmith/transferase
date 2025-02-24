@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  macos-build:
+  macos-unit-tests:
     strategy:
       matrix:
         os: [macos-13, macos-14, macos-15]
