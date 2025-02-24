@@ -1,0 +1,42 @@
+name: Make releases on macOS
+
+on:
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  macos-unit-tests:
+    strategy:
+      matrix:
+        os: [macos-13, macos-14, macos-15]
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v4
+    - name: Update Homebrew
+      run: brew update
+    - name: Install dependencies
+      run: |
+        brew install zlib boost
+    - name: Configure
+      run: |
+        cmake -B build \
+        -DCMAKE_OSX_SYSROOT="" \
+        -DCMAKE_VERBOSE_MAKEFILE=on \
+        -DCMAKE_CXX_FLAGS="-I$(brew --prefix)/include" \
+        -DCMAKE_EXE_LINKER_FLAGS="-L$(brew --prefix)/lib" \
+        -DZLIB_LIBRARY=$(brew --prefix zlib)/lib/libz.a \
+        -DCMAKE_CXX_COMPILER=g++-14 \
+        -DPACKAGE=on \
+        -DCMAKE_BUILD_TYPE=Release
+    - name: Build
+      run: |
+        cmake --build build -j2
+    - name: Package
+      run: |
+        cpack -B build --config build/CPackConfig.cmake
+    - name: Upload the STGZ
+      uses: actions/upload-artifact@v4
+      with:
+        name: packages
+        path: /tmp/transferase/build/transferase-*.sh
