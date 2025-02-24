@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  macos-unit-tests:
+  macos-releases:
     strategy:
       matrix:
         os: [macos-13, macos-14, macos-15]
@@ -17,11 +17,11 @@ jobs:
       run: brew update
     - name: Install dependencies
       run: |
-        brew install zlib boost
+        brew install zlib boost ncurses
     - name: Configure
       run: |
         cmake -B build \
-        -DCMAKE_OSX_SYSROOT="" \
+        -DCMAKE_PREFIX_PATH=$(brew --prefix ncurses) \
         -DCMAKE_VERBOSE_MAKEFILE=on \
         -DCMAKE_CXX_FLAGS="-I$(brew --prefix)/include" \
         -DCMAKE_EXE_LINKER_FLAGS="-L$(brew --prefix)/lib" \
