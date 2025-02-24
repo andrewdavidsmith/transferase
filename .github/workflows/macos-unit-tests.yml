@@ -1,4 +1,4 @@
-name: Run transferase unit tests on macOS
+name: Run unit tests on macOS
 
 on:
   pull_request:
@@ -9,7 +9,7 @@ jobs:
   macos-build:
     strategy:
       matrix:
-        os: [macos-15]
+        os: [macos-13, macos-14, macos-15]
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
@@ -17,9 +17,7 @@ jobs:
       run: brew update
     - name: Install dependencies
       run: |
-        brew install googletest zlib boost
-    # ADS: homebrew might install libz in an "opt" dir, so specify the
-    # brew prefix and then the path to the static lib
+        brew install zlib boost
     - name: Configure for unit tests
       run: |
         cmake -B build \
