@@ -22,7 +22,7 @@ jobs:
           cmake -B build \
           -DCMAKE_VERBOSE_MAKEFILE=on \
           -DCMAKE_CXX_COMPILER=g++-14 \
-          -DTEST_LIB=on
+          -DTEST_LIB=on \
           -DCMAKE_BUILD_TYPE=Build
       - name: Build
         run: |
