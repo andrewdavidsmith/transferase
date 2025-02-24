@@ -1,4 +1,4 @@
-name: Build Python wheel on Ubuntu
+name: Python wheel on Ubuntu
 
 on:
   workflow_dispatch:
