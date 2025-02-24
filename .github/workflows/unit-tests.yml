@@ -20,9 +20,8 @@ jobs:
       - name: Configure for unit tests
         run: |
           cmake -B build \
-          -DCMAKE_VERBOSE_MAKEFILE=on \
           -DCMAKE_CXX_COMPILER=g++-14 \
-          -DTEST_LIB=on \
+          -DUNIT_TESTS=on \
           -DCMAKE_BUILD_TYPE=Build
       - name: Build
         run: |
@@ -31,3 +30,4 @@ jobs:
         run: |
           export LD_LIBRARY_PATH=/usr/local/lib
           ctest --test-dir build/lib --output-on-failure
+          ctest --test-dir build/cli --output-on-failure
