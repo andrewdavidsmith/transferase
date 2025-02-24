@@ -1,6 +1,6 @@
 # MIT License
 #
-# Copyright (c) 2024 Andrew Smith
+# Copyright (c) 2024-2025 Andrew Smith
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -31,6 +31,15 @@ set(CPACK_PACKAGE_VENDOR "Andrew D Smith")
 set(CPACK_PACKAGE_CONTACT "Andrew D Smith")
 set(CPACK_RESOURCE_FILE_LICENSE ${PROJECT_SOURCE_DIR}/LICENSE)
 set(CPACK_GENERATOR "TGZ;STGZ")
+
+if(SYSTEM_NAME_SUFFIX)  # For macOS releases to get the OS version right
+  set(CPACK_PACKAGE_FILE_NAME
+    ${PROJECT_NAME}-${PROJECT_VERSION}-${SYSTEM_NAME_SUFFIX}
+  )
+endif()
+message(STATUS
+  "Package file name (without suffixes): ${CPACK_PACKAGE_FILE_NAME}"
+)
 
 # ADS: adding this is the most general way to make the alias and have
 # it both installed properly and linked the same way as tranferase.
