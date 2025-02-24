@@ -52,7 +52,7 @@ struct level_element_t;
 using namespace transferase;  // NOLINT
 
 TEST(request_handler_test, basic_assertions) {
-  static constexpr auto mock_max_live_methylomes = 8;
+  static constexpr auto mock_max_live_methylomes = 8u;
   request_handler rh("data", "data", mock_max_live_methylomes);
   EXPECT_EQ(rh.methylome_dir, "data");
   EXPECT_EQ(rh.index_file_dir, "data");
@@ -94,10 +94,10 @@ protected:
 
 TEST_F(request_handler_mock, handle_request_success) {
   static constexpr auto rq_type = request_type_code::intervals;
-  static constexpr auto n_intervals = 100;
-  static constexpr auto index_hash = 233205952;
+  static constexpr auto n_intervals = 100u;
+  static constexpr auto index_hash = 233205952u;
   static constexpr auto expected_rows = n_intervals;
-  static constexpr auto expected_cols = 1;
+  static constexpr auto expected_cols = 1u;
 
   [[maybe_unused]] const auto offsets =
     std::vector<transferase::query_element>(n_intervals);
@@ -109,17 +109,17 @@ TEST_F(request_handler_mock, handle_request_success) {
   EXPECT_EQ(resp_hdr.rows, expected_rows);
   EXPECT_EQ(resp_hdr.cols, expected_cols);
   EXPECT_EQ(std::size(mock_request_handler->methylomes.accession_to_methylome),
-            1);
+            1u);
 }
 
 TEST_F(request_handler_mock, handle_request_bad_state) {
-  static constexpr auto index_hash = 0;
+  static constexpr auto index_hash = 0u;
   static constexpr auto ok_accession = "eFlareon_brain";
   static constexpr auto malformed_accession = "eFlareon_..brain";
   static constexpr auto valid_rq_type = request_type_code::intervals;
   // ADS: (below) not a valid type
   static constexpr auto invalid_rq_type = static_cast<request_type_code>(5);
-  static constexpr auto n_intervals = 100;
+  static constexpr auto n_intervals = 100u;
 
   request req{valid_rq_type, index_hash, n_intervals, {malformed_accession}};
 
@@ -135,12 +135,12 @@ TEST_F(request_handler_mock, handle_request_bad_state) {
 }
 
 TEST_F(request_handler_mock, handle_request_failure) {
-  static constexpr auto index_hash = 0;
+  static constexpr auto index_hash = 0u;
   static constexpr auto non_existent_accession{"eFlareon_brainZZZ"};
   static constexpr auto rq_type = request_type_code::intervals;
-  static constexpr auto n_intervals = 100;
-  static constexpr auto expected_rows = 0;  // due to error
-  static constexpr auto expected_cols = 0;  // due to error
+  static constexpr auto n_intervals = 100u;
+  static constexpr auto expected_rows = 0u;  // due to error
+  static constexpr auto expected_cols = 0u;  // due to error
   [[maybe_unused]] const auto offsets =
     std::vector<transferase::query_element>(n_intervals);
 
@@ -152,11 +152,11 @@ TEST_F(request_handler_mock, handle_request_failure) {
   EXPECT_EQ(resp_hdr.rows, expected_rows);
   EXPECT_EQ(resp_hdr.cols, expected_cols);
   EXPECT_EQ(std::size(mock_request_handler->methylomes.accession_to_methylome),
-            0);
+            0u);
 }
 
 TEST_F(request_handler_mock, intervals_get_levels_success) {
-  static constexpr auto index_hash = 0;
+  static constexpr auto index_hash = 0u;
   static constexpr auto rq_type = request_type_code::intervals;
   static constexpr auto assembly = "eFlareon";
   static constexpr auto tissue = "brain";
@@ -192,8 +192,8 @@ TEST_F(request_handler_mock, intervals_get_levels_success) {
 }
 
 TEST_F(request_handler_mock, bins_get_levels_success) {
-  static constexpr auto index_hash = 0;
-  static constexpr auto bin_size = 100;
+  static constexpr auto index_hash = 0u;
+  static constexpr auto bin_size = 100u;
   static constexpr auto rq_type = request_type_code::bins;
   static constexpr auto assembly = "eFlareon";
   static constexpr auto tissue = "brain";

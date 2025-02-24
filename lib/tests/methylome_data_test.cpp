@@ -48,7 +48,7 @@ TEST(methylome_data_test, basic_assertions) {
 TEST(methylome_data_test, valid_read) {
   static constexpr auto dirname{"data"};
   static constexpr auto methylome_name{"SRX012345"};
-  static constexpr auto expected_data_size{6053};
+  static constexpr auto expected_data_size{6053u};
 
   std::error_code ec;
   const auto meta = methylome_metadata::read(dirname, methylome_name, ec);

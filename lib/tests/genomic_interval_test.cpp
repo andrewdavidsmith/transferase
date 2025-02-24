@@ -73,13 +73,13 @@ TEST(genomic_interval_test, valid_input) {
   // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
   genome_index_metadata meta;
   meta.chrom_index["chr1"] = 0;
-  meta.chrom_size.push_back(100000);
+  meta.chrom_size.push_back(100000u);
   std::error_code ec;
   const auto result = parse(meta, "chr1 100 200", ec);
   EXPECT_FALSE(ec);
   EXPECT_EQ(result.ch_id, 0);
-  EXPECT_EQ(result.start, 100);
-  EXPECT_EQ(result.stop, 200);
+  EXPECT_EQ(result.start, 100u);
+  EXPECT_EQ(result.stop, 200u);
   // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
 }
 
@@ -87,13 +87,13 @@ TEST(genomic_interval_test, valid_input_with_tabs) {
   // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
   genome_index_metadata meta;
   meta.chrom_index["chr1"] = 0;
-  meta.chrom_size.push_back(100000);
+  meta.chrom_size.push_back(100000u);
   std::error_code ec;
   const auto result = parse(meta, "chr1\t100\t200", ec);
   EXPECT_FALSE(ec);
   EXPECT_EQ(result.ch_id, 0);
-  EXPECT_EQ(result.start, 100);
-  EXPECT_EQ(result.stop, 200);
+  EXPECT_EQ(result.start, 100u);
+  EXPECT_EQ(result.stop, 200u);
   // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
 }
 
@@ -125,13 +125,13 @@ TEST(genomic_interval_test, stop_position_exceeds_chromosome_size) {
   // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
   genome_index_metadata meta;
   meta.chrom_index["chr1"] = 0;
-  meta.chrom_size.push_back(100000);
+  meta.chrom_size.push_back(100000u);
   std::error_code ec;
   auto result = parse(meta, "chr1 100 200000", ec);
   EXPECT_TRUE(ec);
   EXPECT_EQ(ec, genomic_interval_error_code::interval_past_chrom_end_in_index);
   EXPECT_EQ(result.ch_id, genomic_interval::not_a_chrom);
-  EXPECT_EQ(result.start, 0);
-  EXPECT_EQ(result.stop, 0);
+  EXPECT_EQ(result.start, 0u);
+  EXPECT_EQ(result.stop, 0u);
   // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
 }

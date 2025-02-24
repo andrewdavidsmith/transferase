@@ -39,7 +39,7 @@ using namespace transferase;  // NOLINT
 TEST(genome_index_set_test, valid_genome_index_set) {
   static constexpr auto genome_index_directory = "data";
   const auto index = genome_index_set(genome_index_directory);
-  EXPECT_EQ(std::size(index.name_to_index), 0);
+  EXPECT_EQ(std::size(index.name_to_index), 0u);
 }
 
 class genome_index_set_mock : public ::testing::Test {

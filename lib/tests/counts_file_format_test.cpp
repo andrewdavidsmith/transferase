@@ -39,33 +39,33 @@ TEST(counts_file_format_test, parse_counts_line) {
   bool parse_success = parse_counts_line(line, pos, n_meth, n_unmeth);
   EXPECT_TRUE(parse_success)
     << "failed parse_success for: \"" << line << "\"\n";
-  EXPECT_EQ(pos, 202) << "failed pos for: \"" << line << "\"\n";
-  EXPECT_EQ(n_meth, 105) << "failed n_meth for: \"" << line << "\"\n";
-  EXPECT_EQ(n_unmeth, 4) << "failed n_unmeth for: \"" << line << "\"\n";
+  EXPECT_EQ(pos, 202u) << "failed pos for: \"" << line << "\"\n";
+  EXPECT_EQ(n_meth, 105u) << "failed n_meth for: \"" << line << "\"\n";
+  EXPECT_EQ(n_unmeth, 4u) << "failed n_unmeth for: \"" << line << "\"\n";
 
   const std::string line2{"chr1 22736 + CG 0.050505050505050504 99"};
   parse_success = parse_counts_line(line2, pos, n_meth, n_unmeth);
   EXPECT_TRUE(parse_success)
     << "failed parse_success for: \"" << line2 << "\"\n";
-  EXPECT_EQ(pos, 22736) << "failed pos for: \"" << line2 << "\"\n";
-  EXPECT_EQ(n_meth, 5) << "failed n_meth for: \"" << line2 << "\"\n";
-  EXPECT_EQ(n_unmeth, 94) << "failed n_unmeth for: \"" << line2 << "\"\n";
+  EXPECT_EQ(pos, 22736u) << "failed pos for: \"" << line2 << "\"\n";
+  EXPECT_EQ(n_meth, 5u) << "failed n_meth for: \"" << line2 << "\"\n";
+  EXPECT_EQ(n_unmeth, 94u) << "failed n_unmeth for: \"" << line2 << "\"\n";
 
   const std::string line3{"chr7\t22858\t+\tCG\t0.07954545454545454\t88"};
   parse_success = parse_counts_line(line3, pos, n_meth, n_unmeth);
   EXPECT_TRUE(parse_success)
     << "failed parse_success for: \"" << line3 << "\"\n";
-  EXPECT_EQ(pos, 22858) << "failed pos for: \"" << line3 << "\"\n";
-  EXPECT_EQ(n_meth, 7) << "failed n_meth for: \"" << line3 << "\"\n";
-  EXPECT_EQ(n_unmeth, 81) << "failed n_unmeth for: \"" << line3 << "\"\n";
+  EXPECT_EQ(pos, 22858u) << "failed pos for: \"" << line3 << "\"\n";
+  EXPECT_EQ(n_meth, 7u) << "failed n_meth for: \"" << line3 << "\"\n";
+  EXPECT_EQ(n_unmeth, 81u) << "failed n_unmeth for: \"" << line3 << "\"\n";
 
   const std::string line4{"chr1 10576 + CpG 0.333333 3"};
   parse_success = parse_counts_line(line4, pos, n_meth, n_unmeth);
   EXPECT_TRUE(parse_success)
     << "failed parse_success for: \"" << line4 << "\"\n";
-  EXPECT_EQ(pos, 10576) << "failed pos for: \"" << line4 << "\"\n";
-  EXPECT_EQ(n_meth, 1) << "failed n_meth for: \"" << line4 << "\"\n";
-  EXPECT_EQ(n_unmeth, 2) << "failed n_unmeth for: \"" << line4 << "\"\n";
+  EXPECT_EQ(pos, 10576u) << "failed pos for: \"" << line4 << "\"\n";
+  EXPECT_EQ(n_meth, 1u) << "failed n_meth for: \"" << line4 << "\"\n";
+  EXPECT_EQ(n_unmeth, 2u) << "failed n_unmeth for: \"" << line4 << "\"\n";
 }
 
 TEST(parse_counts_line_tests, valid_line_test) {
@@ -73,9 +73,9 @@ TEST(parse_counts_line_tests, valid_line_test) {
   std::uint32_t pos{}, n_meth{}, n_unmeth{};
   bool result = parse_counts_line(line, pos, n_meth, n_unmeth);
   EXPECT_TRUE(result);
-  EXPECT_EQ(pos, 100);
-  EXPECT_EQ(n_meth, 5);
-  EXPECT_EQ(n_unmeth, 5);
+  EXPECT_EQ(pos, 100u);
+  EXPECT_EQ(n_meth, 5u);
+  EXPECT_EQ(n_unmeth, 5u);
 }
 
 TEST(parse_counts_line_tests, invalid_line_test) {

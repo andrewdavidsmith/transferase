@@ -106,7 +106,7 @@ TEST(zlib_adapter_test, corrupted_gz_file) {
     fputc_wrapper(0x1F, file.get());  // Magic byte 1
     fputc_wrapper(0x8B, file.get());  // Magic byte 2
     fputc_wrapper(0x08, file.get());  // Compression method (DEFLATE)
-    fputc_wrapper(0x00, file.get());  // Flags (0x00)
+    fputc_wrapper(0x00, file.get());  // Flags (0x00u)
 
     // Write arbitrary timestamp (4 bytes, typically 0x00 for no timestamp)
     fputc_wrapper(0x00, file.get());  // Modification time (1st byte)
@@ -114,7 +114,7 @@ TEST(zlib_adapter_test, corrupted_gz_file) {
     fputc_wrapper(0x00, file.get());  // Modification time (3rd byte)
     fputc_wrapper(0x00, file.get());  // Modification time (4th byte)
 
-    fputc_wrapper(0x00, file.get());  // Extra flags (0x00)
+    fputc_wrapper(0x00, file.get());  // Extra flags (0x00u)
     fputc_wrapper(0x03, file.get());  // OS (Unix)
     // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
 
@@ -186,7 +186,7 @@ TEST(zlib_adapter_test, empty_file) {
   const auto [buffer, ec] = read_gzfile_into_buffer(gzfile);
 
   EXPECT_FALSE(ec);
-  EXPECT_EQ(std::size(buffer), 0);  // buffer should be empty
+  EXPECT_EQ(std::size(buffer), 0u);  // buffer should be empty
 
   if (std::filesystem::exists(gzfile)) {
     const bool remove_ok = std::filesystem::remove(gzfile);

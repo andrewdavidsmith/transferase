@@ -43,8 +43,8 @@ TEST(request_test, basic_assertions) {
 TEST(request_test, valid_compose) {
   using namespace std::string_literals;  // NOLINT
   static constexpr auto rq_type = request_type_code::intervals;
-  static constexpr auto mock_aux_value = 1234;
-  static constexpr auto mock_index_hash = 5678;
+  static constexpr auto mock_aux_value = 1234u;
+  static constexpr auto mock_index_hash = 5678u;
   static constexpr auto accession = "SRX012345"s;
   request_buffer buf;
   const request req{rq_type, mock_index_hash, mock_aux_value, {accession}};
@@ -60,8 +60,8 @@ TEST(request_test, valid_compose) {
 TEST(request_test, valid_compose_multiple) {
   using namespace std::string_literals;  // NOLINT
   static constexpr auto rq_type = request_type_code::intervals;
-  static constexpr auto mock_aux_value = 1234;
-  static constexpr auto mock_index_hash = 5678;
+  static constexpr auto mock_aux_value = 1234u;
+  static constexpr auto mock_index_hash = 5678u;
   const auto methylome_names = std::vector{
     "SRX012345"s,
     "asdf"s,
@@ -82,9 +82,9 @@ TEST(request_test, valid_compose_multiple) {
 TEST(request_test, compose_too_large) {
   using namespace std::string_literals;  // NOLINT
   static constexpr auto rq_type = request_type_code::intervals;
-  static constexpr auto mock_aux_value = 1234;
-  static constexpr auto mock_index_hash = 5678;
-  static constexpr auto mock_n_methylome_names = 60;
+  static constexpr auto mock_aux_value = 1234u;
+  static constexpr auto mock_index_hash = 5678u;
+  static constexpr auto mock_n_methylome_names = 60u;
   static constexpr auto mock_methylome_name = "SRX012345"s;
   std::vector<std::string> methylome_names(mock_n_methylome_names,
                                            mock_methylome_name);
@@ -96,7 +96,7 @@ TEST(request_test, compose_too_large) {
 
 TEST(request_test, basic_assertions_bins) {
   using namespace std::string_literals;  // NOLINT
-  static constexpr auto mock_bin_size = 100;
+  static constexpr auto mock_bin_size = 100u;
   static constexpr auto mock_methylome_name = "SRX12345"s;
   const request req{
     request_type_code::bins, 0, mock_bin_size, {mock_methylome_name}};

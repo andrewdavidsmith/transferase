@@ -30,20 +30,20 @@
 using namespace transferase;  // NOLINT
 
 TEST(lru_tracker_test, push_and_size) {
-  lru_tracker<std::string> tracker(3);
-  EXPECT_EQ(std::size(tracker), 0);
+  lru_tracker<std::string> tracker(3u);
+  EXPECT_EQ(std::size(tracker), 0u);
   tracker.push("one");
-  EXPECT_EQ(std::size(tracker), 1);
+  EXPECT_EQ(std::size(tracker), 1u);
   tracker.push("two");
-  EXPECT_EQ(std::size(tracker), 2);
+  EXPECT_EQ(std::size(tracker), 2u);
   tracker.push("three");
-  EXPECT_EQ(std::size(tracker), 3);
+  EXPECT_EQ(std::size(tracker), 3u);
   tracker.push("four");  // This should overwrite the first element
-  EXPECT_EQ(std::size(tracker), 3);
+  EXPECT_EQ(std::size(tracker), 3u);
 }
 
 TEST(lru_tracker_test, full) {
-  lru_tracker<std::string> tracker(3);
+  lru_tracker<std::string> tracker(3u);
   EXPECT_FALSE(tracker.full());
   tracker.push("one");
   tracker.push("two");
@@ -54,7 +54,7 @@ TEST(lru_tracker_test, full) {
 }
 
 TEST(lru_tracker_test, front) {
-  lru_tracker<std::string> tracker(3);
+  lru_tracker<std::string> tracker(3u);
   tracker.push("one");
   tracker.push("two");
   tracker.push("three");
@@ -64,7 +64,7 @@ TEST(lru_tracker_test, front) {
 }
 
 TEST(lru_tracker_test, move_to_front) {
-  lru_tracker<std::string> tracker(4);
+  lru_tracker<std::string> tracker(4u);
   tracker.push("one");
   tracker.push("two");
   tracker.push("three");

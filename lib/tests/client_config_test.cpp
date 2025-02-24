@@ -202,7 +202,7 @@ TEST_F(client_config_mock, run_no_genomes_success) {
 }
 
 TEST_F(client_config_mock, read_metadata_success) {
-  constexpr auto n_lutions = 3;
+  constexpr auto n_lutions = 3u;
   const auto lutions_config_dir = "data/lutions";
   std::error_code error;
   client_config cfg = client_config::read(lutions_config_dir);

@@ -31,20 +31,20 @@
 using namespace transferase;  // NOLINT
 
 TEST(ring_buffer_test, push_back_and_size) {
-  ring_buffer<std::string> buffer(3);
-  EXPECT_EQ(buffer.size(), 0);
+  ring_buffer<std::string> buffer(3u);
+  EXPECT_EQ(buffer.size(), 0u);
   buffer.push_back("one");
-  EXPECT_EQ(buffer.size(), 1);
+  EXPECT_EQ(buffer.size(), 1u);
   buffer.push_back("two");
-  EXPECT_EQ(buffer.size(), 2);
+  EXPECT_EQ(buffer.size(), 2u);
   buffer.push_back("three");
-  EXPECT_EQ(buffer.size(), 3);
+  EXPECT_EQ(buffer.size(), 3u);
   buffer.push_back("four");  // This should overwrite the first element
-  EXPECT_EQ(buffer.size(), 3);
+  EXPECT_EQ(buffer.size(), 3u);
 }
 
 TEST(ring_buffer_test, full) {
-  ring_buffer<std::string> buffer(3);
+  ring_buffer<std::string> buffer(3u);
   EXPECT_FALSE(buffer.full());
   buffer.push_back("one");
   buffer.push_back("two");
@@ -55,7 +55,7 @@ TEST(ring_buffer_test, full) {
 }
 
 TEST(ring_buffer_test, front) {
-  ring_buffer<std::string> buffer(3);
+  ring_buffer<std::string> buffer(3u);
   buffer.push_back("one");
   buffer.push_back("two");
   buffer.push_back("three");
@@ -65,7 +65,7 @@ TEST(ring_buffer_test, front) {
 }
 
 TEST(ring_buffer_test, begin_and_end) {
-  ring_buffer<std::string> buffer(3);
+  ring_buffer<std::string> buffer(3u);
   buffer.push_back("one");
   buffer.push_back("two");
   buffer.push_back("three");

@@ -61,7 +61,7 @@ TEST_F(methylome_set_mock, get_methylome_existing_accession) {
   std::error_code ec;
   const auto meth_ptr = methylome_set_ptr->get_methylome("SRX012345", ec);
   EXPECT_FALSE(ec);
-  EXPECT_EQ(std::size(methylome_set_ptr->accession_to_methylome), 1);
+  EXPECT_EQ(std::size(methylome_set_ptr->accession_to_methylome), 1u);
 }
 
 TEST_F(methylome_set_mock, get_methylome_invalid_methylome_name) {

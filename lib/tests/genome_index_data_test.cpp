@@ -43,7 +43,7 @@ using namespace transferase;  // NOLINT
 TEST(genome_index_data_test, empty_data) {
   genome_index_data data;
   EXPECT_EQ(data.positions, std::vector<genome_index_data::vec>());
-  EXPECT_EQ(data.hash(), 1);
+  EXPECT_EQ(data.hash(), 1u);
 }
 
 TEST(genome_index_data_test, compose_genome_index_data_filename_test) {
@@ -154,9 +154,9 @@ TEST(genome_index_data_test, invalid_read) {
   std::error_code ec;
   const auto index = genome_index::read(index_dir, assembly, ec);
   EXPECT_TRUE(ec);
-  EXPECT_EQ(std::size(index.meta.chrom_order), 0);
-  EXPECT_EQ(std::size(index.meta.chrom_size), 0);
-  EXPECT_EQ(std::size(index.data.positions), 0);
+  EXPECT_EQ(std::size(index.meta.chrom_order), 0u);
+  EXPECT_EQ(std::size(index.meta.chrom_size), 0u);
+  EXPECT_EQ(std::size(index.data.positions), 0u);
 }
 
 class genome_index_data_make_query_success : public ::testing::Test {

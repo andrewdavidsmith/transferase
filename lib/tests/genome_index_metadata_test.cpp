@@ -75,7 +75,7 @@ TEST_F(genome_index_metadata_mock, read_existing_genome_index_metadata) {
   EXPECT_EQ(std::size(meta.chrom_index), std::size(meta.chrom_order));
   EXPECT_EQ(std::size(meta.chrom_index), std::size(meta.chrom_size));
   EXPECT_EQ(std::size(meta.chrom_index), std::size(meta.chrom_offset));
-  EXPECT_GT(meta.n_cpgs, 0);
+  EXPECT_GT(meta.n_cpgs, 0u);
 
   const auto n_cpgs_chrom = meta.get_n_cpgs_chrom();
   EXPECT_EQ(std::size(meta.chrom_index), std::size(n_cpgs_chrom));
@@ -124,7 +124,7 @@ TEST_F(genome_index_metadata_mock, genome_index_metadata_get_n_bins) {
   const auto meta =
     genome_index_metadata::read(genome_index_dir, species_name, ec);
   EXPECT_EQ(ec, std::error_code{});
-  const auto n_bins = meta.get_n_bins(1);
+  const auto n_bins = meta.get_n_bins(1u);
   EXPECT_GE(n_bins, meta.n_cpgs);
 }
 
@@ -138,5 +138,5 @@ TEST_F(genome_index_metadata_mock, genome_index_metadata_init_env) {
 TEST_F(genome_index_metadata_mock, genome_index_metadata_tostring) {
   genome_index_metadata meta{};
   const auto meta_str = meta.tostring();
-  EXPECT_GT(std::size(meta_str), 0);
+  EXPECT_GT(std::size(meta_str), 0u);
 }
