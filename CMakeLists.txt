@@ -1,6 +1,6 @@
 # MIT License
 #
-# Copyright (c) 2024 Andrew Smith
+# Copyright (c) 2024-2025 Andrew Smith
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -25,7 +25,7 @@
 cmake_minimum_required(VERSION 3.28)
 project(
   transferase
-  VERSION 0.4.0
+  VERSION 0.5.0
   DESCRIPTION
   "The transferase system for retrieving methylome data from methbase"
   HOMEPAGE_URL https://github.com/andrewdavidsmith/transferase
