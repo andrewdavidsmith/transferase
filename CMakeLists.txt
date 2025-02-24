@@ -113,6 +113,15 @@ endif()
 
 message(STATUS "Finished global compile and linker configuration")
 
+if(UNIT_TESTS)
+  include(FetchContent)
+  FetchContent_Declare(
+    googletest
+    GIT_REPOSITORY https://github.com/google/googletest.git
+  )
+  FetchContent_MakeAvailable(googletest)
+endif()
+
 add_subdirectory(lib)
 if(BUILD_CLI)
   add_subdirectory(cli)
