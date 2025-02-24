@@ -25,8 +25,7 @@ _transferase_completion() {
     # Below needs to be fixed because not all grep has the Perl mode
 
     # Get list of subcommands from 'transferase --help'
-    subcommands=$("$binary_path" 2>/dev/null | \
-                      grep -oP '^\s+\K[\w-]+' | tr '\n' ' ')
+    subcommands=$("$binary_path" | awk '/^    /{print $1}' | tr '\n' ' ')
     # If we're completing the subcommand (the first argument after the command
     # itself)
     if [[ ${COMP_CWORD} -eq 1 ]]; then
@@ -35,10 +34,8 @@ _transferase_completion() {
     fi
 
     # Get options for the current subcommand (if available)
-    options=$("${binary_path}" "${COMP_WORDS[1]}" --help | \
-                  sed -n '/^Options:/,/^$/ { /^Options:/d; p }' | \
-                  sed 's/^  .*\(--[^ ]*\).*/\1/g;t;d' | tr '\n' ' ')
-
+    options=$("${binary_path}" "${COMP_WORDS[1]}" | \
+                  awk '/  \-/ {split($1, array, ","); print array[2]}')
     # Check if the previous token begins with an unescaped dash and
     # has the suffix dir, and if so, suggest a directory
     if [[ "$prev" =~ ^[^\\-]*-*.*dir ]]; then
