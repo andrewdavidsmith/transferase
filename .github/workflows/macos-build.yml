@@ -9,7 +9,7 @@ jobs:
   macos-build:
     strategy:
       matrix:
-        os: [macos-13, macos-14, macos-15]
+        os: [macos-15]
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v3
@@ -17,7 +17,7 @@ jobs:
       run: brew update
     - name: Install dependencies
       run: |
-        brew install zlib boost
+        brew install zlib boost ncurses
     # ADS: homebrew might install libz in an "opt" dir, so specify the
     # brew prefix and then the path to the static lib
     - name: Configure release build with g++-14
