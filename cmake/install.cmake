@@ -45,7 +45,9 @@ install(FILES ${PROJECT_SOURCE_DIR}/data/transferase-bash-completion
   RENAME transferase
 )
 
-# Systemd configuration file (e.g., /usr/lib/systemd/system/)
-install(FILES ${PROJECT_SOURCE_DIR}/data/transferase.service
-  DESTINATION ${CMAKE_INSTALL_LIBDIR}/systemd/system
-)
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+  # Systemd configuration file (e.g., /usr/lib/systemd/system/)
+  install(FILES ${PROJECT_SOURCE_DIR}/data/transferase.service
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/systemd/system
+  )
+endif()
