@@ -33,7 +33,7 @@ jobs:
           cmake --build build -j4
       - name: Download query data
         run: |
-          wget https://smithlabresearch.org/transferase/other/cpgIslandExtUnmasked_hg38.bed3
+          wget -nv https://smithlabresearch.org/transferase/other/cpgIslandExtUnmasked_hg38.bed3
       - name: Run the test script
         run: |
           . .venv/bin/activate
