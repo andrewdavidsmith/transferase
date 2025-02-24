@@ -14,10 +14,13 @@ jobs:
           sudo apt-get install -y libboost-all-dev zlib1g-dev
       - name: Install Python packages
         run: |
+          python3 -m venv .venv
+          . .venv/bin/activate
           pip install --upgrade pip
           pip install nanobind pytest wheel auditwheel hatch
       - name: Configure
         run: |
+          . .venv/bin/activate
           cmake -B build \
           -DCMAKE_VERBOSE_MAKEFILE=on \
           -DCMAKE_CXX_COMPILER=g++-14 \
@@ -26,8 +29,10 @@ jobs:
           -DCMAKE_BUILD_TYPE=Release
       - name: Build
         run: |
+          . .venv/bin/activate
           cmake --build build -j4
       - name: Check that it runs
         run: |
+          . .venv/bin/activate
           pip install build/python/dist/transferase*whl
           python -c "import transferase; help(transferase)"
