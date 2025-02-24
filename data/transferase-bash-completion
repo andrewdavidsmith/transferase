@@ -22,8 +22,10 @@ _transferase_completion() {
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
 
+    # Below needs to be fixed because not all grep has the Perl mode
+
     # Get list of subcommands from 'transferase --help'
-    subcommands=$("$binary_path" --help 2>/dev/null | \
+    subcommands=$("$binary_path" 2>/dev/null | \
                       grep -oP '^\s+\K[\w-]+' | tr '\n' ' ')
     # If we're completing the subcommand (the first argument after the command
     # itself)
