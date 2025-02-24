@@ -1,4 +1,4 @@
-name: Run transferase unit tests on macOS
+name: Run unit tests on macOS
 
 on:
   pull_request:
@@ -6,10 +6,10 @@ on:
   workflow_dispatch:
 
 jobs:
-  macos-build:
+  macos-unit-tests:
     strategy:
       matrix:
-        os: [macos-13]
+        os: [macos-13, macos-14, macos-15]
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
@@ -17,9 +17,7 @@ jobs:
       run: brew update
     - name: Install dependencies
       run: |
-        brew install googletest zlib boost
-    # ADS: homebrew might install libz in an "opt" dir, so specify the
-    # brew prefix and then the path to the static lib
+        brew install zlib boost googletest
     - name: Configure for unit tests
       run: |
         cmake -B build \
@@ -29,6 +27,7 @@ jobs:
         -DCMAKE_EXE_LINKER_FLAGS="-L$(brew --prefix)/lib" \
         -DZLIB_LIBRARY=$(brew --prefix zlib)/lib/libz.a \
         -DCMAKE_CXX_COMPILER=g++-14 \
+        -DCMAKE_C_COMPILER=gcc-14 \
         -DUNIT_TESTS=on \
         -DGET_GOOGLETEST=on \
         -DCMAKE_BUILD_TYPE=Build

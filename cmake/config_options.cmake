@@ -35,6 +35,10 @@ option(PYTHON_TESTS "Enable Python tests" off)
 set(SANITIZER_TYPE "address"
   CACHE STRING "Choose sanitizer type (address, undefined)")
 
+if(TEST_LIB OR TEST_CLI)
+  set(UNIT_TESTS on)
+endif()
+
 # Release
 if(PACKAGE)
   message(STATUS "Enabling 'PACKAGE'")

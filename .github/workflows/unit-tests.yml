@@ -1,4 +1,4 @@
-name: Run unit tests for transferase
+name: Run unit tests on Ubuntu
 
 # Should run at 2am Pacific time
 on:
