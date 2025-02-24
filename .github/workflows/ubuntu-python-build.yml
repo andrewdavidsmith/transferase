@@ -1,0 +1,33 @@
+name: Build Python package on Ubuntu
+
+on:
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  ubuntu-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libboost-all-dev zlib1g-dev
+      - name: Install Python packages
+        run: |
+          pip install nanobind pytest wheel auditwheel hatch
+      - name: Configure
+        run: |
+          cmake -B build \
+          -DCMAKE_VERBOSE_MAKEFILE=on \
+          -DCMAKE_CXX_COMPILER=g++-14 \
+          -DBUILD_PYTHON=on \
+          -DCMAKE_BUILD_TYPE=Build
+      - name: Build
+        run: |
+          cmake --build build -j4
+      - name: Check that it runs
+        run: |
+          export PYTHONPATH=build/python/transferase
+          PAGER=cat python -c "import transferase; help(transferase)"
