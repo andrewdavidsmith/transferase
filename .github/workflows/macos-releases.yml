@@ -38,5 +38,5 @@ jobs:
     - name: Upload the STGZ
       uses: actions/upload-artifact@v4
       with:
-        name: packages
+        name: transferase-Darwin-${{ matrix.os }}
         path: build/transferase-*-Darwin.*
