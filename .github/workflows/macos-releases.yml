@@ -28,6 +28,7 @@ jobs:
         -DZLIB_LIBRARY=$(brew --prefix zlib)/lib/libz.a \
         -DCMAKE_CXX_COMPILER=g++-14 \
         -DPACKAGE=on \
+        -DSYSTEM_NAME_SUFFIX=${{ matrix.os }}-${{ runner.arch }} \
         -DCMAKE_BUILD_TYPE=Release
     - name: Build
       run: |
@@ -38,5 +39,5 @@ jobs:
     - name: Upload the STGZ
       uses: actions/upload-artifact@v4
       with:
-        name: transferase-Darwin-${{ matrix.os }}
-        path: build/transferase-*-Darwin.*
+        name: transferase-0.5.0-${{ matrix.os }}-${{ runner.arch }}
+        path: build/transferase-0.5.0-${{ matrix.os }}-${{ runner.arch }}.*
