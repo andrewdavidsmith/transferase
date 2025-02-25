@@ -105,7 +105,7 @@ Curently only a shell installer is available. You can download the installer
 matching your version at the releases page on github. Assuming it's macos-15
 and ARM64, then do this:
 
-```
+```console
 sh transferase-0.5.0-Linux.sh --prefix=${PREFIX}
 ```
 
