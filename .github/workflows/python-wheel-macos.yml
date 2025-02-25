@@ -7,7 +7,7 @@ jobs:
   build-wheel:
     strategy:
       matrix:
-        os: [macos-15]
+        os: [macos-13, macos-14, macos-15]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
