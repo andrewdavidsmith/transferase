@@ -1,0 +1,45 @@
+name: Python wheel on macOS
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-wheel:
+    strategy:
+      matrix:
+        os: [macos-13, macos-14, macos-15]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Update Homebrew
+        run: brew update
+      - name: Install dependencies
+        run: |
+          brew install zlib boost
+      - name: Install Python packages
+        run: |
+          python3 -m venv .venv
+          . .venv/bin/activate
+          pip install --upgrade pip
+          pip install nanobind pytest wheel auditwheel hatch
+      - name: Configure
+        run: |
+          . .venv/bin/activate
+          cmake -B build \
+          -DCMAKE_VERBOSE_MAKEFILE=on \
+          -DCMAKE_CXX_FLAGS="-I$(brew --prefix)/include" \
+          -DCMAKE_EXE_LINKER_FLAGS="-L$(brew --prefix)/lib" \
+          -DZLIB_LIBRARY=$(brew --prefix zlib)/lib/libz.a \
+          -DCMAKE_CXX_COMPILER=g++-14 \
+          -DBUILD_PYTHON=on \
+          -DPACKAGE_PYTHON=on \
+          -DCMAKE_BUILD_TYPE=Release
+      - name: Build
+        run: |
+          . .venv/bin/activate
+          cmake --build build -j4
+      - name: Check that it runs
+        run: |
+          . .venv/bin/activate
+          pip install build/python/dist/transferase*whl
+          python -c "import transferase; help(transferase)"
