@@ -107,7 +107,7 @@ if(PACKAGE_PYTHON)
   configure_file(${PROJECT_SOURCE_DIR}/python/version.py
     ${PROJECT_BINARY_DIR}/python/version.py)
   # Copy the LICENSE file to the build directory
-  configure_file(${PROJECT_SOURCE_DIR}/LICENSE
+  configure_file(${PROJECT_SOURCE_DIR}/data/LICENSE
     ${PROJECT_BINARY_DIR}/python/LICENSE COPYONLY)
   # Copy the __init__.py file to the directory where it will be
   # included in the package
