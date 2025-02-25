@@ -18,7 +18,7 @@ jobs:
           brew install zlib boost
       - name: Install Python packages
         run: |
-          python3.12 -m venv .venv
+          python3 -m venv .venv
           . .venv/bin/activate
           pip install --upgrade pip
           pip install nanobind pytest wheel hatch packaging
@@ -42,7 +42,7 @@ jobs:
         run: |
           . .venv/bin/activate
           pip install build/python/dist/transferase*whl
-          python -c "import transferase; help(transferase)"
+          python3 -c "import transferase; help(transferase)"
       - name: Upload macos wheel
         uses: actions/upload-artifact@v4
         with:

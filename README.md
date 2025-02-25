@@ -38,7 +38,7 @@ them locally on your laptop or workstation.
 - Target platforms are command line, Python and R. The R API is not ready yet.
 
 - The current release has binaries that should work on almost any Linux
-  machine. The Python package needs Python 3.12, but otherwise will run on
+  machine. The Python package needs Python 3.13, but otherwise will run on
   almost any Linux machine.
 
 ## Documentation
@@ -118,12 +118,12 @@ macos -- it's a bit unstable.
 
 Transferase has a Python API that allows the same queries to be done within
 Python. Almost all "client side" behaviors of transferase are available
-through the Python API. Installation should be easy. You will need Python >=
-3.12. Download the wheel file (`*.whl`) that matches your system.  On Linux,
-there is only one and it should work on any Linux system going back many
-years. On macOS, there are three (see above for how to select). Assuming you
-have the Linux wheel, just download it into your current directory and do
-this:
+through the Python API. Installation should be easy. You will need Python
+3.13, which is the latest version as of transferase v0.5.0. Download the wheel
+file (`*.whl`) that matches your system.  On Linux, there is only one and it
+should work on any Linux system going back many years. On macOS, there are
+three (see above for how to select). Assuming you have the Linux wheel, just
+download it into your current directory and do this:
 
 (These instructions assume installation in a virtual environment because it
 avoids any risk if something goes wrong.)
