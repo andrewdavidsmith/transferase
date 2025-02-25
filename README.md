@@ -131,7 +131,7 @@ avoids any risk if something goes wrong.)
 ```console
 python3 -m venv .venv
 . .venv/bin/activate
-pip install transferase-0.5.0-cp312-none-manylinux_2_17_x86_64.whl
+pip install transferase-0.5.0-cp313-none-manylinux_2_17_x86_64.whl
 # To test; if you see output, it worked
 python3 -c "import transferase; help(transferase)"
 ```
