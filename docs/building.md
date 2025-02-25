@@ -7,7 +7,7 @@ stabilizes.
 
 ## Ubuntu
 
-I'm using the Ubuntu 24.04. I will list all the steps, even though most of
+I'm using the Ubuntu 24.04 docker image. I will list all the steps, even though most of
 them won't be needed on your system. First is to build the command line tools,
 then the Python package.
 
