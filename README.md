@@ -113,3 +113,28 @@ This will prompt you to accept the license, and then it will install the
 transferase binaries in `${PREFIX}/bin`, along with some config files in
 `${PREFIX}/share`. For v0.5.0, be careful with the bash completions file on
 macos -- it's a bit unstable.
+
+## Installing the Python API
+
+Transferase has a Python API that allows the same queries to be done within
+Python. Almost all "client side" behaviors of transferase are available
+through the Python API. Installation should be easy. You will need Python >=
+3.12. Download the wheel file (`*.whl`) that matches your system.  On Linux,
+there is only one and it should work on any Linux system going back many
+years. On macOS, there are three (see above for how to select). Assuming you
+have the Linux wheel, just download it into your current directory and do
+this:
+
+(These instructions assume installation in a virtual environment because it
+avoids any risk if something goes wrong.)
+
+```console
+python3 -m venv .venv
+. .venv/bin/activate
+pip install transferase-0.5.0-cp312-none-manylinux_2_17_x86_64.whl
+# To test; if you see output, it worked
+python3 -c "import transferase; help(transferase)"
+```
+
+If you happen to get the wrong version, pip will probably tell you it's not
+compatible, so just try another. If none work, let me know.
