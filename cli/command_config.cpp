@@ -65,6 +65,7 @@ xfr config --update -s localhost -p 5000
 #include <map>
 #include <memory>
 #include <print>
+#include <ranges>
 #include <string>
 #include <string_view>
 #include <system_error>
