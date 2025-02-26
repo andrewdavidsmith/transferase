@@ -40,6 +40,7 @@
 
 #include <algorithm>  // for std::min, std::max
 #include <cstdint>    // std::uint32_t
+#include <limits>     // for std::numeric_limits
 #include <string>
 #include <system_error>
 #include <utility>  // std::swap std::move
