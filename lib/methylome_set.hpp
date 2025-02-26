@@ -47,9 +47,9 @@ struct methylome_set {
   // prevent copy; move disallowed because of std::mutex member
   // clang-format off
   methylome_set(const methylome_set &) = delete;
-  methylome_set &operator=(const methylome_set &) = delete;
+  auto operator=(const methylome_set &) -> methylome_set & = delete;
   methylome_set(methylome_set &&) noexcept = delete;
-  methylome_set &operator=(methylome_set &&) noexcept = delete;
+  auto operator=(methylome_set &&) noexcept -> methylome_set & = delete;
   // clang-format on
 
   [[nodiscard]] auto
