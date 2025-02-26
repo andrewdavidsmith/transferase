@@ -85,7 +85,7 @@ command_check_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
   namespace xfr = transferase;
 
   std::string index_dir{};
-  std::string genome_name{};
+  std::string genome_name_arg{};
   std::vector<std::string> methylome_names;
   std::string methylome_dir{};
   xfr::log_level_t log_level{log_level_default};
@@ -103,7 +103,7 @@ command_check_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
                  "genome index directory")
     ->required()
     ->check(CLI::ExistingDirectory);
-  app.add_option("-g,--genome", genome_name,
+  app.add_option("-g,--genome", genome_name_arg,
                  "genome name (default: all in directory)");
   app.add_option("-d,--methylome-dir", methylome_dir,
                  "directory containing methylomes")
@@ -144,7 +144,7 @@ command_check_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
   }
 
   std::vector<std::string> genome_names;
-  if (genome_name.empty()) {
+  if (genome_name_arg.empty()) {
     genome_names = xfr::genome_index::list(index_dir, error);
     if (error) {
       lgr.error("Error reading genome index directory {}: {}", index_dir,
@@ -153,7 +153,7 @@ command_check_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
     }
   }
   else
-    genome_names = {genome_name};
+    genome_names = {genome_name_arg};
 
   const auto joined_methylomes = methylome_names | std::views::join_with(',');
   const auto joined_genomes = genome_names | std::views::join_with(',');

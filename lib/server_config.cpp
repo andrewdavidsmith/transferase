@@ -32,7 +32,6 @@
 #include <fstream>
 #include <iterator>  // for std::size
 #include <ranges>    // IWYU pragma: keep
-#include <sstream>
 #include <string>
 #include <system_error>
 
@@ -78,18 +77,24 @@ server_config::get_config_file(const std::string &config_dir) noexcept
 /// Get the path to the index directory
 [[nodiscard]] auto
 server_config::get_index_dir() const noexcept -> std::string {
+  if (index_dir.empty())
+    return {};
   return (std::filesystem::path(config_dir) / index_dir).lexically_normal();
 }
 
 /// Get the path to the methylome directory
 [[nodiscard]] auto
 server_config::get_methylome_dir() const noexcept -> std::string {
+  if (methylome_dir.empty())
+    return {};
   return (std::filesystem::path(config_dir) / methylome_dir).lexically_normal();
 }
 
 /// Get the path to the log file
 [[nodiscard]] auto
 server_config::get_log_file() const noexcept -> std::string {
+  if (log_file.empty())
+    return {};
   return (std::filesystem::path(config_dir) / log_file).lexically_normal();
 }
 
@@ -156,16 +161,18 @@ server_config::tostring() const -> std::string {
   return data.dump(n_indent);
 }
 
-[[nodiscard]] auto
-server_config::write(const std::string &config_file) const -> std::error_code {
+auto
+server_config::write(const std::string &config_file,
+                     std::error_code &error) const -> void {
   std::ofstream out(config_file);
-  if (!out)
-    return server_config_error_code::error_writing_server_config_file;
+  if (!out) {
+    error = server_config_error_code::error_writing_server_config_file;
+    return;
+  }
   const std::string payload = tostring();
   out.write(payload.data(), static_cast<std::streamsize>(std::size(payload)));
   if (!out)
-    return server_config_error_code::error_writing_server_config_file;
-  return {};
+    error = server_config_error_code::error_writing_server_config_file;
 }
 
 /// Validate that the client config makes sense. This must be done

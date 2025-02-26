@@ -102,14 +102,12 @@ struct client_config {
   // the system config file since different APIs can't be expected to
   // find things the same way.
   client_config(const std::string &config_dir, const std::string &system_config,
-                std::error_code &error) noexcept;
+                std::error_code &error);
 
-  client_config(const std::string &config_dir, std::error_code &error) noexcept;
+  client_config(const std::string &config_dir, std::error_code &error);
 
-#ifndef TRANSFERASE_NOEXCEPT
   client_config(const std::string &config_dir,
                 const std::string &system_config);
-#endif
 
   [[nodiscard]] auto
   config_file_exists() const -> bool;
@@ -181,22 +179,8 @@ struct client_config {
   /// files and verifying consistency, if needed.
   auto
   install(const std::vector<std::string> &genomes,
-          const download_policy_t download_policy, std::string sys_config_dir,
-          std::error_code &error) const noexcept -> void;
-
-#ifndef TRANSFERASE_NOEXCEPT
-  /// Overload of `install` for APIs. Throws system_error if an
-  /// error is encountered.
-  auto
-  install(const std::vector<std::string> &genomes,
           const download_policy_t download_policy,
-          const std::string &sys_config_dir) const -> void {
-    std::error_code error;
-    install(genomes, download_policy, sys_config_dir, error);
-    if (error)
-      throw std::system_error(error);
-  }
-#endif
+          std::string sys_config_dir) const -> void;
 
   /// Validate that the required instance variables are set properly;
   /// do this before attempting the configuration process.
@@ -243,9 +227,6 @@ struct client_config {
                                  index_dir, metadata_file, methylome_dir,
                                  log_file, log_level)
 };
-
-[[nodiscard]] auto
-get_default_sys_config_dir(std::error_code &error) noexcept -> std::string;
 
 }  // namespace transferase
 

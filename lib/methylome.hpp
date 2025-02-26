@@ -36,6 +36,7 @@
 #include <format>
 #include <string>
 #include <system_error>
+#include <tuple>
 #include <type_traits>
 #include <utility>
 #include <variant>  // for std::hash
@@ -289,6 +290,13 @@ struct methylome {
     return methylome_names;
   }
 #endif
+
+  /// @brief Get the genome information associated with the given methylome
+  /// name, without instantiating a methylome object.
+  [[nodiscard]] static auto
+  get_genome_info(
+    const std::string &methylome_dir, const std::string &methylome_name,
+    std::error_code &error) noexcept -> std::tuple<std::string, std::uint64_t>;
 
   /// @brief Parse a methylome name from a filename.
   [[nodiscard]] static auto

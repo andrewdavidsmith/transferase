@@ -22,37 +22,38 @@ _transferase_completion() {
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
 
+    # Below needs to be fixed because not all grep has the Perl mode
+
     # Get list of subcommands from 'transferase --help'
-    subcommands=$("$binary_path" --help 2>/dev/null | grep -oP '^\s+\K[\w-]+' | tr '\n' ' ')
-    # If we're completing the subcommand (the first argument after the command itself)
+    subcommands=$("$binary_path" | awk '/^    /{print $1}' | tr '\n' ' ')
+    # If we're completing the subcommand (the first argument after the command
+    # itself)
     if [[ ${COMP_CWORD} -eq 1 ]]; then
         COMPREPLY=($(compgen -W "${subcommands}" -- "$cur"))
         return
     fi
 
     # Get options for the current subcommand (if available)
-    options=$("${binary_path}" "${COMP_WORDS[1]}" --help | \
-                  sed -n '/^Options:/,/^$/ { /^Options:/d; p }' | \
-                  sed 's/^  .*\(--[^ ]*\).*/\1/g;t;d' | tr '\n' ' ')
-
+    options=$("${binary_path}" "${COMP_WORDS[1]}" | \
+                  awk '/  \-/ {split($1, array, ","); print array[2]}')
     # Check if the previous token begins with an unescaped dash and
     # has the suffix dir, and if so, suggest a directory
     if [[ "$prev" =~ ^[^\\-]*-*.*dir ]]; then
-        # Attempt to expand filenames/paths/directories
+        # Attempt to expand directory names
         COMPREPLY=( $(compgen -d -- "$cur") )
         return
     fi
 
-    # Check if the previous token begins with an unescaped dash and if
-    # so, suggest a file or directory
-    if [[ "$prev" =~ ^[^\\-]*- ]]; then
+    # Check if the previous token begins with an unescaped dash and
+    # has the suffix 'file', and if so, suggest a file or directory
+    if [[ "$prev" =~ ^[^\\-]*-*.*file ]]; then
         # Attempt to expand filenames/paths/directories
-        _filedir
+        COMPREPLY=( $(compgen -f -- "$cur") )
         return
     fi
 
-    compopt +o nospace
     COMPREPLY=($(compgen -W "${options}" -- "$cur"))
+    COMPREPLY+=($(compgen -f -- "$cur"))
     return
 }
 

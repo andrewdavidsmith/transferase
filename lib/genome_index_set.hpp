@@ -44,8 +44,8 @@ struct genome_index;
 struct genome_index_set {
   // prevent copy; move disallowed because of std::mutex member
   genome_index_set(const genome_index_set &) = delete;
-  genome_index_set &
-  operator=(const genome_index_set &) = delete;
+  auto
+  operator=(const genome_index_set &) -> genome_index_set & = delete;
 
   explicit genome_index_set(const std::string &genome_index_directory,
                             const std::uint32_t max_live_genome_indexes =

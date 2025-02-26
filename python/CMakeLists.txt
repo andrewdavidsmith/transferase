@@ -29,39 +29,12 @@ set(DEV_MODULE Development.Module)
 
 # Python has to be available before nanobind
 find_package(Python COMPONENTS Interpreter ${DEV_MODULE} REQUIRED)
+message(STATUS "Python version: ${Python_VERSION}")
 message(STATUS "Python include dir: ${Python_INCLUDE_DIRS}")
 message(STATUS "Python libraries: ${Python_LIBRARIES}")
-message(STATUS "Python version: ${Python_VERSION}")
 message(STATUS "Python SOABI: ${Python_SOABI}")
 
-message(STATUS "Configuring nanobind for Python API")
-
-# Detect the installed nanobind package
-execute_process(
-  COMMAND "${Python_EXECUTABLE}" -m nanobind --cmake_dir
-  OUTPUT_STRIP_TRAILING_WHITESPACE
-  OUTPUT_VARIABLE nanobind_ROOT
-  ERROR_QUIET
-)
-if (nanobind_ROOT)
-  message(STATUS "Found nanobind on the system")
-else()
-  message(STATUS "Configuring to clone nanobind")
-  # Didn't find nanobind so try to clone it
-  include(ExternalProject)
-  ExternalProject_Add(
-    nanobind
-    GIT_REPOSITORY https://github.com/wjakob/nanobind.git
-    GIT_TAG master
-    CMAKE_ARGS
-    -DCMAKE_INSTALL_PREFIX=${PROJECT_BINARY_DIR}/src/nanobind
-    -DCMAKE_BUILD_TYPE=Release
-  )
-endif()
-# Now try to import nanobind; if this step is not done here, then in
-# python/CMakeLists.txt the
-# nanobind_build_library(nanobind-static-abi3) will fail.
-find_package(nanobind CONFIG)
+find_package(nanobind CONFIG REQUIRED)
 
 # Setup the Python include and lib directories
 include_directories(${Python_INCLUDE_DIRS})
@@ -79,7 +52,11 @@ set(LIBRARY_NAME "transferase")
 add_subdirectory(transferase)
 
 # Configure the tests if requested
-if(ENABLE_PYTHON_UNIT_TESTS)
+if(PYTHON_TESTS)
+  # If we are here, we need to setup testing.
+  enable_testing()
+  find_package(GTest REQUIRED)
+  include(GoogleTest)
   add_subdirectory(test)
 endif()
 
@@ -130,7 +107,7 @@ if(PACKAGE_PYTHON)
   configure_file(${PROJECT_SOURCE_DIR}/python/version.py
     ${PROJECT_BINARY_DIR}/python/version.py)
   # Copy the LICENSE file to the build directory
-  configure_file(${PROJECT_SOURCE_DIR}/LICENSE
+  configure_file(${PROJECT_SOURCE_DIR}/data/LICENSE
     ${PROJECT_BINARY_DIR}/python/LICENSE COPYONLY)
   # Copy the __init__.py file to the directory where it will be
   # included in the package
@@ -142,7 +119,7 @@ if(PACKAGE_PYTHON)
     COMMAND hatch build -t wheel
     WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/python
     DEPENDS ${LIBRARY_NAME}
-    COMMENT "Use hatch to build the Python package inside the build tree"
+    COMMENT "Using 'hatch' to build the Python package in the build tree"
   )
   execute_process(COMMAND
     python3 ${PROJECT_SOURCE_DIR}/python/get_python_tag.py
@@ -156,7 +133,7 @@ if(PACKAGE_PYTHON)
   )
   message(STATUS "Platform version tag: ${PYTHON_VERSION_TAG}")
   message(STATUS "Python ABI tag: ${PYTHON_ABI_TAG}")
-  message(STATUS "Python platform tag: deterined post-build")
+  message(STATUS "Python platform tag: determined post-build")
 
   # The initial wheel filename is determined by the entry in the
   # custom hatch hook that can be found following pyproject.conf
@@ -175,6 +152,6 @@ if(PACKAGE_PYTHON)
     COMMAND rm ${INIT_WHL_FILE}
     WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/python/dist
     DEPENDS PYTHON_BUILD_WHL
-    COMMENT "Put the correct tags in the wheel filename (todo: put in one script)"
+    COMMENT "Adding correct tags to wheel filename"
   )
 endif()

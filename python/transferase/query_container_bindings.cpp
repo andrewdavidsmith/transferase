@@ -38,22 +38,20 @@ namespace nb = nanobind;
 auto
 query_container_bindings(nb::class_<transferase::query_container> &cls)
   -> void {
+  namespace xfr = transferase;
   cls.def(nb::init<>())
-    .def("__len__", nb::overload_cast<const transferase::query_container &>(
-                      &transferase::size))
+    .def("__len__", nb::overload_cast<const xfr::query_container &>(&xfr::size))
     .def(nanobind::self == nanobind::self)
     .def(nanobind::self != nanobind::self)
     .def("__repr__",
-         [](const transferase::query_container &self) -> std::string {
-           return std::format("<QueryContainer size={}>",
-                              transferase::size(self));
+         [](const xfr::query_container &self) -> std::string {
+           return std::format("<MQuery size={}>", xfr::size(self));
          })
     .doc() = R"doc(
-    A QueryContainer is a representation for a list of GenomicInterval
-    objects that has been packaged for use in a transferase query. You
-    can't do anything else with a QueryContainer, but it allows you to
-    avoid repeating work if you want to use the same set of
-    GenomicIntervals in more than one query.
+    A MQuery is a representation for a list of GenomicInterval objects that
+    has been packaged for use in a transferase query. You can't do anything
+    else with a MQuery, but it allows you to avoid repeating work if you want
+    to use the same set of GenomicIntervals in more than one query.
     )doc"
     //
     ;

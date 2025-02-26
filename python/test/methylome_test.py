@@ -29,8 +29,8 @@ import os
 from transferase import GenomeIndex
 from transferase import Methylome
 from transferase import GenomicInterval
-from transferase import LevelContainer
-from transferase import LevelContainerCovered
+from transferase import MLevels
+from transferase import MLevelsCovered
 
 
 def get_valid_test_genome_index(genome_name):
@@ -201,7 +201,7 @@ def test_methylome_get_levels_with_query_container():
     meth = get_valid_test_methylome("eFlareon", "brain")
     query = get_valid_test_query("eFlareon", "brain")
     levels = meth.get_levels(query)
-    assert isinstance(levels, LevelContainer)
+    assert isinstance(levels, MLevels)
 
 
 def test_methylome_get_levels_covered_with_query_container():
@@ -209,7 +209,7 @@ def test_methylome_get_levels_covered_with_query_container():
     meth = get_valid_test_methylome("eJolteon", "ear")
     query = get_valid_test_query("eJolteon", "ear")
     levels = meth.get_levels_covered(query)
-    assert isinstance(levels, LevelContainerCovered)
+    assert isinstance(levels, MLevelsCovered)
 
 
 def test_methylome_get_levels_with_bin_size_and_genome_index():
@@ -220,7 +220,7 @@ def test_methylome_get_levels_with_bin_size_and_genome_index():
     genome_index = get_valid_test_genome_index(genome_name)
     bin_size = 100
     levels = meth.get_levels(bin_size, genome_index)
-    assert isinstance(levels, LevelContainer)
+    assert isinstance(levels, MLevels)
 
 
 def test_methylome_get_levels_covered_with_bin_size_and_genome_index():
@@ -231,7 +231,7 @@ def test_methylome_get_levels_covered_with_bin_size_and_genome_index():
     genome_index = get_valid_test_genome_index(genome_name)
     bin_size = 100
     levels = meth.get_levels_covered(bin_size, genome_index)
-    assert isinstance(levels, LevelContainerCovered)
+    assert isinstance(levels, MLevelsCovered)
 
 
 def test_methylome_global_levels():

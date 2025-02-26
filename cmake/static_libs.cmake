@@ -28,7 +28,7 @@ message(STATUS "Enabling static linkage for all non-system libraries")
 set(Boost_USE_STATIC_LIBS on)  # cmake-lint: disable=C0103
 set(ZLIB_USE_STATIC_LIBS on)
 
-# Python3 and pybind11: can't use static libs
+# Python3 and nanobind: not relevant here
 
 # optional
 set(Curses_USE_STATIC_LIBS on)  # cmake-lint: disable=C0103

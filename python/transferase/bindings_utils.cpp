@@ -23,14 +23,17 @@
 
 #include "bindings_utils.hpp"
 
-#include <remote_data_resource.hpp>  // for get_system_config_filename
+#include <system_config.hpp>  // for get_system_config_filename
 
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/vector.h>
 
+#include <algorithm>
 #include <filesystem>
 #include <format>
+#include <iterator>
+#include <ranges>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -65,9 +68,9 @@ find_dir(const std::vector<std::string> &paths,
 get_package_paths() -> std::vector<std::string> {
   nb::object path = nb::module_::import_("sys").attr("path");
   std::vector<std::string> paths;
-  // cppcheck-suppress useStlAlgorithm
-  for (const auto &p : path)
-    paths.emplace_back(nb::cast<std::string>(p));
+  std::ranges::transform(path, std::back_inserter(paths), [](const auto &p) {
+    return nb::cast<std::string>(p);
+  });
   return paths;
 }
 

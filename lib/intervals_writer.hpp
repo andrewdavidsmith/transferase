@@ -47,17 +47,26 @@ struct intervals_writer : public writer_base<intervals_writer> {
     writer_base{outfile, index, out_fmt, names, min_reads},
     intervals{intervals} {}
 
-  [[nodiscard]] auto
-  write_impl(const auto &levels) const noexcept -> std::error_code;
+  // prevent copy and move
+  // clang-format off
+  intervals_writer(const intervals_writer &) = delete;
+  auto operator=(const intervals_writer &) -> intervals_writer & = delete;
+  intervals_writer(intervals_writer &&) noexcept = delete;
+  auto operator=(intervals_writer &&) noexcept -> intervals_writer & = delete;
+  ~intervals_writer() = default;
+  // clang-format on
 
+  /// Write intervals along with their level for a levels
   [[nodiscard]] auto
-  write_bedgraph_impl(const auto &levels) const noexcept -> std::error_code;
+  write_bedlike_impl(const auto &levels, const bool classic_format)
+    const noexcept -> std::error_code;
 
   [[nodiscard]] auto
   write_dataframe_impl(const auto &levels) const noexcept -> std::error_code;
 
   [[nodiscard]] auto
-  write_dataframe_scores_impl(const auto &levels) const noexcept
+  write_dataframe_scores_impl(const auto &levels, const char rowname_delim,
+                              const bool write_header) const noexcept
     -> std::error_code;
 };
 

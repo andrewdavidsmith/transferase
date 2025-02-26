@@ -210,8 +210,9 @@ protected:
     if (!metadata_file.empty()) {
       config.load_transferase_metadata(error);
       if (error) {
-        const auto msg =
-          std::format("[Failed to read metadata: {}]", metadata_file);
+        const auto msg = std::format("[Failed to read metadata: {} (consider "
+                                     "redownloading or regenerating it)]",
+                                     metadata_file);
         throw std::system_error(error, msg);
       }
     }
@@ -263,16 +264,6 @@ protected:
     if (error)  // ADS: need to confirm error code here
       return 0;
     return index->get_hash();
-  }
-
-  [[nodiscard]] auto
-  get_genome_and_index_hash(const std::vector<std::string> &methylome_names,
-                            std::error_code &error) const noexcept
-    -> std::tuple<std::string, std::uint64_t> {
-    const auto genome_name = config.meta.get_genome(methylome_names, error);
-    if (error)  // ADS: need to confirm error code here
-      return {std::string{}, 0};
-    return {genome_name, get_index_hash(genome_name, error)};
   }
 
   NLOHMANN_DEFINE_TYPE_INTRUSIVE(methylome_client_base, config)

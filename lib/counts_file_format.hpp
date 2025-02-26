@@ -28,6 +28,7 @@
 // by dnmtools and others, including determining format, validating
 // format and parsing lines.
 
+#include <array>
 #include <cstdint>
 #include <format>
 #include <string>
@@ -35,6 +36,7 @@
 #include <system_error>
 #include <tuple>
 #include <utility>  // std::unreachable
+#include <variant>  // for std::tuple
 
 namespace transferase {
 

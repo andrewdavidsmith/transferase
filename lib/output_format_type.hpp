@@ -41,6 +41,7 @@ enum class output_format_t : std::uint8_t {
   bedgraph = 2,
   dataframe = 3,
   dataframe_scores = 4,
+  classic = 5,
 };
 
 static constexpr auto output_format_t_name = std::array{
@@ -50,6 +51,7 @@ static constexpr auto output_format_t_name = std::array{
   std::string_view{"bedgraph"},
   std::string_view{"dataframe"},
   std::string_view{"dfscores"},
+  std::string_view{"classic"},
   // clang-format on
 };
 
@@ -60,6 +62,7 @@ static const std::map<std::string, output_format_t> output_format_cli11{
   {"bedgraph", output_format_t::bedgraph},
   {"dataframe", output_format_t::dataframe},
   {"dfscores", output_format_t::dataframe_scores},
+  {"classic", output_format_t::classic},
   // clang-format on
 };
 

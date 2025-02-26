@@ -48,7 +48,7 @@ xfr config --genomes hg38,mm39
 
 xfr config -s example.com -p 5009 --genomes hg38,mm39
 
-xfr config --update -s localhost
+xfr config --update -s localhost -p 5000
 )";
 
 #include "cli_common.hpp"
@@ -60,10 +60,12 @@ xfr config --update -s localhost
 #include "CLI11/CLI11.hpp"
 
 #include <cstdlib>
+#include <exception>
 #include <format>
 #include <map>
 #include <memory>
 #include <print>
+#include <ranges>
 #include <string>
 #include <string_view>
 #include <system_error>
@@ -92,7 +94,7 @@ command_config_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
   // into the config file.
   xfr::client_config cfg;
   cfg.log_level = log_level_default;
-  std::string genomes_arg{};
+  std::vector<std::string> genomes;
   bool quiet{false};
   bool debug{false};
   bool update_config{false};
@@ -125,11 +127,10 @@ command_config_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
                  "{debug, info, warning, error, critical}")
     ->option_text(std::format("ENUM [{}]", log_level_default))
     ->transform(CLI::CheckedTransformer(xfr::log_level_cli11, CLI::ignore_case));
-  app.add_option("-l,--log-file", cfg.log_file,
-                 "log file name (default: print to screen)");
-  app.add_option("-g,--genomes", genomes_arg,
+  app.add_option("-g,--genomes", genomes,
                  "download index files for these genomes "
-                 "(comma separated list, e.g. hg38,mm39)");
+                 "(comma separated list, e.g. hg38,mm39)")
+    ->delimiter(',');
   app.add_option("--download", download_policy,
                  "download policy (none, missing, update, all)")
     ->option_text(std::format("ENUM [{}]", download_policy_default))
@@ -196,26 +197,33 @@ command_config_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
     cfg.assign_defaults_to_missing(empty_sys_config_dir, error);
   }
 
+  const auto genomes_joined =
+    genomes | std::views::join_with(',') | std::ranges::to<std::string>();
+
+  using std::string_literals::operator""s;
+  constexpr auto or_none = [](const auto &s) {
+    return s.empty() ? "none specified"s : s;
+  };
   const std::vector<std::tuple<std::string, std::string>> args_to_log{
     // clang-format off
-    {"Config dir", cfg.config_dir},
-    {"Hostname", cfg.hostname},
-    {"Port", cfg.port},
-    {"Index dir", cfg.index_dir},
-    {"Methylome dir", cfg.methylome_dir},
-    {"Metadata file", cfg.metadata_file},
-    {"Log file", cfg.log_file},
+    {"Config dir", or_none(cfg.config_dir)},
+    {"Hostname", or_none(cfg.hostname)},
+    {"Port", or_none(cfg.port)},
+    {"Index dir", or_none(cfg.index_dir)},
+    {"Methylome dir", or_none(cfg.methylome_dir)},
+    {"Metadata file", or_none(cfg.metadata_file)},
     {"Log level", to_string(cfg.log_level)},
+    {"Genomes", or_none(genomes_joined)},
     {"Download policy", std::format("{}", download_policy)},
     // clang-format on
   };
   xfr::log_args<transferase::log_level_t::info>(args_to_log);
 
-  const auto genomes = split_comma(genomes_arg);
-
-  cfg.install(genomes, download_policy, empty_sys_config_dir, error);
-  if (error) {
-    lgr.error("Configuration incomplete: {}", error);
+  try {
+    cfg.install(genomes, download_policy, empty_sys_config_dir);
+  }
+  catch (const std::exception &e) {
+    lgr.error("Error: {}", e.what());
     return EXIT_FAILURE;
   }
   lgr.debug("Completed configuration with status: {}", error);

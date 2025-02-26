@@ -23,14 +23,12 @@
 
 #include "client_config.hpp"
 #include "download.hpp"
-#include "find_path_to_binary.hpp"
 #include "genome_index_data.hpp"
 #include "genome_index_metadata.hpp"
 #include "remote_data_resource.hpp"
+#include "system_config.hpp"
 
 #include "nlohmann/json.hpp"
-
-#include <config.h>
 
 #include <cassert>
 #include <chrono>  // for std::chrono::operator-
@@ -117,30 +115,6 @@ client_config::get_log_file() const noexcept -> std::string {
   return (std::filesystem::path(config_dir) / log_file).lexically_normal();
 }
 
-/// Locate the system confuration directory based on the path to the binary for
-/// the currently running process.
-[[nodiscard]] auto
-get_default_sys_config_dir(std::error_code &error) noexcept -> std::string {
-  namespace fs = std::filesystem;
-  auto &lgr = logger::instance();
-  static const auto exe_path = find_path_to_binary();
-  const auto exe_dir_parent =
-    fs::canonical(exe_path).parent_path().parent_path().string();
-  const bool is_dir = fs::is_directory(exe_dir_parent, error);
-  if (error) {
-    lgr.debug("Error: {} ({})", error, exe_dir_parent);
-    return {};
-  }
-  if (!is_dir) {
-    error = std::make_error_code(std::errc::not_a_directory);
-    lgr.debug("Not a directory: {}", exe_dir_parent);
-    return {};
-  }
-  // ADS: DATADIR comes from config.h which comes from config.h.in and
-  // is set by cmake
-  return exe_dir_parent / fs::path{DATADIR} / std::string(PROJECT_NAME);
-}
-
 [[nodiscard]] auto
 client_config::get_default_config_dir(std::error_code &error) -> std::string {
   auto env_home = std::getenv("HOME");
@@ -169,18 +143,15 @@ client_config::assign_defaults_to_missing(std::string sys_config_dir,
                                           std::error_code &error) -> void {
   if (hostname.empty() || port.empty()) {
     if (sys_config_dir.empty()) {
-      sys_config_dir = get_default_sys_config_dir(error);
+      sys_config_dir = get_default_system_config_dirname();
       if (error)
         return;
     }
-    const auto [default_hostname, default_port] =
-      transferase::get_transferase_server_info(sys_config_dir, error);
-    if (error)
-      return;
+    system_config cfg(sys_config_dir);
     if (hostname.empty())
-      hostname = default_hostname;
+      hostname = cfg.hostname;
     if (port.empty())
-      port = default_port;
+      port = cfg.port;
   }
   if (index_dir.empty())
     index_dir = index_dirname_default;
@@ -190,47 +161,36 @@ client_config::assign_defaults_to_missing(std::string sys_config_dir,
 
 client_config::client_config(const std::string &config_dir_arg,
                              const std::string &sys_config_dir,
-                             std::error_code &error) noexcept :
+                             std::error_code &error) :
   config_dir{config_dir_arg} {
   if (config_dir.empty()) {
     config_dir = get_default_config_dir(error);
     if (error)
-      return;
+      throw std::system_error(error, "[Calling get_default_config_dir]");
   }
-
-  const auto [default_hostname, default_port] =
-    transferase::get_transferase_server_info(sys_config_dir, error);
-  if (error)
-    return;
-
-  hostname = default_hostname;
-  port = default_port;
+  const system_config sys_conf(sys_config_dir);
+  hostname = sys_conf.hostname;
+  port = sys_conf.port;
   index_dir = index_dirname_default;
   metadata_file = metadata_filename_default;
 }
 
 client_config::client_config(const std::string &config_dir_arg,
-                             std::error_code &error) noexcept :
+                             std::error_code &error) :
   config_dir{config_dir_arg} {
   if (config_dir.empty()) {
     config_dir = get_default_config_dir(error);
     if (error)
-      return;
+      throw std::system_error(error, "[Calling get_default_config_dir]");
   }
-
-  const std::string sys_config_dir = get_default_sys_config_dir(error);
-  const auto [default_hostname, default_port] =
-    transferase::get_transferase_server_info(sys_config_dir, error);
-  if (error)
-    return;
-
-  hostname = default_hostname;
-  port = default_port;
+  const std::string sys_conf_dir = get_default_system_config_dirname();
+  const system_config sys_conf(sys_conf_dir);
+  hostname = sys_conf.hostname;
+  port = sys_conf.port;
   index_dir = index_dirname_default;
   metadata_file = metadata_filename_default;
 }
 
-#ifndef TRANSFERASE_NOEXCEPT
 client_config::client_config(const std::string &config_dir_arg,
                              const std::string &sys_config_dir) :
   config_dir{config_dir_arg} {
@@ -240,18 +200,12 @@ client_config::client_config(const std::string &config_dir_arg,
     if (error)
       throw std::system_error(error, "[Error in get_default_config_dir]");
   }
-
-  const auto [default_hostname, default_port] =
-    transferase::get_transferase_server_info(sys_config_dir, error);
-  if (error)
-    throw std::system_error(error, "[Error in get_transferase_server_info]");
-
-  hostname = default_hostname;
-  port = default_port;
+  const system_config sys_conf(sys_config_dir);
+  hostname = sys_conf.hostname;
+  port = sys_conf.port;
   index_dir = index_dirname_default;
   metadata_file = metadata_filename_default;
 }
-#endif
 
 /// Create all the directories involved in the client config, if they
 /// do not already exist. If directories exist as files, set the error
@@ -461,7 +415,7 @@ check_is_outdated(const download_request &dr,
 
 [[nodiscard]] static auto
 download_index_files(
-  const remote_data_resources &remote, const std::vector<std::string> &genomes,
+  const remote_data_resource &remote, const std::vector<std::string> &genomes,
   const std::string &dirname,
   const download_policy_t download_policy) -> std::error_code {
   auto &lgr = transferase::logger::instance();
@@ -470,7 +424,7 @@ download_index_files(
     const auto data_file =
       std::format("{}{}", stem, genome_index_data::filename_extension);
 
-    const download_request dr{remote.host, remote.port, data_file, dirname};
+    const download_request dr{remote.hostname, remote.port, data_file, dirname};
     const auto local_index_file =
       std::filesystem::path{dirname} / std::format("{}.cpg_idx", genome);
 
@@ -495,7 +449,7 @@ download_index_files(
                 download_policy, index_file_exists, is_outdated);
 
       const auto [data_hdr, data_err] =
-        download({remote.host, remote.port, data_file, dirname});
+        download({remote.hostname, remote.port, data_file, dirname});
       if (data_err)
         return dl_err(data_hdr, data_err, remote.form_url(data_file));
 
@@ -503,7 +457,7 @@ download_index_files(
         std::format("{}{}", stem, genome_index_metadata::filename_extension);
       lgr.debug(R"(Download: {} to "{}")", remote.form_url(meta_file), dirname);
       const auto [meta_hdr, meta_err] =
-        download({remote.host, remote.port, meta_file, dirname});
+        download({remote.hostname, remote.port, meta_file, dirname});
       if (meta_err)
         return dl_err(meta_hdr, meta_err, remote.form_url(meta_file));
     }
@@ -513,10 +467,9 @@ download_index_files(
 
 [[nodiscard]] static auto
 download_metadata_file(
-  const remote_data_resources &remote, const std::string &dirname,
+  const remote_data_resource &remote, const std::string &dirname,
   const download_policy_t download_policy) -> std::error_code {
-  const auto stem = remote.get_metadata_target_stem();
-  const auto metadata_file = std::format("{}.json", stem);
+  const auto metadata_file = remote.form_metadata_target();
   const auto local_metadata_file =
     std::filesystem::path{dirname} / client_config::metadata_filename_default;
   auto &lgr = transferase::logger::instance();
@@ -531,7 +484,7 @@ download_metadata_file(
   // Maybe local modifications are only worth overwriting if the
   // remote is newer?
   const download_request dr{
-    remote.host,
+    remote.hostname,
     remote.port,
     metadata_file,
     dirname,
@@ -561,27 +514,22 @@ download_metadata_file(
 auto
 client_config::install(const std::vector<std::string> &genomes,
                        const download_policy_t download_policy,
-                       std::string sys_config_dir,
-                       std::error_code &error) const noexcept -> void {
+                       std::string sys_config_dir) const -> void {
+  auto &lgr = transferase::logger::instance();
   assert(!config_dir.empty());
-  auto &lgr = logger::instance();
-  if (sys_config_dir.empty()) {
-    sys_config_dir = get_default_sys_config_dir(error);
-    if (error)
-      return;
-  }
+  if (sys_config_dir.empty())
+    sys_config_dir = get_default_system_config_dirname();
 
+  std::error_code error;
   const bool valid = validate(error);
   if (!valid || error)
-    return;
+    throw std::system_error(error, "[Calling validate]");
 
   lgr.debug("Making configuration directories");
   make_directories(error);
-  if (error) {
-    error = client_config_error_code::error_creating_directories;
-    lgr.debug("Error: {}", error);
-    return;
-  }
+  if (error)
+    throw std::system_error(
+      client_config_error_code::error_creating_directories, config_dir);
 
   lgr.debug("Writing configuration file");
   save(error);
@@ -590,17 +538,10 @@ client_config::install(const std::vector<std::string> &genomes,
     return;
   }
 
-  const auto remotes =
-    transferase::get_remote_data_resources(sys_config_dir, error);
-  if (error) {
-    error = client_config_error_code::error_identifying_remote_resources;
-    lgr.debug("Error identifying remote server: {}", error);
-    return;
-  }
-
+  const system_config sys_conf(sys_config_dir);
+  const auto &remotes = sys_conf.get_remote_resources();
   const auto metadata_dir =
     (std::filesystem::path(config_dir) / metadata_file).parent_path().string();
-
   // Do the downloads, attempting each remote resources server in the
   // system config
   bool metadata_downloads_ok{false};
@@ -614,10 +555,8 @@ client_config::install(const std::vector<std::string> &genomes,
       break;
     }
   }
-  if (!metadata_downloads_ok) {
-    error = client_config_error_code::metadata_download_error;
-    return;
-  }
+  if (!metadata_downloads_ok)
+    throw std::system_error(client_config_error_code::metadata_download_error);
 
   if (genomes.empty())
     return;
@@ -637,7 +576,8 @@ client_config::install(const std::vector<std::string> &genomes,
     }
   }
   if (!genome_downloads_ok)
-    error = client_config_error_code::genome_index_download_error;
+    throw std::system_error(
+      client_config_error_code::genome_index_download_error);
 
   return;
 }

@@ -62,17 +62,16 @@ level_container_bindings(
     },
     R"doc(
     Access the tuple (n_meth, n_unmeth) of numbers of methylated and
-    unmethylated reads for the interval corresponding to the given
-    position in the container. These are returned by copy, so access
-    times might differ for the get_n_meth and get_n_unmeth methods.
+    unmethylated reads for the query interval corresponding to the given
+    position in the container. These are returned by copy, so access times
+    might differ for the get_n_meth and get_n_unmeth methods.
 
     Parameters
     ----------
 
-    pos (int): The index of the interval for which to get the numbers
-        of methylated and unmethylated reads.
-
-      )doc",
+    pos (int): The index of the query interval for which to get the numbers of
+        methylated and unmethylated reads.
+    )doc",
     "pos"_a);
   cls.def(
     "get_n_meth",
@@ -83,15 +82,15 @@ level_container_bindings(
       return self[pos].n_meth;
     },
     R"doc(
-    Access the number of *methylated* observations for the interval
+    Access the number of methylated observations for the query interval
     corresponding to the given position.
 
     Parameters
     ----------
 
-    pos (int): The index of the interval for which to get the number
-        of *methylated* reads.
-      )doc",
+    pos (int): The index of the query interval for which to get the number of
+        methylated reads.
+    )doc",
     "pos"_a);
   cls.def(
     "get_n_unmeth",
@@ -102,27 +101,61 @@ level_container_bindings(
       return self[pos].n_unmeth;
     },
     R"doc(
-    Access the number of *UNmethylated* observations for the interval
+    Access the number of UNmethylated observations for the query interval
     corresponding to the given position.
 
     Parameters
     ----------
 
-    pos (int): The index of the interval for which to get the number
-        of *UNmethylated* reads.
-      )doc",
+    pos (int): The index of the query interval for which to get the number of
+        UNmethylated reads.
+    )doc",
     "pos"_a);
-  cls
-    .def("__str__",
-         [](const xfr::level_container<xfr::level_element_t> &self)
-           -> std::string {
-           return std::format("LevelContainer size={}", std::size(self));
-         })
-    .doc() = R"doc(
-    A LevelContainer represents methylation levels in each among a
-    list of GenomicInterval objects. This is the object type that is
-    returned from a transferase query, unless you additionally request
-    information about sites covered (see LevelContainerCovered).
+  cls.def(
+    "get_wmean",
+    [](const xfr::level_container<xfr::level_element_t> &self,
+       const std::size_t pos) -> double {
+      if (pos >= std::size(self))
+        throw std::out_of_range("Index out of range");
+      return self[pos].get_wmean();
+    },
+    R"doc(
+    Get the weighted mean methylation level for the interval corresponding to
+    the given position, which is the number of methylated observations divided
+    by the total number of observations.
+
+    Parameters
+    ----------
+
+    pos (int): The index of the query interval for which to get the weighted
+        mean methylation level.
+    )doc",
+    "pos"_a);
+  cls.def("all_wmeans", &xfr::level_container<xfr::level_element_t>::get_wmeans,
+          R"doc(
+    Apply the 'get_wmean' function to all elements of this Levels object,
+    returning a list of weighted mean methylation levels. A value of -1.0
+    means insufficient reads, but by default the minimium required reads is 0.
+
+    Parameters
+    ----------
+
+    min_reads (int): The minimum number of reads below which the value will be
+        given the value -1.0. Without specifying a value for this argument,
+        intervals with no reads will result in a level of 0.0, which might be
+        desired depending on your application.
+    )doc",
+          "min_reads"_a = 0u);
+  cls.def(
+    "__str__",
+    [](const xfr::level_container<xfr::level_element_t> &self) -> std::string {
+      return std::format("MLevels size={}", std::size(self));
+    });
+  cls.doc() = R"doc(
+    A MLevels represents methylation levels in each among a list of
+    GenomicInterval objects. This is the object type that is returned from a
+    transferase query, unless you additionally request information about sites
+    covered (see MLevelsCovered).
     )doc"
     //
     ;
@@ -150,18 +183,18 @@ level_container_covered_bindings(
                              self[pos].n_covered);
     },
     R"doc(
-    Access the tuple (n_meth, n_unmeth, n_covered) of numbers of
-    methylated and unmethylated reads, along with number of sites with
-    at least one read, for the interval corresponding to the given
-    position in the container. These are returned by copy, so access
-    times might differ for the get_n_meth and get_n_unmeth methods.
+    Access the tuple (n_meth, n_unmeth, n_covered) of numbers of methylated
+    and unmethylated reads, along with number of sites with at least one read,
+    for the interval corresponding to the given position in the container.
+    These are returned by copy, so access times might differ for the
+    get_n_meth and get_n_unmeth methods.
 
     Parameters
     ----------
 
-    pos (int): The index of the interval for which to get the numbers
-        of methylated and unmethylated reads, and covered sites.
-      )doc",
+    pos (int): The index of the query interval for which to get the numbers of
+        methylated and unmethylated reads, and covered sites.
+    )doc",
     "pos"_a);
   cls.def(
     "get_n_meth",
@@ -172,15 +205,15 @@ level_container_covered_bindings(
       return self[pos].n_meth;
     },
     R"doc(
-    Access the number of *methylated* observations for the interval
+    Access the number of methylated observations for the query interval
     corresponding to the given position.
 
     Parameters
     ----------
 
     pos (int): The index of the interval for which to get the number
-        of *methylated* reads.
-      )doc",
+        of methylated reads.
+    )doc",
     "pos"_a);
   cls.def(
     "get_n_unmeth",
@@ -191,15 +224,15 @@ level_container_covered_bindings(
       return self[pos].n_unmeth;
     },
     R"doc(
-    Access the number of *UNmethylated* observations for the interval
+    Access the number of UNmethylated observations for the query interval
     corresponding to the given position.
 
     Parameters
     ----------
 
-    pos (int): The index of the interval for which to get the number
-        of *UNmethylated* reads.
-      )doc",
+    pos (int): The index of the query interval for which to get the number of
+        UNmethylated reads.
+    )doc",
     "pos"_a);
   cls.def(
     "get_n_covered",
@@ -218,16 +251,53 @@ level_container_covered_bindings(
 
     pos (int): The index of the interval for which to get the number
         of covered sites.
-      )doc",
+    )doc",
     "pos"_a);
+  cls.def(
+    "get_wmean",
+    [](const xfr::level_container<xfr::level_element_covered_t> &self,
+       const std::size_t pos) -> double {
+      if (pos >= std::size(self))
+        throw std::out_of_range("Index out of range");
+      return self[pos].get_wmean();
+    },
+    R"doc(
+    Get the weighted mean methylation level for the interval corresponding to
+    the given position, which is the number of methylated observations divided
+    by the total number of observations.
+
+    Parameters
+    ----------
+
+    pos (int): The index of the query interval for which to get the weighted
+        mean methylation level.
+    )doc",
+    "pos"_a);
+  cls.def("all_means",
+          &xfr::level_container<xfr::level_element_covered_t>::get_wmeans,
+          R"doc(
+    Apply the 'get_wmean' function to all elements of this LevelsCovered
+    object, returning a list of weighted mean methylation levels. A value of
+    -1.0 means insufficient reads, but by default the minimium required reads
+    is 0.
+
+    Parameters
+    ----------
+
+    min_reads (int): The minimum number of reads below which the value will be
+        given the value -1.0. Without specifying a value for this argument,
+        intervals with no reads will result in a level of 0.0, which might be
+        desired depending on your application.
+    )doc",
+          "min_reads"_a = 0u);
   cls
     .def("__str__",
          [](const xfr::level_container<xfr::level_element_covered_t> &self)
            -> std::string {
-           return std::format("LevelContainerCovered size={}", std::size(self));
+           return std::format("MLevelsCovered size={}", std::size(self));
          })
     .doc() = R"doc(
-    A LevelContainerCovered represents methylation levels in each
+    A MLevelsCovered represents methylation levels in each
     among a list of GenomicInterval objects. This is the object type
     that is returned from a transferase query if you request
     information about sites covered.

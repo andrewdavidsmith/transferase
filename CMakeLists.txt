@@ -1,6 +1,6 @@
 # MIT License
 #
-# Copyright (c) 2024 Andrew Smith
+# Copyright (c) 2024-2025 Andrew Smith
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -25,7 +25,7 @@
 cmake_minimum_required(VERSION 3.28)
 project(
   transferase
-  VERSION 0.4.0
+  VERSION 0.5.0
   DESCRIPTION
   "The transferase system for retrieving methylome data from methbase"
   HOMEPAGE_URL https://github.com/andrewdavidsmith/transferase
@@ -51,8 +51,9 @@ include(GNUInstallDirs)
 set(GLOBAL_COMPILE_OPTIONS "")
 set(GLOBAL_LINKER_OPTIONS "")
 
-include(cmake/build_types.cmake)
 include(cmake/config_options.cmake)
+
+# This is happening for all builds, even though it doesn't totally make sense.
 include(cmake/data_config.cmake)
 
 if(USE_STATIC_LIBS)
@@ -61,13 +62,13 @@ if(USE_STATIC_LIBS)
   include(cmake/static_libs.cmake)
 endif()
 
-if(ENABLE_STATIC_ANALYSIS)
+if(STATIC_ANALYSIS)
   include(cmake/static_analysis.cmake)
 endif()
 
 include(cmake/third_party.cmake)
 
-if(CONFIGURE_FOR_DISTRIBUTION)
+if(PACKAGE)
   include(cmake/packaging.cmake)
 endif()
 
@@ -89,11 +90,8 @@ if(ENABLE_LTO)
   endif()
 endif()
 
-if(ENABLE_UNIT_TESTS OR ENABLE_PYTHON_UNIT_TESTS)
-  include(cmake/unit_tests.cmake)
-  if(ENABLE_CODE_COVERAGE)
-    include(cmake/code_coverage.cmake)
-  endif()
+if(ENABLE_CODE_COVERAGE)
+  include(cmake/code_coverage.cmake)
 endif()
 
 # Seems this needs to come after some third-party deps are found
@@ -115,13 +113,20 @@ endif()
 
 message(STATUS "Finished global compile and linker configuration")
 
+if(GET_GOOGLETEST)
+  include(FetchContent)
+  FetchContent_Declare(
+    googletest
+    GIT_REPOSITORY https://github.com/google/googletest.git
+    GIT_TAG origin/main
+  )
+  FetchContent_MakeAvailable(googletest)
+endif()
+
 add_subdirectory(lib)
 if(BUILD_CLI)
   add_subdirectory(cli)
   include(cmake/install.cmake)
-endif()
-if(ENABLE_UNIT_TESTS)
-  add_subdirectory(test)
 endif()
 if(BUILD_PYTHON)
   add_subdirectory(python)

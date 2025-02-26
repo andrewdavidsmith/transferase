@@ -1,0 +1,40 @@
+name: Run unit tests on macOS
+
+on:
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  macos-unit-tests:
+    strategy:
+      matrix:
+        os: [macos-13, macos-14, macos-15]
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v4
+    - name: Update Homebrew
+      run: brew update
+    - name: Install dependencies
+      run: |
+        brew install zlib boost googletest
+    - name: Configure for unit tests
+      run: |
+        cmake -B build \
+        -DCMAKE_OSX_SYSROOT="" \
+        -DCMAKE_VERBOSE_MAKEFILE=on \
+        -DCMAKE_CXX_FLAGS="-I$(brew --prefix)/include" \
+        -DCMAKE_EXE_LINKER_FLAGS="-L$(brew --prefix)/lib" \
+        -DZLIB_LIBRARY=$(brew --prefix zlib)/lib/libz.a \
+        -DCMAKE_CXX_COMPILER=g++-14 \
+        -DCMAKE_C_COMPILER=gcc-14 \
+        -DUNIT_TESTS=on \
+        -DGET_GOOGLETEST=on \
+        -DCMAKE_BUILD_TYPE=Build
+    - name: Build transferase
+      run: |
+        cmake --build build -j2
+    - name: Run the tests
+      run: |
+        ctest --test-dir build/lib --output-on-failure
+        ctest --test-dir build/cli --output-on-failure

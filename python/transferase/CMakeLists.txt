@@ -22,6 +22,9 @@
 
 nanobind_build_library(nanobind-static-abi3)
 
+set(NANOBIND_COMPILE_OPTIONS ${GLOBAL_COMPILE_OPTIONS})
+list(REMOVE_ITEM NANOBIND_COMPILE_OPTIONS "-Wpedantic")
+
 file(GLOB cpp_files "*.cpp")
 list(FILTER cpp_files EXCLUDE REGEX "transferase_bindings.cpp")
 
@@ -30,18 +33,12 @@ set(LIBRARY_OBJECTS "")
 foreach(cpp_file ${cpp_files})
   get_filename_component(BASE_NAME ${cpp_file} NAME_WE)
   add_library(${BASE_NAME} OBJECT ${cpp_file})
-  # Below, link to the nanobind module to get the headers; similar for
-  # boost. These headers might not be located otherwise
   target_link_libraries(${BASE_NAME} PUBLIC
     nanobind-static-abi3
     transferase_system
   )
-  set(GLOBAL_COMPILE_OPTIONS_FOR_NANOBIND ${GLOBAL_COMPILE_OPTIONS})
-  list(REMOVE_ITEM GLOBAL_COMPILE_OPTIONS_FOR_NANOBIND "-Wpedantic")
-  target_compile_options(
-    ${BASE_NAME}
-    PRIVATE
-    ${GLOBAL_COMPILE_OPTIONS_FOR_NANOBIND}
+  target_compile_options(${BASE_NAME} PRIVATE
+    ${NANOBIND_COMPILE_OPTIONS}
   )
   list(APPEND LIBRARY_OBJECTS ${BASE_NAME})
 endforeach()
@@ -50,34 +47,16 @@ endforeach()
 add_library(transferase_bindings STATIC transferase_bindings.cpp)
 target_link_libraries(transferase_bindings PUBLIC ${LIBRARY_OBJECTS})
 
-# Compile the extension library
-add_library(${LIBRARY_NAME} MODULE transferase_bindings.cpp)
-target_link_libraries(${LIBRARY_NAME} PUBLIC
-  nanobind-static-abi3
-  transferase_system
-  ZLIB::ZLIB
-  ${Boost_LIBRARIES}
-  ${LIBRARY_OBJECTS}
+# Make the package shared library by applying the bindings functions
+nanobind_add_module(
+  ${LIBRARY_NAME}
+  NB_STATIC STABLE_ABI LTO
+  transferase_bindings.cpp
 )
 
-# (nanobind) set the default symbol visibility to 'hidden'
-nanobind_set_visibility(${LIBRARY_NAME})
+# Compile the extension library
+target_link_libraries(${LIBRARY_NAME} PUBLIC transferase_bindings)
 
-if(STRIP_PATHS_FROM_BINARIES)
-  message(STATUS "Strip paths from binaries: ${STRIP_PATHS_FROM_BINARIES}")
-  # (nanobind) strip unneeded symbols and debug info from the binary
-  # (only active in release builds)
-  nanobind_strip(${LIBRARY_NAME})
-endif()
-
-# nanobind docs suggest this is a good idea
-nanobind_disable_stack_protector(${LIBRARY_NAME})
-
-# (nanobind) set the Python extension suffix
-nanobind_extension(${LIBRARY_NAME})
-
-set(GLOBAL_COMPILE_OPTIONS_FOR_NANOBIND ${GLOBAL_COMPILE_OPTIONS})
-list(REMOVE_ITEM GLOBAL_COMPILE_OPTIONS_FOR_NANOBIND "-Wpedantic")
 target_compile_options(
   ${LIBRARY_NAME}
   PRIVATE
@@ -85,9 +64,14 @@ target_compile_options(
 )
 
 set(GLOBAL_LINKER_OPTIONS_FOR_NANOBIND ${GLOBAL_LINKER_OPTIONS})
-list(APPEND GLOBAL_LINKER_OPTIONS_FOR_NANOBIND "-Wno-odr")
 target_link_options(
-  ${LIBRARY_NAME}
-  PRIVATE
-  ${GLOBAL_LINKER_OPTIONS_FOR_NANOBIND}
+ ${LIBRARY_NAME}
+ PRIVATE
+ ${GLOBAL_LINKER_OPTIONS_FOR_NANOBIND}
+)
+
+set_target_properties(${LIBRARY_NAME}
+  PROPERTIES
+  LIBRARY_OUTPUT_NAME ${LIBRARY_NAME}
+  SKIP_BUILD_RPATH TRUE
 )

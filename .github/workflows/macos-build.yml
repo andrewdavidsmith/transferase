@@ -1,0 +1,39 @@
+name: Build transferase on macOS
+
+on:
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  macos-build:
+    strategy:
+      matrix:
+        os: [macos-13, macos-14, macos-15]
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v3
+    - name: Update Homebrew
+      run: brew update
+    - name: Install dependencies
+      run: |
+        brew install zlib boost
+    # ADS: homebrew might install libz in an "opt" dir, so specify the
+    # brew prefix and then the path to the static lib
+    - name: Configure release build with g++-14
+      run: |
+        cmake -B build \
+        -DCMAKE_OSX_SYSROOT="" \
+        -DCMAKE_VERBOSE_MAKEFILE=on \
+        -DCMAKE_CXX_FLAGS="-I$(brew --prefix)/include" \
+        -DCMAKE_EXE_LINKER_FLAGS="-L$(brew --prefix)/lib" \
+        -DZLIB_LIBRARY=$(brew --prefix zlib)/lib/libz.a \
+        -DCMAKE_CXX_COMPILER=g++-14 \
+        -DBUILD_CLI=on \
+        -DCMAKE_BUILD_TYPE=Release
+    - name: Build transferase
+      run: |
+        cmake --build build -j2
+    - name: Check that it runs
+      run: |
+        ./build/cli/transferase

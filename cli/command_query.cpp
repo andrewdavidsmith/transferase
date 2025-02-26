@@ -43,7 +43,7 @@ Examples:
 
 xfr query -g hg38 -m methylome_name -o output.bed -i input.bed
 
-xfr query -g hg38 -m methylome_name -o output.bed -i input.bed
+xfr query -g hg38 -m methylomes_file.txt -o output.bed -i input.bed
 
 xfr query --local -x index_dir -g hg38 -d methylome_dir \
     -m methylome_name -o output.bed -i input.bed
@@ -78,6 +78,7 @@ xfr query --local -d methylome_dir -x index_dir -g hg38 \
 #include <chrono>
 #include <cstdint>
 #include <cstdlib>
+#include <filesystem>
 #include <format>
 #include <fstream>
 #include <iterator>  // for std::size, for std::cbegin
@@ -89,7 +90,6 @@ xfr query --local -d methylome_dir -x index_dir -g hg38 \
 #include <string_view>
 #include <system_error>
 #include <tuple>
-#include <utility>
 #include <variant>  // for std::tuple
 #include <vector>
 
@@ -97,7 +97,7 @@ xfr query --local -d methylome_dir -x index_dir -g hg38 \
 format_methylome_names_brief(const std::vector<std::string> &names)
   -> std::string {
   static constexpr auto max_names_width = 50;
-  const auto joined =
+  auto joined =
     names | std::views::join_with(' ') | std::ranges::to<std::string>();
   if (std::size(joined) > max_names_width)
     return std::format("{}...{} ({} methylomes)", names.front(), names.back(),
@@ -208,7 +208,6 @@ do_intervals_query(const std::string &intervals_file, const bool count_covered,
     intervals,
     // clang-format on
   };
-  // outmgr.min_reads = args.min_reads;
 
   const auto output_start{std::chrono::high_resolution_clock::now()};
   error = write_output(outmgr, results);
@@ -260,7 +259,6 @@ do_bins_query(const std::uint32_t bin_size, const bool count_covered,
     bin_size,
     // clang-format on
   };
-  // outmgr.min_reads = args.min_reads;
 
   const auto output_start{std::chrono::high_resolution_clock::now()};
   error = write_output(outmgr, results);
@@ -275,7 +273,7 @@ do_bins_query(const std::uint32_t bin_size, const bool count_covered,
 }
 
 [[nodiscard]] static inline auto
-get_methylome_names(std::vector<std::string> &&possibly_methylome_names,
+get_methylome_names(const std::vector<std::string> &possibly_methylome_names,
                     std::error_code &error) -> std::vector<std::string> {
   if (possibly_methylome_names.size() > 1)
     return possibly_methylome_names;
@@ -283,7 +281,7 @@ get_methylome_names(std::vector<std::string> &&possibly_methylome_names,
     std::filesystem::exists(possibly_methylome_names.front()) &&
     std::filesystem::is_regular_file(possibly_methylome_names.front());
   if (is_file) {
-    const auto names_from_file =
+    auto names_from_file =
       read_methylomes_file(possibly_methylome_names.front(), error);
     if (!error)
       return names_from_file;
@@ -326,7 +324,7 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
   // where to put the output and in what format
   std::string output_file;
   xfr::output_format_t out_fmt{out_fmt_default};
-  std::uint32_t min_reads{1};  // relevant for dfscores
+  std::uint32_t min_reads{0};  // relevant for dfscores and bedgraph
 
   // run in local mode
   bool local_mode{};
@@ -417,32 +415,47 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
     return EXIT_FAILURE;
   }
 
-  // validate relationships between arguments
+  // validate that required data is provided somehow and report the problem
+  // otherwise
   if (local_mode && cfg.methylome_dir.empty()) {
-    const auto msg = R"(Local mode but methylome dir not specified {}: {})";
-    if (default_config_dir_error)
-      lgr.debug(msg, "; failed to parse config: {}", default_config_dir_error);
+    const auto msg = "Local mode but methylome dir not specified.";
+    if (read_config_file_error)
+      lgr.error("{} Failed to read config: {} ({})", msg, cfg.config_dir,
+                read_config_file_error);
+    else if (default_config_dir_error)
+      lgr.error("{} Failed to read default config ({})", msg,
+                default_config_dir_error);
     else
-      lgr.debug(msg, "; not found in config: {}", cfg.config_dir);
+      lgr.error("{} Not found in: {}", msg, cfg.config_dir);
     return EXIT_FAILURE;
   }
+
   if (!local_mode && (cfg.hostname.empty() || cfg.port.empty())) {
-    const auto msg = R"(Remote mode but hostname or port not specified {} {})";
-    if (default_config_dir_error)
-      lgr.debug(msg, "; failed to parse config: ", default_config_dir_error);
+    const auto msg = std::format(R"(Remote mode but hostname={} and port={}.)",
+                                 cfg.hostname, cfg.port);
+    if (read_config_file_error)
+      lgr.error("{} Failed to read config: {} ({})", msg, cfg.config_dir,
+                read_config_file_error);
+    else if (default_config_dir_error)
+      lgr.error("{} Failed to parse default config: {}", msg,
+                default_config_dir_error);
     else
-      lgr.debug(msg, "; not found in config: ", cfg.config_dir);
+      lgr.error("{} Not found in config: {}", msg, cfg.config_dir);
     return EXIT_FAILURE;
   }
 
   if (cfg.index_dir.empty()) {
-    const auto msg = R"(Index dir not specified)";
-    if (default_config_dir_error)
-      lgr.debug(msg, "; failed to parse config: ", default_config_dir_error);
+    const auto msg = "Index dir not specified";
+    if (read_config_file_error)
+      lgr.error("{} failed to parse config: {} ({})", msg, cfg.config_dir,
+                read_config_file_error);
+    else if (default_config_dir_error)
+      lgr.error("{} failed to parse config: ", msg, default_config_dir_error);
     else
-      lgr.debug(msg, "; not found in config: ", cfg.config_dir);
+      lgr.error("{} not found in config: ", msg, cfg.config_dir);
     return EXIT_FAILURE;
   }
+
   if ((bin_size == 0) == intervals_file.empty()) {
     lgr.error("Error: specify exactly one of bins-size or intervals-file");
     return EXIT_FAILURE;
@@ -467,8 +480,7 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
   };
 
   // get methylome names either parsed from command line or in a file
-  const auto methylomes =
-    get_methylome_names(std::move(methylome_names), error);
+  const auto methylomes = get_methylome_names(methylome_names, error);
   if (error) {
     lgr.error("Error identifying methylomes from {}: {}",
               format_methylome_names_brief(methylome_names), error);

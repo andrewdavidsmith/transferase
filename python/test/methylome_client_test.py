@@ -26,7 +26,7 @@ import shutil
 import tempfile
 import os
 
-from transferase import MethylomeClient
+from transferase import MClient
 
 def create_temp_directory():
     """Create a unique temporary directory in /tmp"""
@@ -34,16 +34,16 @@ def create_temp_directory():
     return temp_dir
 
 def test_methylome_client_factory():
-    """Get a MethylomeClient"""
+    """Get a MClient"""
     config_dir = "data/lutions"
-    obj = MethylomeClient(config_dir)
+    obj = MClient(config_dir)
     assert hasattr(obj, "config"), "Object is missing 'config'"
 
 def test_reset_to_default_config():
     """Reset the configuration to the default"""
     config_dir = "data/lutions"
     config_dir_tmp = create_temp_directory()
-    obj = MethylomeClient(config_dir)
+    obj = MClient(config_dir)
     obj_tmp = obj
     assert obj_tmp == obj
     if os.path.isdir(config_dir_tmp):

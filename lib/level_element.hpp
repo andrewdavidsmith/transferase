@@ -24,6 +24,7 @@
 #ifndef LIB_LEVEL_ELEMENT_HPP_
 #define LIB_LEVEL_ELEMENT_HPP_
 
+#include <algorithm>  // for std::max
 #include <cstdint>
 #include <format>
 #include <string>
@@ -51,8 +52,29 @@ struct level_element_t {
     return n_meth + n_unmeth;
   }
 
+  /// Get the weighted mean methylation level: the number of methylated
+  /// observations divided by the number of unmethylated observations.
+  [[nodiscard]] constexpr auto
+  get_wmean() const noexcept -> double {
+    return static_cast<double>(n_meth) / std::max(1u, n_meth + n_unmeth);
+  }
+
+  /// Get a string representation for the counts held by this object.
+  [[nodiscard]] constexpr auto
+  tostring_counts() const noexcept -> std::string {
+    return std::format("{}\t{}", n_meth, n_unmeth);
+  }
+
+  /// Get a string representation as used in dnmtools counts
+  [[nodiscard]] constexpr auto
+  tostring_classic() const noexcept -> std::string {
+    return std::format("{:.6}\t{}", get_wmean(), n_reads());
+  }
+
   auto
   operator<=>(const level_element_t &) const = default;
+
+  static constexpr auto hdr_fmt = "{}_M\t{}_U";
 };
 
 /// @brief Triple of counts for methylation level with number of sites covered.
@@ -81,8 +103,29 @@ struct level_element_covered_t {
     return n_meth + n_unmeth;
   }
 
+  /// Get the weighted mean methylation level: the number of methylated
+  /// observations divided by the number of unmethylated observations.
+  [[nodiscard]] constexpr auto
+  get_wmean() const noexcept -> double {
+    return static_cast<double>(n_meth) / std::max(1u, n_meth + n_unmeth);
+  }
+
+  /// Get a string representation for the counts held by this object.
+  [[nodiscard]] constexpr auto
+  tostring_counts() const noexcept -> std::string {
+    return std::format("{}\t{}\t{}", n_meth, n_unmeth, n_covered);
+  }
+
+  /// Get a string representation as used in dnmtools counts
+  [[nodiscard]] constexpr auto
+  tostring_classic() const noexcept -> std::string {
+    return std::format("{:.6}\t{}\t{}", get_wmean(), n_reads(), n_covered);
+  }
+
   auto
   operator<=>(const level_element_covered_t &) const = default;
+
+  static constexpr auto hdr_fmt = "{}_M\t{}_U\t{}_C";
 };
 
 }  // namespace transferase

@@ -17,12 +17,6 @@
 name: Linting with cppcheck
 
 on:
-  push:
-    branches: [ "main" ]
-    paths: '**/*.*pp'
-  pull_request:
-    branches: [ "main" ]
-    paths: '**/*.*pp'
   workflow_dispatch:
     paths: '**/*.*pp'
 
@@ -49,9 +43,8 @@ jobs:
     - name: Run cppcheck
       run: |
         cppcheck \
-          --quiet \
           --enable=all \
           --check-level=exhaustive \
           --inline-suppr \
           --suppressions-list=.cppcheck_suppress \
-          $(git ls-files '*.*pp')
+          $(git ls-files '*.*pp' | grep -v CLI | grep -v json)
