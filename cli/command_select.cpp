@@ -610,6 +610,15 @@ command_select_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
     // ADS: register the signals so a handler can properly reset the
     // terminal on exit
     register_signals();
+#ifdef USE_XTERM
+    const auto set_term_result = setenv("TERM", "xterm", 1);
+    if (set_term_result) {
+      const auto set_term_err = std::make_error_code(std::errc(errno));
+      std::println("Error setting TERM env variable: {}",
+                   set_term_err.message());
+      return EXIT_FAILURE;
+    }
+#endif
     const auto selected = main_loop(data_itr->second);
     if (!selected.empty())
       if (error = write_output(selected, output_file); error) {
