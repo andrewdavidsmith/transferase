@@ -45,17 +45,25 @@ struct bins_writer : public writer_base<bins_writer> {
     writer_base{outfile, index, out_fmt, names, min_reads}, bin_size{bin_size} {
   }
 
-  [[nodiscard]] auto
-  write_impl(const auto &levels) const noexcept -> std::error_code;
+  // prevent copy and move
+  // clang-format off
+  bins_writer(const bins_writer &) = delete;
+  auto operator=(const bins_writer &) -> bins_writer & = delete;
+  bins_writer(bins_writer &&) noexcept = delete;
+  auto operator=(bins_writer &&) noexcept -> bins_writer & = delete;
+  ~bins_writer() = default;
+  // clang-format on
 
   [[nodiscard]] auto
-  write_bedgraph_impl(const auto &levels) const noexcept -> std::error_code;
+  write_bedlike_impl(const auto &levels, const bool classic_format)
+    const noexcept -> std::error_code;
 
   [[nodiscard]] auto
   write_dataframe_impl(const auto &levels) const noexcept -> std::error_code;
 
   [[nodiscard]] auto
-  write_dataframe_scores_impl(const auto &levels) const noexcept
+  write_dataframe_scores_impl(const auto &levels, const char rowname_delim,
+                              const bool write_header) const noexcept
     -> std::error_code;
 };
 
