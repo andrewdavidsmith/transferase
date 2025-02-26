@@ -29,10 +29,7 @@
 #include "level_container.hpp"
 #include "level_element.hpp"
 
-#include <algorithm>  // std::min
-#include <array>
 #include <cerrno>
-#include <charconv>
 #include <format>
 #include <fstream>
 #include <iterator>  // for std::size, std::cbegin
@@ -41,9 +38,7 @@
 #include <string>
 #include <string_view>
 #include <system_error>
-#include <tuple>
 #include <type_traits>  // for std::is_same_v
-#include <utility>      // for std::pair
 #include <vector>
 
 namespace transferase {

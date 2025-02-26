@@ -29,10 +29,7 @@
 #include "level_element.hpp"
 
 #include <algorithm>  // std::min
-#include <array>
-#include <cassert>
 #include <cerrno>
-#include <charconv>
 #include <cstdint>  // for std::uint32_t
 #include <format>
 #include <fstream>
