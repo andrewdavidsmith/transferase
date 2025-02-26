@@ -39,17 +39,6 @@ struct genome_index;
 struct level_element_t;
 struct level_element_covered_t;
 
-template <typename T>
-concept LevelsInputRangeSingle =
-  std::ranges::input_range<T> &&
-  (std::same_as<std::ranges::range_value_t<T>, level_element_t> ||
-   std::same_as<std::ranges::range_value_t<T>, level_element_covered_t>);
-
-static_assert(LevelsInputRangeSingle<std::vector<level_element_t>>);
-static_assert(LevelsInputRangeSingle<std::vector<level_element_t> &>);
-static_assert(LevelsInputRangeSingle<std::vector<level_element_covered_t>>);
-static_assert(LevelsInputRangeSingle<std::vector<level_element_covered_t> &>);
-
 template <typename T> struct writer_base {
   const std::string &outfile;
   const genome_index &index;
@@ -69,13 +58,9 @@ template <typename T> struct writer_base {
   // clang-format on
 
   [[nodiscard]] auto
-  write(const auto &levels) const noexcept -> std::error_code {
-    return self().write_impl(levels);
-  }
-
-  [[nodiscard]] auto
-  write_bedgraph(const auto &levels) const noexcept -> std::error_code {
-    return self().write_bedgraph_impl(levels);
+  write_bedlike(const auto &levels, const bool classic_format =
+                                      false) const noexcept -> std::error_code {
+    return self().write_bedlike_impl(levels, classic_format);
   }
 
   [[nodiscard]] auto
@@ -84,19 +69,24 @@ template <typename T> struct writer_base {
   }
 
   [[nodiscard]] auto
-  write_dataframe_scores(const auto &levels) const noexcept -> std::error_code {
-    return self().write_dataframe_scores_impl(levels);
+  write_dataframe_scores(const auto &levels, const char rowname_delim = '.',
+                         const bool write_header = true) const noexcept
+    -> std::error_code {
+    return self().write_dataframe_scores_impl(levels, rowname_delim,
+                                              write_header);
   }
 
   [[nodiscard]] auto
   write_output(const auto &levels) const noexcept -> std::error_code {
     switch (out_fmt) {
     case output_format_t::none:
-      return write(levels);
+      return write_bedlike(levels);
     case output_format_t::counts:
-      return write(levels);
+      return write_bedlike(levels);
+    case output_format_t::classic:
+      return write_bedlike(levels, true);
     case output_format_t::bedgraph:
-      return write_bedgraph(levels);
+      return write_dataframe_scores(levels, '\t', false);
     case output_format_t::dataframe:
       return write_dataframe(levels);
     case output_format_t::dataframe_scores:
