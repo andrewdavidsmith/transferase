@@ -24,6 +24,7 @@
 #ifndef LIB_CHROM_RANGE_HPP_
 #define LIB_CHROM_RANGE_HPP_
 
+#include <compare>
 #include <cstdint>  // for std::uint32_t
 
 namespace transferase {
