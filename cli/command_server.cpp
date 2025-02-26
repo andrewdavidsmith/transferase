@@ -118,16 +118,6 @@ command_server_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
   std::string config_file;
   bool daemonize{false};
 
-  // get the default config directory to use as a fallback
-  std::error_code default_config_dir_error;
-  const std::string default_config_dir =
-    xfr::server_config::get_default_config_dir(default_config_dir_error);
-  if (default_config_dir_error) {
-    std::println("Failed to identify default config dir: {}",
-                 default_config_dir_error);
-    return EXIT_FAILURE;
-  }
-
   CLI::App app{about_msg};
   argv = app.ensure_utf8(argv);
   app.usage(usage);
