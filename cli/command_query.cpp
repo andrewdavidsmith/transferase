@@ -324,7 +324,7 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
   // where to put the output and in what format
   std::string output_file;
   xfr::output_format_t out_fmt{out_fmt_default};
-  std::uint32_t min_reads{1};  // relevant for dfscores
+  std::uint32_t min_reads{0};  // relevant for dfscores and bedgraph
 
   // run in local mode
   bool local_mode{};
