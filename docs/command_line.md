@@ -414,8 +414,8 @@ will do the configuration and also download the genome index for hg38:
 xfr config -c my_config -s localhost -p 5000 -g hg38
 ```
 
-With this configuration, you can do a query almost exactly as if you
-were querying MethBase2 on the transferase server:
+With this configuration, you can do a query almost exactly as if you were
+querying MethBase2 on the transferase server:
 
 ```console
 xfr query -c my_config -g hg38 \
@@ -447,23 +447,23 @@ name", "isolate", "biomaterial provider", "cell type", "tissue", "cell line",
 "source name" and more are all available to use, and in some cases it can be
 difficult to decide which one to use.
 
-**Terminals** I ran into four kinds of problems when using the `xfr select`
-command across machines. All of this assumes that `xfr` works in general, but
-that the `xfr` command tells you something like this when you try to run it:
+**Terminals** I ran into various problems when using the `xfr select` command
+across machines. All of this assumes that `xfr` works in general, but that the
+`xfr` command tells you something like this when you try to run it:
 
 ```
 Error opening terminal: screen-256color
 ```
 
-Here are situations I've encountered:
+Here are some things to try:
 
-1. The terminal (the TERM environment variable) is not set to one that can
-   work. You can easily try another without making any general changes to your
-   session:
+1. Try to sepcify a terminal that `xfr` understands without making any general
+   changes to your session:
    ```
    TERM=xterm xfr select -g hg38 -o out.txt
    ```
-   On one of my systems I need to do this when I'm using tmux.
+   On one of my systems I need to do this when I'm using tmux. I also figured
+   out how to eliminate this problem for versions after 0.5.0.
 
 2. The terminal configuration file is not being found. I had this issue due to
    conda assigning the environment variable TERMCAP, which helps terminals
@@ -472,17 +472,6 @@ Here are situations I've encountered:
    ```
    TERMCAP=/usr/share/terminfo xfr select -g hg38 -o out.txt
    ```
-
-3. Your session is confused by interactions between ssh, tmux or screen, and
-   possibly other things. Although I often try things for the first time in a
-   docker, that could also have an impact ("ubuntu:latest" works at the time
-   of writing).  Besides what I've written here, I don't have much more advice
-   to offer.
-
-4. It's just not going to work in your terminal. I have forced a situation
-   where I think I made it impossible for `xfr screen` to work with my
-   terminal. I think this is rare, and usually I can only make some parts of
-   it break, like certain colors or key codes.
 
 The use of `xfr select` as a terminal app was just a quick way to get an app
 running that didn't require adding code for a local browser app or setting up
