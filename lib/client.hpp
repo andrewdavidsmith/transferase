@@ -53,6 +53,15 @@ public:
   client_base(const std::string &hostname, const std::string &port_number,
               const request &req);
 
+  // allow const or ref data members (cppcoreguidelines)
+  // clang-format off
+  client_base(const client_base &) = delete;
+  auto operator=(const client_base &) -> client_base & = delete;
+  client_base(client_base &&) noexcept = delete;
+  auto operator=(client_base &&) noexcept -> client_base & = delete;
+  ~client_base() = default;
+  // clang-format on
+
   auto
   run() -> std::error_code {
     io_context.run();
@@ -71,7 +80,6 @@ public:
     return resp_payload.to_levels<level_element>(resp_hdr, error);
   }
 
-protected:
   auto
   handle_write_request(const std::error_code ec) -> void;
 
@@ -121,7 +129,7 @@ private:
   boost::asio::io_context io_context;
   boost::asio::ip::tcp::resolver resolver;
 
-protected:
+public:
   boost::asio::ip::tcp::socket socket;
   boost::asio::steady_timer deadline;
   request_buffer req_buf{};
@@ -135,7 +143,7 @@ private:
 
   std::error_code status{};
 
-protected:
+public:
   logger &lgr;
 
 private:
@@ -145,7 +153,7 @@ private:
 
   // ADS: this timeout applies when the server has received the
   // request (with query if applicable) and is doing the work.
-  std::chrono::seconds wait_for_work_timeout_seconds{60};
+  std::chrono::seconds wait_for_work_timeout_seconds{60};  // NOLINT
 
   // These help keep track of where we are in the incoming levels;
   // they might best be associated with the response.
@@ -323,9 +331,12 @@ client_base<D, L>::do_finish(const std::error_code ec) -> void {
   deadline.expires_at(boost::asio::steady_timer::time_point::max());
   status = ec;
   boost::system::error_code shutdown_ec;  // for non-throwing
-  socket.shutdown(boost::asio::ip::tcp::socket::shutdown_both, shutdown_ec);
+  // nothing actually returned below
+  (void)socket.shutdown(boost::asio::ip::tcp::socket::shutdown_both,
+                        shutdown_ec);
   boost::system::error_code socket_close_ec;  // for non-throwing
-  socket.close(socket_close_ec);
+  // nothing actually returned below
+  (void)socket.close(socket_close_ec);
 }
 
 template <typename D, typename L>
@@ -343,12 +354,15 @@ client_base<D, L>::check_deadline() -> void {
     lgr.debug("Error deadline expired by: {}", delta.count());
 
     boost::system::error_code shutdown_ec;  // for non-throwing
-    socket.shutdown(boost::asio::ip::tcp::socket::shutdown_both, shutdown_ec);
+    // nothing actually returned below
+    (void)socket.shutdown(boost::asio::ip::tcp::socket::shutdown_both,
+                          shutdown_ec);
     deadline.expires_at(boost::asio::steady_timer::time_point::max());
 
     /* ADS: closing here if needed?? */
     boost::system::error_code socket_close_ec;  // for non-throwing
-    socket.close(socket_close_ec);
+    // nothing actually returned below
+    (void)socket.close(socket_close_ec);
   }
 
   // wait again
@@ -361,6 +375,15 @@ public:
   intervals_client(const std::string &hostname, const std::string &port_number,
                    const request &req, const query_container &query) :
     base_class_t(hostname, port_number, req), query{query} {}
+
+  // allow const or ref data members (cppcoreguidelines)
+  // clang-format off
+  intervals_client(const intervals_client &) = delete;
+  auto operator=(const intervals_client &) -> intervals_client & = delete;
+  intervals_client(intervals_client &&) noexcept = delete;
+  auto operator=(intervals_client &&) noexcept -> intervals_client & = delete;
+  ~intervals_client() = default;
+  // clang-format on
 
   auto
   handle_connect_impl() noexcept -> void {
@@ -382,6 +405,7 @@ public:
   auto
   write_query() noexcept -> void {
     base_class_t::socket.async_write_some(
+      // NOLINTNEXTLINE(*-pointer-arithmetic)
       boost::asio::buffer(query.data() + bytes_sent, bytes_remaining),
       [this](const auto error, const std::size_t bytes_transferred) {
         base_class_t::deadline.expires_at(
