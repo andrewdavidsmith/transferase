@@ -128,7 +128,7 @@ download it into your current directory and do this:
 (These instructions assume installation in a virtual environment because it
 avoids any risk if something goes wrong.)
 
-```console
+```
 python3 -m venv .venv
 . .venv/bin/activate
 pip install transferase-0.5.0-cp313-none-manylinux_2_17_x86_64.whl
