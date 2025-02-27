@@ -24,12 +24,17 @@
 #ifndef LIB_LEVEL_CONTAINER_MD_HPP_
 #define LIB_LEVEL_CONTAINER_MD_HPP_
 
+#include "level_element.hpp"
+
+#include <cassert>
 #include <concepts>  // for std::integral
 #include <cstddef>   // for std::size_t
 #include <cstdint>
 #include <initializer_list>  // for std::begin, std::end
-#include <iterator>          // for std::size, std::cbegin, std::cend
-#include <utility>           // for std::move
+#include <iostream>
+#include <iterator>  // for std::size, std::cbegin, std::cend
+#include <ranges>
+#include <utility>  // for std::move
 #include <vector>
 
 namespace transferase {
@@ -55,45 +60,53 @@ template <typename level_element_type> struct level_container_md {
   // prevent copying and allow moving
   level_container_md(const level_container_md &) = delete;
   auto operator=(const level_container_md &) -> level_container_md & = delete;
-  level_container_md(level_container_md &&) noexcept = default;
-  auto operator=(level_container_md &&) noexcept -> level_container_md & = default;
+  level_container_md(level_container_md &&) = default;
+  auto operator=(level_container_md &&) -> level_container_md & = default;
 
-  auto
+  [[nodiscard]] auto
   operator[](const std::integral auto i,
-             const std::integral auto j) -> level_element_type {
+             const std::integral auto j) const noexcept -> level_element_type {
     return v[i*n_cols + j];
   }
 
-  [[nodiscard]] auto begin() {return std::begin(v);}
-  [[nodiscard]] auto begin() const {return std::cbegin(v);}
-  [[nodiscard]] auto end() {return std::end(v);}
-  [[nodiscard]] auto end() const {return std::cend(v);}
-  [[nodiscard]] auto operator[](size_type pos) -> level_element_type& {return v[pos];}
-  [[nodiscard]] auto operator[](size_type pos) const -> const level_element_type& {return v[pos];}
+  auto
+  operator[](const std::integral auto i,
+             const std::integral auto j) noexcept -> level_element_type & {
+    return v[i*n_cols + j];
+  }
+
+  [[nodiscard]] auto begin() noexcept {return std::begin(v);}
+  [[nodiscard]] auto begin() const noexcept {return std::cbegin(v);}
+  [[nodiscard]] auto end() noexcept {return std::end(v);}
+  [[nodiscard]] auto end() const noexcept {return std::cend(v);}
+  [[nodiscard]] auto operator[](size_type pos) noexcept
+    -> level_element_type& {return v[pos];}
+  [[nodiscard]] auto operator[](size_type pos) const noexcept
+    -> const level_element_type& {return v[pos];}
   // clang-format on
 
   auto
-  resize(const auto new_size) {
+  resize(const std::integral auto new_size) noexcept {
     v.resize(new_size);
   }
 
   auto
-  reserve(const auto new_capacity) {
+  reserve(const std::integral auto new_capacity) noexcept {
     v.reserve(new_capacity);
   }
 
   [[nodiscard]] auto
-  get_n_bytes() const -> std::size_t {
+  get_n_bytes() const noexcept -> std::size_t {
     return sizeof(level_element_type) * std::size(v);
   }
 
   [[nodiscard]] auto
-  data() const -> const char * {
+  data() const noexcept -> const char * {
     return reinterpret_cast<const char *>(v.data());
   }
 
   [[nodiscard]] auto
-  data() -> char * {
+  data() noexcept -> char * {
     return reinterpret_cast<char *>(v.data());
   }
 
@@ -101,7 +114,38 @@ template <typename level_element_type> struct level_container_md {
   size() const noexcept -> std::size_t {
     return std::size(v);
   }
+
+  [[nodiscard]] auto
+  tostring() const noexcept -> std::string {
+    std::string s;
+    for (const auto i : std::views::iota(0u, n_rows)) {
+      s += v[i * n_cols].tostring_counts();
+      for (const auto j : std::views::iota(1u, n_cols)) {
+        s += '\t';
+        s += v[i * n_cols + j].tostring_counts();
+      }
+      s += '\n';
+    }
+    return s;
+  }
+
+  auto
+  add_column(const std::vector<level_element_type> &c) noexcept {
+    assert(std::size(c) == n_rows);
+    std::ranges::copy_n(std::cbegin(c), n_rows, std::back_inserter(v));
+    ++n_cols;
+  }
 };
+
+[[nodiscard]] auto
+read_level_container_md(const std::string &filename,
+                        std::error_code &error) noexcept
+  -> level_container_md<level_element_t>;
+
+[[nodiscard]] auto
+read_level_container_md_covered(const std::string &filename,
+                                std::error_code &error) noexcept
+  -> level_container_md<level_element_covered_t>;
 
 }  // namespace transferase
 
