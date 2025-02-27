@@ -41,4 +41,7 @@ generate_unique_dir_name() -> std::string;
 auto
 remove_directories(const std::string &dirname, std::error_code &error) -> void;
 
+auto
+remove_file(const std::string &filename, std::error_code &error) -> void;
+
 #endif  // LIB_TESTS_UNIT_TEST_UTILS_HPP_
