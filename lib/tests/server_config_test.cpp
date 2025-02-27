@@ -144,6 +144,10 @@ TEST_F(server_config_mock, roundtrip_success) {
   sc.write(tmp_file);
   const auto other = server_config::read(tmp_file);
   EXPECT_EQ(sc, other);
+
+  std::error_code error;
+  remove_file(tmp_file, error);
+  EXPECT_FALSE(error);
 }
 
 TEST_F(server_config_mock, make_paths_absolute) {
