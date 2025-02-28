@@ -46,14 +46,6 @@
 #include <unordered_map>
 #include <vector>
 
-// Tasks: round-trip file IO with level_container_md
-
-// Consider slicing
-
-// Conversion to and from the Python ndarray
-
-// Is there any need to consider spans? Stide? Transpose?
-
 using namespace transferase;  // NOLINT
 
 TEST(level_container_md_test, default_constructor) {
