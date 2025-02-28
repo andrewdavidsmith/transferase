@@ -24,7 +24,7 @@
 #ifndef LIB_METHYLOME_CLIENT_REMOTE_HPP_
 #define LIB_METHYLOME_CLIENT_REMOTE_HPP_
 
-#include "client.hpp"
+#include "client_connection.hpp"
 #include "client_config.hpp"
 #include "genome_index.hpp"
 #include "genome_index_set.hpp"

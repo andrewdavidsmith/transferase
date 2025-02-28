@@ -24,7 +24,7 @@
 #ifndef LIB_METHYLOME_INTERFACE2_HPP_
 #define LIB_METHYLOME_INTERFACE2_HPP_
 
-#include "client.hpp"
+#include "client_connection.hpp"
 #include "genome_index.hpp"
 #include "methylome.hpp"
 #include "nlohmann/json.hpp"
