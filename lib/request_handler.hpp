@@ -25,6 +25,7 @@
 #define LIB_REQUEST_HANDLER_HPP_
 
 #include "genome_index_set.hpp"
+#include "level_container_md.hpp"
 #include "methylome_set.hpp"
 
 #include <cstdint>  // for std::uint32_t
@@ -34,7 +35,6 @@ namespace transferase {
 
 struct request;
 struct response_header;
-struct response_payload;
 struct query_container;
 
 /// @brief A handler that is shared by all connections; holds
@@ -67,13 +67,13 @@ struct request_handler {
   auto
   intervals_get_levels(const request &req, const query_container &query,
                        response_header &resp_hdr,
-                       response_payload &resp_data) -> void;
+                       level_container_md<lvl_elem_t> &resp_data) -> void;
 
   /// Handle a request to get levels for query bins.
   template <typename lvl_elem_t>
   auto
   bins_get_levels(const request &req, response_header &resp_hdr,
-                  response_payload &resp_data) -> void;
+                  level_container_md<lvl_elem_t> &resp_data) -> void;
 
   /// @brief Directory on the local filesystem with methylomes
   std::string methylome_dir;
