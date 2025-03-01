@@ -25,6 +25,7 @@
 
 #include <genome_index.hpp>
 #include <genomic_interval.hpp>
+#include <level_container_md.hpp>
 #include <logger.hpp>  // ADS: so we can setup the logger
 #include <query_container.hpp>
 #include <query_element.hpp>
@@ -81,7 +82,7 @@ protected:
   void
   TearDown() override {}
 
-  // NOLINTBEGIN(cppcoreguidelines-non-private-member-variables-in-classes)
+  // NOLINTBEGIN(*-non-private-member-variables-in-classes)
   std::uint32_t max_live_methylomes{};
   std::filesystem::path raw_data_dir;
   std::filesystem::path methylome_dir;
@@ -89,7 +90,7 @@ protected:
   std::unique_ptr<methylome_set> mock_methylome_set;
   std::unique_ptr<genome_index_set> mock_genome_index_set;
   std::unique_ptr<request_handler> mock_request_handler;
-  // NOLINTEND(cppcoreguidelines-non-private-member-variables-in-classes)
+  // NOLINTEND(*-non-private-member-variables-in-classes)
 };
 
 TEST_F(request_handler_mock, handle_request_success) {
@@ -156,7 +157,8 @@ TEST_F(request_handler_mock, handle_request_failure) {
 }
 
 TEST_F(request_handler_mock, intervals_get_levels_success) {
-  static constexpr auto index_hash = 0u;
+  // ADS: the index_hash below is taken from the data file
+  static constexpr auto index_hash = 233205952u;
   static constexpr auto rq_type = request_type_code::intervals;
   static constexpr auto assembly = "eFlareon";
   static constexpr auto tissue = "brain";
@@ -182,17 +184,18 @@ TEST_F(request_handler_mock, intervals_get_levels_success) {
   mock_request_handler->handle_request(req, resp_hdr);
 
   // ADS: payload stays on server side
-  response_payload resp_data;
+  level_container_md<transferase::level_element_t> resp_data;
   mock_request_handler->intervals_get_levels<transferase::level_element_t>(
     req, query, resp_hdr, resp_data);
 
   const auto req_offset_elem_size = sizeof(transferase::query_element);
-  const auto expected_payload_size = req_offset_elem_size * size(query);
-  EXPECT_EQ(std::size(resp_data.payload), expected_payload_size);
+  const auto expected_payload_size = req_offset_elem_size * std::size(query);
+  EXPECT_EQ(resp_data.get_n_bytes(), expected_payload_size);
 }
 
 TEST_F(request_handler_mock, bins_get_levels_success) {
-  static constexpr auto index_hash = 0u;
+  // ADS: the index_hash below is taken from the data file
+  static constexpr auto index_hash = 233205952u;
   static constexpr auto bin_size = 100u;
   static constexpr auto rq_type = request_type_code::bins;
   static constexpr auto assembly = "eFlareon";
@@ -209,8 +212,10 @@ TEST_F(request_handler_mock, bins_get_levels_success) {
   request req{rq_type, index_hash, bin_size, {methylome_name}};
   response_header resp_hdr;
   mock_request_handler->handle_request(req, resp_hdr);
+  EXPECT_EQ(resp_hdr.rows, index.get_n_bins(bin_size)) << resp_hdr.summary();
+  EXPECT_EQ(resp_hdr.cols, 1) << resp_hdr.summary();
 
-  response_payload resp_data;
+  level_container_md<level_element_t> resp_data;
   mock_request_handler->bins_get_levels<level_element_t>(req, resp_hdr,
                                                          resp_data);
 
@@ -218,5 +223,5 @@ TEST_F(request_handler_mock, bins_get_levels_success) {
 
   const auto req_offset_elem_size = sizeof(transferase::query_element);
   const auto expected_payload_size = req_offset_elem_size * expected_n_bins;
-  EXPECT_EQ(std::size(resp_data.payload), expected_payload_size);
+  EXPECT_EQ(resp_data.get_n_bytes(), expected_payload_size);
 }
