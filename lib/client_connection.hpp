@@ -21,10 +21,11 @@
  * SOFTWARE.
  */
 
-#ifndef LIB_CLIENT_HPP_
-#define LIB_CLIENT_HPP_
+#ifndef LIB_CLIENT_CONNECTION_HPP_
+#define LIB_CLIENT_CONNECTION_HPP_
 
 #include "level_container.hpp"
+#include "level_container_md.hpp"
 #include "logger.hpp"
 #include "query_container.hpp"
 #include "request.hpp"
@@ -48,18 +49,19 @@
 
 namespace transferase {
 
-template <typename derived, typename level_element> class client_base {
+template <typename derived, typename level_element>
+class client_connection_base {
 public:
-  client_base(const std::string &hostname, const std::string &port_number,
-              const request &req);
+  client_connection_base(const std::string &hostname,
+                         const std::string &port_number, const request &req);
 
   // allow const or ref data members (cppcoreguidelines)
   // clang-format off
-  client_base(const client_base &) = delete;
-  auto operator=(const client_base &) -> client_base & = delete;
-  client_base(client_base &&) noexcept = delete;
-  auto operator=(client_base &&) noexcept -> client_base & = delete;
-  ~client_base() = default;
+  client_connection_base(const client_connection_base &) = delete;
+  auto operator=(const client_connection_base &) -> client_connection_base & = delete;
+  client_connection_base(client_connection_base &&) noexcept = delete;
+  auto operator=(client_connection_base &&) noexcept -> client_connection_base & = delete;
+  ~client_connection_base() = default;
   // clang-format on
 
   auto
@@ -69,15 +71,13 @@ public:
   }
 
   [[nodiscard]] auto
-  get_levels(std::error_code &error) const noexcept
-    -> std::vector<level_container<level_element>> {
-    return resp_payload.to_levels<level_element>(resp_hdr, error);
+  get_levels() noexcept -> level_container_md<level_element> {
+    return std::move(resp_container);
   }
 
   [[nodiscard]] auto
-  take_levels(std::error_code &error) const noexcept
-    -> std::vector<level_container<level_element>> {
-    return resp_payload.to_levels<level_element>(resp_hdr, error);
+  take_levels() noexcept -> level_container_md<level_element> {
+    return std::move(resp_container);
   }
 
   auto
@@ -110,7 +110,7 @@ private:
   auto
   prepare_to_read_response_payload() -> void {
     // get space for query_container
-    resp_payload.payload.resize(get_incoming_n_bytes());
+    resp_container.resize(resp_hdr.rows, resp_hdr.cols);
     incoming_bytes_remaining = get_incoming_n_bytes();  // init counters
     incoming_bytes_received = 0;
   }
@@ -122,7 +122,7 @@ private:
 
   [[nodiscard]] auto
   get_incoming_data_buffer() noexcept -> char * {
-    return resp_payload.data();
+    return resp_container.data();
   }
 
 private:
@@ -139,7 +139,7 @@ private:
 
   response_header_buffer resp_hdr_buf{};
   response_header resp_hdr{};
-  response_payload resp_payload{};
+  level_container_md<level_element> resp_container{};
 
   std::error_code status{};
 
@@ -159,12 +159,12 @@ private:
   // they might best be associated with the response.
   std::size_t incoming_bytes_received{};
   std::size_t incoming_bytes_remaining{};
-};  // class client_base
+};  // class client_connection_base
 
 template <typename D, typename L>
-client_base<D, L>::client_base(const std::string &hostname,
-                               const std::string &port_number,
-                               const request &req) :
+client_connection_base<D, L>::client_connection_base(
+  const std::string &hostname, const std::string &port_number,
+  const request &req) :
   resolver(io_context), socket(io_context), deadline{socket.get_executor()},
   req{req}, lgr{logger::instance()} {
   // (1) call async, (2) set deadline, (3) register check_deadline
@@ -188,7 +188,7 @@ client_base<D, L>::client_base(const std::string &hostname,
 
 template <typename D, typename L>
 auto
-client_base<D, L>::handle_resolve(
+client_connection_base<D, L>::handle_resolve(
   const std::error_code ec,
   const boost::asio::ip::tcp::resolver::results_type &endpoints) -> void {
   if (!ec) {
@@ -205,7 +205,7 @@ client_base<D, L>::handle_resolve(
 
 template <typename D, typename L>
 auto
-client_base<D, L>::handle_connect(std::error_code ec) -> void {
+client_connection_base<D, L>::handle_connect(std::error_code ec) -> void {
   deadline.expires_at(boost::asio::steady_timer::time_point::max());
   if (!ec) {
     lgr.debug("Connected to server: {}",
@@ -228,7 +228,8 @@ client_base<D, L>::handle_connect(std::error_code ec) -> void {
 
 template <typename D, typename L>
 auto
-client_base<D, L>::handle_write_request(const std::error_code ec) -> void {
+client_connection_base<D, L>::handle_write_request(const std::error_code ec)
+  -> void {
   deadline.expires_at(boost::asio::steady_timer::time_point::max());
   if (!ec) {
     boost::asio::async_read(
@@ -250,7 +251,8 @@ client_base<D, L>::handle_write_request(const std::error_code ec) -> void {
 
 template <typename D, typename L>
 auto
-client_base<D, L>::handle_read_response_header(std::error_code ec) -> void {
+client_connection_base<D, L>::handle_read_response_header(std::error_code ec)
+  -> void {
   // ADS: does this go here?
   deadline.expires_at(boost::asio::steady_timer::time_point::max());
   if (!ec) {
@@ -277,7 +279,7 @@ client_base<D, L>::handle_read_response_header(std::error_code ec) -> void {
 
 template <typename D, typename L>
 auto
-client_base<D, L>::do_read_response_payload() -> void {
+client_connection_base<D, L>::do_read_response_payload() -> void {
   socket.async_read_some(
     boost::asio::buffer(get_incoming_data_buffer() + incoming_bytes_received,
                         incoming_bytes_remaining),
@@ -305,7 +307,8 @@ client_base<D, L>::do_read_response_payload() -> void {
 
 template <typename D, typename L>
 auto
-client_base<D, L>::handle_failure_explanation(std::error_code ec) -> void {
+client_connection_base<D, L>::handle_failure_explanation(std::error_code ec)
+  -> void {
   deadline.expires_at(boost::asio::steady_timer::time_point::max());
   if (!ec) {
     ec = parse(resp_hdr_buf, resp_hdr);
@@ -326,7 +329,7 @@ client_base<D, L>::handle_failure_explanation(std::error_code ec) -> void {
 
 template <typename D, typename L>
 auto
-client_base<D, L>::do_finish(const std::error_code ec) -> void {
+client_connection_base<D, L>::do_finish(const std::error_code ec) -> void {
   // same consequence as canceling
   deadline.expires_at(boost::asio::steady_timer::time_point::max());
   status = ec;
@@ -341,7 +344,7 @@ client_base<D, L>::do_finish(const std::error_code ec) -> void {
 
 template <typename D, typename L>
 auto
-client_base<D, L>::check_deadline() -> void {
+client_connection_base<D, L>::check_deadline() -> void {
   if (!socket.is_open())  // ADS: when can this happen?
     return;
 
@@ -370,20 +373,25 @@ client_base<D, L>::check_deadline() -> void {
 }
 
 template <typename lvl>
-class intervals_client : public client_base<intervals_client<lvl>, lvl> {
+class intervals_client_connection
+  : public client_connection_base<intervals_client_connection<lvl>, lvl> {
 public:
-  intervals_client(const std::string &hostname, const std::string &port_number,
-                   const request &req, const query_container &query) :
+  intervals_client_connection(const std::string &hostname,
+                              const std::string &port_number,
+                              const request &req,
+                              const query_container &query) :
     base_class_t(hostname, port_number, req), query{query} {}
 
   // allow const or ref data members (cppcoreguidelines)
-  // clang-format off
-  intervals_client(const intervals_client &) = delete;
-  auto operator=(const intervals_client &) -> intervals_client & = delete;
-  intervals_client(intervals_client &&) noexcept = delete;
-  auto operator=(intervals_client &&) noexcept -> intervals_client & = delete;
-  ~intervals_client() = default;
-  // clang-format on
+  intervals_client_connection(const intervals_client_connection &) = delete;
+  auto
+  operator=(const intervals_client_connection &)
+    -> intervals_client_connection & = delete;
+  intervals_client_connection(intervals_client_connection &&) noexcept = delete;
+  auto
+  operator=(intervals_client_connection &&) noexcept
+    -> intervals_client_connection & = delete;
+  ~intervals_client_connection() = default;
 
   auto
   handle_connect_impl() noexcept -> void {
@@ -437,7 +445,8 @@ public:
   }
 
 private:
-  using base_class_t = client_base<intervals_client<lvl>, lvl>;
+  using base_class_t =
+    client_connection_base<intervals_client_connection<lvl>, lvl>;
 
   const query_container &query;
   std::chrono::seconds write_timeout_seconds{3};
@@ -450,13 +459,15 @@ private:
   std::size_t n_writes{};
   std::size_t min_write_size{std::numeric_limits<std::size_t>::max()};
   std::size_t max_write_size{0};
-};  // class intervals_client
+};  // class intervals_client_connection
 
 template <typename lvl>
-class bins_client : public client_base<bins_client<lvl>, lvl> {
+class bins_client_connection
+  : public client_connection_base<bins_client_connection<lvl>, lvl> {
 public:
-  bins_client(const std::string &hostname, const std::string &port_number,
-              const request &req) : base_class_t(hostname, port_number, req) {}
+  bins_client_connection(const std::string &hostname,
+                         const std::string &port_number, const request &req) :
+    base_class_t(hostname, port_number, req) {}
 
   auto
   handle_connect_impl() noexcept {
@@ -468,9 +479,9 @@ public:
   }
 
 private:
-  using base_class_t = client_base<bins_client<lvl>, lvl>;
-};  // class bins_client
+  using base_class_t = client_connection_base<bins_client_connection<lvl>, lvl>;
+};  // class bins_client_connection
 
 }  // namespace transferase
 
-#endif  // LIB_CLIENT_HPP_
+#endif  // LIB_CLIENT_CONNECTION_HPP_
