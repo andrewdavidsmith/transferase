@@ -23,6 +23,8 @@
 
 #include <command_config.hpp>
 
+#include "unit_test_utils_cli.hpp"
+
 #include <gtest/gtest.h>
 
 #include <array>
@@ -44,9 +46,11 @@ TEST(command_config_test, run_success) {
     "example.com",
     "-p",
     "5000",
+    "--download",
+    "none",
     // clang-format on
   };
-  // NOLINTNEXTLINE(*-narrowing-conversions)
+  // NOLINT(*-narrowing-conversions)
   const int argc = static_cast<int>(std::size(argv));
 
   EXPECT_EQ(argv[0], "config");
@@ -54,6 +58,7 @@ TEST(command_config_test, run_success) {
   const int ret = command_config_main(argc, const_cast<char **>(argv.data()));
   EXPECT_EQ(ret, EXIT_SUCCESS);
 
-  const std::filesystem::path config_path{config_dir};
-  EXPECT_TRUE(std::filesystem::remove_all(config_dir));
+  std::error_code error;
+  remove_directories_cli(config_dir, error);
+  EXPECT_FALSE(error);
 }
