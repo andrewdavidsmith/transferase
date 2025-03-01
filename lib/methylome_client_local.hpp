@@ -81,7 +81,7 @@ public:
   [[nodiscard]] auto
   get_levels_derived(const std::vector<std::string> &methylome_names,
                      const query_container &query, std::error_code &error)
-    const noexcept -> std::vector<level_container<lvl_elem_t>> {
+    const noexcept -> level_container_md<lvl_elem_t> {
     request_type_code req_type = request_type_code::intervals;
     if constexpr (std::is_same_v<lvl_elem_t, level_element_covered_t>)
       req_type = request_type_code::intervals_covered;
@@ -100,7 +100,7 @@ public:
   get_levels_derived(const std::vector<std::string> &methylome_names,
                      const std::vector<genomic_interval> &intervals,
                      std::error_code &error) const noexcept
-    -> std::vector<level_container<lvl_elem_t>> {
+    -> level_container_md<lvl_elem_t> {
     request_type_code req_type = request_type_code::intervals;
     if constexpr (std::is_same_v<lvl_elem_t, level_element_covered_t>)
       req_type = request_type_code::intervals_covered;
@@ -122,7 +122,7 @@ public:
   [[nodiscard]] auto
   get_levels_derived(const std::vector<std::string> &methylome_names,
                      const std::uint32_t bin_size, std::error_code &error)
-    const noexcept -> std::vector<level_container<lvl_elem_t>> {
+    const noexcept -> level_container_md<lvl_elem_t> {
     request_type_code req_type = request_type_code::bins;
     if constexpr (std::is_same_v<lvl_elem_t, level_element_covered_t>)
       req_type = request_type_code::bins_covered;
@@ -142,14 +142,17 @@ private:
   [[nodiscard]] auto
   get_levels_impl(const request &req, const query_container &query,
                   std::error_code &error) const noexcept
-    -> std::vector<level_container<lvl_elem_t>> {
-    std::vector<level_container<lvl_elem_t>> results;
+    -> level_container_md<lvl_elem_t> {
+    assert(req.n_intervals() == std::size(query));
+    level_container_md<lvl_elem_t> results(req.n_intervals(),
+                                           req.n_methylomes());
+    std::uint32_t col_id = 0;
     for (const auto &methylome_name : req.methylome_names) {
       const auto meth =
         methylome::read(config.methylome_dir, methylome_name, error);
       if (error)
         return {};
-      results.emplace_back(meth.get_levels<lvl_elem_t>(query));
+      meth.get_levels<lvl_elem_t>(query, results.column_itr(col_id++));
     }
     return results;
   }
@@ -158,14 +161,17 @@ private:
   [[nodiscard]] auto
   get_levels_impl(const request &req, const genome_index &index,
                   std::error_code &error) const noexcept
-    -> std::vector<level_container<lvl_elem_t>> {
-    std::vector<level_container<lvl_elem_t>> results;
+    -> level_container_md<lvl_elem_t> {
+    level_container_md<lvl_elem_t> results(index.get_n_bins(req.bin_size()),
+                                           req.n_methylomes());
+    std::uint32_t col_id = 0;
     for (const auto &methylome_name : req.methylome_names) {
       const auto meth =
         methylome::read(config.methylome_dir, methylome_name, error);
       if (error)
         return {};
-      results.emplace_back(meth.get_levels<lvl_elem_t>(req.bin_size(), index));
+      meth.get_levels<lvl_elem_t>(req.bin_size(), index,
+                                  results.column_itr(col_id++));
     }
     return results;
   }
