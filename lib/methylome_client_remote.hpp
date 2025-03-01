@@ -24,8 +24,8 @@
 #ifndef LIB_METHYLOME_CLIENT_REMOTE_HPP_
 #define LIB_METHYLOME_CLIENT_REMOTE_HPP_
 
-#include "client_connection.hpp"
 #include "client_config.hpp"
+#include "client_connection.hpp"
 #include "genome_index.hpp"
 #include "genome_index_set.hpp"
 #include "methylome_client_base.hpp"
@@ -80,7 +80,7 @@ public:
   [[nodiscard]] auto
   get_levels_derived(const std::vector<std::string> &methylome_names,
                      const query_container &query, std::error_code &error)
-    const noexcept -> std::vector<level_container<lvl_elem_t>> {
+    const noexcept -> level_container_md<lvl_elem_t> {
     request_type_code req_type = request_type_code::intervals;
     if constexpr (std::is_same_v<lvl_elem_t, level_element_covered_t>)
       req_type = request_type_code::intervals_covered;
@@ -89,7 +89,7 @@ public:
     if (error)
       return {};
     const auto req =
-      request{req_type, index_hash, size(query), methylome_names};
+      request{req_type, index_hash, std::size(query), methylome_names};
     return get_levels_impl<lvl_elem_t>(req, query, error);
   }
 
@@ -99,7 +99,7 @@ public:
   get_levels_derived(const std::vector<std::string> &methylome_names,
                      const std::vector<genomic_interval> &intervals,
                      std::error_code &error) const noexcept
-    -> std::vector<level_container<lvl_elem_t>> {
+    -> level_container_md<lvl_elem_t> {
     request_type_code req_type = request_type_code::intervals;
     if constexpr (std::is_same_v<lvl_elem_t, level_element_covered_t>)
       req_type = request_type_code::intervals_covered;
@@ -112,7 +112,7 @@ public:
       return {};
     const auto query = index->make_query(intervals);
     const auto req =
-      request{req_type, index_hash, size(query), methylome_names};
+      request{req_type, index_hash, std::size(query), methylome_names};
     return get_levels_impl<lvl_elem_t>(req, query, error);
   }
 
@@ -121,7 +121,7 @@ public:
   [[nodiscard]] auto
   get_levels_derived(const std::vector<std::string> &methylome_names,
                      const std::uint32_t bin_size, std::error_code &error)
-    const noexcept -> std::vector<level_container<lvl_elem_t>> {
+    const noexcept -> level_container_md<lvl_elem_t> {
     request_type_code req_type = request_type_code::bins;
     if constexpr (std::is_same_v<lvl_elem_t, level_element_covered_t>)
       req_type = request_type_code::bins_covered;
@@ -138,8 +138,9 @@ private:
   [[nodiscard]] auto
   get_levels_impl(const request &req, const query_container &query,
                   std::error_code &error) const noexcept
-    -> std::vector<level_container<lvl_elem_t>> {
-    intervals_client<lvl_elem_t> cl(config.hostname, config.port, req, query);
+    -> level_container_md<lvl_elem_t> {
+    intervals_client_connection<lvl_elem_t> cl(config.hostname, config.port,
+                                               req, query);
     error = cl.run();
     if (error)
       return {};
@@ -149,8 +150,8 @@ private:
   template <typename lvl_elem_t>
   [[nodiscard]] auto
   get_levels_impl(const request &req, std::error_code &error) const noexcept
-    -> std::vector<level_container<lvl_elem_t>> {
-    bins_client<lvl_elem_t> cl(config.hostname, config.port, req);
+    -> level_container_md<lvl_elem_t> {
+    bins_client_connection<lvl_elem_t> cl(config.hostname, config.port, req);
     error = cl.run();
     if (error)
       return {};
