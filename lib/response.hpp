@@ -25,6 +25,7 @@
 #define LIB_RESPONSE_HPP_
 
 #include "level_container.hpp"
+#include "level_container_md.hpp"
 
 #include <array>
 #include <cstddef>  // for std::byte
@@ -82,9 +83,9 @@ struct response_payload {
   // prevent copying and allow moving
   // clang-format off
   response_payload(const response_payload &) = delete;
-  response_payload &operator=(const response_payload &) = delete;
+  auto operator=(const response_payload &) -> response_payload & = delete;
   response_payload(response_payload &&) noexcept = default;
-  response_payload &operator=(response_payload &&) noexcept = default;
+  auto operator=(response_payload &&) -> response_payload & = default;
   // clang-format on
 
   template <typename lvl_elem>
@@ -107,36 +108,15 @@ struct response_payload {
     return rp;
   }
 
-  template <typename lvl_elem>
-  [[nodiscard]] auto
-  to_levels(const response_header &hdr, std::error_code &error) const
-    -> std::vector<level_container<lvl_elem>> {
-    // ADS: slower than needed; copy happening here is not needed
-    error = std::error_code{};  // clear this in case it was set
-    std::vector<level_container<lvl_elem>> result;
-    std::size_t byte_offset{};
-    for (auto col_id = 0u; col_id < hdr.cols; ++col_id) {
-      auto source = data_at(byte_offset, error);
-      if (error)
-        return {};
-      level_container<lvl_elem> lvl(hdr.rows);
-      std::memcpy(lvl.data(), source, lvl.get_n_bytes());
-      byte_offset += lvl.get_n_bytes();
-      // ADS: be careful of the move here -- don't reorder!
-      result.emplace_back(std::move(lvl));
-    }
-    return result;
-  }
-
   [[nodiscard]] auto
   data() noexcept -> char * {
-    // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+    // NOLINTNEXTLINE(*-reinterpret-cast)
     return reinterpret_cast<char *>(payload.data());
   }
 
   [[nodiscard]] auto
   data() const noexcept -> const char * {
-    // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+    // NOLINTNEXTLINE(*-reinterpret-cast)
     return reinterpret_cast<const char *>(payload.data());
   }
 
@@ -148,7 +128,7 @@ struct response_payload {
       return nullptr;
     }
     error = std::error_code{};
-    // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+    // NOLINTNEXTLINE(*-reinterpret-cast)
     return reinterpret_cast<char *>(payload.data()) + byte_offset;
   }
 
@@ -160,12 +140,12 @@ struct response_payload {
       return nullptr;
     }
     error = std::error_code{};
-    // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+    // NOLINTNEXTLINE(*-reinterpret-cast)
     return reinterpret_cast<const char *>(payload.data()) + byte_offset;
   }
 
   [[nodiscard]] auto
-  n_bytes() const -> std::uint32_t {
+  get_n_bytes() const -> std::uint32_t {
     return std::size(payload);
   }
 };
