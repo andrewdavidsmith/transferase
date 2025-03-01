@@ -24,6 +24,7 @@
 #ifndef LIB_CONNECTION_HPP_
 #define LIB_CONNECTION_HPP_
 
+#include "level_container_md.hpp"
 #include "logger.hpp"
 #include "query_container.hpp"
 #include "request.hpp"
@@ -99,7 +100,7 @@ struct connection : public std::enable_shared_from_this<connection> {
 
   [[nodiscard]] auto
   get_outgoing_n_bytes() const -> std::uint32_t {
-    return resp.n_bytes();
+    return resp.get_n_bytes();
   }
 
   auto
@@ -110,7 +111,7 @@ struct connection : public std::enable_shared_from_this<connection> {
 
   [[nodiscard]] auto
   get_outgoing_data_buffer() const noexcept -> const char * {
-    return reinterpret_cast<const char *>(resp.payload.data());
+    return reinterpret_cast<const char *>(resp.data());
   }
 
   boost::asio::ip::tcp::socket socket;  // this connection's socket
@@ -120,7 +121,8 @@ struct connection : public std::enable_shared_from_this<connection> {
   request req;  // this connection's request
   response_header_buffer resp_hdr_buf{};
   response_header resp_hdr;  // header of the response
-  response_payload resp;     // response to send back
+  level_container_md<level_element_t> resp;
+  level_container_md<level_element_covered_t> resp_cov;
   logger &lgr;
   std::uint32_t conn_id{};  // identifer for this connection
   std::uint32_t read_timeout_seconds{10};
