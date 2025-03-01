@@ -188,8 +188,9 @@ TEST_F(request_handler_mock, intervals_get_levels_success) {
   mock_request_handler->intervals_get_levels<transferase::level_element_t>(
     req, query, resp_hdr, resp_data);
 
-  const auto req_offset_elem_size = sizeof(transferase::query_element);
-  const auto expected_payload_size = req_offset_elem_size * std::size(query);
+  const std::uint32_t req_offset_elem_size = sizeof(transferase::query_element);
+  const std::uint32_t expected_payload_size =
+    req_offset_elem_size * std::size(query);
   EXPECT_EQ(resp_data.get_n_bytes(), expected_payload_size);
 }
 
@@ -201,7 +202,9 @@ TEST_F(request_handler_mock, bins_get_levels_success) {
   static constexpr auto assembly = "eFlareon";
   static constexpr auto tissue = "brain";
   const auto methylome_name = std::format("{}_{}", assembly, tissue);
-  const auto index_path = index_file_dir / std::format("{}.cpg_idx", assembly);
+  const auto index_path =
+    index_file_dir /
+    std::format("{}{}", assembly, genome_index_data::filename_extension);
 
   EXPECT_TRUE(std::filesystem::exists(index_path));
 
