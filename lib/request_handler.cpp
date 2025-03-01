@@ -24,7 +24,7 @@
 #include "request_handler.hpp"
 
 #include "genome_index.hpp"
-#include "level_container.hpp"
+#include "level_container_md.hpp"
 #include "level_element.hpp"
 #include "logger.hpp"
 #include "methylome.hpp"
@@ -112,10 +112,11 @@ template <>
 auto
 request_handler::intervals_get_levels<level_element_t>(
   const request &req, const query_container &query, response_header &resp_hdr,
-  response_payload &resp_data) -> void {
+  level_container_md<level_element_t> &resp_data) -> void {
   auto &lgr = logger::instance();
   std::error_code ec;
-  std::vector<level_container<level_element_t>> levels;
+  resp_data.resize(resp_hdr.rows, resp_hdr.cols);
+  std::uint32_t col_id = 0;
   for (const auto &methylome_name : req.methylome_names) {
     const auto meth = methylomes.get_methylome(methylome_name, ec);
     if (ec) {
@@ -123,13 +124,8 @@ request_handler::intervals_get_levels<level_element_t>(
       resp_hdr.status = ec;
       return;
     }
-    lgr.debug("Computing levels for methylome: {}", methylome_name);
-    levels.emplace_back(meth->get_levels<level_element_t>(query));
-  }
-  resp_data = response_payload::from_levels(levels, ec);
-  if (ec) {
-    lgr.debug("Error composing response payload: {}", ec);
-    resp_hdr.status = server_error_code::bad_request;
+    lgr.debug("Computing levels for methylome: {} (intervals)", methylome_name);
+    meth->get_levels<level_element_t>(query, resp_data.column_itr(col_id++));
   }
 }
 
@@ -137,10 +133,12 @@ template <>
 auto
 request_handler::intervals_get_levels<level_element_covered_t>(
   const request &req, const query_container &query, response_header &resp_hdr,
-  response_payload &resp_data) -> void {
+  level_container_md<level_element_covered_t> &resp_data) -> void {
   auto &lgr = logger::instance();
   std::error_code ec;
-  std::vector<level_container<level_element_covered_t>> levels;
+
+  resp_data.resize(resp_hdr.rows, resp_hdr.cols);
+  std::uint32_t col_id = 0;
   for (const auto &methylome_name : req.methylome_names) {
     const auto meth = methylomes.get_methylome(methylome_name, ec);
     if (ec) {
@@ -148,13 +146,9 @@ request_handler::intervals_get_levels<level_element_covered_t>(
       resp_hdr.status = ec;
       return;
     }
-    lgr.debug("Computing levels for methylome: {}", methylome_name);
-    levels.emplace_back(meth->get_levels<level_element_covered_t>(query));
-  }
-  resp_data = response_payload::from_levels(levels, ec);
-  if (ec) {
-    lgr.debug("Error composing response payload: {}", ec);
-    resp_hdr.status = server_error_code::bad_request;
+    lgr.debug("Computing levels for methylome: {} (intervals)", methylome_name);
+    meth->get_levels<level_element_covered_t>(query,
+                                              resp_data.column_itr(col_id++));
   }
 }
 
@@ -162,13 +156,14 @@ template <>
 auto
 request_handler::bins_get_levels<level_element_t>(
   const request &req, response_header &resp_hdr,
-  response_payload &resp_data) -> void {
+  level_container_md<level_element_t> &resp_data) -> void {
   auto &lgr = logger::instance();
   std::error_code ec;
   std::shared_ptr<genome_index> index = nullptr;
   std::string genome_name;
-  std::vector<level_container<level_element_t>> levels;
 
+  resp_data.resize(resp_hdr.rows, resp_hdr.cols);
+  [[maybe_unused]] std::uint32_t col_id = 0;
   for (const auto &methylome_name : req.methylome_names) {
     const auto meth = methylomes.get_methylome(methylome_name, ec);
     if (ec) {
@@ -193,16 +188,9 @@ request_handler::bins_get_levels<level_element_t>(
       resp_hdr.status = server_error_code::bad_request;
       return;
     }
-    lgr.debug("Computing levels for methylome: {}", methylome_name);
-    levels.emplace_back(
-      meth->get_levels<level_element_t>(req.bin_size(), *index));
-  }
-
-  // convert the levels to data for sending
-  resp_data = response_payload::from_levels(levels, ec);
-  if (ec) {
-    lgr.debug("Error composing response payload: {}", ec);
-    resp_hdr.status = server_error_code::bad_request;
+    lgr.debug("Computing levels for methylome: {} (bins)", methylome_name);
+    meth->get_levels<level_element_t>(req.bin_size(), *index,
+                                      resp_data.column_itr(col_id++));
   }
 }
 
@@ -210,13 +198,14 @@ template <>
 auto
 request_handler::bins_get_levels<level_element_covered_t>(
   const request &req, response_header &resp_hdr,
-  response_payload &resp_data) -> void {
+  level_container_md<level_element_covered_t> &resp_data) -> void {
   auto &lgr = logger::instance();
   std::error_code ec;
   std::shared_ptr<genome_index> index = nullptr;
   std::string genome_name;
-  std::vector<level_container<level_element_covered_t>> levels;
 
+  resp_data.resize(resp_hdr.rows, resp_hdr.cols);
+  std::uint32_t col_id = 0;
   for (const auto &methylome_name : req.methylome_names) {
     const auto meth = methylomes.get_methylome(methylome_name, ec);
     if (ec) {
@@ -241,16 +230,9 @@ request_handler::bins_get_levels<level_element_covered_t>(
       resp_hdr.status = server_error_code::bad_request;
       return;
     }
-    lgr.debug("Computing levels for methylome: {}", methylome_name);
-    levels.emplace_back(
-      meth->get_levels<level_element_covered_t>(req.bin_size(), *index));
-  }
-
-  // convert the levels to data for sending
-  resp_data = response_payload::from_levels(levels, ec);
-  if (ec) {
-    lgr.debug("Error composing response payload: {}", ec);
-    resp_hdr.status = server_error_code::bad_request;
+    lgr.debug("Computing levels for methylome: {} (bins)", methylome_name);
+    meth->get_levels<level_element_covered_t>(req.bin_size(), *index,
+                                              resp_data.column_itr(col_id++));
   }
 }
 
