@@ -45,6 +45,8 @@ template <typename level_element_type> struct level_container_md {
   std::vector<level_element_type> v;
   typedef level_element_type value_type;
   typedef std::vector<level_element_type>::size_type size_type;
+  typedef std::vector<level_element_type>::iterator iterator;
+  typedef std::vector<level_element_type>::const_iterator const_iterator;
 
   // ADS: need to benchmark use of level set directly vs. starting with vector
   // of level_element
@@ -66,13 +68,13 @@ template <typename level_element_type> struct level_container_md {
   [[nodiscard]] auto
   operator[](const std::integral auto i,
              const std::integral auto j) const noexcept -> level_element_type {
-    return v[i*n_cols + j];
+    return v[j * n_rows + i];
   }
 
   auto
   operator[](const std::integral auto i,
              const std::integral auto j) noexcept -> level_element_type & {
-    return v[i*n_cols + j];
+    return v[j * n_rows + i];
   }
 
   [[nodiscard]] auto begin() noexcept {return std::begin(v);}
@@ -91,6 +93,14 @@ template <typename level_element_type> struct level_container_md {
   }
 
   auto
+  resize(const std::integral auto n_rows_arg,
+         const std::integral auto n_cols_arg) noexcept {
+    v.resize(n_rows_arg * n_cols_arg);
+    n_rows = n_rows_arg;
+    n_cols = n_cols_arg;
+  }
+
+  auto
   reserve(const std::integral auto new_capacity) noexcept {
     v.reserve(new_capacity);
   }
@@ -106,8 +116,29 @@ template <typename level_element_type> struct level_container_md {
   }
 
   [[nodiscard]] auto
+  data_at_column(const std::integral auto col_id) const noexcept -> const
+    char * {
+    return reinterpret_cast<const char *>(&v[col_id * n_rows]);
+  }
+
+  [[nodiscard]] auto
+  column_itr(const std::integral auto col_id) const noexcept -> const_iterator {
+    return std::cbegin(v) + n_rows * col_id;
+  }
+
+  [[nodiscard]] auto
+  column_itr(const std::integral auto col_id) noexcept -> iterator {
+    return std::begin(v) + n_rows * col_id;
+  }
+
+  [[nodiscard]] auto
   data() noexcept -> char * {
     return reinterpret_cast<char *>(v.data());
+  }
+
+  [[nodiscard]] auto
+  data_at_column(const std::integral auto col_id) noexcept -> char * {
+    return reinterpret_cast<char *>(&v[col_id * n_rows]);
   }
 
   [[nodiscard]] auto
@@ -119,19 +150,22 @@ template <typename level_element_type> struct level_container_md {
   tostring() const noexcept -> std::string {
     std::string s;
     for (const auto i : std::views::iota(0u, n_rows)) {
-      s += v[i * n_cols].tostring_counts();
+      s += operator[](i, 0).tostring_counts();
       for (const auto j : std::views::iota(1u, n_cols)) {
         s += '\t';
-        s += v[i * n_cols + j].tostring_counts();
+        s += operator[](i, j).tostring_counts();
       }
       s += '\n';
     }
     return s;
   }
 
+  /// Add a column by growing the level_container_md underlying memory and
+  /// copying the new column values into place.
   auto
-  add_column(const std::vector<level_element_type> &c) noexcept {
-    assert(std::size(c) == n_rows);
+  add_column(const auto &c) noexcept {
+    assert(n_rows == 0 || std::size(c) == n_rows);
+    n_rows = (n_rows == 0) ? std::size(c) : n_rows;
     std::ranges::copy_n(std::cbegin(c), n_rows, std::back_inserter(v));
     ++n_cols;
   }
