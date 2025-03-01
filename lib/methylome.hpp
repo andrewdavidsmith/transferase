@@ -25,6 +25,7 @@
 #define LIB_METHYLOME_HPP_
 
 #include "level_container.hpp"
+#include "level_container_md.hpp"
 #include "level_element.hpp"
 #include "methylome_data.hpp"
 #include "methylome_metadata.hpp"
@@ -247,6 +248,15 @@ struct methylome {
     return data.get_levels<lvl_elem_t>(query);
   }
 
+  /// @brief Get the methylation level for each interval represented
+  /// in a given query container.
+  template <typename lvl_elem_t>
+  auto
+  get_levels(const transferase::query_container &query,
+             level_container_md<lvl_elem_t>::iterator d_first) const -> void {
+    data.get_levels<lvl_elem_t>(query, d_first);
+  }
+
   /// @brief Get the methylation level for each genomic 'bin' (i.e.,
   /// non-overlapping intervals of fixed size; not the same as
   /// windows, which may overlap).
@@ -255,6 +265,16 @@ struct methylome {
   get_levels(const std::uint32_t bin_size,
              const genome_index &index) const -> level_container<lvl_elem_t> {
     return data.get_levels<lvl_elem_t>(bin_size, index);
+  }
+
+  /// @brief Get the methylation level for each genomic 'bin' (i.e.,
+  /// non-overlapping intervals of fixed size; not the same as
+  /// windows, which may overlap).
+  template <typename lvl_elem_t>
+  auto
+  get_levels(const std::uint32_t bin_size, const genome_index &index,
+             level_container_md<lvl_elem_t>::iterator d_first) const -> void {
+    data.get_levels<lvl_elem_t>(bin_size, index, d_first);
   }
 
   /// @brief Returns true iff the methylome files exist for the given name.
