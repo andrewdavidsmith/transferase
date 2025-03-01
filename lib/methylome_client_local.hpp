@@ -90,7 +90,7 @@ public:
     if (error)
       return {};
     const auto req =
-      request{req_type, index_hash, size(query), methylome_names};
+      request{req_type, index_hash, std::size(query), methylome_names};
     return get_levels_impl<lvl_elem_t>(req, query, error);
   }
 
@@ -113,7 +113,7 @@ public:
       return {};
     const auto query = index->make_query(intervals);
     const auto req =
-      request{req_type, index_hash, size(query), methylome_names};
+      request{req_type, index_hash, std::size(query), methylome_names};
     return get_levels_impl<lvl_elem_t>(req, query, error);
   }
 
