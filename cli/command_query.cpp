@@ -178,8 +178,7 @@ do_intervals_query(const std::string &intervals_file,
 
   const auto query_start{std::chrono::high_resolution_clock::now()};
 
-  const auto results =
-    interface.get_levels_md<level_element>(req, query, error);
+  const auto results = interface.get_levels<level_element>(req, query, error);
   if (error) {
     lgr.error("Error obtaining levels: {}", error);
     return error;
@@ -227,8 +226,7 @@ do_bins_query(const std::uint32_t bin_size,
                                         bin_size, methylome_names};
   std::error_code error;
   const auto query_start{std::chrono::high_resolution_clock::now()};
-  const auto results =
-    interface.get_levels_md<level_element>(req, index, error);
+  const auto results = interface.get_levels<level_element>(req, index, error);
   if (error) {
     lgr.error("Error obtaining levels: {}", error);
     return error;
