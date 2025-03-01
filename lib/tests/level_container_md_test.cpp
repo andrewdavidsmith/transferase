@@ -76,6 +76,7 @@ TEST(level_container_md_test, vector_constructor) {
   EXPECT_EQ(container.n_rows, n_rows);
   EXPECT_EQ(container.n_cols, n_cols);
   EXPECT_EQ(container.v.size(), n_rows * n_cols);
+  EXPECT_EQ((container[2, 0]), level_element_t(5, 6));
 }
 
 class level_container_md_mock : public ::testing::Test {
@@ -84,9 +85,11 @@ protected:
   SetUp() -> void override {
     container = level_container_md<level_element_t>(n_rows, n_cols);
     container[0, 0] = level_element_t{1, 2};
-    container[0, 1] = level_element_t{3, 4};
-    container[1, 0] = level_element_t{5, 6};
-    container[1, 1] = level_element_t{7, 8};
+    container[1, 0] = level_element_t{3, 4};
+    container[2, 0] = level_element_t{5, 6};
+    container[0, 1] = level_element_t{7, 8};
+    container[1, 1] = level_element_t{9, 10};
+    container[2, 1] = level_element_t{11, 12};
   }
 
   auto
@@ -94,16 +97,20 @@ protected:
 
 public:
   level_container_md<level_element_t> container;
-  const std::string expected_str = "1\t2\t3\t4\n5\t6\t7\t8\n";
-  const std::uint32_t n_rows = 2;
+  const std::string expected_str = "1\t2\t7\t8\n"
+                                   "3\t4\t9\t10\n"
+                                   "5\t6\t11\t12\n";
+  const std::uint32_t n_rows = 3;
   const std::uint32_t n_cols = 2;
 };
 
 TEST_F(level_container_md_mock, access_operator) {
   EXPECT_EQ((container[0, 0]), level_element_t(1, 2));
-  EXPECT_EQ((container[0, 1]), level_element_t(3, 4));
-  EXPECT_EQ((container[1, 0]), level_element_t(5, 6));
-  EXPECT_EQ((container[1, 1]), level_element_t(7, 8));
+  EXPECT_EQ((container[1, 0]), level_element_t(3, 4));
+  EXPECT_EQ((container[2, 0]), level_element_t(5, 6));
+  EXPECT_EQ((container[0, 1]), level_element_t(7, 8));
+  EXPECT_EQ((container[1, 1]), level_element_t(9, 10));
+  EXPECT_EQ((container[2, 1]), level_element_t(11, 12));
 }
 
 TEST_F(level_container_md_mock, resize) {
@@ -162,6 +169,7 @@ TEST_F(level_container_md_mock, write_with_intervals_writer_test) {
   const auto intervals = std::vector{
     genomic_interval{0, 1000, 2000},
     genomic_interval{0, 3000, 4000},
+    genomic_interval{0, 5000, 6000},
   };
   // make a minimal sufficient genome index
   genome_index index;
@@ -448,16 +456,12 @@ TEST_F(level_container_md_mock, write_with_bins_writer_test) {
   EXPECT_FALSE(error);
 }
 
-TEST(level_container_md_test, add_column_test) {
+TEST_F(level_container_md_mock, add_column_test) {
   const auto col_to_add = std::vector{
-    level_element_t{3, 4},
-    level_element_t{7, 8},
+    level_element_t{13, 14},
+    level_element_t{15, 16},
+    level_element_t{17, 18},
   };
-  constexpr std::uint32_t n_rows = 2;
-  constexpr std::uint32_t n_cols = 1;
-  level_container_md<level_element_t> container(n_rows, n_cols);
-  container[0, 0] = level_element_t{1, 2};
-  container[1, 0] = level_element_t{5, 6};
   container.add_column(col_to_add);
   EXPECT_EQ(std::size(container), n_rows * (n_cols + 1))
     << container.tostring();
