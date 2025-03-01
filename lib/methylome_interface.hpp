@@ -26,9 +26,11 @@
 
 #include "client_connection.hpp"
 #include "genome_index.hpp"
+#include "level_container_md.hpp"
 #include "methylome.hpp"
-#include "nlohmann/json.hpp"
 #include "request.hpp"
+
+#include "nlohmann/json.hpp"
 
 #include <string>
 #include <vector>
@@ -40,6 +42,7 @@ public:
   std::string directory;
   std::string hostname;
   std::string port_number;
+  bool local_mode{false};
 
   [[nodiscard]] auto
   tostring() const noexcept -> std::string {
@@ -53,25 +56,18 @@ public:
   [[nodiscard]] auto
   get_levels(const request &req, const query_container &query,
              std::error_code &ec) const noexcept
-    -> std::variant<std::vector<level_container<level_element_t>>,
-                    std::vector<level_container<level_element_covered_t>>> {
-    if (!directory.empty())
-      return get_levels_local_impl<lvl_elem_t>(req, query, ec);
-    else
-      return get_levels_remote_impl<lvl_elem_t>(req, query, ec);
+    -> level_container_md<lvl_elem_t> {
+    return local_mode ? get_levels_local_impl<lvl_elem_t>(req, query, ec)
+                      : get_levels_remote_impl<lvl_elem_t>(req, query, ec);
   }
 
   // bins: takes an index
   template <typename lvl_elem_t>
   [[nodiscard]] auto
-  get_levels(const request &req, const genome_index &index,
-             std::error_code &ec) const noexcept
-    -> std::variant<std::vector<level_container<level_element_t>>,
-                    std::vector<level_container<level_element_covered_t>>> {
-    if (!directory.empty())
-      return get_levels_local_impl<lvl_elem_t>(req, index, ec);
-    else
-      return get_levels_remote_impl<lvl_elem_t>(req, ec);
+  get_levels(const request &req, const genome_index &index, std::error_code &ec)
+    const noexcept -> level_container_md<lvl_elem_t> {
+    return local_mode ? get_levels_local_impl<lvl_elem_t>(req, index, ec)
+                      : get_levels_remote_impl<lvl_elem_t>(req, ec);
   }
 
 private:
@@ -79,25 +75,30 @@ private:
   [[nodiscard]] auto
   get_levels_remote_impl(const request &req, const query_container &query,
                          std::error_code &ec) const noexcept
-    -> std::vector<level_container<lvl_elem_t>> {
-    intervals_client<lvl_elem_t> cl(hostname, port_number, req, query);
+    -> level_container_md<lvl_elem_t> {
+    intervals_client_connection<lvl_elem_t> cl(hostname, port_number, req,
+                                               query);
     ec = cl.run();
     if (ec)
       return {};
-    return cl.take_levels(ec);
+    return cl.take_levels();
   }
 
   template <typename lvl_elem_t>
   [[nodiscard]] auto
   get_levels_local_impl(const request &req, const query_container &query,
                         std::error_code &ec) const noexcept
-    -> std::vector<level_container<lvl_elem_t>> {
-    std::vector<level_container<lvl_elem_t>> results;
+    -> level_container_md<lvl_elem_t> {
+    level_container_md<lvl_elem_t> results(req.n_intervals(),
+                                           req.n_methylomes());
+    std::uint32_t col_id = 0;
     for (const auto &methylome_name : req.methylome_names) {
       const auto meth = methylome::read(directory, methylome_name, ec);
       if (ec)
         return {};
-      results.emplace_back(meth.get_levels<lvl_elem_t>(query));
+      // This should take the results as out-param and have results fully
+      // pre-allocated
+      meth.get_levels<lvl_elem_t>(query, results.column_itr(col_id));
     }
     return results;
   }
@@ -105,28 +106,32 @@ private:
   template <typename lvl_elem_t>
   [[nodiscard]] auto
   get_levels_remote_impl(const request &req, std::error_code &ec) const noexcept
-    -> std::vector<level_container<lvl_elem_t>> {
-    bins_client<lvl_elem_t> cl(hostname, port_number, req);
+    -> level_container_md<lvl_elem_t> {
+    bins_client_connection<lvl_elem_t> cl(hostname, port_number, req);
     ec = cl.run();
     if (ec)
       return {};
-    return cl.take_levels(ec);
+    return cl.take_levels();
   }
 
   template <typename lvl_elem_t>
   [[nodiscard]] auto
   get_levels_local_impl(const request &req, const genome_index &index,
                         std::error_code &ec) const noexcept
-    -> std::vector<level_container<lvl_elem_t>> {
-    std::vector<level_container<lvl_elem_t>> results;
+    -> level_container_md<lvl_elem_t> {
+    level_container_md<lvl_elem_t> results(index.get_n_bins(req.bin_size()),
+                                           req.n_methylomes());
+    std::uint32_t col_id = 0;
     for (const auto &methylome_name : req.methylome_names) {
       const auto meth = methylome::read(directory, methylome_name, ec);
       if (ec)
         return {};
-      results.emplace_back(meth.get_levels<lvl_elem_t>(req.bin_size(), index));
+      meth.get_levels<lvl_elem_t>(req.bin_size(), index,
+                                  results.column_itr(col_id++));
     }
     return results;
   }
+
   NLOHMANN_DEFINE_TYPE_INTRUSIVE(methylome_interface, directory, hostname,
                                  port_number)
 };
