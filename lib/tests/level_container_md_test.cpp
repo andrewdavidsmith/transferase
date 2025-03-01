@@ -50,8 +50,8 @@ using namespace transferase;  // NOLINT
 
 TEST(level_container_md_test, default_constructor) {
   level_container_md<level_element_t> container;
-  EXPECT_EQ(container.n_rows, 0);
-  EXPECT_EQ(container.n_cols, 0);
+  EXPECT_EQ(container.n_rows, 0u);
+  EXPECT_EQ(container.n_cols, 0u);
   EXPECT_TRUE(container.v.empty());
 }
 
