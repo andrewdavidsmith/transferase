@@ -93,14 +93,14 @@ struct query_container {
   [[nodiscard]] auto operator[](size_type pos) const -> const query_element& {return v[pos];}
   // clang-format on
 
+  [[nodiscard]] auto
+  size() const noexcept -> std::size_t {
+    return std::size(v);
+  }
+
   auto
   operator<=>(const query_container &other) const = default;
 };
-
-[[nodiscard]] inline auto
-size(const query_container &query) {
-  return std::size(query.v);
-}
 
 }  // namespace transferase
 
