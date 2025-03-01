@@ -38,6 +38,15 @@
 
 using namespace transferase;  // NOLINT
 
+[[nodiscard]] static auto
+to_string(const auto &maplike) -> std::string {
+  const auto fmt_pair = [](const auto &pairlike) -> std::string {
+    return std::format(R"("{}":"{}"\n)", pairlike.first, pairlike.second);
+  };
+  return maplike | std::views::transform(fmt_pair) |
+         std::views::join_with(',') | std::ranges::to<std::string>();
+}
+
 TEST(download_test, send_request_timeout) {
   const auto target = std::filesystem::path{"/delay/1"};
   const auto outdir = std::filesystem::path{"/tmp"};
@@ -57,13 +66,12 @@ TEST(download_test, send_request_timeout) {
 
   // Simulate the download
   const auto [headers, ec] = download(dr);
-  std::ignore = headers;
 
-  EXPECT_TRUE(ec.value() == std::to_underlying(boost::beast::error::timeout));
-  if (std::filesystem::exists(expected_outfile)) {
-    const bool remove_ok = std::filesystem::remove(expected_outfile);
-    EXPECT_TRUE(remove_ok);
-  }
+  EXPECT_TRUE(ec.value() == std::to_underlying(boost::beast::error::timeout))
+    << to_string(headers);
+  std::error_code error;
+  remove_file(expected_outfile, error);
+  EXPECT_FALSE(error);
 }
 
 TEST(download_test, receive_download_timeout) {
@@ -86,21 +94,12 @@ TEST(download_test, receive_download_timeout) {
   const auto [headers, ec] = download(dr);  // do the download
   std::ignore = headers;
 
-  EXPECT_TRUE(ec.value() == std::to_underlying(boost::beast::error::timeout));
+  EXPECT_TRUE(ec.value() == std::to_underlying(boost::beast::error::timeout))
+    << to_string(headers);
 
-  if (std::filesystem::exists(expected_outfile)) {
-    const bool remove_ok = std::filesystem::remove(expected_outfile);
-    EXPECT_TRUE(remove_ok);
-  }
-}
-
-[[nodiscard]] static auto
-to_string(const auto &maplike) -> std::string {
-  const auto fmt_pair = [](const auto &pairlike) -> std::string {
-    return std::format(R"("{}":"{}"\n)", pairlike.first, pairlike.second);
-  };
-  return maplike | std::views::transform(fmt_pair) |
-         std::views::join_with(',') | std::ranges::to<std::string>();
+  std::error_code error;
+  remove_file(expected_outfile, error);
+  EXPECT_FALSE(error);
 }
 
 TEST(download_test, download_non_existent_file) {
@@ -139,12 +138,12 @@ TEST(download_test, download_non_existent_file) {
     << to_string(headers);
 
   // randomly generated filename should not exist as a uri
-  EXPECT_TRUE(timeout_happened || headers.at("Status") == "404");
+  EXPECT_TRUE(timeout_happened || headers.at("Status") == "404")
+    << to_string(headers);
 
-  if (std::filesystem::exists(expected_outfile)) {
-    const bool remove_ok = std::filesystem::remove(expected_outfile);
-    EXPECT_TRUE(remove_ok);
-  }
+  std::error_code error;
+  remove_file(expected_outfile, error);
+  EXPECT_FALSE(error);
 }
 
 TEST(download_test, download_success) {
@@ -166,15 +165,17 @@ TEST(download_test, download_success) {
     ec.value() == std::to_underlying(boost::beast::error::timeout);
 
   // Only check things if a timeout didn't happen
-  EXPECT_TRUE(timeout_happened || !ec);
-  EXPECT_TRUE(timeout_happened || headers.contains("Status"));
-  EXPECT_TRUE(timeout_happened || headers.contains("Reason"));
+  EXPECT_TRUE(timeout_happened || !ec) << to_string(headers);
+  EXPECT_TRUE(timeout_happened || headers.contains("Status"))
+    << to_string(headers);
+  EXPECT_TRUE(timeout_happened || headers.contains("Reason"))
+    << to_string(headers);
 
   // index.html should exist
-  EXPECT_TRUE(timeout_happened || headers.at("Status") == "200");
+  EXPECT_TRUE(timeout_happened || headers.at("Status") == "200")
+    << to_string(headers);
 
-  if (std::filesystem::exists(expected_outfile)) {
-    const bool remove_ok = std::filesystem::remove(expected_outfile);
-    EXPECT_TRUE(remove_ok);
-  }
+  std::error_code error;
+  remove_file(expected_outfile, error);
+  EXPECT_FALSE(error);
 }
