@@ -106,13 +106,6 @@ format_methylome_names_brief(const std::vector<std::string> &names)
 }
 
 [[nodiscard]] inline auto
-write_output(const auto &outmgr, const auto &results) -> std::error_code {
-  std::error_code ec;
-  std::visit([&](const auto &arg) { ec = outmgr.write_output(arg); }, results);
-  return ec;
-}
-
-[[nodiscard]] inline auto
 read_methylomes_file(const std::string &filename,
                      std::error_code &ec) -> std::vector<std::string> {
   std::ifstream in(filename);
@@ -156,8 +149,9 @@ read_intervals(const transferase::genome_index &index,
   return intervals;
 }
 
+template <typename level_element>
 [[nodiscard]] static auto
-do_intervals_query(const std::string &intervals_file, const bool count_covered,
+do_intervals_query(const std::string &intervals_file,
                    const transferase::output_format_t out_fmt,
                    const std::uint32_t min_reads,
                    const std::string &output_file,
@@ -184,12 +178,8 @@ do_intervals_query(const std::string &intervals_file, const bool count_covered,
 
   const auto query_start{std::chrono::high_resolution_clock::now()};
 
-  using transferase::level_element_covered_t;
-  using transferase::level_element_t;
   const auto results =
-    count_covered
-      ? interface.get_levels<level_element_covered_t>(req, query, error)
-      : interface.get_levels<level_element_t>(req, query, error);
+    interface.get_levels_md<level_element>(req, query, error);
   if (error) {
     lgr.error("Error obtaining levels: {}", error);
     return error;
@@ -210,19 +200,21 @@ do_intervals_query(const std::string &intervals_file, const bool count_covered,
   };
 
   const auto output_start{std::chrono::high_resolution_clock::now()};
-  error = write_output(outmgr, results);
-  const auto output_stop{std::chrono::high_resolution_clock::now()};
-  lgr.debug("Elapsed time for output: {:.3}s",
-            duration(output_start, output_stop));
+  error = outmgr.write_output(results);
   if (error) {
     lgr.error("Error writing output: {}", error);
     return error;
   }
+  const auto output_stop{std::chrono::high_resolution_clock::now()};
+  lgr.debug("Elapsed time for output: {:.3}s",
+            duration(output_start, output_stop));
+
   return std::error_code{};
 }
 
+template <typename level_element>
 [[nodiscard]] static auto
-do_bins_query(const std::uint32_t bin_size, const bool count_covered,
+do_bins_query(const std::uint32_t bin_size,
               const transferase::output_format_t out_fmt,
               const std::uint32_t min_reads, const std::string &output_file,
               const transferase::genome_index &index,
@@ -235,12 +227,8 @@ do_bins_query(const std::uint32_t bin_size, const bool count_covered,
                                         bin_size, methylome_names};
   std::error_code error;
   const auto query_start{std::chrono::high_resolution_clock::now()};
-  using transferase::level_element_covered_t;
-  using transferase::level_element_t;
   const auto results =
-    count_covered
-      ? interface.get_levels<level_element_covered_t>(req, index, error)
-      : interface.get_levels<level_element_t>(req, index, error);
+    interface.get_levels_md<level_element>(req, index, error);
   if (error) {
     lgr.error("Error obtaining levels: {}", error);
     return error;
@@ -261,7 +249,9 @@ do_bins_query(const std::uint32_t bin_size, const bool count_covered,
   };
 
   const auto output_start{std::chrono::high_resolution_clock::now()};
-  error = write_output(outmgr, results);
+
+  error = outmgr.write_output(results);
+
   const auto output_stop{std::chrono::high_resolution_clock::now()};
   lgr.debug("Elapsed time for output: {:.3}s",
             duration(output_start, output_stop));
@@ -471,12 +461,10 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
   }
 
   const auto interface = xfr::methylome_interface{
-    // directory
-    local_mode ? cfg.methylome_dir : std::string{},
-    // hostname
+    cfg.methylome_dir,
     cfg.hostname,
-    // port number
     cfg.port,
+    local_mode,
   };
 
   // get methylome names either parsed from command line or in a file
@@ -524,11 +512,19 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
                                      : xfr::request_type_code::bins);
   error =
     intervals_query
-      ? do_intervals_query(intervals_file, count_covered, out_fmt, min_reads,
-                           output_file, index, interface, methylomes,
-                           request_type)
-      : do_bins_query(bin_size, count_covered, out_fmt, min_reads, output_file,
-                      index, interface, methylomes, request_type);
+      ? (count_covered ? do_intervals_query<xfr::level_element_covered_t>(
+                           intervals_file, out_fmt, min_reads, output_file,
+                           index, interface, methylomes, request_type)
+                       : do_intervals_query<xfr::level_element_t>(
+                           intervals_file, out_fmt, min_reads, output_file,
+                           index, interface, methylomes, request_type))
+      : (count_covered ? do_bins_query<xfr::level_element_covered_t>(
+                           bin_size, out_fmt, min_reads, output_file, index,
+                           interface, methylomes, request_type)
+                       : do_bins_query<xfr::level_element_t>(
+                           bin_size, out_fmt, min_reads, output_file, index,
+                           interface, methylomes, request_type));
+
   // ADS: below is because error code '0' is printed as "Undefined
   // error" on macos.
   lgr.info("Completed query with status: {}",
