@@ -28,23 +28,32 @@ import os
 from transferase import GenomeIndex
 from transferase import GenomicInterval
 
+
 def create_temp_directory():
     """Create a unique temporary directory in /tmp"""
     temp_dir = tempfile.mkdtemp(dir="/tmp", prefix="test_")
     return temp_dir
+
 
 @pytest.fixture
 def genome_index():
     """Fixture to create a GenomeIndex object for testing"""
     return GenomeIndex()
 
+
+def get_rootdir(pytestconfig):
+    return pytestconfig.option["rootdir"]
+
+
 def test_is_consistent(genome_index):
     """Test the 'is_consistent' method"""
     assert isinstance(genome_index.is_consistent(), bool)
 
+
 def test_hash(genome_index):
     """Test the '__hash__' method"""
     assert isinstance(hash(genome_index), int)
+
 
 def test_repr(genome_index):
     """Test the '__repr__' method"""
@@ -52,12 +61,19 @@ def test_repr(genome_index):
     assert isinstance(repr_str, str)
     assert len(repr_str) > 0
 
-def test_read():
+
+def test_read(pytestconfig):
     """Test the static 'read' method"""
-    dirname = "data/lutions/indexes"
+    rootdir = pytestconfig.rootdir
+    dirname = os.path.join(rootdir, "data/lutions/indexes")
     genome_name = "eVaporeon"
-    index = GenomeIndex.read(dirname, genome_name)
+    try:
+        index = GenomeIndex.read(dirname, genome_name)
+    except Exception as err:
+        print(f"CWD={os.getcwd()}\nROOTDIR={pytest.rootdir}")
+        raise err
     assert index is not None
+
 
 def test_write(genome_index):
     """Test the 'write' method"""
@@ -68,31 +84,41 @@ def test_write(genome_index):
     if os.path.isdir(outdir):
         shutil.rmtree(outdir)
 
-def test_make_query(genome_index):
+
+def test_make_query(genome_index, pytestconfig):
     """Test the 'make_query' method"""
-    intervals_file = "data/lutions/raw/eVaporeon_ear_hmr.bed"
+    rootdir = pytestconfig.rootdir
+    intervals_file = os.path.join(
+        rootdir, "data/lutions/raw/eVaporeon_ear_hmr.bed"
+    )
     with pytest.raises(RuntimeError, match="chrom name not found in index"):
         intervals = GenomicInterval.read(genome_index, intervals_file)
         result = genome_index.make_query(intervals)
         assert result is not None  # Modify based on expected output
 
-def test_make_genome_index():
+
+def test_make_genome_index(pytestconfig):
     """Test the static 'make_genome_index' method"""
-    genome_file = "data/lutions/raw/eJolteon.fa.gz"
+    rootdir = pytestconfig.rootdir
+    genome_file = os.path.join(rootdir, "data/lutions/raw/eJolteon.fa.gz")
     result = GenomeIndex.make_genome_index(genome_file)
     assert result is not None
 
-def test_files_exist():
+
+def test_files_exist(pytestconfig):
     """Test the static 'files_exist' method"""
-    directory = "data/lutions/indexes"
+    rootdir = pytestconfig.rootdir
+    directory = os.path.join(rootdir, "data/lutions/indexes")
     genome_name = "eJolteon"
     result = GenomeIndex.files_exist(directory, genome_name)
     assert isinstance(result, bool)
     assert result
 
-def test_list_genome_indexes():
+
+def test_list_genome_indexes(pytestconfig):
     """Test the static 'list_genome_indexes' method"""
-    directory = "data/lutions/indexes"
+    rootdir = pytestconfig.rootdir
+    directory = os.path.join(rootdir, "data/lutions/indexes")
     result = GenomeIndex.list_genome_indexes(directory)
     assert isinstance(result, list)
     assert len(result) == 3
