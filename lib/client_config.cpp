@@ -297,7 +297,10 @@ client_config::read(std::string config_dir,
   if (error)
     return {};
 
-  return read_config_file(config_file, error);
+  auto config = read_config_file(config_file, error);
+  if (config.config_dir.empty())
+    config.config_dir = config_dir;
+  return config;
 }
 
 auto
