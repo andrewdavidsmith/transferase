@@ -44,12 +44,12 @@ intervals = GenomicInterval.read(genome_index, "cpgIslandExtUnmasked_hg38.bed3")
 
 levels = client.get_levels(["ERX9474770","ERX9474769"], intervals)
 
-print("\n".join([str(levels[1][i]) for i in range(10)]))
+print("\n".join([str(levels.at(i, 1)) for i in range(10)]))
 
 query = genome_index.make_query(intervals)
 levels = client.get_levels_covered(["ERX9474770","ERX9474769"], query)
 
-for methylome_results in levels:
+for j in range(levels.n_methylomes):
     for i in range(10):
-        print(intervals[i].to_string(genome_index), methylome_results[i])
+        print(intervals[i].to_string(genome_index), levels.at(i, j))
     print()
