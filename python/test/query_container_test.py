@@ -24,6 +24,7 @@ import pytest
 
 from transferase import MQuery
 
+
 @pytest.fixture
 def query_containers():
     """Fixture to set up initial data for tests"""
@@ -32,16 +33,19 @@ def query_containers():
     query2 = MQuery()
     return query1, query2
 
+
 def test_init_empty(query_containers):
     """Test length zero"""
     query1, _ = query_containers
     assert len(query1) == 0
+
 
 def test_repr(query_containers):
     """Test the __repr__ method"""
     query1, _ = query_containers
     repr_str = repr(query1)
     assert "<MQuery size=0>" in repr_str
+
 
 def test_eq(query_containers):
     """Test the equality operator"""
