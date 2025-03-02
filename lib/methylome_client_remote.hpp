@@ -49,8 +49,7 @@
 // forward declarations
 namespace transferase {
 struct genomic_interval;
-struct level_element_covered_t;
-template <typename level_element_type> struct level_container;
+struct level_element_covered_t;  // for is_same_v
 }  // namespace transferase
 
 namespace transferase {
@@ -144,7 +143,7 @@ private:
     error = cl.run();
     if (error)
       return {};
-    return cl.take_levels(error);
+    return cl.take_levels();
   }
 
   template <typename lvl_elem_t>
@@ -155,7 +154,7 @@ private:
     error = cl.run();
     if (error)
       return {};
-    return cl.take_levels(error);
+    return cl.take_levels();
   }
 
   [[nodiscard]] auto
