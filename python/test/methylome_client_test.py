@@ -28,20 +28,25 @@ import os
 
 from transferase import MClient
 
+
 def create_temp_directory():
     """Create a unique temporary directory in /tmp"""
     temp_dir = tempfile.mkdtemp(dir="/tmp", prefix="test_")
     return temp_dir
 
-def test_methylome_client_factory():
+
+def test_methylome_client_constructor(pytestconfig):
     """Get a MClient"""
-    config_dir = "data/lutions"
+    print(pytestconfig.rootdir)
+    config_dir = os.path.join(pytestconfig.rootdir, "data/lutions")
+    print(config_dir)
     obj = MClient(config_dir)
     assert hasattr(obj, "config"), "Object is missing 'config'"
 
-def test_reset_to_default_config():
+
+def test_reset_to_default_config(pytestconfig):
     """Reset the configuration to the default"""
-    config_dir = "data/lutions"
+    config_dir = os.path.join(pytestconfig.rootdir, "data/lutions")
     config_dir_tmp = create_temp_directory()
     obj = MClient(config_dir)
     obj_tmp = obj
