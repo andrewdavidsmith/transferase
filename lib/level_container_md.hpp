@@ -87,6 +87,19 @@ template <typename level_element_type> struct level_container_md {
     -> const level_element_type& {return v[pos];}
   // clang-format on
 
+  [[nodiscard]] auto
+  get_wmeans(const std::uint32_t min_reads) const
+    -> std::vector<std::vector<float>> {
+    std::vector<std::vector<float>> u(n_cols, std::vector<float>(n_rows));
+    for (const auto col_id : std::views::iota(0u, n_cols))
+      std::ranges::transform(
+        column_itr(col_id), column_itr(col_id) + n_rows, std::begin(u[col_id]),
+        [min_reads](const auto &val) -> double {
+          return val.n_reads() >= min_reads ? val.get_wmean() : -1.0;
+        });
+    return u;
+  }
+
   auto
   resize(const std::integral auto new_size) noexcept {
     v.resize(new_size);
