@@ -24,24 +24,26 @@
 #ifndef PYTHON_TRANSFERASE_LEVEL_CONTAINER_BINDINGS_HPP_
 #define PYTHON_TRANSFERASE_LEVEL_CONTAINER_BINDINGS_HPP_
 
+#include <level_container_md.hpp>
+
 #include <nanobind/nanobind.h>
 
 namespace transferase {
 struct level_element_covered_t;
 struct level_element_t;
-template <typename level_element_type> struct level_container;
 }  // namespace transferase
 
 namespace nb = nanobind;
 
 auto
 level_container_bindings(
-  nb::class_<transferase::level_container<transferase::level_element_t>> &cls)
-  -> void;
+  nb::class_<transferase::level_container_md<transferase::level_element_t>>
+    &cls) -> void;
 
 auto
 level_container_covered_bindings(
-  nb::class_<transferase::level_container<transferase::level_element_covered_t>>
-    &cls) -> void;
+  nb::class_<
+    transferase::level_container_md<transferase::level_element_covered_t>> &cls)
+  -> void;
 
 #endif  // PYTHON_TRANSFERASE_LEVEL_CONTAINER_BINDINGS_HPP_
