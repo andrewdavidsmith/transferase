@@ -4,7 +4,7 @@
     "port": "9000",
     "index_dir": "indexes",
     "metadata_file": "metadata.json",
-    "methylome_dir": "",
+    "methylome_dir": "methylomes",
     "log_file": "",
     "log_level": "info"
 }
