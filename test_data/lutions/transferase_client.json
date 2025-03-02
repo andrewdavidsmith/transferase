@@ -1,5 +1,5 @@
 {
-    "config_dir": "data/lutions",
+    "config_dir": "",
     "hostname": "bulbapedia.bulbagarden.net",
     "port": "9000",
     "index_dir": "indexes",
