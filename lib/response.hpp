@@ -24,8 +24,6 @@
 #ifndef LIB_RESPONSE_HPP_
 #define LIB_RESPONSE_HPP_
 
-#include "level_container_md.hpp"
-
 #include <array>
 #include <cstddef>  // for std::byte
 #include <cstdint>
@@ -37,6 +35,8 @@
 #include <vector>
 
 namespace transferase {
+
+template <typename level_element_type> struct level_container_md;
 
 static constexpr std::uint32_t response_header_buffer_size = 256;
 typedef std::array<char, response_header_buffer_size> response_header_buffer;

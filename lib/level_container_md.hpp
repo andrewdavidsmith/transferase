@@ -26,14 +26,16 @@
 
 #include "level_element.hpp"
 
+#include <algorithm>
 #include <cassert>
 #include <concepts>  // for std::integral
 #include <cstddef>   // for std::size_t
 #include <cstdint>
 #include <initializer_list>  // for std::begin, std::end
-#include <iostream>
-#include <iterator>  // for std::size, std::cbegin, std::cend
+#include <iterator>          // for std::size, std::cbegin, std::cend
 #include <ranges>
+#include <string>
+#include <system_error>
 #include <utility>  // for std::move
 #include <vector>
 
