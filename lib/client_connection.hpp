@@ -24,7 +24,6 @@
 #ifndef LIB_CLIENT_CONNECTION_HPP_
 #define LIB_CLIENT_CONNECTION_HPP_
 
-#include "level_container.hpp"
 #include "level_container_md.hpp"
 #include "logger.hpp"
 #include "query_container.hpp"
