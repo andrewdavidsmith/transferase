@@ -61,7 +61,6 @@ xfr query --local -d methylome_dir -x index_dir -g hg38 \
 #include "genome_index.hpp"
 #include "genomic_interval.hpp"
 #include "intervals_writer.hpp"
-#include "level_container.hpp"
 #include "level_element.hpp"
 #include "logger.hpp"
 #include "methylome.hpp"
