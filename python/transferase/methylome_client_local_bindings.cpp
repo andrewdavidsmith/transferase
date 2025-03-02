@@ -73,6 +73,14 @@ methylome_client_local_bindings(
     R"doc(
     Get the index directory for this MClientLocal.
     )doc");
+  cls.def(
+    "get_methylome_dir",
+    [](const xfr::methylome_client_local &self) -> std::string {
+      return self.config.get_methylome_dir();
+    },
+    R"doc(
+    Get the methylomes directory for this MClientLocal.
+    )doc");
   cls.def("configured_genomes",
           nb::overload_cast<>(&xfr::methylome_client_local::configured_genomes,
                               nb::const_),
