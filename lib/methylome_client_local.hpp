@@ -51,7 +51,6 @@
 namespace transferase {
 struct genomic_interval;
 struct level_element_covered_t;
-template <typename level_element_type> struct level_container;
 }  // namespace transferase
 
 namespace transferase {
