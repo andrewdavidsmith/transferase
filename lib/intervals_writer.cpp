@@ -27,8 +27,8 @@
 #include "genome_index_metadata.hpp"
 #include "genomic_interval.hpp"
 #include "level_container.hpp"
+#include "level_container_md.hpp"  // IWYU: pragma: keep
 #include "level_element.hpp"
-#include "level_element_md.hpp"  // IWYU: pragma: keep
 
 #include <algorithm>  // for transform
 #include <cerrno>
