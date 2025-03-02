@@ -23,10 +23,11 @@
 
 #include "level_container_bindings.hpp"
 
-#include <level_container.hpp>
+#include <level_container_md.hpp>
 #include <level_element.hpp>
 
 #include <nanobind/nanobind.h>
+#include <nanobind/ndarray.h>
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/tuple.h>
 #include <nanobind/stl/vector.h>
@@ -43,22 +44,32 @@ namespace nb = nanobind;
 
 auto
 level_container_bindings(
-  nb::class_<transferase::level_container<transferase::level_element_t>> &cls)
-  -> void {
+  nb::class_<transferase::level_container_md<transferase::level_element_t>>
+    &cls) -> void {
   using namespace nanobind::literals;  // NOLINT
-  namespace xfr = transferase;
+  using level_container_md =
+    transferase::level_container_md<transferase::level_element_t>;
   cls.def(nb::init<>());
-  cls.def("__len__",
-          [](const xfr::level_container<xfr::level_element_t> &self) {
-            return std::size(self);
-          });
+  cls.def("__len__", &level_container_md::size);
+  cls.def_ro("n_rows", &level_container_md::n_rows);
+  cls.def_ro("n_intervals", &level_container_md::n_rows);
+  cls.def_ro("n_cols", &level_container_md::n_cols);
+  cls.def_ro("n_methylomes", &level_container_md::n_cols);
   cls.def(
-    "__getitem__",
-    [](const xfr::level_container<xfr::level_element_t> &self,
-       const std::size_t pos) -> std::tuple<std::uint32_t, std::uint32_t> {
-      if (pos >= std::size(self))
+    "view_nparray",
+    [](level_container_md &self) {
+      using nparray = nb::ndarray<std::uint32_t, nb::numpy,
+                                  nb::shape<-1, -1, 2>, nb::c_contig>;
+      return nparray(self.v.data(), {self.n_cols, self.n_rows, 2}).cast();
+    },
+    nb::rv_policy::reference_internal);
+  cls.def(
+    "at",
+    [](const level_container_md &self, const std::size_t i,
+       const std::size_t j) -> std::tuple<std::uint32_t, std::uint32_t> {
+      if (i >= self.n_rows || j >= self.n_cols)
         throw std::out_of_range("Index out of range");
-      return std::make_tuple(self[pos].n_meth, self[pos].n_unmeth);
+      return std::make_tuple(self[i, j].n_meth, self[i, j].n_unmeth);
     },
     R"doc(
     Access the tuple (n_meth, n_unmeth) of numbers of methylated and
@@ -69,17 +80,19 @@ level_container_bindings(
     Parameters
     ----------
 
-    pos (int): The index of the query interval for which to get the numbers of
+    arg0 (int): The index of the query interval for which to get the numbers of
         methylated and unmethylated reads.
-    )doc",
-    "pos"_a);
+
+    arg1 (int): The index of the methylome for which to get the numbers of
+        methylated and unmethylated reads.
+    )doc");
   cls.def(
     "get_n_meth",
-    [](const xfr::level_container<xfr::level_element_t> &self,
-       const std::size_t pos) -> std::uint32_t {
-      if (pos >= std::size(self))
+    [](const level_container_md &self, const std::size_t i,
+       const std::size_t j) -> std::uint32_t {
+      if (i >= self.n_rows || j >= self.n_cols)
         throw std::out_of_range("Index out of range");
-      return self[pos].n_meth;
+      return self[i, j].n_meth;
     },
     R"doc(
     Access the number of methylated observations for the query interval
@@ -88,17 +101,19 @@ level_container_bindings(
     Parameters
     ----------
 
-    pos (int): The index of the query interval for which to get the number of
+    arg0 (int): The index of the query interval for which to get the number of
         methylated reads.
-    )doc",
-    "pos"_a);
+
+    arg1 (int): The index of the methylome for which to get the number of
+        methylated reads.
+    )doc");
   cls.def(
     "get_n_unmeth",
-    [](const xfr::level_container<xfr::level_element_t> &self,
-       const std::size_t pos) -> std::uint32_t {
-      if (pos >= std::size(self))
+    [](const level_container_md &self, const std::size_t i,
+       const std::size_t j) -> std::uint32_t {
+      if (i >= self.n_rows || j >= self.n_cols)
         throw std::out_of_range("Index out of range");
-      return self[pos].n_unmeth;
+      return self[i, j].n_unmeth;
     },
     R"doc(
     Access the number of UNmethylated observations for the query interval
@@ -107,17 +122,19 @@ level_container_bindings(
     Parameters
     ----------
 
-    pos (int): The index of the query interval for which to get the number of
+    arg0 (int): The index of the query interval for which to get the number of
         UNmethylated reads.
-    )doc",
-    "pos"_a);
+
+    arg1 (int): The index of the methylome for which to get the number of
+        UNmethylated reads.
+    )doc");
   cls.def(
     "get_wmean",
-    [](const xfr::level_container<xfr::level_element_t> &self,
-       const std::size_t pos) -> double {
-      if (pos >= std::size(self))
+    [](const level_container_md &self, const std::size_t i,
+       const std::size_t j) -> double {
+      if (i >= self.n_rows || j >= self.n_cols)
         throw std::out_of_range("Index out of range");
-      return self[pos].get_wmean();
+      return self[i, j].get_wmean();
     },
     R"doc(
     Get the weighted mean methylation level for the interval corresponding to
@@ -127,11 +144,13 @@ level_container_bindings(
     Parameters
     ----------
 
-    pos (int): The index of the query interval for which to get the weighted
+    arg0 (int): The index of the query interval for which to get the weighted
         mean methylation level.
-    )doc",
-    "pos"_a);
-  cls.def("all_wmeans", &xfr::level_container<xfr::level_element_t>::get_wmeans,
+
+    arg1 (int): The index of the methylome for which to get the weighted mean
+        methylation level.
+    )doc");
+  cls.def("all_wmeans", &level_container_md::get_wmeans,
           R"doc(
     Apply the 'get_wmean' function to all elements of this Levels object,
     returning a list of weighted mean methylation levels. A value of -1.0
@@ -146,11 +165,9 @@ level_container_bindings(
         desired depending on your application.
     )doc",
           "min_reads"_a = 0u);
-  cls.def(
-    "__str__",
-    [](const xfr::level_container<xfr::level_element_t> &self) -> std::string {
-      return std::format("MLevels size={}", std::size(self));
-    });
+  cls.def("__str__", [](const level_container_md &self) -> std::string {
+    return std::format("MLevels size={}", std::size(self));
+  });
   cls.doc() = R"doc(
     A MLevels represents methylation levels in each among a list of
     GenomicInterval objects. This is the object type that is returned from a
@@ -163,24 +180,34 @@ level_container_bindings(
 
 auto
 level_container_covered_bindings(
-  nb::class_<transferase::level_container<transferase::level_element_covered_t>>
-    &cls) -> void {
+  nb::class_<
+    transferase::level_container_md<transferase::level_element_covered_t>> &cls)
+  -> void {
   using namespace nanobind::literals;  // NOLINT
-  namespace xfr = transferase;
+  using level_container_md =
+    transferase::level_container_md<transferase::level_element_covered_t>;
   cls.def(nb::init<>());
-  cls.def("__len__",
-          [](const xfr::level_container<xfr::level_element_covered_t> &self) {
-            return std::size(self);
-          });
+  cls.def("__len__", &level_container_md::size);
+  cls.def_ro("n_rows", &level_container_md::n_rows);
+  cls.def_ro("n_intervals", &level_container_md::n_rows);
+  cls.def_ro("n_cols", &level_container_md::n_cols);
+  cls.def_ro("n_methylomes", &level_container_md::n_cols);
   cls.def(
-    "__getitem__",
-    [](const xfr::level_container<xfr::level_element_covered_t> &self,
-       const std::size_t pos)
+    "view_nparray",
+    [](level_container_md &self) {
+      using nparray = nb::ndarray<std::uint32_t, nb::numpy,
+                                  nb::shape<-1, -1, 3>, nb::c_contig>;
+      return nparray(self.v.data(), {self.n_cols, self.n_rows, 3}).cast();
+    },
+    nb::rv_policy::reference_internal);
+  cls.def(
+    "at",
+    [](const level_container_md &self, const std::size_t i, const std::size_t j)
       -> std::tuple<std::uint32_t, std::uint32_t, std::uint32_t> {
-      if (pos >= std::size(self))
+      if (i >= self.n_rows || j >= self.n_cols)
         throw std::out_of_range("Index out of range");
-      return std::make_tuple(self[pos].n_meth, self[pos].n_unmeth,
-                             self[pos].n_covered);
+      const auto &x = self[i, j];
+      return std::make_tuple(x.n_meth, x.n_unmeth, x.n_covered);
     },
     R"doc(
     Access the tuple (n_meth, n_unmeth, n_covered) of numbers of methylated
@@ -192,17 +219,19 @@ level_container_covered_bindings(
     Parameters
     ----------
 
-    pos (int): The index of the query interval for which to get the numbers of
-        methylated and unmethylated reads, and covered sites.
-    )doc",
-    "pos"_a);
+    arg0 (int): The index of the query interval for which to get the numbers
+        of methylated and unmethylated reads.
+
+    arg1 (int): The index of the methylome for which to get the numbers of
+        methylated and unmethylated reads.
+    )doc");
   cls.def(
     "get_n_meth",
-    [](const xfr::level_container<xfr::level_element_covered_t> &self,
-       const std::size_t pos) -> std::uint32_t {
-      if (pos >= std::size(self))
+    [](const level_container_md &self, const std::size_t i,
+       const std::size_t j) -> std::uint32_t {
+      if (i >= self.n_rows || j >= self.n_cols)
         throw std::out_of_range("Index out of range");
-      return self[pos].n_meth;
+      return self[i, j].n_meth;
     },
     R"doc(
     Access the number of methylated observations for the query interval
@@ -211,17 +240,19 @@ level_container_covered_bindings(
     Parameters
     ----------
 
-    pos (int): The index of the interval for which to get the number
-        of methylated reads.
-    )doc",
-    "pos"_a);
+    arg0 (int): The index of the query interval for which to get the number of
+        methylated reads.
+
+    arg1 (int): The index of the methylome for which to get the number of
+        methylated reads.
+    )doc");
   cls.def(
     "get_n_unmeth",
-    [](const xfr::level_container<xfr::level_element_covered_t> &self,
-       const std::size_t pos) -> std::uint32_t {
-      if (pos >= std::size(self))
+    [](const level_container_md &self, const std::size_t i,
+       const std::size_t j) -> std::uint32_t {
+      if (i >= self.n_rows || j >= self.n_cols)
         throw std::out_of_range("Index out of range");
-      return self[pos].n_unmeth;
+      return self[i, j].n_unmeth;
     },
     R"doc(
     Access the number of UNmethylated observations for the query interval
@@ -230,36 +261,40 @@ level_container_covered_bindings(
     Parameters
     ----------
 
-    pos (int): The index of the query interval for which to get the number of
+    arg0 (int): The index of the query interval for which to get the number of
         UNmethylated reads.
-    )doc",
-    "pos"_a);
+
+    arg1 (int): The index of the methylome for which to get the number of
+        UNmethylated reads.
+    )doc");
   cls.def(
     "get_n_covered",
-    [](const xfr::level_container<xfr::level_element_covered_t> &self,
-       const std::size_t pos) -> std::uint32_t {
-      if (pos >= std::size(self))
+    [](const level_container_md &self, const std::size_t i,
+       const std::size_t j) -> std::uint32_t {
+      if (i >= self.n_rows || j >= self.n_cols)
         throw std::out_of_range("Index out of range");
-      return self[pos].n_covered;
+      return self[i, j].n_covered;
     },
     R"doc(
-    Access the number of covered sites in the interval corresponding
-    to the given position.
+    Access the number of covered sites in the interval corresponding to the
+    given position.
 
     Parameters
     ----------
 
-    pos (int): The index of the interval for which to get the number
-        of covered sites.
-    )doc",
-    "pos"_a);
+    arg0 (int): The index of the query interval for which to get the number of
+        covered sites.
+
+    arg1 (int): The index of the methylome for which to get the number of
+        covered sites.
+    )doc");
   cls.def(
     "get_wmean",
-    [](const xfr::level_container<xfr::level_element_covered_t> &self,
-       const std::size_t pos) -> double {
-      if (pos >= std::size(self))
+    [](const level_container_md &self, const std::size_t i,
+       const std::size_t j) -> double {
+      if (i >= self.n_rows || j >= self.n_cols)
         throw std::out_of_range("Index out of range");
-      return self[pos].get_wmean();
+      return self[i, j].get_wmean();
     },
     R"doc(
     Get the weighted mean methylation level for the interval corresponding to
@@ -269,12 +304,13 @@ level_container_covered_bindings(
     Parameters
     ----------
 
-    pos (int): The index of the query interval for which to get the weighted
+    arg0 (int): The index of the query interval for which to get the weighted
         mean methylation level.
-    )doc",
-    "pos"_a);
-  cls.def("all_means",
-          &xfr::level_container<xfr::level_element_covered_t>::get_wmeans,
+
+    arg1 (int): The index of the methylome for which to get the weighted mean
+        methylation level.
+    )doc");
+  cls.def("all_means", &level_container_md::get_wmeans,
           R"doc(
     Apply the 'get_wmean' function to all elements of this LevelsCovered
     object, returning a list of weighted mean methylation levels. A value of
@@ -292,15 +328,13 @@ level_container_covered_bindings(
           "min_reads"_a = 0u);
   cls
     .def("__str__",
-         [](const xfr::level_container<xfr::level_element_covered_t> &self)
-           -> std::string {
+         [](const level_container_md &self) -> std::string {
            return std::format("MLevelsCovered size={}", std::size(self));
          })
     .doc() = R"doc(
-    A MLevelsCovered represents methylation levels in each
-    among a list of GenomicInterval objects. This is the object type
-    that is returned from a transferase query if you request
-    information about sites covered.
+    A MLevelsCovered represents methylation levels in each among a list of
+    GenomicInterval objects. This is the object type that is returned from a
+    transferase query if you request information about sites covered.
     )doc"
     //
     ;
