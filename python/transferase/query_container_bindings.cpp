@@ -40,12 +40,12 @@ query_container_bindings(nb::class_<transferase::query_container> &cls)
   -> void {
   namespace xfr = transferase;
   cls.def(nb::init<>())
-    .def("__len__", nb::overload_cast<const xfr::query_container &>(&xfr::size))
+    .def("__len__", &xfr::query_container::size)
     .def(nanobind::self == nanobind::self)
     .def(nanobind::self != nanobind::self)
     .def("__repr__",
          [](const xfr::query_container &self) -> std::string {
-           return std::format("<MQuery size={}>", xfr::size(self));
+           return std::format("<MQuery size={}>", std::size(self));
          })
     .doc() = R"doc(
     A MQuery is a representation for a list of GenomicInterval objects that
