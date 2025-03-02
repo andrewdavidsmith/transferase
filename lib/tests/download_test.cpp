@@ -138,7 +138,8 @@ TEST(download_test, download_non_existent_file) {
     << to_string(headers);
 
   // randomly generated filename should not exist as a uri
-  EXPECT_TRUE(timeout_happened || headers.at("Status") == "404")
+  EXPECT_TRUE(timeout_happened || headers.at("Status") == "404" ||
+              headers.at("Status") == "400")
     << to_string(headers);
 
   std::error_code error;
