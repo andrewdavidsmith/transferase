@@ -42,7 +42,7 @@
 namespace transferase {
 
 struct query_container;
-template <typename level_element_type> struct level_container;
+template <typename level_element_type> struct level_container_md;
 
 }  // namespace transferase
 
