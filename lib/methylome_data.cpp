@@ -211,12 +211,12 @@ template <>
 [[nodiscard]] auto
 methylome_data::get_levels<level_element_t>(
   const transferase::query_container &query) const noexcept
-  -> level_container<level_element_t> {
+  -> level_container_md<level_element_t> {
   std::vector<level_element_t> res(std::size(query));
   const auto beg = std::cbegin(cpgs);
   for (const auto [i, q] : std::views::enumerate(query))
     res[i] = get_levels_impl<level_element_t>(beg + q.start, beg + q.stop);
-  return level_container<level_element_t>(std::move(res));
+  return level_container_md<level_element_t>(std::move(res));
 }
 
 template <>
@@ -234,13 +234,13 @@ template <>
 [[nodiscard]] auto
 methylome_data::get_levels<level_element_covered_t>(
   const transferase::query_container &query) const noexcept
-  -> level_container<level_element_covered_t> {
+  -> level_container_md<level_element_covered_t> {
   std::vector<level_element_covered_t> res(std::size(query));
   const auto beg = std::cbegin(cpgs);
   for (const auto [i, q] : std::views::enumerate(query))
     res[i] =
       get_levels_impl<level_element_covered_t>(beg + q.start, beg + q.stop);
-  return level_container<level_element_covered_t>(std::move(res));
+  return level_container_md<level_element_covered_t>(std::move(res));
 }
 
 template <>
@@ -305,9 +305,11 @@ template <typename T>
 [[nodiscard]] static auto
 get_levels_impl(const std::uint32_t bin_size, const genome_index &index,
                 const methylome_data::vec &cpgs) noexcept
-  -> level_container<T> {
-  std::vector<T> results;  // ADS TODO: reserve n_bins
-
+  -> level_container_md<T> {
+  std::vector<T> results;
+  // reserving all the bins; note the container returned from this function is
+  // a 1D container.
+  results.reserve(index.get_n_bins(bin_size));
   const auto zipped = std::views::zip(
     index.data.positions, index.meta.chrom_size, index.meta.chrom_offset);
   for (const auto [positions, chrom_size, offset] : zipped) {
@@ -316,11 +318,11 @@ get_levels_impl(const std::uint32_t bin_size, const genome_index &index,
     auto cpg_itr = std::cbegin(cpgs) + offset;
     for (std::uint32_t i = 0; i < chrom_size; i += bin_size) {
       const auto bin_end = std::min(i + bin_size, chrom_size);
-      results.emplace_back(
+      results.push_back(
         bin_levels_impl<T>(posn_itr, posn_end, bin_end, cpg_itr));
     }
   }
-  return level_container<T>(std::move(results));
+  return level_container_md<T>(std::move(results));
 }
 
 template <typename T>
@@ -346,7 +348,7 @@ template <>
 [[nodiscard]] auto
 methylome_data::get_levels<level_element_t>(const std::uint32_t bin_size,
                                             const genome_index &index)
-  const noexcept -> level_container<level_element_t> {
+  const noexcept -> level_container_md<level_element_t> {
   return get_levels_impl<level_element_t>(bin_size, index, cpgs);
 }
 
@@ -363,7 +365,7 @@ template <>
 [[nodiscard]] auto
 methylome_data::get_levels<level_element_covered_t>(
   const std::uint32_t bin_size, const genome_index &index) const noexcept
-  -> level_container<level_element_covered_t> {
+  -> level_container_md<level_element_covered_t> {
   return get_levels_impl<level_element_covered_t>(bin_size, index, cpgs);
 }
 
