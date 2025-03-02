@@ -25,31 +25,45 @@
 # follows:
 # wget https://smithlabresearch.org/transferase/other/cpgIslandExtUnmasked_hg38.bed3
 
+# Declare variables to use in the query
+methylome_names = ["ERX9474770","ERX9474769"]
+genome_name = "hg38"
+intervals_filename = "cpgIslandExtUnmasked_hg38.bed3"
+
+# Set the log level to debug to see all
 import transferase
 from transferase import LogLevel
 transferase.set_log_level(LogLevel.debug)
 
+# Do the config
 from transferase import MConfig
 config = MConfig()
-config.install(["hg38"])
+config.install([genome_name])
 
+# Get a client
 from transferase import MClient
 client = MClient()
 
+# Load the genome index
 from transferase import GenomeIndex
-genome_index = GenomeIndex.read(client.get_index_dir(), "hg38")
+genome_index = GenomeIndex.read(client.get_index_dir(), genome_name)
 
+# Read the genomic intervals for the query
 from transferase import GenomicInterval
-intervals = GenomicInterval.read(genome_index, "cpgIslandExtUnmasked_hg38.bed3")
+intervals = GenomicInterval.read(genome_index, intervals_filename)
 
-levels = client.get_levels(["ERX9474770","ERX9474769"], intervals)
+# Do the query using the intervals
+levels = client.get_levels(methylome_names, intervals)
 
 print("\n".join([str(levels.at(i, 1)) for i in range(10)]))
 
 query = genome_index.make_query(intervals)
-levels = client.get_levels_covered(["ERX9474770","ERX9474769"], query)
+levels = client.get_levels_covered(methylome_names, query)
 
 for j in range(levels.n_methylomes):
     for i in range(10):
         print(intervals[i].to_string(genome_index), levels.at(i, j))
     print()
+
+arr = levels.view_nparray()
+print(arr)
