@@ -24,7 +24,6 @@
 #ifndef LIB_METHYLOME_HPP_
 #define LIB_METHYLOME_HPP_
 
-#include "level_container.hpp"
 #include "level_container_md.hpp"
 #include "level_element.hpp"
 #include "methylome_data.hpp"
@@ -244,7 +243,7 @@ struct methylome {
   template <typename lvl_elem_t>
   [[nodiscard]] auto
   get_levels(const transferase::query_container &query) const
-    -> level_container<lvl_elem_t> {
+    -> level_container_md<lvl_elem_t> {
     return data.get_levels<lvl_elem_t>(query);
   }
 
@@ -262,8 +261,8 @@ struct methylome {
   /// windows, which may overlap).
   template <typename lvl_elem_t>
   [[nodiscard]] auto
-  get_levels(const std::uint32_t bin_size,
-             const genome_index &index) const -> level_container<lvl_elem_t> {
+  get_levels(const std::uint32_t bin_size, const genome_index &index) const
+    -> level_container_md<lvl_elem_t> {
     return data.get_levels<lvl_elem_t>(bin_size, index);
   }
 
