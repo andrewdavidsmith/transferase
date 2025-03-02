@@ -43,7 +43,7 @@ When in doubt, consult the module reference at the location listed above.
 #include <download_policy.hpp>
 #include <genome_index.hpp>
 #include <genomic_interval.hpp>
-#include <level_container.hpp>
+#include <level_container_md.hpp>
 #include <level_element.hpp>
 #include <logger.hpp>
 #include <methylome.hpp>
@@ -109,11 +109,11 @@ NB_MODULE(transferase, the_module) {
   auto MQuery = nb::class_<xfr::query_container>(
     the_module, "MQuery", "A container for a methylome query");
 
-  auto MLevels = nb::class_<xfr::level_container<xfr::level_element_t>>(
+  auto MLevels = nb::class_<xfr::level_container_md<xfr::level_element_t>>(
     the_module, "MLevels", "A container for methylation levels");
 
   auto MLevelsCovered = nb::class_<
-    xfr::level_container<xfr::level_element_covered_t>>(
+    xfr::level_container_md<xfr::level_element_covered_t>>(
     the_module, "MLevelsCovered",
     "A container for methylation levels with information about covered sites");
 
