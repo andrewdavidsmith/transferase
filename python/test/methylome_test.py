@@ -33,46 +33,48 @@ from transferase import MLevels
 from transferase import MLevelsCovered
 
 
-def get_valid_test_genome_index(genome_name):
+def get_valid_test_genome_index(genome_name, rootdir):
     """
     Fixture to load a valid GenomeIndex object for testing
     """
-    genome_index_dirname = "data/lutions/indexes"
+    genome_index_dirname = os.path.join(rootdir, "data/lutions/indexes")
     genome_index = GenomeIndex.read(genome_index_dirname, genome_name)
     return genome_index
 
 
-def get_valid_test_methylome(genome_name, tissue_name):
+def get_valid_test_methylome(genome_name, tissue_name, rootdir):
     """
     Fixture to load a valid Methylome object for testing
     """
-    methylome_directory = "data/lutions/methylomes"
+    methylome_directory = os.path.join(rootdir, "data/lutions/methylomes")
     methylome_name = f"{genome_name}_{tissue_name}"
     meth = Methylome.read(methylome_directory, methylome_name)
     return meth
 
 
-def get_valid_test_genomic_intervals(genome_name, tissue_name):
+def get_valid_test_genomic_intervals(genome_name, tissue_name, rootdir):
     """
     Fixture to load a valid list of GenomicInterval objects for testing
     """
-    intervals_directory = "data/lutions/raw"
+    intervals_directory = os.path.join(rootdir, "data/lutions/raw")
     intervals_filename = os.path.join(
         intervals_directory,
         f"{genome_name}_{tissue_name}_hmr.bed",
     )
-    genome_index = get_valid_test_genome_index(genome_name)
+    genome_index = get_valid_test_genome_index(genome_name, rootdir)
     intervals = GenomicInterval.read(genome_index, intervals_filename)
     return intervals
 
 
-def get_valid_test_query(genome_name, tissue_name):
+def get_valid_test_query(genome_name, tissue_name, rootdir):
     """
     Fixture to make a valid query for given GenomeIndex and a
     corresponding list of GenomicInterval objects
     """
-    intervals = get_valid_test_genomic_intervals(genome_name, tissue_name)
-    genome_index = get_valid_test_genome_index(genome_name)
+    intervals = get_valid_test_genomic_intervals(
+        genome_name, tissue_name, rootdir
+    )
+    genome_index = get_valid_test_genome_index(genome_name, rootdir)
     query = genome_index.make_query(intervals)
     assert query is not None, f"Failed to make query from fixture"
     return query
@@ -90,9 +92,9 @@ def test_methylome_init():
     assert obj is not None
 
 
-def test_methylome_read():
+def test_methylome_read(pytestconfig):
     """Test the read static method"""
-    directory = "data/lutions/methylomes"
+    directory = os.path.join(pytestconfig.rootdir, "data/lutions/methylomes")
     methylome_name = "eFlareon_brain"
     meth = Methylome.read(directory, methylome_name)
     assert meth is not None
@@ -104,9 +106,9 @@ def test_methylome_is_consistent():
     assert isinstance(meth.is_consistent(), bool)
 
 
-def test_methylome_is_consistent():
+def test_methylome_is_consistent(pytestconfig):
     """Test the is_consistent method (non-empty Methylome)"""
-    directory = "data/lutions/methylomes"
+    directory = os.path.join(pytestconfig.rootdir, "data/lutions/methylomes")
     methylome_name = "eFlareon_brain"
     meth = Methylome.read(directory, methylome_name)
     assert meth.is_consistent()
@@ -119,41 +121,44 @@ def test_methylome_is_consistent_with_other():
     assert isinstance(obj1.is_consistent(obj2), bool)
 
 
-def test_methylome_write():
+def test_methylome_write(pytestconfig):
     """Test the write method"""
+    rootdir = pytestconfig.rootdir
     genome_name = "eVaporeon"
     tissue_name = "brain"
     methylome_name = f"{genome_name}_{tissue_name}"
-    meth = get_valid_test_methylome(genome_name, tissue_name)
+    meth = get_valid_test_methylome(genome_name, tissue_name, rootdir)
     output_directory = create_temp_directory()
     meth.write(output_directory, methylome_name)
     if os.path.isdir(output_directory):
         shutil.rmtree(output_directory)
 
 
-def test_methylome_init_metadata_inconsistent():
+def test_methylome_init_metadata_inconsistent(pytestconfig):
     """
     Test init_metadata method when Methylome and GenomeIndex are not
     consistent
     """
+    rootdir = pytestconfig.rootdir
     genome_name1 = "eVaporeon"
     genome_name2 = "eJolteon"
     tissue_name = "ear"
-    index = get_valid_test_genome_index(genome_name1)
-    meth = get_valid_test_methylome(genome_name2, tissue_name)
+    index = get_valid_test_genome_index(genome_name1, rootdir)
+    meth = get_valid_test_methylome(genome_name2, tissue_name, rootdir)
     with pytest.raises(RuntimeError, match="invalid methylome data"):
         meth.init_metadata(index)
 
 
-def test_methylome_init_metadata_consistent():
+def test_methylome_init_metadata_consistent(pytestconfig):
     """
     Test init_metadata method when Methylome and GenomeIndex are
     consistent
     """
+    rootdir = pytestconfig.rootdir
     genome_name = "eFlareon"
     tissue_name = "tail"
-    index = get_valid_test_genome_index(genome_name)
-    meth = get_valid_test_methylome(genome_name, tissue_name)
+    index = get_valid_test_genome_index(genome_name, rootdir)
+    meth = get_valid_test_methylome(genome_name, tissue_name, rootdir)
     try:
         meth.init_metadata(index)
     except RuntimeError as run_err:
@@ -169,21 +174,23 @@ def test_methylome_update_metadata_empty():
         pytest.fail(f"Unexpected exception raised: {run_err}")
 
 
-def test_methylome_update_metadata():
+def test_methylome_update_metadata(pytestconfig):
     """Test update_metadata method"""
+    rootdir = pytestconfig.rootdir
     genome_name = "eVaporeon"
     tissue_name = "brain"
-    meth = get_valid_test_methylome("eVaporeon", "brain")
+    meth = get_valid_test_methylome("eVaporeon", "brain", rootdir)
     try:
         meth.update_metadata()
     except RuntimeError as run_err:
         pytest.fail(f"Unexpected exception raised: {run_err}")
 
 
-def test_methylome_add_empty():
+def test_methylome_add_empty(pytestconfig):
     """Test add method for two empty methylomes"""
-    meth1 = get_valid_test_methylome("eJolteon", "brain")
-    meth2 = get_valid_test_methylome("eJolteon", "ear")
+    rootdir = pytestconfig.rootdir
+    meth1 = get_valid_test_methylome("eJolteon", "brain", rootdir)
+    meth2 = get_valid_test_methylome("eJolteon", "ear", rootdir)
     meth1.add(meth2)
     assert meth1 is not None
 
@@ -196,39 +203,45 @@ def test_methylome_repr():
     assert "version" in repr_result
 
 
-def test_methylome_get_levels_with_query_container():
+def test_methylome_get_levels_with_query_container(pytestconfig):
     """Test get_levels method (with query_container argument)"""
-    meth = get_valid_test_methylome("eFlareon", "brain")
-    query = get_valid_test_query("eFlareon", "brain")
+    rootdir = pytestconfig.rootdir
+    meth = get_valid_test_methylome("eFlareon", "brain", rootdir)
+    query = get_valid_test_query("eFlareon", "brain", rootdir)
     levels = meth.get_levels(query)
     assert isinstance(levels, MLevels)
 
 
-def test_methylome_get_levels_covered_with_query_container():
+def test_methylome_get_levels_covered_with_query_container(pytestconfig):
     """Test get_levels_covered method (with query_container argument)"""
-    meth = get_valid_test_methylome("eJolteon", "ear")
-    query = get_valid_test_query("eJolteon", "ear")
+    rootdir = pytestconfig.rootdir
+    meth = get_valid_test_methylome("eJolteon", "ear", rootdir)
+    query = get_valid_test_query("eJolteon", "ear", rootdir)
     levels = meth.get_levels_covered(query)
     assert isinstance(levels, MLevelsCovered)
 
 
-def test_methylome_get_levels_with_bin_size_and_genome_index():
+def test_methylome_get_levels_with_bin_size_and_genome_index(pytestconfig):
     """Test get_levels method (with bin_size and genome_index argument)"""
+    rootdir = pytestconfig.rootdir
     genome_name = "eJolteon"
     tissue_name = "ear"
-    meth = get_valid_test_methylome(genome_name, tissue_name)
-    genome_index = get_valid_test_genome_index(genome_name)
+    meth = get_valid_test_methylome(genome_name, tissue_name, rootdir)
+    genome_index = get_valid_test_genome_index(genome_name, rootdir)
     bin_size = 100
     levels = meth.get_levels(bin_size, genome_index)
     assert isinstance(levels, MLevels)
 
 
-def test_methylome_get_levels_covered_with_bin_size_and_genome_index():
+def test_methylome_get_levels_covered_with_bin_size_and_genome_index(
+    pytestconfig,
+):
     """Test get_levels_covered method (with bin_size and genome_index argument)"""
+    rootdir = pytestconfig.rootdir
     genome_name = "eJolteon"
     tissue_name = "ear"
-    meth = get_valid_test_methylome(genome_name, tissue_name)
-    genome_index = get_valid_test_genome_index(genome_name)
+    meth = get_valid_test_methylome(genome_name, tissue_name, rootdir)
+    genome_index = get_valid_test_genome_index(genome_name, rootdir)
     bin_size = 100
     levels = meth.get_levels_covered(bin_size, genome_index)
     assert isinstance(levels, MLevelsCovered)
