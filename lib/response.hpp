@@ -24,7 +24,6 @@
 #ifndef LIB_RESPONSE_HPP_
 #define LIB_RESPONSE_HPP_
 
-#include "level_container.hpp"
 #include "level_container_md.hpp"
 
 #include <array>
@@ -90,21 +89,13 @@ struct response_payload {
 
   template <typename lvl_elem>
   [[nodiscard]] static auto
-  from_levels(const std::vector<level_container<lvl_elem>> &levels,
+  from_levels(const level_container_md<lvl_elem> &levels,
               std::error_code &error) -> response_payload {
     // ADS: slower than needed; copy happening here is not needed
     error = std::error_code{};  // clear this in case it was set
-    const auto tot_bytes =
-      std::size(levels) * sizeof(lvl_elem) * std::size(levels[0]);
+    const auto tot_bytes = std::size(levels) * sizeof(lvl_elem);
     response_payload rp(tot_bytes);
-    std::size_t byte_offset{};
-    for (const auto &lvl : levels) {
-      auto dest = rp.data_at(byte_offset, error);
-      if (error)
-        return {};
-      std::memcpy(dest, lvl.data(), lvl.get_n_bytes());
-      byte_offset += lvl.get_n_bytes();
-    }
+    std::memcpy(rp.data(), levels.data(), levels.get_n_bytes());
     return rp;
   }
 
