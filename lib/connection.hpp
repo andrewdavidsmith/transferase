@@ -25,6 +25,7 @@
 #define LIB_CONNECTION_HPP_
 
 #include "level_container_md.hpp"
+#include "level_element.hpp"
 #include "logger.hpp"
 #include "query_container.hpp"
 #include "request.hpp"
@@ -40,7 +41,6 @@
 #include <memory>
 #include <string>
 #include <utility>  // for std::move
-#include <vector>   // for std::vector
 
 namespace transferase {
 

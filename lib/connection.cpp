@@ -37,9 +37,6 @@
 
 namespace transferase {
 
-struct level_element_covered_t;
-struct level_element_t;
-
 auto
 connection::stop() -> void {
   lgr.debug("{} Initiating connection shutdown.", conn_id);

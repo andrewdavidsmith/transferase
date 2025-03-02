@@ -25,7 +25,6 @@
 #define LIB_REQUEST_HANDLER_HPP_
 
 #include "genome_index_set.hpp"
-#include "level_container_md.hpp"
 #include "methylome_set.hpp"
 
 #include <cstdint>  // for std::uint32_t
@@ -36,6 +35,7 @@ namespace transferase {
 struct request;
 struct response_header;
 struct query_container;
+template <typename level_element_type> struct level_container_md;
 
 /// @brief A handler that is shared by all connections; holds
 /// methylomes and genome indexes in memory.

@@ -24,9 +24,9 @@
 #include "methylome_client_local.hpp"
 
 #include "client_config.hpp"
+
 #include "nlohmann/json.hpp"
 
-#include <cassert>
 #include <iterator>  // std::size
 #include <string>
 #include <system_error>

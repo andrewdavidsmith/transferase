@@ -27,9 +27,9 @@
 #include "genome_index_metadata.hpp"
 #include "genomic_interval.hpp"
 #include "level_container.hpp"
-#include "level_container_md.hpp"
 #include "level_element.hpp"
 
+#include <algorithm>  // for transform
 #include <cerrno>
 #include <format>
 #include <fstream>
@@ -43,6 +43,8 @@
 #include <vector>
 
 namespace transferase {
+
+template <typename level_element_type> struct level_container_md;
 
 [[nodiscard]] static inline auto
 write_bedlike_intervals_impl(const std::string &outfile,

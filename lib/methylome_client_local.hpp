@@ -29,6 +29,7 @@
 #include "client_config.hpp"
 #include "genome_index.hpp"
 #include "genome_index_set.hpp"
+#include "level_container_md.hpp"
 #include "methylome.hpp"
 #include "query_container.hpp"
 #include "request.hpp"
@@ -36,8 +37,10 @@
 
 #include "nlohmann/json.hpp"
 
+#include <cassert>
 #include <cstdint>
-#include <format>  // for std::vector??
+#include <format>    // for std::vector??
+#include <iterator>  // for std::size
 #include <memory>
 #include <string>
 #include <system_error>

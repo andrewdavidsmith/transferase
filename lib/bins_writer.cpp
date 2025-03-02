@@ -26,7 +26,6 @@
 #include "genome_index.hpp"
 #include "genome_index_metadata.hpp"
 #include "level_container.hpp"
-#include "level_container_md.hpp"
 #include "level_element.hpp"
 
 #include <algorithm>  // std::min
@@ -45,6 +44,8 @@
 #include <vector>
 
 namespace transferase {
+
+template <typename level_element_type> struct level_container_md;
 
 [[nodiscard]] static inline auto
 write_bedlike_bins_impl(const std::string &outfile,

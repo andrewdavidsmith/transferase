@@ -24,15 +24,12 @@
 #include "level_container_md.hpp"
 #include "level_element.hpp"
 
+#include <cerrno>
 #include <fstream>
 #include <sstream>
 #include <string>
 #include <system_error>
-#include <type_traits>
 #include <vector>
-
-#include <format>
-#include <print>
 
 namespace transferase {
 
@@ -58,7 +55,6 @@ parse_line(const std::string &line) -> std::vector<level_element_t> {
     }
     ++word_count;
   }
-  std::println("{}", word_count);
   if (word_count % 2 == 1)
     return {};
   return v;
@@ -78,16 +74,13 @@ read_level_container_md(const std::string &filename,
   std::uint32_t n_rows = 0;
 
   std::vector<std::vector<level_element_t>> v;
-  std::vector<level_element_t> row;
   std::string line;
   while (getline(in, line)) {
     if (n_cols == 0) {
       n_cols = get_n_columns(line) / 2;
       v.resize(n_cols);
     }
-    std::println("{}", n_cols);
-    row = parse_line(line);
-    std::println("{}", row.size());
+    const auto row = parse_line(line);
     if (row.empty()) {
       error = std::make_error_code(std::errc::invalid_argument);
       return {};
@@ -100,8 +93,6 @@ read_level_container_md(const std::string &filename,
       v[i].push_back(row[i]);
     ++n_rows;
   }
-  // level_container_md<level_element_t>(n_rows, 1);
-
   return level_container_md<level_element_t>(n_rows, n_cols);
 }
 

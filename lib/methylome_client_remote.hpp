@@ -28,6 +28,7 @@
 #include "client_connection.hpp"
 #include "genome_index.hpp"
 #include "genome_index_set.hpp"
+#include "level_container_md.hpp"
 #include "methylome_client_base.hpp"
 #include "query_container.hpp"
 #include "request.hpp"
@@ -38,6 +39,7 @@
 
 #include <cstdint>
 #include <format>
+#include <iterator>  // for std::size
 #include <memory>
 #include <string>
 #include <system_error>
