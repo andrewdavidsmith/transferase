@@ -91,8 +91,9 @@ genomic_interval_bindings(nanobind::class_<transferase::genomic_interval> &cls)
         if (self.ch_id >= n_chroms)
           throw std::out_of_range(std::format(
             "Index out of range: ch_id={}, n_chroms={}", self.ch_id, n_chroms));
-        return nb::make_tuple(index.meta.chrom_order[self.ch_id], self.start,
-                              self.stop);
+        const nb::tuple t = nb::make_tuple(index.meta.chrom_order[self.ch_id],
+                                           self.start, self.stop);
+        return nb::repr(t);
       },
       R"doc(
     Print a genomic interval with name of chromosome.
