@@ -30,6 +30,12 @@ jobs:
         -DPACKAGE=on \
         -DSYSTEM_NAME_SUFFIX=${{ matrix.os }}-${{ runner.arch }} \
         -DCMAKE_BUILD_TYPE=Release
+    - name: Get version number
+      id: get-version-number
+      run: |
+        awk '/^  VERSION [0-9.]+$/ {print "version="$NF}' CMakeLists.txt >> "$GITHUB_OUTPUT"
+      env:
+        GH_TOKEN: ${{ github.token }}
     - name: Build
       run: |
         cmake --build build -j2
@@ -39,5 +45,5 @@ jobs:
     - name: Upload the STGZ
       uses: actions/upload-artifact@v4
       with:
-        name: transferase-0.5.0-${{ matrix.os }}-${{ runner.arch }}
-        path: build/transferase-0.5.0-${{ matrix.os }}-${{ runner.arch }}.*
+        name: transferase-${{ steps.get-version-number.outputs.version }}-${{ matrix.os }}-${{ runner.arch }}
+        path: build/transferase-${{ steps.get-version-number.outputs.version }}-${{ matrix.os }}-${{ runner.arch }}.*
