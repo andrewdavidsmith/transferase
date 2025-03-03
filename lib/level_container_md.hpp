@@ -34,7 +34,6 @@
 #include <initializer_list>  // for std::begin, std::end
 #include <iterator>          // for std::size, std::cbegin, std::cend
 #include <ranges>
-#include <stdfloat>
 #include <string>
 #include <system_error>
 #include <utility>  // for std::move
@@ -91,12 +90,11 @@ template <typename level_element_type> struct level_container_md {
   // clang-format on
 
   [[nodiscard]] auto
-  get_wmeans(const std::uint32_t min_reads) const
-    -> std::vector<std::float32_t> {
-    std::vector<std::float32_t> u(n_rows * n_cols);
+  get_wmeans(const std::uint32_t min_reads) const -> std::vector<float> {
+    std::vector<float> u(n_rows * n_cols);
     std::ranges::transform(
-      v, std::begin(u), [min_reads](const auto &val) -> std::float32_t {
-        return val.n_reads() >= min_reads ? val.get_wmean() : -1.0f32;
+      v, std::begin(u), [min_reads](const auto &val) -> float {
+        return val.n_reads() >= min_reads ? val.get_wmean() : -1.0f;
       });
     return u;
   }
