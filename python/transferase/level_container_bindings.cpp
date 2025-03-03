@@ -36,6 +36,7 @@
 #include <cstdint>  // for std::uint32_t
 #include <format>
 #include <stdexcept>
+#include <stdfloat>  // for std::float32_t
 #include <string>
 #include <tuple>
 #include <variant>  // for std::tuple
@@ -131,7 +132,7 @@ level_container_bindings(
   cls.def(
     "get_wmean",
     [](const level_container_md &self, const std::size_t i,
-       const std::size_t j) -> double {
+       const std::size_t j) -> std::float32_t {
       if (i >= self.n_rows || j >= self.n_cols)
         throw std::out_of_range("Index out of range");
       return self[i, j].get_wmean();
@@ -150,9 +151,17 @@ level_container_bindings(
     arg1 (int): The index of the methylome for which to get the weighted mean
         methylation level.
     )doc");
-  cls.def("all_wmeans", &level_container_md::get_wmeans,
-          R"doc(
-    Apply the 'get_wmean' function to all elements of this Levels object,
+  cls.def(
+    "all_wmeans",
+    [](const level_container_md &self, const std::uint32_t min_reads) {
+      using nparray = nb::ndarray<std::float32_t, nb::numpy,
+                                  nb::shape<-1, -1, 2>, nb::c_contig>;
+      auto m = self.get_wmeans(min_reads);
+      return nparray(m.data(), {self.n_cols, self.n_rows, 2}).cast();
+    },
+    nb::rv_policy::reference_internal,
+    R"doc(
+    Apply the 'get_wmean' function to all elements of this MLevels object,
     returning a list of weighted mean methylation levels. A value of -1.0
     means insufficient reads, but by default the minimium required reads is 0.
 
@@ -164,7 +173,7 @@ level_container_bindings(
         intervals with no reads will result in a level of 0.0, which might be
         desired depending on your application.
     )doc",
-          "min_reads"_a = 0u);
+    "min_reads"_a = 0u);
   cls.def("__str__", [](const level_container_md &self) -> std::string {
     return std::format("MLevels size={}", std::size(self));
   });
@@ -310,9 +319,17 @@ level_container_covered_bindings(
     arg1 (int): The index of the methylome for which to get the weighted mean
         methylation level.
     )doc");
-  cls.def("all_means", &level_container_md::get_wmeans,
-          R"doc(
-    Apply the 'get_wmean' function to all elements of this LevelsCovered
+  cls.def(
+    "all_wmeans",
+    [](const level_container_md &self, const std::uint32_t min_reads) {
+      using nparray = nb::ndarray<std::float32_t, nb::numpy,
+                                  nb::shape<-1, -1, 2>, nb::c_contig>;
+      auto m = self.get_wmeans(min_reads);
+      return nparray(m.data(), {self.n_cols, self.n_rows, 2}).cast();
+    },
+    nb::rv_policy::reference_internal,
+    R"doc(
+    Apply the 'get_wmean' function to all elements of this MLevelsCovered
     object, returning a list of weighted mean methylation levels. A value of
     -1.0 means insufficient reads, but by default the minimium required reads
     is 0.
@@ -325,7 +342,7 @@ level_container_covered_bindings(
         intervals with no reads will result in a level of 0.0, which might be
         desired depending on your application.
     )doc",
-          "min_reads"_a = 0u);
+    "min_reads"_a = 0u);
   cls
     .def("__str__",
          [](const level_container_md &self) -> std::string {
