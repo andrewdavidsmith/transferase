@@ -66,12 +66,12 @@ methylome_client_local::get_genome_and_index_hash(
   const noexcept -> std::tuple<std::string, std::uint64_t> {
   assert(!config.methylome_dir.empty());
   const auto [genome, index_hash] = methylome::get_genome_info(
-    config.methylome_dir, methylome_names.front(), error);
+    config.get_methylome_dir(), methylome_names.front(), error);
   if (error)
     return {{}, {}};
   for (auto i = 1u; i < std::size(methylome_names); ++i) {
     const auto [curr_genome, curr_index_hash] = methylome::get_genome_info(
-      config.methylome_dir, methylome_names[i], error);
+      config.get_methylome_dir(), methylome_names[i], error);
     if (error)
       return {{}, {}};
     if (index_hash != curr_index_hash) {
