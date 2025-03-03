@@ -36,7 +36,6 @@
 #include <cstdint>  // for std::uint32_t
 #include <format>
 #include <stdexcept>
-#include <stdfloat>  // for std::float32_t
 #include <string>
 #include <tuple>
 #include <variant>  // for std::tuple
@@ -132,7 +131,7 @@ level_container_bindings(
   cls.def(
     "get_wmean",
     [](const level_container_md &self, const std::size_t i,
-       const std::size_t j) -> std::float32_t {
+       const std::size_t j) -> float {
       if (i >= self.n_rows || j >= self.n_cols)
         throw std::out_of_range("Index out of range");
       return self[i, j].get_wmean();
@@ -154,8 +153,8 @@ level_container_bindings(
   cls.def(
     "all_wmeans",
     [](const level_container_md &self, const std::uint32_t min_reads) {
-      using nparray = nb::ndarray<std::float32_t, nb::numpy,
-                                  nb::shape<-1, -1, 2>, nb::c_contig>;
+      using nparray =
+        nb::ndarray<float, nb::numpy, nb::shape<-1, -1, 2>, nb::c_contig>;
       auto m = self.get_wmeans(min_reads);
       return nparray(m.data(), {self.n_cols, self.n_rows, 2}).cast();
     },
@@ -322,8 +321,8 @@ level_container_covered_bindings(
   cls.def(
     "all_wmeans",
     [](const level_container_md &self, const std::uint32_t min_reads) {
-      using nparray = nb::ndarray<std::float32_t, nb::numpy,
-                                  nb::shape<-1, -1, 2>, nb::c_contig>;
+      using nparray =
+        nb::ndarray<float, nb::numpy, nb::shape<-1, -1, 2>, nb::c_contig>;
       auto m = self.get_wmeans(min_reads);
       return nparray(m.data(), {self.n_cols, self.n_rows, 2}).cast();
     },
