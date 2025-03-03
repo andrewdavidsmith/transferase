@@ -44,6 +44,7 @@
 #include <string>
 #include <tuple>  // for std::get
 #include <unordered_map>
+#include <utility>  // for std::move
 #include <vector>
 
 using namespace transferase;  // NOLINT
