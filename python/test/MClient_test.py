@@ -35,16 +35,24 @@ def create_temp_directory():
     return temp_dir
 
 
+def get_config_dir(pytestconfig):
+    """
+    Get the config_dir using the rootdir from pytestconfig
+    """
+    lutions_config_dir = "data/lutions"
+    return os.path.join(pytestconfig.rootdir, lutions_config_dir)
+
+
 def test_MClient_constructor(pytestconfig):
     """Get a MClient"""
-    config_dir = os.path.join(pytestconfig.rootdir, "data/lutions")
+    config_dir = get_config_dir(pytestconfig)
     obj = MClient(config_dir)
     assert hasattr(obj, "config"), "Object is missing 'config'"
 
 
 def test_default_is_different(pytestconfig):
     """Check that the default constructed MClient differs"""
-    config_dir = os.path.join(pytestconfig.rootdir, "data/lutions")
+    config_dir = get_config_dir(pytestconfig)
     obj1 = MClient(config_dir)
     obj2 = MClient()
     assert obj1 != obj2
@@ -52,7 +60,7 @@ def test_default_is_different(pytestconfig):
 
 def test_config_makes_sense(pytestconfig):
     """Check that the default constructed MClient differs"""
-    config_dir = os.path.join(pytestconfig.rootdir, "data/lutions")
+    config_dir = get_config_dir(pytestconfig)
     obj = MClient(config_dir)
     config = obj.config
     assert config.hostname != None
@@ -61,7 +69,7 @@ def test_config_makes_sense(pytestconfig):
 
 def test_config_makes_sense(pytestconfig):
     """Check that the default constructed MClient differs"""
-    config_dir = os.path.join(pytestconfig.rootdir, "data/lutions")
+    config_dir = get_config_dir(pytestconfig)
     obj = MClient(config_dir)
     config = obj.config
     assert config.hostname != None
