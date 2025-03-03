@@ -98,7 +98,7 @@ private:
         return {};
       // This should take the results as out-param and have results fully
       // pre-allocated
-      meth.get_levels<lvl_elem_t>(query, results.column_itr(col_id));
+      meth.get_levels<lvl_elem_t>(query, results.column_itr(col_id++));
     }
     return results;
   }
