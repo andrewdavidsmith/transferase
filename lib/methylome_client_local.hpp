@@ -151,7 +151,7 @@ private:
     std::uint32_t col_id = 0;
     for (const auto &methylome_name : req.methylome_names) {
       const auto meth =
-        methylome::read(config.methylome_dir, methylome_name, error);
+        methylome::read(config.get_methylome_dir(), methylome_name, error);
       if (error)
         return {};
       meth.get_levels<lvl_elem_t>(query, results.column_itr(col_id++));
@@ -169,7 +169,7 @@ private:
     std::uint32_t col_id = 0;
     for (const auto &methylome_name : req.methylome_names) {
       const auto meth =
-        methylome::read(config.methylome_dir, methylome_name, error);
+        methylome::read(config.get_methylome_dir(), methylome_name, error);
       if (error)
         return {};
       meth.get_levels<lvl_elem_t>(req.bin_size(), index,
