@@ -37,19 +37,38 @@ def create_temp_directory():
 
 def test_MClient_constructor(pytestconfig):
     """Get a MClient"""
-    print(pytestconfig.rootdir)
     config_dir = os.path.join(pytestconfig.rootdir, "data/lutions")
-    print(config_dir)
     obj = MClient(config_dir)
     assert hasattr(obj, "config"), "Object is missing 'config'"
 
 
-def test_reset_to_default_config(pytestconfig):
-    """Reset the configuration to the default"""
+def test_default_is_different(pytestconfig):
+    """Check that the default constructed MClient differs"""
     config_dir = os.path.join(pytestconfig.rootdir, "data/lutions")
-    config_dir_tmp = create_temp_directory()
+    obj1 = MClient(config_dir)
+    obj2 = MClient()
+    assert obj1 != obj2
+
+
+def test_config_makes_sense(pytestconfig):
+    """Check that the default constructed MClient differs"""
+    config_dir = os.path.join(pytestconfig.rootdir, "data/lutions")
     obj = MClient(config_dir)
-    obj_tmp = obj
-    assert obj_tmp == obj
-    if os.path.isdir(config_dir_tmp):
-        shutil.rmtree(config_dir_tmp)
+    config = obj.config
+    assert config.hostname != None
+    assert config.port != None
+
+
+def test_config_makes_sense(pytestconfig):
+    """Check that the default constructed MClient differs"""
+    config_dir = os.path.join(pytestconfig.rootdir, "data/lutions")
+    obj = MClient(config_dir)
+    config = obj.config
+    assert config.hostname != None
+    assert config.port != None
+
+
+def test_configured_genomes(pytestconfig):
+    """Test the function to list configured genomes"""
+    obj = MClient(get_config_dir(pytestconfig))
+    assert len(obj.configured_genomes()) == 3
