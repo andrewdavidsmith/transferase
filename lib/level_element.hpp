@@ -27,6 +27,7 @@
 #include <algorithm>  // for std::max
 #include <cstdint>
 #include <format>
+#include <stdfloat>
 #include <string>
 
 namespace transferase {
@@ -55,8 +56,9 @@ struct level_element_t {
   /// Get the weighted mean methylation level: the number of methylated
   /// observations divided by the number of unmethylated observations.
   [[nodiscard]] constexpr auto
-  get_wmean() const noexcept -> double {
-    return static_cast<double>(n_meth) / std::max(1u, n_meth + n_unmeth);
+  get_wmean() const noexcept -> std::float32_t {
+    return static_cast<std::float32_t>(n_meth) /
+           std::max(1u, n_meth + n_unmeth);
   }
 
   /// Get a string representation for the counts held by this object.
@@ -106,8 +108,9 @@ struct level_element_covered_t {
   /// Get the weighted mean methylation level: the number of methylated
   /// observations divided by the number of unmethylated observations.
   [[nodiscard]] constexpr auto
-  get_wmean() const noexcept -> double {
-    return static_cast<double>(n_meth) / std::max(1u, n_meth + n_unmeth);
+  get_wmean() const noexcept -> std::float32_t {
+    return static_cast<std::float32_t>(n_meth) /
+           std::max(1u, n_meth + n_unmeth);
   }
 
   /// Get a string representation for the counts held by this object.
