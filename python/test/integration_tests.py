@@ -67,3 +67,7 @@ for j in range(levels.n_methylomes):
 
 arr = levels.view_nparray()
 print(arr)
+
+min_reads = 2
+means = levels.all_wmeans(min_reads)
+print(means)
