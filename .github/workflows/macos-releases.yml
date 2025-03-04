@@ -1,8 +1,6 @@
 name: Make releases on macOS
 
 on:
-  pull_request:
-    branches: [ "main" ]
   workflow_dispatch:
 
 jobs:
@@ -31,9 +29,9 @@ jobs:
         -DSYSTEM_NAME_SUFFIX=${{ matrix.os }}-${{ runner.arch }} \
         -DCMAKE_BUILD_TYPE=Release
     - name: Get version number
-      id: get-version-number
+      id: get-vn
       run: |
-        awk '/^  VERSION [0-9.]+$/ {print "version="$NF}' CMakeLists.txt >> "$GITHUB_OUTPUT"
+        awk '/^  VERSION [0-9.]+$/ {print "vn="$NF}' CMakeLists.txt >> "$GITHUB_OUTPUT"
       env:
         GH_TOKEN: ${{ github.token }}
     - name: Build
@@ -45,5 +43,5 @@ jobs:
     - name: Upload the STGZ
       uses: actions/upload-artifact@v4
       with:
-        name: transferase-${{ steps.get-version-number.outputs.version }}-${{ matrix.os }}-${{ runner.arch }}
-        path: build/transferase-${{ steps.get-version-number.outputs.version }}-${{ matrix.os }}-${{ runner.arch }}.*
+        name: transferase-${{ steps.get-vn.outputs.vn }}-${{ matrix.os }}-${{ runner.arch }}
+        path: build/transferase-${{ steps.get-vn.outputs.vn }}-${{ matrix.os }}-${{ runner.arch }}.*
