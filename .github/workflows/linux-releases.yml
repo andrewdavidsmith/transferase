@@ -7,7 +7,7 @@ env:
   CONTAINER: andrewdavidsmith/transferase-build
 
 jobs:
-  build-releases:
+  linux-releases:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -30,14 +30,14 @@ jobs:
             cpack -B build --config build/CPackConfig.cmake
         run: |
           docker exec build-container bash -c "$SCRIPT"
-    - name: Get version number
-      id: get-vn
-      run: |
-        awk '/^  VERSION [0-9.]+$/ {print "vn="$NF}' CMakeLists.txt >> "$GITHUB_OUTPUT"
-      env:
-        GH_TOKEN: ${{ github.token }}
-    - name: Upload the packages
-      uses: actions/upload-artifact@v4
-      with:
-        name: transferase-${{ steps.get-vn.outputs.vn }}-${{ matrix.os }}-${{ runner.arch }}
-        path: build/transferase-${{ steps.get-vn.outputs.vn }}-${{ matrix.os }}-${{ runner.arch }}.*
+      - name: Get version number
+        id: get-vn
+        run: |
+          awk '/^  VERSION [0-9.]+$/ {print "vn="$NF}' CMakeLists.txt >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - name: Upload the packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: transferase-${{ steps.get-vn.outputs.vn }}-${{ matrix.os }}-${{ runner.arch }}
+          path: build/transferase-${{ steps.get-vn.outputs.vn }}-${{ matrix.os }}-${{ runner.arch }}.*
