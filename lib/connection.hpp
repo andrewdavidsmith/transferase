@@ -100,7 +100,8 @@ struct connection : public std::enable_shared_from_this<connection> {
 
   [[nodiscard]] auto
   get_outgoing_n_bytes() const -> std::uint32_t {
-    return resp.get_n_bytes();
+    return req.is_covered_request() ? resp_cov.get_n_bytes()
+                                    : resp.get_n_bytes();
   }
 
   auto
@@ -111,7 +112,9 @@ struct connection : public std::enable_shared_from_this<connection> {
 
   [[nodiscard]] auto
   get_outgoing_data_buffer() const noexcept -> const char * {
-    return reinterpret_cast<const char *>(resp.data());
+    return req.is_covered_request()
+             ? reinterpret_cast<const char *>(resp_cov.data())
+             : reinterpret_cast<const char *>(resp.data());
   }
 
   boost::asio::ip::tcp::socket socket;  // this connection's socket
