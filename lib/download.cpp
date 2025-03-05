@@ -25,7 +25,7 @@
 
 // Can't silence IWYU on these
 #include <boost/core/detail/string_view.hpp>
-#include <boost/intrusive/detail/list_iterator.hpp>
+#include <boost/intrusive/detail/list_iterator.hpp>  // IWYU pragma: keep
 #include <boost/optional/optional.hpp>
 #include <boost/system.hpp>
 

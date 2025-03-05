@@ -30,6 +30,7 @@
 #include <cstdint>
 #include <format>
 #include <iostream>
+#include <iterator>  // for std::size
 #include <map>
 #include <string>
 #include <string_view>
