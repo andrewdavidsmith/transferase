@@ -39,3 +39,6 @@ jobs:
         -DCMAKE_CXX_COMPILER=g++-14 \
         -DSTATIC_ANALYSIS=on \
         -DCMAKE_BUILD_TYPE=Build
+    - name: Build
+      run: |
+        cmake --build build -j4
