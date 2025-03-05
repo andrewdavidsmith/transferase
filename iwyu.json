@@ -5,4 +5,5 @@
     { "include": ["@<boost/asio/.*>", "private", "<boost/asio.hpp>", "public"] },
     { "include": ["@<boost/beast/.*>", "private", "<boost/beast.hpp>", "public"] },
     { "include": ["@<boost/system/.*>", "private", "<boost/system.hpp>", "public"] },
+    { "include": ["@<boost/move/utility_core.hpp>", "private", "<utility>", "public"] },
 ]
