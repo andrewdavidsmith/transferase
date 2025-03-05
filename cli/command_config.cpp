@@ -214,7 +214,7 @@ command_config_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
     {"Metadata file", or_none(cfg.metadata_file)},
     {"Log level", to_string(cfg.log_level)},
     {"Genomes", or_none(genomes_joined)},
-    {"Download policy", std::format("{}", download_policy)},
+    {"Download policy", xfr::get_download_policy_message(download_policy)},
     // clang-format on
   };
   xfr::log_args<transferase::log_level_t::info>(args_to_log);
