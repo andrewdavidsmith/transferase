@@ -23,6 +23,8 @@
 
 #include "download.hpp"
 
+#include "indicators/indicators.hpp"
+
 // Can't silence IWYU on these
 #include <boost/core/detail/string_view.hpp>
 #include <boost/intrusive/detail/list_iterator.hpp>  // IWYU pragma: keep
@@ -38,10 +40,12 @@
 #include <cstdint>    // for std::uint64_t
 #include <exception>  // for std::exception_ptr
 #include <filesystem>
+#include <format>
 #include <fstream>
 #include <functional>  // for std::ref
-#include <iterator>    // for std::cbegin
-#include <limits>      // for std::numeric_limits
+#include <iostream>
+#include <iterator>  // for std::cbegin
+#include <limits>    // for std::numeric_limits
 #include <print>
 #include <sstream>
 #include <string>
@@ -50,7 +54,24 @@
 #include <unordered_map>
 #include <utility>  // for std::move
 
+[[nodiscard]] static inline auto
+parse_header(const auto &res) -> std::unordered_map<std::string, std::string> {
+  const auto make_string = [](const auto &x) {
+    return (std::ostringstream() << x).str();
+  };
+  std::unordered_map<std::string, std::string> header = {
+    {"Status", std::to_string(res.result_int())},
+    {"Reason", make_string(res.result())       },
+  };
+  for (const auto &h : res.base())
+    header.emplace(make_string(h.name_string()), make_string(h.value()));
+  return header;
+}
+
 namespace transferase {
+
+namespace http = boost::beast::http;
+namespace ip = boost::asio::ip;
 
 /// Download the header for a remote file
 [[nodiscard]]
@@ -62,7 +83,7 @@ get_header(const download_request &dr)
 
   // setup for io
   boost::asio::io_context ioc;
-  boost::asio::ip::tcp::resolver resolver(ioc);
+  ip::tcp::resolver resolver(ioc);
   boost::beast::tcp_stream stream(ioc);
 
   // lookup server endpoint
@@ -74,44 +95,65 @@ get_header(const download_request &dr)
   stream.connect(results);
 
   // build the HEAD request for the target
-  boost::beast::http::request<boost::beast::http::empty_body> req{
+  http::request<http::empty_body> req{
     // clang-format off
-    boost::beast::http::verb::head,
+    http::verb::head,
     dr.target,
     http_version,
     // clang-format on
   };
-  req.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
-  req.set(boost::beast::http::field::host, dr.host);
+  req.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
+  req.set(http::field::host, dr.host);
 
-  boost::beast::http::write(stream, req, ec);
+  http::write(stream, req, ec);
   if (ec)
     return {{}, std::error_code{ec}};
 
   // empty body to only get header
-  boost::beast::http::response_parser<boost::beast::http::empty_body> p;
+  http::response_parser<http::empty_body> p;
   p.skip(true);  // inform parser there will be no body
 
   boost::beast::flat_buffer buffer;
-  boost::beast::http::read(stream, buffer, p, ec);
+  http::read(stream, buffer, p, ec);
   if (ec)
     return {{}, std::error_code{ec}};
 
   const auto response = p.release();
 
-  const auto make_string = [](const auto &x) {
-    return (std::ostringstream() << x).str();
-  };
-
-  std::unordered_map<std::string, std::string> header = {
-    {"Status", std::to_string(response.result_int())},
-    {"Reason", make_string(response.result())},
-  };
-  for (const auto &h : response.base())
-    header.emplace(make_string(h.name_string()), make_string(h.value()));
-
-  return {header, ec};
+  return {parse_header(response), ec};
 }
+
+struct download_progress {
+  indicators::ProgressBar bar;
+  double total_size{};
+  std::uint32_t prev_percent{};
+  download_progress(const std::string &filename) :
+    bar{
+      // clang-format off
+      indicators::option::BarWidth{72},
+      indicators::option::Start{"["},
+      indicators::option::Fill{"="},
+      indicators::option::Lead{" "},
+      indicators::option::Remainder{"-"},
+      indicators::option::End{"]"},
+      indicators::option::PostfixText{},
+      // clang-format on
+    } {
+    const auto label = std::filesystem::path(filename).filename().string();
+    bar.set_option(indicators::option::PostfixText{label});
+  }
+  auto
+  update(const auto &p) -> void {
+    total_size =
+      (total_size > 0.0) ? total_size : p.content_length().value_or(1.0);
+    const std::uint32_t percent =
+      100.0 * (1.0 - p.content_length_remaining().value_or(0) / total_size);
+    if (percent > prev_percent) {
+      bar.set_progress(percent);
+      prev_percent = percent;
+    }
+  }
+};
 
 auto
 do_download(const download_request &dr, const std::string &outfile,
@@ -125,12 +167,12 @@ do_download(const download_request &dr, const std::string &outfile,
 
   // attempt to open the file for output; do this prior to any async
   // ops starting
-  boost::beast::http::file_body::value_type body;
+  http::file_body::value_type body;
   body.open(outfile.data(), boost::beast::file_mode::write, ec);
   if (ec)
     return;
 
-  boost::asio::ip::tcp::resolver resolver(ioc);
+  ip::tcp::resolver resolver(ioc);
   boost::beast::tcp_stream stream(ioc);
 
   // lookup server endpoint
@@ -147,86 +189,79 @@ do_download(const download_request &dr, const std::string &outfile,
     return;
 
   // Set up an HTTP GET request message
-  boost::beast::http::request<boost::beast::http::string_body> req{
+  http::request<http::string_body> req{
     // clang-format off
-    boost::beast::http::verb::get,
+    http::verb::get,
     dr.target,
     http_version,
     // clang-format on
   };
-  req.set(boost::beast::http::field::host, dr.host);
-  req.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
+  req.set(http::field::host, dr.host);
+  req.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
 
   // set the timeout for download (need a message for this)
   stream.expires_after(dr.get_download_timeout());
 
   // send request to server
-  boost::beast::http::async_write(stream, req, yield[ec]);
+  http::async_write(stream, req, yield[ec]);
   if (ec)
     return;
 
   // make the response using the file-body
-  boost::beast::http::response<boost::beast::http::file_body> res{
+  http::response<http::file_body> res{
     std::piecewise_construct,
     std::make_tuple(std::move(body)),
-    std::make_tuple(boost::beast::http::status::ok, http_version),
+    std::make_tuple(http::status::ok, http_version),
   };
 
-  boost::beast::http::response_parser<boost::beast::http::file_body> p{
+  http::response_parser<http::file_body> p{
     std::move(res),
   };
   p.eager(true);
   p.body_limit(std::numeric_limits<std::uint64_t>::max());
 
+  download_progress bar(outfile);
+
   boost::beast::flat_buffer buffer;
+
   // read the http response
-  boost::beast::http::async_read(stream, buffer, p, yield[ec]);
-  if (ec)
-    return;
+  while (!p.is_done()) {  // p is the parser
+    http::read_some(stream, buffer, p);
+    if (dr.show_progress && p.is_header_done())
+      bar.update(p);
+  }
 
   res = p.release();
 
-  (void)stream.socket().shutdown(boost::asio::ip::tcp::socket::shutdown_both,
-                                 ec);
+  (void)stream.socket().shutdown(ip::tcp::socket::shutdown_both, ec);
 
   if (ec && ec != boost::beast::errc::not_connected)
     return;
 
-  const auto make_string = [](const auto &x) {
-    return (std::ostringstream() << x).str();
-  };
+  header = parse_header(res);
 
-  header = {
-    {"Status", std::to_string(res.result_int())},
-    {"Reason", make_string(res.result())},
-  };
-  for (const auto &h : res.base())
-    header.emplace(make_string(h.name_string()), make_string(h.value()));
-
-  if (boost::beast::http::int_to_status(res.result_int()) !=
-      boost::beast::http::status::ok)
-    ec = boost::beast::http::make_error_code(
-      boost::beast::http::error::bad_target);
+  if (http::int_to_status(res.result_int()) != http::status::ok)
+    ec = http::make_error_code(http::error::bad_target);
 }
 
 [[nodiscard]]
 auto
 download(const download_request &dr)
   -> std::tuple<std::unordered_map<std::string, std::string>, std::error_code> {
-  const auto outdir = std::filesystem::path{dr.outdir};
-  const auto outfile = outdir / std::filesystem::path(dr.target).filename();
+  namespace fs = std::filesystem;
+  const auto outdir = fs::path{dr.outdir};
+  const auto outfile = outdir / fs::path(dr.target).filename();
 
   std::error_code out_ec;
   {
-    if (std::filesystem::exists(outdir) &&
-        !std::filesystem::is_directory(outdir)) {
+    if (fs::exists(outdir) && !fs::is_directory(outdir)) {
       out_ec = std::make_error_code(std::errc::file_exists);
       std::println(R"(Error validating output directory "{}": {})",
                    outdir.string(), out_ec.message());
       return {{}, out_ec};
     }
-    if (!std::filesystem::exists(outdir)) {
-      const bool made_dir = std::filesystem::create_directories(outdir, out_ec);
+    if (!fs::exists(outdir)) {
+      const bool made_dir = fs::create_directories(outdir, out_ec);
       if (!made_dir) {
         std::println(R"(Error output directory does not exist "{}": {})",
                      outdir.string(), out_ec.message());
@@ -240,7 +275,7 @@ download(const download_request &dr)
                    outfile.string(), out_ec.message());
       return {{}, out_ec};
     }
-    const bool remove_ok = std::filesystem::remove(outfile, out_ec);
+    const bool remove_ok = fs::remove(outfile, out_ec);
     if (!remove_ok)
       return {{}, out_ec};
   }
@@ -274,10 +309,10 @@ download(const download_request &dr)
     // if we have an error, make sure we didn't get a file from the
     // download; remove it if we did
     std::error_code filesys_ec;  // unused
-    const bool outfile_exists = std::filesystem::exists(outfile, filesys_ec);
+    const bool outfile_exists = fs::exists(outfile, filesys_ec);
     if (outfile_exists) {
       [[maybe_unused]]
-      const bool remove_ok = std::filesystem::remove(outfile, filesys_ec);
+      const bool remove_ok = fs::remove(outfile, filesys_ec);
     }
   }
 
