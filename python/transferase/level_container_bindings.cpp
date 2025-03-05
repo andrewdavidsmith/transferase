@@ -27,18 +27,23 @@
 #include <level_element.hpp>
 
 #include <nanobind/nanobind.h>
-#include <nanobind/ndarray.h>
-#include <nanobind/stl/string.h>
-#include <nanobind/stl/tuple.h>
-#include <nanobind/stl/vector.h>
+#include <nanobind/ndarray.h>     // IWYU pragma: keep
+#include <nanobind/stl/string.h>  // IWYU pragma: keep
+#include <nanobind/stl/tuple.h>   // IWYU pragma: keep
+#include <nanobind/stl/vector.h>  // IWYU pragma: keep
 
 #include <cstddef>  // for std::size_t
 #include <cstdint>  // for std::uint32_t
 #include <format>
+#include <iterator>  // for std::size
+#include <new>       // for operator new
 #include <stdexcept>
 #include <string>
 #include <tuple>
-#include <variant>  // for std::tuple
+#include <type_traits>  // for std::is_rvalue_reference_v, std::i...
+#include <utility>      // for std::declval
+#include <variant>      // for std::tuple
+#include <vector>       // for std::vector
 
 namespace nb = nanobind;
 

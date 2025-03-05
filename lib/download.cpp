@@ -46,7 +46,7 @@
 #include <sstream>
 #include <string>
 #include <system_error>
-#include <tuple>
+#include <tuple>  // IWYU pragma: keep
 #include <unordered_map>
 #include <utility>  // for std::move
 

@@ -44,7 +44,7 @@
 #include <string_view>
 #include <system_error>
 #include <thread>
-#include <tuple>    // for std::get (iywu fp)
+#include <tuple>    // IWYU pragma: keep
 #include <utility>  // std::to_underlying
 
 namespace transferase {

@@ -29,9 +29,12 @@
 #include <nanobind/operators.h>   // IWYU pragma: keep
 #include <nanobind/stl/string.h>  // IWYU pragma: keep
 
-#include <cstdint>  // for std::uint32_t
 #include <format>
+#include <iterator>  // for std::size
+#include <new>       // for operator new
 #include <string>
+#include <type_traits>  // for std::is_rvalue_reference_v
+#include <utility>      // for std::declval
 
 namespace nb = nanobind;
 

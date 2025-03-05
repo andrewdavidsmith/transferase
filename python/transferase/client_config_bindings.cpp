@@ -34,8 +34,8 @@
 #include <nanobind/stl/string.h>  // IWYU pragma: keep
 #include <nanobind/stl/vector.h>  // IWYU pragma: keep
 
+#include <new>  // for operator new
 #include <string>
-#include <system_error>
 #include <type_traits>
 #include <utility>
 #include <vector>

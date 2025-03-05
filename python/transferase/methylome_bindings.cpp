@@ -23,28 +23,25 @@
 
 #include "methylome_bindings.hpp"
 
-#include <genome_index.hpp>   // IWYU pragma: keep
+#include <genome_index.hpp>  // IWYU pragma: keep
+#include <level_container_md.hpp>
 #include <level_element.hpp>  // for level_element_covered_t (ptr only)
 #include <methylome.hpp>
+#include <query_container.hpp>
 
 #include <nanobind/nanobind.h>
-#include <nanobind/stl/string.h>
-#include <nanobind/stl/tuple.h>
-#include <nanobind/stl/vector.h>
+#include <nanobind/stl/string.h>  // IWYU pragma: keep
+#include <nanobind/stl/tuple.h>   // IWYU pragma: keep
+#include <nanobind/stl/vector.h>  // IWYU pragma: keep
 
 #include <cstdint>
-#include <format>  // for std::format
+#include <new>  // for operator new
 #include <string>
 #include <system_error>  // for std::error_code, std::system_error
 #include <tuple>
-#include <variant>  // for std::tuple
-
-namespace transferase {
-
-struct query_container;
-template <typename level_element_type> struct level_container_md;
-
-}  // namespace transferase
+#include <type_traits>  // for std::is_rvalue_reference_v, std::i...
+#include <utility>      // for std::declval
+#include <variant>      // for std::tuple
 
 namespace nb = nanobind;
 
@@ -76,15 +73,13 @@ methylome_bindings(nb::class_<transferase::methylome> &cls) -> void {
          nb::overload_cast<const transferase::methylome &>(
            &transferase::methylome::is_consistent, nb::const_),
          R"doc(
-    Returns true iff two methylomes are consistent with each
-    other. This means they are the same size, and are based on the
-    same reference genome.
+    Returns true iff two methylomes are consistent with each other. This means
+    they are the same size, and are based on the same reference genome.
 
     Parameters
     ----------
 
-    other (Methylome): The other methylome to check for consistency
-        with self.
+    other (Methylome): The other methylome to check for consistency with self.
     )doc",
          "other"_a);
   cls
@@ -97,11 +92,11 @@ methylome_bindings(nb::class_<transferase::methylome> &cls) -> void {
     Parameters
     ----------
 
-    directory_name (str): The directory in where this methylome should
-        be written.
+    directory_name (str): The directory in where this methylome should be
+        written.
 
-    methylome_name (str): The name of the methylome; determines
-        filenames written.
+    methylome_name (str): The name of the methylome; determines filenames
+        written.
     )doc",
          "directory_name"_a, "methylome_name"_a)
     .def(
@@ -113,16 +108,15 @@ methylome_bindings(nb::class_<transferase::methylome> &cls) -> void {
           throw std::system_error(error);
       },
       R"doc(
-    Initialize the metadata associated with this methylome.
-    This information is used while constructing a methylome and is
-    based on the given GenomeIndex.
+    Initialize the metadata associated with this methylome. This information
+    is used while constructing a methylome and is based on the given
+    GenomeIndex.
 
     Parameters
     ----------
 
-    index (GenomeIndex): A GenomeIndex created from the exact same
-        reference genome as was used to map the reads when producing
-        this Methylome.
+    index (GenomeIndex): A GenomeIndex created from the exact same reference
+        genome as was used to map the reads when producing this Methylome.
     )doc",
       "index"_a)
     .def("update_metadata",
@@ -160,21 +154,31 @@ methylome_bindings(nb::class_<transferase::methylome> &cls) -> void {
           transferase::level_element_covered_t>,
         nb::const_),
       "bin_size"_a, "genome_index"_a)
-    .def("global_levels",
-         [](const transferase::methylome &self)
-           -> std::tuple<std::uint32_t, std::uint32_t> {
-           const auto result =
-             self.global_levels<transferase::level_element_t>();
-           return std::make_tuple(result.n_meth, result.n_unmeth);
-         })
-    .def("global_levels_covered",
-         [](const transferase::methylome &self)
-           -> std::tuple<std::uint32_t, std::uint32_t, std::uint32_t> {
-           const auto result =
-             self.global_levels<transferase::level_element_covered_t>();
-           return std::make_tuple(result.n_meth, result.n_unmeth,
-                                  result.n_covered);
-         })
+    .def(
+      "global_levels",
+      [](const transferase::methylome &self)
+        -> std::tuple<std::uint32_t, std::uint32_t> {
+        const auto result = self.global_levels<transferase::level_element_t>();
+        return std::make_tuple(result.n_meth, result.n_unmeth);
+      },
+      R"doc(
+      Get the global methylation level. These levels are in the form of two
+      integer counts of number of methylated and number of unmethylated read
+      counts over the whole methylome.
+      )doc")
+    .def(
+      "global_levels_covered",
+      [](const transferase::methylome &self)
+        -> std::tuple<std::uint32_t, std::uint32_t, std::uint32_t> {
+        const auto result =
+          self.global_levels<transferase::level_element_covered_t>();
+        return std::make_tuple(result.n_meth, result.n_unmeth,
+                               result.n_covered);
+      },
+      R"doc(
+      Gives the same information as 'global_levels' but with an additional
+      value for number of sites covered globally.
+      )doc")
     //
     ;
 }

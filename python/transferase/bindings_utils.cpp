@@ -26,16 +26,17 @@
 #include <system_config.hpp>  // for get_system_config_filename
 
 #include <nanobind/nanobind.h>
-#include <nanobind/stl/string.h>
-#include <nanobind/stl/vector.h>
+#include <nanobind/stl/string.h>  // IWYU pragma: keep
+#include <nanobind/stl/vector.h>  // IWYU pragma: keep
 
 #include <algorithm>
 #include <filesystem>
 #include <format>
 #include <iterator>
-#include <ranges>
+#include <ranges>  // IWYU pragma: keep
 #include <stdexcept>
 #include <string>
+#include <type_traits>  // for std::is_lvalue_reference_v
 #include <vector>
 
 namespace nb = nanobind;

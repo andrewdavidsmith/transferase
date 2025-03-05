@@ -26,6 +26,7 @@
 #include <methylome_client_local.hpp>
 
 #include <client_config.hpp>
+#include <level_container_md.hpp>
 #include <level_element.hpp>
 #include <methylome_client_base.hpp>
 #include <query_container.hpp>
@@ -36,10 +37,16 @@
 #include <nanobind/stl/vector.h>  // IWYU pragma: keep
 
 #include <cstdint>
+#include <format>
+#include <new>  // for operator new
 #include <string>
 #include <type_traits>
 #include <utility>  // for std::declval
 #include <vector>
+
+namespace transferase {
+struct genomic_interval;
+}
 
 namespace nb = nanobind;
 

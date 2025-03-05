@@ -57,8 +57,8 @@ When in doubt, consult the module reference at the location listed above.
 #include <nanobind/stl/vector.h>  // IWYU pragma: keep
 
 #include <string>
-#include <type_traits>  // for std::is_lvalue_reference_v
-#include <utility>      // for std::move
+#include <type_traits>  // IWYU pragma: keep
+#include <utility>      // IWYU pragma: keep
 
 auto
 initialize_transferase() -> void {

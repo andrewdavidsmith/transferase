@@ -231,8 +231,8 @@ struct methylome {
     return data.global_levels<lvl_elem_t>();
   }
 
-  /// @brief Convenience function that calls global_levels with
-  /// specialized to return information about sites covered.
+  /// @brief Gives the same information as 'global_levels' but with an
+  /// additional value for number of sites covered globally.
   [[nodiscard]] auto
   global_levels_covered() const noexcept -> level_element_covered_t {
     return data.global_levels<level_element_covered_t>();

@@ -26,16 +26,21 @@
 #include <genome_index.hpp>
 #include <genome_index_metadata.hpp>
 
+#include <listobject.h>  // for PyList_New
 #include <nanobind/nanobind.h>
 #include <nanobind/operators.h>   // IWYU pragma: keep
 #include <nanobind/stl/string.h>  // IWYU pragma: keep
 #include <nanobind/stl/vector.h>  // IWYU pragma: keep
 
+#include <compare>  // for std::operator<, std::operator<=
 #include <format>
 #include <genomic_interval.hpp>
 #include <iterator>   // for std::ssize
+#include <new>        // for operator new
 #include <stdexcept>  // for std::out_of_range include <string>
 #include <string>
+#include <type_traits>  // for std::is_rvalue_reference_v, std...
+#include <utility>      // for std::declval
 #include <vector>
 
 namespace nb = nanobind;

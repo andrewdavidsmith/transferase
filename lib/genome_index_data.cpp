@@ -40,7 +40,7 @@
 #include <numeric>     // for std::adjacent_difference, std::exclusive_scan
 #include <ranges>
 #include <string>
-#include <tuple>  // for std::get (iywu fp)
+#include <tuple>  // IWYU pragma: keep
 #include <vector>
 
 namespace transferase {

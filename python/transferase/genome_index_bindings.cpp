@@ -26,12 +26,15 @@
 #include <genome_index.hpp>
 #include <genomic_interval.hpp>  // IWYU pragma: keep
 
-#include "listobject.h"  // for PyList_New
+#include <listobject.h>  // for PyList_New
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/string.h>  // IWYU pragma: keep
 #include <nanobind/stl/vector.h>  // IWYU pragma: keep
 
+#include <new>  // for operator new
 #include <string>
+#include <type_traits>  // for std::is_lvalue_reference_v, std::is_r...
+#include <utility>      // for std::declval
 #include <vector>
 
 auto
