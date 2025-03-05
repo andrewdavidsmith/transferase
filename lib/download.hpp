@@ -44,17 +44,25 @@ struct download_request {
   std::string port;
   std::string target;
   std::string outdir;
+  std::chrono::milliseconds connect_timeout{10'000'000};    // milliseconds
+  std::chrono::milliseconds download_timeout{240'000'000};  // milliseconds
+  bool show_progress{};
+
   download_request(const std::string &host, const std::string &port,
-                   const std::string &target, const std::string &outdir) :
-    host{host}, port{port}, target{target}, outdir{outdir} {}
+                   const std::string &target, const std::string &outdir,
+                   const bool show_progress = false) :
+    host{host}, port{port}, target{target}, outdir{outdir},
+    show_progress{show_progress} {}
 
   download_request(const std::string &host, const std::string &port,
                    const std::string &target, const std::string &outdir,
                    const std::chrono::milliseconds connect_timeout_in_millis,
-                   const std::chrono::milliseconds download_timeout_in_millis) :
+                   const std::chrono::milliseconds download_timeout_in_millis,
+                   const bool show_progress = false) :
     host{host}, port{port}, target{target}, outdir{outdir},
     connect_timeout{connect_timeout_in_millis},
-    download_timeout{download_timeout_in_millis} {}
+    download_timeout{download_timeout_in_millis}, show_progress{show_progress} {
+  }
 
   template <typename T>
   auto
@@ -95,10 +103,6 @@ struct download_request {
   get_download_timeout() const -> std::chrono::milliseconds {
     return download_timeout;
   }
-
-private:
-  std::chrono::milliseconds connect_timeout{10'000'000};    // milliseconds
-  std::chrono::milliseconds download_timeout{240'000'000};  // milliseconds
 };
 
 [[nodiscard]]
