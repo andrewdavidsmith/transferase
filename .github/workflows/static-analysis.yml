@@ -27,14 +27,12 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: '3.13'
-    - name: Install cpplint and cppcheck
+    - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install cpplint cppcheck
-    - name: Check versions
-      run: |
-        cpplint --version
-        cppcheck --version
+        sudo apt-get update
+        sudo apt-get install -y libboost-all-dev zlib1g-dev
     - name: Configure build for static analysis
       run: |
         cmake -B build \
