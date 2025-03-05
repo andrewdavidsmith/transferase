@@ -417,17 +417,21 @@ check_is_outdated(const download_request &dr,
 }
 
 [[nodiscard]] static auto
-download_index_files(
-  const remote_data_resource &remote, const std::vector<std::string> &genomes,
-  const std::string &dirname,
-  const download_policy_t download_policy) -> std::error_code {
+download_index_files(const remote_data_resource &remote,
+                     const std::vector<std::string> &genomes,
+                     const std::string &dirname,
+                     const download_policy_t download_policy,
+                     const bool show_progress) -> std::error_code {
   auto &lgr = transferase::logger::instance();
   for (const auto &genome : genomes) {
     const auto stem = remote.form_index_target_stem(genome);
     const auto data_file =
       std::format("{}{}", stem, genome_index_data::filename_extension);
 
-    const download_request dr{remote.hostname, remote.port, data_file, dirname};
+    const download_request dr{
+      remote.hostname, remote.port, data_file, dirname, show_progress,
+    };
+
     const auto local_index_file =
       std::filesystem::path{dirname} / std::format("{}.cpg_idx", genome);
 
@@ -451,8 +455,7 @@ download_index_files(
       lgr.debug("Reason: policy={}, file_exists={}, is_outdated={}",
                 download_policy, index_file_exists, is_outdated);
 
-      const auto [data_hdr, data_err] =
-        download({remote.hostname, remote.port, data_file, dirname});
+      const auto [data_hdr, data_err] = download(dr);
       if (data_err)
         return dl_err(data_hdr, data_err, remote.form_url(data_file));
 
@@ -517,7 +520,9 @@ download_metadata_file(
 auto
 client_config::install(const std::vector<std::string> &genomes,
                        const download_policy_t download_policy,
-                       std::string sys_config_dir) const -> void {
+                       std::string sys_config_dir,
+                       const bool show_progress) const -> void {
+  namespace fs = std::filesystem;
   auto &lgr = transferase::logger::instance();
   assert(!config_dir.empty());
   if (sys_config_dir.empty())
@@ -529,6 +534,7 @@ client_config::install(const std::vector<std::string> &genomes,
     throw std::system_error(error, "[Calling validate]");
 
   lgr.debug("Making configuration directories");
+  lgr.debug("progress {}", show_progress);
   make_directories(error);
   if (error)
     throw std::system_error(
@@ -544,7 +550,7 @@ client_config::install(const std::vector<std::string> &genomes,
   const system_config sys_conf(sys_config_dir);
   const auto &remotes = sys_conf.get_remote_resources();
   const auto metadata_dir =
-    (std::filesystem::path(config_dir) / metadata_file).parent_path().string();
+    (fs::path(config_dir) / metadata_file).parent_path().string();
   // Do the downloads, attempting each remote resources server in the
   // system config
   bool metadata_downloads_ok{false};
@@ -564,13 +570,12 @@ client_config::install(const std::vector<std::string> &genomes,
   if (genomes.empty())
     return;
 
-  const auto index_full_path =
-    (std::filesystem::path(config_dir) / index_dir).string();
+  const auto index_full_path = (fs::path(config_dir) / index_dir).string();
 
   bool genome_downloads_ok{false};
   for (const auto &remote : remotes) {
-    const auto index_err =
-      download_index_files(remote, genomes, index_full_path, download_policy);
+    const auto index_err = download_index_files(
+      remote, genomes, index_full_path, download_policy, show_progress);
     if (index_err)
       lgr.debug("Error obtaining index files: {}", index_err);
     if (!index_err) {
