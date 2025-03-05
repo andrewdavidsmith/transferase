@@ -100,6 +100,7 @@ command_config_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
   bool update_config{false};
   bool no_defaults{false};
   bool all_defaults{false};
+  bool show_progress{false};
   xfr::download_policy_t download_policy{download_policy_default};
 
   CLI::App app{about_msg};
@@ -145,6 +146,9 @@ command_config_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
   const auto quiet_opt =
     app.add_flag("--quiet", quiet, "only report errors")
     ->option_text(" ");
+  app.add_flag("--progress", show_progress, "show download progress")
+    ->option_text(" ")
+    ->excludes(quiet_opt);
   app.add_flag("--debug", debug, "report debug information")
     ->option_text(" ")
     ->excludes(quiet_opt);
@@ -220,7 +224,7 @@ command_config_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
   xfr::log_args<transferase::log_level_t::info>(args_to_log);
 
   try {
-    cfg.install(genomes, download_policy, empty_sys_config_dir);
+    cfg.install(genomes, download_policy, empty_sys_config_dir, show_progress);
   }
   catch (const std::exception &e) {
     lgr.error("Error: {}", e.what());
