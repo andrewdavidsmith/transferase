@@ -21,44 +21,6 @@
  * SOFTWARE.
  */
 
-/**
- * (ADS: notes to self here) client_config does the work of
- * configuring and setting up the apps, along with managing the
- * configuration of methylome_client objects. This work involves
- * writing configuration files for clients, creating directories,
- * downloading metadata and genome index files from servers, and
- * ensuring that all the right files are in the right places (or
- * noticing when they are not).
- *
- * The client config objects are intended to be used as singletons,
- * although they are not constrained as such. Their instance variables
- * can be just strings, and they can contain more information than is
- * needed. They are not performance-critical.
- *
- * Each methylome client contains a client config object. This is to
- * isolate all the code that interacts with the user's
- * configuration. Even if the user interfaces with a methylome client,
- * the work on configuration files and the configuration directories
- * is all done through a client config object.
- *
- * Responsibilities:
- *
- * - Read configuration files or report that they are not as expected.
- * - Write or update configuration files (save an instantiated object).
- * - Ensure directory structures specified in configuration exist with
- *   correct permissions (not part of interface).
- * - Make calls to download files as requested by users.
- *
- * Activities that define the interface:
- *
- * - Independent of methylome client objects:
- *   - Initial setup of transferase for a user (implemented).
- *   - Updating configuration based on user requests (not fully implemented).
- * - For methylome client objects:
- *   - Just give access to the configuration parameters through public
- *     member variables.
- */
-
 #ifndef LIB_CLIENT_CONFIG_HPP_
 #define LIB_CLIENT_CONFIG_HPP_
 
@@ -179,8 +141,8 @@ struct client_config {
   /// files and verifying consistency, if needed.
   auto
   install(const std::vector<std::string> &genomes,
-          const download_policy_t download_policy,
-          std::string sys_config_dir) const -> void;
+          const download_policy_t download_policy, std::string sys_config_dir,
+          const bool show_progress = false) const -> void;
 
   /// Validate that the required instance variables are set properly;
   /// do this before attempting the configuration process.
