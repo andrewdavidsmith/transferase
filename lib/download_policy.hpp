@@ -54,6 +54,24 @@ static constexpr auto download_policy_t_name = std::array{
   // clang-format on
 };
 
+[[nodiscard]] inline auto
+get_download_policy_message(download_policy_t p) -> std::string {
+  static constexpr auto download_policy_message = std::array{
+    // clang-format off
+    "no downloads"sv,
+    "missing files will be downloaded"sv,
+    "download files with updates"sv,
+    "download all relevant files"sv,
+    // clang-format on
+  };
+  const auto x = std::to_underlying(p);
+  if (x >= std::size(download_policy_message)) {
+    return "error";
+  }
+  const auto &m = download_policy_message[x];
+  return std::string(std::cbegin(m), std::cend(m));
+}
+
 static const std::map<std::string, download_policy_t> download_policy_cli11{
   // clang-format off
   {"none", download_policy_t::none},
