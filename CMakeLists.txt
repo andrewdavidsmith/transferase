@@ -51,7 +51,7 @@ include(GNUInstallDirs)
 set(GLOBAL_COMPILE_OPTIONS "")
 set(GLOBAL_LINKER_OPTIONS "")
 
-include(cmake/config_options.cmake)
+include(cmake/options.cmake)
 
 # This is happening for all builds, even though it doesn't totally make sense.
 include(cmake/data_config.cmake)
