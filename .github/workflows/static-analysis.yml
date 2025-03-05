@@ -7,7 +7,6 @@ on:
 jobs:
 
   clang-format:
-    needs: clang-format
     runs-on: ubuntu-latest
     steps:
     - name: Checkout repository
