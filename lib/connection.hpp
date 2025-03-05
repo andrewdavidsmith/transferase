@@ -124,8 +124,12 @@ struct connection : public std::enable_shared_from_this<connection> {
   request req;  // this connection's request
   response_header_buffer resp_hdr_buf{};
   response_header resp_hdr;  // header of the response
+
+  // ADS: keeping instance of both below bc alternatives aren't that much
+  // better -- reminder that this was a choice and not an accident.
   level_container_md<level_element_t> resp;
   level_container_md<level_element_covered_t> resp_cov;
+
   logger &lgr;
   std::uint32_t conn_id{};  // identifer for this connection
   std::uint32_t read_timeout_seconds{10};
