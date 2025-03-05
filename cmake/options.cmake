@@ -66,7 +66,6 @@ if(BUILD_PYTHON)
   # Check compatibility
   if(UNIT_TESTS OR
       BUILD_CLI OR
-      STATIC_ANALYSIS OR
       ENABLE_CODE_COVERAGE OR
       ENABLE_SANITIZING)
     message(FATAL_ERROR
@@ -163,7 +162,6 @@ if(STATIC_ANALYSIS)
   message(STATUS "Requested static analysis: ${STATIC_ANALYSIS_CHECKS}")
 
   # Options on
-  set(BUILD_PYTHON off)  ## Until we can wrangle nanobind
   set(UNIT_TESTS on)
   # Options off
   set(STRIP_PATHS_FROM_BINARIES off)
