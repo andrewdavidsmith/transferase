@@ -61,7 +61,7 @@ parse_header(const auto &res) -> std::unordered_map<std::string, std::string> {
   };
   std::unordered_map<std::string, std::string> header = {
     {"Status", std::to_string(res.result_int())},
-    {"Reason", make_string(res.result())       },
+    {"Reason", make_string(res.result())},
   };
   for (const auto &h : res.base())
     header.emplace(make_string(h.name_string()), make_string(h.value()));
