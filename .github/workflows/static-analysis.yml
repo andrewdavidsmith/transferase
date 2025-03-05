@@ -5,7 +5,6 @@ on:
     paths: '**/*.*pp'
 
 jobs:
-
   clang-format:
     needs: clang-format
     runs-on: ubuntu-latest
@@ -17,9 +16,9 @@ jobs:
         sudo apt-get install -y clang-format
     - name: Run clang-format
       run: |
-        clang-format -n -Werror $(git ls-files '*.*pp' | grep -v "\(CLI11\|nlohmann\)")
-
-  cpplint:
+        clang-format -n -Werror \
+        $(git ls-files '*.*pp' | grep -v "\(CLI11\|nlohmann\)")
+  static-analysis-build:
     needs: clang-format
     runs-on: ubuntu-latest
     steps:
@@ -29,35 +28,17 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: '3.13'
-    - name: Install cpplint
+    - name: Install cpplint and cppcheck
       run: |
         python -m pip install --upgrade pip
-        pip install cpplint
-    - name: Check cpplint version
-      run: cpplint --version
-    - name: Run cpplint
+        pip install cpplint cppcheck
+    - name: Check versions
       run: |
-        cpplint --quiet --repository=. $(git ls-files '*.*pp' | grep -v "\(CLI11\|nlohmann\)")
-
-  cppcheck:
-    needs: clang-format
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-    - name: Python setup
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.13'
-    - name: Install cppcheck
+        cpplint --version
+        cppcheck --version
+    - name: Configure build for static analysis
       run: |
-        python -m pip install --upgrade pip
-        pip install cppcheck
-    - name: Run cppcheck
-      run: |
-        cppcheck \
-          --enable=all \
-          --check-level=exhaustive \
-          --inline-suppr \
-          --suppressions-list=.cppcheck_suppress \
-          $(git ls-files '*.*pp' | grep -v "\(CLI11\|nlohmann\)")
+        cmake -B build \
+        -DCMAKE_CXX_COMPILER=g++-14 \
+        -DSTATIC_ANALYSIS=on \
+        -DCMAKE_BUILD_TYPE=Build
