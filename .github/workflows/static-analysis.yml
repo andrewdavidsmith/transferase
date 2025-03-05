@@ -1,6 +1,8 @@
 name: Static analysis
 
 on:
+  pull_request:
+    branches: [ "main" ]
   workflow_dispatch:
     paths: '**/*.*pp'
 
