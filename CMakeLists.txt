@@ -27,7 +27,7 @@ project(
   transferase
   VERSION 0.5.0
   DESCRIPTION
-  "The transferase system for retrieving methylome data from methbase"
+  "Tools to retrieve methylome data from methbase"
   HOMEPAGE_URL https://github.com/andrewdavidsmith/transferase
   LANGUAGES CXX)
 
