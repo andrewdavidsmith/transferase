@@ -27,7 +27,7 @@
 #include "request_handler.hpp"
 #include "response.hpp"
 
-#include <boost/asio.hpp>
+#include <asio.hpp>
 #include <boost/system.hpp>
 
 #include <algorithm>
@@ -41,7 +41,7 @@ auto
 connection::stop() -> void {
   lgr.debug("{} Initiating connection shutdown.", conn_id);
   boost::system::error_code shutdown_ec;  // for non-throwing
-  (void)socket.shutdown(boost::asio::ip::tcp::socket::shutdown_both,
+  (void)socket.shutdown(asio::ip::tcp::socket::shutdown_both,
                         shutdown_ec);
   if (shutdown_ec)
     lgr.warning("{} Shutdown error: {}", conn_id, shutdown_ec);
@@ -63,13 +63,13 @@ connection::read_request() -> void {
   // as long as lambda is alive, connection instance is too
   auto self(shared_from_this());
   // default capturing 'this' puts names in search
-  boost::asio::async_read(
-    socket, boost::asio::buffer(req_buf),
-    boost::asio::transfer_exactly(request_buffer_size),
+  asio::async_read(
+    socket, asio::buffer(req_buf),
+    asio::transfer_exactly(request_buffer_size),
     [this, self](const boost::system::error_code ec,
                  [[maybe_unused]] const std::size_t bytes_transferred) {
       // waiting is done; remove deadline for now
-      deadline.expires_at(boost::asio::steady_timer::time_point::max());
+      deadline.expires_at(asio::steady_timer::time_point::max());
       if (!ec) {
         if (const auto req_parse_error = parse(req_buf, req);
             !req_parse_error) {
@@ -112,11 +112,11 @@ connection::read_query() -> void {
   // consistency for setting and clearing the timeouts
   auto self(shared_from_this());
   socket.async_read_some(
-    boost::asio::buffer(query.data(query_byte), query_remaining),
+    asio::buffer(query.data(query_byte), query_remaining),
     [this, self](const boost::system::error_code ec,
                  const std::size_t bytes_transferred) {
       // remove deadline while doing computation
-      deadline.expires_at(boost::asio::steady_timer::time_point::max());
+      deadline.expires_at(asio::steady_timer::time_point::max());
       if (!ec) {
         query_remaining -= bytes_transferred;
         query_byte += bytes_transferred;
@@ -153,7 +153,7 @@ connection::read_query() -> void {
 
 auto
 connection::compute_bins() -> void {
-  deadline.expires_at(boost::asio::steady_timer::time_point::max());
+  deadline.expires_at(asio::steady_timer::time_point::max());
   if (req.is_covered_request())
     handler.bins_get_levels<level_element_covered_t>(req, resp_hdr, resp_cov);
   else
@@ -168,11 +168,11 @@ connection::respond_with_error() -> void {
   if (!compose_error) {
     lgr.warning("{} Responding with error: {}", conn_id, resp_hdr.summary());
     auto self(shared_from_this());
-    boost::asio::async_write(
-      socket, boost::asio::buffer(resp_hdr_buf),
+    asio::async_write(
+      socket, asio::buffer(resp_hdr_buf),
       [this, self](const boost::system::error_code ec,
                    [[maybe_unused]] const std::size_t bytes_transferred) {
-        deadline.expires_at(boost::asio::steady_timer::time_point::max());
+        deadline.expires_at(asio::steady_timer::time_point::max());
         if (ec)
           lgr.error("{} Error responding: {}", conn_id, ec);
         stop();
@@ -191,11 +191,11 @@ connection::respond_with_header() -> void {
   const auto compose_error = compose(resp_hdr_buf, resp_hdr);
   if (!compose_error) {
     auto self(shared_from_this());
-    boost::asio::async_write(
-      socket, boost::asio::buffer(resp_hdr_buf),
+    asio::async_write(
+      socket, asio::buffer(resp_hdr_buf),
       [this, self](const boost::system::error_code ec,
                    [[maybe_unused]] const std::size_t bytes_transferred) {
-        deadline.expires_at(boost::asio::steady_timer::time_point::max());
+        deadline.expires_at(asio::steady_timer::time_point::max());
         if (!ec) {
           prepare_to_write_response_payload();
           respond_with_levels();
@@ -217,13 +217,13 @@ auto
 connection::respond_with_levels() -> void {
   auto self(shared_from_this());
   socket.async_write_some(
-    boost::asio::buffer(
+    asio::buffer(
       // NOLINTNEXTLINE(*-pointer-arithmetic)
       get_outgoing_data_buffer() + outgoing_bytes_sent,
       outgoing_bytes_remaining),
     [this, self](const boost::system::error_code ec,
                  const std::size_t bytes_transferred) {
-      deadline.expires_at(boost::asio::steady_timer::time_point::max());
+      deadline.expires_at(asio::steady_timer::time_point::max());
       if (!ec) {
         outgoing_bytes_remaining -= bytes_transferred;
         outgoing_bytes_sent += bytes_transferred;
@@ -273,13 +273,13 @@ connection::check_deadline() -> void {
   // ADS: use deadline set in place of socket.close so we don't need
   // to check if socket is_open?
 
-  if (deadline.expiry() <= boost::asio::steady_timer::clock_type::now()) {
+  if (deadline.expiry() <= asio::steady_timer::clock_type::now()) {
     // deadline passed: close socket so remaining async ops are
     // cancelled (see comment below)
 
     stop();
 
-    deadline.expires_at(boost::asio::steady_timer::time_point::max());
+    deadline.expires_at(asio::steady_timer::time_point::max());
 
     /* ADS: closing here but not sure it makes sense; RAII? see comment in
      * respond_with_levels */

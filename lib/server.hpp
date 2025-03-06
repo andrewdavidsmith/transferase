@@ -26,7 +26,7 @@
 
 #include "request_handler.hpp"
 
-#include <boost/asio.hpp>
+#include <asio.hpp>
 
 #include <atomic>
 #include <cstdint>
@@ -65,9 +65,9 @@ struct server {
   // clang-format on
 
   std::uint32_t n_threads{};
-  boost::asio::io_context ioc;              // performs async ops
-  boost::asio::signal_set signals;          // registers termination signals
-  boost::asio::ip::tcp::acceptor acceptor;  // listens for connections
+  asio::io_context ioc;              // performs async ops
+  asio::signal_set signals;          // registers termination signals
+  asio::ip::tcp::acceptor acceptor;  // listens for connections
   request_handler handler;                  // handles incoming requests
   logger &lgr;
   std::atomic_uint32_t connection_id{};  // incremented per thread

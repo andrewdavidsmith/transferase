@@ -31,8 +31,8 @@
 #include <boost/optional/optional.hpp>
 #include <boost/system.hpp>
 
-#include <boost/asio.hpp>
-#include <boost/asio/spawn.hpp>  // IWYU pragma: keep
+#include <asio.hpp>
+#include <asio/spawn.hpp>  // IWYU pragma: keep
 #include <boost/beast.hpp>
 
 #include <cerrno>
@@ -70,7 +70,7 @@ parse_header(const auto &res) -> std::unordered_map<std::string, std::string> {
 namespace transferase {
 
 namespace http = boost::beast::http;
-namespace ip = boost::asio::ip;
+namespace ip = asio::ip;
 
 /// Download the header for a remote file
 [[nodiscard]]
@@ -81,7 +81,7 @@ get_header(const download_request &dr)
   static constexpr auto http_version{11};
 
   // setup for io
-  boost::asio::io_context ioc;
+  asio::io_context ioc;
   ip::tcp::resolver resolver(ioc);
   boost::beast::tcp_stream stream(ioc);
 
@@ -158,10 +158,9 @@ struct download_progress {
 
 auto
 do_download(const download_request &dr, const std::string &outfile,
-            boost::asio::io_context &ioc,
+            asio::io_context &ioc,
             std::unordered_map<std::string, std::string> &header,
-            boost::beast::error_code &ec,
-            const boost::asio::yield_context &yield) {
+            boost::beast::error_code &ec, const asio::yield_context &yield) {
   // ADS: this is the function that does the downloading called from
   // as asio io context. Also, look at these constants if bugs happen
   static constexpr auto http_version{11};
@@ -285,16 +284,15 @@ download(const download_request &dr)
 
   std::unordered_map<std::string, std::string> header;
   boost::beast::error_code ec;
-  boost::asio::io_context ioc;
-  boost::asio::spawn(boost::asio::make_strand(ioc),
-                     std::bind(&do_download, dr, outfile, std::ref(ioc),
-                               std::ref(header), std::ref(ec),
-                               std::placeholders::_1),
-                     // on completion, spawn will call this function
-                     [](const std::exception_ptr &ex) {
-                       if (ex)
-                         std::rethrow_exception(ex);
-                     });
+  asio::io_context ioc;
+  asio::spawn(asio::make_strand(ioc),
+              std::bind(&do_download, dr, outfile, std::ref(ioc),
+                        std::ref(header), std::ref(ec), std::placeholders::_1),
+              // on completion, spawn will call this function
+              [](const std::exception_ptr &ex) {
+                if (ex)
+                  std::rethrow_exception(ex);
+              });
 
   // NOTE: here is where it all happens
   ioc.run();
