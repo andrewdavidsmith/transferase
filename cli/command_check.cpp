@@ -28,15 +28,14 @@ check the given files for correctness and consistency
 )";
 
 static constexpr auto description = R"(
-Perform 3 kinds of checks. First, the index is checked internally to
-verify that the index data and the index metadata are consistent.
-Second, the methylomes are each checked internally to verify that the
-methylome data and methylome metadata is consistent for each given
-methylome. Finally, each given methylome is checked for consistency
-with the given index. Not output is written except that logged to the
-console. The exit code of the app will be non-zero if any of the
-consistency checks fails. At a log-level of 'debug' the outcome of
-each check will be logged so the cause of any failure can be
+Perform 3 kinds of checks. First, the index is checked internally to verify
+that the index data and the index metadata are consistent.  Second, the
+methylomes are each checked internally to verify that the methylome data and
+methylome metadata is consistent for each given methylome. Finally, each given
+methylome is checked for consistency with the given index. Not output is
+written except that logged to the console. The exit code of the app will be
+non-zero if any of the consistency checks fails. At a log-level of 'debug' the
+outcome of each check will be logged so the cause of any failure can be
 determined.
 )";
 
