@@ -130,17 +130,18 @@ struct download_progress {
   download_progress(const std::string &filename) :
     bar{
       // clang-format off
-      indicators::option::BarWidth{72},
+      indicators::option::BarWidth{50},
       indicators::option::Start{"["},
       indicators::option::Fill{"="},
-      indicators::option::Lead{" "},
+      indicators::option::Lead{"="},
       indicators::option::Remainder{"-"},
       indicators::option::End{"]"},
       indicators::option::PostfixText{},
       // clang-format on
     } {
     const auto label = std::filesystem::path(filename).filename().string();
-    bar.set_option(indicators::option::PostfixText{label});
+    bar.set_option(
+      indicators::option::PostfixText{std::format("Downloading: {}", label)});
   }
   auto
   update(const auto &p) -> void {
@@ -226,7 +227,9 @@ do_download(const download_request &dr, const std::string &outfile,
 
   // read the http response
   while (!p.is_done()) {  // p is the parser
-    http::read_some(stream, buffer, p);
+    http::async_read_some(stream, buffer, p, yield[ec]);
+    if (ec)
+      return;
     if (dr.show_progress && p.is_header_done())
       bar.update(p);
   }
