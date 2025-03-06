@@ -46,6 +46,7 @@ foreach(cpp_file ${cpp_files})
     ${PROJECT_BINARY_DIR}
     ${Boost_INCLUDE_DIRS}
     ${ZLIB_INCLUDE_DIRS}
+    ${PROJECT_SOURCE_DIR}/lib/asio
   )
   target_compile_options(${BASE_NAME} PRIVATE ${GLOBAL_COMPILE_OPTIONS})
   list(APPEND LIBRARY_OBJECTS ${BASE_NAME})
