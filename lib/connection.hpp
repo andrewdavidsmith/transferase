@@ -31,7 +31,7 @@
 #include "request.hpp"
 #include "response.hpp"
 
-#include <boost/asio.hpp>          // for tcp, steady_timer
+#include "asio.hpp"                // for tcp, steady_timer
 #include <boost/lexical_cast.hpp>  // for lexical_cast
 
 #include <cstddef>
@@ -51,7 +51,7 @@ struct connection : public std::enable_shared_from_this<connection> {
   connection &
   operator=(const connection &) = delete;
 
-  connection(boost::asio::ip::tcp::socket socket_to_move,
+  connection(asio::ip::tcp::socket socket_to_move,
              request_handler &handler, logger &lgr, std::uint32_t conn_id) :
     // 'socket' below can get confused if arg has exact same name
     socket{std::move(socket_to_move)}, deadline{socket.get_executor()},
@@ -117,8 +117,8 @@ struct connection : public std::enable_shared_from_this<connection> {
              : reinterpret_cast<const char *>(resp.data());
   }
 
-  boost::asio::ip::tcp::socket socket;  // this connection's socket
-  boost::asio::steady_timer deadline;
+  asio::ip::tcp::socket socket;  // this connection's socket
+  asio::steady_timer deadline;
   request_handler &handler;  // handles incoming requests
   request_buffer req_buf{};
   request req;  // this connection's request

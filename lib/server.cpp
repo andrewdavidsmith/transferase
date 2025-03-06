@@ -27,7 +27,8 @@
 #include "logger.hpp"
 #include "server_config.hpp"
 
-#include <boost/asio.hpp>
+#include <asio.hpp>
+
 #include <boost/lexical_cast.hpp>
 #include <boost/system.hpp>  // for boost::system::error_code
 
@@ -128,7 +129,7 @@ server::server(const std::string &address, const std::string &port,
   // ADS: after calling do_await_stop, must raise signal before any return
   do_await_stop();  // start waiting for signals
 
-  boost::asio::ip::tcp::resolver resolver(ioc);
+  asio::ip::tcp::resolver resolver(ioc);
   boost::system::error_code boost_ec;
   const auto resolved = resolver.resolve(address, port, boost_ec);
   if (boost_ec) {
@@ -139,7 +140,7 @@ server::server(const std::string &address, const std::string &port,
   }
 
   assert(!resolved.empty());
-  const boost::asio::ip::tcp::endpoint endpoint = *resolved.begin();
+  const asio::ip::tcp::endpoint endpoint = *resolved.begin();
   const auto endpoint_str = boost::lexical_cast<std::string>(endpoint);
   lgr.info("Resolved endpoint {}", endpoint_str);
 
@@ -153,7 +154,7 @@ server::server(const std::string &address, const std::string &port,
   }
 
   // ...with option to reuse the address (SO_REUSEADDR)
-  (void)acceptor.set_option(boost::asio::ip::tcp::acceptor::reuse_address(true),
+  (void)acceptor.set_option(asio::ip::tcp::acceptor::reuse_address(true),
                             boost_ec);
   if (boost_ec) {
     ec = boost_ec;
@@ -170,7 +171,7 @@ server::server(const std::string &address, const std::string &port,
     return;  // don't wait for signal handler
   }
 
-  (void)acceptor.listen(boost::asio::socket_base::max_listen_connections,
+  (void)acceptor.listen(asio::socket_base::max_listen_connections,
                         boost_ec);
   if (boost_ec) {
     ec = boost_ec;
@@ -202,7 +203,7 @@ server::server(const std::string &address, const std::string &port,
   do_daemon_await_stop();  // signals setup; start waiting for them
 
   // ADS: we are about to fork; clean up threads (what else?)
-  ioc.notify_fork(boost::asio::io_context::fork_prepare);
+  ioc.notify_fork(asio::io_context::fork_prepare);
 
   // Fork the process and have the parent exit. If the process was started
   // from a shell, this returns control to the user. Forking a new process is
@@ -241,7 +242,7 @@ server::server(const std::string &address, const std::string &port,
 
   // A second fork ensures the process cannot acquire a controlling
   // terminal.
-  // ioc.notify_fork(boost::asio::io_context::fork_prepare);
+  // ioc.notify_fork(asio::io_context::fork_prepare);
   if (const pid_t pid = fork()) {
     if (pid > 0) {
       std::exit(EXIT_SUCCESS);
@@ -303,7 +304,7 @@ server::server(const std::string &address, const std::string &port,
     return;
   }
 
-  ioc.notify_fork(boost::asio::io_context::fork_child);
+  ioc.notify_fork(asio::io_context::fork_child);
 
   // io_context 'ioc' can now be used normally
   syslog(LOG_INFO | LOG_USER, "Daemon started.");
@@ -311,7 +312,7 @@ server::server(const std::string &address, const std::string &port,
 
   // NOLINTEND(cppcoreguidelines-pro-type-vararg)
 
-  boost::asio::ip::tcp::resolver resolver(ioc);
+  asio::ip::tcp::resolver resolver(ioc);
   boost::system::error_code boost_ec;
   const auto resolved = resolver.resolve(address, port, boost_ec);
   if (boost_ec) {
@@ -322,7 +323,7 @@ server::server(const std::string &address, const std::string &port,
   }
 
   assert(!resolved.empty());
-  const boost::asio::ip::tcp::endpoint endpoint = *resolved.begin();
+  const asio::ip::tcp::endpoint endpoint = *resolved.begin();
   const auto endpoint_str = boost::lexical_cast<std::string>(endpoint);
   lgr.info("Resolved endpoint {}", endpoint_str);
 
@@ -336,7 +337,7 @@ server::server(const std::string &address, const std::string &port,
   }
 
   // ...with option to reuse the address (SO_REUSEADDR)
-  (void)acceptor.set_option(boost::asio::ip::tcp::acceptor::reuse_address(true),
+  (void)acceptor.set_option(asio::ip::tcp::acceptor::reuse_address(true),
                             boost_ec);
   if (boost_ec) {
     ec = boost_ec;
@@ -353,7 +354,7 @@ server::server(const std::string &address, const std::string &port,
     return;  // don't wait for signal handler
   }
 
-  (void)acceptor.listen(boost::asio::socket_base::max_listen_connections,
+  (void)acceptor.listen(asio::socket_base::max_listen_connections,
                         boost_ec);
   if (boost_ec) {
     ec = boost_ec;
@@ -381,9 +382,9 @@ server::run() -> void {
 auto
 server::do_accept() -> void {
   acceptor.async_accept(
-    boost::asio::make_strand(ioc),  // ADS: make a strand with the io_context
+    asio::make_strand(ioc),  // ADS: make a strand with the io_context
     [this](const boost::system::error_code ec,
-           boost::asio::ip::tcp::socket socket) {
+           asio::ip::tcp::socket socket) {
       // quit if server already stopped by signal
       if (!acceptor.is_open())
         return;

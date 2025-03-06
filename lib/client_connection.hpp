@@ -34,7 +34,7 @@
 #include <compare>  // for std::strong_ordering
 #include <cstddef>  // for std::size_t
 
-#include <boost/asio.hpp>
+#include <asio.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/system.hpp>  // for boost::system::error_code
 
@@ -85,7 +85,7 @@ public:
 private:
   auto
   handle_resolve(const std::error_code ec,
-                 const boost::asio::ip::tcp::resolver::results_type &endpoints)
+                 const asio::ip::tcp::resolver::results_type &endpoints)
     -> void;
 
   auto
@@ -125,12 +125,12 @@ private:
   }
 
 private:
-  boost::asio::io_context io_context;
-  boost::asio::ip::tcp::resolver resolver;
+  asio::io_context io_context;
+  asio::ip::tcp::resolver resolver;
 
 public:
-  boost::asio::ip::tcp::socket socket;
-  boost::asio::steady_timer deadline;
+  asio::ip::tcp::socket socket;
+  asio::steady_timer deadline;
   request_buffer req_buf{};
 
 private:
@@ -171,14 +171,14 @@ client_connection_base<D, L>::client_connection_base(
     handle_resolve(error, results);
   };
   boost::system::error_code ec;
-  boost::asio::ip::make_address(hostname, ec);
+  asio::ip::make_address(hostname, ec);
   if (ec) {  // hostname not an IP address
     lgr.debug("Resolving address for hostname: {}", hostname);
     resolver.async_resolve(hostname, port_number, token);
   }
   else {  // hostname given as IP address
     lgr.debug("Avoiding address resolution (ip: {})", hostname);
-    const auto ns = boost::asio::ip::resolver_query_base::numeric_service;
+    const auto ns = asio::ip::resolver_query_base::numeric_service;
     resolver.async_resolve(hostname, port_number, ns, token);
   }
   deadline.expires_after(read_timeout_seconds);
@@ -189,9 +189,9 @@ template <typename D, typename L>
 auto
 client_connection_base<D, L>::handle_resolve(
   const std::error_code ec,
-  const boost::asio::ip::tcp::resolver::results_type &endpoints) -> void {
+  const asio::ip::tcp::resolver::results_type &endpoints) -> void {
   if (!ec) {
-    boost::asio::async_connect(
+    asio::async_connect(
       socket, endpoints,
       [this](const auto &error, auto) { handle_connect(error); });
     deadline.expires_after(read_timeout_seconds);
@@ -205,7 +205,7 @@ client_connection_base<D, L>::handle_resolve(
 template <typename D, typename L>
 auto
 client_connection_base<D, L>::handle_connect(std::error_code ec) -> void {
-  deadline.expires_at(boost::asio::steady_timer::time_point::max());
+  deadline.expires_at(asio::steady_timer::time_point::max());
   if (!ec) {
     lgr.debug("Connected to server: {}",
               boost::lexical_cast<std::string>(socket.remote_endpoint()));
@@ -229,11 +229,11 @@ template <typename D, typename L>
 auto
 client_connection_base<D, L>::handle_write_request(const std::error_code ec)
   -> void {
-  deadline.expires_at(boost::asio::steady_timer::time_point::max());
+  deadline.expires_at(asio::steady_timer::time_point::max());
   if (!ec) {
-    boost::asio::async_read(
-      socket, boost::asio::buffer(resp_hdr_buf),
-      boost::asio::transfer_exactly(response_header_buffer_size),
+    asio::async_read(
+      socket, asio::buffer(resp_hdr_buf),
+      asio::transfer_exactly(response_header_buffer_size),
       [this](const auto error, auto) { handle_read_response_header(error); });
     deadline.expires_after(wait_for_work_timeout_seconds);
   }
@@ -241,9 +241,9 @@ client_connection_base<D, L>::handle_write_request(const std::error_code ec)
     lgr.debug("Error writing request: {}", ec);
     deadline.expires_after(read_timeout_seconds);
     // wait for an explanation of the problem
-    boost::asio::async_read(
-      socket, boost::asio::buffer(resp_hdr_buf),
-      boost::asio::transfer_exactly(response_header_buffer_size),
+    asio::async_read(
+      socket, asio::buffer(resp_hdr_buf),
+      asio::transfer_exactly(response_header_buffer_size),
       [this](const auto error, auto) { handle_failure_explanation(error); });
   }
 }
@@ -253,7 +253,7 @@ auto
 client_connection_base<D, L>::handle_read_response_header(std::error_code ec)
   -> void {
   // ADS: does this go here?
-  deadline.expires_at(boost::asio::steady_timer::time_point::max());
+  deadline.expires_at(asio::steady_timer::time_point::max());
   if (!ec) {
     ec = parse(resp_hdr_buf, resp_hdr);
     if (!ec) {
@@ -280,11 +280,11 @@ template <typename D, typename L>
 auto
 client_connection_base<D, L>::do_read_response_payload() -> void {
   socket.async_read_some(
-    boost::asio::buffer(get_incoming_data_buffer() + incoming_bytes_received,
+    asio::buffer(get_incoming_data_buffer() + incoming_bytes_received,
                         incoming_bytes_remaining),
     [this](const boost::system::error_code ec,
            const std::size_t bytes_transferred) {
-      deadline.expires_at(boost::asio::steady_timer::time_point::max());
+      deadline.expires_at(asio::steady_timer::time_point::max());
       if (!ec) {
         incoming_bytes_remaining -= bytes_transferred;
         incoming_bytes_received += bytes_transferred;
@@ -308,7 +308,7 @@ template <typename D, typename L>
 auto
 client_connection_base<D, L>::handle_failure_explanation(std::error_code ec)
   -> void {
-  deadline.expires_at(boost::asio::steady_timer::time_point::max());
+  deadline.expires_at(asio::steady_timer::time_point::max());
   if (!ec) {
     ec = parse(resp_hdr_buf, resp_hdr);
     if (!ec) {
@@ -330,11 +330,11 @@ template <typename D, typename L>
 auto
 client_connection_base<D, L>::do_finish(const std::error_code ec) -> void {
   // same consequence as canceling
-  deadline.expires_at(boost::asio::steady_timer::time_point::max());
+  deadline.expires_at(asio::steady_timer::time_point::max());
   status = ec;
   boost::system::error_code shutdown_ec;  // for non-throwing
   // nothing actually returned below
-  (void)socket.shutdown(boost::asio::ip::tcp::socket::shutdown_both,
+  (void)socket.shutdown(asio::ip::tcp::socket::shutdown_both,
                         shutdown_ec);
   boost::system::error_code socket_close_ec;  // for non-throwing
   // nothing actually returned below
@@ -347,7 +347,7 @@ client_connection_base<D, L>::check_deadline() -> void {
   if (!socket.is_open())  // ADS: when can this happen?
     return;
 
-  if (const auto right_now = boost::asio::steady_timer::clock_type::now();
+  if (const auto right_now = asio::steady_timer::clock_type::now();
       deadline.expiry() <= right_now) {
     // deadline passed: close socket so remaining async ops are
     // cancelled (see below)
@@ -357,9 +357,9 @@ client_connection_base<D, L>::check_deadline() -> void {
 
     boost::system::error_code shutdown_ec;  // for non-throwing
     // nothing actually returned below
-    (void)socket.shutdown(boost::asio::ip::tcp::socket::shutdown_both,
+    (void)socket.shutdown(asio::ip::tcp::socket::shutdown_both,
                           shutdown_ec);
-    deadline.expires_at(boost::asio::steady_timer::time_point::max());
+    deadline.expires_at(asio::steady_timer::time_point::max());
 
     /* ADS: closing here if needed?? */
     boost::system::error_code socket_close_ec;  // for non-throwing
@@ -394,8 +394,8 @@ public:
 
   auto
   handle_connect_impl() noexcept -> void {
-    boost::asio::async_write(
-      base_class_t::socket, boost::asio::buffer(base_class_t::req_buf),
+    asio::async_write(
+      base_class_t::socket, asio::buffer(base_class_t::req_buf),
       [this](const auto error, auto) {
         if (!error) {
           // prepare to write query payload
@@ -413,10 +413,10 @@ public:
   write_query() noexcept -> void {
     base_class_t::socket.async_write_some(
       // NOLINTNEXTLINE(*-pointer-arithmetic)
-      boost::asio::buffer(query.data() + bytes_sent, bytes_remaining),
+      asio::buffer(query.data() + bytes_sent, bytes_remaining),
       [this](const auto error, const std::size_t bytes_transferred) {
         base_class_t::deadline.expires_at(
-          boost::asio::steady_timer::time_point::max());
+          asio::steady_timer::time_point::max());
         if (!error) {
           bytes_remaining -= bytes_transferred;
           bytes_sent += bytes_transferred;
@@ -470,8 +470,8 @@ public:
 
   auto
   handle_connect_impl() noexcept {
-    boost::asio::async_write(base_class_t::socket,
-                             boost::asio::buffer(base_class_t::req_buf),
+    asio::async_write(base_class_t::socket,
+                             asio::buffer(base_class_t::req_buf),
                              [this](const auto error, auto) {
                                base_class_t::handle_write_request(error);
                              });
