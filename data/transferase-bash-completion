@@ -1,5 +1,3 @@
-#!/bin/bash
-
 # Function to handle autocompletion for 'transferase'
 _transferase_completion() {
     local cur prev subcommands options
