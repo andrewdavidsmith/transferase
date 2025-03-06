@@ -23,4 +23,6 @@ jobs:
 
     - name: Run clang-format
       run: |
-        clang-format --dry-run -Werror $(git ls-files '*.*pp' | grep -v "\(CLI11\|nlohmann\)")
+        clang-format \
+        --dry-run -Werror \
+        $(git ls-files '*.*pp' | grep -v "\(CLI11\|nlohmann\|indicators\)")

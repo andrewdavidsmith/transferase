@@ -18,7 +18,7 @@ jobs:
     - name: Run clang-format
       run: |
         clang-format -n -Werror \
-        $(git ls-files '*.*pp' | grep -v "\(CLI11\|nlohmann\)")
+        $(git ls-files '*.*pp' | grep -v "\(CLI11\|nlohmann\|indicators\)")
   static-analysis-build:
     needs: clang-format
     runs-on: ubuntu-latest
