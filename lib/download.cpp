@@ -43,9 +43,8 @@
 #include <format>
 #include <fstream>
 #include <functional>  // for std::ref
-#include <iostream>
-#include <iterator>  // for std::cbegin
-#include <limits>    // for std::numeric_limits
+#include <iterator>    // for std::cbegin
+#include <limits>      // for std::numeric_limits
 #include <print>
 #include <sstream>
 #include <string>
@@ -124,13 +123,14 @@ get_header(const download_request &dr)
 }
 
 struct download_progress {
+  static constexpr auto bar_width = 50u;
   indicators::ProgressBar bar;
   double total_size{};
   std::uint32_t prev_percent{};
   download_progress(const std::string &filename) :
     bar{
       // clang-format off
-      indicators::option::BarWidth{50},
+      indicators::option::BarWidth{bar_width},
       indicators::option::Start{"["},
       indicators::option::Fill{"="},
       indicators::option::Lead{"="},
