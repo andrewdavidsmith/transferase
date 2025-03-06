@@ -127,7 +127,7 @@ struct download_progress {
   indicators::ProgressBar bar;
   double total_size{};
   std::uint32_t prev_percent{};
-  download_progress(const std::string &filename) :
+  explicit download_progress(const std::string &filename) :
     bar{
       // clang-format off
       indicators::option::BarWidth{bar_width},
