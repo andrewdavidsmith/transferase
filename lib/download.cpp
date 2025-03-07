@@ -23,9 +23,13 @@
 
 #include "download.hpp"
 
+#include "http_client.hpp"
+
 #include "indicators/indicators.hpp"
 
 #include "httplib/httplib.h"
+
+#include <asio.hpp>
 
 #include <cerrno>
 #include <chrono>
@@ -169,6 +173,10 @@ auto
 get_timestamp(const download_request &dr)
   -> std::chrono::time_point<std::chrono::file_clock> {
   static constexpr auto http_time_format = "%a, %d %b %Y %T %z";
+
+  // Should this be a shared_ptr?
+  auto c = std::make_unique<http_client>(dr.host, dr.port, dr.target);
+  c->start();
 
   httplib::Headers headers;
 
