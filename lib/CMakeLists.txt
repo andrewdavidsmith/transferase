@@ -20,15 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-# Boost components
-if(POLICY CMP0167)
-  cmake_policy(SET CMP0167 NEW)
-endif()
-set(BOOST_COMPONENTS context)
-find_package(Boost 1.83.0 REQUIRED COMPONENTS ${BOOST_COMPONENTS})
-message(STATUS "Boost version: ${Boost_VERSION_STRING}")
-message(STATUS "Boost include dirs: ${Boost_INCLUDE_DIRS}")
-message(STATUS "Boost library dirs: ${Boost_LIBRARY_DIRS}")
+find_package(OpenSSL REQUIRED COMPONENTS SSL Crypto)
 
 find_package(Threads REQUIRED)
 
@@ -42,15 +34,16 @@ foreach(cpp_file ${cpp_files})
   add_library(${BASE_NAME} OBJECT ${cpp_file})
   ## Below is to make sure 'config.h' is visible for includes and any
   ## of the headers for configured libraries
-  target_include_directories(${BASE_NAME} PRIVATE
+  target_include_directories(${BASE_NAME} PUBLIC
     ${PROJECT_BINARY_DIR}
-    ${Boost_INCLUDE_DIRS}
     ${ZLIB_INCLUDE_DIRS}
     ${PROJECT_SOURCE_DIR}/lib/asio
   )
   target_compile_options(${BASE_NAME} PRIVATE ${GLOBAL_COMPILE_OPTIONS})
   list(APPEND LIBRARY_OBJECTS ${BASE_NAME})
 endforeach()
+
+target_compile_definitions(download PRIVATE CPPHTTPLIB_OPENSSL_SUPPORT)
 
 # Create the initial static library linking the individual objects
 add_library(transferase_system STATIC)
@@ -60,7 +53,8 @@ target_link_libraries(transferase_system PUBLIC
   ${LIBRARY_OBJECTS}
   ZLIB::ZLIB
   Threads::Threads
-  ${Boost_LIBRARIES}
+  OpenSSL::SSL
+  OpenSSL::Crypto
 )
 
 if(TEST_LIB)
