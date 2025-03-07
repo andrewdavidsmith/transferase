@@ -25,7 +25,6 @@
 
 #include "unit_test_utils.hpp"
 
-#include <boost/beast.hpp>
 #include <gtest/gtest.h>
 
 #include <algorithm>  // IWYU pragma: keep
@@ -67,7 +66,8 @@ TEST(download_test, send_request_timeout) {
   // Simulate the download
   const auto [headers, ec] = download(dr);
 
-  EXPECT_TRUE(ec.value() == std::to_underlying(boost::beast::error::timeout))
+  EXPECT_TRUE(ec.value() ==
+              std::to_underlying(http_error_code::ConnectionTimeout))
     << to_string(headers);
   std::error_code error;
   remove_file(expected_outfile, error);
@@ -94,7 +94,8 @@ TEST(download_test, receive_download_timeout) {
   const auto [headers, ec] = download(dr);  // do the download
   std::ignore = headers;
 
-  EXPECT_TRUE(ec.value() == std::to_underlying(boost::beast::error::timeout))
+  EXPECT_TRUE(ec.value() ==
+              std::to_underlying(http_error_code::ConnectionTimeout))
     << to_string(headers);
 
   std::error_code error;
@@ -125,10 +126,10 @@ TEST(download_test, download_non_existent_file) {
   const auto [headers, ec] = download(dr);  // do the download
 
   const auto bad_target =
-    (ec.value() == std::to_underlying(boost::beast::http::error::bad_target));
+    (ec.value() == std::to_underlying(http_error_code::Unknown));
 
   const auto timeout_happened =
-    (ec.value() == std::to_underlying(boost::beast::error::timeout));
+    (ec.value() == std::to_underlying(http_error_code::ConnectionTimeout));
 
   // Only check things if a timeout didn't happen
   EXPECT_TRUE(timeout_happened || bad_target) << to_string(headers);
@@ -163,7 +164,7 @@ TEST(download_test, download_success) {
   const auto [headers, ec] = download(dr);  // do the download
 
   const auto timeout_happened =
-    ec.value() == std::to_underlying(boost::beast::error::timeout);
+    ec.value() == std::to_underlying(http_error_code::ConnectionTimeout);
 
   // Only check things if a timeout didn't happen
   EXPECT_TRUE(timeout_happened || !ec) << to_string(headers);
