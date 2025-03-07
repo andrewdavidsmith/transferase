@@ -28,7 +28,6 @@
 #include "response.hpp"
 
 #include <asio.hpp>
-#include <boost/system.hpp>
 
 #include <algorithm>
 #include <chrono>
@@ -40,9 +39,8 @@ namespace transferase {
 auto
 connection::stop() -> void {
   lgr.debug("{} Initiating connection shutdown.", conn_id);
-  boost::system::error_code shutdown_ec;  // for non-throwing
-  (void)socket.shutdown(asio::ip::tcp::socket::shutdown_both,
-                        shutdown_ec);
+  std::error_code shutdown_ec;  // for non-throwing
+  (void)socket.shutdown(asio::ip::tcp::socket::shutdown_both, shutdown_ec);
   if (shutdown_ec)
     lgr.warning("{} Shutdown error: {}", conn_id, shutdown_ec);
 }
@@ -64,9 +62,8 @@ connection::read_request() -> void {
   auto self(shared_from_this());
   // default capturing 'this' puts names in search
   asio::async_read(
-    socket, asio::buffer(req_buf),
-    asio::transfer_exactly(request_buffer_size),
-    [this, self](const boost::system::error_code ec,
+    socket, asio::buffer(req_buf), asio::transfer_exactly(request_buffer_size),
+    [this, self](const std::error_code ec,
                  [[maybe_unused]] const std::size_t bytes_transferred) {
       // waiting is done; remove deadline for now
       deadline.expires_at(asio::steady_timer::time_point::max());
@@ -113,7 +110,7 @@ connection::read_query() -> void {
   auto self(shared_from_this());
   socket.async_read_some(
     asio::buffer(query.data(query_byte), query_remaining),
-    [this, self](const boost::system::error_code ec,
+    [this, self](const std::error_code ec,
                  const std::size_t bytes_transferred) {
       // remove deadline while doing computation
       deadline.expires_at(asio::steady_timer::time_point::max());
@@ -170,7 +167,7 @@ connection::respond_with_error() -> void {
     auto self(shared_from_this());
     asio::async_write(
       socket, asio::buffer(resp_hdr_buf),
-      [this, self](const boost::system::error_code ec,
+      [this, self](const std::error_code ec,
                    [[maybe_unused]] const std::size_t bytes_transferred) {
         deadline.expires_at(asio::steady_timer::time_point::max());
         if (ec)
@@ -193,7 +190,7 @@ connection::respond_with_header() -> void {
     auto self(shared_from_this());
     asio::async_write(
       socket, asio::buffer(resp_hdr_buf),
-      [this, self](const boost::system::error_code ec,
+      [this, self](const std::error_code ec,
                    [[maybe_unused]] const std::size_t bytes_transferred) {
         deadline.expires_at(asio::steady_timer::time_point::max());
         if (!ec) {
@@ -221,7 +218,7 @@ connection::respond_with_levels() -> void {
       // NOLINTNEXTLINE(*-pointer-arithmetic)
       get_outgoing_data_buffer() + outgoing_bytes_sent,
       outgoing_bytes_remaining),
-    [this, self](const boost::system::error_code ec,
+    [this, self](const std::error_code ec,
                  const std::size_t bytes_transferred) {
       deadline.expires_at(asio::steady_timer::time_point::max());
       if (!ec) {
@@ -241,7 +238,7 @@ connection::respond_with_levels() -> void {
           stop();
           /* ADS: closing here but not sure it makes sense; RAII? See comment in
            * check_deadline */
-          boost::system::error_code socket_close_ec;  // for non-throwing
+          std::error_code socket_close_ec;  // for non-throwing
           (void)socket.close(socket_close_ec);
           if (socket_close_ec)
             lgr.warning("{} Socket close error: {}", conn_id, socket_close_ec);
@@ -256,7 +253,7 @@ connection::respond_with_levels() -> void {
 
         /* ADS: closing here but not sure it makes sense; RAII? See comment in
          * check_deadline */
-        boost::system::error_code socket_close_ec;  // for non-throwing
+        std::error_code socket_close_ec;  // for non-throwing
         (void)socket.close(socket_close_ec);
         if (socket_close_ec)
           lgr.warning("{} Socket close error: {}", conn_id, socket_close_ec);
@@ -283,7 +280,7 @@ connection::check_deadline() -> void {
 
     /* ADS: closing here but not sure it makes sense; RAII? see comment in
      * respond_with_levels */
-    boost::system::error_code socket_close_ec;  // for non-throwing
+    std::error_code socket_close_ec;  // for non-throwing
     (void)socket.close(socket_close_ec);
     if (socket_close_ec)
       lgr.warning("{} Socket close error: {}", conn_id, socket_close_ec);

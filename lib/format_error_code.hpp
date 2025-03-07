@@ -24,8 +24,6 @@
 #ifndef LIB_FORMAT_ERROR_CODE_HPP_
 #define LIB_FORMAT_ERROR_CODE_HPP_
 
-#include <boost/system.hpp>
-
 #include <cstdint>
 #include <format>
 #include <string>
@@ -37,14 +35,6 @@ template <>
 struct std::formatter<std::error_code> : std::formatter<std::string> {
   auto
   format(const std::error_code &e, std::format_context &ctx) const {
-    return std::format_to(ctx.out(), "{}", e.message());
-  }
-};
-
-template <>
-struct std::formatter<boost::system::error_code> : std::formatter<std::string> {
-  auto
-  format(const boost::system::error_code &e, std::format_context &ctx) const {
     return std::format_to(ctx.out(), "{}", e.message());
   }
 };

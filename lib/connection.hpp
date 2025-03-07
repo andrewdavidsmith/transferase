@@ -31,8 +31,7 @@
 #include "request.hpp"
 #include "response.hpp"
 
-#include "asio.hpp"                // for tcp, steady_timer
-#include <boost/lexical_cast.hpp>  // for lexical_cast
+#include <asio.hpp>
 
 #include <cstddef>
 #include <cstdint>
@@ -51,13 +50,13 @@ struct connection : public std::enable_shared_from_this<connection> {
   connection &
   operator=(const connection &) = delete;
 
-  connection(asio::ip::tcp::socket socket_to_move,
-             request_handler &handler, logger &lgr, std::uint32_t conn_id) :
+  connection(asio::ip::tcp::socket socket_to_move, request_handler &handler,
+             logger &lgr, std::uint32_t conn_id) :
     // 'socket' below can get confused if arg has exact same name
     socket{std::move(socket_to_move)}, deadline{socket.get_executor()},
     handler{handler}, lgr{lgr}, conn_id{conn_id} {
     lgr.info("Connection id: {}. Request endpoint: {}", conn_id,
-             boost::lexical_cast<std::string>(socket.remote_endpoint()));
+             (std::ostringstream() << socket.remote_endpoint()).str());
   }
 
   auto
