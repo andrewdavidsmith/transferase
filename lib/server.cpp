@@ -29,9 +29,6 @@
 
 #include <asio.hpp>
 
-#include <boost/lexical_cast.hpp>
-#include <boost/system.hpp>  // for boost::system::error_code
-
 #include <cassert>
 #include <cerrno>
 #include <csignal>  // std::raise
@@ -130,10 +127,8 @@ server::server(const std::string &address, const std::string &port,
   do_await_stop();  // start waiting for signals
 
   asio::ip::tcp::resolver resolver(ioc);
-  boost::system::error_code boost_ec;
-  const auto resolved = resolver.resolve(address, port, boost_ec);
-  if (boost_ec) {
-    ec = boost_ec;
+  const auto resolved = resolver.resolve(address, port, ec);
+  if (ec) {
     lgr.error("{} {}:{}", ec, address, port);
     (void)std::raise(SIGTERM);
     return;  // don't wait for signal handler
@@ -141,40 +136,34 @@ server::server(const std::string &address, const std::string &port,
 
   assert(!resolved.empty());
   const asio::ip::tcp::endpoint endpoint = *resolved.begin();
-  const auto endpoint_str = boost::lexical_cast<std::string>(endpoint);
+  const auto endpoint_str = (std::ostringstream() << endpoint).str();
   lgr.info("Resolved endpoint {}", endpoint_str);
 
   // open acceptor...
-  (void)acceptor.open(endpoint.protocol(), boost_ec);
-  if (boost_ec) {
-    ec = boost_ec;
+  (void)acceptor.open(endpoint.protocol(), ec);
+  if (ec) {
     lgr.error("Error opening endpoint {}: {}", endpoint_str, ec);
     (void)std::raise(SIGTERM);
     return;  // don't wait for signal handler
   }
 
   // ...with option to reuse the address (SO_REUSEADDR)
-  (void)acceptor.set_option(asio::ip::tcp::acceptor::reuse_address(true),
-                            boost_ec);
-  if (boost_ec) {
-    ec = boost_ec;
+  (void)acceptor.set_option(asio::ip::tcp::acceptor::reuse_address(true), ec);
+  if (ec) {
     lgr.error("Error setting SO_REUSEADDR: {}", ec);
     (void)std::raise(SIGTERM);
     return;  // don't wait for signal handler
   }
 
-  (void)acceptor.bind(endpoint, boost_ec);
-  if (boost_ec) {
-    ec = boost_ec;
+  (void)acceptor.bind(endpoint, ec);
+  if (ec) {
     lgr.error("Error binding endpoint {}: {}", endpoint_str, ec);
     (void)std::raise(SIGTERM);
     return;  // don't wait for signal handler
   }
 
-  (void)acceptor.listen(asio::socket_base::max_listen_connections,
-                        boost_ec);
-  if (boost_ec) {
-    ec = boost_ec;
+  (void)acceptor.listen(asio::socket_base::max_listen_connections, ec);
+  if (ec) {
     lgr.error("Error listening  on endpoint {}: {}", endpoint_str, ec);
     (void)std::raise(SIGTERM);
     return;  // don't wait for signal handler
@@ -313,10 +302,8 @@ server::server(const std::string &address, const std::string &port,
   // NOLINTEND(cppcoreguidelines-pro-type-vararg)
 
   asio::ip::tcp::resolver resolver(ioc);
-  boost::system::error_code boost_ec;
-  const auto resolved = resolver.resolve(address, port, boost_ec);
-  if (boost_ec) {
-    ec = boost_ec;
+  const auto resolved = resolver.resolve(address, port, ec);
+  if (ec) {
     lgr.error("{} {}:{}", ec, address, port);
     (void)std::raise(SIGTERM);
     return;  // don't wait for signal handler
@@ -324,40 +311,34 @@ server::server(const std::string &address, const std::string &port,
 
   assert(!resolved.empty());
   const asio::ip::tcp::endpoint endpoint = *resolved.begin();
-  const auto endpoint_str = boost::lexical_cast<std::string>(endpoint);
+  const auto endpoint_str = (std::ostringstream() << endpoint).str();
   lgr.info("Resolved endpoint {}", endpoint_str);
 
   // open acceptor...
-  (void)acceptor.open(endpoint.protocol(), boost_ec);
-  if (boost_ec) {
-    ec = boost_ec;
+  (void)acceptor.open(endpoint.protocol(), ec);
+  if (ec) {
     lgr.error("Error opening endpoint {}: {}", endpoint_str, ec);
     (void)std::raise(SIGTERM);
     return;  // don't wait for signal handler
   }
 
   // ...with option to reuse the address (SO_REUSEADDR)
-  (void)acceptor.set_option(asio::ip::tcp::acceptor::reuse_address(true),
-                            boost_ec);
-  if (boost_ec) {
-    ec = boost_ec;
+  (void)acceptor.set_option(asio::ip::tcp::acceptor::reuse_address(true), ec);
+  if (ec) {
     lgr.error("Error setting SO_REUSEADDR: {}", ec);
     (void)std::raise(SIGTERM);
     return;  // don't wait for signal handler
   }
 
-  (void)acceptor.bind(endpoint, boost_ec);
-  if (boost_ec) {
-    ec = boost_ec;
+  (void)acceptor.bind(endpoint, ec);
+  if (ec) {
     lgr.error("Error binding endpoint {}: {}", endpoint_str, ec);
     (void)std::raise(SIGTERM);
     return;  // don't wait for signal handler
   }
 
-  (void)acceptor.listen(asio::socket_base::max_listen_connections,
-                        boost_ec);
-  if (boost_ec) {
-    ec = boost_ec;
+  (void)acceptor.listen(asio::socket_base::max_listen_connections, ec);
+  if (ec) {
     lgr.error("Error listening  on endpoint {}: {}", endpoint_str, ec);
     (void)std::raise(SIGTERM);
     return;  // don't wait for signal handler
@@ -383,8 +364,7 @@ auto
 server::do_accept() -> void {
   acceptor.async_accept(
     asio::make_strand(ioc),  // ADS: make a strand with the io_context
-    [this](const boost::system::error_code ec,
-           asio::ip::tcp::socket socket) {
+    [this](const std::error_code ec, asio::ip::tcp::socket socket) {
       // quit if server already stopped by signal
       if (!acceptor.is_open())
         return;
@@ -401,39 +381,36 @@ server::do_accept() -> void {
 auto
 server::do_await_stop() -> void {
   // capture brings 'this' into search for names
-  signals.async_wait(
-    [this](const boost::system::error_code ec, const int signo) {
-      lgr.warning("Received signal {} ({})", strsignal(signo), ec);
-      // stop server by cancelling all outstanding async ops; when all
-      // have finished, the call to io_context::run() will finish
-      ioc.stop();
-    });
+  signals.async_wait([this](const std::error_code ec, const int signo) {
+    lgr.warning("Received signal {} ({})", strsignal(signo), ec);
+    // stop server by cancelling all outstanding async ops; when all
+    // have finished, the call to io_context::run() will finish
+    ioc.stop();
+  });
 }
 
 auto
 server::do_daemon_await_stop() -> void {
   // capture brings 'this' into search for names
-  signals.async_wait(
-    [this](const boost::system::error_code boost_ec, const int signo) {
-      lgr.warning("Received signal {} ({})", strsignal(signo), boost_ec);
-      const auto message = std::format("Daemon stopped (pid: {})", getpid());
-      // NOLINTBEGIN(cppcoreguidelines-pro-type-vararg)
-      syslog(LOG_INFO | LOG_USER, "%s", message.data());
-      // NOLINTEND(cppcoreguidelines-pro-type-vararg)
-      lgr.info(message);
-      std::error_code ec{};
-      const auto pid_file_exists = std::filesystem::exists(pid_filename, ec);
-      if (ec)
-        lgr.info("Error identifying PID file {}: {}", pid_filename, ec);
-      if (pid_file_exists) {
-        const bool remove_ok = std::filesystem::remove(pid_filename, ec);
-        if (remove_ok)
-          lgr.info("Removed pid file: {}", pid_filename);
-      }
-      // stop server by cancelling all outstanding async ops; when all
-      // have finished, the call to io_context::run() will finish
-      ioc.stop();
-    });
+  signals.async_wait([this](std::error_code ec, const int signo) {
+    lgr.warning("Received signal {} ({})", strsignal(signo), ec);
+    const auto message = std::format("Daemon stopped (pid: {})", getpid());
+    // NOLINTBEGIN(cppcoreguidelines-pro-type-vararg)
+    syslog(LOG_INFO | LOG_USER, "%s", message.data());
+    // NOLINTEND(cppcoreguidelines-pro-type-vararg)
+    lgr.info(message);
+    const auto pid_file_exists = std::filesystem::exists(pid_filename, ec);
+    if (ec)
+      lgr.info("Error identifying PID file {}: {}", pid_filename, ec);
+    if (pid_file_exists) {
+      const bool remove_ok = std::filesystem::remove(pid_filename, ec);
+      if (remove_ok)
+        lgr.info("Removed pid file: {}", pid_filename);
+    }
+    // stop server by cancelling all outstanding async ops; when all
+    // have finished, the call to io_context::run() will finish
+    ioc.stop();
+  });
 }
 
 }  // namespace transferase

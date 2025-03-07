@@ -25,8 +25,7 @@
 
 #include <config.h>
 
-#include <asio.hpp>          // asio::ip::host_name();
-#include <boost/system.hpp>  // for boost::system::error_code
+#include <asio.hpp>  // asio::ip::host_name();
 
 // getpwuid_r
 #include <pwd.h>
@@ -71,10 +70,10 @@ get_time_as_string() -> std::string {
 
 [[nodiscard]] auto
 get_hostname() -> std::tuple<std::string, std::error_code> {
-  boost::system::error_code boost_err;
-  const auto host = asio::ip::host_name(boost_err);
-  if (boost_err)
-    return {std::string{}, std::error_code{boost_err}};
+  std::error_code ec;
+  const auto host = asio::ip::host_name(ec);
+  if (ec)
+    return {{}, ec};
   return {host, std::error_code{}};
 }
 
