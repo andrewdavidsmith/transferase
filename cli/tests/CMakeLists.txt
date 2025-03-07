@@ -36,9 +36,6 @@ foreach(cpp_file ${cpp_files})
   target_link_libraries(${BASE_NAME} PRIVATE
     GTest::GTest
     GTest::Main
-    ZLIB::ZLIB
-    ${Boost_LIBRARIES}
-    Threads::Threads
     transferase_system
     transferase_cli
     unit_test_utils_cli
