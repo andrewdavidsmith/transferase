@@ -31,6 +31,8 @@
 #include <unordered_map>
 #include <variant>  // for std::tuple
 
+#include "httplib/httplib.h"
+
 namespace transferase {
 
 template <typename T>
@@ -116,5 +118,80 @@ get_timestamp(const download_request &dr)
   -> std::chrono::time_point<std::chrono::file_clock>;
 
 }  // namespace transferase
+
+/// @brief Enum for error codes related to http
+enum class http_error_code : std::uint8_t {
+  Success = 0,
+  Unknown,
+  Connection,
+  BindIPAddress,
+  Read,
+  Write,
+  ExceedRedirectCount,
+  Canceled,
+  SSLConnection,
+  SSLLoadingCerts,
+  SSLServerVerification,
+  SSLServerHostnameVerification,
+  UnsupportedMultipartBoundaryChars,
+  Compression,
+  ConnectionTimeout,
+  ProxyConnection,
+};
+
+template <>
+struct std::is_error_code_enum<http_error_code> : public std::true_type {};
+
+struct http_error_category : std::error_category {
+  auto
+  name() const noexcept -> const char * override {
+    return "http";
+  }
+  auto
+  message(int code) const -> std::string override {
+    using std::string_literals::operator""s;
+    switch (code) {
+    case std::to_underlying(http_error_code::Success):
+      return "Success"s;
+    case std::to_underlying(http_error_code::Unknown):
+      return "Unknown"s;
+    case std::to_underlying(http_error_code::Connection):
+      return "Connection"s;
+    case std::to_underlying(http_error_code::BindIPAddress):
+      return "BindIPAddress"s;
+    case std::to_underlying(http_error_code::Read):
+      return "Read"s;
+    case std::to_underlying(http_error_code::Write):
+      return "Write"s;
+    case std::to_underlying(http_error_code::ExceedRedirectCount):
+      return "ExceedRedirectCount"s;
+    case std::to_underlying(http_error_code::Canceled):
+      return "Canceled"s;
+    case std::to_underlying(http_error_code::SSLConnection):
+      return "SSLConnection"s;
+    case std::to_underlying(http_error_code::SSLLoadingCerts):
+      return "SSLLoadingCerts"s;
+    case std::to_underlying(http_error_code::SSLServerVerification):
+      return "SSLServerVerification"s;
+    case std::to_underlying(http_error_code::SSLServerHostnameVerification):
+      return "SSLServerHostnameVerification"s;
+    case std::to_underlying(http_error_code::UnsupportedMultipartBoundaryChars):
+      return "UnsupportedMultipartBoundaryChars"s;
+    case std::to_underlying(http_error_code::Compression):
+      return "Compression"s;
+    case std::to_underlying(http_error_code::ConnectionTimeout):
+      return "ConnectionTimeout"s;
+    case std::to_underlying(http_error_code::ProxyConnection):
+      return "ProxyConnection"s;
+    }
+    std::unreachable();
+  }
+};
+
+inline auto
+make_error_code(http_error_code e) -> std::error_code {
+  static auto category = http_error_category{};
+  return std::error_code(std::to_underlying(e), category);
+}
 
 #endif  // LIB_DOWNLOAD_HPP_

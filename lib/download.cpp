@@ -99,7 +99,8 @@ do_download(auto &cli, const download_request &dr, const std::string &outfile)
       return true;  // return 'false' if you want to cancel the request.
     });
   if (!res)
-    return {{}, std::make_error_code(std::errc::invalid_argument)};
+    return {std::unordered_map<std::string, std::string>{},
+            http_error_code(res.error())};
 
   std::unordered_map<std::string, std::string> fixed_headers;
   for (const auto &h : res->headers)
