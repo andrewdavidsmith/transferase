@@ -24,12 +24,7 @@
 #include "download.hpp"
 
 #include "http_client.hpp"
-
-#include "indicators/indicators.hpp"
-
-#include "httplib/httplib.h"
-
-#include <asio.hpp>
+#include "https_client.hpp"
 
 #include <cerrno>
 #include <chrono>
@@ -50,74 +45,6 @@
 #include <utility>  // for std::move
 
 namespace transferase {
-
-struct download_progress {
-  static constexpr auto bar_width = 50u;
-  indicators::ProgressBar bar;
-  double total_size{};
-  std::uint32_t prev_percent{};
-  explicit download_progress(const std::string &filename) :
-    bar{
-      // clang-format off
-      indicators::option::BarWidth{bar_width},
-      indicators::option::Start{"["},
-      indicators::option::Fill{"="},
-      indicators::option::Lead{"="},
-      indicators::option::Remainder{"-"},
-      indicators::option::End{"]"},
-      indicators::option::PostfixText{},
-      // clang-format on
-    } {
-    const auto label = std::filesystem::path(filename).filename().string();
-    bar.set_option(
-      indicators::option::PostfixText{std::format("Downloading: {}", label)});
-  }
-  auto
-  update(std::uint64_t len, std::uint64_t total) -> void {
-    const std::uint32_t percent = 100.0 * static_cast<double>(len) / total;
-    if (percent > prev_percent) {
-      bar.set_progress(percent);
-      prev_percent = percent;
-    }
-  }
-};
-
-auto
-do_download(auto &cli, const download_request &dr, const std::string &outfile)
-  -> std::tuple<std::unordered_map<std::string, std::string>, std::error_code> {
-
-  download_progress bar(outfile);
-
-  std::string body;
-
-  cli.set_tcp_nodelay(true);
-  auto res = cli.Get(
-    dr.target,
-    [&](const char *data, std::size_t data_length) {
-      body.append(data, data_length);
-      return true;
-    },
-    [&](const std::uint64_t len, const std::uint64_t total) {
-      if (dr.show_progress)
-        bar.update(len, total);
-      return true;  // return 'false' if you want to cancel the request.
-    });
-  if (!res)
-    return {std::unordered_map<std::string, std::string>{},
-            http_error_code(res.error())};
-
-  std::unordered_map<std::string, std::string> fixed_headers;
-  for (const auto &h : res->headers)
-    fixed_headers.insert(h);
-
-  std::ofstream out(outfile);
-  if (!out)
-    return {{}, std::make_error_code(std::errc(errno))};
-
-  out.write(body.data(), std::size(body));
-
-  return {fixed_headers, std::error_code{}};
-}
 
 [[nodiscard]]
 auto
@@ -155,16 +82,20 @@ download(const download_request &dr)
       return {{}, out_ec};
   }
 
-  httplib::Headers headers;
+  const auto [header, error] =
+    (dr.port == "443")
+      ? download_https(dr.host, dr.port, dr.target, outfile, dr.show_progress)
+      : download_http(dr.host, dr.port, dr.target, outfile, dr.show_progress);
 
-  if (dr.port == "443") {
-    httplib::SSLClient cli(dr.host);
-    return do_download(cli, dr, outfile);
-  }
-  else {  // if (dr.port == "80") {
-    httplib::Client cli(dr.host);
-    return do_download(cli, dr, outfile);
-  }
+  if (error)
+    return {{}, error};
+
+  std::unordered_map<std::string, std::string> m;
+  m.emplace("status", header.status_code);
+  m.emplace("last-modified", header.last_modified);
+  m.emplace("content-length", std::to_string(header.content_length));
+
+  return {m, {}};
 }
 
 /// Get the timestamp for a remote file
@@ -174,30 +105,16 @@ get_timestamp(const download_request &dr)
   -> std::chrono::time_point<std::chrono::file_clock> {
   static constexpr auto http_time_format = "%a, %d %b %Y %T %z";
 
-  // Should this be a shared_ptr?
-  auto c = std::make_unique<http_client>(dr.host, dr.port, dr.target);
-  c->start();
-
-  httplib::Headers headers;
+  http_header header;
 
   if (dr.port == "443") {
-    httplib::SSLClient cli(dr.host);
-    auto res = cli.Head(dr.target);
-    if (!res)
-      return {};
-    headers = std::move(res->headers);
+    header = download_header_https(dr.host, dr.port, dr.target);
   }
   else {  // if (dr.port == "80") {
-    httplib::Client cli(dr.host);
-    auto res = cli.Head(dr.target);
-    if (!res)
-      return {};
-    headers = std::move(res->headers);
+    header = download_header_http(dr.host, dr.port, dr.target);
   }
-  const auto last_modified_itr = headers.find("Last-Modified");
-  if (last_modified_itr == std::cend(headers))
-    return {};
-  std::istringstream is{last_modified_itr->second};
+
+  std::istringstream is{header.last_modified};
   std::chrono::time_point<std::chrono::file_clock> tp;
   if (!(is >> std::chrono::parse(http_time_format, tp)))
     return {};
