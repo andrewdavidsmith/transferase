@@ -38,7 +38,7 @@ struct http_header {
   std::size_t content_length{};  // content-length: 117607180
 
   http_header() = default;
-  http_header(const std::string &header_block);
+  explicit http_header(const std::string &header_block);
   http_header(const asio::streambuf &data, const std::size_t size);
   auto
   tostring() const -> std::string;

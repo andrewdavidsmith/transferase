@@ -86,7 +86,7 @@ public:
   }
 
   [[nodiscard]] auto
-  get_header() const -> http_header {
+  get_header() const -> const http_header & {
     return header;
   }
 
