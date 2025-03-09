@@ -28,19 +28,20 @@
 #include "http_header.hpp"
 
 #include <asio.hpp>
-#include <asio/ssl.hpp>
 
 #include <algorithm>
+#include <cerrno>
+#include <compare>
 #include <cstdlib>
-#include <cstring>
 #include <filesystem>
 #include <format>
 #include <fstream>
 #include <functional>
-#include <iostream>
-#include <print>
-#include <ranges>
-#include <string_view>
+#include <iterator>
+#include <memory>
+#include <new>
+#include <sstream>
+#include <utility>
 
 namespace transferase {
 
@@ -68,12 +69,12 @@ download_http(
   if (error)
     return {{}, error};
 
-  const auto data = c.get_data();
+  const auto &data = c.get_data();
   std::ofstream out(outfile);
   if (!out)
     return {{}, std::make_error_code(std::errc(errno))};
 
-  out.write(data.data(), std::size(data));
+  out.write(data.data(), std::ssize(data));
 
   return {c.get_header(), std::error_code{}};
 }
@@ -234,6 +235,7 @@ auto
 http_client::receive_body() -> void {
   deadline.expires_after(read_timeout);
   sock.async_read_some(
+    // NOLINTNEXTLINE (*-pointer-arithmetic)
     asio::buffer(buf.data() + bytes_received, bytes_remaining),
     [this](const std::error_code error, const std::size_t bytes_transferred) {
       deadline.expires_at(asio::steady_timer::time_point::max());
