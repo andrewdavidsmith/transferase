@@ -38,7 +38,7 @@
 #include <variant>
 #include <vector>
 
-using namespace std::chrono_literals;
+using namespace std::chrono_literals;  // NOLINT
 
 namespace transferase {
 
