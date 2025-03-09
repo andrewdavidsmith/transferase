@@ -26,12 +26,15 @@
 #include <asio.hpp>
 
 #include <algorithm>
-#include <chrono>
+#include <cctype>
 #include <cstdlib>
+#include <format>
+#include <iterator>
 #include <ranges>
+#include <sstream>
 #include <string>
 #include <string_view>
-#include <system_error>
+#include <tuple>
 
 namespace transferase {
 
@@ -127,7 +130,8 @@ http_header::http_header(const std::string &header_block) {
 
 http_header::http_header(const asio::streambuf &data, const std::size_t size) :
   http_header(std::string(asio::buffers_begin(data.data()),
-                          asio::buffers_begin(data.data()) + size)) {}
+                          asio::buffers_begin(data.data()) +
+                            static_cast<std::ptrdiff_t>(size))) {}
 
 auto
 http_header::tostring() const -> std::string {

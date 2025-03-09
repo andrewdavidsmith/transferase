@@ -32,6 +32,7 @@
 #include <algorithm>
 #include <chrono>
 #include <compare>  // for operator<=
+#include <string>
 #include <system_error>
 
 namespace transferase {

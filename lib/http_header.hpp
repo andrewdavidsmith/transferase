@@ -25,12 +25,9 @@
 #define LIB_HTTP_HEADER_HPP_
 
 #include <asio.hpp>
-#include <asio/ssl.hpp>
 
-#include <chrono>
 #include <cstdlib>
 #include <string>
-#include <system_error>
 
 namespace transferase {
 

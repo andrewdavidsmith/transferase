@@ -42,6 +42,7 @@
 #include <memory>
 #include <new>
 #include <sstream>
+#include <tuple>
 #include <utility>
 
 namespace transferase {
@@ -111,7 +112,6 @@ https_client::https_client(
   sock(io_context, context), host{host}, port{port}, target{target},
   connect_timeout{connect_timeout}, read_timeout{read_timeout},
   deadline{sock.get_executor()} {
-
   // ADS: currently disabled
   sock.set_verify_mode(asio::ssl::verify_none);
   sock.set_verify_callback(std::bind(&https_client::verify_certificate, this,
@@ -134,7 +134,6 @@ https_client::https_client(
   connect_timeout{connect_timeout}, read_timeout{read_timeout},
   progress_label{progress_label}, progress(progress_label),
   deadline{sock.get_executor()} {
-
   // ADS: currently disabled
   sock.set_verify_mode(asio::ssl::verify_none);
   sock.set_verify_callback(std::bind(&https_client::verify_certificate, this,
@@ -155,7 +154,6 @@ https_client::https_client(
   sock(io_context, context), host{host}, port{port}, target{target},
   header_only{header_only}, connect_timeout{connect_timeout},
   read_timeout{read_timeout}, deadline{sock.get_executor()} {
-
   // ADS: currently disabled
   sock.set_verify_mode(asio::ssl::verify_none);
   sock.set_verify_callback(std::bind(&https_client::verify_certificate, this,

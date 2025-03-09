@@ -31,7 +31,7 @@
 
 #include <cassert>
 #include <cerrno>
-#include <csignal>  // std::raise
+#include <csignal>
 #include <cstdint>
 #include <cstdlib>  // for std::exit, std::getenv, EXIT_SUCCESS
 #include <cstring>  // std::strsignal
@@ -40,6 +40,8 @@
 #include <fstream>
 #include <iterator>  // for std::size
 #include <memory>    // std::make_shared<>
+#include <new>
+#include <sstream>  // for std::basic_ostringstream
 #include <string>
 #include <system_error>
 #include <thread>
