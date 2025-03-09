@@ -72,6 +72,8 @@ xfr query --local -d methylome_dir -x index_dir -g hg38 \
 
 #include "CLI11/CLI11.hpp"
 
+#include <asio.hpp>
+
 #include <algorithm>  // IWYU pragma: keep
 #include <cerrno>     // for errno
 #include <chrono>
