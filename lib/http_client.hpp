@@ -39,15 +39,18 @@ using namespace std::chrono_literals;
 
 namespace transferase {
 
-auto
-download_http(const std::string &host, const std::string &port,
-              const std::string &target, const std::string &outfile,
-              const bool show_progress = false)
-  -> std::tuple<http_header, std::error_code>;
+[[nodiscard]] auto
+download_http(
+  const std::string &host, const std::string &port, const std::string &target,
+  const std::string &outfile, const std::chrono::microseconds connect_timeout,
+  const std::chrono::microseconds download_timeout,
+  const bool show_progress) -> std::tuple<http_header, std::error_code>;
 
 [[nodiscard]] auto
-download_header_http(const std::string &host, const std::string &port,
-                     const std::string &target) -> http_header;
+download_header_http(
+  const std::string &host, const std::string &port, const std::string &target,
+  const std::chrono::microseconds connect_timeout,
+  const std::chrono::microseconds download_timeout) -> http_header;
 
 class http_client {
 public:
@@ -61,16 +64,18 @@ public:
   http_client(asio::io_context &io_context,
               const asio::ip::tcp::resolver::results_type &endpoints,
               const std::string &host, const std::string &port,
-              const std::string &target, const std::string &progress_label,
+              const std::string &target,
               const std::chrono::microseconds connect_timeout = 10'000ms,
-              const std::chrono::microseconds read_timeout = 30'000ms);
+              const std::chrono::microseconds read_timeout = 30'000ms,
+              const std::string &progress_label = "");
 
   http_client(asio::io_context &io_context,
               const asio::ip::tcp::resolver::results_type &endpoints,
               const std::string &host, const std::string &port,
-              const std::string &target, const bool header_only,
+              const std::string &target,
               const std::chrono::microseconds connect_timeout = 10'000ms,
-              const std::chrono::microseconds read_timeout = 30'000ms);
+              const std::chrono::microseconds read_timeout = 30'000ms,
+              const bool header_only = false);
 
   [[nodiscard]] auto
   get_data() const -> const std::vector<char> & {
