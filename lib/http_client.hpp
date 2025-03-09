@@ -28,12 +28,14 @@
 #include "http_header.hpp"
 
 #include <asio.hpp>
-#include <asio/ssl.hpp>
 
 #include <chrono>
 #include <cstdlib>
 #include <string>
 #include <system_error>
+#include <tuple>
+#include <variant>
+#include <vector>
 
 using namespace std::chrono_literals;
 

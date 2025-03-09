@@ -24,26 +24,19 @@
 #include "download.hpp"
 
 #include "http_client.hpp"
-#include "http_error_code.hpp"
+#include "http_header.hpp"
 #include "https_client.hpp"
 
 #include <cerrno>
 #include <chrono>
-#include <cstdint>    // for std::uint64_t
-#include <exception>  // for std::exception_ptr
 #include <filesystem>
-#include <format>
 #include <fstream>
-#include <functional>  // for std::ref
-#include <iterator>    // for std::cbegin
-#include <limits>      // for std::numeric_limits
 #include <print>
 #include <sstream>
 #include <string>
 #include <system_error>
 #include <tuple>  // IWYU pragma: keep
 #include <unordered_map>
-#include <utility>  // for std::move
 
 namespace transferase {
 

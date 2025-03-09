@@ -33,12 +33,14 @@
 
 #include <asio.hpp>
 
+#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <functional>  // for std::bind
 #include <limits>      // for std::numeric_limits
 #include <memory>
-#include <string>
+#include <new>
+#include <sstream>
 #include <utility>  // for std::move
 
 namespace transferase {
