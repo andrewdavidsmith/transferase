@@ -68,7 +68,7 @@ struct server {
   asio::io_context ioc;              // performs async ops
   asio::signal_set signals;          // registers termination signals
   asio::ip::tcp::acceptor acceptor;  // listens for connections
-  request_handler handler;                  // handles incoming requests
+  request_handler handler;           // handles incoming requests
   logger &lgr;
   std::atomic_uint32_t connection_id{};  // incremented per thread
   std::string pid_filename;
