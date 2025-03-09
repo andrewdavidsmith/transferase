@@ -27,6 +27,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cstddef>
 #include <cstdlib>
 #include <format>
 #include <iterator>
