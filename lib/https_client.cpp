@@ -44,11 +44,12 @@
 
 namespace transferase {
 
-auto
-download_https(const std::string &host, const std::string &port,
-               const std::string &target, const std::string &outfile,
-               const bool show_progress)
-  -> std::tuple<http_header, std::error_code> {
+[[nodiscard]] auto
+download_https(
+  const std::string &host, const std::string &port, const std::string &target,
+  const std::string &outfile, const std::chrono::microseconds connect_timeout,
+  const std::chrono::microseconds download_timeout,
+  const bool show_progress) -> std::tuple<http_header, std::error_code> {
   asio::io_context io_context;
 
   asio::ip::tcp::resolver resolver(io_context);
@@ -62,7 +63,7 @@ download_https(const std::string &host, const std::string &port,
   if (show_progress)
     progress_label = std::filesystem::path(target).filename().string();
   https_client c(io_context, ctx, endpoints, host, port, target,
-                 progress_label);
+                 connect_timeout, download_timeout, progress_label);
 
   io_context.run();
 
@@ -81,8 +82,10 @@ download_https(const std::string &host, const std::string &port,
 }
 
 [[nodiscard]] auto
-download_header_https(const std::string &host, const std::string &port,
-                      const std::string &target) -> http_header {
+download_header_https(
+  const std::string &host, const std::string &port, const std::string &target,
+  const std::chrono::microseconds connect_timeout,
+  const std::chrono::microseconds download_timeout) -> http_header {
   asio::io_context io_context;
   asio::ip::tcp::resolver resolver(io_context);
   auto endpoints = resolver.resolve(host, port);
@@ -91,7 +94,8 @@ download_header_https(const std::string &host, const std::string &port,
   asio::ssl::context ctx(asio::ssl::context::sslv23);
   // ctx.load_verify_file("ca.pem");
 
-  https_client c(io_context, ctx, endpoints, host, port, target, true);
+  https_client c(io_context, ctx, endpoints, host, port, target,
+                 connect_timeout, download_timeout, true);
   io_context.run();
   return c.get_header();
 }
@@ -121,9 +125,9 @@ https_client::https_client(
   asio::io_context &io_context, asio::ssl::context &context,
   const asio::ip::tcp::resolver::results_type &endpoints,
   const std::string &host, const std::string &port, const std::string &target,
-  const std::string &progress_label,
   const std::chrono::microseconds connect_timeout,
-  const std::chrono::microseconds read_timeout) :
+  const std::chrono::microseconds read_timeout,
+  const std::string &progress_label) :
   sock(io_context, context), host{host}, port{port}, target{target},
   connect_timeout{connect_timeout}, read_timeout{read_timeout},
   progress_label{progress_label}, progress(progress_label),
@@ -144,8 +148,8 @@ https_client::https_client(
   asio::io_context &io_context, asio::ssl::context &context,
   const asio::ip::tcp::resolver::results_type &endpoints,
   const std::string &host, const std::string &port, const std::string &target,
-  const bool header_only, const std::chrono::microseconds connect_timeout,
-  const std::chrono::microseconds read_timeout) :
+  const std::chrono::microseconds connect_timeout,
+  const std::chrono::microseconds read_timeout, const bool header_only) :
   sock(io_context, context), host{host}, port{port}, target{target},
   header_only{header_only}, connect_timeout{connect_timeout},
   read_timeout{read_timeout}, deadline{sock.get_executor()} {
@@ -319,7 +323,8 @@ auto
 https_client::finish(const std::error_code error) -> void {
   // same consequence as canceling
   deadline.expires_at(asio::steady_timer::time_point::max());
-  status = error;
+  if (!status)  // could have been a timeout
+    status = error;
   std::error_code unused_error;  // for non-throwing
   // nothing actually returned below
   (void)sock.shutdown(unused_error);

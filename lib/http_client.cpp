@@ -44,11 +44,12 @@
 
 namespace transferase {
 
-auto
-download_http(const std::string &host, const std::string &port,
-              const std::string &target, const std::string &outfile,
-              const bool show_progress)
-  -> std::tuple<http_header, std::error_code> {
+[[nodiscard]] auto
+download_http(
+  const std::string &host, const std::string &port, const std::string &target,
+  const std::string &outfile, const std::chrono::microseconds connect_timeout,
+  const std::chrono::microseconds download_timeout,
+  const bool show_progress) -> std::tuple<http_header, std::error_code> {
   asio::io_context io_context;
 
   asio::ip::tcp::resolver resolver(io_context);
@@ -57,7 +58,9 @@ download_http(const std::string &host, const std::string &port,
   std::string progress_label;
   if (show_progress)
     progress_label = std::filesystem::path(target).filename().string();
-  http_client c(io_context, endpoints, host, port, target, progress_label);
+
+  http_client c(io_context, endpoints, host, port, target, connect_timeout,
+                download_timeout, progress_label);
 
   io_context.run();
 
@@ -76,12 +79,15 @@ download_http(const std::string &host, const std::string &port,
 }
 
 [[nodiscard]] auto
-download_header_http(const std::string &host, const std::string &port,
-                     const std::string &target) -> http_header {
+download_header_http(
+  const std::string &host, const std::string &port, const std::string &target,
+  const std::chrono::microseconds connect_timeout,
+  const std::chrono::microseconds download_timeout) -> http_header {
   asio::io_context io_context;
   asio::ip::tcp::resolver resolver(io_context);
   auto endpoints = resolver.resolve(host, port);
-  http_client c(io_context, endpoints, host, port, target, true);
+  http_client c(io_context, endpoints, host, port, target, connect_timeout,
+                download_timeout, true);
   io_context.run();
   return c.get_header();
 }
@@ -104,9 +110,9 @@ http_client::http_client(asio::io_context &io_context,
                          const asio::ip::tcp::resolver::results_type &endpoints,
                          const std::string &host, const std::string &port,
                          const std::string &target,
-                         const std::string &progress_label,
                          const std::chrono::microseconds connect_timeout,
-                         const std::chrono::microseconds read_timeout) :
+                         const std::chrono::microseconds read_timeout,
+                         const std::string &progress_label) :
   sock(io_context), host{host}, port{port}, target{target},
   connect_timeout{connect_timeout}, read_timeout{read_timeout},
   progress_label{progress_label}, progress(progress_label),
@@ -119,9 +125,10 @@ http_client::http_client(asio::io_context &io_context,
 http_client::http_client(asio::io_context &io_context,
                          const asio::ip::tcp::resolver::results_type &endpoints,
                          const std::string &host, const std::string &port,
-                         const std::string &target, const bool header_only,
+                         const std::string &target,
                          const std::chrono::microseconds connect_timeout,
-                         const std::chrono::microseconds read_timeout) :
+                         const std::chrono::microseconds read_timeout,
+                         const bool header_only) :
   sock(io_context), host{host}, port{port}, target{target},
   header_only{header_only}, connect_timeout{connect_timeout},
   read_timeout{read_timeout}, deadline{sock.get_executor()} {
@@ -257,7 +264,8 @@ auto
 http_client::finish(const std::error_code error) -> void {
   // same consequence as canceling
   deadline.expires_at(asio::steady_timer::time_point::max());
-  status = error;
+  if (!status)  // could have been a timeout
+    status = error;
   std::error_code unused_error;  // for non-throwing
   // nothing actually returned below
   (void)sock.shutdown(asio::ip::tcp::socket::shutdown_both, unused_error);
