@@ -23,6 +23,8 @@
 
 #include <download.hpp>
 
+#include <http_error_code.hpp>
+
 #include "unit_test_utils.hpp"
 
 #include <gtest/gtest.h>
@@ -40,26 +42,26 @@ using namespace transferase;  // NOLINT
 [[nodiscard]] static auto
 to_string(const auto &maplike) -> std::string {
   const auto fmt_pair = [](const auto &pairlike) -> std::string {
-    return std::format(R"("{}":"{}"\n)", pairlike.first, pairlike.second);
+    return std::format("\"{}\":\"{}\"", pairlike.first, pairlike.second);
   };
   return maplike | std::views::transform(fmt_pair) |
-         std::views::join_with(',') | std::ranges::to<std::string>();
+         std::views::join_with('\n') | std::ranges::to<std::string>();
 }
 
 TEST(download_test, send_request_timeout) {
   const auto target = std::filesystem::path{"/delay/1"};
   const auto outdir = std::filesystem::path{"/tmp"};
-  const std::chrono::milliseconds connect_timeout{0};
-  const std::chrono::milliseconds download_timeout{0'500};  // 0.5s
+  const std::chrono::microseconds connect_timeout{1};
+  const std::chrono::microseconds download_timeout{0'500};  // 0.5s
   // clang-format off
-  const download_request dr{
+  download_request dr{
     "httpbin.org",
     "80",
     target,
     outdir,
-    connect_timeout,
-    download_timeout,
   };
+  dr.set_connect_timeout(connect_timeout);
+  dr.set_download_timeout(download_timeout);
   // clang-format on
   const auto expected_outfile = outdir / target.filename();
 
@@ -67,8 +69,9 @@ TEST(download_test, send_request_timeout) {
   const auto [headers, ec] = download(dr);
 
   EXPECT_TRUE(ec.value() ==
-              std::to_underlying(http_error_code::ConnectionTimeout))
-    << to_string(headers);
+              std::to_underlying(http_error_code::inactive_timeout))
+    << to_string(headers) << '\t' << ec.message() << '\t' << ec.value() << '\t'
+    << "underlying: \"" << http_error_code::inactive_timeout << "\"\n";
   std::error_code error;
   remove_file(expected_outfile, error);
   EXPECT_FALSE(error);
@@ -95,7 +98,7 @@ TEST(download_test, receive_download_timeout) {
   std::ignore = headers;
 
   EXPECT_TRUE(ec.value() ==
-              std::to_underlying(http_error_code::ConnectionTimeout))
+              std::to_underlying(http_error_code::inactive_timeout))
     << to_string(headers);
 
   std::error_code error;
@@ -125,22 +128,16 @@ TEST(download_test, download_non_existent_file) {
 
   const auto [headers, ec] = download(dr);  // do the download
 
-  const auto bad_target =
-    (ec.value() == std::to_underlying(http_error_code::Unknown));
-
   const auto timeout_happened =
-    (ec.value() == std::to_underlying(http_error_code::ConnectionTimeout));
+    (ec.value() == std::to_underlying(http_error_code::inactive_timeout));
 
   // Only check things if a timeout didn't happen
-  EXPECT_TRUE(timeout_happened || bad_target) << to_string(headers);
-  EXPECT_TRUE(timeout_happened || headers.contains("Status"))
-    << to_string(headers);
-  EXPECT_TRUE(timeout_happened || headers.contains("Reason"))
+  EXPECT_TRUE(timeout_happened || headers.contains("status"))
     << to_string(headers);
 
   // randomly generated filename should not exist as a uri
-  EXPECT_TRUE(timeout_happened || headers.at("Status") == "404" ||
-              headers.at("Status") == "400")
+  EXPECT_TRUE(timeout_happened || headers.at("status") == "404" ||
+              headers.at("status") == "400")
     << to_string(headers);
 
   std::error_code error;
@@ -164,17 +161,15 @@ TEST(download_test, download_success) {
   const auto [headers, ec] = download(dr);  // do the download
 
   const auto timeout_happened =
-    ec.value() == std::to_underlying(http_error_code::ConnectionTimeout);
+    ec.value() == std::to_underlying(http_error_code::inactive_timeout);
 
   // Only check things if a timeout didn't happen
   EXPECT_TRUE(timeout_happened || !ec) << to_string(headers);
-  EXPECT_TRUE(timeout_happened || headers.contains("Status"))
-    << to_string(headers);
-  EXPECT_TRUE(timeout_happened || headers.contains("Reason"))
+  EXPECT_TRUE(timeout_happened || headers.contains("status"))
     << to_string(headers);
 
   // index.html should exist
-  EXPECT_TRUE(timeout_happened || headers.at("Status") == "200")
+  EXPECT_TRUE(timeout_happened || headers.at("status") == "200")
     << to_string(headers);
 
   std::error_code error;
