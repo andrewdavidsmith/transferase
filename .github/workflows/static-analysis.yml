@@ -17,8 +17,9 @@ jobs:
         sudo apt-get install -y clang-format
     - name: Run clang-format
       run: |
-        clang-format -n -Werror \
-        $(git ls-files '*.*pp' | grep -v "\(CLI11\|nlohmann\|indicators\)")
+        git ls-files '*.*pp' | \
+        grep -v "\(CLI11\|nlohmann\|indicators\)" | \
+        clang-format -n -Werror
   cpplint:
     runs-on: ubuntu-latest
     steps:
@@ -34,7 +35,8 @@ jobs:
         pip install cpplint
     - name: Run cpplint
       run: |
-        git ls-files ':(glob)*/*.*pp' | \
+        git ls-files '*.*pp' | \
+        grep -v "\(CLI11\|nlohmann\|indicators\)" | \
         xargs -P 4 -n 1 cpplint --quiet --repository=.
   cppcheck:
     runs-on: ubuntu-latest
