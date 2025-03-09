@@ -10,7 +10,7 @@
         },
         {
             "hostname": "smithlabresearch.org",
-            "port": "80",
+            "port": "443",
             "path": "/transferase"
         }
     ]
