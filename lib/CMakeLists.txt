@@ -25,18 +25,19 @@ find_package(OpenSSL REQUIRED COMPONENTS SSL Crypto)
 find_package(Threads REQUIRED)
 
 message(STATUS "Adding external header-only project 'asio'")
-include(ExternalProject)
-ExternalProject_Add(
-  ASIO
+include(FetchContent)
+FetchContent_Declare(
+  asio
   GIT_REPOSITORY https://github.com/andrewdavidsmith/asio.git
   GIT_TAG main
   CONFIGURE_COMMAND ""
   BUILD_COMMAND ""
   INSTALL_COMMAND ""
+  SYSTEM
+  OVERRIDE_FIND_PACKAGE
 )
-
-ExternalProject_Get_Property(ASIO SOURCE_DIR)
-set(ASIO_SOURCE_DIR ${SOURCE_DIR})
+FetchContent_MakeAvailable(asio)
+FetchContent_GetProperties(asio SOURCE_DIR ASIO_SOURCE_DIR)
 
 file(GLOB cpp_files "*.cpp")
 
@@ -48,7 +49,6 @@ foreach(cpp_file ${cpp_files})
   add_library(${BASE_NAME} OBJECT ${cpp_file})
   ## Below is to make sure 'config.h' is visible for includes and any
   ## of the headers for configured libraries
-  add_dependencies(${BASE_NAME} ASIO)
   target_include_directories(${BASE_NAME} PUBLIC
     ${PROJECT_BINARY_DIR}
     ${ZLIB_INCLUDE_DIRS}
