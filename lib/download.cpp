@@ -24,6 +24,7 @@
 #include "download.hpp"
 
 #include "http_client.hpp"
+#include "http_error_code.hpp"
 #include "https_client.hpp"
 
 #include <cerrno>
@@ -84,8 +85,10 @@ download(const download_request &dr)
 
   const auto [header, error] =
     (dr.port == "443")
-      ? download_https(dr.host, dr.port, dr.target, outfile, dr.show_progress)
-      : download_http(dr.host, dr.port, dr.target, outfile, dr.show_progress);
+      ? download_https(dr.host, dr.port, dr.target, outfile, dr.connect_timeout,
+                       dr.download_timeout, dr.show_progress)
+      : download_http(dr.host, dr.port, dr.target, outfile, dr.connect_timeout,
+                      dr.download_timeout, dr.show_progress);
 
   if (error)
     return {{}, error};
@@ -95,7 +98,7 @@ download(const download_request &dr)
   m.emplace("last-modified", header.last_modified);
   m.emplace("content-length", std::to_string(header.content_length));
 
-  return {m, {}};
+  return {m, error};
 }
 
 /// Get the timestamp for a remote file
@@ -108,10 +111,12 @@ get_timestamp(const download_request &dr)
   http_header header;
 
   if (dr.port == "443") {
-    header = download_header_https(dr.host, dr.port, dr.target);
+    header = download_header_https(dr.host, dr.port, dr.target,
+                                   dr.connect_timeout, dr.download_timeout);
   }
   else {  // if (dr.port == "80") {
-    header = download_header_http(dr.host, dr.port, dr.target);
+    header = download_header_http(dr.host, dr.port, dr.target,
+                                  dr.connect_timeout, dr.download_timeout);
   }
 
   std::istringstream is{header.last_modified};
