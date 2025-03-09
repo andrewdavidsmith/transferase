@@ -390,10 +390,9 @@ dl_err(const auto &hdr, const auto &ec, const auto &url) -> std::error_code {
   lgr.debug("Error downloading {}: ", url);
   if (ec)
     lgr.debug("Error code: {}", ec);
-  const auto status_itr = hdr.find("Status");
-  const auto reason_itr = hdr.find("Reason");
-  if (status_itr != std::cend(hdr) && reason_itr != std::cend(hdr))
-    lgr.debug("HTTP status: {} {}", status_itr->second, reason_itr->second);
+  const auto status_itr = hdr.find("status");
+  if (status_itr != std::cend(hdr))
+    lgr.debug("HTTP status: {}", status_itr->second);
   return ec;
 }
 
