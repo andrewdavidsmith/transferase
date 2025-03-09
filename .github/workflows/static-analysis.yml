@@ -19,8 +19,7 @@ jobs:
       run: |
         clang-format -n -Werror \
         $(git ls-files '*.*pp' | grep -v "\(CLI11\|nlohmann\|indicators\)")
-  static-analysis-build:
-    needs: clang-format
+  cpplint:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout repository
@@ -29,18 +28,30 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: '3.13'
-    - name: Install dependencies
+    - name: Install cpplint
       run: |
         python -m pip install --upgrade pip
-        pip install cpplint cppcheck
-        sudo apt-get update
-        sudo apt-get install -y libboost-all-dev zlib1g-dev
-    - name: Configure build for static analysis
+        pip install cpplint
+    - name: Run cpplint
       run: |
-        cmake -B build \
-        -DCMAKE_CXX_COMPILER=g++-14 \
-        -DSTATIC_ANALYSIS=on \
-        -DCMAKE_BUILD_TYPE=Build
-    - name: Build
+        git ls-files ':(glob)*/*.*pp' | \
+        xargs -P 4 -n 1 cpplint --quiet --repository=.
+  cppcheck:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    - name: Python setup
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.13'
+    - name: Install cppcheck
       run: |
-        cmake --build build -j4
+        python -m pip install --upgrade pip
+        pip install cppcheck
+    - name: Run cpplint
+      run: |
+        git ls-files '*.*pp' | \
+        grep -v "\(CLI11\|nlohmann\|indicators\)" | \
+        xargs -P 4 -n 1 cppcheck --enable=all \
+        --inline-suppr --suppressions-list=.cppcheck_suppress
