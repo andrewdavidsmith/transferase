@@ -15,7 +15,7 @@ jobs:
         run: brew update
       - name: Install dependencies
         run: |
-          brew install zlib boost
+          brew install zlib
       - name: Install Python packages
         run: |
           python3 -m venv .venv
