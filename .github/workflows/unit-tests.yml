@@ -16,7 +16,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libboost-all-dev zlib1g-dev libgtest-dev
+          sudo apt-get install -y zlib1g-dev libgtest-dev
       - name: Configure for unit tests
         run: |
           cmake -B build \
@@ -28,6 +28,5 @@ jobs:
           cmake --build build -j4
       - name: Run the tests
         run: |
-          export LD_LIBRARY_PATH=/usr/local/lib
           ctest --test-dir build/lib --output-on-failure
           ctest --test-dir build/cli --output-on-failure
