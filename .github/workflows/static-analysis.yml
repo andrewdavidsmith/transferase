@@ -19,7 +19,7 @@ jobs:
       run: |
         git ls-files '*.*pp' | \
         grep -v "\(CLI11\|nlohmann\|indicators\)" | \
-        clang-format -n -Werror
+        xargs -n 1 -P 4 clang-format -n -Werror
   cpplint:
     runs-on: ubuntu-latest
     steps:
