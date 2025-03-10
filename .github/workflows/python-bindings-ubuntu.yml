@@ -13,14 +13,13 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libboost-all-dev zlib1g-dev
+          sudo apt-get install -y zlib1g-dev
       - name: Install Python packages
         run: |
           pip install nanobind pytest wheel auditwheel hatch
       - name: Configure
         run: |
           cmake -B build \
-          -DCMAKE_VERBOSE_MAKEFILE=on \
           -DCMAKE_CXX_COMPILER=g++-14 \
           -DBUILD_PYTHON=on \
           -DCMAKE_BUILD_TYPE=Build
