@@ -7,22 +7,17 @@ on:
 
 jobs:
   macos-unit-tests:
-    strategy:
-      matrix:
-        os: [macos-13, macos-14, macos-15]
-    runs-on: ${{ matrix.os }}
+    runs-on: macos-15
     steps:
     - uses: actions/checkout@v4
     - name: Update Homebrew
       run: brew update
     - name: Install dependencies
       run: |
-        brew install zlib boost googletest
+        brew install zlib googletest
     - name: Configure for unit tests
       run: |
         cmake -B build \
-        -DCMAKE_OSX_SYSROOT="" \
-        -DCMAKE_VERBOSE_MAKEFILE=on \
         -DCMAKE_CXX_FLAGS="-I$(brew --prefix)/include" \
         -DCMAKE_EXE_LINKER_FLAGS="-L$(brew --prefix)/lib" \
         -DZLIB_LIBRARY=$(brew --prefix zlib)/lib/libz.a \
@@ -33,7 +28,7 @@ jobs:
         -DCMAKE_BUILD_TYPE=Build
     - name: Build transferase
       run: |
-        cmake --build build -j2
+        cmake --build build -j3
     - name: Run the tests
       run: |
         ctest --test-dir build/lib --output-on-failure
