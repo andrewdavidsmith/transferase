@@ -38,13 +38,19 @@ jobs:
         run: |
           . .venv/bin/activate
           cmake --build build -j4
+      - name: Get version number
+        id: get-vn
+        run: |
+          awk '/^  VERSION [0-9.]+$/ {print "vn="$NF}' CMakeLists.txt >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ github.token }}
       - name: Check that it runs
         run: |
           . .venv/bin/activate
-          pip install build/python/dist/transferase*whl
+          pip install build/python/dist/transferase-${{ steps.get-vn.outputs.vn }}-*.whl
           python3 -c "import transferase; help(transferase)"
       - name: Upload macos wheel
         uses: actions/upload-artifact@v4
         with:
-          name: transferase-0.5.0-Python-${{ matrix.os }}-${{ runner.arch }}
-          path: build/python/dist/transferase-0.5.0-*.whl
+          name: transferase-${{ steps.get-vn.outputs.vn }}-Python-${{ matrix.os }}-${{ runner.arch }}
+          path: build/python/dist/transferase-${{ steps.get-vn.outputs.vn }}-*.whl
