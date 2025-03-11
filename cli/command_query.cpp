@@ -146,7 +146,8 @@ read_intervals(const transferase::genome_index &index,
     error = std::make_error_code(std::errc::invalid_argument);
     return {};
   }
-  lgr.info("Number of intervals: {}", std::size(intervals));
+  lgr.debug("Number of intervals in {}: {}", intervals_file,
+            std::size(intervals));
   return intervals;
 }
 
@@ -304,7 +305,6 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
 
   // the two possible sources of names of methylomes to query
   std::vector<std::string> methylome_names;
-  // std::string methylomes_file;
 
   // the genome associated with the methylomes -- could come from a
   // lookup in transferase metadata
@@ -501,7 +501,7 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
     {"Local mode", std::format("{}", local_mode)},
     // clang-format on
   };
-  xfr::log_args<xfr::log_level_t::info>(args_to_log);
+  xfr::log_args<xfr::log_level_t::debug>(args_to_log);
 
   const bool intervals_query = (bin_size == 0);
   const auto request_type =
@@ -526,8 +526,10 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
 
   // ADS: below is because error code '0' is printed as "Undefined
   // error" on macos.
-  lgr.info("Completed query with status: {}",
-           error ? error.message() : "Success");
+  if (error) {
+    lgr.critical("Failed to complete query: {}", error);
+    return EXIT_FAILURE;
+  }
 
-  return error ? EXIT_FAILURE : EXIT_SUCCESS;
+  return EXIT_SUCCESS;
 }
