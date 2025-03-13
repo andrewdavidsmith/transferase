@@ -115,7 +115,7 @@ command_server_config_main(int argc, char *argv[])  // NOLINT(*-c-arrays)
   app.add_option("-v,--log-level", cfg.log_level,
                  "{debug, info, warning, error, critical}")
     ->option_text(std::format("ENUM [{}]", log_level_default))
-    ->transform(CLI::CheckedTransformer(xfr::log_level_cli11, CLI::ignore_case));
+    ->transform(CLI::CheckedTransformer(xfr::str_to_level, CLI::ignore_case));
   app.add_option("-l,--log-file", cfg.log_file,
                  "log file name");
   app.add_option("-r,--max-resident", cfg.max_resident,
