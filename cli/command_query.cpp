@@ -376,7 +376,7 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
   app.add_option("-v,--log-level", cfg.log_level,
                  "{debug, info, warning, error, critical}")
     ->option_text(std::format("ENUM [{}]", log_level_default))
-    ->transform(CLI::CheckedTransformer(xfr::log_level_cli11, CLI::ignore_case));
+    ->transform(CLI::CheckedTransformer(xfr::str_to_level, CLI::ignore_case));
   // clang-format on
 
   if (argc < 2) {

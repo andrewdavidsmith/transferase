@@ -66,7 +66,7 @@ enum class log_level_t : std::uint8_t {
   critical,
 };
 
-static const std::map<std::string, log_level_t> log_level_cli11{
+static const std::map<std::string, log_level_t> str_to_level{
   // clang-format off
   {"debug", log_level_t::debug},
   {"info", log_level_t::info},
