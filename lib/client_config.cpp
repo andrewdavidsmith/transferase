@@ -448,7 +448,9 @@ download_index_files(const remote_data_resource &remote,
 
     // ADS: should report the reason why a download happened
     if (download_policy == download_policy_t::all ||
-        (download_policy == download_policy_t::missing && !index_file_exists) ||
+        ((download_policy == download_policy_t::missing ||
+          download_policy == download_policy_t::update) &&
+         !index_file_exists) ||
         (download_policy == download_policy_t::update && is_outdated)) {
       lgr.debug(R"(Download: {} to "{}")", remote.form_url(data_file), dirname);
       lgr.debug("Reason: policy={}, file_exists={}, is_outdated={}",
