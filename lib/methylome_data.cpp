@@ -294,7 +294,7 @@ bin_levels_impl(genome_index_data::vec::const_iterator &posn_itr,
     t.n_meth += cpg_itr->n_meth;
     t.n_unmeth += cpg_itr->n_unmeth;
     if constexpr (std::is_same<T, level_element_covered_t>::value)
-      t.n_covered += (*cpg_itr == mcount_pair{});
+      t.n_covered += (*cpg_itr != mcount_pair{});
     ++cpg_itr;
     ++posn_itr;
   }
