@@ -32,7 +32,7 @@
 #include "query_container.hpp"  // IWYU pragma: keep
 #include "request.hpp"
 #include "response.hpp"
-#include "server.hpp"
+#include "server_error_code.hpp"
 
 #include <memory>  // for std::shared_ptr
 #include <string>
@@ -146,7 +146,8 @@ request_handler::intervals_get_levels<level_element_covered_t>(
       resp_hdr.status = ec;
       return;
     }
-    lgr.debug("Computing levels for methylome: {} (intervals)", methylome_name);
+    lgr.debug("Computing levels for methylome: {} (intervals, covered)",
+              methylome_name);
     meth->get_levels<level_element_covered_t>(query,
                                               resp_data.column_itr(col_id++));
   }
@@ -230,7 +231,8 @@ request_handler::bins_get_levels<level_element_covered_t>(
       resp_hdr.status = server_error_code::bad_request;
       return;
     }
-    lgr.debug("Computing levels for methylome: {} (bins)", methylome_name);
+    lgr.debug("Computing levels for methylome: {} (bins, covered)",
+              methylome_name);
     meth->get_levels<level_element_covered_t>(req.bin_size(), *index,
                                               resp_data.column_itr(col_id++));
   }
