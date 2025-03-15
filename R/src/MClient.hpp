@@ -37,6 +37,7 @@
 #include <stdexcept>
 #include <string>
 #include <system_error>
+#include <unordered_set>
 #include <vector>
 
 template <typename level_element> class MClient {
