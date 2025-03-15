@@ -23,7 +23,7 @@
 
 #include "response.hpp"
 
-#include "server.hpp"
+#include "server_error_code.hpp"
 
 #include <algorithm>
 #include <cassert>
