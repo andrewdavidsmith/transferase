@@ -504,7 +504,8 @@ download_metadata_file(
     return error;
 
   if (download_policy == download_policy_t::all ||
-      (download_policy == download_policy_t::missing &&
+      ((download_policy == download_policy_t::update ||
+        download_policy == download_policy_t::missing) &&
        !metadata_file_exists) ||
       (download_policy == download_policy_t::update && is_outdated)) {
     lgr.debug("Download: {} to {}", remote.form_url(metadata_file), dirname);
