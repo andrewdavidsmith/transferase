@@ -180,6 +180,11 @@ public:
     instance().min_log_level = lvl;
   }
 
+  [[nodiscard]] static auto
+  get_level() noexcept -> std::string {
+    return level_name_str[std::to_underlying(instance().min_log_level)];
+  }
+
   operator bool() const { return status ? false : true; }
 
   template <log_level_t the_level>
