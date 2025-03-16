@@ -1,0 +1,13 @@
+Package: transferase
+Type: Package
+Title: Transferase
+Version: 0.5.0
+Date: 2025-03-09
+Authors@R: person("Andrew", "Smith", role=c("aut", "cre"), email="andrewds@usc.edu")
+Description: Provides functions that use the transferase system to retrieve
+  methylome data from methbase
+License: MIT + file LICENSE
+Imports: R6, methods, Rcpp (>= 1.0.14)
+LinkingTo: Rcpp
+SystemRequirements: C++23
+Encoding: UTF-8
