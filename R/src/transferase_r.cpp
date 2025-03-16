@@ -21,6 +21,8 @@
  * SOFTWARE.
  */
 
+#include "transferase_r.hpp"
+
 #include "genomic_interval.hpp"
 #include "level_element.hpp"
 #include "logger.hpp"
@@ -35,6 +37,7 @@
 #include <filesystem>
 #include <format>
 #include <iterator>
+#include <memory>
 #include <ranges>
 #include <stdexcept>
 #include <string>
