@@ -70,8 +70,11 @@ MClient <- R6Class(
   ),
   public = list(
     config_dir = NULL,
-    initialize = function(config_dir = NULL) {
-      # ADS: check that config_dir_arg makes sense
+    initialize = function(config_dir = "") {
+      if (config_dir == "") {
+        home_dir <- Sys.getenv("HOME")
+        config_dir <- file.path(home_dir, ".config", "transferase")
+      }
       self$config_dir <- config_dir
       private$client <- .Call(`_transferase_createMClient`, config_dir)
     },
