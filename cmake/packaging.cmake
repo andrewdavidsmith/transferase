@@ -63,6 +63,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")  # macOS
   list(APPEND GLOBAL_LINKER_OPTIONS "-Wl,-dead_strip")
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
   list(APPEND GLOBAL_LINKER_OPTIONS "-s")
+  list(APPEND GLOBAL_LINKER_OPTIONS "-Wl,--gc-sections")
 elseif(CMAKE_SYSTEM_NAME STREQUAL "WIN32")
   message(FATAL_ERROR "Windows isn't supported")
 else()
