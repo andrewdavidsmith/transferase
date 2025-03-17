@@ -23,19 +23,23 @@
 """
 Get the platform tag most appropriate for the given wheel file.
 """
-import sys, os, errno, platform
+import sys, os, errno, platform, subprocess, re
 
 def get_platform_tags_linux(whl_file):
     """
     For the given wheel file, get the 'overall_tag' that is deemed
     most appropriate by the functions in the auditwheel package
     """
-    from auditwheel import wheel_abi
-    import auditwheel.policy
-
-    wheel_policy = auditwheel.policy.WheelPolicies()
-    winfo = wheel_abi.analyze_wheel_abi(wheel_policy, whl_file, ())
-    return winfo.overall_tag
+    cmd = f"auditwheel show {whl_file}"
+    p = subprocess.run(
+        cmd,
+        capture_output=True,
+        shell=True,
+        check=False,
+    )
+    text = p.stdout.decode().strip().replace("\n", " ").replace("  ", " ")
+    tag_match = re.search('tag: "([a-zA-Z0-9_]*)"', text)
+    return tag_match.group(1) if tag_match and tag_match.groups() else None
 
 
 def get_platform_tags_macos(whl_file):
