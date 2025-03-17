@@ -22,19 +22,19 @@
 
 library(R6)
 
-configXfr <- function(genomes, config_dir = "") {
+config_xfr <- function(genomes, config_dir = "") {
   invisible(.Call(`_transferase_configXfr`, genomes, config_dir))
 }
 
-setXfrLogLevel <- function(log_level) {
+set_xfr_log_level <- function(log_level) {
   invisible(.Call(`_transferase_setXfrLogLevel`, log_level))
 }
 
-getXfrLogLevel <- function() {
+get_xfr_log_level <- function() {
   .Call(`_transferase_getXfrLogLevel`)
 }
 
-initLogger <- function() {
+init_logger <- function() {
   invisible(.Call(`_transferase_initLogger`))
 }
 
@@ -74,6 +74,9 @@ MClient <- R6Class(
       if (config_dir == "") {
         home_dir <- Sys.getenv("HOME")
         config_dir <- file.path(home_dir, ".config", "transferase")
+      } else if (!file.exists(config_dir)) {
+        fmt <- "directory does not exist: %s. See the configXfr function"
+        stop(sprintf(fmt, config_dir), call. = FALSE)
       }
       self$config_dir <- config_dir
       private$client <- .Call(`_transferase_createMClient`, config_dir)
@@ -83,13 +86,12 @@ MClient <- R6Class(
       cat("config_dir: ", self$config_dir, "\n", sep = "")
       cat("client:     ", typeof(private$client), "\n", sep = "")
     },
-    doQuery = function(methylomes, query, genome=NULL, covered=FALSE) {
+    do_query = function(methylomes, query, genome = NULL, covered = FALSE) {
       if (is.data.frame(query)) {
         if (covered) {
           .Call(`_transferase_queryIntervalsCov`, private$client,
                 methylomes, genome, query)
-        }
-        else {
+        } else {
           .Call(`_transferase_queryIntervals`, private$client,
                 methylomes, genome, query)
         }
@@ -97,8 +99,7 @@ MClient <- R6Class(
         if (covered) {
           .Call(`_transferase_queryBinsCov`, private$client,
                 methylomes, query)
-        }
-        else {
+        } else {
           .Call(`_transferase_queryBins`, private$client,
                 methylomes, query)
         }
@@ -114,7 +115,7 @@ MClient <- R6Class(
         stop("Invalid 'query' argument", call. = FALSE)
       }
     },
-    formatQuery = function(genome, intervals) {
+    format_query = function(genome, intervals) {
       MQuery$new(.Call(`_transferase_formatQuery`,
                        private$client, genome, intervals))
     }
