@@ -75,8 +75,13 @@ MClient <- R6Class(
         home_dir <- Sys.getenv("HOME")
         config_dir <- file.path(home_dir, ".config", "transferase")
       } else if (!file.exists(config_dir)) {
-        fmt <- "directory does not exist: %s. See the configXfr function"
+        fmt <- "directory does not exist: %s. See the config_xfr function"
         stop(sprintf(fmt, config_dir), call. = FALSE)
+      }
+      config_file <- file.path(config_dir, "transferase_client.json")
+      if (!file.exists(config_file)) {
+        fmt <- "config file does not exist: %s. See the config_xfr function"
+        stop(sprintf(fmt, config_file), call. = FALSE)
       }
       self$config_dir <- config_dir
       private$client <- .Call(`_transferase_createMClient`, config_dir)
