@@ -31,5 +31,5 @@
 #' @useDynLib transferase
 #' @name transferase
 .onLoad <- function(libname, pkgname) {
-  initLogger()
+  init_logger()
 }
