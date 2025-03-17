@@ -24,8 +24,6 @@
 #ifndef LIB_CLIENT_CONFIG_HPP_
 #define LIB_CLIENT_CONFIG_HPP_
 
-// ADS: Not sure why logger is needed below, but it might be that the
-// full logger needs to be seen for 'mp11' and 'describe'
 #include "download_policy.hpp"  // IWYU pragma: keep
 #include "logger.hpp"           // IWYU pragma: keep
 #include "nlohmann/json.hpp"    // IWYU pragma: keep
@@ -128,8 +126,7 @@ struct client_config {
     std::error_code error;
     const auto obj = read(config_dir, error);
     if (error) {
-      const auto message = std::format(
-        "[Error reading client config (config_dir: {})]", config_dir);
+      const auto message = std::format("[config_dir: {}]", config_dir);
       throw std::system_error(error, message);
     }
     return obj;
