@@ -88,34 +88,30 @@ find_R_sys_config_dir() -> std::string {
   return find_dir(package_paths, sys_conf_file);
 }
 
-// [[Rcpp::export]]
 auto
-configXfr(const std::vector<std::string> &genomes,
-          const std::string &config_dir = "") {
+config_xfr(const std::vector<std::string> &genomes,
+           const std::string &config_dir = "") -> void {
   const auto download_policy = transferase::download_policy_t::update;
   const auto sys_config_dir = find_R_sys_config_dir();
   transferase::client_config cfg(config_dir, sys_config_dir);
   cfg.install(genomes, download_policy, sys_config_dir);
 }
 
-// [[Rcpp::export]]
 auto
-setXfrLogLevel(const std::string &log_level) {
+set_xfr_log_level(const std::string &log_level) -> void {
   const auto itr = transferase::str_to_level.find(log_level);
   if (itr == std::cend(transferase::str_to_level))
     throw std::runtime_error(std::format("Invalid log level: {}\n", log_level));
   transferase::logger::set_level(itr->second);
 }
 
-// [[Rcpp::export]]
 auto
-getXfrLogLevel() -> std::string {
+get_xfr_log_level() -> std::string {
   return transferase::logger::get_level();
 }
 
-// [[Rcpp::export]]
 auto
-createMClient(const std::string &config_dir = "")
+create_mclient(const std::string &config_dir = "")
   -> Rcpp::XPtr<transferase::methylome_client_remote> {
   typedef transferase::methylome_client_remote MClient;
   auto client = std::make_unique<MClient>(config_dir);
@@ -123,9 +119,9 @@ createMClient(const std::string &config_dir = "")
 }
 
 [[nodiscard]] auto
-format_query(const transferase::methylome_client_remote &client,
-             const std::string &genome,
-             const Rcpp::DataFrame intervals) -> transferase::query_container {
+format_query_impl(const transferase::methylome_client_remote &client,
+                  const std::string &genome, const Rcpp::DataFrame intervals)
+  -> transferase::query_container {
   try {
     std::error_code error{};
     const auto idx_itr = client.indexes->get_genome_index(genome, error);
@@ -173,19 +169,17 @@ format_query(const transferase::methylome_client_remote &client,
   }
 }
 
-// [[Rcpp::export]]
 auto
-formatQuery(const Rcpp::XPtr<transferase::methylome_client_remote> client,
-            const std::string &genome, const Rcpp::DataFrame intervals)
+format_query(const Rcpp::XPtr<transferase::methylome_client_remote> client,
+             const std::string &genome, const Rcpp::DataFrame intervals)
   -> Rcpp::XPtr<transferase::query_container> {
-  typedef transferase::query_container Query;
-  auto q = std::make_unique<Query>(format_query(*client, genome, intervals));
-  return Rcpp::XPtr<Query>(q.release());
+  typedef transferase::query_container qct;
+  auto q = std::make_unique<qct>(format_query_impl(*client, genome, intervals));
+  return Rcpp::XPtr<qct>(q.release());
 }
 
-// [[Rcpp::export]]
 auto
-initLogger() -> void {
+init_logger() -> void {
   [[maybe_unused]] auto &lgr = transferase::logger::instance(
     std::make_shared<std::ostream>(Rcpp::Rcout.rdbuf()), "transferase",
     transferase::log_level_t::error);
@@ -204,34 +198,31 @@ convert_to_numeric_matrix(
   return m;
 }
 
-// [[Rcpp::export]]
 auto
-queryBins(const Rcpp::XPtr<transferase::methylome_client_remote> client,
-          const std::vector<std::string> &methylomes,
-          const std::size_t bin_size) -> Rcpp::NumericMatrix {
+query_bins(const Rcpp::XPtr<transferase::methylome_client_remote> client,
+           const std::vector<std::string> &methylomes,
+           const std::size_t bin_size) -> Rcpp::NumericMatrix {
   const auto levels =
     client->get_levels<transferase::level_element_t>(methylomes, bin_size);
   return convert_to_numeric_matrix(levels);
 }
 
-// [[Rcpp::export]]
 auto
-queryPreprocessed(const Rcpp::XPtr<transferase::methylome_client_remote> client,
-                  const std::vector<std::string> &methylomes,
-                  const Rcpp::XPtr<transferase::query_container> query)
-  -> Rcpp::NumericMatrix {
+query_preprocessed(
+  const Rcpp::XPtr<transferase::methylome_client_remote> client,
+  const std::vector<std::string> &methylomes,
+  const Rcpp::XPtr<transferase::query_container> query) -> Rcpp::NumericMatrix {
   const auto levels =
     client->get_levels<transferase::level_element_t>(methylomes, *query);
   return convert_to_numeric_matrix(levels);
 }
 
-// [[Rcpp::export]]
 auto
-queryIntervals(const Rcpp::XPtr<transferase::methylome_client_remote> client,
-               const std::vector<std::string> &methylomes,
-               const std::string &genome,
-               const Rcpp::DataFrame intervals) -> Rcpp::NumericMatrix {
-  const auto query = format_query(*client, genome, intervals);
+query_intervals(const Rcpp::XPtr<transferase::methylome_client_remote> client,
+                const std::vector<std::string> &methylomes,
+                const std::string &genome,
+                const Rcpp::DataFrame intervals) -> Rcpp::NumericMatrix {
+  const auto query = format_query_impl(*client, genome, intervals);
   const auto levels =
     client->get_levels<transferase::level_element_t>(methylomes, query);
   return convert_to_numeric_matrix(levels);
@@ -251,19 +242,17 @@ convert_to_numeric_matrix(
   return m;
 }
 
-// [[Rcpp::export]]
 auto
-queryBinsCov(const Rcpp::XPtr<transferase::methylome_client_remote> client,
-             const std::vector<std::string> &methylomes,
-             const std::size_t bin_size) -> Rcpp::NumericMatrix {
+query_bins_cov(const Rcpp::XPtr<transferase::methylome_client_remote> client,
+               const std::vector<std::string> &methylomes,
+               const std::size_t bin_size) -> Rcpp::NumericMatrix {
   const auto levels = client->get_levels<transferase::level_element_covered_t>(
     methylomes, bin_size);
   return convert_to_numeric_matrix(levels);
 }
 
-// [[Rcpp::export]]
 auto
-queryPreprocessedCov(
+query_preprocessed_cov(
   const Rcpp::XPtr<transferase::methylome_client_remote> client,
   const std::vector<std::string> &methylomes,
   const Rcpp::XPtr<transferase::query_container> query) -> Rcpp::NumericMatrix {
@@ -272,13 +261,12 @@ queryPreprocessedCov(
   return convert_to_numeric_matrix(levels);
 }
 
-// [[Rcpp::export]]
 auto
-queryIntervalsCov(const Rcpp::XPtr<transferase::methylome_client_remote> client,
-                  const std::vector<std::string> &methylomes,
-                  const std::string &genome,
-                  const Rcpp::DataFrame intervals) -> Rcpp::NumericMatrix {
-  const auto query = format_query(*client, genome, intervals);
+query_intervals_cov(
+  const Rcpp::XPtr<transferase::methylome_client_remote> client,
+  const std::vector<std::string> &methylomes, const std::string &genome,
+  const Rcpp::DataFrame intervals) -> Rcpp::NumericMatrix {
+  const auto query = format_query_impl(*client, genome, intervals);
   const auto levels =
     client->get_levels<transferase::level_element_covered_t>(methylomes, query);
   return convert_to_numeric_matrix(levels);
