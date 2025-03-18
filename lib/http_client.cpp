@@ -162,15 +162,9 @@ http_client::connect(const asio::ip::tcp::resolver::results_type &endpoints)
       if (!error) {
         const auto endpoint_str =
           (std::ostringstream() << sock.lowest_layer().remote_endpoint()).str();
-#ifdef DEBUG
-        std::println("Connected to {}", endpoint_str);
-#endif
         send_request();
       }
       else {
-#ifdef DEBUG
-        std::println("Connect failed: {}", error.message());
-#endif
         finish(http_error_code::connect_failed);
       }
     });
@@ -186,9 +180,6 @@ http_client::send_request() -> void {
     [this](const std::error_code &error, const std::size_t /*size*/) {
       deadline.expires_at(asio::steady_timer::time_point::max());
       if (error) {
-#ifdef DEBUG
-        std::println("Error sending GET {}", error.message());
-#endif
         finish(http_error_code::send_request_failed);
       }
       else {
@@ -205,9 +196,6 @@ http_client::receive_header() -> void {
     [this](const std::error_code &error, const std::size_t size) {
       deadline.expires_at(asio::steady_timer::time_point::max());
       if (error) {
-#ifdef DEBUG
-        std::println("Error receiving GET header {}", ec.message());
-#endif
         finish(http_error_code::receive_header_failed);
       }
       else {
@@ -223,9 +211,6 @@ http_client::receive_header() -> void {
           receive_body();
         }
         else {
-#ifdef DEBUG
-          std::println("Unknown body length");
-#endif
           finish(http_error_code::unknown_body_length);
         }
       }
@@ -254,10 +239,6 @@ http_client::receive_body() -> void {
         }
       }
       else {
-#ifdef DEBUG
-        std::println("Error reading: {} ({})", error.message(),
-                     bytes_transferred);
-#endif
         finish(http_error_code::reading_body_failed);
       }
     });
