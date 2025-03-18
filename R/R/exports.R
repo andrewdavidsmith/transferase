@@ -23,19 +23,19 @@
 library(R6)
 
 config_xfr <- function(genomes, config_dir = "") {
-  invisible(.Call(`_transferase_configXfr`, genomes, config_dir))
+  invisible(.Call(`_transferase_config_xfr`, genomes, config_dir))
 }
 
 set_xfr_log_level <- function(log_level) {
-  invisible(.Call(`_transferase_setXfrLogLevel`, log_level))
+  invisible(.Call(`_transferase_set_xfr_log_level`, log_level))
 }
 
 get_xfr_log_level <- function() {
-  .Call(`_transferase_getXfrLogLevel`)
+  .Call(`_transferase_get_xfr_log_level`)
 }
 
 init_logger <- function() {
-  invisible(.Call(`_transferase_initLogger`))
+  invisible(.Call(`_transferase_init_logger`))
 }
 
 MQuery <- R6Class(
@@ -84,7 +84,7 @@ MClient <- R6Class(
         stop(sprintf(fmt, config_file), call. = FALSE)
       }
       self$config_dir <- config_dir
-      private$client <- .Call(`_transferase_createMClient`, config_dir)
+      private$client <- .Call(`_transferase_create_mclient`, config_dir)
     },
     print = function(...) {
       cat("MClient:\n")
@@ -94,26 +94,26 @@ MClient <- R6Class(
     do_query = function(methylomes, query, genome = NULL, covered = FALSE) {
       if (is.data.frame(query)) {
         if (covered) {
-          .Call(`_transferase_queryIntervalsCov`, private$client,
+          .Call(`_transferase_query_intervals_cov`, private$client,
                 methylomes, genome, query)
         } else {
-          .Call(`_transferase_queryIntervals`, private$client,
+          .Call(`_transferase_query_intervals`, private$client,
                 methylomes, genome, query)
         }
       } else if (is.atomic(query) && length(query) == 1 && is.numeric(query)) {
         if (covered) {
-          .Call(`_transferase_queryBinsCov`, private$client,
+          .Call(`_transferase_query_bins_cov`, private$client,
                 methylomes, query)
         } else {
-          .Call(`_transferase_queryBins`, private$client,
+          .Call(`_transferase_query_bins`, private$client,
                 methylomes, query)
         }
       } else if (class(query)[1] == "MQuery") {
         if (covered) {
-          .Call(`_transferase_queryPreprocessedCov`, private$client,
+          .Call(`_transferase_query_preprocessed_cov`, private$client,
                 methylomes, query$data)
         } else {
-          .Call(`_transferase_queryPreprocessed`, private$client,
+          .Call(`_transferase_query_preprocessed`, private$client,
                 methylomes, query$data)
         }
       } else {
@@ -121,7 +121,7 @@ MClient <- R6Class(
       }
     },
     format_query = function(genome, intervals) {
-      MQuery$new(.Call(`_transferase_formatQuery`,
+      MQuery$new(.Call(`_transferase_format_query`,
                        private$client, genome, intervals))
     }
   )
