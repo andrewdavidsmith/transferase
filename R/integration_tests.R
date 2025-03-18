@@ -52,6 +52,8 @@ if (inherits(client, "try-error")) {
   stop("Stopping: we should have had an error")
 }
 
+config_xfr(c("hg38"))
+
 client <- MClient$new()
 print(client)
 
