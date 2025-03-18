@@ -20,6 +20,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+"""
+Utilities associated with the Python bindings for transferase, but that
+are not implemented within the bindings themselves.
+"""
+
 from .transferase import GenomeIndex
 
 import json
