@@ -21,10 +21,11 @@ minimum versions that are required, if relevant.
 
 - git and ca-certificates (for using git and https)
 - g++: g++-14 (14.2.0/14.2.0)
-- Boost: libboost-all-dev (1.83/1.78)
 - cmake: cmake (3.28.3/3.28)
 - gnu make: make
 - ncurses: libncurses5-dev (for the 'select' command)
+- SSL: libssl-dev (for downloading config files)
+- ZLib: zlib1g-dev (seem needed sometimes)
 
 This next command will install all the packages listed above, and the
 `DEBIAN_FRONTEND=noninteractive` is to prevent from being asked your timezone
@@ -37,10 +38,11 @@ apt-get install -y --no-install-recommends \
     ca-certificates \
     git \
     g++-14 \
-    libboost-all-dev \
     cmake \
     make \
-    libncurses5-dev
+    libncurses5-dev \
+    libssl-dev \
+    zlib1g-dev
 ```
 
 It might take a few minutes and they install quickly, but one of them might
@@ -168,6 +170,7 @@ g++-14, but if not, just install it):
 ```console
 export CC=gcc-14
 cmake -B build -DCMAKE_CXX_COMPILER=g++-14 -DPACKAGE_PYTHON=on -DCMAKE_BUILD_TYPE=Release
+cmake --build build -j32
 ```
 
 There is an option to `BUILD_PYTHON` but it's separate from `PACKAGE_PYTHON`,
@@ -203,7 +206,6 @@ along with some version information for the dnf packages I found.
 
 - git: git
 - g++: g++ (14.2.1/14.2.0)
-- Boost: boost-devel (1.83/1.78)
 - cmake: cmake (3.30.8/3.28)
 - ncurses: ncurses-devel (for the 'select' command)
 - ZLib: zlib-devel
@@ -217,7 +219,6 @@ dnf install -y \
     g++ \
     cmake \
     zlib-devel \
-    boost-devel \
     ncurses-devel
 ```
 
@@ -238,7 +239,6 @@ as for a regular build. Fedora is different. In order to build with
 `-DPACKAGE=on` we need to get static libraries for most dependencies:
 
 - zlib-static: without this, the build configuration fails
-- boost-static: without this, the failure is at the final link step
 - libstdc++-static: similarly, without this the build fails at link time
 - ncurses-static: needed for the 'select' command to build
 
@@ -247,7 +247,6 @@ We also need the `rpm-build` package. Here is the command:
 ```console
 dnf install -y \
     zlib-static \
-    boost-static \
     ncurses-static \
     libstdc++-static \
     rpm-build
@@ -276,3 +275,67 @@ rpm -i build/transferase-0.5.0-Linux.rpm
 rpm -qi transferase  # Info
 rpm -e transferase  # Remove
 ```
+
+## The R API
+
+In mid-March 2025, I'm using the unstable ("sid") Debian docker image to build
+the R API for transferase because it has R-4.4 and GCC-14.2 by default. By the
+end of April, 2025, Ubuntu should have these in a main release. Start the
+container like this:
+
+```console
+docker run --rm -it debian:sid bash
+```
+
+Then get the required packages like this:
+
+```console
+apt-get update && \
+DEBIAN_FRONTEND=noninteractive \
+apt-get install -y --no-install-recommends \
+    ca-certificates \
+    git \
+    gcc \
+    g++ \
+    cmake \
+    make \
+    r-base-dev
+```
+
+If it seems like you need more packages after trying the next few steps, look
+above at the packages installed for Ubuntu and others. The transferase R API
+needs the Rcpp package to build and the R6 package to run.
+
+```console
+R -e 'install.packages(c("R6", "Rcpp"))'
+```
+
+If the build is configured like this:
+
+```console
+cmake -B build -DBUILD_R=on -DCMAKE_INSTALL_PREFIX=rsrc
+```
+
+There is no '--build' step for making the R API because R will do that
+itself. So the next step is to install like this into a modified source tree
+for R:
+
+```console
+cmake --install build
+```
+
+Then the following can install the package:
+
+```console
+R CMD INSTALL rsrc
+```
+
+And this will make the tarball that can be installed with 'install.packages':
+
+```
+R CMD build rsrc
+```
+
+The resulting file will be named: `transferase_0.5.0.tar.gz`. This is the same
+name as one of the files currently generated as part of the command line
+package with cpack, so be careful not to confuse the two.
