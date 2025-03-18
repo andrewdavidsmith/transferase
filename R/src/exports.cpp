@@ -30,6 +30,7 @@
 //
 // RCPP_BEGIN/END wrap code in a try/catch
 // RcppExport sets C linkage and default visibility
+// Rcpp::RNGScope uses RAII to protect RNG
 
 #include "transferase_r.hpp"
 
@@ -48,29 +49,24 @@ Rcpp::Rostream<true> &Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false> &Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
-template <typename T> using rcpp_param = Rcpp::traits::input_parameter<T>;
 using xfr_client_remote = transferase::methylome_client_remote;
 using query_container = transferase::query_container;
 
 RcppExport auto
-_transferase_config_xfr(const SEXP genomesSEXP,
-                        const SEXP config_dirSEXP) -> SEXP {
+_transferase_config_xfr(const SEXP genomes, const SEXP config_dir) -> SEXP {
   BEGIN_RCPP
   Rcpp::RNGScope rcpp_rngScope_gen;
-  // rcpp_param<const std::vector<std::string> &>::type genomes(genomesSEXP);
-  // rcpp_param<const std::string &>::type config_dir(config_dirSEXP);
-  config_xfr(Rcpp::as<std::vector<std::string>>(genomesSEXP),
-             Rcpp::as<std::string>(config_dirSEXP));
+  config_xfr(Rcpp::as<std::vector<std::string>>(genomes),
+             Rcpp::as<std::string>(config_dir));
   return R_NilValue;
   END_RCPP
 }
 
 RcppExport auto
-_transferase_set_xfr_log_level(const SEXP log_levelSEXP) -> SEXP {
+_transferase_set_xfr_log_level(const SEXP log_level) -> SEXP {
   BEGIN_RCPP
   Rcpp::RNGScope rcpp_rngScope_gen;
-  // rcpp_param<const std::string &>::type log_level(log_levelSEXP);
-  set_xfr_log_level(Rcpp::as<std::string>(log_levelSEXP));
+  set_xfr_log_level(Rcpp::as<std::string>(log_level));
   return R_NilValue;
   END_RCPP
 }
@@ -84,26 +80,25 @@ _transferase_get_xfr_log_level() -> SEXP {
 }
 
 RcppExport auto
-_transferase_create_mclient(const SEXP config_dirSEXP) -> SEXP {
+_transferase_create_mclient(const SEXP config_dir) -> SEXP {
   BEGIN_RCPP
   Rcpp::RNGScope rcpp_rngScope_gen;
-  rcpp_param<const std::string &>::type config_dir(config_dirSEXP);
-  return Rcpp::wrap(create_mclient(config_dir));
+  return Rcpp::wrap(create_mclient(Rcpp::as<std::string>(config_dir)));
   END_RCPP
 }
 
 RcppExport auto
-_transferase_format_query(const SEXP clientSEXP, const SEXP genomeSEXP,
-                          const SEXP intervalsSEXP) -> SEXP {
+_transferase_format_query(const SEXP client, const SEXP genome,
+                          const SEXP intervals) -> SEXP {
   BEGIN_RCPP
   Rcpp::RNGScope rcpp_rngScope_gen;
-  // rcpp_param<const Rcpp::XPtr<xfr_client_remote>>::type client(clientSEXP);
-  // rcpp_param<const std::string &>::type genome(genomeSEXP);
-  // rcpp_param<const Rcpp::DataFrame>::type intervals(intervalsSEXP);
-  return Rcpp::wrap(
-    format_query(Rcpp::as<Rcpp::XPtr<xfr_client_remote>>(clientSEXP),
-                 Rcpp::as<std::string>(genomeSEXP),
-                 Rcpp::as<Rcpp::DataFrame>(intervalsSEXP)));
+  // clang-format off
+  return Rcpp::wrap(format_query(
+    Rcpp::as<Rcpp::XPtr<xfr_client_remote>>(client),
+    Rcpp::as<std::string>(genome),
+    Rcpp::as<Rcpp::DataFrame>(intervals)
+  ));
+  // clang-format on
   END_RCPP
 }
 
@@ -119,81 +114,95 @@ _transferase_init_logger() -> SEXP {
 // ADS: defintions for exports of query functions below
 
 RcppExport auto
-_transferase_query_bins(SEXP clientSEXP, SEXP methylomesSEXP,
-                        SEXP bin_sizeSEXP) -> SEXP {
+_transferase_query_bins(const SEXP client, const SEXP methylomes,
+                        const SEXP bin_size) -> SEXP {
   BEGIN_RCPP
   Rcpp::RNGScope rcpp_rngScope_gen;
-  rcpp_param<const Rcpp::XPtr<xfr_client_remote>>::type client(clientSEXP);
-  rcpp_param<const std::vector<std::string> &>::type methylomes(methylomesSEXP);
-  rcpp_param<const std::size_t>::type bin_size(bin_sizeSEXP);
-  return Rcpp::wrap(query_bins(client, methylomes, bin_size));
+  // clang-format off
+  return Rcpp::wrap(query_bins(
+    Rcpp::as<Rcpp::XPtr<xfr_client_remote>>(client),
+    Rcpp::as<std::vector<std::string>>(methylomes),
+    Rcpp::as<std::size_t>(bin_size)
+  ));
+  // clang-format on
   END_RCPP
 }
 
 RcppExport auto
-_transferase_query_preprocessed(const SEXP clientSEXP,
-                                const SEXP methylomesSEXP,
-                                const SEXP querySEXP) -> SEXP {
+_transferase_query_preprocessed(const SEXP client, const SEXP methylomes,
+                                const SEXP query) -> SEXP {
   BEGIN_RCPP
   Rcpp::RNGScope rcpp_rngScope_gen;
-  rcpp_param<const Rcpp::XPtr<xfr_client_remote>>::type client(clientSEXP);
-  rcpp_param<const std::vector<std::string> &>::type methylomes(methylomesSEXP);
-  rcpp_param<const Rcpp::XPtr<query_container>>::type query(querySEXP);
-  return Rcpp::wrap(query_preprocessed(client, methylomes, query));
+  // clang-format off
+  return Rcpp::wrap(query_preprocessed(
+    Rcpp::as<Rcpp::XPtr<xfr_client_remote>>(client),
+    Rcpp::as<std::vector<std::string>>(methylomes),
+    Rcpp::as<Rcpp::XPtr<query_container>>(query)
+  ));
+  // clang-format on
   END_RCPP
 }
 
 RcppExport auto
-_transferase_query_intervals(const SEXP clientSEXP, const SEXP methylomesSEXP,
-                             const SEXP genomeSEXP,
-                             const SEXP intervalsSEXP) -> SEXP {
+_transferase_query_intervals(const SEXP client, const SEXP methylomes,
+                             const SEXP genome, const SEXP intervals) -> SEXP {
   BEGIN_RCPP
   Rcpp::RNGScope rcpp_rngScope_gen;
-  rcpp_param<const Rcpp::XPtr<xfr_client_remote>>::type client(clientSEXP);
-  rcpp_param<const std::vector<std::string> &>::type methylomes(methylomesSEXP);
-  rcpp_param<const std::string &>::type genome(genomeSEXP);
-  rcpp_param<const Rcpp::DataFrame>::type intervals(intervalsSEXP);
-  return Rcpp::wrap(query_intervals(client, methylomes, genome, intervals));
+  // clang-format off
+  return Rcpp::wrap(query_intervals(
+    Rcpp::as<Rcpp::XPtr<xfr_client_remote>>(client),
+    Rcpp::as<std::vector<std::string>>(methylomes),
+    Rcpp::as<std::string>(genome),
+    Rcpp::as<Rcpp::DataFrame>(intervals)
+  ));
+  // clang-format on
   END_RCPP
 }
 
 RcppExport auto
-_transferase_query_bins_cov(const SEXP clientSEXP, const SEXP methylomesSEXP,
-                            const SEXP bin_sizeSEXP) -> SEXP {
+_transferase_query_bins_cov(const SEXP client, const SEXP methylomes,
+                            const SEXP bin_size) -> SEXP {
   BEGIN_RCPP
   Rcpp::RNGScope rcpp_rngScope_gen;
-  rcpp_param<const Rcpp::XPtr<xfr_client_remote>>::type client(clientSEXP);
-  rcpp_param<const std::vector<std::string> &>::type methylomes(methylomesSEXP);
-  rcpp_param<const std::size_t>::type bin_size(bin_sizeSEXP);
-  return Rcpp::wrap(query_bins_cov(client, methylomes, bin_size));
+  // clang-format off
+  return Rcpp::wrap(query_bins_cov(
+    Rcpp::as<Rcpp::XPtr<xfr_client_remote>>(client),
+    Rcpp::as<std::vector<std::string>>(methylomes),
+    Rcpp::as<std::size_t>(bin_size)
+  ));
+  // clang-format on
   END_RCPP
 }
 
 RcppExport auto
-_transferase_query_preprocessed_cov(const SEXP clientSEXP,
-                                    const SEXP methylomesSEXP,
-                                    const SEXP querySEXP) -> SEXP {
+_transferase_query_preprocessed_cov(const SEXP client, const SEXP methylomes,
+                                    const SEXP query) -> SEXP {
   BEGIN_RCPP
   Rcpp::RNGScope rcpp_rngScope_gen;
-  rcpp_param<const Rcpp::XPtr<xfr_client_remote>>::type client(clientSEXP);
-  rcpp_param<const std::vector<std::string> &>::type methylomes(methylomesSEXP);
-  rcpp_param<const Rcpp::XPtr<query_container>>::type query(querySEXP);
-  return Rcpp::wrap(query_preprocessed_cov(client, methylomes, query));
+  // clang-format off
+  return Rcpp::wrap(query_preprocessed_cov(
+    Rcpp::as<Rcpp::XPtr<xfr_client_remote>>(client),
+    Rcpp::as<std::vector<std::string>>(methylomes),
+    Rcpp::as<Rcpp::XPtr<query_container>>(query)
+  ));
+  // clang-format on
   END_RCPP
 }
 
 RcppExport auto
-_transferase_query_intervals_cov(const SEXP clientSEXP,
-                                 const SEXP methylomesSEXP,
-                                 const SEXP genomeSEXP,
-                                 const SEXP intervalsSEXP) -> SEXP {
+_transferase_query_intervals_cov(const SEXP client, const SEXP methylomes,
+                                 const SEXP genome,
+                                 const SEXP intervals) -> SEXP {
   BEGIN_RCPP
   Rcpp::RNGScope rcpp_rngScope_gen;
-  rcpp_param<const Rcpp::XPtr<xfr_client_remote>>::type client(clientSEXP);
-  rcpp_param<const std::vector<std::string> &>::type methylomes(methylomesSEXP);
-  rcpp_param<const std::string &>::type genome(genomeSEXP);
-  rcpp_param<const Rcpp::DataFrame>::type intervals(intervalsSEXP);
-  return Rcpp::wrap(query_intervals_cov(client, methylomes, genome, intervals));
+  // clang-format off
+  return Rcpp::wrap(query_intervals_cov(
+    Rcpp::as<Rcpp::XPtr<xfr_client_remote>>(client),
+    Rcpp::as<std::vector<std::string>>(methylomes),
+    Rcpp::as<std::string>(genome),
+    Rcpp::as<Rcpp::DataFrame>(intervals)
+  ));
+  // clang-format on
   END_RCPP
 }
 
