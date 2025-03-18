@@ -26,7 +26,7 @@ message(STATUS "Configuring to build R API")
 
 # If the build is configured like this:
 #
-# cmake -B build -DBUILD_R=on -DCMAKE_INSTALL_PREFIX=r_src
+# cmake -B build -DBUILD_R=on -DCMAKE_INSTALL_PREFIX=rsrc
 #
 # And then installed like this (without a '--build' step):
 #
@@ -34,12 +34,12 @@ message(STATUS "Configuring to build R API")
 #
 # Then the following can install the package:
 #
-# R CMD INSTALL r_src
+# R CMD INSTALL rsrc
 #
 # And this will make the tarball that can be installed with
 # 'install.packages':
 #
-# R CMD build r_src
+# R CMD build rsrc
 #
 # will produce a file like: 'transferase_0.5.0.tar.gz' which will have the
 # same name as a file from 'cpack -B build --config build/CPackConfig.cmake'
