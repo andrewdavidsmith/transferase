@@ -35,7 +35,7 @@ get_xfr_log_level <- function() {
 }
 
 init_logger <- function() {
-  invisible(.Call(`_transferase_init_logger`))
+  .Call(`_transferase_init_logger`)
 }
 
 MQuery <- R6Class(
@@ -92,33 +92,46 @@ MClient <- R6Class(
       cat("client:     ", typeof(private$client), "\n", sep = "")
     },
     do_query = function(methylomes, query, genome = NULL, covered = FALSE) {
-      if (is.data.frame(query)) {
-        if (covered) {
-          .Call(`_transferase_query_intervals_cov`, private$client,
-                methylomes, genome, query)
+      get_query_response <- function(methylomes, query, genome, covered) {
+        if (is.data.frame(query)) {
+          if (covered) {
+            .Call(`_transferase_query_intervals_cov`, private$client,
+                  methylomes, genome, query)
+          } else {
+            .Call(`_transferase_query_intervals`, private$client,
+                  methylomes, genome, query)
+          }
+        } else if (is.atomic(query) && length(query) == 1 &&
+                     is.numeric(query)) {
+          if (covered) {
+            .Call(`_transferase_query_bins_cov`, private$client,
+                  methylomes, query)
+          } else {
+            .Call(`_transferase_query_bins`, private$client,
+                  methylomes, query)
+          }
+        } else if (class(query)[1] == "MQuery") {
+          if (covered) {
+            .Call(`_transferase_query_preprocessed_cov`, private$client,
+                  methylomes, query$data)
+          } else {
+            .Call(`_transferase_query_preprocessed`, private$client,
+                  methylomes, query$data)
+          }
         } else {
-          .Call(`_transferase_query_intervals`, private$client,
-                methylomes, genome, query)
+          stop("Invalid 'query' argument", call. = FALSE)
         }
-      } else if (is.atomic(query) && length(query) == 1 && is.numeric(query)) {
-        if (covered) {
-          .Call(`_transferase_query_bins_cov`, private$client,
-                methylomes, query)
-        } else {
-          .Call(`_transferase_query_bins`, private$client,
-                methylomes, query)
-        }
-      } else if (class(query)[1] == "MQuery") {
-        if (covered) {
-          .Call(`_transferase_query_preprocessed_cov`, private$client,
-                methylomes, query$data)
-        } else {
-          .Call(`_transferase_query_preprocessed`, private$client,
-                methylomes, query$data)
-        }
-      } else {
-        stop("Invalid 'query' argument", call. = FALSE)
       }
+      response <- get_query_response(methylomes, query, genome, covered)
+      # Put a header on the data frame
+      sub_headings <- c("M", "U")
+      if (covered) {
+        sub_headings <- c(sub_headings, "C")
+      }
+      header <- do.call(paste, expand.grid(methylomes, sub_headings,
+                                           sep = "_", stringsAsFactors = FALSE))
+      colnames(response) <- header
+      response
     },
     format_query = function(genome, intervals) {
       MQuery$new(.Call(`_transferase_format_query`,
