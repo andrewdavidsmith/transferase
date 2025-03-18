@@ -109,8 +109,11 @@ if(PACKAGE_PYTHON)
   # Copy the LICENSE file to the build directory
   configure_file(${PROJECT_SOURCE_DIR}/data/LICENSE
     ${PROJECT_BINARY_DIR}/python/LICENSE COPYONLY)
-  # Copy the __init__.py file to the directory where it will be
-  # included in the package
+
+  # Copy the python sources (e.g., "__init__.py") to the directory where they
+  # will be included in the package
+  configure_file(${PROJECT_SOURCE_DIR}/python/transferase_utils.py
+    ${PROJECT_BINARY_DIR}/python/${LIBRARY_NAME}/transferase_utils.py COPYONLY)
   configure_file(${PROJECT_SOURCE_DIR}/python/__init__.py
     ${PROJECT_BINARY_DIR}/python/${LIBRARY_NAME}/__init__.py COPYONLY)
 
