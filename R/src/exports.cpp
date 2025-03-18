@@ -211,17 +211,17 @@ R_init_transferase(DllInfo *dll) {
   // clang-format off
   static const R_CallMethodDef call_entries[] = {
     {"_transferase_config_xfr", (DL_FUNC)&_transferase_config_xfr, 2},
-    {"_transferase_setXfrLogLevel", (DL_FUNC)&_transferase_set_xfr_log_level, 1},
-    {"_transferase_getXfrLogLevel", (DL_FUNC)&_transferase_get_xfr_log_level, 0},
-    {"_transferase_createMClient", (DL_FUNC)&_transferase_create_mclient, 1},
-    {"_transferase_formatQuery", (DL_FUNC)&_transferase_format_query, 3},
-    {"_transferase_initLogger", (DL_FUNC)&_transferase_init_logger, 0},
-    {"_transferase_queryBins", (DL_FUNC)&_transferase_query_bins, 3},
-    {"_transferase_queryPreprocessed", (DL_FUNC)&_transferase_query_preprocessed, 3},
-    {"_transferase_queryIntervals", (DL_FUNC)&_transferase_query_intervals, 4},
-    {"_transferase_queryBinsCov", (DL_FUNC)&_transferase_query_bins_cov, 3},
-    {"_transferase_queryPreprocessedCov", (DL_FUNC)&_transferase_query_preprocessed_cov, 3},
-    {"_transferase_queryIntervalsCov", (DL_FUNC)&_transferase_query_intervals_cov, 4},
+    {"_transferase_set_xfr_log_level", (DL_FUNC)&_transferase_set_xfr_log_level, 1},
+    {"_transferase_get_xfr_log_level", (DL_FUNC)&_transferase_get_xfr_log_level, 0},
+    {"_transferase_create_mclient", (DL_FUNC)&_transferase_create_mclient, 1},
+    {"_transferase_format_query", (DL_FUNC)&_transferase_format_query, 3},
+    {"_transferase_init_logger", (DL_FUNC)&_transferase_init_logger, 0},
+    {"_transferase_query_bins", (DL_FUNC)&_transferase_query_bins, 3},
+    {"_transferase_query_preprocessed", (DL_FUNC)&_transferase_query_preprocessed, 3},
+    {"_transferase_query_intervals", (DL_FUNC)&_transferase_query_intervals, 4},
+    {"_transferase_query_bins_cov", (DL_FUNC)&_transferase_query_bins_cov, 3},
+    {"_transferase_query_preprocessed_cov", (DL_FUNC)&_transferase_query_preprocessed_cov, 3},
+    {"_transferase_query_intervals_cov", (DL_FUNC)&_transferase_query_intervals_cov, 4},
     {nullptr, nullptr, 0},
   };
   // clang-format on
