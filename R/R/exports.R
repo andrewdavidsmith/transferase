@@ -41,7 +41,9 @@ init_logger <- function() {
 MQuery <- R6Class(
   "MQuery",
   private = list(
-    .data = NULL
+    .data = NULL,
+    .genome = NULL,
+    .size = NA
   ),
   active = list(
     data = function(value) {
@@ -50,15 +52,33 @@ MQuery <- R6Class(
       } else {
         stop("`$data` is read only", call. = FALSE)
       }
+    },
+    genome = function(value) {
+      if (missing(value)) {
+        private$.genome
+      } else {
+        stop("`$genome` is read only", call. = FALSE)
+      }
+    },
+    size = function(value) {
+      if (missing(value)) {
+        private$.size
+      } else {
+        stop("`$size` is read only", call. = FALSE)
+      }
     }
   ),
   public = list(
-    initialize = function(data) {
+    initialize = function(data, genome, size) {
       private$.data <- data
+      private$.genome <- genome
+      private$.size <- size
     },
     print = function(...) {
       cat("MQuery:\n")
-      cat("data: ", typeof(private$.data), "\n", sep = "")
+      cat("genome: ", private$.genome, "\n", sep = "")
+      cat("size:   ", private$.size, "\n", sep = "")
+      cat("data:   ", typeof(private$.data), "\n", sep = "")
     }
   )
 )
@@ -134,8 +154,12 @@ MClient <- R6Class(
       response
     },
     format_query = function(genome, intervals) {
+      if (!is.data.frame(intervals)) {
+        stop("intervals must be a data frame of genomic intervals", call. = FALSE)
+      }
       MQuery$new(.Call(`_transferase_format_query`,
-                       private$client, genome, intervals))
+                       private$client, genome, intervals),
+                 genome, nrow(intervals))
     }
   )
 )
