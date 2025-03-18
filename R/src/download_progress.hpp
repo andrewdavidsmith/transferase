@@ -21,6 +21,9 @@
  * SOFTWARE.
  */
 
+// ADS: This file is identical to the one in /lib except that it sets the
+// "Stream" to "Rcout" for the R API.
+
 #ifndef R_SRC_DOWNLOAD_PROGRESS_HPP_
 #define R_SRC_DOWNLOAD_PROGRESS_HPP_
 
