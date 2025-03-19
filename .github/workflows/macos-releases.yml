@@ -7,7 +7,7 @@ jobs:
   macos-releases:
     strategy:
       matrix:
-        os: [macos-13, macos-14, macos-15]
+        os: [macos-13]
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
@@ -16,10 +16,49 @@ jobs:
     - name: Install dependencies
       run: |
         brew install zlib ncurses
-    - name: Configure
+    - name: Build openssl
+      run: |
+        # Get the source and make a build dir
+        cd /tmp
+        wget -nv https://github.com/openssl/openssl/releases/download/openssl-${OPENSSL_VERSION}/openssl-${OPENSSL_VERSION}.tar.gz
+        tar -xf openssl-${OPENSSL_VERSION}.tar.gz
+        cd openssl-${OPENSSL_VERSION}
+        mkdir build && cd build
+        # Configure with all those options...
+        cat ${GITHUB_WORKSPACE}/data/openssl_options.txt | \
+        xargs ../Configure --prefix=/tmp/openssl_custom CC=gcc-14 CXX=g++-14
+        # Build the library
+        make -j2 \
+        CFLAGS="-Wall -Os -fomit-frame-pointer -ffunction-sections -fdata-sections" \
+        CXXFLAGS="-Wall -Os -fomit-frame-pointer -ffunction-sections -fdata-sections"
+        make install
+    - name: Build ncurses
+      run: |
+        # Get the source and make a build dir
+        cd /tmp
+        wget https://ftp.gnu.org/gnu/ncurses/ncurses-${NCURSES_VERSION}.tar.gz
+        tar -xf ncurses-${NCURSES_VERSION}.tar.gz
+        cd ncurses-${NCURSES_VERSION}
+        mkdir build && cd build
+        # Configure the build
+        ../configure --with-fallbacks=xterm \
+        --disable-database \
+        --enable-overwrite \
+        --with-normal \
+        --without-gpm \
+        --disable-widec \
+        --prefix=/tmp/ncurses_custom
+        # Copy the fallback defs into place
+        cp ${GITHUB_WORKSPACE}/data/fallback.c ncurses
+        # Build and install
+        make -j2 \
+        CFLAGS="-Wall -O2 -DNDEBUG -ffunction-sections -fdata-sections" \
+        CXXFLAGS="-Wall -O2 -DNDEBUG -ffunction-sections -fdata-sections"
+        make install
+    - name: Configure transferase
       run: |
         cmake -B build \
-        -DCMAKE_PREFIX_PATH=$(brew --prefix ncurses) \
+        -DCMAKE_PREFIX_PATH="/tmp/ncurses_custom;/tmp/openssl_custom"
         -DCMAKE_CXX_FLAGS="-I$(brew --prefix)/include" \
         -DCMAKE_EXE_LINKER_FLAGS="-L$(brew --prefix)/lib" \
         -DZLIB_LIBRARY=$(brew --prefix zlib)/lib/libz.a \
