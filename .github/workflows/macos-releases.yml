@@ -39,10 +39,9 @@ jobs:
     - name: Build ncurses
       run: |
         # Get the source and make a build dir
-        cd /tmp
-        wget -nv https://ftp.gnu.org/gnu/ncurses/ncurses-${NCURSES_VERSION}.tar.gz
-        tar -xf ncurses-${NCURSES_VERSION}.tar.gz
-        cd ncurses-${NCURSES_VERSION}
+        wget -nv https://ftp.gnu.org/gnu/ncurses/ncurses-${NCURSES_VERSION}.tar.gz && \
+        tar -xf ncurses-${NCURSES_VERSION}.tar.gz && \
+        cd ncurses-${NCURSES_VERSION} && \
         mkdir build && cd build
         # Configure the build
         ../configure --with-fallbacks=xterm \
@@ -50,14 +49,17 @@ jobs:
         --enable-overwrite \
         --with-normal \
         --without-gpm \
+        --without-cxx-binding \
         --disable-widec \
-        --prefix=/tmp/ncurses_custom
-        # Copy the fallback defs into place
-        cp ${GITHUB_WORKSPACE}/data/fallback.c ncurses
-        # Build and install
-        make -j2 \
+        --prefix=/tmp/ncurses_custom \
         CC=gcc-14 \
-        CXX=g++-14 \
+        CXX=c++-14
+        # Copy the fallback defs into place
+        cp ${GITHUB_WORKSPACE}/fallback.c ncurses
+        # Build and install
+        make -j4 \
+        CC=gcc-14 \
+        CXX=c++-14 \
         CFLAGS="-Wall -O2 -DNDEBUG -ffunction-sections -fdata-sections" \
         CXXFLAGS="-Wall -O2 -DNDEBUG -ffunction-sections -fdata-sections"
         make install
