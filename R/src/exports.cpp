@@ -111,6 +111,48 @@ _transferase_init_logger() -> SEXP {
   END_RCPP
 }
 
+RcppExport auto
+_transferase_get_chrom_sizes(const SEXP client, const SEXP genome) -> SEXP {
+  BEGIN_RCPP
+  Rcpp::RNGScope rcpp_rngScope_gen;
+  // clang-format off
+  return Rcpp::wrap(get_chrom_sizes(
+    Rcpp::as<Rcpp::XPtr<xfr_client_remote>>(client),
+    Rcpp::as<std::string>(genome)
+  ));
+  // clang-format on
+  END_RCPP
+}
+
+RcppExport auto
+_transferase_get_bin_names(const SEXP client, const SEXP genome,
+                           const SEXP bin_size) -> SEXP {
+  BEGIN_RCPP
+  Rcpp::RNGScope rcpp_rngScope_gen;
+  // clang-format off
+  return Rcpp::wrap(get_bin_names(
+    Rcpp::as<Rcpp::XPtr<xfr_client_remote>>(client),
+    Rcpp::as<std::string>(genome),
+    Rcpp::as<std::size_t>(bin_size)
+  ));
+  // clang-format on
+  END_RCPP
+}
+
+RcppExport auto
+_transferase_get_interval_names(const SEXP client,
+                                const SEXP intervals) -> SEXP {
+  BEGIN_RCPP
+  Rcpp::RNGScope rcpp_rngScope_gen;
+  // clang-format off
+  return Rcpp::wrap(get_interval_names(
+    Rcpp::as<Rcpp::XPtr<xfr_client_remote>>(client),
+    Rcpp::as<Rcpp::DataFrame>(intervals)
+  ));
+  // clang-format on
+  END_RCPP
+}
+
 // ADS: defintions for exports of query functions below
 
 RcppExport auto
@@ -216,6 +258,9 @@ R_init_transferase(DllInfo *dll) {
     {"_transferase_create_mclient", (DL_FUNC)&_transferase_create_mclient, 1},
     {"_transferase_format_query", (DL_FUNC)&_transferase_format_query, 3},
     {"_transferase_init_logger", (DL_FUNC)&_transferase_init_logger, 0},
+    {"_transferase_get_chrom_sizes", (DL_FUNC)&_transferase_get_chrom_sizes, 2},
+    {"_transferase_get_bin_names", (DL_FUNC)&_transferase_get_bin_names, 3},
+    {"_transferase_get_interval_names", (DL_FUNC)&_transferase_get_interval_names, 2},
     {"_transferase_query_bins", (DL_FUNC)&_transferase_query_bins, 3},
     {"_transferase_query_preprocessed", (DL_FUNC)&_transferase_query_preprocessed, 3},
     {"_transferase_query_intervals", (DL_FUNC)&_transferase_query_intervals, 4},
