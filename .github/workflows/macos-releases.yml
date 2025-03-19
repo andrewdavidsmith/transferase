@@ -3,6 +3,10 @@ name: Make releases on macOS
 on:
   workflow_dispatch:
 
+env:
+  NCURSES_VERSION: 6.5
+  OPENSSL_VERSION: 3.4.0
+
 jobs:
   macos-releases:
     strategy:
