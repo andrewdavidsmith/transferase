@@ -28,14 +28,13 @@ select methylomes based on metadata related to biological samples
 )";
 
 static constexpr auto description = R"(
-This command interacts with MethBase2 metadata files for experiments,
-allowing methylomes to be selected based on information about the
-associated biological samples. This command uses a text-based user
-interface with list navigation. A genome must be specified because the
-selection can only be done for one genome at a time. The selected
-methylomes are output to a text file with one methylome accession per
-line. The purpose of this file is to serve as input for transferase
-queries.
+This command interacts with MethBase2 metadata files for experiments, allowing
+methylomes to be selected based on information about the associated biological
+samples. This command uses a text-based user interface with list navigation. A
+genome must be specified because the selection can only be done for one genome
+at a time. The selected methylomes are output to a text file with one
+methylome accession per line. The purpose of this file is to serve as input
+for transferase queries.
 )";
 
 static constexpr auto examples = R"(
@@ -197,7 +196,8 @@ show_help() {
     std::pair{"a"sv, "Toggle multi-select mode"sv},
     std::pair{"r"sv, "Toggle multi-remove mode"sv},
     std::pair{"s"sv, "Enter search phrase"sv},
-    std::pair{"q"sv, "Quit and save"sv},
+    std::pair{"w"sv, "Write selections to file"sv},
+    std::pair{"q"sv, "Quit"sv},
     std::pair{"C-c"sv, "Quit without saving"sv},
     std::pair{"h"sv, "This message (any key to leave)"sv},
   };
@@ -215,9 +215,8 @@ static inline auto
 get_query(std::string &query, std::regex &query_re) {
   static constexpr auto escape_key_code = 27;
   static constexpr auto enter_key_code = 10;
-  query.clear();
   clear();
-  mvprintw(1, 0, std::format("Search Query: {}", query));
+  mvprintw(0, 0, std::format("Search Query: {}", query));
   refresh();
   while (true) {
     const auto query_ch = getch();
@@ -227,24 +226,144 @@ get_query(std::string &query, std::regex &query_re) {
       break;  // Enter to submit
     else if (std::isprint(query_ch) || query_ch == ' ')
       query += static_cast<char>(query_ch);
-    else if (query_ch == KEY_BACKSPACE || query_ch == KEY_DC)
+    else if (query_ch == KEY_BACKSPACE || query_ch == KEY_DC) {
       if (!query.empty())
         query.pop_back();
+    }
     clear();
-    mvprintw(1, 0, std::format("Search Query: {}", query));
+    mvprintw(0, 0, std::format("Search Query: {}", query));
     refresh();
   }
   query_re = std::regex(query, std::regex_constants::icase);
 }
 
+static inline auto
+get_filename(std::string &filename) {
+  static constexpr auto escape_key_code = 27;
+  static constexpr auto enter_key_code = 10;
+  static constexpr auto header1 = "Delete and backspace to change. Use "
+                                  "alphanumeric characters or '.', '_', '-'.";
+  static constexpr auto header2 = "Enter to confirm, Escape to cancel";
+  static constexpr auto msg_fmt = "Filename: {}";
+
+  const auto valid_char_for_filename = [](const auto x) {
+    return std::isalnum(x) || x == '.' || x == '_' || x == '-';
+  };
+
+  const std::string original_filename{filename};
+
+  clear();
+  mvprintw(0, 0, header1);
+  mvprintw(1, 0, header2);
+  mvprintw(2, 0, std::format(msg_fmt, filename));
+  refresh();
+
+  while (true) {
+    const auto filename_ch = getch();
+    if (filename_ch == escape_key_code) {
+      filename = original_filename;
+      break;  // ESC to cancel
+    }
+    else if (filename_ch == enter_key_code) {
+      break;  // Enter to submit
+    }
+    else if (valid_char_for_filename(filename_ch)) {
+      filename += static_cast<char>(filename_ch);
+    }
+    else if (filename_ch == KEY_BACKSPACE || filename_ch == KEY_DC) {
+      if (!filename.empty())
+        filename.pop_back();
+    }
+
+    clear();
+    mvprintw(0, 0, header1);
+    mvprintw(1, 0, header2);
+    mvprintw(2, 0, std::format(msg_fmt, filename));
+    refresh();
+  }
+}
+
+auto
+write_output(const auto &data, std::string &outfile) {
+  constexpr auto msg_fmt1 = "Selected {} methylomes. Save to file: {}?";
+  constexpr auto msg_fmt1_empty =
+    "Selected {} methylomes. No filename specified.";
+  constexpr auto msg_fmt2 = "y: accept, n: specify another filename, c: cancel";
+  constexpr auto msg_fmt2_empty = "n: specify another filename, c: cancel";
+  constexpr auto msg_fmt3 = "[Saving will not clear your selections]";
+  int confirmation{};
+  if (data.empty()) {
+    const auto empty_sel_msg = "Selection is empty. Any key to return.";
+    confirmation = '\0';
+    while (confirmation != '\0') {
+      erase();
+      mvprintw(0, 0, empty_sel_msg);
+      refresh();
+      confirmation = std::getchar();
+    }
+    erase();
+    mvprintw(0, 0, empty_sel_msg + std::string(" {}", confirmation));
+    refresh();
+    return;
+  }
+
+  const auto confirming_save = [](const auto x, const auto &filename) {
+    const auto l = std::tolower(x);
+    return (l != 'y' || filename.empty()) && l != 'c';
+  };
+  const auto awaiting_input = [](const auto x) {
+    return std::tolower(x) != 'y' && std::tolower(x) != 'c' &&
+           std::tolower(x) != 'n';
+  };
+
+  // A selection exists, apply the save dialogue
+  confirmation = '\0';
+  while (confirming_save(confirmation, outfile)) {
+    confirmation = '\0';
+    while (awaiting_input(confirmation)) {
+      erase();
+      if (outfile.empty()) {
+        mvprintw(0, 0, std::format(msg_fmt1_empty, std::size(data)));
+        mvprintw(1, 0, msg_fmt2_empty);
+      }
+      else {
+        mvprintw(0, 0, std::format(msg_fmt1, std::size(data), outfile));
+        mvprintw(1, 0, msg_fmt2);
+      }
+      mvprintw(2, 0, msg_fmt3);
+      refresh();
+      confirmation = std::getchar();
+    }
+    if (std::tolower(confirmation) == 'n')
+      get_filename(outfile);
+  }
+
+  if (std::tolower(confirmation) == 'y') {
+    std::ofstream out(outfile);
+    if (!out) {
+      const auto err = std::make_error_code(std::errc(errno));
+      throw std::system_error(err, std::format("writing output {}", outfile));
+    }
+    for (const auto &d : data)
+      std::println(out, "{}", d);
+
+    const auto done_message = "Selection saved. Any key to return.";
+    confirmation = '\0';
+    while (confirmation != '\0') {
+      erase();
+      mvprintw(0, 0, done_message);
+      refresh();
+      confirmation = std::getchar();
+    }
+    erase();
+    mvprintw(0, 0, done_message);
+    refresh();
+  }
+}
+
 [[nodiscard]] static inline auto
-confirm_quit(const auto &selected_keys) -> bool {
-  using std::string_literals::operator""s;
-  const auto message =
-    selected_keys.empty()
-      ? std::format("Quit? [y/n]")
-      : std::format("Quit and save selection ({} items)? [y/n]",
-                    std::size(selected_keys));
+confirm_quit() -> bool {
+  const auto message = "Quit? [y/n]";
   int confirmation{};
   while (std::tolower(confirmation) != 'y' &&
          std::tolower(confirmation) != 'n') {
@@ -254,14 +373,14 @@ confirm_quit(const auto &selected_keys) -> bool {
     confirmation = std::getchar();
   }
   erase();
-  mvprintw(0, 0, message + std::string(" {}", confirmation));
+  mvprintw(0, 0, message);
   refresh();
   return (confirmation == 'y' || confirmation == 'Y');
 }
 
 auto
-main_loop(const std::vector<std::pair<std::string, std::string>> &data)
-  -> std::vector<std::string> {
+main_loop(const std::vector<std::pair<std::string, std::string>> &data,
+          std::string &filename) -> std::vector<std::string> {
   static constexpr auto extra_margin_space = 2;  // colon and space
   static constexpr auto escape_key_code = 27;
   static constexpr auto escape_delay{25};
@@ -270,7 +389,8 @@ main_loop(const std::vector<std::pair<std::string, std::string>> &data)
   static constexpr auto legend =
     "h=Help, q=Quit, Move: Arrows/PgUp/PgDn/Home/End Space=Add/remove "
     "[{}/{}, selected={}]\n"
-    "a/r=Toggle multi-add/remove, v/c=View/clear selection, s/Esc=Enter/clear "
+    "a/r=Toggle multi-add/remove, v/c=View/clear selection, "
+    "s/Esc=Enter/clear "
     "search";
 
   // margin must be max key width plus room
@@ -294,32 +414,33 @@ main_loop(const std::vector<std::pair<std::string, std::string>> &data)
   init_pair(4, COLOR_BLUE, COLOR_BLACK);    // Multiple selection mode active
 
   std::unordered_set<std::string> selected_keys;
+  std::string prev_query;
   std::string query;
   std::regex query_re;
   bool multi_add = false;
   bool multi_remove = false;
   std::int32_t horiz_pos = 0;
   std::int32_t cursor_pos = 0;
-  std::vector<std::pair<std::string, std::string>> filtered;
+  std::vector<std::pair<std::string, std::string>> filtered(data);
 
   while (true) {
-    // Filter data based on the query
-    const auto query_found = [&](const auto &x) -> bool {
-      // ADS: need to take care of upper/lower case here
-      return std::regex_search(x.second, query_re);
-    };
-    filtered.clear();
-    if (!query.empty())
+    if (query != prev_query) {
+      // Filter data based on the query
+      const auto query_found = [&](const auto &x) -> bool {
+        // ADS: need to take care of upper/lower case here
+        return std::regex_search(x.second, query_re);
+      };
+      filtered.clear();
       std::ranges::copy_if(data, std::back_inserter(filtered), query_found);
-
-    if (filtered.empty()) {
-      query.clear();
-      filtered = data;
+      if (query.empty() || filtered.empty()) {
+        query.clear();
+        filtered = data;
+      }
+      prev_query = query;
     }
 
-    // NOLINTBEGIN (cppcoreguidelines-narrowing-conversions)
+    // NOLINTNEXTLINE (*-narrowing-conversions)
     const std::int32_t n_filtered = std::size(filtered);
-    // NOLINTEND (cppcoreguidelines-narrowing-conversions)
 
     // Include the query in the legened if appropriate
     const std::string current_legend =
@@ -372,17 +493,19 @@ main_loop(const std::vector<std::pair<std::string, std::string>> &data)
     // Handle user input
     const auto ch = getch();
     if (ch == 'q') {
-      if (confirm_quit(selected_keys))
+      if (confirm_quit())
         break;
     }
     else if (ch == escape_key_code) {  // ESC key to reset query
       query.clear();
       cursor_pos = 0;
     }
+    else if (ch == 'w') {  // w key to save selection
+      write_output(selected_keys, filename);
+    }
     else if (ch == KEY_RIGHT) {  // Scroll right
-      // NOLINTBEGIN (cppcoreguidelines-narrowing-conversions)
+      // NOLINTNEXTLINE (*-narrowing-conversions)
       const std::int32_t width = std::size(filtered[cursor_pos].second);
-      // NOLINTEND (cppcoreguidelines-narrowing-conversions)
       if (margin + width > COLS)
         horiz_pos = std::min(horiz_pos + 1, (margin + width) - COLS);
     }
@@ -485,16 +608,6 @@ main_loop(const std::vector<std::pair<std::string, std::string>> &data)
   return selected_keys | std::ranges::to<std::vector>();
 }
 
-[[nodiscard]] auto
-write_output(const auto &data, std::string &filename) -> std::error_code {
-  std::ofstream out(filename);
-  if (!out)
-    return std::make_error_code(std::errc(errno));
-  for (const auto &d : data)
-    std::println(out, "{}", d);
-  return {};
-}
-
 static auto
 throwing_handler(int sig) {
   clear();
@@ -527,7 +640,8 @@ register_signals() {
 }
 
 auto
-command_select_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
+command_select_main(int argc,
+                    char *argv[]) -> int {  // NOLINT(*-c-arrays)
   static constexpr auto command = "select";
   static const auto usage =
     std::format("Usage: xfr {} [options]", rstrip(command));
@@ -551,7 +665,7 @@ command_select_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
   app.set_help_flag("-h,--help", "Print a detailed help message and exit");
   // clang-format off
   app.add_option("-g,--genome", genome_name, "use this genome")->required();
-  app.add_option("-o,--output", output_file, "output file")->required();
+  app.add_option("-o,--output", output_file, "output file (you will be promoted before saving)");
   const auto input_file_opt =
     app.add_option("-i,--input-file", input_file, "specify an input file")
     ->option_text("TEXT:FILE")
@@ -619,13 +733,7 @@ command_select_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
       return EXIT_FAILURE;
     }
 #endif
-    const auto selected = main_loop(data_itr->second);
-    if (!selected.empty())
-      if (error = write_output(selected, output_file); error) {
-        std::println("Error writing output {}: {}", output_file,
-                     error.message());
-        return EXIT_FAILURE;
-      }
+    main_loop(data_itr->second, output_file);
   }
   catch (std::runtime_error &e) {
     std::println("{}", e.what());
