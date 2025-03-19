@@ -15,7 +15,7 @@ jobs:
       run: brew update
     - name: Install dependencies
       run: |
-        brew install zlib ncurses
+        brew install zlib
     - name: Build openssl
       run: |
         # Get the source and make a build dir
