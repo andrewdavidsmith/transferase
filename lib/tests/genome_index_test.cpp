@@ -24,6 +24,7 @@
 #include "genome_index.hpp"
 
 #include "genome_index_impl.hpp"
+#include "genomic_interval.hpp"
 
 #include <gtest/gtest.h>
 
@@ -206,4 +207,30 @@ TEST(genome_index_test, initialize_genome_index_invalid_genome_file) {
   EXPECT_EQ(std::size(index.meta.chrom_order), 0u);
   EXPECT_EQ(std::size(index.meta.chrom_size), 0u);
   EXPECT_EQ(std::size(index.data.positions), 0u);
+}
+
+TEST(genome_index_test, get_n_cpgs_per_interval_small) {
+  static const auto expected_n_cpgs = std::vector{2u, 2u, 2u};
+  std::error_code ec;
+  const auto index = genome_index::read("data", "pAntiquusx", ec);
+  EXPECT_FALSE(ec);
+  const auto intervals =
+    genomic_interval::read(index, "data/pAntiquusx_promoters.bed", ec);
+  EXPECT_FALSE(ec);
+  const auto n_cpgs = index.get_n_cpgs(intervals);
+  EXPECT_EQ(std::size(n_cpgs), std::size(intervals));
+  EXPECT_EQ(n_cpgs, expected_n_cpgs);
+}
+
+TEST(genome_index_test, get_n_cpgs_per_interval) {
+  std::error_code ec;
+  const auto index = genome_index::read("data", "tProrsus1", ec);
+  EXPECT_FALSE(ec);
+  const auto intervals =
+    genomic_interval::read(index, "data/tProrsus1_intervals.bed", ec);
+  EXPECT_FALSE(ec);
+  const auto n_cpgs = index.get_n_cpgs(intervals);
+  EXPECT_EQ(std::size(n_cpgs), std::size(intervals));
+  EXPECT_EQ(n_cpgs.front(), 20);
+  EXPECT_EQ(n_cpgs.back(), 22);
 }
