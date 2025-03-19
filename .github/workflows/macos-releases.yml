@@ -55,7 +55,7 @@ jobs:
         CC=gcc-14 \
         CXX=c++-14
         # Copy the fallback defs into place
-        cp ${GITHUB_WORKSPACE}/fallback.c ncurses
+        cp ${GITHUB_WORKSPACE}/data/fallback.c ncurses
         # Build and install
         make -j4 \
         CC=gcc-14 \
