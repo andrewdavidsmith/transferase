@@ -271,3 +271,92 @@ query_intervals_cov(
     client->get_levels<transferase::level_element_covered_t>(methylomes, query);
   return convert_to_numeric_matrix(levels);
 }
+
+[[nodiscard]] auto
+get_chrom_sizes(const Rcpp::XPtr<transferase::methylome_client_remote> client,
+                const std::string &genome) -> Rcpp::DataFrame {
+  std::error_code error;
+  const auto idx_itr = client->indexes->get_genome_index(genome, error);
+  if (error) {
+    const auto msg = std::format("(check that {} is installed)", genome);
+    throw std::system_error(error, msg);
+  }
+  const auto &meta = idx_itr->get_metadata();
+  auto names = meta.chrom_order;
+  auto sizes = meta.chrom_size;
+  return Rcpp::DataFrame::create(Rcpp::Named("name") = std::move(names),
+                                 Rcpp::Named("size") = std::move(sizes));
+}
+
+[[nodiscard]] auto
+get_bin_names(const Rcpp::XPtr<transferase::methylome_client_remote> client,
+              const std::string &genome,
+              const std::size_t bin_size) -> Rcpp::StringVector {
+  static constexpr auto total_buf_size{128};
+  static constexpr auto buf_size{total_buf_size - 10};  // allow max digits
+  static constexpr auto sep{'_'};
+
+  std::array<char, total_buf_size> buf{};
+  const auto buf_beg = buf.data();
+  const auto buf_end = buf_beg + buf_size;
+
+  std::error_code error;
+  const auto idx_itr = client->indexes->get_genome_index(genome, error);
+  if (error) {
+    const auto msg = std::format("(check that {} is installed)", genome);
+    throw std::system_error(error, msg);
+  }
+  const auto &meta = idx_itr->get_metadata();
+  const auto n_bins = meta.get_n_bins(bin_size);
+
+  Rcpp::StringVector names(n_bins);
+  std::size_t total_bin_count = 0;
+
+  // ADS: not checking for errors in here...
+  const auto zipped = std::views::zip(meta.chrom_order, meta.chrom_size);
+  for (const auto [chrom_name, chrom_size] : zipped) {
+    auto cursor = std::ranges::copy(chrom_name, buf_beg).out;
+    *cursor++ = sep;
+    for (std::uint32_t i = 0; i < chrom_size; i += bin_size) {
+      auto tcr = std::to_chars(cursor, buf_end, i);
+      names(total_bin_count++) = std::string(buf_beg, tcr.ptr);
+    }
+  }
+  return names;
+}
+
+[[nodiscard]] auto
+get_interval_names(
+  const Rcpp::XPtr<transferase::methylome_client_remote> client,
+  const Rcpp::DataFrame intervals) -> Rcpp::StringVector {
+  static constexpr auto total_buf_size{128};
+  static constexpr auto buf_size{total_buf_size - 10};  // allow max digits
+  static constexpr auto sep{'_'};
+
+  std::array<char, total_buf_size> buf{};
+  const auto buf_beg = buf.data();
+  const auto buf_end = buf_beg + buf_size;
+
+  const Rcpp::CharacterVector chroms = intervals[0];
+  const Rcpp::IntegerVector starts = intervals[1];
+  const Rcpp::IntegerVector stops = intervals[2];
+
+  const auto n_intervals = intervals.rows();
+  Rcpp::StringVector names(n_intervals);
+
+  std::string prev_name;
+  auto cursor = buf_beg;
+  for (auto i = 0u; i < n_intervals; ++i) {
+    const auto &curr_name = Rcpp::as<std::string>(chroms[i]);
+    if (prev_name != curr_name) {
+      cursor = std::ranges::copy(curr_name, buf_beg).out;
+      *cursor++ = sep;
+      prev_name = curr_name;
+    }
+    auto tcr = std::to_chars(cursor, buf_end, starts[i]);
+    *tcr.ptr++ = sep;
+    tcr = std::to_chars(tcr.ptr, buf_end, stops[i]);
+    names(i) = std::string(buf_beg, tcr.ptr);
+  }
+  return names;
+}

@@ -56,6 +56,20 @@ format_query(const Rcpp::XPtr<transferase::methylome_client_remote> client,
              const std::string &genome, const Rcpp::DataFrame intervals)
   -> Rcpp::XPtr<transferase::query_container>;
 
+[[nodiscard]] auto
+get_chrom_sizes(const Rcpp::XPtr<transferase::methylome_client_remote> client,
+                const std::string &genome) -> Rcpp::DataFrame;
+
+[[nodiscard]] auto
+get_bin_names(const Rcpp::XPtr<transferase::methylome_client_remote> client,
+              const std::string &genome,
+              const std::size_t bin_size) -> Rcpp::StringVector;
+
+[[nodiscard]] auto
+get_interval_names(
+  const Rcpp::XPtr<transferase::methylome_client_remote> client,
+  const Rcpp::DataFrame intervals) -> Rcpp::StringVector;
+
 // ADS: declarations for query functions below (3 inputs x 2 outputs)
 
 // not covered
