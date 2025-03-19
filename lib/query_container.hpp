@@ -29,7 +29,8 @@
 #include <cstddef>   // for std::size_t
 #include <cstdint>   // for std::uint32_t
 #include <iterator>  // for std::size, std::begin
-#include <utility>   // for std::move
+#include <ranges>
+#include <utility>  // for std::move
 #include <vector>
 
 namespace transferase {
@@ -96,6 +97,13 @@ struct query_container {
   [[nodiscard]] auto
   size() const noexcept -> std::size_t {
     return std::size(v);
+  }
+
+  [[nodiscard]] auto
+  get_n_cpgs() const noexcept -> std::vector<std::uint32_t> {
+    const auto count_cpgs = [](const auto x) { return x.stop - x.start; };
+    return std::ranges::transform_view(v, count_cpgs) |
+           std::ranges::to<std::vector>();
   }
 
   auto
