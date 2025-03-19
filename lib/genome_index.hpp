@@ -184,6 +184,16 @@ struct genome_index {
     return meta.get_n_cpgs_chrom();
   }
 
+  /// @brief Get the number of CpG sites in each of a given set of genomic
+  /// intervals.
+  /// @param intervals A vector of genomic_interval, assumed to be sorted.
+  /// @return A vector of counts of CpG sites in each interval.
+  [[nodiscard]] auto
+  get_n_cpgs(const std::vector<genomic_interval> &intervals) const noexcept
+    -> std::vector<std::uint32_t> {
+    return data.get_n_cpgs(meta, intervals);
+  }
+
   /// @brief Get the number bins for the underlying reference genome
   /// @param bin_size Size of bins to consider.
   [[nodiscard]] auto
