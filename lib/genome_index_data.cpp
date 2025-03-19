@@ -28,6 +28,7 @@
 #include "genome_index_metadata.hpp"
 #include "genomic_interval.hpp"
 #include "hash.hpp"  // for update_adler
+#include "query_container.hpp"
 #include "query_element.hpp"
 
 #include <algorithm>
@@ -198,6 +199,17 @@ genome_index_data::get_n_cpgs() const noexcept -> std::uint32_t {
   return std::transform_reduce(std::cbegin(positions), std::cend(positions),
                                static_cast<std::uint32_t>(0), std::plus{},
                                std::size<genome_index_data::vec>);
+}
+
+[[nodiscard]] auto
+genome_index_data::get_n_cpgs(const genome_index_metadata &meta,
+                              const std::vector<genomic_interval> &intervals)
+  const noexcept -> std::vector<std::uint32_t> {
+  const auto count_cpgs = [](const auto x) -> std::uint32_t {
+    return x.stop - x.start;
+  };
+  return std::ranges::transform_view(make_query(meta, intervals), count_cpgs) |
+         std::ranges::to<std::vector>();
 }
 
 }  // namespace transferase
