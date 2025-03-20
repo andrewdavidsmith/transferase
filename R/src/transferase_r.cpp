@@ -290,11 +290,10 @@ get_chrom_sizes(const Rcpp::XPtr<transferase::methylome_client_remote> client,
 
 [[nodiscard]] auto
 get_bin_names(const Rcpp::XPtr<transferase::methylome_client_remote> client,
-              const std::string &genome,
-              const std::size_t bin_size) -> Rcpp::StringVector {
+              const std::string &genome, const std::size_t bin_size,
+              const char sep) -> Rcpp::StringVector {
   static constexpr auto total_buf_size{128};
   static constexpr auto buf_size{total_buf_size - 10};  // allow max digits
-  static constexpr auto sep{'_'};
 
   std::array<char, total_buf_size> buf{};
   const auto buf_beg = buf.data();
@@ -326,12 +325,10 @@ get_bin_names(const Rcpp::XPtr<transferase::methylome_client_remote> client,
 }
 
 [[nodiscard]] auto
-get_interval_names(
-  const Rcpp::XPtr<transferase::methylome_client_remote> client,
-  const Rcpp::DataFrame intervals) -> Rcpp::StringVector {
+get_interval_names(const Rcpp::DataFrame intervals,
+                   const char sep) -> Rcpp::StringVector {
   static constexpr auto total_buf_size{128};
   static constexpr auto buf_size{total_buf_size - 10};  // allow max digits
-  static constexpr auto sep{'_'};
 
   std::array<char, total_buf_size> buf{};
   const auto buf_beg = buf.data();
@@ -359,4 +356,43 @@ get_interval_names(
     names(i) = std::string(buf_beg, tcr.ptr);
   }
   return names;
+}
+
+[[nodiscard]] auto
+get_n_cpgs(const Rcpp::XPtr<transferase::methylome_client_remote> client,
+           const std::string &genome,
+           const Rcpp::DataFrame intervals) -> Rcpp::NumericMatrix {
+  const auto query = format_query_impl(*client, genome, intervals);
+  const auto n_cpgs = query.get_n_cpgs();
+  Rcpp::NumericMatrix m(std::size(n_cpgs), 1);
+  for (auto i = 0u; i < std::size(n_cpgs); ++i)
+    m(i, 0) = n_cpgs[i];
+  return m;
+}
+
+[[nodiscard]] auto
+get_n_cpgs(const Rcpp::XPtr<transferase::query_container> query)
+  -> Rcpp::NumericMatrix {
+  const auto n_cpgs = query->get_n_cpgs();
+  Rcpp::NumericMatrix m(std::size(n_cpgs), 1);
+  for (auto i = 0u; i < std::size(n_cpgs); ++i)
+    m(i, 0) = n_cpgs[i];
+  return m;
+}
+
+[[nodiscard]] auto
+get_n_cpgs(const Rcpp::XPtr<transferase::methylome_client_remote> client,
+           const std::string &genome,
+           const std::uint32_t bin_size) -> Rcpp::NumericMatrix {
+  std::error_code error{};
+  const auto idx_itr = client->indexes->get_genome_index(genome, error);
+  if (error) {
+    const auto msg = std::format("(check that {} is installed)", genome);
+    throw std::system_error(error, msg);
+  }
+  const auto n_cpgs = idx_itr->get_n_cpgs(bin_size);
+  Rcpp::NumericMatrix m(std::size(n_cpgs), 1);
+  for (auto i = 0u; i < std::size(n_cpgs); ++i)
+    m(i, 0) = n_cpgs[i];
+  return m;
 }
