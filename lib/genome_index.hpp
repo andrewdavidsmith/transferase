@@ -194,6 +194,15 @@ struct genome_index {
     return data.get_n_cpgs(meta, intervals);
   }
 
+  /// @brief Get the number of CpG sites in each bin of a given size.
+  /// @param bin_size Size of bins to consider.
+  /// @return A vector of counts of CpG sites in each bin
+  [[nodiscard]] auto
+  get_n_cpgs(const std::uint32_t bin_size) const noexcept
+    -> std::vector<std::uint32_t> {
+    return data.get_n_cpgs(meta, bin_size);
+  }
+
   /// @brief Get the number bins for the underlying reference genome
   /// @param bin_size Size of bins to consider.
   [[nodiscard]] auto
