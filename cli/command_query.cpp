@@ -160,7 +160,8 @@ do_intervals_query(const std::string &intervals_file,
                    const transferase::genome_index &index,
                    const transferase::methylome_interface &interface,
                    const std::vector<std::string> &methylome_names,
-                   const transferase::request_type_code &request_type) {
+                   const transferase::request_type_code &request_type,
+                   const bool write_n_cpgs) {
   auto &lgr = transferase::logger::instance();
   // Read query intervals and validate them
   std::error_code error;
@@ -189,6 +190,9 @@ do_intervals_query(const std::string &intervals_file,
   lgr.debug("Elapsed time for query: {:.3}s",
             duration(query_start, query_stop));
 
+  const auto n_cpgs =
+    write_n_cpgs ? query.get_n_cpgs() : std::vector<std::uint32_t>{};
+
   const auto outmgr = transferase::intervals_writer{
     // clang-format off
     output_file,
@@ -196,6 +200,7 @@ do_intervals_query(const std::string &intervals_file,
     out_fmt,
     methylome_names,
     min_reads,
+    n_cpgs,
     intervals,
     // clang-format on
   };
@@ -221,7 +226,8 @@ do_bins_query(const std::uint32_t bin_size,
               const transferase::genome_index &index,
               const transferase::methylome_interface &interface,
               const std::vector<std::string> &methylome_names,
-              const transferase::request_type_code &request_type) {
+              const transferase::request_type_code &request_type,
+              const bool write_n_cpgs) {
   auto &lgr = transferase::logger::instance();
   // Read query intervals and validate them
   const auto req = transferase::request{request_type, index.get_hash(),
@@ -237,6 +243,9 @@ do_bins_query(const std::uint32_t bin_size,
   lgr.debug("Elapsed time for query: {:.3}s",
             duration(query_start, query_stop));
 
+  const auto n_cpgs =
+    write_n_cpgs ? index.get_n_cpgs(bin_size) : std::vector<std::uint32_t>{};
+
   const auto outmgr = transferase::bins_writer{
     // clang-format off
     output_file,
@@ -244,6 +253,7 @@ do_bins_query(const std::uint32_t bin_size,
     out_fmt,
     methylome_names,
     min_reads,
+    n_cpgs,
     bin_size,
     // clang-format on
   };
@@ -302,6 +312,7 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
   std::uint32_t bin_size{};
   std::string intervals_file;
   bool count_covered{false};
+  bool write_n_cpgs{false};
 
   // the two possible sources of names of methylomes to query
   std::vector<std::string> methylome_names;
@@ -354,6 +365,8 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
                  "output format {counts=1, bedgraph=2, dataframe=3, dfscores=4}")
     ->option_text(std::format("ENUM [{}]", out_fmt_default))
     ->transform(CLI::CheckedTransformer(xfr::output_format_cli11, CLI::ignore_case));
+  app.add_flag("--n-cpgs", write_n_cpgs,
+               "write the number of CpG sites for each query interval");
   app.add_option("-r,--min-reads", min_reads,
                  "for fractional output, require this many reads");
   const auto hostname_opt =
@@ -509,20 +522,23 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
                                      : xfr::request_type_code::intervals)
                     : (count_covered ? xfr::request_type_code::bins_covered
                                      : xfr::request_type_code::bins);
+
+  // clang-format off
   error =
     intervals_query
-      ? (count_covered ? do_intervals_query<xfr::level_element_covered_t>(
-                           intervals_file, out_fmt, min_reads, output_file,
-                           index, interface, methylomes, request_type)
-                       : do_intervals_query<xfr::level_element_t>(
-                           intervals_file, out_fmt, min_reads, output_file,
-                           index, interface, methylomes, request_type))
-      : (count_covered ? do_bins_query<xfr::level_element_covered_t>(
-                           bin_size, out_fmt, min_reads, output_file, index,
-                           interface, methylomes, request_type)
-                       : do_bins_query<xfr::level_element_t>(
-                           bin_size, out_fmt, min_reads, output_file, index,
-                           interface, methylomes, request_type));
+    ? (count_covered ? do_intervals_query<xfr::level_element_covered_t>(
+                         intervals_file, out_fmt, min_reads, output_file, index,
+                         interface, methylomes, request_type, write_n_cpgs)
+                     : do_intervals_query<xfr::level_element_t>(
+                         intervals_file, out_fmt, min_reads, output_file, index,
+                         interface, methylomes, request_type, write_n_cpgs))
+    : (count_covered ? do_bins_query<xfr::level_element_covered_t>(
+                         bin_size, out_fmt, min_reads, output_file, index,
+                         interface, methylomes, request_type, write_n_cpgs)
+                     : do_bins_query<xfr::level_element_t>(
+                         bin_size, out_fmt, min_reads, output_file, index,
+                         interface, methylomes, request_type, write_n_cpgs));
+  // clang-format on
 
   // ADS: below is because error code '0' is printed as "Undefined
   // error" on macos.
