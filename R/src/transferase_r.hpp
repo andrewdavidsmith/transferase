@@ -51,7 +51,7 @@ get_xfr_log_level() -> std::string;
 create_mclient(const std::string &config_dir)
   -> Rcpp::XPtr<transferase::methylome_client_remote>;
 
-auto
+[[nodiscard]] auto
 format_query(const Rcpp::XPtr<transferase::methylome_client_remote> client,
              const std::string &genome, const Rcpp::DataFrame intervals)
   -> Rcpp::XPtr<transferase::query_container>;
@@ -62,13 +62,26 @@ get_chrom_sizes(const Rcpp::XPtr<transferase::methylome_client_remote> client,
 
 [[nodiscard]] auto
 get_bin_names(const Rcpp::XPtr<transferase::methylome_client_remote> client,
-              const std::string &genome,
-              const std::size_t bin_size) -> Rcpp::StringVector;
+              const std::string &genome, const std::size_t bin_size,
+              const char sep) -> Rcpp::StringVector;
 
 [[nodiscard]] auto
-get_interval_names(
-  const Rcpp::XPtr<transferase::methylome_client_remote> client,
-  const Rcpp::DataFrame intervals) -> Rcpp::StringVector;
+get_interval_names(const Rcpp::DataFrame intervals,
+                   const char sep) -> Rcpp::StringVector;
+
+[[nodiscard]] auto
+get_n_cpgs(const Rcpp::XPtr<transferase::methylome_client_remote> client,
+           const std::string &genome,
+           const Rcpp::DataFrame intervals) -> Rcpp::NumericMatrix;
+
+[[nodiscard]] auto
+get_n_cpgs(const Rcpp::XPtr<transferase::methylome_client_remote> client,
+           const std::string &genome,
+           const std::uint32_t bin_size) -> Rcpp::NumericMatrix;
+
+[[nodiscard]] auto
+get_n_cpgs(const Rcpp::XPtr<transferase::query_container> query)
+  -> Rcpp::NumericMatrix;
 
 // ADS: declarations for query functions below (3 inputs x 2 outputs)
 
