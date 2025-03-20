@@ -199,6 +199,7 @@ TEST_F(level_container_md_mock, write_with_intervals_writer_test) {
     output_format_t::counts,
     methylomes_names,
     min_reads,
+    std::vector<std::uint32_t>{},
     intervals,
   };
   // clang-format on
@@ -217,6 +218,7 @@ TEST_F(level_container_md_mock, write_with_intervals_writer_test) {
     output_format_t::counts,
     methylomes_names,
     min_reads,
+    std::vector<std::uint32_t>{},
     intervals,
   };
   // clang-format on
@@ -240,6 +242,7 @@ TEST_F(level_container_md_mock, write_with_intervals_writer_test) {
     output_format_t::dataframe,
     methylomes_names,
     min_reads,
+    std::vector<std::uint32_t>{},
     intervals,
   };
   // clang-format on
@@ -257,6 +260,7 @@ TEST_F(level_container_md_mock, write_with_intervals_writer_test) {
     output_format_t::dataframe,
     methylomes_names,
     min_reads,
+    std::vector<std::uint32_t>{},
     intervals,
   };
   // clang-format on
@@ -279,6 +283,7 @@ TEST_F(level_container_md_mock, write_with_intervals_writer_test) {
     output_format_t::dataframe_scores,
     methylomes_names,
     min_reads,
+    std::vector<std::uint32_t>{},
     intervals,
   };
   // clang-format on
@@ -297,6 +302,7 @@ TEST_F(level_container_md_mock, write_with_intervals_writer_test) {
     output_format_t::dataframe_scores,
     methylomes_names,
     min_reads,
+    std::vector<std::uint32_t>{},
     intervals,
   };
   // clang-format on
@@ -346,6 +352,7 @@ TEST_F(level_container_md_mock, write_with_bins_writer_test) {
     output_format_t::counts,
     methylomes_names,
     min_reads,
+    std::vector<std::uint32_t>{},
     bin_size,
   };
   // clang-format on
@@ -364,6 +371,7 @@ TEST_F(level_container_md_mock, write_with_bins_writer_test) {
     output_format_t::counts,
     methylomes_names,
     min_reads,
+    std::vector<std::uint32_t>{},
     bin_size,
   };
   // clang-format on
@@ -387,6 +395,7 @@ TEST_F(level_container_md_mock, write_with_bins_writer_test) {
     output_format_t::dataframe,
     methylomes_names,
     min_reads,
+    std::vector<std::uint32_t>{},
     bin_size,
   };
   // clang-format on
@@ -404,6 +413,7 @@ TEST_F(level_container_md_mock, write_with_bins_writer_test) {
     output_format_t::dataframe,
     methylomes_names,
     min_reads,
+    std::vector<std::uint32_t>{},
     bin_size,
   };
   // clang-format on
@@ -426,6 +436,7 @@ TEST_F(level_container_md_mock, write_with_bins_writer_test) {
     output_format_t::dataframe_scores,
     methylomes_names,
     min_reads,
+    std::vector<std::uint32_t>{},
     bin_size,
   };
   // clang-format on
@@ -444,6 +455,7 @@ TEST_F(level_container_md_mock, write_with_bins_writer_test) {
     output_format_t::dataframe_scores,
     methylomes_names,
     min_reads,
+    std::vector<std::uint32_t>{},
     bin_size,
   };
   // clang-format on
