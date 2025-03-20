@@ -126,28 +126,70 @@ _transferase_get_chrom_sizes(const SEXP client, const SEXP genome) -> SEXP {
 
 RcppExport auto
 _transferase_get_bin_names(const SEXP client, const SEXP genome,
-                           const SEXP bin_size) -> SEXP {
+                           const SEXP bin_size, const SEXP sep) -> SEXP {
   BEGIN_RCPP
   Rcpp::RNGScope rcpp_rngScope_gen;
   // clang-format off
   return Rcpp::wrap(get_bin_names(
     Rcpp::as<Rcpp::XPtr<xfr_client_remote>>(client),
     Rcpp::as<std::string>(genome),
-    Rcpp::as<std::size_t>(bin_size)
+    Rcpp::as<std::size_t>(bin_size),
+    Rcpp::as<char>(sep)
   ));
   // clang-format on
   END_RCPP
 }
 
 RcppExport auto
-_transferase_get_interval_names(const SEXP client,
-                                const SEXP intervals) -> SEXP {
+_transferase_get_interval_names(const SEXP intervals, const SEXP sep) -> SEXP {
   BEGIN_RCPP
   Rcpp::RNGScope rcpp_rngScope_gen;
   // clang-format off
   return Rcpp::wrap(get_interval_names(
+    Rcpp::as<Rcpp::DataFrame>(intervals),
+    Rcpp::as<char>(sep)
+  ));
+  // clang-format on
+  END_RCPP
+}
+
+RcppExport auto
+_transferase_get_n_cpgs(const SEXP client, const SEXP genome,
+                        const SEXP intervals) -> SEXP {
+  BEGIN_RCPP
+  Rcpp::RNGScope rcpp_rngScope_gen;
+  // clang-format off
+  return Rcpp::wrap(get_n_cpgs(
     Rcpp::as<Rcpp::XPtr<xfr_client_remote>>(client),
+    Rcpp::as<std::string>(genome),
     Rcpp::as<Rcpp::DataFrame>(intervals)
+  ));
+  // clang-format on
+  END_RCPP
+}
+
+RcppExport auto
+_transferase_get_n_cpgs_query(const SEXP query) -> SEXP {
+  BEGIN_RCPP
+  Rcpp::RNGScope rcpp_rngScope_gen;
+  // clang-format off
+  return Rcpp::wrap(get_n_cpgs(
+    Rcpp::as<Rcpp::XPtr<transferase::query_container>>(query)
+  ));
+  // clang-format on
+  END_RCPP
+}
+
+RcppExport auto
+_transferase_get_n_cpgs_bins(const SEXP client, const SEXP genome,
+                             const SEXP bin_size) -> SEXP {
+  BEGIN_RCPP
+  Rcpp::RNGScope rcpp_rngScope_gen;
+  // clang-format off
+  return Rcpp::wrap(get_n_cpgs(
+    Rcpp::as<Rcpp::XPtr<xfr_client_remote>>(client),
+    Rcpp::as<std::string>(genome),
+    Rcpp::as<std::uint32_t>(bin_size)
   ));
   // clang-format on
   END_RCPP
@@ -259,8 +301,11 @@ R_init_transferase(DllInfo *dll) {
     {"_transferase_format_query", (DL_FUNC)&_transferase_format_query, 3},
     {"_transferase_init_logger", (DL_FUNC)&_transferase_init_logger, 0},
     {"_transferase_get_chrom_sizes", (DL_FUNC)&_transferase_get_chrom_sizes, 2},
-    {"_transferase_get_bin_names", (DL_FUNC)&_transferase_get_bin_names, 3},
+    {"_transferase_get_bin_names", (DL_FUNC)&_transferase_get_bin_names, 4},
     {"_transferase_get_interval_names", (DL_FUNC)&_transferase_get_interval_names, 2},
+    {"_transferase_get_n_cpgs", (DL_FUNC)&_transferase_get_n_cpgs, 3},
+    {"_transferase_get_n_cpgs_query", (DL_FUNC)&_transferase_get_n_cpgs_query, 1},
+    {"_transferase_get_n_cpgs_bins", (DL_FUNC)&_transferase_get_n_cpgs_bins, 3},
     {"_transferase_query_bins", (DL_FUNC)&_transferase_query_bins, 3},
     {"_transferase_query_preprocessed", (DL_FUNC)&_transferase_query_preprocessed, 3},
     {"_transferase_query_intervals", (DL_FUNC)&_transferase_query_intervals, 4},
