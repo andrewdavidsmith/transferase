@@ -114,6 +114,7 @@ MClient <- R6Class(
     do_query = function(methylomes, query,
                         genome = NULL,
                         covered = FALSE,
+                        add_n_cpgs = FALSE,
                         add_header = FALSE,
                         add_rownames = FALSE,
                         header_sep = '_',
@@ -179,9 +180,30 @@ MClient <- R6Class(
           stop("Cannot add rownames if query is MQuery object", call. = FALSE)
         } else { # is_intervals(query)
           rownames(response) <- .Call(`_transferase_get_interval_names`,
-                                      private$client, query, rowname_sep)
+                                      query, rowname_sep)
         }
       }
+
+      # Function to compute the number of CpG sites in each query interval
+      get_n_cpgs <- function(client, genome, query) {
+        if (is_bins(query)) {
+          .Call(`_transferase_get_n_cpgs_bins`, client, genome, query)
+        } else if (is_mquery(query)) {
+          .Call(`_transferase_get_n_cpgs_query`, query)
+        } else { # is_intervals(query)
+          .Call(`_transferase_get_n_cpgs`, client, genome, query)
+        }
+      }
+
+      # Add the number of CpG sites to the response
+      if (add_n_cpgs) {
+        n_cpgs <- get_n_cpgs(private$client, genome, query)
+        if (add_header) {
+          colnames(n_cpgs) <- c("N_CPGS")
+        }
+        response <- cbind(response, n_cpgs)
+      }
+
       response
     },
     format_query = function(genome, intervals) {
