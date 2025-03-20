@@ -122,3 +122,20 @@ def test_list_genome_indexes(pytestconfig):
     result = GenomeIndex.list_genome_indexes(directory)
     assert isinstance(result, list)
     assert len(result) == 3
+
+
+def test_get_n_cpgs_for_intervals(pytestconfig):
+    """
+    Test the 'get_n_cpgs' function for GenomeIndex with given list of
+    GenomicIntervals objects.
+    """
+    expected_n_cpgs = [3, 3, 4, 5, 3, 2, 4, 3, 4, 2]
+    rootdir = pytestconfig.rootdir
+    index_directory = os.path.join(rootdir, "data/lutions/indexes")
+    index = GenomeIndex.read(index_directory, "eFlareon")
+    assert index != None
+    intervals_directory = os.path.join(rootdir, "data", "lutions", "raw")
+    intervals_file = os.path.join(intervals_directory, "eFlareon_brain_hmr.bed")
+    intervals = GenomicInterval.read(index, intervals_file)
+    n_cpgs = index.get_n_cpgs(intervals)
+    assert n_cpgs == expected_n_cpgs
