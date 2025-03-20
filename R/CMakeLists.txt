@@ -44,6 +44,21 @@ message(STATUS "Configuring to build R API")
 # will produce a file like: 'transferase_0.5.0.tar.gz' which will have the
 # same name as a file from 'cpack -B build --config build/CPackConfig.cmake'
 
+# Check that required R packages have been installed
+set(REQUIRED_R_PACKAGES "Rcpp;R6")
+foreach(package_name ${REQUIRED_R_PACKAGES})
+  message(STATUS "Checking R package: ${package_name}")
+  # ADS: Only works if Rscript works
+  execute_process(
+    COMMAND Rscript -e "library(${package_name})"
+    RESULT_VARIABLE EXIT_CODE
+    OUTPUT_QUIET
+  )
+  if(${EXIT_CODE})
+    message(FATAL_ERROR "Required R package not found: ${package_name}")
+  endif()
+endforeach()
+
 # Copy the relevant sources from 'lib' into a source tree for the R extension.
 install(
   DIRECTORY ${PROJECT_SOURCE_DIR}/lib/
