@@ -63,21 +63,33 @@ query <- client$format_query(genome, intervals)
 print(query)
 
 # Regular
-levels <- client$do_query(methylomes, intervals, genome)
-print(levels[1:10, ])
+levels <- client$do_query(methylomes, intervals, genome,
+                          add_n_cpgs = TRUE, add_header = TRUE)
+print(head(levels))
 
 levels <- client$do_query(methylomes, bin_size)
-print(levels[1:10, ])
+print(head(levels))
 
 levels <- client$do_query(methylomes, query)
-print(levels[1:10, ])
+print(head(levels))
 
 # Covered
-levels <- client$do_query(methylomes, intervals, genome, covered = TRUE)
-print(levels[1:10, ])
+levels <- client$do_query(methylomes, intervals, genome,
+                          covered = TRUE, add_header = TRUE,
+                          add_rownames = TRUE)
+print(head(levels))
 
-levels <- client$do_query(methylomes, bin_size, covered = TRUE)
-print(levels[1:10, ])
+levels <- client$do_query(methylomes, bin_size, genome = genome,
+                          covered = TRUE, add_rownames = TRUE)
+print(head(levels))
 
 levels <- client$do_query(methylomes, query, covered = TRUE)
-print(levels[1:10, ])
+print(head(levels))
+
+levels <- try(client$do_query(methylomes, query,
+                              covered = TRUE, add_rownames = TRUE))
+if (inherits(levels, "try-error")) {
+  cat("Caught appropriate error\n")
+} else {
+  stop("Stopping: we should have had an error")
+}
