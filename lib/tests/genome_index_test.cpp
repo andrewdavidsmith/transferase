@@ -231,8 +231,8 @@ TEST(genome_index_test, get_n_cpgs_per_interval) {
   EXPECT_FALSE(ec);
   const auto n_cpgs = index.get_n_cpgs(intervals);
   EXPECT_EQ(std::size(n_cpgs), std::size(intervals));
-  EXPECT_EQ(n_cpgs.front(), 20);
-  EXPECT_EQ(n_cpgs.back(), 22);
+  EXPECT_EQ(n_cpgs.front(), 20u);
+  EXPECT_EQ(n_cpgs.back(), 22u);
 }
 
 TEST(genome_index_test, get_n_cpgs_per_bin_small) {
@@ -243,7 +243,7 @@ TEST(genome_index_test, get_n_cpgs_per_bin_small) {
   const auto index = genome_index::read("data", "pAntiquusx", ec);
   EXPECT_FALSE(ec);
   const auto n_cpgs = index.get_n_cpgs(bin_size);
-  EXPECT_EQ(std::size(n_cpgs), 11);
+  EXPECT_EQ(std::size(n_cpgs), 11u);
   EXPECT_EQ(n_cpgs, expected_n_cpgs);
 }
 
@@ -253,7 +253,7 @@ TEST(genome_index_test, get_n_cpgs_per_bin) {
   EXPECT_FALSE(ec);
   const auto bin_size = 200u;
   const auto n_cpgs = index.get_n_cpgs(bin_size);
-  EXPECT_EQ(std::size(n_cpgs), 490);
-  EXPECT_EQ(n_cpgs.front(), 10);
-  EXPECT_EQ(n_cpgs.back(), 12);
+  EXPECT_EQ(std::size(n_cpgs), 490u);
+  EXPECT_EQ(n_cpgs.front(), 10u);
+  EXPECT_EQ(n_cpgs.back(), 12u);
 }
