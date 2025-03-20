@@ -212,4 +212,31 @@ genome_index_data::get_n_cpgs(const genome_index_metadata &meta,
          std::ranges::to<std::vector>();
 }
 
+[[nodiscard]] auto
+genome_index_data::get_n_cpgs(const genome_index_metadata &meta,
+                              const std::uint32_t bin_size) const noexcept
+  -> std::vector<std::uint32_t> {
+  const auto n_bins = meta.get_n_bins(bin_size);
+  std::vector<std::uint32_t> counts(n_bins);
+  std::uint32_t j = 0;
+  const auto zipped =
+    std::views::zip(positions, meta.chrom_size, meta.chrom_offset);
+  for (const auto [posn, chrom_size, offset] : zipped) {
+    auto posn_itr = std::cbegin(posn);
+    const auto posn_end = std::cend(posn);
+    for (std::uint32_t i = 0; i < chrom_size; i += bin_size) {
+      // need bin_end like this because otherwise we go into next chrom
+      const auto bin_end = std::min(i + bin_size, chrom_size);
+      std::uint32_t bin_count{};
+      while (posn_itr != posn_end && *posn_itr < bin_end) {
+        ++bin_count;
+        ++posn_itr;
+      }
+      counts[j++] = bin_count;
+    }
+  }
+
+  return counts;
+}
+
 }  // namespace transferase

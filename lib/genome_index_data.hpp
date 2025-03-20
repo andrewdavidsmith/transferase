@@ -92,6 +92,10 @@ struct genome_index_data {
     -> std::vector<std::uint32_t>;
 
   [[nodiscard]] auto
+  get_n_cpgs(const genome_index_metadata &meta, const std::uint32_t bin_size)
+    const noexcept -> std::vector<std::uint32_t>;
+
+  [[nodiscard]] auto
   make_query_chrom(const std::int32_t ch_id, const genome_index_metadata &meta,
                    const std::vector<chrom_range_t> &pos) const noexcept
     -> transferase::query_container;
