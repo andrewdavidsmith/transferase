@@ -317,6 +317,7 @@ get_levels_impl(const std::uint32_t bin_size, const genome_index &index,
     const auto posn_end = std::cend(positions);
     auto cpg_itr = std::cbegin(cpgs) + offset;
     for (std::uint32_t i = 0; i < chrom_size; i += bin_size) {
+      // need bin_end like this because otherwise we go into next chrom
       const auto bin_end = std::min(i + bin_size, chrom_size);
       results.push_back(
         bin_levels_impl<T>(posn_itr, posn_end, bin_end, cpg_itr));
@@ -338,6 +339,7 @@ get_levels_impl(const std::uint32_t bin_size, const genome_index &index,
     const auto posn_end = std::cend(positions);
     auto cpg_itr = std::cbegin(cpgs) + offset;
     for (std::uint32_t i = 0; i < chrom_size; i += bin_size) {
+      // need bin_end like this because otherwise we go into next chrom
       const auto bin_end = std::min(i + bin_size, chrom_size);
       *d_first++ = bin_levels_impl<T>(posn_itr, posn_end, bin_end, cpg_itr);
     }
