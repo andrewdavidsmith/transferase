@@ -43,8 +43,9 @@ struct intervals_writer : public writer_base<intervals_writer> {
                    const output_format_t out_fmt,
                    const std::vector<std::string> &names,
                    const std::uint32_t min_reads,
+                   const std::vector<std::uint32_t> &n_cpgs,
                    const std::vector<genomic_interval> &intervals) :
-    writer_base{outfile, index, out_fmt, names, min_reads},
+    writer_base{outfile, index, out_fmt, names, min_reads, n_cpgs},
     intervals{intervals} {}
 
   // prevent copy and move

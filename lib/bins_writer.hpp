@@ -41,9 +41,11 @@ struct bins_writer : public writer_base<bins_writer> {
   bins_writer(const std::string &outfile, const genome_index &index,
               const output_format_t out_fmt,
               const std::vector<std::string> &names,
-              const std::uint32_t &min_reads, const std::uint32_t bin_size) :
-    writer_base{outfile, index, out_fmt, names, min_reads}, bin_size{bin_size} {
-  }
+              const std::uint32_t &min_reads,
+              const std::vector<std::uint32_t> &n_cpgs,
+              const std::uint32_t bin_size) :
+    writer_base{outfile, index, out_fmt, names, min_reads, n_cpgs},
+    bin_size{bin_size} {}
 
   // prevent copy and move
   // clang-format off
