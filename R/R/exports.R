@@ -111,9 +111,28 @@ MClient <- R6Class(
       cat("config_dir: ", self$config_dir, "\n", sep = "")
       cat("client:     ", typeof(private$client), "\n", sep = "")
     },
-    do_query = function(methylomes, query, genome = NULL, covered = FALSE) {
+    do_query = function(methylomes, query,
+                        genome = NULL,
+                        covered = FALSE,
+                        add_header = FALSE,
+                        add_rownames = FALSE,
+                        header_sep = '_',
+                        rowname_sep = '_') {
+
+      is_bins <- function(query) {
+        is.atomic(query) && length(query) == 1 && is.numeric(query)
+      }
+
+      is_mquery <- function(query) {
+        class(query)[1] == "MQuery"
+      }
+
+      is_intervals <- function(query) {
+        is.data.frame(query)
+      }
+
       get_query_response <- function(methylomes, query, genome, covered) {
-        if (is.data.frame(query)) {
+        if (is_intervals(query)) {
           if (covered) {
             .Call(`_transferase_query_intervals_cov`, private$client,
                   methylomes, genome, query)
@@ -121,8 +140,7 @@ MClient <- R6Class(
             .Call(`_transferase_query_intervals`, private$client,
                   methylomes, genome, query)
           }
-        } else if (is.atomic(query) && length(query) == 1 &&
-                     is.numeric(query)) {
+        } else if (is_bins(query)) {
           if (covered) {
             .Call(`_transferase_query_bins_cov`, private$client,
                   methylomes, query)
@@ -130,7 +148,7 @@ MClient <- R6Class(
             .Call(`_transferase_query_bins`, private$client,
                   methylomes, query)
           }
-        } else if (class(query)[1] == "MQuery") {
+        } else if (is_mquery(query)) {
           if (covered) {
             .Call(`_transferase_query_preprocessed_cov`, private$client,
                   methylomes, query$data)
@@ -143,19 +161,33 @@ MClient <- R6Class(
         }
       }
       response <- get_query_response(methylomes, query, genome, covered)
-      # Put a header on the data frame
-      sub_headings <- c("M", "U")
-      if (covered) {
-        sub_headings <- c(sub_headings, "C")
+
+      # Add a header to the results
+      if (add_header) {
+        sub_headings <- if (covered) c("M", "U", "C") else c("M", "U")
+        header <- c(t(outer(methylomes, sub_headings, paste, sep = header_sep)))
+        colnames(response) <- header
       }
-      header <- do.call(paste, expand.grid(methylomes, sub_headings,
-                                           sep = "_", stringsAsFactors = FALSE))
-      colnames(response) <- header
+
+      # Add rownames to the results
+      if (add_rownames) {
+        if (is_bins(query)) {
+          rownames(response) <- .Call(`_transferase_get_bin_names`,
+                                      private$client, genome,
+                                      query, rowname_sep)
+        } else if (is_mquery(query)) {
+          stop("Cannot add rownames if query is MQuery object", call. = FALSE)
+        } else { # is_intervals(query)
+          rownames(response) <- .Call(`_transferase_get_interval_names`,
+                                      private$client, query, rowname_sep)
+        }
+      }
       response
     },
     format_query = function(genome, intervals) {
       if (!is.data.frame(intervals)) {
-        stop("intervals must be a data frame of genomic intervals", call. = FALSE)
+        stop("intervals must be a data frame of genomic intervals",
+             call. = FALSE)
       }
       MQuery$new(.Call(`_transferase_format_query`,
                        private$client, genome, intervals),
