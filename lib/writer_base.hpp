@@ -39,6 +39,10 @@ struct level_element_t;
 struct level_element_covered_t;
 
 template <typename T> struct writer_base {
+  // ADS: below = (max_digits) x (max_methylomes) x (max_cols)
+  // <= 10 x 100 x 3;
+  static constexpr auto output_buffer_size{4096u};
+
   const std::string &outfile;
   const genome_index &index;
   const output_format_t out_fmt;
@@ -66,8 +70,10 @@ template <typename T> struct writer_base {
   }
 
   [[nodiscard]] auto
-  write_dataframe(const auto &levels) const noexcept -> std::error_code {
-    return self().write_dataframe_impl(levels);
+  write_dataframe(const auto &levels, const char rowname_delim = '.',
+                  const bool write_header = true) const noexcept
+    -> std::error_code {
+    return self().write_dataframe_impl(levels, rowname_delim, write_header);
   }
 
   [[nodiscard]] auto
