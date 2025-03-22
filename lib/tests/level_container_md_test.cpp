@@ -379,12 +379,14 @@ TEST_F(level_container_md_mock, write_with_bins_writer_test) {
     writer_bedlike_for_vec.write_bedlike(vec, true);
   EXPECT_FALSE(write_vec_err) << write_vec_err.message();
 
-  EXPECT_TRUE(files_are_identical(tmp_filename, tmp_filename_vec));
-  remove_file(tmp_filename, error);
-  EXPECT_FALSE(error);
-  remove_file(tmp_filename_vec, error);
-  EXPECT_FALSE(error);
-
+  auto ident = files_are_identical(tmp_filename, tmp_filename_vec);
+  EXPECT_TRUE(ident);
+  if (ident) {
+    remove_file(tmp_filename, error);
+    EXPECT_FALSE(error);
+    remove_file(tmp_filename_vec, error);
+    EXPECT_FALSE(error);
+  }
   // do dataframe
 
   tmp_filename = generate_temp_filename("tmp_md_d");
@@ -420,12 +422,14 @@ TEST_F(level_container_md_mock, write_with_bins_writer_test) {
   write_vec_err = writer_dataframe_for_vec.write_dataframe(vec);
   EXPECT_FALSE(write_vec_err) << write_vec_err.message();
 
-  EXPECT_TRUE(files_are_identical(tmp_filename, tmp_filename_vec));
-  remove_file(tmp_filename, error);
-  EXPECT_FALSE(error);
-  remove_file(tmp_filename_vec, error);
-  EXPECT_FALSE(error);
-
+  ident = files_are_identical(tmp_filename, tmp_filename_vec);
+  EXPECT_TRUE(ident);
+  if (ident) {
+    remove_file(tmp_filename, error);
+    EXPECT_FALSE(error);
+    remove_file(tmp_filename_vec, error);
+    EXPECT_FALSE(error);
+  }
   // do dataframe scores
 
   tmp_filename = generate_temp_filename("tmp_md_s");
@@ -462,11 +466,14 @@ TEST_F(level_container_md_mock, write_with_bins_writer_test) {
   write_vec_err = writer_dataframe_scores_for_vec.write_dataframe_scores(vec);
   EXPECT_FALSE(write_vec_err) << write_vec_err.message();
 
-  EXPECT_TRUE(files_are_identical(tmp_filename, tmp_filename_vec));
-  remove_file(tmp_filename, error);
-  EXPECT_FALSE(error);
-  remove_file(tmp_filename_vec, error);
-  EXPECT_FALSE(error);
+  ident = files_are_identical(tmp_filename, tmp_filename_vec);
+  EXPECT_TRUE(ident);
+  if (ident) {
+    remove_file(tmp_filename, error);
+    EXPECT_FALSE(error);
+    remove_file(tmp_filename_vec, error);
+    EXPECT_FALSE(error);
+  }
 }
 
 TEST_F(level_container_md_mock, add_column_test) {
