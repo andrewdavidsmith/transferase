@@ -41,4 +41,7 @@ auto
 remove_directories_cli(const std::string &dirname,
                        std::error_code &error) -> void;
 
+auto
+remove_file_cli(const std::string &filename, std::error_code &error) -> void;
+
 #endif  // CLI_TESTS_UNIT_TEST_UTILS_CLI_HPP_

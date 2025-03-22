@@ -85,3 +85,15 @@ remove_directories_cli(const std::string &dirname,
   [[maybe_unused]] const bool remove_ok =
     std::filesystem::remove_all(dirname, error);
 }
+
+auto
+remove_file_cli(const std::string &filename, std::error_code &error) -> void {
+  const auto file_exists = std::filesystem::exists(filename, error);
+  if (error || !file_exists)
+    return;
+  const auto file_is_file = std::filesystem::is_regular_file(filename, error);
+  if (error || !file_is_file)
+    return;
+  [[maybe_unused]] const bool remove_ok =
+    std::filesystem::remove(filename, error);
+}
