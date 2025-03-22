@@ -74,7 +74,7 @@ struct level_element_t {
   auto
   operator<=>(const level_element_t &) const = default;
 
-  static constexpr auto hdr_fmt = "{}_M\t{}_U";
+  static constexpr auto hdr_fmt = "{}_M{}{}_U";
 };
 
 /// @brief Triple of counts for methylation level with number of sites covered.
@@ -125,7 +125,7 @@ struct level_element_covered_t {
   auto
   operator<=>(const level_element_covered_t &) const = default;
 
-  static constexpr auto hdr_fmt = "{}_M\t{}_U\t{}_C";
+  static constexpr auto hdr_fmt = "{}_M{}{}_U{}{}_C";
 };
 
 }  // namespace transferase
