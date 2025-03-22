@@ -65,10 +65,10 @@ TEST(command_query_test, intervals_basic_local_test) {
     output_file,
     // clang-format on
   };
-  const int argc = sizeof(argv) / sizeof(argv[0]);
+  const int argc = static_cast<int>(std::size(argv));
 
   // Run the main function
-  // NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast)
+  // NOLINTNEXTLINE(*-const-cast)
   const int result = command_query_main(argc, const_cast<char **>(argv.data()));
 
   // Check that the output file is created
@@ -166,10 +166,10 @@ TEST(command_query_test, intervals_failing_remote_test) {
     output_file,
     // clang-format on
   };
-  const int argc = sizeof(argv) / sizeof(argv[0]);
+  const int argc = static_cast<int>(std::size(argv));
 
   // Run the main function
-  // NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast)
+  // NOLINTNEXTLINE(*-const-cast)
   const int result = command_query_main(argc, const_cast<char **>(argv.data()));
 
   // Check that the output file is created
@@ -178,8 +178,9 @@ TEST(command_query_test, intervals_failing_remote_test) {
 
   // Clean up: delete test files
   if (std::filesystem::exists(output_file)) {
-    const auto remove_ok = std::filesystem::remove(output_file);
-    EXPECT_TRUE(remove_ok);
+    std::error_code error;
+    remove_file_cli(output_file, error);
+    EXPECT_FALSE(error);
   }
 }
 
@@ -213,24 +214,24 @@ TEST(command_query_test, bins_basic_local_test) {
     "100",
     // clang-format on
   };
-  const int argc = sizeof(argv) / sizeof(argv[0]);
+  const int argc = static_cast<int>(std::size(argv));
 
   // Run the main function
-  // NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast)
+  // NOLINTNEXTLINE(*-const-cast)
   const int result = command_query_main(argc, const_cast<char **>(argv.data()));
 
   // Check that the output file is created
   EXPECT_EQ(result, EXIT_SUCCESS);
-  std::error_code ignored_ec;
-  EXPECT_TRUE(std::filesystem::exists(output_file, ignored_ec));
+  std::error_code error;
+  EXPECT_TRUE(std::filesystem::exists(output_file, error));
 
   const bool output_files_identical =
     files_are_identical_cli(output_file, expected_output_file);
   EXPECT_TRUE(output_files_identical);
 
   // Clean up: delete test files only if tests pass
-  if (output_files_identical && std::filesystem::exists(output_file)) {
-    const auto remove_ok = std::filesystem::remove(output_file);
-    EXPECT_TRUE(remove_ok);
+  if (output_files_identical) {
+    remove_file_cli(output_file, error);
+    EXPECT_FALSE(error);
   }
 }
