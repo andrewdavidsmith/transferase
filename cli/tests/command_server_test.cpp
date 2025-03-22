@@ -46,10 +46,8 @@ TEST(command_server_test, failing_server_missing_directory) {
     methylome_directory,
     // clang-format on
   };
-  const int command_argc = sizeof(argv) / sizeof(argv[0]);
-  // NOLINTBEGIN(cppcoreguidelines-pro-type-const-cast)
-  const int result =
-    command_server_main(command_argc, const_cast<char **>(argv.data()));
-  // NOLINTEND(cppcoreguidelines-pro-type-const-cast)
-  EXPECT_NE(result, EXIT_SUCCESS);
+  const int argc = static_cast<int>(std::size(argv));
+  // NOLINTNEXTLINE(*-const-cast)
+  const int res = command_server_main(argc, const_cast<char **>(argv.data()));
+  EXPECT_NE(res, EXIT_SUCCESS);
 }
