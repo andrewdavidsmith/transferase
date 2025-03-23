@@ -10,6 +10,10 @@ maintainers =  [{name = "Andrew D Smith", email = "andrewds@usc.edu"}]
 readme = "README.md"
 license = {text = "MIT"}
 dynamic = ["version"]
+dependencies = [
+  "nanobind",
+  "numpy",
+]
 requires-python = ">= 3.12"
 keywords = ["methylome", "DNA methylation", "epigenetics", "epigenomics"]
 classifiers = [
