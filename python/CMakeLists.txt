@@ -35,7 +35,7 @@ message(STATUS "Python libraries: ${Python_LIBRARIES}")
 message(STATUS "Python SOABI: ${Python_SOABI}")
 
 # Check that required Python packages have been installed
-set(REQUIRED_PYTHON_PACKAGES "nanobind;pytest;wheel;auditwheel;hatch")
+set(REQUIRED_PYTHON_PACKAGES "nanobind;pytest;numpy;wheel;auditwheel;hatch")
 foreach(package_name ${REQUIRED_PYTHON_PACKAGES})
   message(STATUS "Checking Python package: ${package_name}")
   execute_process(
