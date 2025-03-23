@@ -141,11 +141,13 @@ apt remove transferase
 ### Python package
 
 We will work with a virtual environment to be sure things don't get mixed
-up. This means we need another package. But we also need a C compiler because
-we will be making ZLib from source. So getting out own :
+up. This means we need two more packages, one for building Python things (dev)
+and one for thee virtual env (venv):
 
 ```console
-apt install -y --no-install-recommends python3.12-venv
+apt install -y --no-install-recommends \
+    python3.12-dev \
+    python3.12-venv
 ```
 
 Then make the venv and activate it.
@@ -157,7 +159,7 @@ python3 -m venv .venv && . .venv/bin/activate
 Here are the Python packages we need and how to get them:
 
 ```console
-pip install nanobind pytest wheel auditwheel hatch
+pip install nanobind pytest wheel auditwheel hatch numpy
 ```
 
 You likely won't be using the pytest. The critical one is nanobind, which is
