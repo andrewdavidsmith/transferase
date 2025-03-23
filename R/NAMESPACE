@@ -1,3 +1,0 @@
-useDynLib(transferase, .registration = TRUE)
-import(methods, Rcpp)
-exportPattern("^[[:alpha:]]+")
