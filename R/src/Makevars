@@ -1,3 +1,0 @@
-CXX_STD = CXX23
-PKG_CPPFLAGS = -I.
-PKG_LIBS= -lssl
