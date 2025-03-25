@@ -3,13 +3,15 @@
 Currently this process might seem a bit complicated, so the best way for me to
 explain is to walk through the build process on different systems. I probably
 will expand this with more systems and update it as the transferase source
-stabilizes.
+stabilizes. You might find what seems like unnecessary redundancy in the steps
+below, but that's mostly because I copy-paste from this document, and want to
+keep things together.
 
 ## Ubuntu
 
-I'm using the Ubuntu 24.04 docker image. I will list all the steps, even though most of
-them won't be needed on your system. First is to build the command line tools,
-then the Python package.
+I'm using the Ubuntu 24.04 docker image. I will list all the steps, even
+though most of them won't be needed on your system. First is to build the
+command line tools, then the Python package.
 
 ### Command line app
 
@@ -301,43 +303,201 @@ apt-get install -y --no-install-recommends \
     g++ \
     cmake \
     make \
+    libssl-dev \
+    libxml2-dev \
     r-base-dev
 ```
 
-If it seems like you need more packages after trying the next few steps, look
-above at the packages installed for Ubuntu and others. The transferase R API
-needs the Rcpp package to build and the R6 package to run.
+The `libxml2-dev` package installed through `apt-get` is needed by `roxygen2`,
+which in a strict sense is optional.
+
+The transferase R API needs the Rcpp package for the build step, and the R6
+package to run. It also needs to be able to link to OpenSSL, which is among
+the dependencies in the list above. Here's how we get the R packages:
 
 ```console
-R -e 'install.packages(c("R6", "Rcpp"))'
+R -e 'install.packages(c("R6", "Rcpp", "roxygen2"))'
 ```
 
-If the build is configured like this:
+`roxygen2` is needed to generate the documentation if you building the
+transferase R API from source.
+
+As usual, we need to clone the repo:
 
 ```console
-cmake -B build -DBUILD_R=on -DCMAKE_INSTALL_PREFIX=rsrc
+git clone https://github.com/andrewdavidsmith/transferase && \
+cd transferase
 ```
 
-There is no '--build' step for making the R API because R will do that
-itself. So the next step is to install like this into a modified source tree
-for R:
+The build configuration needs an install prefix because we will be skipping
+the usual `--build` step in cmake. Our goal is to make a source tree that
+conforms to what R wants, so R can build it in the best way to work with R.
+
+```console
+cmake -B build -DBUILD_R=on -DCMAKE_INSTALL_PREFIX=rsrc -Wno-dev
+```
+
+The `-Wno-dev` is to avoid warnings, and might not be needed in a few months.
+
+The `build` and `rsrc` directories are arbitrary. Depending on what else I'm
+doing at the same time, I might use `build_r` and `src`, respectively, for
+those names. Just don't get these two confused. However, you name them,
+neither should exist before you run the above command. After running the above
+command, the `build` directory should exist.
+
+The next step is to "install" into a modified source tree for R:
 
 ```console
 cmake --install build
 ```
 
-Then the following can install the package:
+This will create a directory named `rsrc` if you followed my commands
+exactly. This step uses `Rcpp` to generate boilerplate code that exposes
+transferase functions in R. To satisfy the requirements on R code, the
+transferase source files are also modified in several different ways.
+
+Once this new source tree has been created, you can directly install it.  This
+means no documentation, though. If you want to do that, this is the command:
 
 ```console
-R CMD INSTALL rsrc
+MAKEFLAGS="-j32" R CMD INSTALL rsrc
 ```
 
-And this will make the tarball that can be installed with 'install.packages':
+Remember, the `rsrc` was a name we chose, not any kind of keyword or
+convention. Replace the 32 above with whatever number of cores you want to
+use. In this case, if you have 32 cores, the install will be faster. The above
+step will likely install transferase in your local packages directory, which
+for me is `${HOME}/R/x86_64-pc-linux-gnu-library/4.4`. If you are in a
+container, or working in admin mode, it might put them in a system location
+like `/usr/local/lib/R/site-library`.
 
+Building the documentation, along with an archive that others can install, is
+more involved. I'm trying to follow guidelines that will eventually make
+transferase fully conformant with CRAN rules. The documentation for
+transferase in R needs to be build with roxygen2. Unfortunately, due to how
+Rcpp and roxygen2 interact, the least unpleasant way to generate the
+documentation involves building everything twice.
+
+We start by building the shared library so that roxygen2 won't attept to do it
+(it would fail). The following command will put object files (`.o`) and a
+shared library file (`.so`) in the `rsrc/src` directory, but will not actually
+install them anywhere:
+
+```console
+MAKEFLAGS="-j32" R CMD INSTALL --no-inst rsrc
 ```
+
+Now we can generate the documentation files for the individual functions and
+classes in the package:
+
+```console
+Rscript -e "library(roxygen2, R6); roxygen2::roxygenize('rsrc')"
+```
+
+This will generate multiple files named like `*.Rd` in the `rsrc/man`
+directory. These are used when you do `? function_name` in your R
+interpreter. Next we need the "manual" which is a pdf document required by
+CRAN. To get this we need to latex, along with a specific font used by R:
+
+```console
+DEBIAN_FRONTEND=noninteractive \
+apt-get install -y --no-install-recommends \
+    texlive \
+    texlive-fonts-extra
+```
+
+Now we generate the pdf manual from the individual Rd help files:
+
+```console
+mkdir rsrc/doc && \
+R CMD Rd2pdf -o rsrc/doc/transferase.pdf --no-preview rsrc
+```
+
+I added the `--no-preview` because working inside a docker container, I have
+no way to view the pdf. R expects the manual to be in the `rsrc/doc` if the
+package is in `rsrc`.
+
+Note: we created `.o` and `.so` files previously, but R will ignore these in
+subsequent steps, so there is no need to delete them.
+
+Now we make the package archive:
+
+```console
 R CMD build rsrc
 ```
 
-The resulting file will be named: `transferase_0.5.0.tar.gz`. This is the same
-name as one of the files currently generated as part of the command line
-package with cpack, so be careful not to confuse the two.
+The `build` above is a sub-command to `R CMD` and not the name of a CMake
+build directory. This command generates a file named like
+`transferase_0.5.0.tar.gz`. Unfortunately, at present this name is identical
+to one generated by CPack for the transferase command line app. If you are
+building both, don't confuse the two files.
+
+The final step tells us how well we did by running the "check" command:
+
+```console
+MAKEFLAGS="-j32" R CMD check transferase_0.5.0.tar.gz
+```
+
+Since the above command will build all the code, using the `-j32` helps with
+speed.
+
+If the above command works without "warnings", congratulate both yourself and
+me. Now you can use the `transferase_0.5.0.tar.gz` as follows to install:
+
+```R
+install.packages("transferase_0.5.0.tar.gz")
+```
+
+Notes:
+
+- You can export `DEBIAN_FRONTEND` to avoid specifying it every time. It can
+  be a big deal because you might start an install and come back 15 min later
+  only to find it didn't even begin due to trying to ask you about
+  timezones.
+
+- Similarly, if you export `MAKEFLAGS` to set multiple cores, it help wherever
+  it can. In `R CMD`, inside `R` and even building the docs in latex. Just
+  unset it if you ever get complaints about regular make being confused. If
+  confused it never hurts, but it can dump more text on your screen.
+
+- In `debian:sid` (I haven't tried stable Debian) I need to set the locale to
+  avoid a "warning" from `R CMD check`: `export LANG=C.UTF-8
+  LC_ALL=C.UTF-8`. I didn't notice the same issue on my own Ubuntu machines,
+  but each of those is a mess.
+
+- I get a "Note" from `R CMD check` because the `transferase.so` shared
+  library is over 50MB in size (!). Interestingly, if I build without `-g` the
+  size decreases down to roughly 2MB. There are many ways to make the shared
+  library smaller, and I expect to ensure users get small binaries eventually.
+  But in a process that ends with `R CMD check` I want to modify as few build
+  settings as possible.
+
+All together as one copy-paste:
+
+```console
+export DEBIAN_FRONTEND=noninteractive MAKEFLAGS="-j32" LANG=C.UTF-8 LC_ALL=C.UTF-8 && \
+apt-get update && \
+apt-get install -y --no-install-recommends \
+    ca-certificates \
+    git \
+    gcc \
+    g++ \
+    cmake \
+    make \
+    libssl-dev \
+    libxml2-dev \
+    r-base-dev \
+    texlive \
+    texlive-fonts-extra && \
+R -e 'install.packages(c("R6", "Rcpp", "roxygen2"))' && \
+git clone https://github.com/andrewdavidsmith/transferase && \
+cd transferase && \
+cmake -B build -DBUILD_R=on -DCMAKE_INSTALL_PREFIX=rsrc -Wno-dev && \
+cmake --install build && \
+R CMD INSTALL --no-inst rsrc && \
+Rscript -e "library(roxygen2, R6); roxygen2::roxygenize('rsrc')" && \
+mkdir rsrc/doc && \
+R CMD Rd2pdf -o rsrc/doc/transferase.pdf --no-preview rsrc && \
+R CMD build rsrc && \
+R CMD check transferase_0.5.0.tar.gz
+```
