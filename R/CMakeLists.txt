@@ -131,11 +131,11 @@ install(
   RENAME LICENSE
 )
 
-# Copy the full LICENSE file into the data directory of the R package.
+# Copy the full LICENSE file into the inst directory of the R package.
 install(
   FILES
   ${PROJECT_SOURCE_DIR}/data/LICENSE
-  DESTINATION data
+  DESTINATION inst
   RENAME LICENSE.note
 )
 
