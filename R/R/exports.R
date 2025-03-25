@@ -22,22 +22,77 @@
 
 library(R6)
 
+#' Configure transferase
+#'
+#' The config_xfr function configures transferase, which includes creating a
+#' configuration directory, writing configuration files, and typically
+#' downloading metadata and configuration data corresponding to one or more
+#' specified reference genomes.
+#'
+#' @param genomes A list of names of reference genome assemblies. These are
+#' in the format used by the UCSC Genome Browser (i.e., "hg38" instead of
+#' "GRCh38"). There is no way to know if a typo has been made, as the system
+#' will simply assume an incorrect genome name is one that is not supported.
+#' @param config_dir A directory to place the configuration. Default is
+#' `$HOME/.config/transferase`.
+#'
+#' @export
+#' @examples
+#' genomes <- c("hg38", "bosTau9")
+#' config_dir <- "my_config_directory"
+#' config_xfr(genomes, config_dir)
 config_xfr <- function(genomes, config_dir = "") {
   invisible(.Call(`_transferase_config_xfr`, genomes, config_dir))
 }
 
+#' Set transferase log level
+#'
+#' The `set_xfr_log_level` function sets the log level for functions related
+#' to transferase. Must be one of 'debug', 'info', 'warning', 'error' or
+#' 'critical'. The value 'debug' prints the most information, while 'critical'
+#' could print nothing even if there is an error.
+#'
+#' @param log_level The log level value to use. One of debug, info, warning,
+#' error or critical.
+#'
+#' @export
+#' @examples
+#' set_xfr_log_level("debug")
 set_xfr_log_level <- function(log_level) {
   invisible(.Call(`_transferase_set_xfr_log_level`, log_level))
 }
 
+#' Get the transferase log level
+#'
+#' Get the current log level, which is the default if you didn't use
+#' `set_xfr_log_level`, or whatever log level you most recently set it to.
+#'
+#' @return A string indicating the current log level
+#'
+#' @export
+#' @examples
+#' get_xfr_log_level()
 get_xfr_log_level <- function() {
   .Call(`_transferase_get_xfr_log_level`)
 }
 
+#' Initialize logger
+#'
+#' Initialize logging for transferase. This function is called automatically
+#' when 'library(transferase)' is called. You will never need to use it, and
+#' it takes no arguments anyway.
+#'
+#' @export
+#' @examples
+#' init_logger()
 init_logger <- function() {
   .Call(`_transferase_init_logger`)
 }
 
+#' @title MQuery
+#'
+#' @description
+#' Instances of MQuery hold preprocessed genomic intervals for faster queries.
 MQuery <- R6Class(
   "MQuery",
   private = list(
@@ -46,6 +101,9 @@ MQuery <- R6Class(
     .size = NA
   ),
   active = list(
+
+    #' @field data This is the internal data of the MQuery object. It cannot be
+    #' inspected or manipulated directly.
     data = function(value) {
       if (missing(value)) {
         private$.data
@@ -53,6 +111,9 @@ MQuery <- R6Class(
         stop("`$data` is read only", call. = FALSE)
       }
     },
+
+    #' @field genome The corresponding reference genome. Do not use an MQuery
+    #' object to query methylomes for any other genome.
     genome = function(value) {
       if (missing(value)) {
         private$.genome
@@ -60,6 +121,8 @@ MQuery <- R6Class(
         stop("`$genome` is read only", call. = FALSE)
       }
     },
+
+    #' @field size The number of intervals represented in the MQuery object.
     size = function(value) {
       if (missing(value)) {
         private$.size
@@ -69,11 +132,28 @@ MQuery <- R6Class(
     }
   ),
   public = list(
+
+    #' @description Construct an MQuery object
+    #'
+    #' This constructor is not callable, as one of its instance variables
+    #' cannot be created within R. The only way to construct an MQuery object
+    #' is with the MClient$format_query() method.
+    #'
+    #' @param data This is the internal data of the MQuery object. It cannot be
+    #' inspected or manipulated directly.
+    #'
+    #' @param genome The corresponding reference genome. Do not use an MQuery object
+    #' to query methylomes for any other genome.
+    #'
+    #' @param size The number of intervals represented in the MQuery object.
     initialize = function(data, genome, size) {
       private$.data <- data
       private$.genome <- genome
       private$.size <- size
     },
+
+    #' @description Print an MQuery object
+    #' @param ... None
     print = function(...) {
       cat("MQuery:\n")
       cat("genome: ", private$.genome, "\n", sep = "")
@@ -83,13 +163,34 @@ MQuery <- R6Class(
   )
 )
 
+#' @title MClient
+#'
+#' @description
+#' Instances of MClient are an interface for making queries in transferase.
 MClient <- R6Class(
   "MClient",
   private = list(
     client = NULL
   ),
   public = list(
+
+    #' @field config_dir The name of the configuration directory associated with this
+    #' MClient object. Again, this would have been configured using `config_xfr`
+    #' or the command line transferase app.
     config_dir = NULL,
+
+    #' @description Create an MClient object
+    #'
+    #' The constructor can take the name of a configuration directory, but most
+    #' users will leave this empty and allow it to use the default.
+    #'
+    #' @param config_dir The name of a configuration directory; most users will
+    #' typically leave this empty.
+    #'
+    #' @export
+    #' @examples
+    #' config_xfr(c("hg38", "mm39"), "some_directory")
+    #' client <- MClient$new("some_directory")
     initialize = function(config_dir = "") {
       if (config_dir == "") {
         home_dir <- Sys.getenv("HOME")
@@ -106,11 +207,44 @@ MClient <- R6Class(
       self$config_dir <- config_dir
       private$client <- .Call(`_transferase_create_mclient`, config_dir)
     },
+
+    #' @description Print an MClient object
+    #' @param ... None
     print = function(...) {
       cat("MClient:\n")
       cat("config_dir: ", self$config_dir, "\n", sep = "")
       cat("client:     ", typeof(private$client), "\n", sep = "")
     },
+
+    #' @description
+    #' Performs a transferase query
+    #'
+    #' The do_query function performs all the work of querying the transferase
+    #' system for methylation levels. It takes methylome names and query
+    #' intervals. It returns methylation levels for each query interval and
+    #' methylome, in a matrix with rows corresponding to query intervals and
+    #' columns corresponding to methylomes. It allows for query intervals to be
+    #' specified in multiple formats and has options that control how the
+    #' output is structured.
+    #'
+    #' @param methylomes A list of methylome names, each of which is a string.
+    #' @param query A specification of the query. See "Details".
+    #' @param genome The reference genome corresponding to the methylomes and
+    #' query. If the query is in MQuery format, this argument is not needed.
+    #' @param covered If TRUE, the query will return, for each query interval
+    #' and queried methylome, the number of CpG sites that are covered by at
+    #' least one read.
+    #' @param add_n_cpgs If TRUE, the total number of CpG sites in each query
+    #' interval with be provided as the final column in the matrix returned by
+    #' this function.
+    #' @param add_header If true, a header will be added to the matrix
+    #' returned by this function.
+    #' @param add_rownames If true, rownames will be added to the matrix
+    #' returned by this function.
+    #' @param header_sep The separator character to use inside column names in
+    #' the returned matrix.
+    #' @param rowname_sep The separator character to use inside row names in
+    #' the returned matrix.
     do_query = function(methylomes, query,
                         genome = NULL,
                         covered = FALSE,
@@ -206,6 +340,25 @@ MClient <- R6Class(
 
       response
     },
+    #' Create an MQuery object
+    #'
+    #' This method formats a set of query intervals as a MQuery object. The
+    #' query intervals must be a data frame specifying chromosome, start and
+    #' stop for each interval in the first three columns,
+    #' respectively. Intervals are 0-based and half-open. Intervals must be
+    #' sorted within each chromosome, but the order of chromosomes does not
+    #' matter.
+    #'
+    #' @param genome The reference genome corresponding to the intervals.
+    #'
+    #' @param intervals (data frame) A data frame with genomic intervals
+    #' specified in the first 3 columns.
+    #'
+    #' @export
+    #' @examples
+    #' intervals <- read.table(intervals_file)
+    #' client <- MClient$new()
+    #' query <- client$format_query("hg38", intervals)
     format_query = function(genome, intervals) {
       if (!is.data.frame(intervals)) {
         stop("intervals must be a data frame of genomic intervals",
