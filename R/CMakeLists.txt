@@ -232,6 +232,7 @@ execute_process(
 
 install(CODE [[
 message(STATUS "Replacing std::cout and std::cerr with Rcpp equivalents")
+message(STATUS "Replacing stdout/stderr with nullptr and removing std::fputs")
 set(INDICATORS_FILENAME ${CMAKE_INSTALL_PREFIX}/src/indicators/indicators.h)
 execute_process(
   COMMAND
@@ -240,7 +241,9 @@ execute_process(
   s/std::cerr/Rcpp::Rcerr/g; \
   s/std::clog/Rcpp::Rcerr/g; \
   s/stdout/nullptr/g; \
-  s/stderr/nullptr/g" ${INDICATORS_FILENAME}
+  s/stderr/nullptr/g; \
+  s/^ +std::fputs.*\$/{};/g"
+  ${INDICATORS_FILENAME}
   RESULT_VARIABLE EXIT_CODE
 )
 ]])
