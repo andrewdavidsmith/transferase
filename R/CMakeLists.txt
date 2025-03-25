@@ -123,11 +123,20 @@ install(
   DESTINATION R
 )
 
-# Copy the main LICENSE file into the root of the R package dir.
+# Copy the LICENSE stub into the root of the R package dir.
+install(
+  FILES
+  ${PROJECT_SOURCE_DIR}/R/LICENSE_STUB
+  DESTINATION .
+  RENAME LICENSE
+)
+
+# Copy the full LICENSE file into the data directory of the R package.
 install(
   FILES
   ${PROJECT_SOURCE_DIR}/data/LICENSE
-  DESTINATION .
+  DESTINATION data
+  RENAME LICENSE.note
 )
 
 # Copy the R documentation into the man dir of the package.
