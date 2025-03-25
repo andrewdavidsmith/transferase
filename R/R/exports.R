@@ -256,7 +256,7 @@ MClient <- R6Class(
     #'
     #' @export
     #' @examples
-    #' xfr_config(c("hg38"), "some_directory")
+    #' config_xfr(c("hg38"), "some_directory")
     #' client <- MClient$new("some_directory")
     #'
     #' genome <- "hg38"
@@ -362,7 +362,7 @@ MClient <- R6Class(
       response
     },
 
-    #' Create an MQuery object
+    #' @description Create an MQuery object
     #'
     #' This method formats a set of query intervals as a MQuery object. The
     #' query intervals must be a data frame specifying chromosome, start and
@@ -377,7 +377,7 @@ MClient <- R6Class(
     #'
     #' @export
     #' @examples
-    #' xfr_config(c("hg38"), "some_directory")
+    #' config_xfr(c("hg38"), "some_directory")
     #'
     #' # Names of columns below are not needed
     #' intervals <- data.frame(chrom=c("chr1", "chr2", "chr3"),
