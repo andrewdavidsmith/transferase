@@ -228,23 +228,44 @@ MClient <- R6Class(
     #' output is structured.
     #'
     #' @param methylomes A list of methylome names, each of which is a string.
+    #'
     #' @param query A specification of the query. See "Details".
+    #'
     #' @param genome The reference genome corresponding to the methylomes and
     #' query. If the query is in MQuery format, this argument is not needed.
+    #'
     #' @param covered If TRUE, the query will return, for each query interval
     #' and queried methylome, the number of CpG sites that are covered by at
     #' least one read.
+    #'
     #' @param add_n_cpgs If TRUE, the total number of CpG sites in each query
     #' interval with be provided as the final column in the matrix returned by
     #' this function.
+    #'
     #' @param add_header If true, a header will be added to the matrix
     #' returned by this function.
+    #'
     #' @param add_rownames If true, rownames will be added to the matrix
     #' returned by this function.
+    #'
     #' @param header_sep The separator character to use inside column names in
     #' the returned matrix.
+    #'
     #' @param rowname_sep The separator character to use inside row names in
     #' the returned matrix.
+    #'
+    #' @export
+    #' @examples
+    #' xfr_config(c("hg38"), "some_directory")
+    #' client <- MClient$new("some_directory")
+    #'
+    #' genome <- "hg38"
+    #' methylomes <- c("SRX3468816", "SRX3468835")
+    #' intervals <- data.frame(chrom=c("chr1", "chr2", "chr3"),
+    #'                         start=c(10468, 197437, 308977),
+    #'                         stops=c(11240, 198535, 309210))
+    #'
+    #' levels <- client$do_query(methylomes, intervals, genome)
     do_query = function(methylomes, query,
                         genome = NULL,
                         covered = FALSE,
@@ -340,14 +361,14 @@ MClient <- R6Class(
 
       response
     },
+
     #' Create an MQuery object
     #'
     #' This method formats a set of query intervals as a MQuery object. The
     #' query intervals must be a data frame specifying chromosome, start and
-    #' stop for each interval in the first three columns,
-    #' respectively. Intervals are 0-based and half-open. Intervals must be
-    #' sorted within each chromosome, but the order of chromosomes does not
-    #' matter.
+    #' stop for each interval in the first three columns, respectively.
+    #' Intervals are 0-based and half-open. Intervals must be sorted within
+    #' each chromosome, but the order of chromosomes does not matter.
     #'
     #' @param genome The reference genome corresponding to the intervals.
     #'
@@ -356,8 +377,13 @@ MClient <- R6Class(
     #'
     #' @export
     #' @examples
-    #' intervals <- read.table(intervals_file)
-    #' client <- MClient$new()
+    #' xfr_config(c("hg38"), "some_directory")
+    #'
+    #' # Names of columns below are not needed
+    #' intervals <- data.frame(chrom=c("chr1", "chr2", "chr3"),
+    #'                         start=c(10468, 197437, 308977),
+    #'                         stops=c(11240, 198535, 309210))
+    #' client <- MClient$new("some_directory")
     #' query <- client$format_query("hg38", intervals)
     format_query = function(genome, intervals) {
       if (!is.data.frame(intervals)) {
