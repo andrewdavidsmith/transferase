@@ -13,38 +13,14 @@ section in the 'docs/building.md' file that explains how to build the R
 package from a cloned repo. The R package itself is source, but not identical
 to the cloned repo. So if you are trying to do this from the cloned repo
 itself, it won't work. Assuming you have a file named
-`transferase_0.5.0.tar.gz`, and it is the R package, you can install it within
-R like this:
+`transferase_R_0.6.0.tar.gz`, and it is the R package, you can install it
+within R like this:
 
 ```R
-install.packages("transferase_0.5.0.tar.gz", repos = NULL)
+install.packages("transferase_R_0.6.0.tar.gz", repos=NULL)
 ```
-
-At the time of writing (mid-March 2025), the default GCC and R packages for
-typical Linux distributions will not build the transferase R API. The current
-Debian 'sid' branch, available through docker as 'debian:sid' can do the build
-with default packages. See 'docs/building.md'. By late April 2025, the main
-Ubuntu distribution should be able to build the transferase R API by default.
 
 ## Functions
-
-The following functions are not associated with any particular object.
-
-### Initialize logger
-
-Initialize logging for transferase. This function is called automatically when
-`library(transferase)` is called. You will never need to use it, and it takes
-no arguments anyway.
-
-Usage:
-```R
-init_logger()
-```
-
-Examples:
-```R
-init_logger()
-```
 
 ### Configure transferase
 
@@ -77,6 +53,22 @@ config_dir <- "my_config_directory"
 config_xfr(genomes, config_dir)
 ```
 
+### Initialize logger
+
+Initialize logging for transferase. This function is called automatically when
+`library(transferase)` is loaded. You will never need to use it, and it takes
+no arguments anyway.
+
+Usage:
+```R
+init_logger()
+```
+
+Examples:
+```R
+init_logger()
+```
+
 ### Set transferase log level
 
 The `set_xfr_log_level` function sets the log level for functions related to
@@ -101,51 +93,38 @@ set_xfr_log_level("debug")
 ### Get transferase log level
 
 Get the current log level, which is the default if you didn't use
-`set_xfr_log_level`, or whatever log level you most recently set it to.
-
-Usage:
-```R
-get_xfr_log_level()
-```
-
-Return value: A string indicating the log level.
-
-Examples:
+`set_xfr_log_level`, or whatever log level you most recently set it to.  The
+return value is a string indicating the log level. Example:
 ```R
 get_xfr_log_level()
 ```
 
 ## MClient
 
-The MClient class is one of two classes in the R API. MClient is an R6
-class that serves as the interface for making remote transferase queries. You
-will not be able to instantiate an object of MClient class until you have
-either run the `config_xfr` function, or configured transferase using the
-command line app (or did the same with the Python API).
+The MClient class is one of two classes in the R API. MClient is an R6 class
+that serves as the interface for making remote transferase queries. You will
+not be able to instantiate an object of MClient class until you have either
+run the `config_xfr` function, or configured transferase using the command
+line app (or did the same with the Python API).
 
 ### Data:
 
 * `config_dir`: The name of the configuration directory associated with this
-    MClient object. Again, this would have been configured using `config_xfr`
-    or the command line transferase app.
+  MClient object. Again, this would have been configured using `config_xfr` or
+  the command line transferase app.
 
-* `data`: A pointer to the underlying object, which cannot be inspected
-    directly. This object could be several hundred MB in size, depending on
-    how many genomes you are working with.
+* `client`: A pointer to the underlying object, which cannot be inspected
+  directly. This object could be several hundred MB in size, depending on how
+  many genomes you are working with.
 
 ### Constructor:
 
 The constructor can take the name of a configuration directory, but most users
 will leave this empty and allow it to use the default.
 
-Usage:
-```R
-MClient$new(config_dir = "")
-```
-
 Arguments:
 * `config_dir`: The name of a configuration directory; most users will
-    typically leave this empty.
+  typically leave this empty.
 
 Examples:
 ```R
@@ -155,38 +134,58 @@ client <- MClient$new("some_directory")
 
 ### do_query
 
-This is the central function for querying methylomes using transferase.
+Query transferase
+
+This is the central function for querying methylomes using transferase.  It
+takes methylome names and query intervals. It returns methylation levels for
+each query interval and methylome, in a matrix with rows corresponding to
+query intervals and columns corresponding to methylomes. It allows for query
+intervals to be specified in multiple formats and has options that control how
+the output is structured.
+
 Currently only "remote" queries are supported through the R package, but that
-includes a server you run on your own machine (e.g., your laptop, in a
+does include a server you run on your own machine (e.g., your laptop, in a
 different window). This is explained in the usage docs for the transferase
 command line app.
 
-This function requires the names of methylomes to query, and a set of genomic
-intervals that can be specified in different ways.
-
 Usage:
 ```R
-do_query(methylomes, query, genome = NULL, covered = FALSE)
+do_query(
+    methylomes,
+    query,
+    genome = NULL,
+    covered = FALSE,
+    add_n_cpgs = FALSE,
+    add_header = FALSE,
+    add_rownames = FALSE,
+    header_sep = '_',
+    rowname_sep = '_'
+)
 ```
 
 Arguments:
 * `methylomes`: A list of methylome names. These must be the names of
-     methylomes that exist on the server. These will usually be SRA accession
-     numbers, and the server will immediately reject any names that include
-     letters other than `[a-zA-Z0-9_]`. Queries involving too many methylomes
-     will be rejected; this number is roughly 45.
-
+   methylomes that exist on the server. These will usually be SRA accession
+   numbers, and the server will immediately reject any names that include
+   letters other than `[a-zA-Z0-9_]`. Queries involving too many methylomes
+   will be rejected; this number is roughly 45.
 * `query`: This can be one of three types:
-     - an integer value indicating a genomic bin size.
-     - a data frame with genomic intervals
-     - an MQuery object built from a set of genomic intervals.
-
+   - an integer value indicating a genomic bin size.
+   - a data frame with genomic intervals
+   - an MQuery object built from a set of genomic intervals.
 * `genome`: The name of the reference genome corresponding to the given
-    methylomes. This is only needed if the type for `query` is a data frame of
-    genomic intervals.
-
+   methylomes. This is only needed if the type for `query` is a data frame of
+   genomic intervals.
 * `covered`: A boolean value indicating whether the response to the query
-    should include the number of covered sites for each interval.
+   should include the number of covered sites for each interval.
+* `add_n_cpgs`: If TRUE, the total number of CpG sites in each query interval
+  with be provided as the final column in resulting matrix.
+* `add_header`: If true, a header will be added to the resulting matrix.
+* `add_rownames`: If true, rownames will be added to the resulting matrix.
+* `header_sep`: The separator character to use inside column names in the
+  resulting matrix.
+* `rowname_sep`: The separator character to use inside row names in the
+  resulting matrix.
 
 Return value: A numeric matrix with one row for each query intervals, and
 columns corresponding to the methylomes in the query. For each query
@@ -194,7 +193,34 @@ methylome, there will be columns named with suffixes `_M` and `_U` indicating
 the number of methylated and unmethylated observations, respectively.
 Additionally, if `covered = TRUE` was set, then there will be a third column,
 indicated with the suffix `_C`, to indicate the number of covered CpG sites in
-each intervals.
+each intervals. The underscore in `_M`, etc., can be changed using the
+`header_sep` argument.
+
+Details:
+
+The do_query method for MClient objects needs to know the following:
+
+- The names of methylomes you want to query.
+- An indication of the query intervals you want information about.
+
+The query intervals can be specified in 3 ways:
+
+- A data frame with each query interval specified in the first 3 columns,
+  giving the chromosome, the start position and the end position,
+  respectively. The chromosome must exist for that genome, and the start and
+  stop positions are considered 0-based and half-open intervals.
+- An integer bin size. I use the word "bin" here as opposed to "window"
+  because the bins don't slide: they are non-overlapping. There is a minimum
+  bin size to ensure that no user asks for bins of 1bp, which would result in
+  a lot of empty information sent from the server.
+- A formatted MQuery object (see the documentation for the MQuery class). This
+  is an object made from a set of genomic intervals, but allows for faster
+  queries. This is because the MQuery object is created for every query that
+  is based on a data frame of intervals. If the MQuery object is constructed
+  separately, it can be used repeatedly without recreating it.
+
+If the query intervals are not specified as an MQuery object, the
+corresponding reference genome must also be supplied.
 
 Examples:
 ```R
@@ -212,10 +238,13 @@ levels <- client$do_query(methylomes, bin_size)
 
 ### Format a transferase query
 
-The `format_query` method of the MClient R6 class converts a data frame of
-genomic intervals (chromosome, start, stop; half-open and zero-based) into a
-MQuery object. The corresponding reference genome must be specified and that
-reference genome must have been configured with the `config_xfr` command.
+Create an MQuery object from genomic intervals
+
+This method formats a set of query intervals as a MQuery object.
+The query intervals must be a data frame specifying chromosome, start and stop
+for each interval in the first three columns, respectively. Intervals are
+0-based and half-open. Intervals must be sorted within each chromosome, but
+the order of chromosomes does not matter.
 
 Usage:
 ```R
@@ -254,9 +283,9 @@ will be used in repeated queries, because keeping the intervals in this form
 makes each query faster. You can't do anything else with an MQuery object, and
 you can't examine its internals.
 
-There are methods associated with MQuery object that you should be using. The
-only uses of MQuery objects is passing them to the `do_query` method of the
-MClient class.
+There are no meaningful methods associated with MQuery object that you should
+be using. The only uses of MQuery objects is passing them to the `do_query`
+method of the MClient class.
 
 Examples:
 ```R
