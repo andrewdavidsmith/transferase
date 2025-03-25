@@ -229,3 +229,18 @@ execute_process(
   RESULT_VARIABLE EXIT_CODE
 )
 ]])
+
+install(CODE [[
+message(STATUS "Replacing std::cout and std::cerr with Rcpp equivalents")
+set(INDICATORS_FILENAME ${CMAKE_INSTALL_PREFIX}/src/indicators/indicators.h)
+execute_process(
+  COMMAND
+  sed -i -E "1s/^/\#include <Rcpp.h>\\n/; \
+  s/std::cout/Rcpp::Rcout/g; \
+  s/std::cerr/Rcpp::Rcerr/g; \
+  s/std::clog/Rcpp::Rcerr/g; \
+  s/stdout/nullptr/g; \
+  s/stderr/nullptr/g" ${INDICATORS_FILENAME}
+  RESULT_VARIABLE EXIT_CODE
+)
+]])
