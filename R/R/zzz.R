@@ -20,16 +20,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-#' transferase
-#'
-#' A system for querying methylation levels from methylomes in the MethBase2
-#' database.
-#'
-#' @docType transferase
-#' @author Andrew D Smith <andrewds@usc.edu>
-#' @import methods Rcpp
-#' @useDynLib transferase
-#' @name transferase
 .onLoad <- function(libname, pkgname) {
   init_logger()
 }
