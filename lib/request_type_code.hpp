@@ -29,7 +29,6 @@
 #include <format>
 #include <string>
 #include <iterator>
-#include <string_view>
 #include <utility>  // for to_underlying, unreachable
 
 namespace transferase {
@@ -43,25 +42,19 @@ enum class request_type_code : std::uint8_t {
   n_request_types = 5,
 };
 
-using std::literals::string_view_literals::operator""sv;
 static constexpr auto request_type_code_names = std::array{
   // clang-format off
-  "intervals"sv,
-  "intervals_covered"sv,
-  "bins"sv,
-  "bins_covered"sv,
-  "unknown"sv,
+  "intervals",
+  "intervals_covered",
+  "bins",
+  "bins_covered",
+  "unknown",
   // clang-format on
 };
 
 [[nodiscard]] inline auto
 to_string(const request_type_code c) -> std::string {
-  const auto x = std::to_underlying(c);
-  if (x >= std::size(request_type_code_names)) {
-    return "error";
-  }
-  const auto &m = request_type_code_names[x];
-  return std::string(std::cbegin(m), std::cend(m));
+  return std::format("{}", std::to_underlying(c));
 }
 
 }  // namespace transferase
