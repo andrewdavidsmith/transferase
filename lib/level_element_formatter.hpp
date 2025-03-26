@@ -24,6 +24,8 @@
 #ifndef LIB_LEVEL_ELEMENT_FORMATTER_HPP_
 #define LIB_LEVEL_ELEMENT_FORMATTER_HPP_
 
+#include "level_element.hpp"
+
 #include <charconv>
 #include <cstdint>
 #include <format>
