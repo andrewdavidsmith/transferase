@@ -38,6 +38,8 @@
 #include <tuple>  // IWYU pragma: keep
 #include <unordered_map>
 
+#include <ctime>
+
 namespace transferase {
 
 [[nodiscard]]
@@ -112,12 +114,20 @@ get_timestamp(const download_request &dr)
                                   dr.connect_timeout, dr.download_timeout);
   }
 
-  std::istringstream is{header.last_modified};
-  std::chrono::time_point<std::chrono::file_clock> tp;
-  if (!(is >> std::chrono::parse(http_time_format, tp)))
-    return {};
+  struct tm tm;
+  strptime(header.last_modified.data(),
+           "%a, %d %b %Y %H:%M:%S GMT", &tm);
 
-  return tp;
+  const std::time_t epoch_time = std::mktime(&tm);
+
+  return std::chrono::time_point<std::chrono::file_clock>{std::chrono::seconds(epoch_time)};
+
+  // std::istringstream is{header.last_modified};
+  // std::chrono::time_point<std::chrono::file_clock> tp;
+  // if (!(is >> std::chrono::parse(http_time_format, tp)))
+  //   return {};
+
+  // return tp;
 }
 
 }  // namespace transferase
