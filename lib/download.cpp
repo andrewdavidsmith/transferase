@@ -101,7 +101,7 @@ download(const download_request &dr)
 auto
 get_timestamp(const download_request &dr)
   -> std::chrono::time_point<std::chrono::file_clock> {
-  static constexpr auto http_time_format = "%a, %d %b %Y %T %z";
+  // static constexpr auto http_time_format = "%a, %d %b %Y %T %z";
 
   http_header header;
 
