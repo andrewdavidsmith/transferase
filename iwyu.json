@@ -2,5 +2,5 @@
     { "include": ["@[\"<]gtest/.*[\">]", "private", "<gtest/gtest.h>", "public"] },
     { "include": ["@[\"<]zconf.h[\">]", "private", "<zlib.h>", "public"] },
     { "include": ["@<nanobind/.*>", "private", "<nanobind/nanobind.h>", "public"] },
-    { "include": ["@[\"<]asio/.*[\">]", "private", "<asio.hpp>", "public"] },
+    { "include": ["@[\"<]asio/.*[\">]", "private", "\"asio.hpp\"", "public"] },
 ]
