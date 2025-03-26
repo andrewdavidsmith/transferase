@@ -32,6 +32,7 @@
 #include "methylome_metadata.hpp"
 #include "query_container.hpp"
 #include "zlib_adapter.hpp"
+#include "query_element.hpp"  // implicitly used
 
 #include <algorithm>
 #include <cassert>
