@@ -214,8 +214,10 @@ methylome_data::get_levels<level_element_t>(
   -> level_container_md<level_element_t> {
   std::vector<level_element_t> res(std::size(query));
   const auto beg = std::cbegin(cpgs);
-  for (const auto [i, q] : std::views::enumerate(query))
-    res[i] = get_levels_impl<level_element_t>(beg + q.start, beg + q.stop);
+  // for (const auto [i, q] : std::views::enumerate(query))
+  std::uint32_t i = 0;
+  for (const auto q : query)
+    res[i++] = get_levels_impl<level_element_t>(beg + q.start, beg + q.stop);
   return level_container_md<level_element_t>(std::move(res));
 }
 
@@ -226,8 +228,12 @@ methylome_data::get_levels<level_element_t>(
   level_container_md<level_element_t>::iterator d_first) const noexcept
   -> void {
   const auto beg = std::cbegin(cpgs);
-  for (const auto [i, q] : std::views::enumerate(query))
+  // for (const auto [i, q] : std::views::enumerate(query))
+  std::uint32_t i = 0;
+  for (const auto q : query) {
     *d_first++ = get_levels_impl<level_element_t>(beg + q.start, beg + q.stop);
+    ++i;
+  }
 }
 
 template <>
@@ -237,8 +243,10 @@ methylome_data::get_levels<level_element_covered_t>(
   -> level_container_md<level_element_covered_t> {
   std::vector<level_element_covered_t> res(std::size(query));
   const auto beg = std::cbegin(cpgs);
-  for (const auto [i, q] : std::views::enumerate(query))
-    res[i] =
+  // for (const auto [i, q] : std::views::enumerate(query))
+  std::uint32_t i = 0;
+  for (const auto q : query)
+    res[i++] =
       get_levels_impl<level_element_covered_t>(beg + q.start, beg + q.stop);
   return level_container_md<level_element_covered_t>(std::move(res));
 }
@@ -250,9 +258,13 @@ methylome_data::get_levels<level_element_covered_t>(
   typename level_container_md<level_element_covered_t>::iterator d_first)
   const noexcept -> void {
   const auto beg = std::cbegin(cpgs);
-  for (const auto [i, q] : std::views::enumerate(query))
+  // for (const auto [i, q] : std::views::enumerate(query))
+  std::uint32_t i = 0;
+  for (const auto q : query) {
     *d_first++ =
       get_levels_impl<level_element_covered_t>(beg + q.start, beg + q.stop);
+    ++i;
+  }
 }
 
 template <>
