@@ -55,7 +55,7 @@ ask for your timezone.
 Once they have installed, clone the repo:
 
 ```console
-git clone https://github.com/andrewdavidsmith/transferase
+git clone https://github.com/andrewdavidsmith/transferase && \
 cd transferase
 ```
 
@@ -155,7 +155,7 @@ apt install -y --no-install-recommends \
 Then make the venv and activate it.
 
 ```console
-python3 -m venv .venv && . .venv/bin/activate
+python3.12 -m venv .venv && . .venv/bin/activate
 ```
 
 Here are the Python packages we need and how to get them:
@@ -172,8 +172,8 @@ we set the CC env variable before the build (gcc-14 likely came along with
 g++-14, but if not, just install it):
 
 ```console
-export CC=gcc-14
-cmake -B build -DCMAKE_CXX_COMPILER=g++-14 -DPACKAGE_PYTHON=on -DCMAKE_BUILD_TYPE=Release
+export CC=gcc-14 && \
+cmake -B build -DCMAKE_CXX_COMPILER=g++-14 -DPACKAGE_PYTHON=on -DCMAKE_BUILD_TYPE=Release && \
 cmake --build build -j32
 ```
 
