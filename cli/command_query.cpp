@@ -69,6 +69,7 @@ xfr query --local -d methylome_dir -x index_dir -g hg38 \
 #include "request.hpp"
 #include "request_type_code.hpp"
 #include "utilities.hpp"
+#include "query_container.hpp"
 
 #include "CLI11/CLI11.hpp"
 
