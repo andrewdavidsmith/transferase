@@ -133,14 +133,15 @@ genome_index::parse_genome_name(
   using std::string_literals::operator""s;
   using std::literals::string_view_literals::operator""sv;
   // clang-format off
-  const auto fasta_suff = std::vector {
-    ".fa"sv,
-    ".fa.gz"sv,
-    ".faa"sv,
-    ".faa.gz"sv,
-    ".fasta"sv,
-    ".fasta.gz"sv,
-  } | std::views::join_with('|');
+  // const auto fasta_suff = std::vector {
+  //   ".fa"sv,
+  //   ".fa.gz"sv,
+  //   ".faa"sv,
+  //   ".faa.gz"sv,
+  //   ".fasta"sv,
+  //   ".fasta.gz"sv,
+  // } | std::views::join_with('|');
+  const auto fasta_suff = ".fa|.fa.gz|.faa|.faa.gz|.fasta|.fasta.gz"sv;
   // clang-format on
   const auto reference_genome_pattern =
     "("s + std::string(std::cbegin(fasta_suff), std::cend(fasta_suff)) + ")$"s;
@@ -327,8 +328,10 @@ make_genome_index_plain(const std::string &genome_filename,
 
   // init the index that maps chrom names to their rank in the order
   meta.chrom_index.clear();
-  for (const auto [i, chrom_name] : std::views::enumerate(meta.chrom_order))
-    meta.chrom_index.emplace(chrom_name, i);
+  // for (const auto [i, chrom_name] : std::views::enumerate(meta.chrom_order))
+  std::uint32_t i = 0;
+  for (const auto chrom_name : meta.chrom_order)
+    meta.chrom_index.emplace(chrom_name, i++);
 
   error = meta.init_env();
   if (error)
@@ -414,8 +417,10 @@ make_genome_index_gzip(const std::string &genome_filename,
 
   // init the index that maps chrom names to their rank in the order
   meta.chrom_index.clear();
-  for (const auto [i, chrom_name] : std::views::enumerate(meta.chrom_order))
-    meta.chrom_index.emplace(chrom_name, i);
+  // for (const auto [i, chrom_name] : std::views::enumerate(meta.chrom_order))
+  std::uint32_t i = 0;
+  for (const auto chrom_name : meta.chrom_order)
+    meta.chrom_index.emplace(chrom_name, i++);
 
   error = meta.init_env();
   if (error)
