@@ -43,7 +43,7 @@ std::uint32_t request::min_bin_size = request::min_bin_size_default;
 [[nodiscard]] STATIC INLINE auto
 compose(char *first, char const *last, const request &req) -> std::error_code {
   // ADS: use to_chars here
-  const std::string s = std::format("{}\n", req);
+  const std::string s = std::format("{}\n", req.tostring());
   if (std::size(s) >= request_buffer_size)
     return request_error_code::request_too_large;
 
@@ -139,15 +139,18 @@ parse(const request_buffer &buf, request &req) -> std::error_code {
 
 [[nodiscard]] auto
 request::summary() const -> std::string {
-  auto joined = methylome_names | std::views::transform([](const auto &r) {
-                  return std::format("\"{}\"", r);
-                }) |
-                std::views::join_with(',') | std::ranges::to<std::string>();
+  // auto joined = methylome_names | std::views::transform([](const auto &r) {
+  //                 return std::format("\"{}\"", r);
+  //               }) |
+  //               std::views::join_with(',') | std::ranges::to<std::string>();
+  std::string joined = std::format("\"{}\"", methylome_names.front());
+  for (auto i = 1u; i < std::size(methylome_names); ++i)
+    joined += std::format(",\"{}\"", methylome_names[i]);
   return std::format(R"({{"request_type": {}, )"
                      R"("index_hash": {}, )"
                      R"("aux_value": {}, )"
                      R"("methylome_names": [{}]}})",
-                     request_type, index_hash, aux_value, joined);
+                     to_string(request_type), index_hash, aux_value, joined);
 }
 
 }  // namespace transferase
