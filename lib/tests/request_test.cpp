@@ -52,7 +52,7 @@ TEST(request_test, valid_compose) {
   EXPECT_FALSE(compose_ec);
   request req_parsed;
   const std::error_code parse_ec = parse(buf, req_parsed);
-  EXPECT_FALSE(parse_ec);
+  EXPECT_FALSE(parse_ec) << parse_ec.message();
   EXPECT_EQ(req, req_parsed);
   EXPECT_EQ(req_parsed.n_intervals(), mock_aux_value);
 }
