@@ -227,14 +227,11 @@ execute_process(
 
 install(CODE [[
 message(STATUS "Adding include for transferase_r.hpp to RcppExports.cpp")
-execute_process(COMMAND mktemp -u
-  OUTPUT_VARIABLE TEMP_FILENAME
-  OUTPUT_STRIP_TRAILING_WHITESPACE
-)
 set(EXPORTS_FILENAME ${CMAKE_INSTALL_PREFIX}/src/RcppExports.cpp)
+message(STATUS "EXPORTS_FILENAME: ${EXPORTS_FILENAME}")
 execute_process(
   COMMAND
-  sed -i "1s/^/\#include \"transferase_r.h\"\\n/" ${EXPORTS_FILENAME}
+  sed -i -E "1s/^/\#include \"transferase_r.h\"\\n/" ${EXPORTS_FILENAME}
   RESULT_VARIABLE EXIT_CODE
 )
 ]])
