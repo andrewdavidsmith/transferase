@@ -343,7 +343,7 @@ get_interval_names(const Rcpp::DataFrame intervals,
 
   std::string prev_name;
   auto cursor = buf_beg;
-  for (auto i = 0u; i < n_intervals; ++i) {
+  for (auto i = 0; i < n_intervals; ++i) {
     const auto &curr_name = Rcpp::as<std::string>(chroms[i]);
     if (prev_name != curr_name) {
       cursor = std::ranges::copy(curr_name, buf_beg).out;
