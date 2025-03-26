@@ -109,7 +109,7 @@ struct request {
                      index_hash, aux_value);
     for (const auto &methylome_name : methylome_names)
       s += std::format("\t{}", methylome_name);
-    return s;
+    return std::format("{}\n", s);
   }
 };
 
