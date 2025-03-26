@@ -114,7 +114,7 @@ get_timestamp(const download_request &dr)
                                   dr.connect_timeout, dr.download_timeout);
   }
 
-  struct tm tm;
+  struct tm tm{};
   strptime(header.last_modified.data(),
            "%a, %d %b %Y %H:%M:%S GMT", &tm);
 
