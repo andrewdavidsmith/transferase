@@ -122,11 +122,15 @@ operator>>(std::istream &in, log_level_t &l) -> std::istream & {
   std::string tmp;
   if (!(in >> tmp))
     return in;
-  for (const auto [idx, name] : std::views::enumerate(level_name))
+  // for (const auto [idx, name] : std::views::enumerate(level_name))
+  std::uint32_t idx = 0;
+  for (const auto name : level_name) {
     if (tmp == name) {
       l = static_cast<log_level_t>(idx);
       return in;
     }
+    ++idx;
+  }
   in.setstate(std::ios::failbit);
   return in;
 }
