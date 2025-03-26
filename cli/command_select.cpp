@@ -367,6 +367,7 @@ write_output(const auto &data, std::string &outfile) {
       confirmation = std::getchar();
     }
     erase();
+    // NOLINTNEXTLINE (*-type-vararg)
     mvprintw(0, 0, done_message);
     refresh();
   }
