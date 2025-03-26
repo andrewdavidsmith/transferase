@@ -45,11 +45,15 @@ operator>>(std::istream &in, download_policy_t &dp) -> std::istream & {
   std::string tmp;
   if (!(in >> tmp))
     return in;
-  for (const auto [idx, name] : std::views::enumerate(download_policy_t_name))
+  // for (const auto [idx, name] : std::views::enumerate(download_policy_t_name))
+  std::uint32_t idx = 0;
+  for (const auto name : download_policy_t_name) {
     if (tmp == name) {
       dp = static_cast<download_policy_t>(idx);
       return in;
     }
+    ++idx;
+  }
   in.setstate(std::ios::failbit);
   return in;
 }

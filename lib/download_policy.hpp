@@ -56,7 +56,7 @@ static constexpr auto download_policy_t_name = std::array{
 };
 
 [[nodiscard]] inline auto
-get_download_policy_message(download_policy_t p) -> std::string {
+get_download_policy_message(const download_policy_t p) -> std::string {
   static constexpr auto download_policy_message = std::array{
     // clang-format off
     "no downloads"sv,
@@ -70,6 +70,16 @@ get_download_policy_message(download_policy_t p) -> std::string {
     return "error";
   }
   const auto &m = download_policy_message[x];
+  return std::string(std::cbegin(m), std::cend(m));
+}
+
+[[nodiscard]] inline auto
+to_string(const download_policy_t p) -> std::string {
+  const auto x = std::to_underlying(p);
+  if (x >= std::size(download_policy_t_name)) {
+    return "error";
+  }
+  const auto &m = download_policy_t_name[x];
   return std::string(std::cbegin(m), std::cend(m));
 }
 
