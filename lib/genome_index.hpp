@@ -95,7 +95,7 @@ struct genome_index {
   /// @brief Generate a string representation in JSON format for a genome_index
   [[nodiscard]] auto
   tostring() const noexcept -> std::string {
-    return std::format(R"json({{"meta": {}, "data": {}}})json", meta, data);
+    return std::format(R"json({{"meta": {}, "data": {}}})json", meta.tostring(), data.tostring());
   }
 
   /// @brief Get a const reference to the associated metadata
