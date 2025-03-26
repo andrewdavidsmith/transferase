@@ -206,6 +206,17 @@ set(FILES_TO_REMOVE
   "${CMAKE_INSTALL_PREFIX}/src/server.hpp"
   "${CMAKE_INSTALL_PREFIX}/src/request_handler.hpp"
   "${CMAKE_INSTALL_PREFIX}/src/request_handler.cpp"
+  "${CMAKE_INSTALL_PREFIX}/src/bins_writer.cpp"
+  "${CMAKE_INSTALL_PREFIX}/src/bins_writer.hpp"
+  "${CMAKE_INSTALL_PREFIX}/src/counts_file_format.hpp"
+  "${CMAKE_INSTALL_PREFIX}/src/counts_file_format.cpp"
+  "${CMAKE_INSTALL_PREFIX}/src/counts_file_format_impl.hpp"
+  "${CMAKE_INSTALL_PREFIX}/src/intervals_writer.hpp"
+  "${CMAKE_INSTALL_PREFIX}/src/intervals_writer.cpp"
+  "${CMAKE_INSTALL_PREFIX}/src/output_format_type.hpp"
+  "${CMAKE_INSTALL_PREFIX}/src/output_format_type.cpp"
+  "${CMAKE_INSTALL_PREFIX}/src/server_config.hpp"
+  "${CMAKE_INSTALL_PREFIX}/src/server_config.cpp"
 )
 file(REMOVE ${FILES_TO_REMOVE})
 file(REMOVE_RECURSE ${CMAKE_INSTALL_PREFIX}/src/asio/experimental)
@@ -231,7 +242,9 @@ set(EXPORTS_FILENAME ${CMAKE_INSTALL_PREFIX}/src/RcppExports.cpp)
 message(STATUS "EXPORTS_FILENAME: ${EXPORTS_FILENAME}")
 execute_process(
   COMMAND
-  sed -i -E "1s/^/\#include \"transferase_r.h\"\\n/" ${EXPORTS_FILENAME}
+  sed -i.remove "1s/^/\#include \"transferase_r.h\"\\n/" ${EXPORTS_FILENAME}
+  COMMAND
+  rm ${EXPORTS_FILENAME}.remove
   RESULT_VARIABLE EXIT_CODE
 )
 ]])
