@@ -229,11 +229,8 @@ methylome_data::get_levels<level_element_t>(
   -> void {
   const auto beg = std::cbegin(cpgs);
   // for (const auto [i, q] : std::views::enumerate(query))
-  std::uint32_t i = 0;
-  for (const auto q : query) {
+  for (const auto q : query)
     *d_first++ = get_levels_impl<level_element_t>(beg + q.start, beg + q.stop);
-    ++i;
-  }
 }
 
 template <>
@@ -259,12 +256,9 @@ methylome_data::get_levels<level_element_covered_t>(
   const noexcept -> void {
   const auto beg = std::cbegin(cpgs);
   // for (const auto [i, q] : std::views::enumerate(query))
-  std::uint32_t i = 0;
-  for (const auto q : query) {
+  for (const auto q : query)
     *d_first++ =
       get_levels_impl<level_element_covered_t>(beg + q.start, beg + q.stop);
-    ++i;
-  }
 }
 
 template <>
