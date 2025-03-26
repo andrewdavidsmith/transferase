@@ -25,7 +25,6 @@
 #define LIB_SERVER_HPP_
 
 #include "request_handler.hpp"
-#include "server_error_code.hpp"
 
 #include "asio.hpp"
 
@@ -33,8 +32,6 @@
 #include <cstdint>
 #include <string>
 #include <system_error>
-#include <type_traits>
-#include <utility>
 
 namespace transferase {
 
