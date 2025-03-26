@@ -194,7 +194,7 @@ client_connection_base<D, L>::handle_resolve(
     deadline.expires_after(read_timeout_seconds);
   }
   else {
-    lgr.debug("Error resolving server: {}", ec);
+    lgr.debug("Error resolving server: {}", ec.message());
     do_finish(ec);
   }
 }
@@ -212,12 +212,12 @@ client_connection_base<D, L>::handle_connect(std::error_code ec) -> void {
       deadline.expires_after(read_timeout_seconds);
     }
     else {
-      lgr.debug("Error forming request: {}", ec);
+      lgr.debug("Error forming request: {}", ec.message());
       do_finish(ec);
     }
   }
   else {
-    lgr.debug("Error connecting: {}", ec);
+    lgr.debug("Error connecting: {}", ec.message());
     do_finish(ec);
   }
 }
@@ -235,7 +235,7 @@ client_connection_base<D, L>::handle_write_request(const std::error_code ec)
     deadline.expires_after(wait_for_work_timeout_seconds);
   }
   else {
-    lgr.debug("Error writing request: {}", ec);
+    lgr.debug("Error writing request: {}", ec.message());
     deadline.expires_after(read_timeout_seconds);
     // wait for an explanation of the problem
     asio::async_read(
@@ -263,12 +263,12 @@ client_connection_base<D, L>::handle_read_response_header(std::error_code ec)
       }
     }
     else {
-      lgr.debug("Error: {}", ec);
+      lgr.debug("Error: {}", ec.message());
       do_finish(ec);
     }
   }
   else {
-    lgr.debug("Error reading response header: {}", ec);
+    lgr.debug("Error reading response header: {}", ec.message());
     do_finish(ec);
   }
 }
@@ -292,7 +292,7 @@ client_connection_base<D, L>::do_read_response_payload() -> void {
         }
       }
       else {
-        lgr.error("Error reading levels: {}", ec);
+        lgr.error("Error reading levels: {}", ec.message());
         // exiting the read loop -- no deadline for now
         do_finish(ec);
       }
@@ -312,12 +312,12 @@ client_connection_base<D, L>::handle_failure_explanation(std::error_code ec)
       do_finish(resp_hdr.status);
     }
     else {
-      lgr.debug("Error: {}", ec);
+      lgr.debug("Error: {}", ec.message());
       do_finish(ec);
     }
   }
   else {
-    lgr.debug("Error reading response header: {}", ec);
+    lgr.debug("Error reading response header: {}", ec.message());
     do_finish(ec);
   }
 }
