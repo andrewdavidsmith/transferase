@@ -31,7 +31,7 @@
 #include <chrono>
 #include <filesystem>
 #include <fstream>
-#include <print>  // IWYU pragma: keep
+#include <print>    // IWYU pragma: keep
 #include <sstream>  // IWYU pragma: keep
 #include <string>
 #include <system_error>
@@ -115,12 +115,12 @@ get_timestamp(const download_request &dr)
   }
 
   struct tm tm{};
-  strptime(header.last_modified.data(),
-           "%a, %d %b %Y %H:%M:%S GMT", &tm);
+  strptime(header.last_modified.data(), "%a, %d %b %Y %H:%M:%S GMT", &tm);
 
   const std::time_t epoch_time = std::mktime(&tm);
 
-  return std::chrono::time_point<std::chrono::file_clock>{std::chrono::seconds(epoch_time)};
+  return std::chrono::time_point<std::chrono::file_clock>{
+    std::chrono::seconds(epoch_time)};
 
   // std::istringstream is{header.last_modified};
   // std::chrono::time_point<std::chrono::file_clock> tp;
