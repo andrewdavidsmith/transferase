@@ -207,6 +207,7 @@ write_bedlike_bins_impl(
   const auto write_n_cpgs = !n_cpgs.empty();
 
   std::vector<char> line(bins_writer::output_buffer_size);
+  // NOLINTNEXTLINE (*-pointer-arithmetic)
   const auto line_end = line.data() + std::size(line);
   auto error = std::errc{};
 
@@ -264,6 +265,7 @@ write_bins_dataframe_scores_impl(
   }
 
   std::vector<char> line(bins_writer::output_buffer_size);
+  // NOLINTNEXTLINE (*-pointer-arithmetic)
   const auto line_end = line.data() + std::size(line);
   auto error = std::errc{};
 
@@ -327,6 +329,7 @@ write_bins_dataframe_impl(
   }
 
   std::vector<char> line(bins_writer::output_buffer_size);
+  // NOLINTNEXTLINE (*-pointer-arithmetic)
   const auto line_end = line.data() + std::size(line);
   auto error = std::errc{};
 
