@@ -31,8 +31,8 @@
 #include <chrono>
 #include <filesystem>
 #include <fstream>
-#include <print>
-#include <sstream>
+#include <print>  // IWYU pragma: keep
+#include <sstream>  // IWYU pragma: keep
 #include <string>
 #include <system_error>
 #include <tuple>  // IWYU pragma: keep
