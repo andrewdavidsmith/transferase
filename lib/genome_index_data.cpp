@@ -129,7 +129,9 @@ make_query_within_chrom(const genome_index_data::vec &positions,
   -> transferase::query_container {
   transferase::query_container query(std::size(chrom_ranges));
   auto cursor = std::cbegin(positions);
-  for (const auto [idx, cr] : std::views::enumerate(chrom_ranges)) {
+  // for (const auto [idx, cr] : std::views::enumerate(chrom_ranges)) {
+  std::uint32_t idx = 0;
+  for (const auto cr : chrom_ranges) {
     namespace rg = std::ranges;
     cursor = rg::lower_bound(cursor, std::cend(positions), cr.start);
     const auto pos_stop =
@@ -138,6 +140,7 @@ make_query_within_chrom(const genome_index_data::vec &positions,
       static_cast<q_elem_t>(rg::distance(std::cbegin(positions), cursor)),
       static_cast<q_elem_t>(rg::distance(std::cbegin(positions), pos_stop)),
     };
+    ++idx;
   }
   return query;
 }
