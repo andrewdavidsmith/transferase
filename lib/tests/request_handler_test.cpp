@@ -31,6 +31,7 @@
 #include <query_element.hpp>
 #include <request.hpp>
 #include <request_type_code.hpp>
+#include <server_error_code.hpp>
 #include <response.hpp>
 #include <server.hpp>
 
