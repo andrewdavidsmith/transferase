@@ -330,7 +330,7 @@ make_genome_index_plain(const std::string &genome_filename,
   meta.chrom_index.clear();
   // for (const auto [i, chrom_name] : std::views::enumerate(meta.chrom_order))
   std::uint32_t i = 0;
-  for (const auto chrom_name : meta.chrom_order)
+  for (const auto &chrom_name : meta.chrom_order)
     meta.chrom_index.emplace(chrom_name, i++);
 
   error = meta.init_env();
@@ -419,7 +419,7 @@ make_genome_index_gzip(const std::string &genome_filename,
   meta.chrom_index.clear();
   // for (const auto [i, chrom_name] : std::views::enumerate(meta.chrom_order))
   std::uint32_t i = 0;
-  for (const auto chrom_name : meta.chrom_order)
+  for (const auto &chrom_name : meta.chrom_order)
     meta.chrom_index.emplace(chrom_name, i++);
 
   error = meta.init_env();
