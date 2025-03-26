@@ -166,8 +166,10 @@ static inline auto
 show_selected_keys(const auto &selected_keys) {
   using std::string_literals::operator""s;
   clear();
+  // NOLINTNEXTLINE (*-type-vararg)
   mvprintw(0, 0, "Selected keys: "s);
   if (selected_keys.empty())
+    // NOLINTNEXTLINE (*-type-vararg)
     mvprintw(1, 0, "Empty selection."s);
   else {
     const auto joined = selected_keys | std::views::join_with(',') |
@@ -253,8 +255,10 @@ get_filename(std::string &filename) {
   const std::string original_filename{filename};
 
   clear();
+  // NOLINTBEGIN (*-type-vararg)
   mvprintw(0, 0, header1);
   mvprintw(1, 0, header2);
+  // NOLINTEND (*-type-vararg)
   mvprintw(2, 0, std::format(msg_fmt, filename));
   refresh();
 
@@ -276,8 +280,10 @@ get_filename(std::string &filename) {
     }
 
     clear();
+    // NOLINTBEGIN (*-type-vararg)
     mvprintw(0, 0, header1);
     mvprintw(1, 0, header2);
+    // NOLINTEND (*-type-vararg)
     mvprintw(2, 0, std::format(msg_fmt, filename));
     refresh();
   }
@@ -297,6 +303,7 @@ write_output(const auto &data, std::string &outfile) {
     confirmation = '\0';
     while (confirmation != '\0') {
       erase();
+      // NOLINTNEXTLINE (*-type-vararg)
       mvprintw(0, 0, empty_sel_msg);
       refresh();
       confirmation = std::getchar();
@@ -324,12 +331,15 @@ write_output(const auto &data, std::string &outfile) {
       erase();
       if (outfile.empty()) {
         mvprintw(0, 0, std::format(msg_fmt1_empty, std::size(data)));
+        // NOLINTNEXTLINE (*-type-vararg)
         mvprintw(1, 0, msg_fmt2_empty);
       }
       else {
         mvprintw(0, 0, std::format(msg_fmt1, std::size(data), outfile));
+        // NOLINTNEXTLINE (*-type-vararg)
         mvprintw(1, 0, msg_fmt2);
       }
+      // NOLINTNEXTLINE (*-type-vararg)
       mvprintw(2, 0, msg_fmt3);
       refresh();
       confirmation = std::getchar();
@@ -351,6 +361,7 @@ write_output(const auto &data, std::string &outfile) {
     confirmation = '\0';
     while (confirmation != '\0') {
       erase();
+      // NOLINTNEXTLINE (*-type-vararg)
       mvprintw(0, 0, done_message);
       refresh();
       confirmation = std::getchar();
@@ -368,11 +379,13 @@ confirm_quit() -> bool {
   while (std::tolower(confirmation) != 'y' &&
          std::tolower(confirmation) != 'n') {
     erase();
+    // NOLINTNEXTLINE (*-type-vararg)
     mvprintw(0, 0, message);
     refresh();
     confirmation = std::getchar();
   }
   erase();
+  // NOLINTNEXTLINE (*-type-vararg)
   mvprintw(0, 0, message);
   refresh();
   return (confirmation == 'y' || confirmation == 'Y');
