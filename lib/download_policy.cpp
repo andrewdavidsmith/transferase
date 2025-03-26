@@ -26,7 +26,7 @@
 #include <array>
 #include <format>
 #include <iostream>
-#include <ranges>
+#include <ranges>  // IWYU pragma: keep
 #include <string>
 #include <string_view>
 #include <tuple>    // IWYU pragma: keep
