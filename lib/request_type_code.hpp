@@ -27,8 +27,8 @@
 #include <array>
 #include <cstdint>  // for std::uint32_t
 #include <format>
-#include <string>
 #include <iterator>
+#include <string>
 #include <utility>  // for to_underlying, unreachable
 
 namespace transferase {

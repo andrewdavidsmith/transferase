@@ -105,8 +105,8 @@ struct request {
   [[nodiscard]] auto
   tostring() const -> std::string {
     std::string s;
-    s += std::format("{}\t{}\t{}", to_string(request_type),
-                     index_hash, aux_value);
+    s +=
+      std::format("{}\t{}\t{}", to_string(request_type), index_hash, aux_value);
     for (const auto &methylome_name : methylome_names)
       s += std::format("\t{}", methylome_name);
     return std::format("{}\n", s);
@@ -126,7 +126,8 @@ struct std::formatter<transferase::request> : std::formatter<std::string> {
   auto
   format(const transferase::request &r, std::format_context &ctx) const {
     std::string s;
-    s += std::format("{}\t{}\t{}", to_string(r.request_type), r.index_hash, r.aux_value);
+    s += std::format("{}\t{}\t{}", to_string(r.request_type), r.index_hash,
+                     r.aux_value);
     for (const auto &methylome_name : r.methylome_names)
       s += std::format("\t{}", methylome_name);
     return std::format_to(ctx.out(), "{}\n", s);
