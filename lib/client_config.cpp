@@ -381,7 +381,8 @@ client_config::save(std::error_code &error) const noexcept -> void {
 client_config::tostring() const -> std::string {
   static constexpr auto n_indent = 4;
   nlohmann::json data = *this;
-  return std::format("{}\n", data.dump(n_indent));
+  const std::string dump = data.dump(n_indent);
+  return std::format("{}\n", dump);
 }
 
 [[nodiscard]] static auto
@@ -389,7 +390,7 @@ dl_err(const auto &hdr, const auto &ec, const auto &url) -> std::error_code {
   auto &lgr = transferase::logger::instance();
   lgr.debug("Error downloading {}: ", url);
   if (ec)
-    lgr.debug("Error code: {}", ec);
+    lgr.debug("Error code: {}", ec.message());
   const auto status_itr = hdr.find("status");
   if (status_itr != std::cend(hdr))
     lgr.debug("HTTP status: {}", status_itr->second);
@@ -454,7 +455,7 @@ download_index_files(const remote_data_resource &remote,
         (download_policy == download_policy_t::update && is_outdated)) {
       lgr.debug(R"(Download: {} to "{}")", remote.form_url(data_file), dirname);
       lgr.debug("Reason: policy={}, file_exists={}, is_outdated={}",
-                download_policy, index_file_exists, is_outdated);
+                to_string(download_policy), index_file_exists, is_outdated);
 
       const auto [data_hdr, data_err] = download(dr);
       if (data_err)
@@ -510,7 +511,7 @@ download_metadata_file(
       (download_policy == download_policy_t::update && is_outdated)) {
     lgr.debug("Download: {} to {}", remote.form_url(metadata_file), dirname);
     lgr.debug("Reason: policy={}, file_exists={}, is_outdated={}",
-              download_policy, metadata_file_exists, is_outdated);
+              to_string(download_policy), metadata_file_exists, is_outdated);
 
     const auto [data_hdr, data_err] = download(dr);
     if (data_err)
@@ -545,7 +546,7 @@ client_config::install(const std::vector<std::string> &genomes,
   lgr.debug("Writing configuration file");
   save(error);
   if (error) {
-    lgr.debug("Error writing config file: {}", error);
+    lgr.debug("Error writing config file: {}", error.message());
     return;
   }
 
@@ -560,7 +561,7 @@ client_config::install(const std::vector<std::string> &genomes,
     const auto metadata_err =
       download_metadata_file(remote, metadata_dir, download_policy);
     if (metadata_err)
-      lgr.debug("Error obtaining metadata file: {}", metadata_err);
+      lgr.debug("Error obtaining metadata file: {}", metadata_err.message());
     if (!metadata_err) {
       metadata_downloads_ok = true;
       break;
@@ -579,7 +580,7 @@ client_config::install(const std::vector<std::string> &genomes,
     const auto index_err = download_index_files(
       remote, genomes, index_full_path, download_policy, show_progress);
     if (index_err)
-      lgr.debug("Error obtaining index files: {}", index_err);
+      lgr.debug("Error obtaining index files: {}", index_err.message());
     if (!index_err) {
       genome_downloads_ok = true;
       break;
