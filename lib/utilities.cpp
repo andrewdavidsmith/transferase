@@ -58,13 +58,13 @@ validate_output_directory(const std::string &dirname,
   auto &lgr = transferase::logger::instance();
   const bool dir_exists = std::filesystem::exists(dirname, error);
   if (error) {
-    lgr.error("Filesystem error {}: {}", dirname, error);
+    lgr.error("Filesystem error {}: {}", dirname, error.message());
     return;
   }
   if (!dir_exists) {
     const bool dirs_ok = std::filesystem::create_directories(dirname, error);
     if (error) {
-      lgr.error("Failed to create directory {}: {}", dirname, error);
+      lgr.error("Failed to create directory {}: {}", dirname, error.message());
       return;
     }
     const auto status = dirs_ok ? "created" : "exists";

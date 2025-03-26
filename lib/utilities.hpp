@@ -72,7 +72,10 @@ rlstrip(const std::string &s) noexcept -> std::string {
     return std::isgraph(c);
   };
   const auto start = std::ranges::find_if(s, is_graph);
-  auto stop = std::begin(std::ranges::find_last_if(s, is_graph));
+  // auto stop = std::begin(std::ranges::find_last_if(s, is_graph));
+  auto stop = std::end(s);
+  while (stop != std::cbegin(s) && !is_graph(*(--stop)))
+    ;
   if (stop != std::cend(s))
     ++stop;
   return std::string(start, stop);
