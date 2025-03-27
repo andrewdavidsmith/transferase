@@ -18,7 +18,25 @@ jobs:
           brew update
       - name: Find OpenSSL
         run: |
-          find / -name openssl
-          find / -name libssl.a
-          find / -name libssl\*
-          find / -name include -exec ls {}/conf.h \;
+          find / -name openssl 2> /dev/null
+          find / -name libssl.a 2> /dev/null
+          find / -name libssl\* 2> /dev/null
+          find / -name include -exec ls {}/conf.h \; 2> /dev/null
+      - name: Install OpenSSL
+        run: |
+          brew install openssl
+      - name: Install R
+        run: |
+          brew install --cask r
+      - name: Install R dependencies
+        run: |
+          R -e "options(repos = c(CRAN = 'https://cloud.r-project.org')); install.packages(c('Rcpp', 'R6', 'roxygen2', 'openssl'))"
+      - name: Find OpenSSL again
+        run: |
+          find / -name openssl 2> /dev/null
+          find / -name libssl.a 2> /dev/null
+          find / -name libssl\* 2> /dev/null
+          find / -name include -exec ls {}/conf.h \; 2> /dev/null
+      - name: R Env
+        run: |
+          R CMD config --all
