@@ -30,6 +30,10 @@ jobs:
       - name: Install R
         run: |
           brew install --cask r
+      - name: Link the Brew prefix paths
+        run: |
+          sudo ln -s $(brew --prefix)/include /usr/local/include
+          sudo ln -s $(brew --prefix)/lib /usr/local/lib
       - name: Install R dependencies
         run: |
           R -e "options(repos = c(CRAN = 'https://cloud.r-project.org')); install.packages(c('Rcpp', 'R6', 'roxygen2'))"
