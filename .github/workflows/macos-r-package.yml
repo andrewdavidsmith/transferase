@@ -16,29 +16,9 @@ jobs:
       - name: Update Homebrew
         run: |
           brew update
-      - name: Install OpenSSL
+      - name: Find OpenSSL
         run: |
-          brew install openssl
-      - name: Install R
-        run: |
-          brew install --cask r
-      - name: Install R dependencies
-        run: |
-          R -e "options(repos = c(CRAN = 'https://cloud.r-project.org')); install.packages(c('Rcpp', 'R6', 'roxygen2'))"
-      - uses: actions/checkout@v4
-      - name: Generate R API source tree
-        run: |
-          cmake -B build -DBUILD_R=on -DCMAKE_INSTALL_PREFIX=rsrc -Wno-dev && \
-          cmake --install build
-      - name: Build for making docs
-        run: |
-          R CMD INSTALL --no-inst rsrc
-      - name: Build the docs
-        run: |
-          Rscript -e "library(roxygen2, R6); roxygen2::roxygenize('rsrc')" && \
-          mkdir rsrc/doc && \
-          R CMD Rd2pdf -o rsrc/doc/transferase.pdf --no-preview rsrc
-      - name: Build and check the package
-        run: |
-          R CMD build rsrc && \
-          R CMD check transferase_0.5.0.tar.gz
+          find / -name openssl
+          find / -name libssl.a
+          find / -name libssl\*
+          find / -name include -exec ls {}/conf.h \;
