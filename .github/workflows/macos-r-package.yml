@@ -44,11 +44,9 @@ jobs:
       - name: Build the docs
         run: |
           eval "$(/usr/libexec/path_helper)"
-          alias pdflatex='/Library/TeX/texbin/pdflatex'
-          Rscript -e "library(roxygen2, R6); roxygen2::roxygenize('rsrc')"
-          mkdir rsrc/doc
+          Rscript -e "library(roxygen2, R6); roxygen2::roxygenize('rsrc')" && \
+          mkdir rsrc/doc && \
           R CMD Rd2pdf -o rsrc/doc/transferase.pdf --no-preview rsrc
-        shell: bash
       - name: Get version number
         id: get-vn
         run: |
