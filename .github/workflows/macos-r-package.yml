@@ -16,6 +16,9 @@ jobs:
       - name: Update Homebrew
         run: |
           brew update
+      - name: Install OpenSSL
+        run: |
+          brew install openssl
       - name: Install R
         run: |
           brew install --cask r
