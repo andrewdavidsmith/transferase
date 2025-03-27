@@ -50,7 +50,7 @@ get_username() -> std::tuple<std::string, std::error_code> {
   std::array<char, bufsize> buf{};
   const auto s = getpwuid_r(getuid(), &pwd, buf.data(), bufsize, &result);
   if (result == nullptr)
-    return {{},
+    return {std::string{},
             std::make_error_code(s == 0 ? std::errc::invalid_argument
                                         : std::errc(errno))};
   // ADS: pw_name below might be better as pw_gecos
@@ -73,7 +73,7 @@ get_hostname() -> std::tuple<std::string, std::error_code> {
   std::error_code ec;
   const auto host = asio::ip::host_name(ec);
   if (ec)
-    return {{}, ec};
+    return {std::string{}, ec};
   return {host, std::error_code{}};
 }
 

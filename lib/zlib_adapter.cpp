@@ -122,7 +122,7 @@ read_gzfile_into_buffer(const std::string &filename)
 
   gzFile gz = gzopen(filename.data(), "rb");
   if (!gz)
-    return {{}, std::make_error_code(std::errc(errno))};
+    return {std::vector<char>{}, std::make_error_code(std::errc(errno))};
 
   std::array<char, buf_size> buf{};
   std::vector<char> buffer;
@@ -133,7 +133,7 @@ read_gzfile_into_buffer(const std::string &filename)
   gzclose(gz);
 
   if (n_bytes < 0)
-    return {{},
+    return {std::vector<char>{},
             std::error_code{zlib_adapter_error_code::unexpected_return_code}};
 
   return std::make_tuple(std::move(buffer), std::error_code{});

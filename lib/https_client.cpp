@@ -73,12 +73,12 @@ download_https(
 
   const std::error_code error = c.get_status();
   if (error)
-    return {{}, error};
+    return {http_header{}, error};
 
   const auto &data = c.get_data();
   std::ofstream out(outfile);
   if (!out)
-    return {{}, std::make_error_code(std::errc(errno))};
+    return {http_header{}, std::make_error_code(std::errc(errno))};
 
   out.write(data.data(), std::ssize(data));
 
