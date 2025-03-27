@@ -1,7 +1,7 @@
 CXX_STD = CXX23
 PKG_CPPFLAGS = -I.
 PKG_LIBS= -lssl $(LTO)
-ifeq ($(shell uname -s), Darwin)
+ifeq (`uname -s`, Darwin)
     PKG_CPPFLAGS += -I$(shell brew --prefix openssl)/include
     PKG_LIBS += -L$(shell brew --prefix openssl)/lib
 endif
