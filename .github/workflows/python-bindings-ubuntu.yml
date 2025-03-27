@@ -16,7 +16,7 @@ jobs:
           sudo apt-get install -y zlib1g-dev
       - name: Install Python packages
         run: |
-          pip install nanobind pytest wheel auditwheel hatch
+          pip install nanobind pytest wheel auditwheel hatch numpy
       - name: Configure
         run: |
           cmake -B build \
