@@ -40,7 +40,7 @@ library(R6)
 #' @examples
 #' config_xfr(c("hg38"), "some_directory")
 config_xfr <- function(genomes, config_dir = "") {
-  invisible(.Call(`_transferase_config_xfr`, genomes, config_dir))
+  invisible(.Call(`_Rxfr_config_xfr`, genomes, config_dir))
 }
 
 #' Set transferase log level
@@ -57,7 +57,7 @@ config_xfr <- function(genomes, config_dir = "") {
 #' @examples
 #' set_xfr_log_level("debug")
 set_xfr_log_level <- function(log_level) {
-  invisible(.Call(`_transferase_set_xfr_log_level`, log_level))
+  invisible(.Call(`_Rxfr_set_xfr_log_level`, log_level))
 }
 
 #' Get the transferase log level
@@ -71,20 +71,20 @@ set_xfr_log_level <- function(log_level) {
 #' @examples
 #' get_xfr_log_level()
 get_xfr_log_level <- function() {
-  .Call(`_transferase_get_xfr_log_level`)
+  .Call(`_Rxfr_get_xfr_log_level`)
 }
 
 #' Initialize logger
 #'
 #' Initialize logging for transferase. This function is called automatically
-#' when 'library(transferase)' is called. You will never need to use it, and
+#' when 'library(Rxfr)' is called. You will never need to use it, and
 #' it takes no arguments anyway.
 #'
 #' @export
 #' @examples
 #' init_logger()
 init_logger <- function() {
-  .Call(`_transferase_init_logger`)
+  .Call(`_Rxfr_init_logger`)
 }
 
 #' @title MQuery
@@ -203,7 +203,7 @@ MClient <- R6Class(
         stop(sprintf(fmt, config_file), call. = FALSE)
       }
       self$config_dir <- config_dir
-      private$client <- .Call(`_transferase_create_mclient`, config_dir)
+      private$client <- .Call(`_Rxfr_create_mclient`, config_dir)
     },
 
     #' @description Print an MClient object
@@ -288,26 +288,26 @@ MClient <- R6Class(
       get_query_response <- function(methylomes, query, genome, covered) {
         if (is_intervals(query)) {
           if (covered) {
-            .Call(`_transferase_query_intervals_cov`, private$client,
+            .Call(`_Rxfr_query_intervals_cov`, private$client,
                   methylomes, genome, query)
           } else {
-            .Call(`_transferase_query_intervals`, private$client,
+            .Call(`_Rxfr_query_intervals`, private$client,
                   methylomes, genome, query)
           }
         } else if (is_bins(query)) {
           if (covered) {
-            .Call(`_transferase_query_bins_cov`, private$client,
+            .Call(`_Rxfr_query_bins_cov`, private$client,
                   methylomes, query)
           } else {
-            .Call(`_transferase_query_bins`, private$client,
+            .Call(`_Rxfr_query_bins`, private$client,
                   methylomes, query)
           }
         } else if (is_mquery(query)) {
           if (covered) {
-            .Call(`_transferase_query_preprocessed_cov`, private$client,
+            .Call(`_Rxfr_query_preprocessed_cov`, private$client,
                   methylomes, query$data)
           } else {
-            .Call(`_transferase_query_preprocessed`, private$client,
+            .Call(`_Rxfr_query_preprocessed`, private$client,
                   methylomes, query$data)
           }
         } else {
@@ -326,13 +326,13 @@ MClient <- R6Class(
       # Add rownames to the results
       if (add_rownames) {
         if (is_bins(query)) {
-          rownames(response) <- .Call(`_transferase_get_bin_names`,
+          rownames(response) <- .Call(`_Rxfr_get_bin_names`,
                                       private$client, genome,
                                       query, rowname_sep)
         } else if (is_mquery(query)) {
           stop("Cannot add rownames if query is MQuery object", call. = FALSE)
         } else { # is_intervals(query)
-          rownames(response) <- .Call(`_transferase_get_interval_names`,
+          rownames(response) <- .Call(`_Rxfr_get_interval_names`,
                                       query, rowname_sep)
         }
       }
@@ -340,11 +340,11 @@ MClient <- R6Class(
       # Function to compute the number of CpG sites in each query interval
       get_n_cpgs <- function(client, genome, query) {
         if (is_bins(query)) {
-          .Call(`_transferase_get_n_cpgs_bins`, client, genome, query)
+          .Call(`_Rxfr_get_n_cpgs_bins`, client, genome, query)
         } else if (is_mquery(query)) {
-          .Call(`_transferase_get_n_cpgs_query`, query)
+          .Call(`_Rxfr_get_n_cpgs_query`, query)
         } else { # is_intervals(query)
-          .Call(`_transferase_get_n_cpgs`, client, genome, query)
+          .Call(`_Rxfr_get_n_cpgs`, client, genome, query)
         }
       }
 
@@ -388,8 +388,7 @@ MClient <- R6Class(
         stop("intervals must be a data frame of genomic intervals",
              call. = FALSE)
       }
-      MQuery$new(.Call(`_transferase_format_query`,
-                       private$client, genome, intervals),
+      MQuery$new(.Call(`_Rxfr_format_query`, private$client, genome, intervals),
                  genome, nrow(intervals))
     }
   )
