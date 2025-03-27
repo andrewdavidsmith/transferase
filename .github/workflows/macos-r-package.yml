@@ -22,7 +22,11 @@ jobs:
       - name: Install LaTeX
         run: |
           brew install basictex
-          brew install --cask font-inconsolata
+      - name: Install font for R manuals
+        run: |
+          eval "$(/usr/libexec/path_helper)"
+          sudo tlmgr update --self
+          sudo tlmgr install inconsolata
       - name: Install R
         run: |
           brew install --cask r
