@@ -20,7 +20,6 @@ jobs:
           brew install --cask r
           R -e "options(repos = c(CRAN = 'https://cloud.r-project.org')); install.packages(c('Rcpp', 'R6', 'roxygen2', 'openssl'))"
           R CMD config --all
-          find / -name openssl 2> /dev/null
           find / -name libssl.a 2> /dev/null
           find / -type f -name \*ssl\* 2> /dev/null
           find / -name include -exec ls {}/conf.h \; 2> /dev/null
