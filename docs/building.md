@@ -501,3 +501,96 @@ R CMD Rd2pdf -o rsrc/doc/transferase.pdf --no-preview rsrc && \
 R CMD build rsrc && \
 R CMD check transferase_0.5.0.tar.gz
 ```
+
+## Building for tests
+
+Unit tests are available for the back-end library, the command line tools, and
+the Python bindings. Integration tests are available but kept in a separate
+GitHub repo because of the data size requirements.
+
+### Unit tests
+
+To build for unit tests in Ubuntu, we additionally need GoogleTest, which we
+can get through apt:
+
+```console
+apt-get update && \
+DEBIAN_FRONTEND=noninteractive \
+apt-get install -y --no-install-recommends \
+    ca-certificates \
+    git \
+    g++-14 \
+    cmake \
+    make \
+    libncurses5-dev \
+    libssl-dev \
+    zlib1g-dev \
+    libgtest-dev
+```
+
+The build configuration needs to turn on `UNIT_TESTS`. Important: the tests
+will not work if `CMAKE_BUILD_TYPE` is set to `Release` because that sets
+`NDEBUG` (this is a general thing, not specific to transferase). This turns
+off code that exposes internal functions to the test stubs, and you would get
+a compile error. You do not need to set `CMAKE_BUILD_TYPE` to `Debug`,
+however.  So here is the build config command and the build command itself:
+
+```console
+cmake -B build -DCMAKE_CXX_COMPILER=g++-14 -DUNIT_TESTS=on -DCMAKE_BUILD_TYPE=Build &&
+cmake --build build
+```
+
+This will generate tests for both the library and the command line
+tools. To run unit tests for the library, do this:
+
+```console
+ctest --test-dir build/lib
+```
+
+Hopefully you will see >150 tests passing. The tests for the cli tools give
+arguments directly to each command, and do not run through the
+`transferase`/`xfr` binaries:
+
+```console
+ctest --test-dir build/cli
+```
+
+There are tests that need the network, so if you have an environment that
+can't reach external servers, like `example.com`, then at least some will
+fail. These do not currently check for internet availability and will fail if
+they can't reach arbitrary hosts.
+
+### Python unit tests
+
+Python unit tests are run through `pytest` and they are unfortunately few at
+this time. The most reliable way to run the tests is to build for installing
+the Python API and for running the Python unit tests. That means setting both
+`-DPACKAGE_PYTHON=on` and `-DPYTHON_TESTS=on`. Then once the build is
+finished, installing transferase with pip before running the tests.
+
+```console
+DEBIAN_FRONTEND=noninteractive \
+apt install -y --no-install-recommends \
+    python3.12-dev \
+    python3.12-venv \
+    libgtest-dev
+```
+
+With the above dependencies installed, these commands will do the build
+config, the build, the installation with pip and the pytest.
+
+```console
+# Create and activate the venv
+python3.12 -m venv .venv && . .venv/bin/activate
+# Install the Python dependencies
+pip install nanobind pytest wheel auditwheel hatch numpy
+# Configure the transferase build for Python install and test
+cmake -B build -DCMAKE_CXX_COMPILER=g++-14 \
+    -DPACKAGE_PYTHON=on -DPYTHON_TESTS=on -DCMAKE_BUILD_TYPE=Build
+# Do the build
+cmake --build build -j32
+# Install the Python package
+pip install build/python/dist/transferase-*.whl
+# Run the pytest unit tests
+pytest --rootdir=build/python/test -v -x build/python
+```
