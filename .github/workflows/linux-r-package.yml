@@ -29,7 +29,7 @@ jobs:
           texlive-fonts-extra
       - name: Install R dependencies
         run: |
-          R -e 'install.packages(c("R6", "Rcpp", "roxygen2"))'
+          R -e 'options(repos = c(CRAN = "https://cloud.r-project.org")); install.packages(c("R6", "Rcpp", "roxygen2"))'
       - uses: actions/checkout@v4
       - name: Generate R API source tree
         run: |
