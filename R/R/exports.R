@@ -38,9 +38,7 @@ library(R6)
 #'
 #' @export
 #' @examples
-#' genomes <- c("hg38", "bosTau9")
-#' config_dir <- "my_config_directory"
-#' config_xfr(genomes, config_dir)
+#' config_xfr(c("hg38"), "some_directory")
 config_xfr <- function(genomes, config_dir = "") {
   invisible(.Call(`_transferase_config_xfr`, genomes, config_dir))
 }
@@ -189,7 +187,7 @@ MClient <- R6Class(
     #'
     #' @export
     #' @examples
-    #' config_xfr(c("hg38", "mm39"), "some_directory")
+    #' config_xfr(c("hg38"), "some_directory")
     #' client <- MClient$new("some_directory")
     initialize = function(config_dir = "") {
       if (config_dir == "") {
