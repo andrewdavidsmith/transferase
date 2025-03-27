@@ -282,10 +282,10 @@ rpm -e transferase  # Remove
 
 ## The R API
 
-In mid-March 2025, I'm using the unstable ("sid") Debian docker image to build
-the R API for transferase because it has R-4.4 and GCC-14.2 by default. By the
-end of April, 2025, Ubuntu should have these in a main release. Start the
-container like this:
+The transferase API for R is called Rxfr.  In mid-March 2025, I'm using the
+unstable ("sid") Debian docker image to build the R API for transferase
+because it has R-4.4 and GCC-14.2 by default. By the end of April, 2025,
+Ubuntu should have these in a main release. Start the container like this:
 
 ```console
 docker run --rm -it debian:sid bash
@@ -334,16 +334,16 @@ the usual `--build` step in cmake. Our goal is to make a source tree that
 conforms to what R wants, so R can build it in the best way to work with R.
 
 ```console
-cmake -B build -DBUILD_R=on -DCMAKE_INSTALL_PREFIX=rsrc -Wno-dev
+cmake -B build -DBUILD_R=on -DCMAKE_INSTALL_PREFIX=Rxfr -Wno-dev
 ```
 
 The `-Wno-dev` is to avoid warnings, and might not be needed in a few months.
 
-The `build` and `rsrc` directories are arbitrary. Depending on what else I'm
-doing at the same time, I might use `build_r` and `src`, respectively, for
-those names. Just don't get these two confused. However, you name them,
-neither should exist before you run the above command. After running the above
-command, the `build` directory should exist.
+The `build` and `Rxfr` directories are arbitrary, but make sense. Depending on
+what else I'm doing at the same time, I might use `build_r` and `src`,
+respectively, for those names. Just don't get these two confused. However, you
+name them, neither should exist before you run the above command. After
+running the above command, the `build` directory should exist.
 
 The next step is to "install" into a modified source tree for R:
 
@@ -351,7 +351,7 @@ The next step is to "install" into a modified source tree for R:
 cmake --install build
 ```
 
-This will create a directory named `rsrc` if you followed my commands
+This will create a directory named `Rxfr` if you followed my commands
 exactly. This step uses `Rcpp` to generate boilerplate code that exposes
 transferase functions in R. To satisfy the requirements on R code, the
 transferase source files are also modified in several different ways.
@@ -360,11 +360,13 @@ Once this new source tree has been created, you can directly install it.  This
 means no documentation, though. If you want to do that, this is the command:
 
 ```console
-MAKEFLAGS="-j32" R CMD INSTALL rsrc
+MAKEFLAGS="-j32" R CMD INSTALL Rxfr
 ```
 
-Remember, the `rsrc` was a name we chose, not any kind of keyword or
-convention. Replace the 32 above with whatever number of cores you want to
+Remember, the "Rxfr" was a name we chose, not any kind of keyword or
+convention. The name of the package is not determined by our use of "Rxfr"
+here, but instead by a field within the `DESCRIPTION` file inside that
+directory. Replace the 32 above with whatever number of cores you want to
 use. In this case, if you have 32 cores, the install will be faster. The above
 step will likely install transferase in your local packages directory, which
 for me is `${HOME}/R/x86_64-pc-linux-gnu-library/4.4`. If you are in a
@@ -380,21 +382,21 @@ documentation involves building everything twice.
 
 We start by building the shared library so that roxygen2 won't attept to do it
 (it would fail). The following command will put object files (`.o`) and a
-shared library file (`.so`) in the `rsrc/src` directory, but will not actually
+shared library file (`.so`) in the `Rxfr/src` directory, but will not actually
 install them anywhere:
 
 ```console
-MAKEFLAGS="-j32" R CMD INSTALL --no-inst rsrc
+MAKEFLAGS="-j32" R CMD INSTALL --no-inst Rxfr
 ```
 
 Now we can generate the documentation files for the individual functions and
 classes in the package:
 
 ```console
-Rscript -e "library(roxygen2, R6); roxygen2::roxygenize('rsrc')"
+Rscript -e "library(roxygen2, R6); roxygen2::roxygenize('Rxfr')"
 ```
 
-This will generate multiple files named like `*.Rd` in the `rsrc/man`
+This will generate multiple files named like `*.Rd` in the `Rxfr/man`
 directory. These are used when you do `? function_name` in your R
 interpreter. Next we need the "manual" which is a pdf document required by
 CRAN. To get this we need to latex, along with a specific font used by R:
@@ -409,13 +411,13 @@ apt-get install -y --no-install-recommends \
 Now we generate the pdf manual from the individual Rd help files:
 
 ```console
-mkdir rsrc/doc && \
-R CMD Rd2pdf -o rsrc/doc/transferase.pdf --no-preview rsrc
+mkdir Rxfr/doc && \
+R CMD Rd2pdf -o Rxfr/doc/Rxfr.pdf --no-preview Rxfr
 ```
 
 I added the `--no-preview` because working inside a docker container, I have
-no way to view the pdf. R expects the manual to be in the `rsrc/doc` if the
-package is in `rsrc`.
+no way to view the pdf. R expects the manual to be in the `Rxfr/doc` if the
+package is in `Rxfr`.
 
 Note: we created `.o` and `.so` files previously, but R will ignore these in
 subsequent steps, so there is no need to delete them.
@@ -423,37 +425,34 @@ subsequent steps, so there is no need to delete them.
 Now we make the package archive:
 
 ```console
-R CMD build rsrc
+R CMD build Rxfr
 ```
 
 The `build` above is a sub-command to `R CMD` and not the name of a CMake
-build directory. This command generates a file named like
-`transferase_0.5.0.tar.gz`. Unfortunately, at present this name is identical
-to one generated by CPack for the transferase command line app. If you are
-building both, don't confuse the two files.
+build directory. This command generates a file named `Rxfr_0.5.0.tar.gz`
+(unless I forgot to update these docs with a new version number...).
 
 The final step tells us how well we did by running the "check" command:
 
 ```console
-MAKEFLAGS="-j32" R CMD check transferase_0.5.0.tar.gz
+MAKEFLAGS="-j32" R CMD check Rxfr_0.5.0.tar.gz
 ```
 
 Since the above command will build all the code, using the `-j32` helps with
 speed.
 
 If the above command works without "warnings", congratulate both yourself and
-me. Now you can use the `transferase_0.5.0.tar.gz` as follows to install:
+me. Now you can use the `Rxfr_0.5.0.tar.gz` as follows to install:
 
 ```R
-install.packages("transferase_0.5.0.tar.gz")
+install.packages("Rxfr_0.5.0.tar.gz")
 ```
 
 Notes:
 
 - You can export `DEBIAN_FRONTEND` to avoid specifying it every time. It can
   be a big deal because you might start an install and come back 15 min later
-  only to find it didn't even begin due to trying to ask you about
-  timezones.
+  only to find it didn't even begin due to trying to ask you about timezones.
 
 - Similarly, if you export `MAKEFLAGS` to set multiple cores, it help wherever
   it can. In `R CMD`, inside `R` and even building the docs in latex. Just
@@ -465,12 +464,13 @@ Notes:
   LC_ALL=C.UTF-8`. I didn't notice the same issue on my own Ubuntu machines,
   but each of those is a mess.
 
-- I get a "Note" from `R CMD check` because the `transferase.so` shared
-  library is over 50MB in size (!). Interestingly, if I build without `-g` the
-  size decreases down to roughly 2MB. There are many ways to make the shared
+- I get a "Note" from `R CMD check` because the `Rxfr.so` shared library is
+  over 50MB in size (!). Interestingly, if I build without `-g` the size
+  decreases down to roughly 2MB. There are many ways to make the shared
   library smaller, and I expect to ensure users get small binaries eventually.
   But in a process that ends with `R CMD check` I want to modify as few build
-  settings as possible.
+  settings as possible. I don't see the same issue with default settings
+  building with R as installed through Homebrew on macOS.
 
 All together as one copy-paste:
 
@@ -492,14 +492,14 @@ apt-get install -y --no-install-recommends \
 R -e "options(repos = c(CRAN = 'https://cloud.r-project.org')); install.packages(c('Rcpp', 'R6', 'roxygen2'))"
 git clone https://github.com/andrewdavidsmith/transferase && \
 cd transferase && \
-cmake -B build -DBUILD_R=on -DCMAKE_INSTALL_PREFIX=rsrc -Wno-dev && \
+cmake -B build -DBUILD_R=on -DCMAKE_INSTALL_PREFIX=Rxfr -Wno-dev && \
 cmake --install build && \
-R CMD INSTALL --no-inst rsrc && \
-Rscript -e "library(roxygen2, R6); roxygen2::roxygenize('rsrc')" && \
-mkdir rsrc/doc && \
-R CMD Rd2pdf -o rsrc/doc/transferase.pdf --no-preview rsrc && \
-R CMD build rsrc && \
-R CMD check transferase_0.5.0.tar.gz
+R CMD INSTALL --no-inst Rxfr && \
+Rscript -e "library(roxygen2, R6); roxygen2::roxygenize('Rxfr')" && \
+mkdir Rxfr/doc && \
+R CMD Rd2pdf -o Rxfr/doc/Rxfr.pdf --no-preview Rxfr && \
+R CMD build Rxfr && \
+R CMD check Rxfr_0.5.0.tar.gz
 ```
 
 ## Building for tests
@@ -540,8 +540,8 @@ cmake -B build -DCMAKE_CXX_COMPILER=g++-14 -DUNIT_TESTS=on -DCMAKE_BUILD_TYPE=Bu
 cmake --build build
 ```
 
-This will generate tests for both the library and the command line
-tools. To run unit tests for the library, do this:
+This will generate tests for both the library and the command line tools. To
+run unit tests for the library, do this:
 
 ```console
 ctest --test-dir build/lib
