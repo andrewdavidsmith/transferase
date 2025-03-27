@@ -26,7 +26,7 @@ message(STATUS "Configuring to build R API")
 
 # If the build is configured like this:
 #
-# cmake -B build -DBUILD_R=on -DCMAKE_INSTALL_PREFIX=rsrc
+# cmake -B build -DBUILD_R=on -DCMAKE_INSTALL_PREFIX=Rxfr
 #
 # And then installed like this (without a '--build' step):
 #
@@ -34,14 +34,14 @@ message(STATUS "Configuring to build R API")
 #
 # Then the following can install the package:
 #
-# R CMD INSTALL rsrc
+# R CMD INSTALL Rxfr
 #
 # And this will make the tarball that can be installed with
 # 'install.packages':
 #
-# R CMD build rsrc
+# R CMD build Rxfr
 #
-# will produce a file like: 'transferase_0.5.0.tar.gz' which will have the
+# will produce a file like: 'Rxfr_0.5.0.tar.gz' which will have the
 # same name as a file from 'cpack -B build --config build/CPackConfig.cmake'
 
 # Check that required R packages have been installed
