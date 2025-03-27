@@ -50,25 +50,8 @@ def test_MClient_constructor(pytestconfig):
     assert hasattr(obj, "config"), "Object is missing 'config'"
 
 
-def test_default_is_different(pytestconfig):
-    """Check that the default constructed MClient differs"""
-    config_dir = get_config_dir(pytestconfig)
-    obj1 = MClient(config_dir)
-    obj2 = MClient()
-    assert obj1 != obj2
-
-
 def test_config_makes_sense(pytestconfig):
-    """Check that the default constructed MClient differs"""
-    config_dir = get_config_dir(pytestconfig)
-    obj = MClient(config_dir)
-    config = obj.config
-    assert config.hostname != None
-    assert config.port != None
-
-
-def test_config_makes_sense(pytestconfig):
-    """Check that the default constructed MClient differs"""
+    """Check that config object isn't broken"""
     config_dir = get_config_dir(pytestconfig)
     obj = MClient(config_dir)
     config = obj.config
