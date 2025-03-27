@@ -66,10 +66,10 @@ xfr query --local -d methylome_dir -x index_dir -g hg38 \
 #include "methylome.hpp"
 #include "methylome_interface.hpp"
 #include "output_format_type.hpp"
+#include "query_container.hpp"
 #include "request.hpp"
 #include "request_type_code.hpp"
 #include "utilities.hpp"
-#include "query_container.hpp"
 
 #include "CLI11/CLI11.hpp"
 
