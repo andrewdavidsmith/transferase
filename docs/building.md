@@ -489,7 +489,7 @@ apt-get install -y --no-install-recommends \
     r-base-dev \
     texlive \
     texlive-fonts-extra && \
-R -e 'install.packages(c("R6", "Rcpp", "roxygen2"))' && \
+R -e "options(repos = c(CRAN = 'https://cloud.r-project.org')); install.packages(c('Rcpp', 'R6', 'roxygen2'))"
 git clone https://github.com/andrewdavidsmith/transferase && \
 cd transferase && \
 cmake -B build -DBUILD_R=on -DCMAKE_INSTALL_PREFIX=rsrc -Wno-dev && \
