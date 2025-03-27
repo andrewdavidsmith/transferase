@@ -1,6 +1,6 @@
-Package: transferase
+Package: Rxfr
 Type: Package
-Title: Transferase
+Title: Rxfr
 Version: 0.5.0
 Date: 2025-03-09
 Authors@R: person("Andrew", "Smith", role=c("aut", "cre"), email="andrewds@usc.edu")
