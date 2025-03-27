@@ -114,7 +114,9 @@ get_timestamp(const download_request &dr)
                                   dr.connect_timeout, dr.download_timeout);
   }
 
+  // clang-format off
   struct tm tm{};
+  // clang-format on
   strptime(header.last_modified.data(), "%a, %d %b %Y %H:%M:%S GMT", &tm);
 
   const std::time_t epoch_time = std::mktime(&tm);
