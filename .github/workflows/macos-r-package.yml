@@ -16,6 +16,13 @@ jobs:
       - name: Update Homebrew
         run: |
           brew update
+      - name: Install OpenSSL
+        run: |
+          brew install openssl
+      - name: Install LaTeX
+        run: |
+          brew install basictex
+          brew install --cask font-inconsolata
       - name: Install R
         run: |
           brew install --cask r
@@ -32,10 +39,17 @@ jobs:
           R CMD INSTALL --no-inst rsrc
       - name: Build the docs
         run: |
+          eval "$(/usr/libexec/path_helper)"
           Rscript -e "library(roxygen2, R6); roxygen2::roxygenize('rsrc')" && \
           mkdir rsrc/doc && \
           R CMD Rd2pdf -o rsrc/doc/transferase.pdf --no-preview rsrc
+      - name: Get version number
+        id: get-vn
+        run: |
+          awk '/^  VERSION [0-9.]+$/ {print "vn="$NF}' CMakeLists.txt >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ github.token }}
       - name: Build and check the package
         run: |
           R CMD build rsrc && \
-          R CMD check transferase_0.5.0.tar.gz
+          R CMD check transferase_${{ steps.get-vn.outputs.vn }}.tar.gz
