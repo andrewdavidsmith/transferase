@@ -13,11 +13,11 @@ section in the 'docs/building.md' file that explains how to build the R
 package from a cloned repo. The R package itself is source, but not identical
 to the cloned repo. So if you are trying to do this from the cloned repo
 itself, it won't work. Assuming you have a file named
-`transferase_R_0.6.0.tar.gz`, and it is the R package, you can install it
+`Rxfr_0.5.0.tar.gz`, and it is the R package, you can install it
 within R like this:
 
 ```R
-install.packages("transferase_R_0.6.0.tar.gz", repos=NULL)
+install.packages("Rxfr_0.5.0.tar.gz", repos=NULL)
 ```
 
 ## Functions
@@ -56,7 +56,7 @@ config_xfr(genomes, config_dir)
 ### Initialize logger
 
 Initialize logging for transferase. This function is called automatically when
-`library(transferase)` is loaded. You will never need to use it, and it takes
+`library(Rxfr)` is loaded. You will never need to use it, and it takes
 no arguments anyway.
 
 Usage:
