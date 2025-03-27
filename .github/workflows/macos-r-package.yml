@@ -55,5 +55,6 @@ jobs:
           GH_TOKEN: ${{ github.token }}
       - name: Build and check the package
         run: |
+          eval "$(/usr/libexec/path_helper)"
           R CMD build rsrc && \
           R CMD check transferase_${{ steps.get-vn.outputs.vn }}.tar.gz
