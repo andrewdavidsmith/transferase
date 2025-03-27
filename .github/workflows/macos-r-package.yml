@@ -22,7 +22,11 @@ jobs:
       - name: Install LaTeX
         run: |
           brew install basictex
-          brew install --cask font-inconsolata
+      - name: Install font for R manuals
+        run: |
+          eval "$(/usr/libexec/path_helper)"
+          sudo tlmgr update --self
+          sudo tlmgr install inconsolata
       - name: Install R
         run: |
           brew install --cask r
@@ -40,7 +44,6 @@ jobs:
       - name: Build the docs
         run: |
           eval "$(/usr/libexec/path_helper)"
-          find /usr -name \*inconsol\*
           Rscript -e "library(roxygen2, R6); roxygen2::roxygenize('rsrc')" && \
           mkdir rsrc/doc && \
           R CMD Rd2pdf -o rsrc/doc/transferase.pdf --no-preview rsrc
