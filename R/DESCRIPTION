@@ -1,7 +1,7 @@
 Package: Rxfr
 Type: Package
 Title: Rxfr
-Version: 0.5.0
+Version: 0.6.0
 Date: 2025-03-09
 Authors@R: person("Andrew", "Smith", role=c("aut", "cre"), email="andrewds@usc.edu")
 Description: This package provides functions that use the transferase system
