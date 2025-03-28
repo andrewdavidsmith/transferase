@@ -76,6 +76,8 @@ client_config::make_paths_absolute() noexcept -> void {
     index_dir = fs::absolute(index_dir, ignored_error).string();
   if (!metadata_file.empty())
     metadata_file = fs::absolute(metadata_file, ignored_error).string();
+  if (!labels_file.empty())
+    labels_file = fs::absolute(labels_file, ignored_error).string();
   if (!methylome_dir.empty())
     methylome_dir = fs::absolute(methylome_dir, ignored_error).string();
   if (!log_file.empty())
@@ -101,6 +103,12 @@ client_config::get_index_dir() const noexcept -> std::string {
 [[nodiscard]] auto
 client_config::get_metadata_file() const noexcept -> std::string {
   return (std::filesystem::path(config_dir) / metadata_file).lexically_normal();
+}
+
+/// Get the path to the labels file
+[[nodiscard]] auto
+client_config::get_labels_file() const noexcept -> std::string {
+  return (std::filesystem::path(config_dir) / labels_file).lexically_normal();
 }
 
 /// Get the path to the methylome directory
@@ -157,6 +165,8 @@ client_config::assign_defaults_to_missing(std::string sys_config_dir,
     index_dir = index_dirname_default;
   if (metadata_file.empty())
     metadata_file = metadata_filename_default;
+  if (labels_file.empty())
+    labels_file = labels_filename_default;
 }
 
 client_config::client_config(const std::string &config_dir_arg,
@@ -173,6 +183,7 @@ client_config::client_config(const std::string &config_dir_arg,
   port = sys_conf.port;
   index_dir = index_dirname_default;
   metadata_file = metadata_filename_default;
+  labels_file = labels_filename_default;
 }
 
 client_config::client_config(const std::string &config_dir_arg,
@@ -189,6 +200,7 @@ client_config::client_config(const std::string &config_dir_arg,
   port = sys_conf.port;
   index_dir = index_dirname_default;
   metadata_file = metadata_filename_default;
+  labels_file = labels_filename_default;
 }
 
 client_config::client_config(const std::string &config_dir_arg,
@@ -205,6 +217,7 @@ client_config::client_config(const std::string &config_dir_arg,
   port = sys_conf.port;
   index_dir = index_dirname_default;
   metadata_file = metadata_filename_default;
+  labels_file = labels_filename_default;
 }
 
 /// Create all the directories involved in the client config, if they
@@ -230,6 +243,18 @@ client_config::make_directories(std::error_code &error) const noexcept -> void {
     if (metadata_file_path.is_absolute()) {
       const auto metadata_file_dir = metadata_file_path.parent_path().string();
       create(metadata_file_dir);
+      if (error)
+        return;
+    }
+  }
+
+  if (!labels_file.empty()) {
+    const auto labels_file_path = fs::path(labels_file);
+    // If the path isn't absolute, we already have the directory by
+    // definition
+    if (labels_file_path.is_absolute()) {
+      const auto labels_file_dir = labels_file_path.parent_path().string();
+      create(labels_file_dir);
       if (error)
         return;
     }
@@ -319,6 +344,8 @@ client_config::read_config_file_no_overwrite(std::error_code &error) noexcept
     index_dir = tmp.index_dir;
   if (metadata_file.empty())
     metadata_file = tmp.metadata_file;
+  if (labels_file.empty())
+    labels_file = tmp.labels_file;
   if (methylome_dir.empty())
     methylome_dir = tmp.methylome_dir;
   if (log_file.empty())
@@ -358,6 +385,8 @@ client_config::save(std::error_code &error) const noexcept -> void {
       tmp.index_dir = index_dir;
     if (!metadata_file.empty())
       tmp.metadata_file = metadata_file;
+    if (!labels_file.empty())
+      tmp.labels_file = labels_file;
     if (!methylome_dir.empty())
       tmp.methylome_dir = methylome_dir;
     if (!log_file.empty())
@@ -520,6 +549,53 @@ download_metadata_file(
   return {};
 }
 
+[[nodiscard]] static auto
+download_labels_file(
+  const remote_data_resource &remote, const std::string &dirname,
+  const download_policy_t download_policy) -> std::error_code {
+  const auto labels_file = remote.form_labels_target();
+  const auto local_labels_file =
+    std::filesystem::path{dirname} / client_config::labels_filename_default;
+  auto &lgr = transferase::logger::instance();
+
+  std::error_code error;
+  const bool labels_file_exists =
+    std::filesystem::exists(local_labels_file, error);
+  if (error)
+    return error;
+
+  // ADS: why do this check for 'is_outdated' for such a small file?
+  // Maybe local modifications are only worth overwriting if the
+  // remote is newer?
+  const download_request dr{
+    remote.hostname,
+    remote.port,
+    labels_file,
+    dirname,
+  };
+
+  const bool is_outdated = labels_file_exists &&
+                           (download_policy == download_policy_t::update) &&
+                           check_is_outdated(dr, local_labels_file, error);
+  if (error)
+    return error;
+
+  if (download_policy == download_policy_t::all ||
+      ((download_policy == download_policy_t::update ||
+        download_policy == download_policy_t::missing) &&
+       !labels_file_exists) ||
+      (download_policy == download_policy_t::update && is_outdated)) {
+    lgr.debug("Download: {} to {}", remote.form_url(labels_file), dirname);
+    lgr.debug("Reason: policy={}, file_exists={}, is_outdated={}",
+              to_string(download_policy), labels_file_exists, is_outdated);
+
+    const auto [data_hdr, data_err] = download(dr);
+    if (data_err)
+      return dl_err(data_hdr, data_err, remote.form_url(labels_file));
+  }
+  return {};
+}
+
 auto
 client_config::install(const std::vector<std::string> &genomes,
                        const download_policy_t download_policy,
@@ -562,7 +638,11 @@ client_config::install(const std::vector<std::string> &genomes,
       download_metadata_file(remote, metadata_dir, download_policy);
     if (metadata_err)
       lgr.debug("Error obtaining metadata file: {}", metadata_err.message());
-    if (!metadata_err) {
+    const auto labels_err =
+      download_labels_file(remote, metadata_dir, download_policy);
+    if (labels_err)
+      lgr.debug("Error obtaining labels file: {}", labels_err.message());
+    if (!metadata_err && !labels_err) {
       metadata_downloads_ok = true;
       break;
     }
@@ -618,12 +698,19 @@ client_config::validate(std::error_code &error) const noexcept -> bool {
     error = client_config_error_code::invalid_client_config_information;
     return false;
   }
+  // validate the labels_file
+  if (labels_file.empty()) {
+    error = client_config_error_code::invalid_client_config_information;
+    return false;
+  }
   return true;
 }
 
 auto
 client_config::load_transferase_metadata(std::error_code &error) -> void {
-  meta = transferase_metadata::read(get_metadata_file(), error);
+  /// ADS: this is instantiating the transferase metadata object using the
+  /// labels file, which for now has all the info needed.
+  meta = transferase_metadata::read(get_labels_file(), error);
 }
 
 [[nodiscard]] auto

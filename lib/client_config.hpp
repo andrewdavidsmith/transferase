@@ -42,7 +42,8 @@ namespace transferase {
 struct client_config {
   static constexpr auto transferase_config_dirname_default =
     ".config/transferase";
-  static constexpr auto metadata_filename_default = "metadata.json";
+  static constexpr auto metadata_filename_default = "metadata.txt";
+  static constexpr auto labels_filename_default = "metadata.json";
   static constexpr auto index_dirname_default = "indexes";
   static constexpr auto client_config_filename_default =
     "transferase_client.json";
@@ -54,6 +55,7 @@ struct client_config {
   std::string port{};
   std::string index_dir;
   std::string metadata_file;
+  std::string labels_file;
   std::string methylome_dir;
   std::string log_file;
   log_level_t log_level{};
@@ -87,6 +89,10 @@ struct client_config {
   [[nodiscard]] auto
   get_metadata_file() const noexcept -> std::string;
 
+  /// Get the path to the labels file
+  [[nodiscard]] auto
+  get_labels_file() const noexcept -> std::string;
+
   /// Get the path to the methylome directory
   [[nodiscard]] auto
   get_methylome_dir() const noexcept -> std::string;
@@ -95,7 +101,9 @@ struct client_config {
   [[nodiscard]] auto
   get_log_file() const noexcept -> std::string;
 
-  /// Read the transferase metadata file
+  /// Read the transferase metadata file. Note: currently this loading from
+  /// the labels file, as that provide all the metadata for a transferase
+  /// metadata object.
   auto
   load_transferase_metadata(std::error_code &error) -> void;
 
@@ -183,8 +191,8 @@ struct client_config {
   client_config() = default;
 
   NLOHMANN_DEFINE_TYPE_INTRUSIVE(client_config, config_dir, hostname, port,
-                                 index_dir, metadata_file, methylome_dir,
-                                 log_file, log_level)
+                                 index_dir, metadata_file, labels_file,
+                                 methylome_dir, log_file, log_level)
 };
 
 }  // namespace transferase
