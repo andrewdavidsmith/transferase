@@ -1,24 +1,27 @@
 # R API usage examples
 
-I'm starting the R documentation here because I don't have time right now to
-learn how to format the docs nicely within R (using Rd or roxygen2). I will
-make proper R docs for this when I get the chance.
+I'm still putting R documentation here. I now have most of it in the sources
+and formatted into Rd using roxygen2. So it should appear using `?
+function_name` within R.
 
 Note: I don't expect this to work at all on Windows.
 
 ## Installing the package
 
-In R, packages are usually installed by building from source. There is a
-section in the 'docs/building.md' file that explains how to build the R
-package from a cloned repo. The R package itself is source, but not identical
-to the cloned repo. So if you are trying to do this from the cloned repo
-itself, it won't work. Assuming you have a file named
-`Rxfr_0.5.0.tar.gz`, and it is the R package, you can install it
-within R like this:
+In R, packages are usually installed by building from source. The file
+`docs/installing_Rxfr.md` has instructions for two ways to install the R
+package on Linux, and two ways to do it on macOS. These are "source"
+installations, but the R package archive `Rxfr_0.6.0.tar.gz` you would be
+installing is not the same as the source you would get from a clone of the
+repo. If you really want to start from the cloned repo, the instructions are
+in `docs/building.md`. If you have a file named `Rxfr_0.6.0.tar.gz`, and if
+the stars are perfectly aligned, you can install it within R like this:
 
 ```R
-install.packages("Rxfr_0.5.0.tar.gz")
+install.packages("Rxfr_0.6.0.tar.gz")
 ```
+
+Likely that won't work, so see `docs/installing_Rxfr.md`.
 
 ## Functions
 
