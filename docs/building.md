@@ -316,7 +316,7 @@ package to run. It also needs to be able to link to OpenSSL, which is among
 the dependencies in the list above. Here's how we get the R packages:
 
 ```console
-R -e 'install.packages(c("R6", "Rcpp", "roxygen2"))'
+R -e "install.packages(c('Rcpp', 'R6', 'roxygen2'), repos = 'https://cloud.r-project.org')"
 ```
 
 `roxygen2` is needed to generate the documentation if you building the
@@ -393,7 +393,7 @@ Now we can generate the documentation files for the individual functions and
 classes in the package:
 
 ```console
-Rscript -e "library(roxygen2, R6); roxygen2::roxygenize('Rxfr')"
+R -e "library(roxygen2, R6); roxygen2::roxygenize('Rxfr')"
 ```
 
 This will generate multiple files named like `*.Rd` in the `Rxfr/man`
@@ -489,13 +489,13 @@ apt-get install -y --no-install-recommends \
     r-base-dev \
     texlive \
     texlive-fonts-extra && \
-R -e "options(repos = c(CRAN = 'https://cloud.r-project.org')); install.packages(c('Rcpp', 'R6', 'roxygen2'))"
+R -e "install.packages(c('Rcpp', 'R6', 'roxygen2'), repos = 'https://cloud.r-project.org')"
 git clone https://github.com/andrewdavidsmith/transferase && \
 cd transferase && \
 cmake -B build -DBUILD_R=on -DCMAKE_INSTALL_PREFIX=Rxfr -Wno-dev && \
 cmake --install build && \
 R CMD INSTALL --no-inst Rxfr && \
-Rscript -e "library(roxygen2, R6); roxygen2::roxygenize('Rxfr')" && \
+R -e "library(roxygen2, R6); roxygen2::roxygenize('Rxfr')" && \
 mkdir Rxfr/doc && \
 R CMD Rd2pdf -o Rxfr/doc/Rxfr.pdf --no-preview Rxfr && \
 R CMD build Rxfr && \
