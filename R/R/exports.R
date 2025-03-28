@@ -74,6 +74,38 @@ get_xfr_log_level <- function() {
   .Call(`_Rxfr_get_xfr_log_level`)
 }
 
+#' Load transferase metadata
+#'
+#' Load a data frame with the current transferase metadata.
+#'
+#' @param genome The reference genome for which you want metadata.
+#'
+#' @param config_dir The configuration directory. Unless set specifically with
+#'   the config_xfr() function, this should be left empty.
+#'
+#' @return A data frame with the current transferase metadata.
+#'
+#' @export
+#' @examples
+#' meta <- load_xfr_metadata("hg38")
+load_xfr_metadata <- function(genome, config_dir = "") {
+  if (config_dir == "") {
+    home_dir <- Sys.getenv("HOME")
+    config_dir <- file.path(home_dir, ".config", "transferase")
+  } else if (!file.exists(config_dir)) {
+    fmt <- "directory does not exist: %s. See the config_xfr function"
+    stop(sprintf(fmt, config_dir), call. = FALSE)
+  }
+  metadata_file <- file.path(config_dir, "metadata.txt")
+  if (!file.exists(metadata_file)) {
+    fmt <- "config file does not exist: %s. See the config_xfr function"
+    stop(sprintf(fmt, config_file), call. = FALSE)
+  }
+  full_table <- read.table(metadata_file, header=TRUE)
+  selected <- full_table[, "assembly"] == genome
+  full_table[selected, ]
+}
+
 #' Initialize logger
 #'
 #' Initialize logging for transferase. This function is called automatically
