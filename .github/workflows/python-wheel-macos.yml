@@ -8,7 +8,7 @@ jobs:
     strategy:
       matrix:
         os: [macos-15]
-        python: ['3.13']
+        python: ['3.12', '3.13']
     name: "Python ${{ matrix.python }} / ${{ matrix.os }}" 
     runs-on: ${{ matrix.os }}
     steps:
@@ -53,5 +53,5 @@ jobs:
       - name: Upload macos wheel
         uses: actions/upload-artifact@v4
         with:
-          name: transferase-${{ steps.get-vn.outputs.vn }}-Python-${{ matrix.os }}-${{ runner.arch }}
+          name: transferase-${{ steps.get-vn.outputs.vn }}-Python-${{ matrix.python }}-${{ matrix.os }}-${{ runner.arch }}
           path: build/python/dist/transferase-${{ steps.get-vn.outputs.vn }}-*.whl
