@@ -21,7 +21,6 @@ jobs:
         env:
           SCRIPT: |
             . .venv/bin/activate
-            pip install nanobind numpy
             cd /workspace
             cmake -B build \
             -DCMAKE_CXX_COMPILER=g++ \
