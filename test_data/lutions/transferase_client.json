@@ -3,7 +3,8 @@
     "hostname": "bulbapedia.bulbagarden.net",
     "port": "9000",
     "index_dir": "indexes",
-    "metadata_file": "metadata.json",
+    "labels_file": "metadata.json",
+    "metadata_file": "metadata.txt",
     "methylome_dir": "methylomes",
     "log_file": "",
     "log_level": "info"

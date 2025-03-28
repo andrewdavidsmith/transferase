@@ -47,7 +47,7 @@ TEST(remote_data_resource_test, form_index_target_stem_success) {
 }
 
 TEST(remote_data_resource_test, form_metadata_target_stem_success) {
-  static constexpr auto expected = "metadata/latest/metadata.json";
+  static constexpr auto expected = "metadata/latest/metadata.txt";
   remote_data_resource rdr;
   const std::string metadata_target_stem = rdr.form_metadata_target();
   EXPECT_EQ(metadata_target_stem, expected)

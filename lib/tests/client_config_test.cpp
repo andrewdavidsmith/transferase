@@ -54,6 +54,7 @@ protected:
     "log_file": "",
     "log_level": "debug",
     "metadata_file": "",
+    "labels_file": "",
     "methylome_dir": "",
     "port": "9000"
 }
@@ -243,5 +244,6 @@ TEST_F(client_config_mock, re_read_config_file_success) {
   EXPECT_EQ(cfg.methylome_dir, mock_methylome_dir) << cfg.tostring() << "\n";
   EXPECT_EQ(cfg.port, "9000") << cfg.tostring() << "\n";
   EXPECT_EQ(cfg.index_dir, "indexes") << cfg.tostring() << "\n";
-  EXPECT_EQ(cfg.metadata_file, "metadata.json") << cfg.tostring() << "\n";
+  EXPECT_EQ(cfg.metadata_file, "metadata.txt") << cfg.tostring() << "\n";
+  EXPECT_EQ(cfg.labels_file, "metadata.json") << cfg.tostring() << "\n";
 }
