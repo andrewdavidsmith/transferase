@@ -7,8 +7,8 @@ jobs:
   build-wheel:
     strategy:
       matrix:
-        os: [macos-13, macos-14, macos-15]
-        python: ['3.12', '3.13']
+        os: [macos-13]
+        python: ['3.13']
     name: "Python ${{ matrix.python }} / ${{ matrix.os }}" 
     runs-on: ${{ matrix.os }}
     steps:
@@ -23,6 +23,22 @@ jobs:
       - name: Install dependencies
         run: |
           brew install zlib
+      - name: Build openssl
+        run: |
+          # Get the source and make a build dir
+          cd /tmp
+          wget -nv https://github.com/openssl/openssl/releases/download/openssl-${OPENSSL_VERSION}/openssl-${OPENSSL_VERSION}.tar.gz
+          tar -xf openssl-${OPENSSL_VERSION}.tar.gz
+          cd openssl-${OPENSSL_VERSION}
+          mkdir build && cd build
+          # Configure with all those options...
+          cat ${GITHUB_WORKSPACE}/data/openssl_options.txt | \
+          xargs ../Configure --prefix=/tmp/openssl_custom CC=gcc-14 CXX=g++-14
+          # Build the library
+          make -j2 \
+          CFLAGS="-Wall -Os -fomit-frame-pointer -ffunction-sections -fdata-sections" \
+          CXXFLAGS="-Wall -Os -fomit-frame-pointer -ffunction-sections -fdata-sections"
+          make install
       - name: Install Python packages
         run: |
           python --version
@@ -30,6 +46,7 @@ jobs:
       - name: Configure
         run: |
           cmake -B build \
+          -DCMAKE_PREFIX_PATH="/tmp/ncurses_custom;/tmp/openssl_custom" \
           -DCMAKE_CXX_FLAGS="-I$(brew --prefix)/include" \
           -DCMAKE_EXE_LINKER_FLAGS="-L$(brew --prefix)/lib" \
           -DZLIB_LIBRARY=$(brew --prefix zlib)/lib/libz.a \
