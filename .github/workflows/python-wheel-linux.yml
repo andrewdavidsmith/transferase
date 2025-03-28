@@ -31,3 +31,14 @@ jobs:
             cmake --build build -j4
         run: |
           docker exec build-container bash -c "$SCRIPT"
+      - name: Get version number
+        id: get-vn
+        run: |
+          awk '/^  VERSION [0-9.]+$/ {print "vn="$NF}' CMakeLists.txt >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - name: Upload Linux wheel
+        uses: actions/upload-artifact@v4
+        with:
+          name: transferase-${{ steps.get-vn.outputs.vn }}-Python-Linux-${{ runner.arch }}
+          path: build/python/dist/transferase-${{ steps.get-vn.outputs.vn }}-*.whl
