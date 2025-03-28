@@ -118,11 +118,9 @@ get_timestamp(const download_request &dr)
   struct tm tm{};
   // clang-format on
   strptime(header.last_modified.data(), "%a, %d %b %Y %H:%M:%S GMT", &tm);
-
-  const std::time_t epoch_time = std::mktime(&tm);
-
-  return std::chrono::time_point<std::chrono::file_clock>{
-    std::chrono::seconds(epoch_time)};
+  const std::time_t u = std::mktime(&tm);
+  namespace chrono = std::chrono;
+  return chrono::file_clock::from_sys(chrono::system_clock::from_time_t(u));
 
   // std::istringstream is{header.last_modified};
   // std::chrono::time_point<std::chrono::file_clock> tp;
