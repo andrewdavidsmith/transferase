@@ -86,6 +86,51 @@ get_xfr_log_level <- function() {
 #'
 #' @return A data frame with the current transferase metadata.
 #'
+#' @details
+#'
+#' The following information is available for each methylome:
+#'
+#' study: The SRA study accession for the corresponding study.
+#'
+#' experiment: The SRA experiment accession, and the identifier for the
+#' methylome.
+#'
+#' assembly: This is the genome. I might rename this to 'genome' soon.
+#'
+#' bsrate: Estimated bisulfite conversion rate.
+#'
+#' meth: Estimated global weighted mean methylation level.
+#'
+#' depth: The average number of reads covering each CpG site.
+#'
+#' mapping: The fraction of *uniquely* mapping reads. Can be far less than the
+#' fraction that map.
+#'
+#' uniq: The fraction of uniquely mapping reads that are not duplicates.
+#'
+#' sites: The fraction of CpG sites covered by at least one read.
+#'
+#' pmd_count: Number of PMDs identified in the methylome. Note: this number
+#' will be low, but rarely zero, for methylomes that do not exhibit PMDs at
+#' all.  If the fraction of the genome covered by PMDs (pmd_count x pmd_size)
+#' is less than 10 percent, any identified PMDs are sure false-positives.
+#'
+#' pmd_size: The mean size of identified PMDs.
+#'
+#' hmr_count`: Number of identified HMRs. If this number is much more than
+#' 100K, then many are likely false-positives.
+#'
+#' hmr_size: The mean size of identified HMRs. If these are too large, then
+#' they could easily include some very deep but short PMDs.
+#'
+#' sample_name: A label currently associated with the methylome. These are
+#' inferred based on annotations in SRA and GEO, and depend heavily on how the
+#' original data submitter chose to describe their data. There have been cases
+#' where these are wrong because, for example, all samples in the same study
+#' were given a name related to the study/project, rather than the individual
+#' sample, and only detailed reading can uncover the differences. Your
+#' feedback can help improve these.
+#'
 #' @export
 #' @examples
 #' # Mostly leave the config_dir empty
