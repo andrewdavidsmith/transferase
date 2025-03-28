@@ -3,6 +3,9 @@ name: Python wheel on macOS
 on:
   workflow_dispatch:
 
+env:
+  OPENSSL_VERSION: 3.4.0
+
 jobs:
   build-wheel:
     strategy:
