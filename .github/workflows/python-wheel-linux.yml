@@ -8,6 +8,9 @@ env:
 
 jobs:
   build-wheel:
+    strategy:
+      matrix:
+        python: [3.12, 3.13]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -17,17 +20,17 @@ jobs:
           docker pull $CONTAINER
           docker run --name build-container \
           -d -v ${{ github.workspace }}:/workspace $CONTAINER tail -f /dev/null
-      - name: Configure, build and package
+      - name: Configure, build and package for Python ${{ matrix.python }}
         env:
           SCRIPT: |
-            . .venv/bin/activate
+            . .venv_${{ matrix.python }}/bin/activate
             cd /workspace
-            cmake -B build \
+            cmake -B build_${{ matrix.python }} \
             -DCMAKE_CXX_COMPILER=g++ \
             -DBUILD_PYTHON=on \
             -DPACKAGE_PYTHON=on \
             -DCMAKE_BUILD_TYPE=Release
-            cmake --build build -j4
+            cmake --build build_${{ matrix.python }} -j4
         run: |
           docker exec build-container bash -c "$SCRIPT"
       - name: Get version number
@@ -36,8 +39,8 @@ jobs:
           awk '/^  VERSION [0-9.]+$/ {print "vn="$NF}' CMakeLists.txt >> "$GITHUB_OUTPUT"
         env:
           GH_TOKEN: ${{ github.token }}
-      - name: Upload Linux wheel
+      - name: Upload Linux wheel for Python ${{ matrix.python }}
         uses: actions/upload-artifact@v4
         with:
-          name: transferase-${{ steps.get-vn.outputs.vn }}-Python-Linux-${{ runner.arch }}
-          path: build/python/dist/transferase-${{ steps.get-vn.outputs.vn }}-*.whl
+          name: transferase-${{ steps.get-vn.outputs.vn }}-Python-${{ matrix.python }}-Linux-${{ runner.arch }}
+          path: build_${{ matrix.python }}/python/dist/transferase-${{ steps.get-vn.outputs.vn }}-*.whl
