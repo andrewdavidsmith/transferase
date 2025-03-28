@@ -712,7 +712,7 @@ command_select_main(int argc,
       if (error)
         throw std::runtime_error(std::format("Error reading config dir {}: {}",
                                              config_dir, error.message()));
-      input_file = config.get_metadata_file();
+      input_file = config.get_labels_file();
     }
 
     const auto all_data = load_data(input_file, error);
