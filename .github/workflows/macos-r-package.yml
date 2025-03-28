@@ -36,7 +36,7 @@ jobs:
           sudo ln -s $(brew --prefix)/lib /usr/local/lib
       - name: Install R dependencies
         run: |
-          R -e "options(repos = c(CRAN = 'https://cloud.r-project.org')); install.packages(c('Rcpp', 'R6', 'roxygen2'))"
+          R -e 'install.packages(c("R6", "Rcpp", "roxygen2"), repos = "https://cloud.r-project.org")'
       - uses: actions/checkout@v4
       - name: Generate R API source tree
         run: |
