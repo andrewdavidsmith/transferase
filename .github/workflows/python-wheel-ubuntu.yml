@@ -17,7 +17,7 @@ jobs:
           python3 -m venv .venv
           . .venv/bin/activate
           pip install --upgrade pip
-          pip install nanobind pytest wheel auditwheel hatch
+          pip install nanobind pytest wheel auditwheel hatch numpy
       - name: Configure
         run: |
           . .venv/bin/activate
