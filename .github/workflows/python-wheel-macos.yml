@@ -8,9 +8,14 @@ jobs:
     strategy:
       matrix:
         os: [macos-13, macos-14, macos-15]
+        python-version: ["3.12", "3.13"]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
+      - name: Python setup ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
       - name: Update Homebrew
         run: brew update
       - name: Install dependencies
@@ -18,7 +23,7 @@ jobs:
           brew install zlib
       - name: Install Python packages
         run: |
-          python3 -m venv .venv
+          python -m venv .venv
           . .venv/bin/activate
           pip install --upgrade pip
           pip install nanobind pytest wheel hatch packaging numpy
@@ -47,9 +52,9 @@ jobs:
         run: |
           . .venv/bin/activate
           pip install build/python/dist/transferase-${{ steps.get-vn.outputs.vn }}-*.whl
-          python3 -c "import transferase; help(transferase)"
+          python -c "import transferase; help(transferase)"
       - name: Upload macos wheel
         uses: actions/upload-artifact@v4
         with:
-          name: transferase-${{ steps.get-vn.outputs.vn }}-Python-${{ matrix.os }}-${{ runner.arch }}
+          name: transferase-${{ steps.get-vn.outputs.vn }}-Python-${{ matrix.python-version }}-${{ matrix.os }}-${{ runner.arch }}
           path: build/python/dist/transferase-${{ steps.get-vn.outputs.vn }}-*.whl
