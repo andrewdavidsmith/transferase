@@ -1,0 +1,43 @@
+name: Python wheel on Linux
+
+on:
+  workflow_dispatch:
+
+env:
+  CONTAINER: andrewdavidsmith/transferase-build
+
+jobs:
+  build-wheel:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Start docker container
+        # Pull the container, run it in detached mode, mount the workspace
+        run: |
+          docker pull $CONTAINER
+          docker run --name build-container \
+          -d -v ${{ github.workspace }}:/workspace $CONTAINER tail -f /dev/null
+      - name: Configure, build and package
+        env:
+          SCRIPT: |
+            . .venv/bin/activate
+            cd /workspace
+            cmake -B build \
+            -DCMAKE_CXX_COMPILER=g++ \
+            -DBUILD_PYTHON=on \
+            -DPACKAGE_PYTHON=on \
+            -DCMAKE_BUILD_TYPE=Release
+            cmake --build build -j4
+        run: |
+          docker exec build-container bash -c "$SCRIPT"
+      - name: Get version number
+        id: get-vn
+        run: |
+          awk '/^  VERSION [0-9.]+$/ {print "vn="$NF}' CMakeLists.txt >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - name: Upload Linux wheel
+        uses: actions/upload-artifact@v4
+        with:
+          name: transferase-${{ steps.get-vn.outputs.vn }}-Python-Linux-${{ runner.arch }}
+          path: build/python/dist/transferase-${{ steps.get-vn.outputs.vn }}-*.whl
