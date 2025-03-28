@@ -50,10 +50,22 @@ struct remote_data_resource {
     return (std::filesystem::path{path} / "indexes" / genome).string();
   }
 
-  /// Used to identify both the remote url and local relative path
+  /// Used to identify both the remote url and local relative path for
+  /// metadata table.
   [[nodiscard]] auto
   form_metadata_target() const {
-    return (std::filesystem::path{path} / "metadata/latest/metadata.json")
+    return (std::filesystem::path{path} / "metadata" / "latest" /
+            "metadata.txt")
+      .string();
+  }
+
+  /// Used to identify both the remote url and local relative path for labels
+  /// in JSON format. This will be deprecated in favor of only using one file
+  /// for all metadata.
+  [[nodiscard]] auto
+  form_labels_target() const {
+    return (std::filesystem::path{path} / "metadata" / "latest" /
+            "metadata.json")
       .string();
   }
 
