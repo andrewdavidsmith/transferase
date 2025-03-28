@@ -36,7 +36,7 @@ message(STATUS "Python SOABI: ${Python_SOABI}")
 
 # Check that required Python packages have been installed
 set(REQUIRED_PYTHON_PACKAGES "nanobind;pytest;numpy;wheel;hatch")
-if(NOT CMAKE_SYSTEM_NAME STREQUAL "Linux")  # not macOS
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
   list(APPEND REQUIRED_PYTHON_PACKAGES "auditwheel")
 endif()
 foreach(package_name ${REQUIRED_PYTHON_PACKAGES})
