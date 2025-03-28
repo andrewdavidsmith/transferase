@@ -8,29 +8,27 @@ jobs:
     strategy:
       matrix:
         os: [macos-15]
-        python-version: ["3.13"]
+        python: ['3.13']
+    name: "Python ${{ matrix.python }} / ${{ matrix.os }}" 
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
+      - name: Setup Python ${{ matrix.python }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+          cache: 'pip'
       - name: Update Homebrew
         run: brew update
       - name: Install dependencies
         run: |
           brew install zlib
-      - name: Python setup ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
       - name: Install Python packages
         run: |
-          python3 --version
-          python3 -m venv .venv
-          . .venv/bin/activate
-          pip install --upgrade pip
-          pip install nanobind pytest wheel hatch packaging numpy
+          python --version
+          python -m pip install nanobind pytest wheel hatch packaging numpy
       - name: Configure
         run: |
-          . .venv/bin/activate
           cmake -B build \
           -DCMAKE_CXX_FLAGS="-I$(brew --prefix)/include" \
           -DCMAKE_EXE_LINKER_FLAGS="-L$(brew --prefix)/lib" \
@@ -41,7 +39,6 @@ jobs:
           -DCMAKE_BUILD_TYPE=Release
       - name: Build
         run: |
-          . .venv/bin/activate
           cmake --build build -j4
       - name: Get version number
         id: get-vn
@@ -51,9 +48,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
       - name: Check that it runs
         run: |
-          . .venv/bin/activate
-          pip install build/python/dist/transferase-${{ steps.get-vn.outputs.vn }}-*.whl
-          python3 -c "import transferase; help(transferase)"
+          python -m pip install build/python/dist/transferase-${{ steps.get-vn.outputs.vn }}-*.whl
+          python -c "import transferase; help(transferase)"
       - name: Upload macos wheel
         uses: actions/upload-artifact@v4
         with:
