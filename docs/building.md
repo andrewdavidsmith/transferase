@@ -147,7 +147,7 @@ up. This means we need two more packages, one for building Python things (dev)
 and one for thee virtual env (venv):
 
 ```console
-apt install -y --no-install-recommends \
+apt-get install -y --no-install-recommends \
     python3.12-dev \
     python3.12-venv
 ```
@@ -570,7 +570,7 @@ finished, installing transferase with pip before running the tests.
 
 ```console
 DEBIAN_FRONTEND=noninteractive \
-apt install -y --no-install-recommends \
+apt-get install -y --no-install-recommends \
     python3.12-dev \
     python3.12-venv \
     libgtest-dev
