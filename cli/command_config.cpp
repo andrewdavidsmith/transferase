@@ -230,7 +230,8 @@ command_config_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
     lgr.error("Error: {}", e.what());
     return EXIT_FAILURE;
   }
-  lgr.debug("Completed configuration with status: {}", error);
+  lgr.info("Completed configuration with status: {}",
+           error ? error.message() : "Success");
 
   return EXIT_SUCCESS;
 }
