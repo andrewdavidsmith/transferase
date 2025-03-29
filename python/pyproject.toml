@@ -11,7 +11,7 @@ readme = "README.md"
 license = {text = "MIT"}
 dynamic = ["version"]
 dependencies = [
-  "numpy",
+  "numpy >= 2.2",
 ]
 requires-python = ">= 3.12"
 keywords = ["methylome", "DNA methylation", "epigenetics", "epigenomics"]
