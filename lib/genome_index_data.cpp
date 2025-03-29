@@ -68,10 +68,9 @@ genome_index_data::read(const std::string &data_file,
 
     const auto n_bytes_expected =
       static_cast<std::streamsize>(n_cpgs_chrom * sizeof(std::uint32_t));
-    // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
+    // NOLINTNEXTLINE(*-reinterpret-cast)
     in.read(reinterpret_cast<char *>(data.positions.back().data()),
             n_bytes_expected);
-    // NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)
     const auto read_ok = static_cast<bool>(in);
     const auto n_bytes = in.gcount();
     if (!read_ok || n_bytes != n_bytes_expected) {
@@ -108,11 +107,10 @@ genome_index_data::write(const std::string &data_file) const noexcept
   if (!out)
     return std::make_error_code(std::errc(errno));
   for (const auto &cpgs : positions) {
-    // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
+    // NOLINTNEXTLINE(*-reinterpret-cast)
     out.write(
       reinterpret_cast<const char *>(cpgs.data()),
       static_cast<std::streamsize>(sizeof(std::uint32_t) * std::size(cpgs)));
-    // NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)
     const auto write_ok = static_cast<bool>(out);
     if (!write_ok)
       return std::make_error_code(std::errc(errno));
