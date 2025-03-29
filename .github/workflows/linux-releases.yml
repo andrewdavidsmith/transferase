@@ -24,6 +24,7 @@ jobs:
             cmake -B build \
             -DCMAKE_VERBOSE_MAKEFILE=on \
             -DCMAKE_CXX_COMPILER=g++ \
+            -DUSE_XTERM=on \
             -DPACKAGE=on \
             -DCMAKE_BUILD_TYPE=Release
             cmake --build build -j4
