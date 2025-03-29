@@ -7,8 +7,9 @@ work on earlier versions of R.
 
 ## Installing on Debian
 
-Here I'm using Debian "sid" which is ahead of the stable release. These
-instructions should work on latest stable Ubuntu or Debian by late April 2025.
+Here I'm using Debian "sid" which is ahead of the stable release (Note: also
+tested and working with Ubuntu "plucky"). These instructions should work on
+latest stable Ubuntu or Debian by late April 2025.
 
 Assuming a clean Debian, get the dependencies:
 

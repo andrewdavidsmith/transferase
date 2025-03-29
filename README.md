@@ -147,4 +147,5 @@ compatible, so just try another. If none work, let me know.
 
 ## Installing the R API
 
-Please see the instructions in `docs/installing_Rxfr.md`.
+Please see the instructions in
+[`docs/installing_Rxfr.md`](docs/installing_Rxfr.md).
