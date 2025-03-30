@@ -75,6 +75,7 @@ command_select_main([[maybe_unused]] int argc,
 #include <cstdlib>
 #include <format>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <iterator>
 #include <map>
@@ -166,11 +167,9 @@ static inline auto
 show_selected_keys(const auto &selected_keys) {
   using std::string_literals::operator""s;
   clear();
-  // NOLINTNEXTLINE (*-type-vararg)
-  mvprintw(0, 0, "Selected keys: "s);
+  mvprintw(0, 0, "Selected keys: "s);  // NOLINT (*-type-vararg)
   if (selected_keys.empty())
-    // NOLINTNEXTLINE (*-type-vararg)
-    mvprintw(1, 0, "Empty selection."s);
+    mvprintw(1, 0, "Empty selection."s);  // NOLINT (*-type-vararg)
   else {
     const auto joined = selected_keys | std::views::join_with(',') |
                         std::ranges::to<std::string>();
@@ -255,10 +254,8 @@ get_filename(std::string &filename) {
   const std::string original_filename{filename};
 
   clear();
-  // NOLINTBEGIN (*-type-vararg)
-  mvprintw(0, 0, header1);
-  mvprintw(1, 0, header2);
-  // NOLINTEND (*-type-vararg)
+  mvprintw(0, 0, header1);  // NOLINT (*-type-vararg)
+  mvprintw(1, 0, header2);  // NOLINT (*-type-vararg)
   mvprintw(2, 0, std::format(msg_fmt, filename));
   refresh();
 
@@ -280,10 +277,8 @@ get_filename(std::string &filename) {
     }
 
     clear();
-    // NOLINTBEGIN (*-type-vararg)
-    mvprintw(0, 0, header1);
-    mvprintw(1, 0, header2);
-    // NOLINTEND (*-type-vararg)
+    mvprintw(0, 0, header1);  // NOLINT (*-type-vararg)
+    mvprintw(1, 0, header2);  // NOLINT (*-type-vararg)
     mvprintw(2, 0, std::format(msg_fmt, filename));
     refresh();
   }
@@ -331,16 +326,13 @@ write_output(const auto &data, std::string &outfile) {
       erase();
       if (outfile.empty()) {
         mvprintw(0, 0, std::format(msg_fmt1_empty, std::size(data)));
-        // NOLINTNEXTLINE (*-type-vararg)
-        mvprintw(1, 0, msg_fmt2_empty);
+        mvprintw(1, 0, msg_fmt2_empty);  // NOLINT (*-type-vararg)
       }
       else {
         mvprintw(0, 0, std::format(msg_fmt1, std::size(data), outfile));
-        // NOLINTNEXTLINE (*-type-vararg)
-        mvprintw(1, 0, msg_fmt2);
+        mvprintw(1, 0, msg_fmt2);  // NOLINT (*-type-vararg)
       }
-      // NOLINTNEXTLINE (*-type-vararg)
-      mvprintw(2, 0, msg_fmt3);
+      mvprintw(2, 0, msg_fmt3);  // NOLINT (*-type-vararg)
       refresh();
       confirmation = std::getchar();
     }
@@ -361,14 +353,12 @@ write_output(const auto &data, std::string &outfile) {
     confirmation = '\0';
     while (confirmation != '\0') {
       erase();
-      // NOLINTNEXTLINE (*-type-vararg)
-      mvprintw(0, 0, done_message);
+      mvprintw(0, 0, done_message);  // NOLINT (*-type-vararg)
       refresh();
       confirmation = std::getchar();
     }
     erase();
-    // NOLINTNEXTLINE (*-type-vararg)
-    mvprintw(0, 0, done_message);
+    mvprintw(0, 0, done_message);  // NOLINT (*-type-vararg)
     refresh();
   }
 }
@@ -380,16 +370,26 @@ confirm_quit() -> bool {
   while (std::tolower(confirmation) != 'y' &&
          std::tolower(confirmation) != 'n') {
     erase();
-    // NOLINTNEXTLINE (*-type-vararg)
-    mvprintw(0, 0, message);
+    mvprintw(0, 0, message);  // NOLINT (*-type-vararg)
     refresh();
     confirmation = std::getchar();
   }
   erase();
-  // NOLINTNEXTLINE (*-type-vararg)
-  mvprintw(0, 0, message);
+  mvprintw(0, 0, message);  // NOLINT (*-type-vararg)
   refresh();
   return (confirmation == 'y' || confirmation == 'Y');
+}
+
+[[nodiscard]] static inline auto
+format_queries(const std::vector<std::string> &queries) -> std::string {
+  if (queries.empty())
+    return {};
+
+  std::string s = std::format("[filters: \"{}\"", queries.front());
+  for (auto i = 1u; i < std::size(queries); ++i)
+    s += std::format(", \"{}\"", queries[i]);
+  s += "]";
+  return s;
 }
 
 auto
@@ -404,9 +404,7 @@ main_loop(const std::vector<std::pair<std::string, std::string>> &data,
     "h=Help, q=Quit, Move: Arrows/PgUp/PgDn/Home/End Space=Add/remove "
     "[{}/{}, selected={}]\n"
     "a/r=Toggle multi-add/remove, v/c=View/clear selection, "
-    "s/Esc=Enter/clear "
-    "search";
-
+    "s/Esc=Enter/clear ";
   // margin must be max key width plus room
   const auto key_sizes = std::views::transform(
     data, [](const auto &s) -> std::int32_t { return std::size(s.first); });
@@ -428,48 +426,54 @@ main_loop(const std::vector<std::pair<std::string, std::string>> &data,
   init_pair(4, COLOR_BLUE, COLOR_BLACK);    // Multiple selection mode active
 
   std::unordered_set<std::string> selected_keys;
-  std::string prev_query;
-  std::string query;
+  std::vector<std::string> queries;
+  std::string query_update;
   std::regex query_re;
   bool multi_add = false;
   bool multi_remove = false;
   std::int32_t horiz_pos = 0;
   std::int32_t cursor_pos = 0;
-  std::vector<std::pair<std::string, std::string>> filtered(data);
+  std::vector<std::vector<std::pair<std::string, std::string>>> filtered;
+  filtered.push_back(data);
 
   while (true) {
-    if (query != prev_query) {
+    if (!query_update.empty() &&
+        (queries.empty() || query_update != queries.back())) {
       // Filter data based on the query
       const auto query_found = [&](const auto &x) -> bool {
         // ADS: need to take care of upper/lower case here
         return std::regex_search(x.second, query_re);
       };
-      filtered.clear();
-      std::ranges::copy_if(data, std::back_inserter(filtered), query_found);
-      if (query.empty() || filtered.empty()) {
-        query.clear();
-        filtered = data;
-      }
-      prev_query = query;
+      filtered.push_back({});
+      assert(std::size(filtered) >= 2u);
+      const auto &prev_filtered = filtered[filtered.size() - 2];
+      std::ranges::copy_if(prev_filtered, std::back_inserter(filtered.back()),
+                           query_found);
+      if (filtered.back().empty())
+        filtered.pop_back();
+      else
+        queries.push_back(query_update);
+      query_update.clear();
     }
+    assert(std::size(filtered) == std::size(queries) + 1);
 
     // NOLINTNEXTLINE (*-narrowing-conversions)
-    const std::int32_t n_filtered = std::size(filtered);
+    const std::int32_t n_filtered = std::size(filtered.back());
 
     // Include the query in the legened if appropriate
     const std::string current_legend =
-      query.empty() ? std::format(legend, cursor_pos + 1, n_filtered,
-                                  std::size(selected_keys))
-                    : std::format(legend, cursor_pos + 1, n_filtered,
-                                  std::size(selected_keys)) +
-                        std::format(" [{}]", query);
+      queries.empty() ? std::format(legend, cursor_pos + 1, n_filtered,
+                                    std::size(selected_keys))
+                      : std::format(legend, cursor_pos + 1, n_filtered,
+                                    std::size(selected_keys)) +
+                          format_queries(queries);
 
     const auto disp_start =
       std::max(0, std::min(n_filtered + legend_height - LINES,
                            std::max(0, cursor_pos - LINES / 2)));
     const auto disp_end = std::min(n_filtered, disp_start + LINES);
 
-    const auto to_show = get_to_show(filtered, disp_start, disp_end);
+    const auto to_show = get_to_show(filtered.back(), disp_start, disp_end);
 
     // Clear to prepare for redraw and display the legend
     erase();  // performs better than using clear();
@@ -511,7 +515,10 @@ main_loop(const std::vector<std::pair<std::string, std::string>> &data,
         break;
     }
     else if (ch == escape_key_code) {  // ESC key to reset query
-      query.clear();
+      if (!queries.empty()) {
+        queries.pop_back();
+        filtered.pop_back();
+      }
       cursor_pos = 0;
     }
     else if (ch == 'w') {  // w key to save selection
@@ -519,7 +526,7 @@ main_loop(const std::vector<std::pair<std::string, std::string>> &data,
     }
     else if (ch == KEY_RIGHT) {  // Scroll right
       // NOLINTNEXTLINE (*-narrowing-conversions)
-      const std::int32_t width = std::size(filtered[cursor_pos].second);
+      const std::int32_t width = std::size(filtered.back()[cursor_pos].second);
       if (margin + width > COLS)
         horiz_pos = std::min(horiz_pos + 1, (margin + width) - COLS);
     }
@@ -530,9 +537,9 @@ main_loop(const std::vector<std::pair<std::string, std::string>> &data,
       horiz_pos = 0;
       cursor_pos = (cursor_pos + 1) % n_filtered;
       if (multi_add)
-        do_add(filtered, cursor_pos, selected_keys);
+        do_add(filtered.back(), cursor_pos, selected_keys);
       if (multi_remove)
-        do_remove(filtered, cursor_pos, selected_keys);
+        do_remove(filtered.back(), cursor_pos, selected_keys);
     }
     else if (ch == KEY_NPAGE) {
       horiz_pos = 0;
@@ -540,53 +547,53 @@ main_loop(const std::vector<std::pair<std::string, std::string>> &data,
         std::min(cursor_pos + LINES - legend_height, n_filtered - 1);
       if (multi_add)
         for (std::int32_t i = cursor_pos; i < max_down; ++i)
-          do_add(filtered, i, selected_keys);
+          do_add(filtered.back(), i, selected_keys);
       if (multi_remove)
         for (std::int32_t i = cursor_pos; i < max_down; ++i)
-          do_remove(filtered, i, selected_keys);
+          do_remove(filtered.back(), i, selected_keys);
       cursor_pos = max_down;
     }
     else if (ch == KEY_END) {
       horiz_pos = 0;
       if (multi_add)
         for (std::int32_t i = cursor_pos; i < n_filtered; ++i)
-          do_add(filtered, i, selected_keys);
+          do_add(filtered.back(), i, selected_keys);
       if (multi_remove)
         for (std::int32_t i = cursor_pos; i < n_filtered; ++i)
-          do_remove(filtered, i, selected_keys);
+          do_remove(filtered.back(), i, selected_keys);
       cursor_pos = n_filtered - 1;
     }
     else if (ch == KEY_UP) {
       horiz_pos = 0;
       cursor_pos = (cursor_pos - 1 + n_filtered) % n_filtered;
       if (multi_add)
-        do_add(filtered, cursor_pos, selected_keys);
+        do_add(filtered.back(), cursor_pos, selected_keys);
       if (multi_remove)
-        do_remove(filtered, cursor_pos, selected_keys);
+        do_remove(filtered.back(), cursor_pos, selected_keys);
     }
     else if (ch == KEY_PPAGE) {
       horiz_pos = 0;
       std::int32_t max_up = std::max(cursor_pos - (LINES - legend_height), 0);
       if (multi_add)
         for (std::int32_t i = cursor_pos; i >= max_up; --i)
-          do_add(filtered, i, selected_keys);
+          do_add(filtered.back(), i, selected_keys);
       if (multi_remove)
         for (std::int32_t i = cursor_pos; i >= max_up; --i)
-          do_remove(filtered, i, selected_keys);
+          do_remove(filtered.back(), i, selected_keys);
       cursor_pos = max_up;
     }
     else if (ch == KEY_HOME) {
       horiz_pos = 0;
       if (multi_add)
         for (std::int32_t i = cursor_pos; i >= 0; --i)
-          do_add(filtered, i, selected_keys);
+          do_add(filtered.back(), i, selected_keys);
       if (multi_remove)
         for (std::int32_t i = cursor_pos; i >= 0; --i)
-          do_remove(filtered, i, selected_keys);
+          do_remove(filtered.back(), i, selected_keys);
       cursor_pos = 0;
     }
     else if (ch == ' ' || ch == '\n') {  // Select/deselect current item
-      do_select(filtered, cursor_pos, selected_keys);
+      do_select(filtered.back(), cursor_pos, selected_keys);
     }
     else if (ch == 'c') {  // Clear selected keys
       selected_keys.clear();
@@ -598,17 +605,17 @@ main_loop(const std::vector<std::pair<std::string, std::string>> &data,
       multi_add = !multi_add;
       multi_remove = false;
       if (multi_add)
-        do_add(filtered, cursor_pos, selected_keys);
+        do_add(filtered.back(), cursor_pos, selected_keys);
     }
     else if (ch == 'r') {  // Toggle multi-select mode
       multi_remove = !multi_remove;
       multi_add = false;
       if (multi_remove)
-        do_remove(filtered, cursor_pos, selected_keys);
+        do_remove(filtered.back(), cursor_pos, selected_keys);
     }
     else if (ch == '/' || ch == 's') {  // Start search query
       horiz_pos = 0;
-      get_query(query, query_re);
+      get_query(query_update, query_re);
       cursor_pos = 0;
     }
     else if (ch == 'h') {  // show help
