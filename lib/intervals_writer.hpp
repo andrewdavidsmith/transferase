@@ -24,7 +24,6 @@
 #ifndef LIB_INTERVALS_WRITER_HPP_
 #define LIB_INTERVALS_WRITER_HPP_
 
-#include "level_element_formatter.hpp"
 #include "writer_base.hpp"
 
 #include <cstdint>
@@ -37,6 +36,7 @@ namespace transferase {
 struct genomic_interval;
 struct genome_index;
 enum class output_format_t : std::uint8_t;
+enum class level_element_mode : std::uint8_t;
 
 struct intervals_writer : public writer_base<intervals_writer> {
   const std::vector<genomic_interval> &intervals;
@@ -70,7 +70,7 @@ struct intervals_writer : public writer_base<intervals_writer> {
 
   [[nodiscard]] auto
   write_dfscores_impl(const auto &levels, const char rowname_delim,
-                              const bool write_header) const noexcept
+                      const bool write_header) const noexcept
     -> std::error_code;
 };
 
