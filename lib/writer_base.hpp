@@ -24,6 +24,7 @@
 #ifndef LIB_WRITER_BASE_HPP_
 #define LIB_WRITER_BASE_HPP_
 
+#include "level_element_formatter.hpp"
 #include "output_format_type.hpp"
 
 #include <string>
@@ -37,6 +38,7 @@ struct genomic_interval;
 struct genome_index;
 struct level_element_t;
 struct level_element_covered_t;
+enum class output_format_t : std::uint8_t;
 
 template <typename T> struct writer_base {
   // ADS: below = (max_digits) x (max_methylomes) x (max_cols)
@@ -64,23 +66,25 @@ template <typename T> struct writer_base {
   // clang-format on
 
   [[nodiscard]] auto
-  write_bedlike(const auto &levels, const bool classic_format =
-                                      false) const noexcept -> std::error_code {
-    return self().write_bedlike_impl(levels, classic_format);
+  write_bedlike(const auto &levels, const level_element_mode mode)
+    const noexcept -> std::error_code {
+    return self().write_bedlike_impl(levels, mode);
   }
 
   [[nodiscard]] auto
-  write_dataframe(const auto &levels, const char rowname_delim = '.',
+  write_dataframe(const auto &levels, const level_element_mode mode,
+                  const char rowname_delim = '.',
                   const bool write_header = true) const noexcept
     -> std::error_code {
-    return self().write_dataframe_impl(levels, rowname_delim, write_header);
+    return self().write_dataframe_impl(levels, mode, rowname_delim,
+                                       write_header);
   }
 
   [[nodiscard]] auto
-  write_dataframe_scores(const auto &levels, const char rowname_delim = '.',
+  write_dfscores(const auto &levels, const char rowname_delim = '.',
                          const bool write_header = true) const noexcept
     -> std::error_code {
-    return self().write_dataframe_scores_impl(levels, rowname_delim,
+    return self().write_dfscores_impl(levels, rowname_delim,
                                               write_header);
   }
 
@@ -88,17 +92,19 @@ template <typename T> struct writer_base {
   write_output(const auto &levels) const noexcept -> std::error_code {
     switch (out_fmt) {
     case output_format_t::none:
-      return write_bedlike(levels);
+      return write_bedlike(levels, level_element_mode::counts);
     case output_format_t::counts:
-      return write_bedlike(levels);
+      return write_bedlike(levels, level_element_mode::counts);
     case output_format_t::classic:
-      return write_bedlike(levels, true);
+      return write_bedlike(levels, level_element_mode::classic);
     case output_format_t::bedgraph:
-      return write_dataframe_scores(levels, '\t', false);
+      return write_dfscores(levels, '\t', false);
+    case output_format_t::dfscores:
+      return write_dfscores(levels);
     case output_format_t::dataframe:
-      return write_dataframe(levels);
-    case output_format_t::dataframe_scores:
-      return write_dataframe_scores(levels);
+      return write_dataframe(levels, level_element_mode::counts);
+    case output_format_t::dfclassic:
+      return write_dataframe(levels, level_element_mode::classic);
     }
     std::unreachable();
   }

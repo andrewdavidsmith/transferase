@@ -55,10 +55,11 @@ write_bedlike_bins_impl(const std::string &outfile,
                         const std::uint32_t bin_size,
                         const std::vector<std::uint32_t> &n_cpgs,
                         const auto &levels,
-                        const bool classic_format) -> std::error_code {
+                        const level_element_mode mode) -> std::error_code {
   static constexpr auto delim{'\t'};
-  const auto lvl_to_string = [classic_format](const auto &l) {
-    return classic_format ? l.tostring_classic() : l.tostring_counts();
+  const auto lvl_to_string = [mode](const auto &l) {
+    return mode == level_element_mode::classic ? l.tostring_classic()
+                                               : l.tostring_counts();
   };
 
   std::ofstream out(outfile);
@@ -86,14 +87,14 @@ write_bedlike_bins_impl(const std::string &outfile,
 }
 
 [[nodiscard]] static inline auto
-write_bins_dataframe_scores_impl(const std::string &outfile,
-                                 const std::vector<std::string> &names,
-                                 const genome_index_metadata &meta,
-                                 const std::uint32_t bin_size,
-                                 const std::uint32_t min_reads,
-                                 const std::vector<std::uint32_t> &n_cpgs,
-                                 const auto &levels, const char rowname_delim,
-                                 const bool write_header) -> std::error_code {
+write_bins_dfscores_impl(const std::string &outfile,
+                         const std::vector<std::string> &names,
+                         const genome_index_metadata &meta,
+                         const std::uint32_t bin_size,
+                         const std::uint32_t min_reads,
+                         const std::vector<std::uint32_t> &n_cpgs,
+                         const auto &levels, const char rowname_delim,
+                         const bool write_header) -> std::error_code {
   using std::literals::string_view_literals::operator""sv;
   static constexpr auto none_label = "NA"sv;
   static constexpr auto delim{'\t'};
@@ -138,15 +139,22 @@ write_bins_dataframe_impl(const std::string &outfile,
                           const genome_index_metadata &meta,
                           const std::uint32_t bin_size,
                           const std::vector<std::uint32_t> &n_cpgs,
-                          const auto &levels, const char rowname_delim,
+                          const auto &levels, const level_element_mode mode,
+                          const char rowname_delim,
                           const bool write_header) -> std::error_code {
   using std::literals::string_view_literals::operator""sv;
   static constexpr auto delim = '\t';  // not optional for now
   // determine type
   using outer_type = typename std::remove_cvref_t<decltype(levels)>::value_type;
   using level_element = typename std::remove_cvref_t<outer_type>::value_type;
-  const auto hdr_formatter = [&](const auto &r) {
-    return std::format(level_element::hdr_fmt, r, delim, r, delim, r);
+  const auto hdr_formatter = [mode](const auto &r) {
+    return mode == level_element_mode::classic
+             ? std::format(level_element::hdr_fmt_cls, r, delim, r, delim, r)
+             : std::format(level_element::hdr_fmt, r, delim, r, delim, r);
+  };
+  const auto lvl_to_string = [mode](const auto &l) {
+    return mode == level_element_mode::classic ? l.tostring_classic()
+                                               : l.tostring_counts();
   };
 
   std::ofstream out(outfile);
@@ -172,7 +180,7 @@ write_bins_dataframe_impl(const std::string &outfile,
       std::print(out, "{}{}{}{}{}", chrom_name, rowname_delim, bin_beg,
                  rowname_delim, bin_end);
       for (const auto j : std::views::iota(0u, n_levels))
-        std::print(out, "{}{}", delim, levels[j][i].tostring_counts());
+        std::print(out, "{}{}", delim, lvl_to_string(levels[j][i]));
       if (write_n_cpgs)
         std::print(out, "{}{}", delim, n_cpgs[i]);
       std::println(out);
@@ -239,7 +247,7 @@ write_bedlike_bins_impl(
 
 template <typename level_element>
 [[nodiscard]] static inline auto
-write_bins_dataframe_scores_impl(
+write_bins_dfscores_impl(
   const std::string &outfile, const std::vector<std::string> &names,
   const genome_index_metadata &meta, const std::uint32_t bin_size,
   const std::uint32_t min_reads, const std::vector<std::uint32_t> &n_cpgs,
@@ -303,6 +311,7 @@ write_bins_dataframe_impl(
   const std::uint32_t bin_size,
   const std::vector<std::uint32_t> &n_cpgs,
   const level_container_md<level_element> &levels,
+  const level_element_mode mode,
   const char rowname_delim,
   const bool write_header
   // clang-format on
@@ -310,8 +319,10 @@ write_bins_dataframe_impl(
   static constexpr auto delim{'\t'};
   static constexpr auto newline{'\n'};
 
-  const auto hdr_formatter = [&](const auto &r) {
-    return std::format(level_element::hdr_fmt, r, delim, r, delim, r);
+  const auto hdr_formatter = [mode](const auto &r) {
+    return mode == level_element_mode::classic
+             ? std::format(level_element::hdr_fmt_cls, r, delim, r, delim, r)
+             : std::format(level_element::hdr_fmt, r, delim, r, delim, r);
   };
 
   std::ofstream out(outfile);
@@ -345,8 +356,7 @@ write_bins_dataframe_impl(
       const auto bin_end = std::min(bin_beg + bin_size, chrom_size);
       push_buffer(cursor, line_end, error, bin_beg, rowname_delim, bin_end);
       for (const auto j : std::views::iota(0u, n_levels))
-        push_buffer_elem(cursor, line_end, error, levels[i, j],
-                         level_element_mode::counts, delim);
+        push_buffer_elem(cursor, line_end, error, levels[i, j], mode, delim);
       if (write_n_cpgs)
         push_buffer(cursor, line_end, error, delim, n_cpgs[i]);
       push_buffer(cursor, line_end, error, newline);
@@ -363,124 +373,123 @@ template <>
 [[nodiscard]] auto
 bins_writer::write_bedlike_impl(
   const std::vector<level_container<level_element_t>> &levels,
-  const bool classic_format) const noexcept -> std::error_code {
+  const level_element_mode mode) const noexcept -> std::error_code {
   return write_bedlike_bins_impl(outfile, index.get_metadata(), bin_size,
-                                 n_cpgs, levels, classic_format);
+                                 n_cpgs, levels, mode);
 }
 
 template <>
 [[nodiscard]] auto
 bins_writer::write_bedlike_impl(
   const std::vector<level_container<level_element_covered_t>> &levels,
-  const bool classic_format) const noexcept -> std::error_code {
+  const level_element_mode mode) const noexcept -> std::error_code {
   return write_bedlike_bins_impl(outfile, index.get_metadata(), bin_size,
-                                 n_cpgs, levels, classic_format);
+                                 n_cpgs, levels, mode);
 }
 
 template <>
 [[nodiscard]] auto
 bins_writer::write_bedlike_impl(
   const level_container_md<level_element_t> &levels,
-  const bool classic_format) const noexcept -> std::error_code {
-  return write_bedlike_bins_impl(
-    outfile, index.get_metadata(), bin_size, n_cpgs, levels,
-    classic_format ? level_element_mode::classic : level_element_mode::counts);
+  const level_element_mode mode) const noexcept -> std::error_code {
+  return write_bedlike_bins_impl(outfile, index.get_metadata(), bin_size,
+                                 n_cpgs, levels, mode);
 }
 
 template <>
 [[nodiscard]] auto
 bins_writer::write_bedlike_impl(
   const level_container_md<level_element_covered_t> &levels,
-  const bool classic_format) const noexcept -> std::error_code {
-  return write_bedlike_bins_impl(
-    outfile, index.get_metadata(), bin_size, n_cpgs, levels,
-    classic_format ? level_element_mode::classic : level_element_mode::counts);
+  const level_element_mode mode) const noexcept -> std::error_code {
+  return write_bedlike_bins_impl(outfile, index.get_metadata(), bin_size,
+                                 n_cpgs, levels, mode);
 }
 
 template <>
 [[nodiscard]] auto
-bins_writer::write_dataframe_scores_impl(
+bins_writer::write_dfscores_impl(
   const std::vector<level_container<level_element_t>> &levels,
   const char rowname_delim,
   const bool write_header) const noexcept -> std::error_code {
-  return write_bins_dataframe_scores_impl(outfile, names, index.get_metadata(),
-                                          bin_size, min_reads, n_cpgs, levels,
-                                          rowname_delim, write_header);
+  return write_bins_dfscores_impl(outfile, names, index.get_metadata(),
+                                  bin_size, min_reads, n_cpgs, levels,
+                                  rowname_delim, write_header);
 }
 
 template <>
 [[nodiscard]] auto
-bins_writer::write_dataframe_scores_impl(
+bins_writer::write_dfscores_impl(
   const std::vector<level_container<level_element_covered_t>> &levels,
   const char rowname_delim,
   const bool write_header) const noexcept -> std::error_code {
-  return write_bins_dataframe_scores_impl(outfile, names, index.get_metadata(),
-                                          bin_size, min_reads, n_cpgs, levels,
-                                          rowname_delim, write_header);
+  return write_bins_dfscores_impl(outfile, names, index.get_metadata(),
+                                  bin_size, min_reads, n_cpgs, levels,
+                                  rowname_delim, write_header);
 }
 
 template <>
 [[nodiscard]] auto
-bins_writer::write_dataframe_scores_impl(
+bins_writer::write_dfscores_impl(
   const level_container_md<level_element_t> &levels, const char rowname_delim,
   const bool write_header) const noexcept -> std::error_code {
-  return write_bins_dataframe_scores_impl(outfile, names, index.get_metadata(),
-                                          bin_size, min_reads, n_cpgs, levels,
-                                          rowname_delim, write_header);
+  return write_bins_dfscores_impl(outfile, names, index.get_metadata(),
+                                  bin_size, min_reads, n_cpgs, levels,
+                                  rowname_delim, write_header);
 }
 
 template <>
 [[nodiscard]] auto
-bins_writer::write_dataframe_scores_impl(
+bins_writer::write_dfscores_impl(
   const level_container_md<level_element_covered_t> &levels,
   const char rowname_delim,
   const bool write_header) const noexcept -> std::error_code {
-  return write_bins_dataframe_scores_impl(outfile, names, index.get_metadata(),
-                                          bin_size, min_reads, n_cpgs, levels,
-                                          rowname_delim, write_header);
+  return write_bins_dfscores_impl(outfile, names, index.get_metadata(),
+                                  bin_size, min_reads, n_cpgs, levels,
+                                  rowname_delim, write_header);
 }
 
 template <>
 [[nodiscard]] auto
 bins_writer::write_dataframe_impl(
   const std::vector<level_container<level_element_t>> &levels,
-  const char rowname_delim,
+  const level_element_mode mode, const char rowname_delim,
   const bool write_header) const noexcept -> std::error_code {
   return write_bins_dataframe_impl(outfile, names, index.get_metadata(),
-                                   bin_size, n_cpgs, levels, rowname_delim,
-                                   write_header);
+                                   bin_size, n_cpgs, levels, mode,
+                                   rowname_delim, write_header);
 }
 
 template <>
 [[nodiscard]] auto
 bins_writer::write_dataframe_impl(
   const std::vector<level_container<level_element_covered_t>> &levels,
-  const char rowname_delim,
+  const level_element_mode mode, const char rowname_delim,
   const bool write_header) const noexcept -> std::error_code {
   return write_bins_dataframe_impl(outfile, names, index.get_metadata(),
-                                   bin_size, n_cpgs, levels, rowname_delim,
-                                   write_header);
+                                   bin_size, n_cpgs, levels, mode,
+                                   rowname_delim, write_header);
 }
 
 template <>
 [[nodiscard]] auto
 bins_writer::write_dataframe_impl(
-  const level_container_md<level_element_t> &levels, const char rowname_delim,
+  const level_container_md<level_element_t> &levels,
+  const level_element_mode mode, const char rowname_delim,
   const bool write_header) const noexcept -> std::error_code {
   return write_bins_dataframe_impl(outfile, names, index.get_metadata(),
-                                   bin_size, n_cpgs, levels, rowname_delim,
-                                   write_header);
+                                   bin_size, n_cpgs, levels, mode,
+                                   rowname_delim, write_header);
 }
 
 template <>
 [[nodiscard]] auto
 bins_writer::write_dataframe_impl(
   const level_container_md<level_element_covered_t> &levels,
-  const char rowname_delim,
+  const level_element_mode mode, const char rowname_delim,
   const bool write_header) const noexcept -> std::error_code {
   return write_bins_dataframe_impl(outfile, names, index.get_metadata(),
-                                   bin_size, n_cpgs, levels, rowname_delim,
-                                   write_header);
+                                   bin_size, n_cpgs, levels, mode,
+                                   rowname_delim, write_header);
 }
 
 }  // namespace transferase

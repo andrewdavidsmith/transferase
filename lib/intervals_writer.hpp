@@ -24,6 +24,7 @@
 #ifndef LIB_INTERVALS_WRITER_HPP_
 #define LIB_INTERVALS_WRITER_HPP_
 
+#include "level_element_formatter.hpp"
 #include "writer_base.hpp"
 
 #include <cstdint>
@@ -59,16 +60,16 @@ struct intervals_writer : public writer_base<intervals_writer> {
 
   /// Write intervals along with their level for a levels
   [[nodiscard]] auto
-  write_bedlike_impl(const auto &levels, const bool classic_format)
+  write_bedlike_impl(const auto &levels, const level_element_mode mode)
     const noexcept -> std::error_code;
 
   [[nodiscard]] auto
-  write_dataframe_impl(const auto &levels, const char rowname_delim,
-                       const bool write_header) const noexcept
-    -> std::error_code;
+  write_dataframe_impl(
+    const auto &levels, const level_element_mode mode, const char rowname_delim,
+    const bool write_header) const noexcept -> std::error_code;
 
   [[nodiscard]] auto
-  write_dataframe_scores_impl(const auto &levels, const char rowname_delim,
+  write_dfscores_impl(const auto &levels, const char rowname_delim,
                               const bool write_header) const noexcept
     -> std::error_code;
 };
