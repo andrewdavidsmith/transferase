@@ -82,10 +82,9 @@ template <typename T> struct writer_base {
 
   [[nodiscard]] auto
   write_dfscores(const auto &levels, const char rowname_delim = '.',
-                         const bool write_header = true) const noexcept
+                 const bool write_header = true) const noexcept
     -> std::error_code {
-    return self().write_dfscores_impl(levels, rowname_delim,
-                                              write_header);
+    return self().write_dfscores_impl(levels, rowname_delim, write_header);
   }
 
   [[nodiscard]] auto
