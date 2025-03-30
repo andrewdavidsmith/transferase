@@ -1,8 +1,11 @@
 name: Run unit tests on macOS
 
+# Should run at 2am Pacific time
 on:
   pull_request:
     branches: [ "main" ]
+  schedule:
+    - cron: "0 9 * * *"
   workflow_dispatch:
 
 jobs:
