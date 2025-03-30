@@ -26,17 +26,23 @@ option(UNIT_TESTS "Enable unit tests" off)
 option(PACKAGE "Enable packaging for release" off)
 option(STATIC_ANALYSIS "Enable static analysis" off)
 option(STATIC_LIBS "Use static linkage for non-system libs" off)
-option(SANITIZING "Enable sanitizing" off)
+option(SANITIZE "Enable sanitizing" off)
 option(CODE_COVERAGE "Enable code coverage" off)
 option(LTO "Enable link-time optimization" off)
 option(BUILD_PYTHON "Build Python bindings" off)
 option(PACKAGE_PYTHON "Package the Python bindings" off)
 option(PYTHON_TESTS "Enable Python tests" off)
+option(LIB_ONLY "Skip building the cli" off)
 set(SANITIZER_TYPE "address"
   CACHE STRING "Choose sanitizer type (address, undefined)")
 
 if(TEST_LIB OR TEST_CLI)
   set(UNIT_TESTS on)
+endif()
+
+set(BUILD_CLI on)
+if(LIB_ONLY OR BUILD_PYTHON OR PACKAGE_PYTHON)
+  set(BUILD_CLI off)
 endif()
 
 # Release
@@ -48,7 +54,7 @@ if(PACKAGE)
       PYTHON_TESTS OR
       STATIC_ANALYSIS OR
       ENABLE_CODE_COVERAGE OR
-      ENABLE_SANITIZING)
+      SANITIZE)
     message(FATAL_ERROR
       "Specified options incompatible with 'PACKAGE'")
   endif()
@@ -67,7 +73,7 @@ if(BUILD_PYTHON)
   if(UNIT_TESTS OR
       BUILD_CLI OR
       ENABLE_CODE_COVERAGE OR
-      ENABLE_SANITIZING)
+      SANITIZE)
     message(FATAL_ERROR
       "Specified options incompatible with 'BUILD_PYTHON'")
   endif()
@@ -85,7 +91,7 @@ if(PACKAGE_PYTHON)
       BUILD_CLI OR
       STATIC_ANALYSIS OR
       ENABLE_CODE_COVERAGE OR
-      ENABLE_SANITIZING)
+      SANITIZE)
     message(FATAL_ERROR
       "Specified options incompatible with 'PACKAGE_PYTHON'")
   endif()
@@ -119,7 +125,7 @@ if(PYTHON_TESTS)
       BUILD_CLI OR
       STATIC_ANALYSIS OR
       ENABLE_CODE_COVERAGE OR
-      ENABLE_SANITIZING)
+      SANITIZE)
     message(FATAL_ERROR
       "Specified options incompatible with 'PYTHON_TESTS'")
   endif()

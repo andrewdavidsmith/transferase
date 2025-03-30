@@ -62,7 +62,7 @@ cd transferase
 The build configuration needs some variables. I will explain the parts below:
 
 ```console
-cmake -B build -DCMAKE_CXX_COMPILER=g++-14 -DBUILD_CLI=on -DCMAKE_BUILD_TYPE=Release
+cmake -B build -DCMAKE_CXX_COMPILER=g++-14 -DCMAKE_BUILD_TYPE=Release
 ```
 
 If you are not familiar with cmake, the variables are set with a `-D`. The
@@ -73,9 +73,7 @@ aware that transferase uses the c++23 standard, so you will need either g++
 with at least version 14.2.0, or clang++ with at least version 20.0.0, the
 latter not yet available in packages as I write this. The `-B build` tells it
 to put all the work inside the `build` directory, so you can easily delete it
-all if you made a mistake. Finally, one that is specific to transferase:
-`BUILD_CLI=on` builds the command line interface, which you absolutely need,
-but is off by default for my own convenience.
+all if you made a mistake.
 
 Now is time for the build. The following basically runs make. Use `-j` to
 specify how many cores you want to use when building:
@@ -232,7 +230,7 @@ run it. Notice that on Fedora we use `g++` and not `g++-14`:
 ```console
 git clone https://github.com/andrewdavidsmith/transferase
 cd transferase
-cmake -B build -DCMAKE_CXX_COMPILER=g++ -DBUILD_CLI=on -DCMAKE_BUILD_TYPE=Release
+cmake -B build -DCMAKE_CXX_COMPILER=g++ -DCMAKE_BUILD_TYPE=Release
 cmake --build build -j32
 ```
 
