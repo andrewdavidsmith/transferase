@@ -67,6 +67,7 @@ command_select_main([[maybe_unused]] int argc,
 
 #include <algorithm>
 #include <array>
+#include <cassert>
 #include <cctype>  // for std::isprint
 #include <cerrno>
 #include <csignal>
