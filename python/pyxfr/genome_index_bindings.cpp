@@ -51,7 +51,7 @@ genome_index_bindings(nanobind::class_<transferase::genome_index> &cls)
                  nb::overload_cast<const std::string &, const std::string &>(
                    &xfr::genome_index::read),
                  R"doc(
-    Read a a GenomeIndex object from a directory.
+    Read a GenomeIndex object from a directory.
 
     Parameters
     ----------
