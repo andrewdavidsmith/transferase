@@ -134,7 +134,6 @@ methylome_client_remote_bindings(
       &xfr::methylome_client_remote::get_levels<xfr::level_element_t>,
       nb::const_),
     R"doc(
-
     Query the server for methylation levels in each non-overlapping genomic
     interval of the given size and for each specified methylome.
 
@@ -228,14 +227,14 @@ methylome_client_remote_bindings(
     )doc",
     "methylomes"_a, "bin_size"_a);
   cls.doc() = R"doc(
-    A MClient is an interface for querying a remote transferase server. Using
-    the MClient to make queries ensures that the client and server are always
-    communicating about the exact same reference genome, and not one that
-    differs, for example, by inclusion of unassembled fragments or alternate
-    haplotypes. If you have not already setup transferase using the MConfig
-    class (or with command line tools), it is possible to use a MClient, but
-    the process is more complicated.
-    )doc"
+    An MClient object is an interface for querying a remote transferase
+    server. Using the MClient to make queries ensures that the client and
+    server are always communicating about the exact same reference genome, and
+    not one that differs, for example, by inclusion of unassembled fragments
+    or alternate haplotypes. If you have not already setup transferase using
+    the MConfig class (or with command line tools), it is possible to use a
+    MClient, but the process is more complicated.
+  )doc"
     //
     ;
 }

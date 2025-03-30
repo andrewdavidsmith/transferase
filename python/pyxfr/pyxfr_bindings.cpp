@@ -61,19 +61,19 @@ When in doubt, consult the module reference at the location listed above.
 #include <utility>      // IWYU pragma: keep
 
 auto
-initialize_transferase() -> void {
+initialize_pyxfr() -> void {
   namespace xfr = transferase;
-  xfr::logger::instance(xfr::shared_from_cout(), "Transferase",
+  xfr::logger::instance(xfr::shared_from_cout(), "pyxfr",
                         xfr::log_level_t::error);
 }
 
-NB_MODULE(transferase, the_module) {
+NB_MODULE(pyxfr, the_module) {
   namespace nb = nanobind;
   namespace xfr = transferase;
 
   the_module.doc() = warning_message;
 
-  initialize_transferase();
+  initialize_pyxfr();
 
   auto LogLevel = nb::enum_<xfr::log_level_t>(the_module, "LogLevel")
                     .value("debug", xfr::log_level_t::debug)
@@ -93,7 +93,7 @@ NB_MODULE(transferase, the_module) {
                     .value("update", xfr::download_policy_t::update);
 
   auto MConfig = nb::class_<xfr::client_config>(
-    the_module, "MConfig", "Class to help configuring transferase");
+    the_module, "MConfig", "Class to help configure transferase");
 
   auto GenomicInterval = nb::class_<xfr::genomic_interval>(
     the_module, "GenomicInterval",

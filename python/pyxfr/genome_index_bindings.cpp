@@ -56,7 +56,9 @@ genome_index_bindings(nanobind::class_<transferase::genome_index> &cls)
     Parameters
     ----------
 
-    directory (str): Directory where the genome_index files can be found.
+    directory (str): Directory where the genome_index files can be found. If
+       you have an MClient object, then the `get_index_dir()` method can be
+       used to obtain this argument.
 
     genome_name (str): Read the index for the genome with this name.
     )doc",

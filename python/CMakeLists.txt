@@ -63,10 +63,10 @@ foreach(dirname ${Python_INCLUDE_DIRS})
 endforeach()
 
 # Set the Python package/library name
-set(LIBRARY_NAME "transferase")
+set(LIBRARY_NAME "pyxfr")
 
 # Recurse into the subdirectory with the Python bindings
-add_subdirectory(transferase)
+add_subdirectory(pyxfr)
 
 # Configure the tests if requested
 if(PYTHON_TESTS)
@@ -129,8 +129,8 @@ if(PACKAGE_PYTHON)
 
   # Copy the python sources (e.g., "__init__.py") to the directory where they
   # will be included in the package
-  configure_file(${PROJECT_SOURCE_DIR}/python/transferase_utils.py
-    ${PROJECT_BINARY_DIR}/python/${LIBRARY_NAME}/transferase_utils.py COPYONLY)
+  configure_file(${PROJECT_SOURCE_DIR}/python/pyxfr_utils.py
+    ${PROJECT_BINARY_DIR}/python/${LIBRARY_NAME}/pyxfr_utils.py COPYONLY)
   configure_file(${PROJECT_SOURCE_DIR}/python/__init__.py
     ${PROJECT_BINARY_DIR}/python/${LIBRARY_NAME}/__init__.py COPYONLY)
 
