@@ -11,7 +11,7 @@ readme = "README.md"
 license = {text = "MIT"}
 dynamic = ["version"]
 dependencies = [
-  "numpy >= 2.2",
+  "numpy >= 2.0",
 ]
 requires-python = ">= 3.12"
 keywords = [
