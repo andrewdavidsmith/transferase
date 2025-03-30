@@ -107,8 +107,8 @@ genome_index_data::write(const std::string &data_file) const noexcept
   if (!out)
     return std::make_error_code(std::errc(errno));
   for (const auto &cpgs : positions) {
-    // NOLINTNEXTLINE(*-reinterpret-cast)
     out.write(
+      // NOLINTNEXTLINE(*-reinterpret-cast)
       reinterpret_cast<const char *>(cpgs.data()),
       static_cast<std::streamsize>(sizeof(std::uint32_t) * std::size(cpgs)));
     const auto write_ok = static_cast<bool>(out);
