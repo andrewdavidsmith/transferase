@@ -28,5 +28,5 @@ jobs:
           cmake --build build -j4
       - name: Check that it runs
         run: |
-          export PYTHONPATH=build/python/transferase
-          PAGER=cat python -c "import transferase; help(transferase)"
+          export PYTHONPATH=build/python/pyxfr
+          PAGER=cat python -c "import pyxfr; help(pyxfr)"
