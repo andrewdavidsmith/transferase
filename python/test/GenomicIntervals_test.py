@@ -26,8 +26,8 @@ import tempfile
 import os
 
 
-from transferase import GenomicInterval
-from transferase import GenomeIndex
+from pyxfr import GenomicInterval
+from pyxfr import GenomeIndex
 
 
 def create_temp_directory():
