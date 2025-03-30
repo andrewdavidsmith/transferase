@@ -26,7 +26,7 @@ set(NANOBIND_COMPILE_OPTIONS ${GLOBAL_COMPILE_OPTIONS})
 list(REMOVE_ITEM NANOBIND_COMPILE_OPTIONS "-Wpedantic")
 
 file(GLOB cpp_files "*.cpp")
-list(FILTER cpp_files EXCLUDE REGEX "transferase_bindings.cpp")
+list(FILTER cpp_files EXCLUDE REGEX "pyxfr_bindings.cpp")
 
 # Ensure all objects depend on both the cpp and hpp files
 set(LIBRARY_OBJECTS "")
@@ -44,18 +44,18 @@ foreach(cpp_file ${cpp_files})
 endforeach()
 
 # Create the static library by linking the previous parts
-add_library(transferase_bindings STATIC transferase_bindings.cpp)
-target_link_libraries(transferase_bindings PUBLIC ${LIBRARY_OBJECTS})
+add_library(pyxfr_bindings STATIC pyxfr_bindings.cpp)
+target_link_libraries(pyxfr_bindings PUBLIC ${LIBRARY_OBJECTS})
 
 # Make the package shared library by applying the bindings functions
 nanobind_add_module(
   ${LIBRARY_NAME}
   NB_STATIC STABLE_ABI LTO
-  transferase_bindings.cpp
+  pyxfr_bindings.cpp
 )
 
 # Compile the extension library
-target_link_libraries(${LIBRARY_NAME} PUBLIC transferase_bindings)
+target_link_libraries(${LIBRARY_NAME} PUBLIC pyxfr_bindings)
 
 target_compile_options(
   ${LIBRARY_NAME}

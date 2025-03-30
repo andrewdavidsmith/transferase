@@ -21,11 +21,11 @@
 # SOFTWARE.
 
 """
-Utilities associated with the Python bindings for transferase, but that
-are not implemented within the bindings themselves.
+Utilities associated with pyxfr, the Python API for Transferase, but that
+are not implemented within the pyxfr C++ bindings.
 """
 
-from .transferase import GenomeIndex
+from .pyxfr import GenomeIndex
 
 import json
 

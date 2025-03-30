@@ -3,8 +3,8 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "transferase"
-description = "Transferase"
+name = "pyxfr"
+description = "The Transferase Python API"
 authors = [{name = "Andrew D Smith", email = "andrewds@usc.edu"}]
 maintainers =  [{name = "Andrew D Smith", email = "andrewds@usc.edu"}]
 readme = "README.md"
@@ -14,19 +14,26 @@ dependencies = [
   "numpy >= 2.2",
 ]
 requires-python = ">= 3.12"
-keywords = ["methylome", "DNA methylation", "epigenetics", "epigenomics"]
+keywords = [
+  "methylome",
+  "methylation",
+  "DNA methylation",
+  "epigenetics",
+  "epigenomics",
+  "genomics",
+]
 classifiers = [
-    "Development Status :: 3 - Alpha",
-    "Intended Audience :: Developers",
-    "Intended Audience :: Healthcare Industry",
-    "Intended Audience :: Science/Research",
-    "Topic :: Scientific/Engineering :: Bio-Informatics",
-    "Topic :: Scientific/Engineering :: Information Analysis",
-    "Topic :: Scientific/Engineering :: Medical Science Apps.",
-    "Programming Language :: Python :: 3.12",
-    "Programming Language :: Python :: 3.13",
-    "Programming Language :: Python :: 3.14",
-    "Programming Language :: Python :: Implementation :: CPython",
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Education",
+  "Intended Audience :: Healthcare Industry",
+  "Intended Audience :: Science/Research",
+  "Topic :: Scientific/Engineering :: Bio-Informatics",
+  "Topic :: Scientific/Engineering :: Information Analysis",
+  "Topic :: Scientific/Engineering :: Medical Science Apps.",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: Implementation :: CPython",
 ]
 [project.urls]
 Homepage = "https://github.com/andrewdavidsmith/transferase"
@@ -45,14 +52,14 @@ path = "hatch_build.py"
 
 [tool.hatch.build.targets.wheel]
 exclude = [
-    "**/*",  # Exclude everything recursively
-    "!*.json", # Except the system config json file
-    "!*.so", # Except the library .so file
-    "!*.py", # Except any python bindings
+  "**/*",  # Exclude everything recursively
+  "!*.json", # Except the system config json file
+  "!*.so", # Except the library .so file
+  "!*.py", # Except any python bindings
 ]
 
 [tool.hatch.build.targets.sdist]
 exclude = [
-    "**/*",  # Exclude everything recursively
-    "!*.py", # Except any python bindings
+  "**/*",  # Exclude everything recursively
+  "!*.py", # Except any python bindings
 ]
