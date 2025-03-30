@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef PYTHON_TRANSFERASE_BINDINGS_UTILS_HPP_
-#define PYTHON_TRANSFERASE_BINDINGS_UTILS_HPP_
+#ifndef PYTHON_PYXFR_BINDINGS_UTILS_HPP_
+#define PYTHON_PYXFR_BINDINGS_UTILS_HPP_
 
 #include <string>
 #include <vector>
@@ -41,4 +41,4 @@ find_python_sys_config_dir() -> std::string;
 
 }  // namespace transferase
 
-#endif  // PYTHON_TRANSFERASE_BINDINGS_UTILS_HPP_
+#endif  // PYTHON_PYXFR_BINDINGS_UTILS_HPP_

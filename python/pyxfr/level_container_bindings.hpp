@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef PYTHON_TRANSFERASE_LEVEL_CONTAINER_BINDINGS_HPP_
-#define PYTHON_TRANSFERASE_LEVEL_CONTAINER_BINDINGS_HPP_
+#ifndef PYTHON_PYXFR_LEVEL_CONTAINER_BINDINGS_HPP_
+#define PYTHON_PYXFR_LEVEL_CONTAINER_BINDINGS_HPP_
 
 #include <nanobind/nanobind.h>
 
@@ -42,4 +42,4 @@ level_container_covered_bindings(
     transferase::level_container_md<transferase::level_element_covered_t>> &cls)
   -> void;
 
-#endif  // PYTHON_TRANSFERASE_LEVEL_CONTAINER_BINDINGS_HPP_
+#endif  // PYTHON_PYXFR_LEVEL_CONTAINER_BINDINGS_HPP_
