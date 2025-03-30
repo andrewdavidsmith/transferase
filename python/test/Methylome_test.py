@@ -26,11 +26,11 @@ import shutil
 import tempfile
 import os
 
-from transferase import GenomeIndex
-from transferase import Methylome
-from transferase import GenomicInterval
-from transferase import MLevels
-from transferase import MLevelsCovered
+from pyxfr import GenomeIndex
+from pyxfr import Methylome
+from pyxfr import GenomicInterval
+from pyxfr import MLevels
+from pyxfr import MLevelsCovered
 
 
 def get_valid_test_genome_index(genome_name, rootdir):

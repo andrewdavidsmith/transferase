@@ -22,7 +22,7 @@
 
 import pytest
 
-from transferase import MQuery
+from pyxfr import MQuery
 
 
 @pytest.fixture

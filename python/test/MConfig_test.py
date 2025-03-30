@@ -26,7 +26,7 @@ import tempfile
 import os
 
 
-from transferase import MConfig
+from pyxfr import MConfig
 
 
 def create_temp_directory():

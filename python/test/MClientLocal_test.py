@@ -26,11 +26,11 @@ import shutil
 import tempfile
 import os
 
-from transferase import MClientLocal
-from transferase import MConfig
-from transferase import GenomicInterval
-from transferase import MQuery
-from transferase import GenomeIndex
+from pyxfr import MClientLocal
+from pyxfr import MConfig
+from pyxfr import GenomicInterval
+from pyxfr import MQuery
+from pyxfr import GenomeIndex
 
 
 def create_temp_directory():

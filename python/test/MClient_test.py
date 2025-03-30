@@ -26,7 +26,7 @@ import shutil
 import tempfile
 import os
 
-from transferase import MClient
+from pyxfr import MClient
 
 
 def create_temp_directory():

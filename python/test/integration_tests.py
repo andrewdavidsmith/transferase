@@ -31,25 +31,25 @@ genome_name = "hg38"
 intervals_filename = "cpgIslandExtUnmasked_hg38.bed3"
 
 # Set the log level to debug to see all
-import transferase
-from transferase import LogLevel
-transferase.set_log_level(LogLevel.debug)
+import pyxfr
+from pyxfr import LogLevel
+pyxfr.set_log_level(LogLevel.debug)
 
 # Do the config
-from transferase import MConfig
+from pyxfr import MConfig
 config = MConfig()
 config.install([genome_name])
 
 # Get a client
-from transferase import MClient
+from pyxfr import MClient
 client = MClient()
 
 # Load the genome index
-from transferase import GenomeIndex
+from pyxfr import GenomeIndex
 genome_index = GenomeIndex.read(client.get_index_dir(), genome_name)
 
 # Read the genomic intervals for the query
-from transferase import GenomicInterval
+from pyxfr import GenomicInterval
 intervals = GenomicInterval.read(genome_index, intervals_filename)
 
 # Do the query using the intervals
