@@ -22,6 +22,7 @@
  */
 
 #include <level_container_md.hpp>
+#include <level_element_formatter.hpp>
 
 #include <bins_writer.hpp>
 #include <genome_index.hpp>
@@ -206,7 +207,7 @@ TEST_F(level_container_md_mock, write_with_intervals_writer_test) {
 
   // write the level_container_md
   std::error_code write_container_err =
-    writer_bedlike.write_bedlike(container, true);
+    writer_bedlike.write_bedlike(container, level_element_mode::classic);
   EXPECT_FALSE(write_container_err) << write_container_err.message();
 
   // write the vector of level_container
@@ -223,7 +224,7 @@ TEST_F(level_container_md_mock, write_with_intervals_writer_test) {
   };
   // clang-format on
   std::error_code write_vec_err =
-    writer_bedlike_for_vec.write_bedlike(vec, true);
+    writer_bedlike_for_vec.write_bedlike(vec, level_element_mode::classic);
   EXPECT_FALSE(write_vec_err) << write_vec_err.message();
 
   EXPECT_TRUE(files_are_identical(tmp_filename, tmp_filename_vec));
@@ -248,7 +249,8 @@ TEST_F(level_container_md_mock, write_with_intervals_writer_test) {
   // clang-format on
 
   // write the level_container_md
-  write_container_err = writer_dataframe.write_dataframe(container);
+  write_container_err =
+    writer_dataframe.write_dataframe(container, level_element_mode::counts);
   EXPECT_FALSE(write_container_err) << write_container_err.message();
 
   // write the vector of level_container
@@ -264,7 +266,8 @@ TEST_F(level_container_md_mock, write_with_intervals_writer_test) {
     intervals,
   };
   // clang-format on
-  write_vec_err = writer_dataframe_for_vec.write_dataframe(vec);
+  write_vec_err =
+    writer_dataframe_for_vec.write_dataframe(vec, level_element_mode::counts);
   EXPECT_FALSE(write_vec_err) << write_vec_err.message();
 
   EXPECT_TRUE(files_are_identical(tmp_filename, tmp_filename_vec));
@@ -280,7 +283,7 @@ TEST_F(level_container_md_mock, write_with_intervals_writer_test) {
   const auto writer_dataframe_scores = intervals_writer{
     tmp_filename,
     index,
-    output_format_t::dataframe_scores,
+    output_format_t::dfscores,
     methylomes_names,
     min_reads,
     std::vector<std::uint32_t>{},
@@ -289,8 +292,7 @@ TEST_F(level_container_md_mock, write_with_intervals_writer_test) {
   // clang-format on
 
   // write the level_container_md
-  write_container_err =
-    writer_dataframe_scores.write_dataframe_scores(container);
+  write_container_err = writer_dataframe_scores.write_dfscores(container);
   EXPECT_FALSE(write_container_err) << write_container_err.message();
 
   // write the vector of level_container
@@ -299,14 +301,14 @@ TEST_F(level_container_md_mock, write_with_intervals_writer_test) {
   const auto writer_dataframe_scores_for_vec = intervals_writer{
     tmp_filename_vec,
     index,
-    output_format_t::dataframe_scores,
+    output_format_t::dfscores,
     methylomes_names,
     min_reads,
     std::vector<std::uint32_t>{},
     intervals,
   };
   // clang-format on
-  write_vec_err = writer_dataframe_scores_for_vec.write_dataframe_scores(vec);
+  write_vec_err = writer_dataframe_scores_for_vec.write_dfscores(vec);
   EXPECT_FALSE(write_vec_err) << write_vec_err.message();
 
   EXPECT_TRUE(files_are_identical(tmp_filename, tmp_filename_vec));
@@ -359,7 +361,7 @@ TEST_F(level_container_md_mock, write_with_bins_writer_test) {
 
   // write the level_container_md
   std::error_code write_container_err =
-    writer_bedlike.write_bedlike(container, true);
+    writer_bedlike.write_bedlike(container, level_element_mode::classic);
   EXPECT_FALSE(write_container_err) << write_container_err.message();
 
   // write the vector of level_container
@@ -376,7 +378,7 @@ TEST_F(level_container_md_mock, write_with_bins_writer_test) {
   };
   // clang-format on
   std::error_code write_vec_err =
-    writer_bedlike_for_vec.write_bedlike(vec, true);
+    writer_bedlike_for_vec.write_bedlike(vec, level_element_mode::classic);
   EXPECT_FALSE(write_vec_err) << write_vec_err.message();
 
   auto ident = files_are_identical(tmp_filename, tmp_filename_vec);
@@ -403,7 +405,8 @@ TEST_F(level_container_md_mock, write_with_bins_writer_test) {
   // clang-format on
 
   // write the level_container_md
-  write_container_err = writer_dataframe.write_dataframe(container);
+  write_container_err =
+    writer_dataframe.write_dataframe(container, level_element_mode::counts);
   EXPECT_FALSE(write_container_err) << write_container_err.message();
 
   // write the vector of level_container
@@ -419,7 +422,8 @@ TEST_F(level_container_md_mock, write_with_bins_writer_test) {
     bin_size,
   };
   // clang-format on
-  write_vec_err = writer_dataframe_for_vec.write_dataframe(vec);
+  write_vec_err =
+    writer_dataframe_for_vec.write_dataframe(vec, level_element_mode::counts);
   EXPECT_FALSE(write_vec_err) << write_vec_err.message();
 
   ident = files_are_identical(tmp_filename, tmp_filename_vec);
@@ -437,7 +441,7 @@ TEST_F(level_container_md_mock, write_with_bins_writer_test) {
   const auto writer_dataframe_scores = bins_writer{
     tmp_filename,
     index,
-    output_format_t::dataframe_scores,
+    output_format_t::dfscores,
     methylomes_names,
     min_reads,
     std::vector<std::uint32_t>{},
@@ -446,8 +450,7 @@ TEST_F(level_container_md_mock, write_with_bins_writer_test) {
   // clang-format on
 
   // write the level_container_md
-  write_container_err =
-    writer_dataframe_scores.write_dataframe_scores(container);
+  write_container_err = writer_dataframe_scores.write_dfscores(container);
   EXPECT_FALSE(write_container_err) << write_container_err.message();
 
   // write the vector of level_container
@@ -456,14 +459,14 @@ TEST_F(level_container_md_mock, write_with_bins_writer_test) {
   const auto writer_dataframe_scores_for_vec = bins_writer{
     tmp_filename_vec,
     index,
-    output_format_t::dataframe_scores,
+    output_format_t::dfscores,
     methylomes_names,
     min_reads,
     std::vector<std::uint32_t>{},
     bin_size,
   };
   // clang-format on
-  write_vec_err = writer_dataframe_scores_for_vec.write_dataframe_scores(vec);
+  write_vec_err = writer_dataframe_scores_for_vec.write_dfscores(vec);
   EXPECT_FALSE(write_vec_err) << write_vec_err.message();
 
   ident = files_are_identical(tmp_filename, tmp_filename_vec);
