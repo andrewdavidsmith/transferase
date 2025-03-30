@@ -40,8 +40,9 @@ enum class output_format_t : std::uint8_t {
   counts = 1,
   bedgraph = 2,
   dataframe = 3,
-  dataframe_scores = 4,
+  dfscores = 4,
   classic = 5,
+  dfclassic = 6,
 };
 
 static constexpr auto output_format_t_name = std::array{
@@ -52,6 +53,7 @@ static constexpr auto output_format_t_name = std::array{
   std::string_view{"dataframe"},
   std::string_view{"dfscores"},
   std::string_view{"classic"},
+  std::string_view{"dfclassic"},
   // clang-format on
 };
 
@@ -61,8 +63,9 @@ static const std::map<std::string, output_format_t> output_format_cli11{
   {"counts", output_format_t::counts},
   {"bedgraph", output_format_t::bedgraph},
   {"dataframe", output_format_t::dataframe},
-  {"dfscores", output_format_t::dataframe_scores},
+  {"dfscores", output_format_t::dfscores},
   {"classic", output_format_t::classic},
+  {"dfclassic", output_format_t::dfclassic},
   // clang-format on
 };
 
