@@ -34,7 +34,7 @@ missingInclude
 # Exclude external files
 *:*CLI11.hpp
 *:*json.hpp
-*:*asio.hpp
+*:*asio*
 *:*ssl.hpp
 *:*indicators.hpp
 # Problem caused by external files
