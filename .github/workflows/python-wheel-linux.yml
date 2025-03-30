@@ -42,5 +42,5 @@ jobs:
       - name: Upload Linux wheel for Python ${{ matrix.python }}
         uses: actions/upload-artifact@v4
         with:
-          name: transferase-${{ steps.get-vn.outputs.vn }}-Python-${{ matrix.python }}-Linux-${{ runner.arch }}
-          path: build_${{ matrix.python }}/python/dist/transferase-${{ steps.get-vn.outputs.vn }}-*.whl
+          name: pyxfr-${{ steps.get-vn.outputs.vn }}-Python-${{ matrix.python }}-Linux-${{ runner.arch }}
+          path: build_${{ matrix.python }}/python/dist/pyxfr-${{ steps.get-vn.outputs.vn }}-*.whl
