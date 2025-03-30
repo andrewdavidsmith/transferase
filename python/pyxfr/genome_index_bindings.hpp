@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef PYTHON_TRANSFERASE_GENOME_INDEX_BINDINGS_HPP_
-#define PYTHON_TRANSFERASE_GENOME_INDEX_BINDINGS_HPP_
+#ifndef PYTHON_PYXFR_GENOME_INDEX_BINDINGS_HPP_
+#define PYTHON_PYXFR_GENOME_INDEX_BINDINGS_HPP_
 
 #include <nanobind/nanobind.h>
 
@@ -33,4 +33,4 @@ struct genome_index;
 auto
 genome_index_bindings(nanobind::class_<transferase::genome_index> &cls) -> void;
 
-#endif  // PYTHON_TRANSFERASE_GENOME_INDEX_BINDINGS_HPP_
+#endif  // PYTHON_PYXFR_GENOME_INDEX_BINDINGS_HPP_

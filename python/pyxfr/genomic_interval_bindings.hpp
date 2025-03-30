@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef PYTHON_TRANSFERASE_GENOMIC_INTERVAL_BINDINGS_HPP_
-#define PYTHON_TRANSFERASE_GENOMIC_INTERVAL_BINDINGS_HPP_
+#ifndef PYTHON_PYXFR_GENOMIC_INTERVAL_BINDINGS_HPP_
+#define PYTHON_PYXFR_GENOMIC_INTERVAL_BINDINGS_HPP_
 
 #include <nanobind/nanobind.h>
 
@@ -34,4 +34,4 @@ auto
 genomic_interval_bindings(nanobind::class_<transferase::genomic_interval> &cls)
   -> void;
 
-#endif  // PYTHON_TRANSFERASE_GENOMIC_INTERVAL_BINDINGS_HPP_
+#endif  // PYTHON_PYXFR_GENOMIC_INTERVAL_BINDINGS_HPP_

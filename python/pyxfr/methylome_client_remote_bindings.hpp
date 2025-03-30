@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef PYTHON_TRANSFERASE_METHYLOME_CLIENT_REMOTE_BINDINGS_HPP_
-#define PYTHON_TRANSFERASE_METHYLOME_CLIENT_REMOTE_BINDINGS_HPP_
+#ifndef PYTHON_PYXFR_METHYLOME_CLIENT_REMOTE_BINDINGS_HPP_
+#define PYTHON_PYXFR_METHYLOME_CLIENT_REMOTE_BINDINGS_HPP_
 
 #include <nanobind/nanobind.h>
 
@@ -34,4 +34,4 @@ auto
 methylome_client_remote_bindings(
   nanobind::class_<transferase::methylome_client_remote> &cls) -> void;
 
-#endif  // PYTHON_TRANSFERASE_METHYLOME_CLIENT_REMOTE_BINDINGS_HPP_
+#endif  // PYTHON_PYXFR_METHYLOME_CLIENT_REMOTE_BINDINGS_HPP_

@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef PYTHON_TRANSFERASE_METHYLOME_BINDINGS_HPP_
-#define PYTHON_TRANSFERASE_METHYLOME_BINDINGS_HPP_
+#ifndef PYTHON_PYXFR_METHYLOME_BINDINGS_HPP_
+#define PYTHON_PYXFR_METHYLOME_BINDINGS_HPP_
 
 #include <nanobind/nanobind.h>
 
@@ -33,4 +33,4 @@ struct methylome;
 auto
 methylome_bindings(nanobind::class_<transferase::methylome> &cls) -> void;
 
-#endif  // PYTHON_TRANSFERASE_METHYLOME_BINDINGS_HPP_
+#endif  // PYTHON_PYXFR_METHYLOME_BINDINGS_HPP_
