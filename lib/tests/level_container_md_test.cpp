@@ -192,6 +192,8 @@ TEST_F(level_container_md_mock, write_with_intervals_writer_test) {
 
   // do bedlike
 
+  const auto empty_n_cpgs = std::vector<std::uint32_t>{};
+
   auto tmp_filename = generate_temp_filename("tmp_md_c");
   // clang-format off
   const auto writer_bedlike = intervals_writer{
@@ -200,7 +202,7 @@ TEST_F(level_container_md_mock, write_with_intervals_writer_test) {
     output_format_t::counts,
     methylomes_names,
     min_reads,
-    std::vector<std::uint32_t>{},
+    empty_n_cpgs,
     intervals,
   };
   // clang-format on
@@ -219,7 +221,7 @@ TEST_F(level_container_md_mock, write_with_intervals_writer_test) {
     output_format_t::counts,
     methylomes_names,
     min_reads,
-    std::vector<std::uint32_t>{},
+    empty_n_cpgs,
     intervals,
   };
   // clang-format on
@@ -243,7 +245,7 @@ TEST_F(level_container_md_mock, write_with_intervals_writer_test) {
     output_format_t::dataframe,
     methylomes_names,
     min_reads,
-    std::vector<std::uint32_t>{},
+    empty_n_cpgs,
     intervals,
   };
   // clang-format on
@@ -262,7 +264,7 @@ TEST_F(level_container_md_mock, write_with_intervals_writer_test) {
     output_format_t::dataframe,
     methylomes_names,
     min_reads,
-    std::vector<std::uint32_t>{},
+    empty_n_cpgs,
     intervals,
   };
   // clang-format on
@@ -286,7 +288,7 @@ TEST_F(level_container_md_mock, write_with_intervals_writer_test) {
     output_format_t::dfscores,
     methylomes_names,
     min_reads,
-    std::vector<std::uint32_t>{},
+    empty_n_cpgs,
     intervals,
   };
   // clang-format on
@@ -304,7 +306,7 @@ TEST_F(level_container_md_mock, write_with_intervals_writer_test) {
     output_format_t::dfscores,
     methylomes_names,
     min_reads,
-    std::vector<std::uint32_t>{},
+    empty_n_cpgs,
     intervals,
   };
   // clang-format on
@@ -346,6 +348,8 @@ TEST_F(level_container_md_mock, write_with_bins_writer_test) {
 
   // do bedlike
 
+  const auto empty_n_cpgs = std::vector<std::uint32_t>{};
+
   auto tmp_filename = generate_temp_filename("tmp_md_c");
   // clang-format off
   const auto writer_bedlike = bins_writer{
@@ -354,7 +358,7 @@ TEST_F(level_container_md_mock, write_with_bins_writer_test) {
     output_format_t::counts,
     methylomes_names,
     min_reads,
-    std::vector<std::uint32_t>{},
+    empty_n_cpgs,
     bin_size,
   };
   // clang-format on
@@ -373,7 +377,7 @@ TEST_F(level_container_md_mock, write_with_bins_writer_test) {
     output_format_t::counts,
     methylomes_names,
     min_reads,
-    std::vector<std::uint32_t>{},
+    empty_n_cpgs,
     bin_size,
   };
   // clang-format on
@@ -399,7 +403,7 @@ TEST_F(level_container_md_mock, write_with_bins_writer_test) {
     output_format_t::dataframe,
     methylomes_names,
     min_reads,
-    std::vector<std::uint32_t>{},
+    empty_n_cpgs,
     bin_size,
   };
   // clang-format on
@@ -418,7 +422,7 @@ TEST_F(level_container_md_mock, write_with_bins_writer_test) {
     output_format_t::dataframe,
     methylomes_names,
     min_reads,
-    std::vector<std::uint32_t>{},
+    empty_n_cpgs,
     bin_size,
   };
   // clang-format on
@@ -444,7 +448,7 @@ TEST_F(level_container_md_mock, write_with_bins_writer_test) {
     output_format_t::dfscores,
     methylomes_names,
     min_reads,
-    std::vector<std::uint32_t>{},
+    empty_n_cpgs,
     bin_size,
   };
   // clang-format on
@@ -462,7 +466,7 @@ TEST_F(level_container_md_mock, write_with_bins_writer_test) {
     output_format_t::dfscores,
     methylomes_names,
     min_reads,
-    std::vector<std::uint32_t>{},
+    empty_n_cpgs,
     bin_size,
   };
   // clang-format on
