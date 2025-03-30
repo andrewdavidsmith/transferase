@@ -75,7 +75,6 @@ command_select_main([[maybe_unused]] int argc,
 #include <cstdlib>
 #include <format>
 #include <fstream>
-#include <iomanip>
 #include <iostream>
 #include <iterator>
 #include <map>
