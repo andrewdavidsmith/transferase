@@ -1,16 +1,19 @@
-# Transferase Python package
+# pyxfr: the transferase Python package
 
 ## Usage examples
 
-First we import the transferase module so we can set our preferred log level
-for the session or in your Python scripts. Setting it to 'debug' let's us see
+The transferase Python API is named pyxfr. These examples assume you have
+already successfully installed pyxfr package.
+
+First we import the pyxfr module so we can set our preferred log level for the
+session or in your Python scripts. Setting it to "debug" let's us see
 everything. It will be a lot of information, most of it actually for
 debugging.
 
 ```python
-import transferase
-from transferase import LogLevel
-transferase.set_log_level(LogLevel.debug)
+import pyxfr
+from pyxfr import LogLevel
+pyxfr.set_log_level(LogLevel.debug)
 ```
 
 Next we want to set up transferase for the user (i.e., you) on the host system
@@ -18,7 +21,7 @@ Next we want to set up transferase for the user (i.e., you) on the host system
 to a minute:
 
 ```python
-from transferase import MConfig
+from pyxfr import MConfig
 config = MConfig()
 config.install(["hg38"])
 ```
@@ -32,27 +35,27 @@ default values -- they only need to be changed if you are using local data.
 
 You can select other genomes in the `install` step (e.g., mm39, rn7, bosTau9,
 etc.). If the genomes don't exist or are not on the server, you should see a
-`RuntimeError` indicating a problem downloading. The server can't tell the
-difference between a totally invalid genome assembly name, one that is
-possibly misspelled, and a real one that simply isn't on the server. You can
+`RuntimeError` exception in Python, indicating a problem downloading. The
+server can't tell the difference between an invalid genome assembly name, one
+that is misspelled, and a real one that simply isn't on the server. You can
 find the list of available genomes by checking out MethBase2 through the UCSC
-Genome Browser.
+Genome Browser, or using a command I will show below.
 
-With the setup completed, we can get a client object:
+With the setup has completed, we can get a client object:
 
 ```python
-from transferase import MClient
+from pyxfr import MClient
 client = MClient()
 ```
 
 The client object is what makes the queries. Our query will be based on a set
-of genomic intervals, which you would get from BED format file. However,
+of genomic intervals, which you would get from a BED format file. However,
 before working with the genomic intervals we need to first load a genome
 index, which guarantees that we are working with the exact reference genome
 that the transferase server expects.
 
 ```python
-from transferase import GenomeIndex
+from pyxfr import GenomeIndex
 genome_index = GenomeIndex.read(client.get_index_dir(), "hg38")
 ```
 
@@ -62,7 +65,7 @@ for example around 100k intervals, you can use it. Otherwise you can find the
 (likely alongside this file), gunzip it and put it in your working directory.
 
 ```python
-from transferase import GenomicInterval
+from pyxfr import GenomicInterval
 intervals = GenomicInterval.read(genome_index, "intervals.bed")
 ```
 
