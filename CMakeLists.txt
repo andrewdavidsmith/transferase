@@ -95,7 +95,7 @@ if(ENABLE_CODE_COVERAGE)
 endif()
 
 # Seems this needs to come after some third-party deps are found
-if(ENABLE_SANITIZING)
+if(SANITIZE)
   include(cmake/sanitizing.cmake)
 endif()
 
