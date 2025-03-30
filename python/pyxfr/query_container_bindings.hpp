@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef PYTHON_TRANSFERASE_QUERY_CONTAINER_BINDINGS_HPP_
-#define PYTHON_TRANSFERASE_QUERY_CONTAINER_BINDINGS_HPP_
+#ifndef PYTHON_PYXFR_QUERY_CONTAINER_BINDINGS_HPP_
+#define PYTHON_PYXFR_QUERY_CONTAINER_BINDINGS_HPP_
 
 #include <nanobind/nanobind.h>
 
@@ -34,4 +34,4 @@ auto
 query_container_bindings(nanobind::class_<transferase::query_container> &cls)
   -> void;
 
-#endif  // PYTHON_TRANSFERASE_QUERY_CONTAINER_BINDINGS_HPP_
+#endif  // PYTHON_PYXFR_QUERY_CONTAINER_BINDINGS_HPP_

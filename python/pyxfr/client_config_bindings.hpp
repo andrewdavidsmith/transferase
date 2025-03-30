@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef PYTHON_TRANSFERASE_CLIENT_CONFIG_BINDINGS_HPP_
-#define PYTHON_TRANSFERASE_CLIENT_CONFIG_BINDINGS_HPP_
+#ifndef PYTHON_PYXFR_CLIENT_CONFIG_BINDINGS_HPP_
+#define PYTHON_PYXFR_CLIENT_CONFIG_BINDINGS_HPP_
 
 #include <nanobind/nanobind.h>
 
@@ -34,4 +34,4 @@ auto
 client_config_bindings(nanobind::class_<transferase::client_config> &cls)
   -> void;
 
-#endif  // PYTHON_TRANSFERASE_CLIENT_CONFIG_BINDINGS_HPP_
+#endif  // PYTHON_PYXFR_CLIENT_CONFIG_BINDINGS_HPP_
