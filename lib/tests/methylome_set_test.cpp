@@ -93,12 +93,16 @@ protected:
       "tail",
       "ear",
     };
-    accessions =
-      std::views::cartesian_product(species, tissues) |
-      std::views::transform([](const auto &both) {
-        return std::format("{}_{}", std::get<0>(both), std::get<1>(both));
-      }) |
-      std::ranges::to<std::vector>();
+    for (const auto &s : species)
+      for (const auto &t : tissues)
+        accessions.push_back(std::format("{}_{}", s, t));
+
+    // accessions =
+    //   std::views::cartesian_product(species, tissues) |
+    //   std::views::transform([](const auto &both) {
+    //     return std::format("{}_{}", std::get<0>(both), std::get<1>(both));
+    //   }) |
+    //   std::ranges::to<std::vector>();
 
     max_live_methylomes = 3;
     methylome_directory = "data/lutions/methylomes";
