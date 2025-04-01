@@ -35,4 +35,8 @@ set(Curses_USE_STATIC_LIBS on)  # cmake-lint: disable=C0103
 # Set static for the linker so the compiler's libraries will be static
 ## ADS: using this instead of forcing -static for everything avoids the static
 ## linkage that Aiso warns against, but also means it's not 100% static linked
-list(APPEND GLOBAL_LINKER_OPTIONS -static-libgcc -static-libstdc++)
+## ADS: can't do this if the compiler is AppleClang because they don't
+## have the libc++.a and the libgcc wouldn't make sense anyway.
+if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")  # macOS
+  list(APPEND GLOBAL_LINKER_OPTIONS -static-libgcc -static-libstdc++)
+endif()
