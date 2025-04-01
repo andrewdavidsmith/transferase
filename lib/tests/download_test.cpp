@@ -24,6 +24,7 @@
 #include <download.hpp>
 
 #include <http_error_code.hpp>
+#include <macos_helper.hpp>
 
 #include "unit_test_utils.hpp"
 
@@ -44,8 +45,9 @@ to_string(const auto &maplike) -> std::string {
   const auto fmt_pair = [](const auto &pairlike) -> std::string {
     return std::format("\"{}\":\"{}\"", pairlike.first, pairlike.second);
   };
-  return maplike | std::views::transform(fmt_pair) |
-         std::views::join_with('\n') | std::ranges::to<std::string>();
+  // return maplike | std::views::transform(fmt_pair) |
+  //        std::views::join_with('\n') | std::ranges::to<std::string>();
+  return join_with(maplike | std::views::transform(fmt_pair), '\n');
 }
 
 TEST(download_test, send_request_timeout) {
