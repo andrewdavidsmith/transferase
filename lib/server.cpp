@@ -357,9 +357,18 @@ server::run() -> void {
      are equivalent and the io_context may choose any one of them to
      invoke a handler."
   */
-  std::vector<std::jthread> threads;
+  // std::vector<std::jthread> threads;
+  // for (std::uint32_t i = 0; i < n_threads; ++i)
+  //   threads.emplace_back([this] { ioc.run(); });  // NOLINT
+
+  std::vector<std::thread> threads;
   for (std::uint32_t i = 0; i < n_threads; ++i)
     threads.emplace_back([this] { ioc.run(); });  // NOLINT
+
+  // If not using std::jthread, then join the std::thread
+  for (std::uint32_t i = 0; i < n_threads; ++i)
+    threads[i].join();
+
 }
 
 auto

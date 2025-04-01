@@ -82,9 +82,9 @@ template <>
 struct std::formatter<transferase::genomic_interval>
   : std::formatter<std::string> {
   auto
-  format(const transferase::genomic_interval &gi,
-         std::format_context &ctx) const {
-    return std::format_to(ctx.out(), "{}\t{}\t{}", gi.ch_id, gi.start, gi.stop);
+  format(const transferase::genomic_interval &x, auto &ctx) const {
+    return std::formatter<std::string>::format(
+      std::format("{}\t{}\t{}", x.ch_id, x.start, x.stop), ctx);
   }
 };
 

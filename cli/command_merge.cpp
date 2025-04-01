@@ -136,8 +136,12 @@ command_merge_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
   xfr::log_args<xfr::log_level_t::info>(args_to_log);
 
   std::vector<std::tuple<std::string, std::string>> filenames_to_log;
-  for (const auto [i, filename] : std::views::enumerate(methylome_names))
+  // for (const auto [i, filename] : std::views::enumerate(methylome_names))
+  std::uint32_t i = 0;
+  for (const auto &filename : methylome_names) {
     filenames_to_log.emplace_back(std::format("Methylome{}", i), filename);
+    ++i;
+  }
   xfr::log_args<xfr::log_level_t::debug>(filenames_to_log);
 
   std::error_code error;

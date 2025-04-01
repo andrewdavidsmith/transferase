@@ -136,9 +136,8 @@ template <>
 struct std::formatter<transferase::genome_index_data>
   : std::formatter<std::string> {
   auto
-  format(const transferase::genome_index_data &data,
-         std::format_context &ctx) const noexcept {
-    return std::format_to(ctx.out(), "{}", data.tostring());
+  format(const transferase::genome_index_data &x, auto &ctx) const {
+    return std::formatter<std::string>::format(x.tostring(), ctx);
   }
 };
 

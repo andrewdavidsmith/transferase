@@ -54,6 +54,8 @@ xfr check -x index_dir -d methylome_dir
 #include "methylome_set.hpp"
 #include "utilities.hpp"
 
+#include "macos_helper.hpp"
+
 #include "CLI11/CLI11.hpp"
 
 #include <cstdlib>  // for EXIT_FAILURE, EXIT_SUCCESS
@@ -154,8 +156,8 @@ command_check_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
   else
     genome_names = {genome_name_arg};
 
-  const auto joined_methylomes = methylome_names | std::views::join_with(',');
-  const auto joined_genomes = genome_names | std::views::join_with(',');
+  const auto joined_methylomes = join_with(methylome_names, ',');
+  const auto joined_genomes = join_with(genome_names, ',');
   const std::vector<std::tuple<std::string, std::string>> args_to_log{
     // clang-format off
     {"Index directory", index_dir},

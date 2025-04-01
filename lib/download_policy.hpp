@@ -113,8 +113,10 @@ template <>
 struct std::formatter<transferase::download_policy_t>
   : std::formatter<std::string> {
   auto
-  format(const transferase::download_policy_t &dp,
-         std::format_context &ctx) const -> std::format_context::iterator;
+  format(const transferase::download_policy_t &x, auto &ctx) const {
+    const auto v = get_download_policy_message(x);
+    return std::formatter<std::string>::format(v, ctx);
+  }
 };
 
 #endif  // LIB_DOWNLOAD_POLICY_HPP_

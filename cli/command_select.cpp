@@ -61,6 +61,8 @@ command_select_main([[maybe_unused]] int argc,
 #include "nlohmann/json.hpp"
 #include "utilities.hpp"
 
+#include "macos_helper.hpp"
+
 #include "CLI11/CLI11.hpp"
 
 #include <ncurses.h>
@@ -90,6 +92,8 @@ command_select_main([[maybe_unused]] int argc,
 #include <unordered_set>
 #include <utility>  // for std::pair
 #include <vector>
+
+namespace xfr = transferase;
 
 [[nodiscard]] auto
 load_data(const std::string &json_filename, std::error_code &error)
@@ -171,8 +175,9 @@ show_selected_keys(const auto &selected_keys) {
   if (selected_keys.empty())
     mvprintw(1, 0, "Empty selection."s);  // NOLINT (*-type-vararg)
   else {
-    const auto joined = selected_keys | std::views::join_with(',') |
-                        std::ranges::to<std::string>();
+    // const auto joined = selected_keys | std::views::join_with(',') |
+    //                     std::ranges::to<std::string>();
+    const auto joined = join_with(selected_keys, ',');
     mvprintw(1, 0, joined);
   }
   refresh();
@@ -479,7 +484,9 @@ main_loop(const std::vector<std::pair<std::string, std::string>> &data,
     erase();  // performs better than using clear();
     mvprintw(0, 0, current_legend);
 
-    for (const auto [idx, entry] : std::views::enumerate(to_show)) {
+    // for (const auto [idx, entry] : std::views::enumerate(to_show)) {
+    std::int32_t idx = 0;  // ADS: need to compare with signed cursor_pos
+    for (const auto &entry : to_show) {
       // Calculate the global data index
       const auto data_idx = disp_start + idx;
       const auto y_pos = static_cast<std::int32_t>(idx + legend_height);
@@ -505,6 +512,7 @@ main_loop(const std::vector<std::pair<std::string, std::string>> &data,
       attroff(COLOR_PAIR(2));
       attroff(COLOR_PAIR(3));
       attroff(COLOR_PAIR(4));
+      ++idx;
     }
     refresh();
 

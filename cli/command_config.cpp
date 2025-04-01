@@ -57,6 +57,8 @@ xfr config --update -s localhost -p 5000
 #include "logger.hpp"
 #include "utilities.hpp"
 
+#include "macos_helper.hpp"
+
 #include "CLI11/CLI11.hpp"
 
 #include <cstdlib>
@@ -201,8 +203,9 @@ command_config_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
     cfg.assign_defaults_to_missing(empty_sys_config_dir, error);
   }
 
-  const auto genomes_joined =
-    genomes | std::views::join_with(',') | std::ranges::to<std::string>();
+  // const auto genomes_joined =
+  //   genomes | std::views::join_with(',') | std::ranges::to<std::string>();
+  const auto genomes_joined = join_with(genomes, ',');
 
   using std::string_literals::operator""s;
   constexpr auto or_none = [](const auto &s) {

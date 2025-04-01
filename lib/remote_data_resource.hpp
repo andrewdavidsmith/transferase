@@ -85,9 +85,9 @@ template <>
 struct std::formatter<transferase::remote_data_resource>
   : std::formatter<std::string> {
   auto
-  format(const transferase::remote_data_resource &r,
-         std::format_context &ctx) const {
-    return std::format_to(ctx.out(), "{}:{}{}", r.hostname, r.port, r.path);
+  format(const transferase::remote_data_resource &r, auto &ctx) const {
+    return std::formatter<std::string>::format(
+      std::format("{}:{}{}", r.hostname, r.port, r.path), ctx);
   }
 };
 

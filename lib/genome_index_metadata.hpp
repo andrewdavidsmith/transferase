@@ -96,13 +96,13 @@ struct genome_index_metadata {
 
 }  // namespace transferase
 
+/// Specialization of std::format for genome_index_data
 template <>
 struct std::formatter<transferase::genome_index_metadata>
   : std::formatter<std::string> {
   auto
-  format(const transferase::genome_index_metadata &meta,
-         std::format_context &ctx) const {
-    return std::format_to(ctx.out(), "{}", meta.tostring());
+  format(const transferase::genome_index_metadata &x, auto &ctx) const {
+    return std::formatter<std::string>::format(x.tostring(), ctx);
   }
 };
 

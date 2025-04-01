@@ -67,12 +67,16 @@ operator>>(std::istream &in,
     return in;
   }
 
-  for (const auto [i, name] :
-       std::views::enumerate(transferase::output_format_t_name))
+  // for (const auto [i, name] :
+  //        std::views::enumerate(transferase::output_format_t_name))
+  std::uint32_t i = 0;
+  for (const auto &name : transferase::output_format_t_name) {
     if (tmp == name) {
       of = static_cast<transferase::output_format_t>(i);
       return in;
     }
+    ++i;
+  }
   in.setstate(std::ios::failbit);
   return in;
 }

@@ -64,23 +64,6 @@ get_transferase_server_info() -> std::tuple<std::string, std::string>;
 get_transferase_server_info(const std::string &data_dir)
   -> std::tuple<std::string, std::string>;
 
-// [[nodiscard]] auto
-// get_remote_data_resource() -> std::vector<remote_data_resource>;
-
-// [[nodiscard]] auto
-// get_remote_data_resource(const std::string &data_dir)
-//   -> std::vector<remote_data_resource>;
-
 }  // namespace transferase
-
-// template <>
-// struct std::formatter<transferase::remote_data_resource>
-//   : std::formatter<std::string> {
-//   auto
-//   format(const transferase::remote_data_resource &r,
-//          std::format_context &ctx) const {
-//     return std::format_to(ctx.out(), "{}:{}{}", r.tostring());
-//   }
-// };
 
 #endif  // LIB_SYSTEM_CONFIG_HPP_

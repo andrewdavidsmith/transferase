@@ -65,9 +65,9 @@ struct std::formatter<transferase::request_type_code>
   : std::formatter<std::string> {
   /// Specialization of std::format for request_type_code
   auto
-  format(const transferase::request_type_code &rtc,
-         std::format_context &ctx) const {
-    return std::format_to(ctx.out(), "{}", std::to_underlying(rtc));
+  format(const transferase::request_type_code &rtc, auto &ctx) const {
+    return std::formatter<std::string>::format(
+      std::format("{}", std::to_underlying(rtc)), ctx);
   }
 };
 
