@@ -23,7 +23,7 @@
 message(STATUS "Locating REQUIRED third-party packages")
 
 # ZLib
-if(BUILD_PYTHON)
+if(BUILD_PYTHON OR PACKAGE)
   # Typically ZLib isn't built with -fPIC, but it's small so we can
   # clone and build it if needed
   message(STATUS "Configuring to clone ZLib for Python API")
