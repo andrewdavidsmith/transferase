@@ -80,6 +80,7 @@ write_bedlike_intervals_impl(
       std::print(out, "\t{}", lvl_to_string(levels[j][i]));
     if (write_n_cpgs)
       std::print(out, "\t{}", n_cpgs[i]);
+    // std::println(out);
     std::print(out, "\n");
     ++i;
   }
@@ -133,6 +134,7 @@ write_intervals_dfscores_impl(const std::string &outfile,
         std::print(out, "\t{}", none_label);
     if (write_n_cpgs)
       std::print(out, "\t{}", n_cpgs[i]);
+    // std::println(out);
     std::print(out, "\n");
     ++i;
   }
@@ -198,6 +200,7 @@ write_intervals_dataframe_impl(
       std::print(out, "{}{}", delim, lvl_to_string(levels[j][i]));
     if (write_n_cpgs)
       std::print(out, "{}{}", delim, n_cpgs[i]);
+    // std::println(out);
     std::print(out, "\n");
     ++i;
   }

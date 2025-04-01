@@ -81,6 +81,7 @@ write_bedlike_bins_impl(const std::string &outfile,
         std::print(out, "{}{}", delim, lvl_to_string(levels[j][i]));
       if (write_n_cpgs)
         std::print(out, "{}{}", delim, n_cpgs[i]);
+      // std::println(out);
       std::print(out, "\n");
       ++i;
     }
@@ -129,7 +130,8 @@ write_bins_dfscores_impl(const std::string &outfile,
           std::print(out, "{}{:.6}", delim, levels[j][i].get_wmean());
         else
           std::print(out, "{}{}", delim, none_label);
-      std::println(out, "\n");
+      // std::println(out);
+      std::print(out, "\n");
       ++i;
     }
   }
@@ -187,7 +189,8 @@ write_bins_dataframe_impl(const std::string &outfile,
         std::print(out, "{}{}", delim, lvl_to_string(levels[j][i]));
       if (write_n_cpgs)
         std::print(out, "{}{}", delim, n_cpgs[i]);
-      std::println(out, "\n");
+      // std::println(out);
+      std::print(out, "\n");
       ++i;
     }
 
