@@ -66,6 +66,7 @@ jobs:
     - name: Configure transferase
       run: |
         cmake -B build \
+        -DCMAKE_VERBOSE_MAKEFILE=on \
         -DCMAKE_PREFIX_PATH="/tmp/ncurses_custom;/tmp/openssl_custom" \
         -DCMAKE_CXX_FLAGS="-I$(brew --prefix)/include" \
         -DCMAKE_EXE_LINKER_FLAGS="-L$(brew --prefix)/lib" \
