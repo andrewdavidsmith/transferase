@@ -17,9 +17,6 @@ jobs:
     - uses: actions/checkout@v4
     - name: Update Homebrew
       run: brew update
-    - name: Install dependencies
-      run: |
-        brew install zlib
     - name: Build openssl
       run: |
         # Get the source and make a build dir
@@ -72,7 +69,6 @@ jobs:
         -DCMAKE_PREFIX_PATH="/tmp/ncurses_custom;/tmp/openssl_custom" \
         -DCMAKE_CXX_FLAGS="-I$(brew --prefix)/include" \
         -DCMAKE_EXE_LINKER_FLAGS="-L$(brew --prefix)/lib" \
-        -DZLIB_LIBRARY=$(brew --prefix zlib)/lib/libz.a \
         -DUSE_XTERM=on \
         -DCMAKE_CXX_COMPILER=clang++ \
         -DPACKAGE=on \
