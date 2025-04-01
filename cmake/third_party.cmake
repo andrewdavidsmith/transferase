@@ -23,40 +23,22 @@
 message(STATUS "Locating REQUIRED third-party packages")
 
 # ZLib
-if(BUILD_PYTHON OR PACKAGE)
+if(BUILD_PYTHON)
   # Typically ZLib isn't built with -fPIC, but it's small so we can
   # clone and build it if needed
   message(STATUS "Configuring to clone ZLib for Python API")
   include(ExternalProject)
-  if(CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")  # macOS  if
-    ExternalProject_Add(
-      ZLIB
-      GIT_REPOSITORY https://github.com/madler/zlib.git
-      GIT_TAG master
-      CMAKE_ARGS
-      -DZLIB_BUILD_EXAMPLES=off
-      -DCMAKE_OSX_DEPLOYMENT_TARGET=14
-      -DCMAKE_C_COMPILER=clang
-      -DCMAKE_CXX_COMPILER=clang++
-      -DCMAKE_OSX_ARCHITECTURES="x86_64;arm64"
-      -DSKIP_INSTALL_FILES=on
-      -DCMAKE_POSITION_INDEPENDENT_CODE=on
-      -DCMAKE_INSTALL_PREFIX=${PROJECT_BINARY_DIR}/src/zlib
-      -DCMAKE_BUILD_TYPE=Release
-    )
-  else()
-    ExternalProject_Add(
-      ZLIB
-      GIT_REPOSITORY https://github.com/madler/zlib.git
-      GIT_TAG master
-      CMAKE_ARGS
-      -DZLIB_BUILD_EXAMPLES=off
-      -DSKIP_INSTALL_FILES=on
-      -DCMAKE_POSITION_INDEPENDENT_CODE=on
-      -DCMAKE_INSTALL_PREFIX=${PROJECT_BINARY_DIR}/src/zlib
-      -DCMAKE_BUILD_TYPE=Release
-    )
-  endif()
+  ExternalProject_Add(
+    ZLIB
+    GIT_REPOSITORY https://github.com/madler/zlib.git
+    GIT_TAG master
+    CMAKE_ARGS
+    -DZLIB_BUILD_EXAMPLES=off
+    -DSKIP_INSTALL_FILES=on
+    -DCMAKE_POSITION_INDEPENDENT_CODE=on
+    -DCMAKE_INSTALL_PREFIX=${PROJECT_BINARY_DIR}/src/zlib
+    -DCMAKE_BUILD_TYPE=Release
+  )
   # Include the built zlib headers and link against the built zlib library
   set(ZLIB_INCLUDE_DIR "${PROJECT_BINARY_DIR}/src/zlib/include")
   set(ZLIB_LIBRARY "${PROJECT_BINARY_DIR}/src/zlib/lib/libz.a")

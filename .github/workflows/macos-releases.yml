@@ -11,12 +11,15 @@ jobs:
   macos-releases:
     strategy:
       matrix:
-        os: [macos-15]
+        os: [macos-13,macos-15]
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
     - name: Update Homebrew
       run: brew update
+    - name: Install dependencies
+      run: |
+        brew install zlib
     - name: Build openssl
       run: |
         # Get the source and make a build dir
@@ -27,11 +30,11 @@ jobs:
         mkdir build && cd build
         # Configure with all those options...
         cat ${GITHUB_WORKSPACE}/data/openssl_options.txt | \
-        xargs ../Configure --prefix=/tmp/openssl_custom CC=clang CXX=clang++
+        xargs ../Configure --prefix=/tmp/openssl_custom CC=gcc-14 CXX=g++-14
         # Build the library
         make -j4 \
-        CFLAGS="-Wall -Os -fomit-frame-pointer -ffunction-sections -fdata-sections -mmacosx-version-min=14 -arch x86_64 -arch arm64" \
-        CXXFLAGS="-Wall -Os -fomit-frame-pointer -ffunction-sections -fdata-sections -mmacosx-version-min=14 -arch x86_64 -arch arm64"
+        CFLAGS="-Wall -Os -fomit-frame-pointer -ffunction-sections -fdata-sections -mmacos-version-min=14" \
+        CXXFLAGS="-Wall -Os -fomit-frame-pointer -ffunction-sections -fdata-sections -mmacos-version-min=14"
         make install
     - name: Build ncurses
       run: |
@@ -49,28 +52,28 @@ jobs:
         --without-cxx-binding \
         --disable-widec \
         --prefix=/tmp/ncurses_custom \
-        CC=clang \
-        CXX=clang++
+        CC=gcc-14 \
+        CXX=g++-14
         # Copy the fallback defs into place
         cp ${GITHUB_WORKSPACE}/data/fallback.c ncurses
         # Build and install
         make -j4 \
-        CC=clang \
-        CXX=clang++ \
-        CFLAGS="-Wall -O2 -DNDEBUG -ffunction-sections -fdata-sections -mmacosx-version-min=14 -arch x86_64 -arch arm64" \
-        CXXFLAGS="-Wall -O2 -DNDEBUG -ffunction-sections -fdata-sections -mmacosx-version-min=14 -arch x86_64 -arch arm64"
+        CC=gcc-14 \
+        CXX=g++-14 \
+        CFLAGS="-Wall -O2 -DNDEBUG -ffunction-sections -fdata-sections -mmacosx-version-min=14" \
+        CXXFLAGS="-Wall -O2 -DNDEBUG -ffunction-sections -fdata-sections -mmacosx-version-min=14"
         make install
     - name: Configure transferase
       run: |
         cmake -B build \
         -DCMAKE_VERBOSE_MAKEFILE=on \
         -DCMAKE_OSX_DEPLOYMENT_TARGET=14 \
-        -DCMAKE_OSX_ARCHITECTURES="x86_64;arm64" \
         -DCMAKE_PREFIX_PATH="/tmp/ncurses_custom;/tmp/openssl_custom" \
         -DCMAKE_CXX_FLAGS="-I$(brew --prefix)/include" \
         -DCMAKE_EXE_LINKER_FLAGS="-L$(brew --prefix)/lib" \
+        -DZLIB_LIBRARY=$(brew --prefix zlib)/lib/libz.a \
         -DUSE_XTERM=on \
-        -DCMAKE_CXX_COMPILER=clang++ \
+        -DCMAKE_CXX_COMPILER=g++-14 \
         -DPACKAGE=on \
         -DSYSTEM_NAME_SUFFIX=${{ matrix.os }} \
         -DCMAKE_BUILD_TYPE=Release
@@ -89,5 +92,5 @@ jobs:
     - name: Upload the STGZ
       uses: actions/upload-artifact@v4
       with:
-        name: transferase-${{ steps.get-vn.outputs.vn }}-${{ matrix.os }}
-        path: build/transferase-${{ steps.get-vn.outputs.vn }}-${{ matrix.os }}.*
+        name: transferase-${{ steps.get-vn.outputs.vn }}-${{ matrix.os }}-${{ runner.arch }}
+        path: build/transferase-${{ steps.get-vn.outputs.vn }}-${{ matrix.os }}-${{ runner.arch }}.*
