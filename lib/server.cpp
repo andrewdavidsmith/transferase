@@ -368,7 +368,6 @@ server::run() -> void {
   // If not using std::jthread, then join the std::thread
   for (std::uint32_t i = 0; i < n_threads; ++i)
     threads[i].join();
-
 }
 
 auto

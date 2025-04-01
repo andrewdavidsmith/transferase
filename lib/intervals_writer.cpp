@@ -177,8 +177,10 @@ write_intervals_dataframe_impl(
 
   if (write_header) {
     // auto joined = names | std::views::transform(hdr_formatter) |
-    //               std::views::join_with(delim) | std::ranges::to<std::string>();
-    auto joined = join_with(names | std::views::transform(hdr_formatter), delim);
+    //               std::views::join_with(delim) |
+    //               std::ranges::to<std::string>();
+    auto joined =
+      join_with(names | std::views::transform(hdr_formatter), delim);
     if (write_n_cpgs)
       joined += std::format("{}{}", delim, "N_CPG");
     std::println(out, "{}", joined);
@@ -367,8 +369,10 @@ write_intervals_dataframe_impl(
 
   if (write_header) {
     // auto joined = names | std::views::transform(hdr_formatter) |
-    //               std::views::join_with(delim) | std::ranges::to<std::string>();
-    auto joined = join_with(names | std::views::transform(hdr_formatter), delim);
+    //               std::views::join_with(delim) |
+    //               std::ranges::to<std::string>();
+    auto joined =
+      join_with(names | std::views::transform(hdr_formatter), delim);
     if (write_n_cpgs)
       joined += std::format("{}{}", delim, "N_CPG");
     std::println(out, "{}", joined);
