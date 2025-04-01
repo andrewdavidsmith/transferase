@@ -27,9 +27,9 @@
 // ADS: this file exists because in 2025, Apple Clang doesn't yet fully
 // support even C++17
 
+#include <charconv>
 #include <format>
 #include <string>
-#include <charconv>
 
 namespace transferase {
 
@@ -62,6 +62,5 @@ join_with(const auto &tokens, const char delim) -> std::string {
   }
   return joined;
 }
-
 
 #endif  // LIB_MACOS_HELPER_HPP_

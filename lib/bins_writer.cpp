@@ -154,8 +154,8 @@ write_bins_dataframe_impl(const std::string &outfile,
   using level_element = typename std::remove_cvref_t<outer_type>::value_type;
   const auto hdr_formatter = [&](const auto &r) {
     return mode == level_element_mode::classic
-      ? std::format(level_element::hdr_fmt_cls, r, delim, r, delim, r)
-      : std::format(level_element::hdr_fmt, r, delim, r, delim, r);
+             ? std::format(level_element::hdr_fmt_cls, r, delim, r, delim, r)
+             : std::format(level_element::hdr_fmt, r, delim, r, delim, r);
   };
   const auto lvl_to_string = [mode](const auto &l) {
     return mode == level_element_mode::classic ? l.tostring_classic()
@@ -170,8 +170,10 @@ write_bins_dataframe_impl(const std::string &outfile,
 
   if (write_header) {
     // auto joined = names | std::views::transform(hdr_formatter) |
-    //               std::views::join_with(delim) | std::ranges::to<std::string>();
-    auto joined = join_with(names | std::views::transform(hdr_formatter), delim);
+    //               std::views::join_with(delim) |
+    //               std::ranges::to<std::string>();
+    auto joined =
+      join_with(names | std::views::transform(hdr_formatter), delim);
     if (write_n_cpgs)
       joined += std::format("{}{}", delim, "N_CPG"sv);
     std::println(out, "{}", joined);
@@ -341,8 +343,10 @@ write_bins_dataframe_impl(
 
   if (write_header) {
     // auto joined = names | std::views::transform(hdr_formatter) |
-    //               std::views::join_with(delim) | std::ranges::to<std::string>();
-    auto joined = join_with(names | std::views::transform(hdr_formatter), delim);
+    //               std::views::join_with(delim) |
+    //               std::ranges::to<std::string>();
+    auto joined =
+      join_with(names | std::views::transform(hdr_formatter), delim);
     if (write_n_cpgs)
       joined += std::format("{}{}", delim, "N_CPG");
     std::println(out, "{}", joined);
