@@ -75,7 +75,7 @@ jobs:
         -DUSE_XTERM=on \
         -DCMAKE_CXX_COMPILER=g++-14 \
         -DPACKAGE=on \
-        -DSYSTEM_NAME_SUFFIX=${{ matrix.os }} \
+        -DSYSTEM_NAME_SUFFIX=${{ matrix.os }}-${{ runner.arch }} \
         -DCMAKE_BUILD_TYPE=Release
     - name: Get version number
       id: get-vn
