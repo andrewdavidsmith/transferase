@@ -46,12 +46,12 @@ enum class counts_file_format : std::uint8_t {
   counts = 2,
 };
 
-using std::literals::string_view_literals::operator""sv;
+using std::literals::string_literals::operator""s;
 static constexpr auto counts_file_format_name = std::array{
   // clang-format off
-  "unknown"sv,
-  "xcounts"sv,
-  "counts"sv,
+  "unknown"s,
+  "xcounts"s,
+  "counts"s,
   // clang-format on
 };
 
@@ -69,11 +69,10 @@ template <>
 struct std::formatter<transferase::counts_file_format>
   : std::formatter<std::string> {
   auto
-  format(const transferase::counts_file_format &ff,
-         std::format_context &ctx) const {
-    const auto u = std::to_underlying(ff);
-    return std::format_to(ctx.out(), "{}",
-                          transferase::counts_file_format_name[u]);
+  format(const transferase::counts_file_format &x, auto &ctx) const {
+    const auto u = std::to_underlying(x);
+    const auto v = transferase::counts_file_format_name[u];
+    return std::formatter<std::string>::format(v, ctx);
   }
 };
 

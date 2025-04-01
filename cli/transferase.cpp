@@ -73,8 +73,13 @@ static auto
 format_help(const std::string &description,
             std::ranges::input_range auto &&cmds) {
   static constexpr auto sep_width = 4;
-  const auto cmds_comma =
-    cmds | std::views::elements<0> | std::views::join_with(',');
+  // const auto cmds_comma =
+  //   cmds | std::views::elements<0> | std::views::join_with(',');
+
+  auto cmds_comma = std::string(std::get<0>(cmds.front()));
+  for (auto i = 1u; i < std::size(cmds); ++i)
+    cmds_comma += std::format(",{}", std::get<0>(cmds[i]));
+
   const std::string cmds_line(std::cbegin(cmds_comma), std::cend(cmds_comma));
   std::println("usage: {} {{{}}}\n\n"
                "version: {}\n",
@@ -85,7 +90,8 @@ format_help(const std::string &description,
   const auto sz = std::ranges::max(std::views::transform(
     cmds | std::views::elements<0>, &std::string_view::size));
   std::ranges::for_each(cmds, [sz, w = sep_width](const auto &cmd) {
-    std::println("    {:{}}{}", get<0>(cmd), sz + w, get<2>(cmd));
+    std::println("    {:{}}{}", std::get<0>(cmd), sz + w, std::get<2>(cmd));
+    // std::println("    {:{}}{}", get<0>(cmd), sz + w, get<2>(cmd));
   });
 }
 

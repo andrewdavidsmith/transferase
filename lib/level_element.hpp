@@ -136,10 +136,10 @@ template <>
 struct std::formatter<transferase::level_element_t>
   : std::formatter<std::string> {
   auto
-  format(const transferase::level_element_t &l,
-         std::format_context &ctx) const {
-    return std::format_to(ctx.out(), R"({{"n_meth": {}, "n_unmeth": {}}})",
-                          l.n_meth, l.n_unmeth);
+  format(const transferase::level_element_t &x, auto &ctx) const {
+    return std::formatter<std::string>::format(
+      std::format(R"({{"n_meth": {}, "n_unmeth": {}}})", x.n_meth, x.n_unmeth),
+      ctx);
   }
 };
 
@@ -147,11 +147,11 @@ template <>
 struct std::formatter<transferase::level_element_covered_t>
   : std::formatter<std::string> {
   auto
-  format(const transferase::level_element_covered_t &l,
-         std::format_context &ctx) const {
-    return std::format_to(
-      ctx.out(), R"({{"n_meth": {}, "n_unmeth": {}, "n_covered": {}}})",
-      l.n_meth, l.n_unmeth, l.n_covered);
+  format(const transferase::level_element_covered_t &x, auto &ctx) const {
+    return std::formatter<std::string>::format(
+      std::format(R"({{"n_meth": {}, "n_unmeth": {}, "n_covered": {}}})",
+                  x.n_meth, x.n_unmeth, x.n_covered),
+      ctx);
   }
 };
 

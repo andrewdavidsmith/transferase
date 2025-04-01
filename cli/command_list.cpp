@@ -131,7 +131,7 @@ command_list_main(int argc, char *argv[])  // NOLINT(*-c-arrays)
       }
       std::ranges::for_each(index_names, print);
       if (verbose && !show_only_indexes)
-        std::println();
+        std::print("\n");
     }
     if (!show_only_indexes) {
       if (verbose && !show_only_methylomes)
@@ -143,7 +143,7 @@ command_list_main(int argc, char *argv[])  // NOLINT(*-c-arrays)
       }
       std::ranges::for_each(methylome_names, print);
       if (verbose && !show_only_methylomes)
-        std::println();
+        std::print("\n");
     }
   }
 

@@ -30,6 +30,8 @@
 #include "level_element.hpp"
 #include "level_element_formatter.hpp"
 
+#include "macos_helper.hpp"
+
 #include <algorithm>  // std::min
 #include <cerrno>
 #include <cstdint>  // for std::uint32_t
@@ -79,7 +81,7 @@ write_bedlike_bins_impl(const std::string &outfile,
         std::print(out, "{}{}", delim, lvl_to_string(levels[j][i]));
       if (write_n_cpgs)
         std::print(out, "{}{}", delim, n_cpgs[i]);
-      std::println(out);
+      std::print(out, "\n");
       ++i;
     }
   }
@@ -106,8 +108,9 @@ write_bins_dfscores_impl(const std::string &outfile,
   const auto write_n_cpgs = !n_cpgs.empty();
 
   if (write_header) {
-    auto joined =
-      names | std::views::join_with(delim) | std::ranges::to<std::string>();
+    // auto joined =
+    //   names | std::views::join_with(delim) | std::ranges::to<std::string>();
+    auto joined = join_with(names, delim);
     if (write_n_cpgs)
       joined += std::format("{}{}", delim, "N_CPG"sv);
     std::println(out, "{}", joined);
@@ -126,7 +129,7 @@ write_bins_dfscores_impl(const std::string &outfile,
           std::print(out, "{}{:.6}", delim, levels[j][i].get_wmean());
         else
           std::print(out, "{}{}", delim, none_label);
-      std::println(out);
+      std::println(out, "\n");
       ++i;
     }
   }
@@ -147,10 +150,10 @@ write_bins_dataframe_impl(const std::string &outfile,
   // determine type
   using outer_type = typename std::remove_cvref_t<decltype(levels)>::value_type;
   using level_element = typename std::remove_cvref_t<outer_type>::value_type;
-  const auto hdr_formatter = [mode](const auto &r) {
+  const auto hdr_formatter = [&](const auto &r) {
     return mode == level_element_mode::classic
-             ? std::format(level_element::hdr_fmt_cls, r, delim, r, delim, r)
-             : std::format(level_element::hdr_fmt, r, delim, r, delim, r);
+      ? std::format(level_element::hdr_fmt_cls, r, delim, r, delim, r)
+      : std::format(level_element::hdr_fmt, r, delim, r, delim, r);
   };
   const auto lvl_to_string = [mode](const auto &l) {
     return mode == level_element_mode::classic ? l.tostring_classic()
@@ -164,8 +167,9 @@ write_bins_dataframe_impl(const std::string &outfile,
   const auto write_n_cpgs = !n_cpgs.empty();
 
   if (write_header) {
-    auto joined = names | std::views::transform(hdr_formatter) |
-                  std::views::join_with(delim) | std::ranges::to<std::string>();
+    // auto joined = names | std::views::transform(hdr_formatter) |
+    //               std::views::join_with(delim) | std::ranges::to<std::string>();
+    auto joined = join_with(names | std::views::transform(hdr_formatter), delim);
     if (write_n_cpgs)
       joined += std::format("{}{}", delim, "N_CPG"sv);
     std::println(out, "{}", joined);
@@ -183,7 +187,7 @@ write_bins_dataframe_impl(const std::string &outfile,
         std::print(out, "{}{}", delim, lvl_to_string(levels[j][i]));
       if (write_n_cpgs)
         std::print(out, "{}{}", delim, n_cpgs[i]);
-      std::println(out);
+      std::println(out, "\n");
       ++i;
     }
 
@@ -265,8 +269,9 @@ write_bins_dfscores_impl(
   const auto write_n_cpgs = !n_cpgs.empty();
 
   if (write_header) {
-    auto joined =
-      names | std::views::join_with(delim) | std::ranges::to<std::string>();
+    // auto joined =
+    //   names | std::views::join_with(delim) | std::ranges::to<std::string>();
+    auto joined = join_with(names, delim);
     if (write_n_cpgs)
       joined += std::format("{}{}", delim, "N_CPG");
     std::println(out, "{}", joined);
@@ -319,7 +324,7 @@ write_bins_dataframe_impl(
   static constexpr auto delim{'\t'};
   static constexpr auto newline{'\n'};
 
-  const auto hdr_formatter = [mode](const auto &r) {
+  const auto hdr_formatter = [&](const auto &r) {
     return mode == level_element_mode::classic
              ? std::format(level_element::hdr_fmt_cls, r, delim, r, delim, r)
              : std::format(level_element::hdr_fmt, r, delim, r, delim, r);
@@ -332,8 +337,9 @@ write_bins_dataframe_impl(
   const auto write_n_cpgs = !n_cpgs.empty();
 
   if (write_header) {
-    auto joined = names | std::views::transform(hdr_formatter) |
-                  std::views::join_with(delim) | std::ranges::to<std::string>();
+    // auto joined = names | std::views::transform(hdr_formatter) |
+    //               std::views::join_with(delim) | std::ranges::to<std::string>();
+    auto joined = join_with(names | std::views::transform(hdr_formatter), delim);
     if (write_n_cpgs)
       joined += std::format("{}{}", delim, "N_CPG");
     std::println(out, "{}", joined);

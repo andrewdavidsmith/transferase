@@ -71,6 +71,8 @@ xfr query --local -d methylome_dir -x index_dir -g hg38 \
 #include "request_type_code.hpp"
 #include "utilities.hpp"
 
+#include "macos_helper.hpp"
+
 #include "CLI11/CLI11.hpp"
 
 #include <asio.hpp>
@@ -99,8 +101,9 @@ xfr query --local -d methylome_dir -x index_dir -g hg38 \
 format_methylome_names_brief(const std::vector<std::string> &names)
   -> std::string {
   static constexpr auto max_names_width = 50;
-  auto joined =
-    names | std::views::join_with(' ') | std::ranges::to<std::string>();
+  // auto joined =
+  //   names | std::views::join_with(' ') | std::ranges::to<std::string>();
+  auto joined = join_with(names, ' ');
   if (std::size(joined) > max_names_width)
     return std::format("{}...{} ({} methylomes)", names.front(), names.back(),
                        std::size(names));

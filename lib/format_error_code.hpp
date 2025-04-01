@@ -34,8 +34,8 @@
 template <>
 struct std::formatter<std::error_code> : std::formatter<std::string> {
   auto
-  format(const std::error_code &e, std::format_context &ctx) const {
-    return std::format_to(ctx.out(), "{}", e.message());
+  format(const std::error_code &x, auto &ctx) const {
+    return std::formatter<std::string>::format(x.message(), ctx);
   }
 };
 

@@ -81,11 +81,11 @@ template <>
 struct std::formatter<transferase::output_format_t>
   : std::formatter<std::string> {
   auto
-  format(const transferase::output_format_t &of,
-         std::format_context &ctx) const {
-    return std::format_to(
-      ctx.out(), "{}",
-      transferase::output_format_t_name[std::to_underlying(of)]);
+  format(const transferase::output_format_t &x, auto &ctx) const {
+    const auto u = std::to_underlying(x);
+    const auto v = transferase::output_format_t_name[u];
+    return std::formatter<std::string>::format(
+      std::string(std::cbegin(v), std::cend(v)), ctx);
   }
 };
 

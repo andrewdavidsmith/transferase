@@ -26,6 +26,8 @@
 
 #include "zlib_adapter.hpp"
 
+#include "macos_helper.hpp"
+
 #include <algorithm>
 #include <cctype>  // for std::isdigit
 #include <cerrno>
@@ -70,7 +72,8 @@ parse_counts_line(const std::string &line, std::uint32_t &pos,
   // get level
   double meth{};
   field_s = field_e + 1;
-  res = std::from_chars(std::min(field_s, c_end), c_end, meth);
+  // res = std::from_chars(std::min(field_s, c_end), c_end, meth);
+  res = from_chars(std::min(field_s, c_end), c_end, meth);
   failed = failed || (res.ptr == c_end);
 
   // get n reads

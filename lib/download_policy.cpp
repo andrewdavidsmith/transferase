@@ -60,13 +60,3 @@ operator>>(std::istream &in, download_policy_t &dp) -> std::istream & {
 }
 
 }  // namespace transferase
-
-auto
-std::formatter<transferase::download_policy_t>::format(
-  const transferase::download_policy_t &dp,
-  std::format_context &ctx) const -> std::format_context::iterator {
-  return std::format_to(
-    ctx.out(), "{}",
-    // NOLINTNEXTLINE(*-array-index)
-    transferase::download_policy_t_name[std::to_underlying(dp)]);
-};

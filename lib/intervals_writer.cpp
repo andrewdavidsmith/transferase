@@ -31,6 +31,8 @@
 #include "level_element.hpp"
 #include "level_element_formatter.hpp"
 
+#include "macos_helper.hpp"
+
 #include <algorithm>  // IWYU pragma: keep (for transform)
 #include <cerrno>
 #include <format>
@@ -66,7 +68,9 @@ write_bedlike_intervals_impl(
   const auto n_levels = std::size(levels);
   auto prev_ch_id = genomic_interval::not_a_chrom;
   std::string chrom_name;
-  for (const auto [i, interval] : std::views::enumerate(intervals)) {
+  // for (const auto [i, interval] : std::views::enumerate(intervals)) {
+  std::uint32_t i = 0;
+  for (const auto &interval : intervals) {
     if (interval.ch_id != prev_ch_id) {
       chrom_name = meta.chrom_order[interval.ch_id];
       prev_ch_id = interval.ch_id;
@@ -76,7 +80,8 @@ write_bedlike_intervals_impl(
       std::print(out, "\t{}", lvl_to_string(levels[j][i]));
     if (write_n_cpgs)
       std::print(out, "\t{}", n_cpgs[i]);
-    std::println(out);
+    std::print(out, "\n");
+    ++i;
   }
   return {};
 }
@@ -92,7 +97,7 @@ write_intervals_dfscores_impl(const std::string &outfile,
                               const bool write_header) -> std::error_code {
   using std::literals::string_view_literals::operator""sv;
   static constexpr auto none_label = "NA"sv;
-  // static constexpr auto delim = '\t';
+  static constexpr auto delim = '\t';
 
   std::ofstream out(outfile);
   if (!out)
@@ -101,8 +106,9 @@ write_intervals_dfscores_impl(const std::string &outfile,
   const auto write_n_cpgs = !n_cpgs.empty();
 
   if (write_header) {
-    auto joined =
-      names | std::views::join_with('\t') | std::ranges::to<std::string>();
+    // auto joined =
+    //   names | std::views::join_with('\t') | std::ranges::to<std::string>();
+    auto joined = join_with(names, delim);
     if (write_n_cpgs)
       joined += "\tN_CPG";
     std::println(out, "{}", joined);
@@ -111,7 +117,9 @@ write_intervals_dfscores_impl(const std::string &outfile,
   const auto n_levels = std::size(levels);
   auto prev_ch_id = genomic_interval::not_a_chrom;
   std::string chrom_name;
-  for (const auto [i, interval] : std::views::enumerate(intervals)) {
+  // for (const auto [i, interval] : std::views::enumerate(intervals)) {
+  std::uint32_t i = 0;
+  for (const auto &interval : intervals) {
     if (interval.ch_id != prev_ch_id) {
       chrom_name = meta.chrom_order[interval.ch_id];
       prev_ch_id = interval.ch_id;
@@ -125,7 +133,8 @@ write_intervals_dfscores_impl(const std::string &outfile,
         std::print(out, "\t{}", none_label);
     if (write_n_cpgs)
       std::print(out, "\t{}", n_cpgs[i]);
-    std::println(out);
+    std::print(out, "\n");
+    ++i;
   }
   return {};
 }
@@ -152,7 +161,7 @@ write_intervals_dataframe_impl(
     return mode == level_element_mode::classic ? l.tostring_classic()
                                                : l.tostring_counts();
   };
-  const auto hdr_formatter = [mode](const auto &r) {
+  const auto hdr_formatter = [&](const auto &r) {
     return mode == level_element_mode::classic
              ? std::format(level_element::hdr_fmt_cls, r, delim, r, delim, r)
              : std::format(level_element::hdr_fmt, r, delim, r, delim, r);
@@ -165,8 +174,9 @@ write_intervals_dataframe_impl(
   const auto write_n_cpgs = !n_cpgs.empty();
 
   if (write_header) {
-    auto joined = names | std::views::transform(hdr_formatter) |
-                  std::views::join_with(delim) | std::ranges::to<std::string>();
+    // auto joined = names | std::views::transform(hdr_formatter) |
+    //               std::views::join_with(delim) | std::ranges::to<std::string>();
+    auto joined = join_with(names | std::views::transform(hdr_formatter), delim);
     if (write_n_cpgs)
       joined += std::format("{}{}", delim, "N_CPG");
     std::println(out, "{}", joined);
@@ -175,7 +185,9 @@ write_intervals_dataframe_impl(
   const auto n_levels = std::size(levels);
   auto prev_ch_id = genomic_interval::not_a_chrom;
   std::string chrom_name;
-  for (const auto [i, interval] : std::views::enumerate(intervals)) {
+  // for (const auto [i, interval] : std::views::enumerate(intervals)) {
+  std::uint32_t i = 0;
+  for (const auto &interval : intervals) {
     if (interval.ch_id != prev_ch_id) {
       chrom_name = meta.chrom_order[interval.ch_id];
       prev_ch_id = interval.ch_id;
@@ -186,7 +198,8 @@ write_intervals_dataframe_impl(
       std::print(out, "{}{}", delim, lvl_to_string(levels[j][i]));
     if (write_n_cpgs)
       std::print(out, "{}{}", delim, n_cpgs[i]);
-    std::println(out);
+    std::print(out, "\n");
+    ++i;
   }
   return {};
 }
@@ -226,7 +239,9 @@ write_bedlike_intervals_impl(
   auto prev_ch_id = genomic_interval::not_a_chrom;
   std::string chrom_name;
 
-  for (const auto [i, interval] : std::views::enumerate(intervals)) {
+  // for (const auto [i, interval] : std::views::enumerate(intervals)) {
+  std::uint32_t i = 0;
+  for (const auto &interval : intervals) {
     if (interval.ch_id != prev_ch_id) {
       chrom_name = meta.chrom_order[interval.ch_id];
       prev_ch_id = interval.ch_id;
@@ -244,6 +259,7 @@ write_bedlike_intervals_impl(
       push_buffer(cursor, line_end, error, delim, n_cpgs[i]);
     push_buffer(cursor, line_end, error, newline);
     out.write(line.data(), std::distance(line.data(), cursor));
+    ++i;
   }
   return {};
 }
@@ -275,8 +291,9 @@ write_intervals_dfscores_impl(
   const auto write_n_cpgs = !n_cpgs.empty();
 
   if (write_header) {
-    auto joined =
-      names | std::views::join_with(delim) | std::ranges::to<std::string>();
+    // auto joined =
+    //   names | std::views::join_with(delim) | std::ranges::to<std::string>();
+    auto joined = join_with(names, delim);
     if (write_n_cpgs)
       joined += std::format("{}{}", delim, "N_CPG"sv);
     std::println(out, "{}", joined);
@@ -291,7 +308,9 @@ write_intervals_dfscores_impl(
   const auto n_levels = levels.n_cols;
   auto prev_ch_id = genomic_interval::not_a_chrom;
   std::string chrom_name;
-  for (const auto [i, interval] : std::views::enumerate(intervals)) {
+  // for (const auto [i, interval] : std::views::enumerate(intervals)) {
+  std::uint32_t i = 0;
+  for (const auto &interval : intervals) {
     if (interval.ch_id != prev_ch_id) {
       chrom_name = meta.chrom_order[interval.ch_id];
       prev_ch_id = interval.ch_id;
@@ -308,6 +327,7 @@ write_intervals_dfscores_impl(
       push_buffer(cursor, line_end, error, delim, n_cpgs[i]);
     push_buffer(cursor, line_end, error, newline);
     out.write(line.data(), std::distance(line.data(), cursor));
+    ++i;
   }
   return {};
 }
@@ -330,7 +350,7 @@ write_intervals_dataframe_impl(
   static constexpr auto delim{'\t'};
   static constexpr auto newline{'\n'};
 
-  const auto hdr_formatter = [mode](const auto &r) {
+  const auto hdr_formatter = [&](const auto &r) {
     return mode == level_element_mode::classic
              ? std::format(level_element::hdr_fmt_cls, r, delim, r, delim, r)
              : std::format(level_element::hdr_fmt, r, delim, r, delim, r);
@@ -343,8 +363,9 @@ write_intervals_dataframe_impl(
   const auto write_n_cpgs = !n_cpgs.empty();
 
   if (write_header) {
-    auto joined = names | std::views::transform(hdr_formatter) |
-                  std::views::join_with(delim) | std::ranges::to<std::string>();
+    // auto joined = names | std::views::transform(hdr_formatter) |
+    //               std::views::join_with(delim) | std::ranges::to<std::string>();
+    auto joined = join_with(names | std::views::transform(hdr_formatter), delim);
     if (write_n_cpgs)
       joined += std::format("{}{}", delim, "N_CPG");
     std::println(out, "{}", joined);
@@ -360,7 +381,9 @@ write_intervals_dataframe_impl(
   auto prev_ch_id = genomic_interval::not_a_chrom;
   std::string chrom_name;
 
-  for (const auto [i, interval] : std::views::enumerate(intervals)) {
+  // for (const auto [i, interval] : std::views::enumerate(intervals)) {
+  std::uint32_t i = 0;
+  for (const auto &interval : intervals) {
     if (interval.ch_id != prev_ch_id) {
       chrom_name = meta.chrom_order[interval.ch_id];
       prev_ch_id = interval.ch_id;
@@ -377,6 +400,7 @@ write_intervals_dataframe_impl(
       push_buffer(cursor, line_end, error, delim, n_cpgs[i]);
     push_buffer(cursor, line_end, error, newline);
     out.write(line.data(), std::distance(line.data(), cursor));
+    ++i;
   }
   return {};
 }
