@@ -28,6 +28,7 @@ jobs:
           -DCMAKE_EXE_LINKER_FLAGS="-L$(brew --prefix)/lib" \
           -DZLIB_LIBRARY=$(brew --prefix zlib)/lib/libz.a \
           -DCMAKE_CXX_COMPILER=g++-14 \
+          -DPACKAGE=on \
           -DCMAKE_BUILD_TYPE=Build
       - name: Get version number
         id: get-vn
@@ -52,7 +53,9 @@ jobs:
       - uses: actions/checkout@v4
       - name: Configure for CPack
         run: |
-          cmake -B build -DPACKAGE=on
+          cmake -B build \
+          -DZLIB_LIBRARY=$(brew --prefix zlib)/lib/libz.a \
+          -DPACKAGE=on
       - name: Create universal binaries
         uses: actions/download-artifact@v4
         with:
@@ -60,4 +63,32 @@ jobs:
           pattern: transferase-*
           merge-multiple: false
       - run: |
-          ls -lR binaries
+          lipo -create \
+          binaries/transferase-0.6.0-macos-13-X64/transferase \
+          binaries/transferase-0.6.0-macos-14-ARM64/transferase \
+          -output build/cli/transferase
+          lipo -create \
+          binaries/transferase-0.6.0-macos-13-X64/xfr \
+          binaries/transferase-0.6.0-macos-14-ARM64/xfr \
+          -output build/cli/xfr
+      - name: Prevent building dependencies
+        run: |
+          cmake -B build -DPACKAGE=on
+      - name: Prevent CPack regen
+        run: |
+          mv build/Makefile build/Makefile.orig
+          python3 data/cpack_no_preinstall.py build/Makefile.orig > build/Makefile
+      - name: Package
+        run: |
+          cpack -B build --config build/CPackConfig.cmake
+      - name: Get version number
+        id: get-vn
+        run: |
+          awk '/^  VERSION [0-9.]+$/ {print "vn="$NF}' CMakeLists.txt >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - name: Upload the package files
+        uses: actions/upload-artifact@v4
+        with:
+          name: transferase-${{ steps.get-vn.outputs.vn }}-macOS
+          path: build/transferase-${{ steps.get-vn.outputs.vn }}*
