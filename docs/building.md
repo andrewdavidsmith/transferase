@@ -583,8 +583,9 @@ python3.12 -m venv .venv && . .venv/bin/activate
 # Install the Python dependencies
 pip install nanobind pytest wheel auditwheel hatch numpy
 # Configure the transferase build for Python install and test
+export CC=gcc-14
 cmake -B build -DCMAKE_CXX_COMPILER=g++-14 \
-    -DPACKAGE_PYTHON=on -DPYTHON_TESTS=on -DCMAKE_BUILD_TYPE=Build
+    -DPACKAGE_PYTHON=on -DLIB_ONLY=on -DPYTHON_TESTS=on -DCMAKE_BUILD_TYPE=Build
 # Do the build
 cmake --build build -j32
 # Install the Python package
