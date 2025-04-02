@@ -160,18 +160,35 @@ if(PACKAGE_PYTHON)
   set(INIT_WHL_FILE "${LIBRARY_NAME}-${PROJECT_VERSION}-py3-none-any.whl")
   message(STATUS "Initial wheel filename: ${INIT_WHL_FILE}")
 
-  # Rename the wheel file after it has been generated
-  add_custom_target(PYTHON_RENAME_WHL ALL
-    COMMAND
-    wheel tags
-    --python-tag ${PYTHON_VERSION_TAG}
-    --abi-tag ${PYTHON_ABI_TAG}
-    --platform-tag
-    `python3 ${PROJECT_SOURCE_DIR}/python/get_platform_tag.py ${INIT_WHL_FILE}`
-    ${INIT_WHL_FILE}
-    COMMAND rm ${INIT_WHL_FILE}
-    WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/python/dist
-    DEPENDS PYTHON_BUILD_WHL
-    COMMENT "Adding correct tags to wheel filename"
-  )
+  if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+    # Rename the wheel file after it has been generated
+    add_custom_target(PYTHON_RENAME_WHL ALL
+      COMMAND
+      wheel tags
+      --python-tag ${PYTHON_VERSION_TAG}
+      --abi-tag ${PYTHON_ABI_TAG}
+      --platform-tag
+      `python3 ${PROJECT_SOURCE_DIR}/python/get_platform_tag.py ${PROJECT_BINARY_DIR}/python/${LIBRARY_NAME}*.so`
+      ${INIT_WHL_FILE}
+      COMMAND rm ${INIT_WHL_FILE}
+      WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/python/dist
+      DEPENDS PYTHON_BUILD_WHL
+      COMMENT "Adding correct tags to wheel filename (macOS)"
+    )
+  else()
+    # Rename the wheel file after it has been generated
+    add_custom_target(PYTHON_RENAME_WHL ALL
+      COMMAND
+      wheel tags
+      --python-tag ${PYTHON_VERSION_TAG}
+      --abi-tag ${PYTHON_ABI_TAG}
+      --platform-tag
+      `python3 ${PROJECT_SOURCE_DIR}/python/get_platform_tag.py ${INIT_WHL_FILE}`
+      ${INIT_WHL_FILE}
+      COMMAND rm ${INIT_WHL_FILE}
+      WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/python/dist
+      DEPENDS PYTHON_BUILD_WHL
+      COMMENT "Adding correct tags to wheel filename (Linux)"
+    )
+  endif()
 endif()
