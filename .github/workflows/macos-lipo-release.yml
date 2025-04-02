@@ -90,7 +90,9 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: transferase-${{ steps.get-vn.outputs.vn }}-${{ matrix.os }}-${{ runner.arch }}
-        path: build/cli/transferase build/cli/xfr
+        path: |
+          build/cli/transferase
+          build/cli/xfr
   package:
     needs: build-macos-releases
     runs-on: macos-15
