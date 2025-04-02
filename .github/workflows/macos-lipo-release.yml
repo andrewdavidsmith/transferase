@@ -57,7 +57,7 @@ jobs:
           brew install zlib
       - name: Configure for CPack
         run: |
-          cmake -B build -DPACKAGE=on
+          cmake -B build -DZLIB_LIBRARY=$(brew --prefix zlib)/lib/libz.a -DPACKAGE=on
       - name: Create universal binaries
         uses: actions/download-artifact@v4
         with:
