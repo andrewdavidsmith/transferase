@@ -51,6 +51,11 @@ jobs:
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
+      - name: Update Homebrew
+        run: brew update
+      - name: Install dependencies
+        run: |
+          brew install zlib
       - name: Configure for CPack
         run: |
           cmake -B build \
