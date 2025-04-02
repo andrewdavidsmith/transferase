@@ -29,6 +29,7 @@
 methylome_names = ["ERX9474770","ERX9474769"]
 genome_name = "hg38"
 intervals_filename = "cpgIslandExtUnmasked_hg38.bed3"
+bin_size = 100000
 
 # Set the log level to debug to see all
 import pyxfr
@@ -66,8 +67,23 @@ for j in range(levels.n_methylomes):
     print()
 
 arr = levels.view_nparray()
-print(arr)
+print("levels as nparray:")
+print(arr[0:10])
+print()
 
 min_reads = 2
 means = levels.all_wmeans(min_reads)
-print(means)
+print("levels as weighted means:")
+print(means[0:10])
+print()
+
+## Get the number of CpGs in query regions
+print("n_cpgs intervals:")
+n_cpgs_intervals = genome_index.get_n_cpgs(intervals)
+print("\n".join([str(i) for i in n_cpgs_intervals[0:10]]))
+print()
+
+print("n_cpgs bins:")
+n_cpgs_bins = genome_index.get_n_cpgs(bin_size)
+print("\n".join([str(i) for i in n_cpgs_bins[0:10]]))
+print()
