@@ -10,7 +10,7 @@ jobs:
   build-wheel:
     strategy:
       matrix:
-        os: [macos-13, macos-14, macos-15]
+        os: [macos-13, macos-14]
         python: ['3.12', '3.13']
     name: "Python ${{ matrix.python }} / ${{ matrix.os }}"
     runs-on: ${{ matrix.os }}
@@ -77,9 +77,3 @@ jobs:
         with:
           name: pyxfr-${{ steps.get-vn.outputs.vn }}-Python-${{ matrix.python }}-${{ matrix.os }}-${{ runner.arch }}
           path: build/python/dist/pyxfr-${{ steps.get-vn.outputs.vn }}-*.whl
-      - name: Upload macos so
-        uses: actions/upload-artifact@v4
-        with:
-          name: pyxfr-${{ steps.get-vn.outputs.vn }}-Python-${{ matrix.python }}-${{ matrix.os }}-${{ runner.arch }}-so
-          path: build/python/pyxfr/pyxfr*.so
-
