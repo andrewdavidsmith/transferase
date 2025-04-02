@@ -52,6 +52,46 @@ def get_platform_tags_macos(whl_file):
     return next(packaging.tags.platform_tags())
 
 
+def get_platform_tags_from_so_macos(so_file):
+    """
+    For the given shared library file, get the platform tag from the packaging
+    module that comes first in the list, and so is the most specific that is
+    compatible with the build system
+    """
+    # get the architecture
+    arch_cmd = f"lipo -archs {so_file}"
+    p = subprocess.run(
+        arch_cmd,
+        capture_output=True,
+        shell=True,
+        check=False,
+    )
+    arch = p.stdout.decode().strip()
+
+    # plat_cmd = f"vtool -show-build {so_file} | grep platform"
+    # p = subprocess.run(
+    #     plat_cmd,
+    #     capture_output=True,
+    #     shell=True,
+    #     check=False,
+    # )
+    # plat = p.stdout.decode().strip().split()[-1]
+    # plat = plat.lower()
+    plat = "macosx"
+
+    minos_cmd = f"vtool -show-build {so_file} | grep minos"
+    p = subprocess.run(
+        minos_cmd,
+        capture_output=True,
+        shell=True,
+        check=False,
+    )
+    minos = p.stdout.decode().strip().split()[-1]
+    minos = minos.replace(".", "_")
+
+    return f"{plat}_{minos}_{arch}"
+
+
 if __name__ == "__main__":
     if len(sys.argv) != 2:
         print("Give exactly one arg to get_platform_tags", file=sys.stderr)
@@ -63,7 +103,13 @@ if __name__ == "__main__":
     if platform.system() == "Linux":
         the_tag = get_platform_tags_linux(sys.argv[1])
     elif platform.system() == "Darwin":
-        the_tag = get_platform_tags_macos(sys.argv[1])
+        if sys.argv[1].endswith(".whl"):
+            the_tag = get_platform_tags_macos(sys.argv[1])
+        elif sys.argv[1].endswith(".so"):
+            the_tag = get_platform_tags_from_so_macos(sys.argv[1])
+        else:
+            print("Invalid file type (not .so or .whl)")
+            sys.exit(-1)
     else:
         print(f"System not currently supported: {platform.system()}")
         sys.exit(-1)
