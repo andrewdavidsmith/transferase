@@ -41,6 +41,10 @@ message(STATUS
   "Package file name (without suffixes): ${CPACK_PACKAGE_FILE_NAME}"
 )
 
+if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")  # macOS
+  set(CPACK_SYSTEM_NAME "macOS")
+endif()
+
 # ADS: adding this is the most general way to make the alias and have
 # it both installed properly and linked the same way as tranferase.
 set(BUILD_XFR_ALIAS on)
