@@ -642,7 +642,7 @@ signal_handler(int sig) {
   clear();
   refresh();
   endwin();
-  std::println(std::format("Terminating (received signal: {})", sig));
+  std::println("Terminating (received signal: {})", sig);
   exit(sig);
 }
 
