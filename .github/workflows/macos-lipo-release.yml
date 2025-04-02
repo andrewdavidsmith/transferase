@@ -31,21 +31,27 @@ jobs:
           -DPACKAGE=on \
           -DCMAKE_BUILD_TYPE=Build
       - name: Get version number
-        id: get-vn
+        id: vars
         run: |
           awk '/^  VERSION [0-9.]+$/ {print "vn="$NF}' CMakeLists.txt >> "$GITHUB_OUTPUT"
+          uname -m | awk '{print "arch="$0}' >> "$GITHUB_OUTPUT"
         env:
           GH_TOKEN: ${{ github.token }}
       - name: Build
         run: |
           cmake --build build -j4
+      - name: Rename binaries
+        run: |
+          mv build/cli/transferase build/cli/transferase_$(uname -m)
+          mv build/cli/xfr build/cli/xfr_$(uname -m)
+          ls -lR build/cli
       - name: Upload the binaries
         uses: actions/upload-artifact@v4
         with:
-          name: transferase-${{ steps.get-vn.outputs.vn }}-${{ matrix.os }}-${{ runner.arch }}
+          name: transferase-${{ steps.vars.outputs.vn }}-${{ matrix.os }}-${{ steps.vars.outputs.arch }}
           path: |
-            build/cli/transferase
-            build/cli/xfr
+            build/cli/transferase_${{ steps.vars.outputs.arch }}
+            build/cli/xfr_${{ steps.vars.outputs.arch }}
   package:
     needs: build-macos-releases
     runs-on: macos-15
@@ -76,9 +82,6 @@ jobs:
           binaries/transferase-0.6.0-macos-13-X64/xfr \
           binaries/transferase-0.6.0-macos-14-ARM64/xfr \
           -output build/cli/xfr
-      - name: Prevent building dependencies
-        run: |
-          cmake -B build -DPACKAGE=on
       - name: Prevent CPack regen
         run: |
           mv build/Makefile build/Makefile.orig
