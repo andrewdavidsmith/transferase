@@ -425,10 +425,10 @@ main_loop(const std::vector<std::pair<std::string, std::string>> &data,
 
   // Set up color pairs
   start_color();
-  init_pair(1, COLOR_WHITE, COLOR_BLACK);   // Normal text
-  init_pair(2, COLOR_YELLOW, COLOR_BLACK);  // Highlighted current item
-  init_pair(3, COLOR_GREEN, COLOR_BLACK);   // Selected items
-  init_pair(4, COLOR_BLUE, COLOR_BLACK);    // Multiple selection mode active
+  use_default_colors();
+  init_pair(2, COLOR_CYAN, -1);   // Highlighted current item
+  init_pair(3, COLOR_GREEN, -1);  // Selected items
+  init_pair(4, COLOR_BLUE, -1);   // Multiple selection mode active
 
   std::unordered_set<std::string> selected_keys;
   std::vector<std::string> queries;
@@ -638,34 +638,35 @@ main_loop(const std::vector<std::pair<std::string, std::string>> &data,
 }
 
 static auto
-throwing_handler(int sig) {
+signal_handler(int sig) {
   clear();
   refresh();
   endwin();
-  throw std::runtime_error(
-    std::format("Terminating (received signal: {})", sig));
+  std::println(std::format("Terminating (received signal: {})", sig));
+  exit(sig);
 }
 
 static auto
-throwing_handler_message([[maybe_unused]] int sig) {
+signal_handler_message([[maybe_unused]] int sig) {
   clear();
   refresh();
   endwin();
-  throw std::runtime_error(std::format("Received user request to quit"));
+  std::println("Received user request to quit");
+  exit(0);
 }
 
 /// Register all signals that could disrupt the curses and leave the
 /// terminal in a bad state.
 static auto
 register_signals() {
-  (void)std::signal(SIGINT, throwing_handler_message);
-  (void)std::signal(SIGQUIT, throwing_handler_message);
-  (void)std::signal(SIGTERM, throwing_handler_message);
+  (void)std::signal(SIGINT, signal_handler_message);
+  (void)std::signal(SIGQUIT, signal_handler_message);
+  (void)std::signal(SIGTERM, signal_handler_message);
 
-  (void)std::signal(SIGKILL, throwing_handler);
-  (void)std::signal(SIGABRT, throwing_handler);
-  (void)std::signal(SIGSEGV, throwing_handler);
-  (void)std::signal(SIGFPE, throwing_handler);
+  (void)std::signal(SIGKILL, signal_handler);
+  (void)std::signal(SIGABRT, signal_handler);
+  (void)std::signal(SIGSEGV, signal_handler);
+  (void)std::signal(SIGFPE, signal_handler);
 }
 
 auto
