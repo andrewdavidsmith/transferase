@@ -168,7 +168,7 @@ if(PACKAGE_PYTHON)
       --python-tag ${PYTHON_VERSION_TAG}
       --abi-tag ${PYTHON_ABI_TAG}
       --platform-tag
-      `python3 ${PROJECT_SOURCE_DIR}/python/get_platform_tag.py ${PROJECT_BINARY_DIR}/python/${LIBRARY_NAME}*.so`
+      `python3 ${PROJECT_SOURCE_DIR}/python/get_platform_tag.py ${PROJECT_BINARY_DIR}/python/pyxfr/${LIBRARY_NAME}*.so`
       ${INIT_WHL_FILE}
       COMMAND rm ${INIT_WHL_FILE}
       WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/python/dist
