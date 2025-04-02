@@ -125,8 +125,13 @@ the guidelines, but it's enough to allow you to or anyone else with privileges
 on your system to cleanly uninstall it. You can use `dpkg`:
 
 ```console
+# Examine what will be installed
+dpkg --info build/transferase-0.6.0-Linux.deb
+# Do the install
 dpkg --install build/transferase-0.6.0-Linux.deb
+# See what has been installed
 dpkg --status transferase
+# Remove it
 dpkg --remove transferase
 ```
 
