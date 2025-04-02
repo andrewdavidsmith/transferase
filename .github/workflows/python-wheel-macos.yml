@@ -10,7 +10,7 @@ jobs:
   build-wheel:
     strategy:
       matrix:
-        os: [macos-13, macos-14]
+        os: [macos-14]
         python: ['3.13']
     name: "Python ${{ matrix.python }} / ${{ matrix.os }}"
     runs-on: ${{ matrix.os }}
