@@ -89,7 +89,7 @@ foreach(name ${TRANSFERASE_NAMES})
   add_executable(${name} transferase.cpp)
   # Make sure that the 'config.h' is visible to include
   target_include_directories(${name} PRIVATE ${PROJECT_BINARY_DIR})
-  target_link_libraries(${name} PRIVATE transferase_system transferase_cli)
+  target_link_libraries(${name} PRIVATE transferase_cli)
   if(CURSES_FOUND)
     target_link_libraries(${name} PRIVATE ${CURSES_LIBRARIES})
   endif()
