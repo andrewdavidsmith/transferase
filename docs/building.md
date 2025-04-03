@@ -450,6 +450,8 @@ me. Now you can use the `Rxfr_0.6.0.tar.gz` as follows to install:
 
 ```R
 install.packages("Rxfr_0.6.0.tar.gz")
+library(Rxfr)
+library(help=Rxfr)
 ```
 
 Notes:
