@@ -1,14 +1,31 @@
 # pyxfr
 
-The pyxfr Python package is an API in Python for the transferase system. This
-package allows the same queries to be done within Python as with the
-transferase command line app. Almost all other utilities for manipulating
-transferase data are available through pyxfr.
+Transferase is comprehensive system for methylome data retrieval. Transferase
+aims to provide access to remotely stored sequencing-based whole genome DNA
+methylation profiles, through flexible queries for user-defined summary
+statistics, at speeds comparable to analyses of locally stored data. The
+public transferase server delivers data from the MethBase2 database, which
+includes over ten thousand high-quality WGBS methylomes.  As of transferase
+version 0.6.0, transferase clients include command line tools for Linux and
+macOS, along with a Python package (pyxfr) and an R package (Rxfr).
+
+The pyxfr Python package is an API in Python for transferase. This package
+allows the same queries to be done within Python as with the transferase
+command line app. Almost all other utilities for manipulating transferase data
+are available through pyxfr.
+
+Although documentation is still sparse for pyxfr, each class and function in
+pyxfr has built-in documentation:
+
+```python
+from pyxfr import *
+help(pyxfr)
+```
 
 ## Requirements
 
 - Linux: Python >= 3.12
-- macOS: Python >= 3.12 and macOS >= 14 (at least Sonoma)
+- macOS: Python >= 3.12 and macOS >= 13 (at least Ventura)
 
 ## Usage examples
 
