@@ -1,4 +1,4 @@
-name: Make releases on Linux
+name: Release on Linux
 
 on:
   workflow_dispatch:
