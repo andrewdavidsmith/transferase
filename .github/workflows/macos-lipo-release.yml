@@ -62,7 +62,7 @@ jobs:
       - name: Install dependencies
         run: |
           brew install zlib
-          - name: Configure for CPack
+      - name: Configure for CPack
         run: |
           cmake -B build \
           -DZLIB_LIBRARY=$(brew --prefix zlib)/lib/libz.a \
@@ -74,6 +74,7 @@ jobs:
           pattern: transferase-*
           merge-multiple: false
       - run: |
+          ls -lR binaries
           lipo -create \
           binaries/transferase-*/transferase_* \
           -output build/cli/transferase
