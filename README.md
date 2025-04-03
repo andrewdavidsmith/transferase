@@ -2,7 +2,7 @@
 
 [What's New](#whats-new)
 
-The MethBase2 database currently has roughly 13,5000 *high-quality* methylomes
+The MethBase2 database currently has roughly 13,500 *high-quality* methylomes
 for vertebrate species, mostly split equally between human and mouse. For most
 epigenomics scientists, answering important questions requires identifying
 relevant data sets and obtaining methylation levels summarized at relavant
@@ -47,8 +47,8 @@ them locally on your laptop or workstation.
 ## What's new
 
 * The transferase Python package, pyxfr, can now be installed using
-  [pip](https://pypi.org/project/pyxfr/0.6.0) on Linux (*any*) and
-  macOS >= Ventura (Needs Python >= 3.12).
+  [pip](https://pypi.org/project/pyxfr/0.6.0) with Python >= 3.12 on Linux
+  and macOS (at least Ventura):
   ```console
   pip install pyxfr
   ```
