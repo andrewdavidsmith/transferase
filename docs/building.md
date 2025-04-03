@@ -150,6 +150,7 @@ up. This means we need two more packages, one for building Python things (dev)
 and one for thee virtual env (venv):
 
 ```console
+DEBIAN_FRONTEND=noninteractive \
 apt-get install -y --no-install-recommends \
     python3.12-dev \
     python3.12-venv
