@@ -167,7 +167,7 @@ init_logger <- function() {
   .Call(`_Rxfr_init_logger`)
 }
 
-#' @title MQuery
+#' @title Objects to accelerate repeated queries
 #'
 #' @description
 #' Instances of MQuery hold preprocessed genomic intervals for faster queries.
@@ -241,7 +241,7 @@ MQuery <- R6Class(
   )
 )
 
-#' @title MClient
+#' @title An interface for queries
 #'
 #' @description
 #' Instances of MClient are an interface for making queries in transferase.
