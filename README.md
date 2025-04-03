@@ -1,8 +1,6 @@
 # Transferase
 
-(Edited 2025-03-27 ahead of v0.6.0)
-
-The transferase system for retrieving methylome data from methbase.
+[What's New](#whats-new)
 
 The MethBase2 database currently has roughly 13,5000 *high-quality* methylomes
 for vertebrate species, mostly split equally between human and mouse. For most
@@ -45,6 +43,12 @@ them locally on your laptop or workstation.
 
 - The Python package needs Python 3.13, but otherwise will run on almost any
   Linux machine. The R package needs at least R version 4.4.
+
+## What's new
+
+* The transferase Python package, pyxfr, can now be installed using
+  [pip](https://pypi.org/project/pyxfr/0.6.0) on Linux (*any*) and
+  macOS >= Ventura (Needs Python >= 3.12).
 
 ## Documentation
 
