@@ -49,6 +49,9 @@ them locally on your laptop or workstation.
 * The transferase Python package, pyxfr, can now be installed using
   [pip](https://pypi.org/project/pyxfr/0.6.0) on Linux (*any*) and
   macOS >= Ventura (Needs Python >= 3.12).
+  ```console
+  pip install pyxfr
+  ```
 
 ## Documentation
 
