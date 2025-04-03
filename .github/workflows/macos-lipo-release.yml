@@ -75,12 +75,12 @@ jobs:
           merge-multiple: false
       - run: |
           lipo -create \
-          binaries/transferase-0.6.0-macos-13-X64/transferase \
-          binaries/transferase-0.6.0-macos-14-ARM64/transferase \
+          binaries/transferase-*/transferase_* \
+          binaries/transferase-*/transferase_* \
           -output build/cli/transferase
           lipo -create \
-          binaries/transferase-0.6.0-macos-13-X64/xfr \
-          binaries/transferase-0.6.0-macos-14-ARM64/xfr \
+          binaries/transferase-*/xfr_* \
+          binaries/transferase-*/xfr_* \
           -output build/cli/xfr
       - name: Prevent CPack regen
         run: |
