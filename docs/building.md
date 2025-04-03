@@ -188,7 +188,7 @@ installed with pip. Here is what I got and how to install it (we are still in
 a venv):
 
 ```console
-pip install build/python/dist/transferase-0.6.0-cp312-none-manylinux_2_38_x86_64.whl
+pip install build/python/dist/pyxfr-0.6.0-cp312-none-manylinux_2_38_x86_64.whl
 ```
 
 In the above naming, the `cp312` is the Python version. The `none` means no
@@ -197,7 +197,7 @@ Linux with GLIBC >= 2.38. If you want to check that the above installation
 worked, do this:
 
 ```console
-python3 -c "from transferase import *; help(transferase)"
+python3 -c "from pyxfr import *; help(pyxfr)"
 ```
 
 ## Fedora
@@ -586,18 +586,26 @@ With the above dependencies installed, these commands will do the build
 config, the build, the installation with pip and the pytest.
 
 ```console
-# Create and activate the venv
-python3.12 -m venv .venv && . .venv/bin/activate
+# Create and activate the venv (need Python >= 3.12)
+python3 -m venv .venv && . .venv/bin/activate
+
 # Install the Python dependencies
 pip install nanobind pytest wheel auditwheel hatch numpy
-# Configure the transferase build for Python install and test
+
+# Export 'CC' as cmake builds zlib from source, but won't try to use gcc-14 if
+# we specify it as CMAKE_C_COMPILER
 export CC=gcc-14
+
+# Configure the transferase build for Python install and test
 cmake -B build -DCMAKE_CXX_COMPILER=g++-14 \
     -DPACKAGE_PYTHON=on -DLIB_ONLY=on -DPYTHON_TESTS=on -DCMAKE_BUILD_TYPE=Build
+
 # Do the build
 cmake --build build -j32
+
 # Install the Python package
-pip install build/python/dist/transferase-*.whl
+pip install build/python/dist/pyxfr-*.whl
+
 # Run the pytest unit tests
 pytest --rootdir=build/python/test -v -x build/python
 ```
