@@ -1,18 +1,21 @@
 # pyxfr
 
-Transferase is comprehensive system for methylome data retrieval. Transferase
-aims to provide access to remotely stored sequencing-based whole genome DNA
-methylation profiles, through flexible queries for user-defined summary
-statistics, at speeds comparable to analyses of locally stored data. The
-public transferase server delivers data from the MethBase2 database, which
-includes over ten thousand high-quality WGBS methylomes.  As of transferase
-version 0.6.0, transferase clients include command line tools for Linux and
-macOS, along with a Python package (pyxfr) and an R package (Rxfr).
+Transferase enables access to massive volumes of remotely stored
+sequencing-based whole genome DNA methylation profiles, with the aim
+delivering results at speeds expected from locally stored data. Transferase
+include a collection of data formats and algorithms for fast computation of
+methylation levels through arbitrary genomic intervals, supporting flexible
+queries for the most useful summary statistics. The client apps and APIs of
+transferase are designed to facilitate exploratory data analysis and
+hypothesis testing. The public transferase server interfaces with MethBase2, a
+database that includes over 13,000 high-quality WGBS methylomes from mammalian
+species (04/2025). Since version 0.6.0, transferase clients include command
+line apps for Linux and macOS, along with a Python package and an R package.
 
-The pyxfr Python package is an API in Python for transferase. This package
-allows the same queries to be done within Python as with the transferase
-command line app. Almost all other utilities for manipulating transferase data
-are available through pyxfr.
+The pyxfr Python package is an API for transferase. This package allows the
+same queries to be done within Python as with the transferase command line
+app. Almost all other utilities for manipulating transferase data are
+available through pyxfr.
 
 Although documentation is still sparse for pyxfr, each class and function in
 pyxfr has built-in documentation:
