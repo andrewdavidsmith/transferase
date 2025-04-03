@@ -47,7 +47,7 @@ enum class counts_file_format : std::uint8_t {
 };
 
 using std::literals::string_literals::operator""s;
-static constexpr auto counts_file_format_name = std::array{
+static const auto counts_file_format_name = std::array{
   // clang-format off
   "unknown"s,
   "xcounts"s,
