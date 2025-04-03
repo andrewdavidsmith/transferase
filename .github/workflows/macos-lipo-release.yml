@@ -62,7 +62,7 @@ jobs:
       - name: Install dependencies
         run: |
           brew install zlib
-      - name: Configure for CPack
+          - name: Configure for CPack
         run: |
           cmake -B build \
           -DZLIB_LIBRARY=$(brew --prefix zlib)/lib/libz.a \
@@ -76,10 +76,8 @@ jobs:
       - run: |
           lipo -create \
           binaries/transferase-*/transferase_* \
-          binaries/transferase-*/transferase_* \
           -output build/cli/transferase
           lipo -create \
-          binaries/transferase-*/xfr_* \
           binaries/transferase-*/xfr_* \
           -output build/cli/xfr
       - name: Prevent CPack regen
