@@ -23,7 +23,6 @@ jobs:
           . .venv/bin/activate
           cmake -B build \
           -DCMAKE_CXX_COMPILER=g++-14 \
-          -DBUILD_PYTHON=on \
           -DPACKAGE_PYTHON=on \
           -DCMAKE_BUILD_TYPE=Release
       - name: Build
@@ -36,5 +35,5 @@ jobs:
       - name: Run the test script
         run: |
           . .venv/bin/activate
-          pip install build/python/dist/transferase*whl
+          pip install build/python/dist/pyxfr*whl
           python python/test/integration_tests.py
