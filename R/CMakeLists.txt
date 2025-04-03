@@ -243,9 +243,11 @@ message(STATUS "EXPORTS_FILENAME: ${EXPORTS_FILENAME}")
 execute_process(
   COMMAND
   sed -i.remove "1s/^/\#include \"transferase_r.h\"\\n/" ${EXPORTS_FILENAME}
+  RESULT_VARIABLE EXIT_CODE
+)
+execute_process(
   COMMAND
   rm ${EXPORTS_FILENAME}.remove
-  RESULT_VARIABLE EXIT_CODE
 )
 ]])
 
