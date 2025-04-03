@@ -2,7 +2,7 @@
 
 [What's New](#whats-new)
 
-The MethBase2 database currently has roughly 13,5000 *high-quality* methylomes
+The MethBase2 database currently has roughly 13,500 *high-quality* methylomes
 for vertebrate species, mostly split equally between human and mouse. For most
 epigenomics scientists, answering important questions requires identifying
 relevant data sets and obtaining methylation levels summarized at relavant
