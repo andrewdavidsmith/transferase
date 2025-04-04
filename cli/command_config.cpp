@@ -28,15 +28,13 @@ configure a transferase client
 )";
 
 static constexpr auto description = R"(
-Configure transferase on your system, reducing the amount of
-information needed for each query. The default config directory is
-'${HOME}/.config/transferase'. This command will also retrieve other
-data. It will get index files that are used to accelerate queries. And
-it will retrieve a file with MethBase2 metadata. This command has
-modes that allow you to update an existing configuration or reset a
-configuration to default values. Note: configuration is not strictly
-needed, as most other commands can run with all information provided
-on the command line.
+Configure transferase on your system. The default config directory is
+'${HOME}/.config/transferase'. This command will also retrieve other data. It
+will get index files that are used to accelerate queries. And it will retrieve
+files with MethBase2 metadata. This command has modes that allow you to
+update an existing configuration or reset a configuration to default
+values. Note: configuration is not strictly needed, as most other commands can
+run with all information provided on the command line.
 )";
 
 static constexpr auto examples = R"(
@@ -135,8 +133,9 @@ command_config_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
                  "(comma separated list, e.g. hg38,mm39)")
     ->delimiter(',');
   app.add_option("--download", download_policy,
-                 "download policy (none, missing, update, all)")
-    ->option_text(std::format("ENUM [{}]", download_policy_default))
+                 "download policy (none, missing, update, all) " +
+                 std::format("default: {}", download_policy_default))
+    ->option_text("ENUM")
     ->transform(CLI::CheckedTransformer(xfr::download_policy_cli11, CLI::ignore_case));
   const auto all_defaults_opt =
     app.add_flag("--defaults", all_defaults, "allow all default config values")
