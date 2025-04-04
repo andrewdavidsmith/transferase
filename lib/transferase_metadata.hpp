@@ -58,6 +58,11 @@ struct transferase_metadata {
   }
 
   [[nodiscard]] auto
+  empty() const -> bool {
+    return genome_to_methylomes.empty();
+  }
+
+  [[nodiscard]] auto
   tostring() const -> std::string;
 
   NLOHMANN_DEFINE_TYPE_INTRUSIVE(transferase_metadata, genome_to_methylomes,
