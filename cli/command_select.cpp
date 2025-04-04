@@ -89,6 +89,7 @@ command_select_main([[maybe_unused]] int argc,
 #include <string>
 #include <string_view>
 #include <system_error>
+#include <tuple>
 #include <unordered_set>
 #include <utility>  // for std::pair
 #include <vector>
@@ -97,7 +98,8 @@ namespace xfr = transferase;
 
 [[nodiscard]] auto
 load_data(const std::string &json_filename, std::error_code &error)
-  -> std::map<std::string, std::vector<std::pair<std::string, std::string>>> {
+  -> std::map<std::string,
+              std::vector<std::tuple<std::string, std::string, std::string>>> {
   std::ifstream in(json_filename);
   if (!in) {
     error = std::make_error_code(std::errc(errno));
@@ -108,12 +110,21 @@ load_data(const std::string &json_filename, std::error_code &error)
     error = std::make_error_code(std::errc::invalid_argument);
     return {};
   }
-  std::map<std::string, std::map<std::string, std::string>> data = payload;
+  std::map<std::string, std::map<std::string, std::vector<std::string>>> data =
+    payload;
 
-  typedef std::vector<std::pair<std::string, std::string>> vec_key_val;
-  std::map<std::string, vec_key_val> r;
+  typedef std::vector<std::tuple<std::string, std::string, std::string>>
+    vec_key_vals;
+  std::map<std::string, vec_key_vals> r;
+  const auto to_vec_key_vals = [&](const auto &x) -> vec_key_vals {
+    vec_key_vals v;
+    for (const auto &u : x)
+      if (!u.second.empty())
+        v.emplace_back(u.first, u.second.front(), u.second.back());
+    return v;
+  };
   std::ranges::for_each(data, [&](const auto &d) {
-    r.emplace(d.first, d.second | std::ranges::to<vec_key_val>());
+    r.emplace(d.first, to_vec_key_vals(d.second));
   });
   return r;
 }
@@ -134,19 +145,25 @@ get_to_show(const auto &filtered, const auto disp_start, const auto disp_end) {
 
 [[nodiscard]] static inline auto
 format_current_entry(const auto &entry, const auto horiz_pos, const auto max_x,
-                     const auto margin) {
-  if (horiz_pos > std::ssize(entry.second))
-    return std::format("{}:", entry.first);
-  return std::format("{}: {}", entry.first,
-                     entry.second.substr(horiz_pos, max_x - margin));
+                     const auto margin, const bool show_details) {
+  auto label = std::format("{}:", std::get<0>(entry));
+  auto sample_name = std::get<1>(entry);
+  if (show_details)
+    sample_name += std::format(" | {}", std::get<2>(entry));
+  const auto line_width = margin + std::ssize(sample_name);
+  if (horiz_pos > line_width)
+    return label;
+  const auto full_line =
+    std::format("{:{}}{}", label, margin, sample_name.substr(horiz_pos));
+  return full_line.substr(0, max_x - 1);
 }
 
 static inline auto
 do_select(const auto &filtered, const auto cursor_pos, auto &selected_keys) {
   const auto curr_fltr = std::cbegin(filtered) + cursor_pos;
-  const auto itr = selected_keys.find(curr_fltr->first);
+  const auto itr = selected_keys.find(std::get<0>(*curr_fltr));
   if (itr == std::cend(selected_keys))
-    selected_keys.insert(curr_fltr->first);
+    selected_keys.insert(std::get<0>(*curr_fltr));
   else
     selected_keys.erase(itr);
 }
@@ -154,17 +171,17 @@ do_select(const auto &filtered, const auto cursor_pos, auto &selected_keys) {
 static inline auto
 do_add(const auto &filtered, const auto cursor_pos, auto &selected_keys) {
   const auto curr_fltr = std::cbegin(filtered) + cursor_pos;
-  const auto itr = selected_keys.find(curr_fltr->first);
+  const auto itr = selected_keys.find(std::get<0>(*curr_fltr));
   if (itr == std::cend(selected_keys))
-    selected_keys.insert(curr_fltr->first);
+    selected_keys.insert(std::get<0>(*curr_fltr));
 }
 
 static inline auto
 do_remove(const auto &filtered, const auto cursor_pos, auto &selected_keys) {
   const auto curr_fltr = std::cbegin(filtered) + cursor_pos;
-  const auto itr = selected_keys.find(curr_fltr->first);
+  const auto itr = selected_keys.find(std::get<0>(*curr_fltr));
   if (itr != std::cend(selected_keys))
-    selected_keys.erase(curr_fltr->first);
+    selected_keys.erase(std::get<0>(*curr_fltr));
 }
 
 static inline auto
@@ -199,6 +216,7 @@ show_help() {
     std::pair{"Space/Enter"sv, "Select or deselect current item"sv},
     std::pair{"c"sv, "Clear current selections"sv},
     std::pair{"v"sv, "View current selections"sv},
+    std::pair{"d"sv, "Toggle detailed view"sv},
     std::pair{"a"sv, "Toggle multi-select mode"sv},
     std::pair{"r"sv, "Toggle multi-remove mode"sv},
     std::pair{"s"sv, "Enter search phrase"sv},
@@ -294,8 +312,8 @@ write_output(const auto &data, std::string &outfile) {
   constexpr auto msg_fmt1 = "Selected {} methylomes. Save to file: {}?";
   constexpr auto msg_fmt1_empty =
     "Selected {} methylomes. No filename specified.";
-  constexpr auto msg_fmt2 = "y: accept, n: specify another filename, c: cancel";
-  constexpr auto msg_fmt2_empty = "n: specify another filename, c: cancel";
+  constexpr auto msg_fmt2 = "y: accept, n: enter file name, c: cancel";
+  constexpr auto msg_fmt2_empty = "n: enter file name, c: cancel";
   constexpr auto msg_fmt3 = "[Saving will not clear your selections]";
   int confirmation{};
   if (data.empty()) {
@@ -398,9 +416,10 @@ format_queries(const std::vector<std::string> &queries) -> std::string {
 }
 
 auto
-main_loop(const std::vector<std::pair<std::string, std::string>> &data,
-          std::string &filename) -> std::vector<std::string> {
-  static constexpr auto extra_margin_space = 2;  // colon and space
+main_loop(
+  const std::vector<std::tuple<std::string, std::string, std::string>> &data,
+  std::string &filename) -> std::vector<std::string> {
+  static constexpr auto extra_margin_space = 2;  // colon, space and safety?
   static constexpr auto escape_key_code = 27;
   static constexpr auto escape_delay{25};
   // lines to keep at top of display
@@ -411,8 +430,10 @@ main_loop(const std::vector<std::pair<std::string, std::string>> &data,
     "a/r=Toggle multi-add/remove, v/c=View/clear selection, "
     "s/Esc=Enter/clear ";
   // margin must be max key width plus room
-  const auto key_sizes = std::views::transform(
-    data, [](const auto &s) -> std::int32_t { return std::size(s.first); });
+  const auto key_sizes =
+    std::views::transform(data, [](const auto &s) -> std::int32_t {
+      return std::size(std::get<0>(s));
+    });
   const std::int32_t margin = std::ranges::max(key_sizes) + extra_margin_space;
 
   // Initialize ncurses
@@ -430,6 +451,7 @@ main_loop(const std::vector<std::pair<std::string, std::string>> &data,
   init_pair(3, COLOR_GREEN, -1);  // Selected items
   init_pair(4, COLOR_BLUE, -1);   // Multiple selection mode active
 
+  bool show_details = false;  // show detailed sample info
   std::unordered_set<std::string> selected_keys;
   std::vector<std::string> queries;
   std::string query_update;
@@ -438,7 +460,8 @@ main_loop(const std::vector<std::pair<std::string, std::string>> &data,
   bool multi_remove = false;
   std::int32_t horiz_pos = 0;
   std::int32_t cursor_pos = 0;
-  std::vector<std::vector<std::pair<std::string, std::string>>> filtered;
+  std::vector<std::vector<std::tuple<std::string, std::string, std::string>>>
+    filtered;
   filtered.push_back(data);
 
   while (true) {
@@ -447,7 +470,8 @@ main_loop(const std::vector<std::pair<std::string, std::string>> &data,
       // Filter data based on the query
       const auto query_found = [&](const auto &x) -> bool {
         // ADS: need to take care of upper/lower case here
-        return std::regex_search(x.second, query_re);
+        return std::regex_search(std::get<1>(x), query_re) ||
+               std::regex_search(std::get<2>(x), query_re);
       };
       filtered.push_back({});
       assert(std::size(filtered) >= 2u);
@@ -494,7 +518,7 @@ main_loop(const std::vector<std::pair<std::string, std::string>> &data,
         break;
 
       // color this item if it's among the selections
-      if (selected_keys.contains(entry.first))
+      if (selected_keys.contains(std::get<0>(entry)))
         attron(COLOR_PAIR(3));
 
       // highlight this item if it's at the cursor position
@@ -506,13 +530,16 @@ main_loop(const std::vector<std::pair<std::string, std::string>> &data,
       }
 
       // Display (key: paragraph) with horizontal range
-      mvprintw(y_pos, 0, format_current_entry(entry, horiz_pos, COLS, margin));
+      mvprintw(
+        y_pos, 0,
+        format_current_entry(entry, horiz_pos, COLS, margin, show_details));
 
       // Reset attribute
       attroff(COLOR_PAIR(2));
       attroff(COLOR_PAIR(3));
       attroff(COLOR_PAIR(4));
-      ++idx;
+
+      ++idx;  // enumerate
     }
     refresh();
 
@@ -533,8 +560,12 @@ main_loop(const std::vector<std::pair<std::string, std::string>> &data,
       write_output(selected_keys, filename);
     }
     else if (ch == KEY_RIGHT) {  // Scroll right
-      // NOLINTNEXTLINE (*-narrowing-conversions)
-      const std::int32_t width = std::size(filtered.back()[cursor_pos].second);
+      // ADS: the "+ 3" below is for std::size(" | ");
+      // NOLINTBEGIN (*-narrowing-conversions)
+      const std::int32_t width =
+        std::size(std::get<1>(filtered.back()[cursor_pos])) +
+        std::size(std::get<2>(filtered.back()[cursor_pos])) + 3;
+      // NOLINTEND (*-narrowing-conversions)
       if (margin + width > COLS)
         horiz_pos = std::min(horiz_pos + 1, (margin + width) - COLS);
     }
@@ -602,6 +633,9 @@ main_loop(const std::vector<std::pair<std::string, std::string>> &data,
     }
     else if (ch == ' ' || ch == '\n') {  // Select/deselect current item
       do_select(filtered.back(), cursor_pos, selected_keys);
+    }
+    else if (ch == 'd') {  // Toggle detailed view
+      show_details = !show_details;
     }
     else if (ch == 'c') {  // Clear selected keys
       selected_keys.clear();
