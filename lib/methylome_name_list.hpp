@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef LIB_TRANSFERASE_METADATA_HPP_
-#define LIB_TRANSFERASE_METADATA_HPP_
+#ifndef LIB_METHYLOME_NAME_LIST_HPP_
+#define LIB_METHYLOME_NAME_LIST_HPP_
 
 #include "nlohmann/json.hpp"
 
@@ -38,7 +38,7 @@
 
 namespace transferase {
 
-struct transferase_metadata {
+struct methylome_name_list {
   std::unordered_map<std::string, std::vector<std::string>>
     genome_to_methylomes;
   std::unordered_map<std::string, std::string> methylome_to_genome;
@@ -49,7 +49,7 @@ struct transferase_metadata {
 
   [[nodiscard]] static auto
   read(const std::string &json_filename,
-       std::error_code &error) noexcept -> transferase_metadata;
+       std::error_code &error) noexcept -> methylome_name_list;
 
   [[nodiscard]] auto
   available_genomes() const noexcept -> std::vector<std::string> {
@@ -65,27 +65,27 @@ struct transferase_metadata {
   [[nodiscard]] auto
   tostring() const -> std::string;
 
-  NLOHMANN_DEFINE_TYPE_INTRUSIVE(transferase_metadata, genome_to_methylomes,
+  NLOHMANN_DEFINE_TYPE_INTRUSIVE(methylome_name_list, genome_to_methylomes,
                                  methylome_to_genome)
 };
 
 }  // namespace transferase
 
-/// @brief Enum for error codes related to transferase_metadata
-enum class transferase_metadata_error_code : std::uint8_t {
+/// @brief Enum for error codes related to methylome_name_list
+enum class methylome_name_list_error_code : std::uint8_t {
   ok = 0,
-  error_reading_transferase_metadata_json_file = 1,
-  error_parsing_transferase_metadata_json_file = 2,
+  error_reading_methylome_name_list_json_file = 1,
+  error_parsing_methylome_name_list_json_file = 2,
   methylome_not_found_in_metadata = 3,
 };
 
 template <>
-struct std::is_error_code_enum<transferase_metadata_error_code>
+struct std::is_error_code_enum<methylome_name_list_error_code>
   : public std::true_type {};
 
-struct transferase_metadata_error_category : std::error_category {
+struct methylome_name_list_error_category : std::error_category {
   // clang-format off
-  auto name() const noexcept -> const char * override { return "transferase_metadata"; }
+  auto name() const noexcept -> const char * override { return "methylome_name_list"; }
   auto message(int code) const noexcept -> std::string override {
     using std::string_literals::operator""s;
     switch (code) {
@@ -100,9 +100,9 @@ struct transferase_metadata_error_category : std::error_category {
 };
 
 inline auto
-make_error_code(transferase_metadata_error_code e) noexcept -> std::error_code {
-  static auto category = transferase_metadata_error_category{};
+make_error_code(methylome_name_list_error_code e) noexcept -> std::error_code {
+  static auto category = methylome_name_list_error_category{};
   return std::error_code(std::to_underlying(e), category);
 }
 
-#endif  // LIB_TRANSFERASE_METADATA_HPP_
+#endif  // LIB_METHYLOME_NAME_LIST_HPP_
