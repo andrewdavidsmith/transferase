@@ -84,7 +84,15 @@ transferase_metadata::read(const std::string &json_filename,
     error = parse_error;
     return {};
   }
-  std::map<std::string, std::map<std::string, std::string>> data = payload;
+
+  std::map<std::string, std::map<std::string, std::string>> data;
+  try {
+    data = payload;
+  }
+  catch (const nlohmann::json::exception &) {
+    error = parse_error;
+    return {};
+  }
 
   transferase_metadata m;
   std::ranges::for_each(data, [&](const auto &d) {
