@@ -20,4 +20,5 @@ License: MIT + file LICENSE
 Imports: R6, methods, Rcpp (>= 1.0.14)
 LinkingTo: Rcpp
 SystemRequirements: C++23
+SystemRequirements: OpenSSL
 Encoding: UTF-8
