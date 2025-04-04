@@ -185,14 +185,17 @@ command_config_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
 
   // If the user is requesting not to Unless the users is load any previously
   // set values in the same config directory
-  if (update_config && cfg.config_file_exists()) {
+  if (cfg.config_file_exists()) {
     lgr.debug("Loading unspecified values from previous config file: {}",
               cfg.get_config_file(cfg.config_dir));
-    cfg.read_config_file_no_overwrite(error);
+    auto tmp_cfg = cfg;
+    tmp_cfg.read_config_file_no_overwrite(error);
     if (error) {
-      lgr.error("Error setting default config values: {}.", error);
-      return EXIT_FAILURE;
+      lgr.info("Existing config is invalid and will be replaced");
+      std::filesystem::remove(cfg.get_config_file(cfg.config_dir), error);
     }
+    else
+      cfg = tmp_cfg;
   }
 
   // If the user is allowing defeaults, any args are left unspecified
