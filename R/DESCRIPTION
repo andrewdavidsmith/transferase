@@ -19,6 +19,5 @@ Description: This package is an API for transferase. Transferase enables
 License: MIT + file LICENSE
 Imports: R6, methods, Rcpp (>= 1.0.14)
 LinkingTo: Rcpp
-SystemRequirements: C++23
-SystemRequirements: OpenSSL
+SystemRequirements: C++23, OpenSSL
 Encoding: UTF-8
