@@ -21,7 +21,7 @@
  * SOFTWARE.
  */
 
-#include "transferase_metadata.hpp"
+#include "methylome_name_list.hpp"
 
 #include "methylome.hpp"
 
@@ -39,9 +39,9 @@
 namespace transferase {
 
 [[nodiscard]] auto
-transferase_metadata::get_genome(
-  const std::vector<std::string> &methylome_names,
-  std::error_code &error) const noexcept -> std::string {
+methylome_name_list::get_genome(const std::vector<std::string> &methylome_names,
+                                std::error_code &error) const noexcept
+  -> std::string {
   [[maybe_unused]] const bool all_valid =
     methylome::are_valid_names(methylome_names, error);
   if (error)
@@ -51,7 +51,7 @@ transferase_metadata::get_genome(
     const auto genome_itr = methylome_to_genome.find(name);
     if (genome_itr == std::cend(methylome_to_genome)) {
       // ERROR not found
-      error = transferase_metadata_error_code::methylome_not_found_in_metadata;
+      error = methylome_name_list_error_code::methylome_not_found_in_metadata;
       return {};
     }
     if (!genome.empty() && genome != genome_itr->second) {
@@ -66,13 +66,13 @@ transferase_metadata::get_genome(
 }
 
 [[nodiscard]] auto
-transferase_metadata::read(const std::string &json_filename,
-                           std::error_code &error) noexcept
-  -> transferase_metadata {
-  constexpr auto read_error = transferase_metadata_error_code::
-    error_reading_transferase_metadata_json_file;
-  constexpr auto parse_error = transferase_metadata_error_code::
-    error_parsing_transferase_metadata_json_file;
+methylome_name_list::read(const std::string &json_filename,
+                          std::error_code &error) noexcept
+  -> methylome_name_list {
+  constexpr auto read_error =
+    methylome_name_list_error_code::error_reading_methylome_name_list_json_file;
+  constexpr auto parse_error =
+    methylome_name_list_error_code::error_parsing_methylome_name_list_json_file;
 
   std::ifstream in(json_filename);
   if (!in) {
@@ -94,7 +94,7 @@ transferase_metadata::read(const std::string &json_filename,
     return {};
   }
 
-  transferase_metadata m;
+  methylome_name_list m;
   std::ranges::for_each(data, [&](const auto &d) {
     m.genome_to_methylomes.emplace(
       d.first, d.second | std::views::elements<0> |
@@ -111,7 +111,7 @@ transferase_metadata::read(const std::string &json_filename,
 }
 
 [[nodiscard]] auto
-transferase_metadata::tostring() const -> std::string {
+methylome_name_list::tostring() const -> std::string {
   static constexpr auto n_indent = 4;
   nlohmann::json data = *this;
   return data.dump(n_indent);
