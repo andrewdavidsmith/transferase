@@ -26,8 +26,8 @@
 #include <client_config.hpp>
 #include <download_policy.hpp>
 #include <logger.hpp>
+#include <methylome_name_list.hpp>
 #include <remote_data_resource.hpp>
-#include <transferase_metadata.hpp>
 
 #include <gtest/gtest.h>
 
@@ -53,7 +53,9 @@ protected:
     "index_dir": "",
     "log_file": "",
     "log_level": "debug",
-    "metadata_file": "",
+    "metadata_dataframe": "",
+    "methylome_list": "",
+    "select_metadata": "",
     "labels_file": "",
     "methylome_dir": "",
     "port": "9000"
@@ -200,26 +202,6 @@ TEST_F(client_config_mock, run_no_genomes_success) {
 
   remove_directories(config_dir_mock, error);
   EXPECT_FALSE(error);
-}
-
-TEST_F(client_config_mock, read_metadata_success) {
-  constexpr auto n_lutions = 3u;
-  const auto lutions_config_dir = "data/lutions";
-  std::error_code error;
-  client_config cfg = client_config::read(lutions_config_dir);
-  EXPECT_FALSE(error) << lutions_config_dir << "\n";
-
-  const bool validate_ok = cfg.validate(error);
-  EXPECT_TRUE(validate_ok);
-  EXPECT_FALSE(error) << error.message();
-
-  cfg.load_transferase_metadata(error);
-  EXPECT_FALSE(error) << cfg.tostring() << "\t" << error << "\n";
-
-  const auto all_genomes = cfg.meta.available_genomes();
-  EXPECT_FALSE(all_genomes.empty()) << cfg.meta.tostring() << "\n"
-                                    << cfg.metadata_file << "\n";
-  EXPECT_EQ(std::size(all_genomes), n_lutions);
 }
 
 TEST_F(client_config_mock, re_read_config_file_success) {
