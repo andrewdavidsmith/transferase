@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef LIB_METHYLOME_CLIENT_REMOTE_HPP_
-#define LIB_METHYLOME_CLIENT_REMOTE_HPP_
+#ifndef LIB_REMOTE_CLIENT_HPP_
+#define LIB_REMOTE_CLIENT_HPP_
 
 #include "client_base.hpp"
 #include "client_config.hpp"
@@ -53,11 +53,9 @@ struct level_element_covered_t;  // for is_same_v
 
 namespace transferase {
 
-class methylome_client_remote : public client_base<methylome_client_remote> {
+class remote_client : public client_base<remote_client> {
 public:
-  typedef client_base<methylome_client_remote> methylome_client_remote_parent;
-
-  explicit methylome_client_remote(const std::string &config_dir) :
+  explicit remote_client(const std::string &config_dir) :
     client_base(config_dir) {
     std::error_code error;
     validate(error);
@@ -161,4 +159,4 @@ private:
 
 }  // namespace transferase
 
-#endif  // LIB_METHYLOME_CLIENT_REMOTE_HPP_
+#endif  // LIB_REMOTE_CLIENT_HPP_
