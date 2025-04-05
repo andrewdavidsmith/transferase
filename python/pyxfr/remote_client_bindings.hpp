@@ -21,17 +21,17 @@
  * SOFTWARE.
  */
 
-#ifndef PYTHON_PYXFR_METHYLOME_CLIENT_REMOTE_BINDINGS_HPP_
-#define PYTHON_PYXFR_METHYLOME_CLIENT_REMOTE_BINDINGS_HPP_
+#ifndef PYTHON_PYXFR_REMOTE_CLIENT_BINDINGS_HPP_
+#define PYTHON_PYXFR_REMOTE_CLIENT_BINDINGS_HPP_
 
 #include <nanobind/nanobind.h>
 
 namespace transferase {
-class methylome_client_remote;
+class remote_client;
 }  // namespace transferase
 
 auto
-methylome_client_remote_bindings(
-  nanobind::class_<transferase::methylome_client_remote> &cls) -> void;
+remote_client_bindings(nanobind::class_<transferase::remote_client> &cls)
+  -> void;
 
-#endif  // PYTHON_PYXFR_METHYLOME_CLIENT_REMOTE_BINDINGS_HPP_
+#endif  // PYTHON_PYXFR_REMOTE_CLIENT_BINDINGS_HPP_
