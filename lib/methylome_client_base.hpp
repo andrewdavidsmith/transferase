@@ -29,10 +29,10 @@
 #include "genome_index_set.hpp"
 #include "genomic_interval.hpp"
 #include "level_container_md.hpp"
+#include "methylome_name_list.hpp"
 #include "query_container.hpp"  // for transferase::size
 #include "request.hpp"
 #include "request_type_code.hpp"  // for transferase::request_type_code
-#include "transferase_metadata.hpp"
 
 #include "nlohmann/json.hpp"
 
@@ -61,7 +61,7 @@ enum class methylome_client_base_error_code : std::uint8_t {
   required_config_values_not_found = 2,
   index_dir_not_found = 3,
   failed_to_read_index_dir = 4,
-  transferase_metadata_not_found = 5,
+  methylome_name_list_not_found = 5,
 };
 
 template <>
@@ -116,82 +116,6 @@ public:
   }
 #endif
 
-  // intervals: takes a query
-  template <typename lvl_elem_t>
-  [[nodiscard]] auto
-  get_levels(const std::vector<std::string> &methylome_names,
-             const query_container &query, std::error_code &error)
-    const noexcept -> level_container_md<lvl_elem_t> {
-    return self().template get_levels_derived<lvl_elem_t>(methylome_names,
-                                                          query, error);
-  }
-
-#ifndef TRANSFERASE_NOEXCEPT
-  // intervals: takes a query
-  template <typename lvl_elem_t>
-  auto
-  get_levels(const std::vector<std::string> &methylome_names,
-             const query_container &query) const
-    -> level_container_md<lvl_elem_t> {
-    std::error_code error;
-    auto result = get_levels<lvl_elem_t>(methylome_names, query, error);
-    if (error)
-      throw std::system_error(error);
-    return result;
-  }
-#endif
-
-  // intervals: takes a list of genomic intervals
-  template <typename lvl_elem_t>
-  [[nodiscard]] auto
-  get_levels(const std::vector<std::string> &methylome_names,
-             const std::vector<genomic_interval> &intervals,
-             std::error_code &error) const noexcept
-    -> level_container_md<lvl_elem_t> {
-    return self().template get_levels_derived<lvl_elem_t>(methylome_names,
-                                                          intervals, error);
-  }
-
-#ifndef TRANSFERASE_NOEXCEPT
-  // intervals: takes a list of genomic intervals
-  template <typename lvl_elem_t>
-  auto
-  get_levels(const std::vector<std::string> &methylome_names,
-             const std::vector<genomic_interval> &intervals) const
-    -> level_container_md<lvl_elem_t> {
-    std::error_code error;
-    auto result = get_levels<lvl_elem_t>(methylome_names, intervals, error);
-    if (error)
-      throw std::system_error(error);
-    return result;
-  }
-#endif
-
-  // bins: takes an index
-  template <typename lvl_elem_t>
-  [[nodiscard]] auto
-  get_levels(const std::vector<std::string> &methylome_names,
-             const std::uint32_t bin_size, std::error_code &error)
-    const noexcept -> level_container_md<lvl_elem_t> {
-    return self().template get_levels_derived<lvl_elem_t>(methylome_names,
-                                                          bin_size, error);
-  }
-
-#ifndef TRANSFERASE_NOEXCEPT
-  // bins: takes an index (throws)
-  template <typename lvl_elem_t>
-  auto
-  get_levels(const std::vector<std::string> &methylome_names,
-             const std::uint32_t bin_size) const
-    -> level_container_md<lvl_elem_t> {
-    std::error_code error;
-    auto result = get_levels<lvl_elem_t>(methylome_names, bin_size, error);
-    if (error)
-      throw std::system_error(error);
-    return result;
-  }
-#endif
-
 protected:
   // API function
   explicit methylome_client_base(std::string config_dir) {
@@ -206,16 +130,6 @@ protected:
 
     // client_config should read the transferase metadata if possible
     config = client_config::read(config_dir);
-    const auto metadata_file = config.get_metadata_file();
-    if (!metadata_file.empty()) {
-      config.load_transferase_metadata(error);
-      if (error) {
-        const auto msg = std::format("[Failed to read metadata: {} (consider "
-                                     "redownloading or regenerating it)]",
-                                     metadata_file);
-        throw std::system_error(error, msg);
-      }
-    }
 
     // Error for index dir should be taken care of in client_config
     if (!config.index_dir.empty())
@@ -234,28 +148,6 @@ protected:
 
   auto
   tostring_derived() const = delete;
-
-  auto
-  validate_derived() const = delete;
-
-  template <typename lvl_elem_t>
-  [[nodiscard]] auto
-  get_levels_derived(const std::vector<std::string> &methylome_names,
-                     const query_container &query, std::error_code &error)
-    const noexcept -> level_container_md<lvl_elem_t> = delete;
-
-  template <typename lvl_elem_t>
-  [[nodiscard]] auto
-  get_levels_derived(const std::vector<std::string> &methylome_names,
-                     const std::vector<genomic_interval> &intervals,
-                     std::error_code &error) const noexcept
-    -> level_container_md<lvl_elem_t> = delete;
-
-  template <typename lvl_elem_t>
-  [[nodiscard]] auto
-  get_levels_derived(const std::vector<std::string> &methylome_names,
-                     const std::uint32_t bin_size, std::error_code &error)
-    const noexcept -> level_container_md<lvl_elem_t>;
 
   [[nodiscard]] auto
   get_index_hash(const std::string &genome_name,
