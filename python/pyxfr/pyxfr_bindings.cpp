@@ -34,10 +34,10 @@ When in doubt, consult the module reference at the location listed above.
 #include "genome_index_bindings.hpp"
 #include "genomic_interval_bindings.hpp"
 #include "level_container_bindings.hpp"
+#include "local_client_bindings.hpp"
 #include "methylome_bindings.hpp"
-#include "methylome_client_local_bindings.hpp"
-#include "methylome_client_remote_bindings.hpp"
 #include "query_container_bindings.hpp"
+#include "remote_client_bindings.hpp"
 
 #include <client_config.hpp>  // IWYU pragma: keep
 #include <download_policy.hpp>
@@ -45,11 +45,11 @@ When in doubt, consult the module reference at the location listed above.
 #include <genomic_interval.hpp>
 #include <level_container_md.hpp>
 #include <level_element.hpp>
+#include <local_client.hpp>
 #include <logger.hpp>
 #include <methylome.hpp>
-#include <methylome_client_local.hpp>
-#include <methylome_client_remote.hpp>
 #include <query_container.hpp>
+#include <remote_client.hpp>
 
 #include <moduleobject.h>
 #include <nanobind/nanobind.h>
@@ -117,10 +117,10 @@ NB_MODULE(pyxfr, the_module) {
     the_module, "MLevelsCovered",
     "A container for methylation levels with information about covered sites");
 
-  auto MClient = nb::class_<xfr::methylome_client_remote>(
+  auto MClient = nb::class_<xfr::remote_client>(
     the_module, "MClient", "Client to get data from a remote methylome server");
 
-  auto MClientLocal = nb::class_<xfr::methylome_client_local>(
+  auto MClientLocal = nb::class_<xfr::local_client>(
     the_module, "MClientLocal", "Client to get data stored locally");
 
   client_config_bindings(MConfig);
@@ -133,6 +133,6 @@ NB_MODULE(pyxfr, the_module) {
   level_container_bindings(MLevels);
   level_container_covered_bindings(MLevelsCovered);
 
-  methylome_client_local_bindings(MClientLocal);
-  methylome_client_remote_bindings(MClient);
+  local_client_bindings(MClientLocal);
+  remote_client_bindings(MClient);
 }
