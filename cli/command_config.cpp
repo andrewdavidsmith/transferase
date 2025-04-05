@@ -195,7 +195,13 @@ command_config_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
     tmp_cfg.read_config_file_no_overwrite(error);
     if (error) {
       lgr.info("Existing config is invalid and will be replaced");
-      std::filesystem::remove(cfg.get_config_file(cfg.config_dir), error);
+      [[maybe_unused]] const bool remove_ok =
+        std::filesystem::remove(cfg.get_config_file(cfg.config_dir), error);
+      if (error) {
+        lgr.error("Failed to removing existing config file: {}",
+                  cfg.get_config_file(cfg.config_dir));
+        return EXIT_FAILURE;
+      }
     }
     else
       cfg = tmp_cfg;
