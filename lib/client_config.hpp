@@ -26,7 +26,6 @@
 
 #include "download_policy.hpp"  // IWYU pragma: keep
 #include "logger.hpp"           // IWYU pragma: keep
-#include "methylome_name_list.hpp"
 
 #include "nlohmann/json.hpp"  // IWYU pragma: keep
 
@@ -44,13 +43,12 @@ struct client_config {
   static constexpr auto transferase_config_dirname_default =
     ".config/transferase";
   static constexpr auto index_dirname_default = "indexes";
-  static constexpr auto client_config_filename_default =
-    "transferase_client.json";
   static constexpr auto client_log_filename_default = "transferase.log";
+  static constexpr auto client_config_filename_default =
+    "transferase_client_{}.json";
   static constexpr auto metadata_dataframe_default =
     "metadata_dataframe_{}.tsv";
   static constexpr auto select_metadata_default = "select_metadata_{}.json";
-  static constexpr auto methylome_list_default = "methylome_list_{}.json";
 
   std::string config_dir;
   std::string hostname;

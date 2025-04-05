@@ -25,6 +25,7 @@
 #include "download.hpp"
 #include "genome_index_data.hpp"
 #include "genome_index_metadata.hpp"
+#include "methylome_name_list.hpp"
 #include "remote_data_resource.hpp"
 #include "system_config.hpp"
 
@@ -101,7 +102,8 @@ client_config::make_paths_absolute() noexcept -> void {
 [[nodiscard]] auto
 client_config::get_config_file(const std::string &config_dir) noexcept
   -> std::string {
-  return (std::filesystem::path(config_dir) / client_config_filename_default)
+  return (std::filesystem::path(config_dir) /
+          std::format(client_config_filename_default, VERSION))
     .lexically_normal();
 }
 
@@ -155,8 +157,8 @@ client_config::get_default_config_dir(std::error_code &error) -> std::string {
 [[nodiscard]] auto
 client_config::get_config_file(const std::string &config_dir,
                                std::error_code &error) -> std::string {
-  const auto joined =
-    std::filesystem::path{config_dir} / client_config_filename_default;
+  const auto joined = std::filesystem::path{config_dir} /
+                      std::format(client_config_filename_default, VERSION);
   return get_file_if_not_already_dir(joined, error);
 }
 
@@ -182,7 +184,7 @@ client_config::assign_defaults_to_missing(std::string sys_config_dir,
   if (select_metadata.empty())
     select_metadata = std::format(select_metadata_default, VERSION);
   if (methylome_list.empty())
-    methylome_list = std::format(methylome_list_default, VERSION);
+    methylome_list = methylome_name_list::get_default_filename();
 }
 
 client_config::client_config(const std::string &config_dir_arg,
@@ -200,7 +202,7 @@ client_config::client_config(const std::string &config_dir_arg,
   index_dir = std::format(index_dirname_default, VERSION);
   metadata_dataframe = std::format(metadata_dataframe_default, VERSION);
   select_metadata = std::format(select_metadata_default, VERSION);
-  methylome_list = std::format(methylome_list_default, VERSION);
+  methylome_list = methylome_name_list::get_default_filename();
 }
 
 client_config::client_config(const std::string &config_dir_arg,
@@ -218,7 +220,7 @@ client_config::client_config(const std::string &config_dir_arg,
   index_dir = std::format(index_dirname_default, VERSION);
   metadata_dataframe = std::format(metadata_dataframe_default, VERSION);
   select_metadata = std::format(select_metadata_default, VERSION);
-  methylome_list = std::format(methylome_list_default, VERSION);
+  methylome_list = methylome_name_list::get_default_filename();
 }
 
 client_config::client_config(const std::string &config_dir_arg,
@@ -236,7 +238,7 @@ client_config::client_config(const std::string &config_dir_arg,
   index_dir = std::format(index_dirname_default, VERSION);
   metadata_dataframe = std::format(metadata_dataframe_default, VERSION);
   select_metadata = std::format(select_metadata_default, VERSION);
-  methylome_list = std::format(methylome_list_default, VERSION);
+  methylome_list = methylome_name_list::get_default_filename();
 }
 
 /// Create all the directories involved in the client config, if they
@@ -595,9 +597,8 @@ download_methylome_list(
   const remote_data_resource &remote, const std::string &dirname,
   const download_policy_t download_policy) -> std::error_code {
   const auto methylome_list = remote.form_methylome_list_target();
-  const auto local_methylome_list =
-    std::filesystem::path{dirname} /
-    std::format(client_config::methylome_list_default, VERSION);
+  const auto local_methylome_list = std::filesystem::path{dirname} /
+                                    methylome_name_list::get_default_filename();
   auto &lgr = transferase::logger::instance();
 
   std::error_code error;
