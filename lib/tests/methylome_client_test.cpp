@@ -24,7 +24,7 @@
 #include <methylome_client_remote.hpp>
 
 #include <logger.hpp>
-#include <transferase_metadata.hpp>
+#include <methylome_name_list.hpp>
 
 #include <client_config.hpp>
 #include <gtest/gtest.h>
@@ -82,18 +82,19 @@ TEST_F(methylome_client_remote_mock, read_success_throwing) {
 }
 
 TEST_F(methylome_client_remote_mock, read_success) {
-  const auto client = methylome_client_remote(config_dir);
+  constexpr auto require_methylome_names = true;
+  const auto client =
+    methylome_client_remote(config_dir, require_methylome_names);
   EXPECT_EQ(client.config.hostname, hostname)
     << client.config.tostring() << "\n";
   EXPECT_EQ(client.config.port, port);
   EXPECT_FALSE(client.config.index_dir.empty());
   EXPECT_FALSE(client.config.metadata_file.empty());
 
-  EXPECT_EQ(std::size(client.config.meta.genome_to_methylomes),
-            n_lutions_available);
-  for (const auto &d : client.config.meta.genome_to_methylomes)
+  EXPECT_EQ(std::size(client.meta.genome_to_methylomes), n_lutions_available);
+  for (const auto &d : client.meta.genome_to_methylomes)
     EXPECT_EQ(std::size(d.second), n_lutions_tissues);
 
-  EXPECT_EQ(std::size(client.config.meta.methylome_to_genome),
+  EXPECT_EQ(std::size(client.meta.methylome_to_genome),
             n_lutions_available * n_lutions_tissues);
 }
