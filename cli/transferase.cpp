@@ -75,12 +75,17 @@ format_help(const std::string &description,
   static constexpr auto sep_width = 4;
   // const auto cmds_comma =
   //   cmds | std::views::elements<0> | std::views::join_with(',');
+  bool first = true;
+  std::string cmds_line;
+  for (const auto &cmd : cmds) {
+    if (!first)
+      cmds_line += ",";
+    cmds_line += std::get<0>(cmd);
+    first = false;
+  }
 
-  auto cmds_comma = std::string(std::get<0>(cmds.front()));
-  for (auto i = 1u; i < std::size(cmds); ++i)
-    cmds_comma += std::format(",{}", std::get<0>(cmds[i]));
-
-  const std::string cmds_line(std::cbegin(cmds_comma), std::cend(cmds_comma));
+  // const std::string cmds_line(std::cbegin(cmds_comma),
+  // std::cend(cmds_comma));
   std::println("usage: {} {{{}}}\n\n"
                "version: {}\n",
                description, cmds_line, VERSION);
