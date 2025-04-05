@@ -25,10 +25,10 @@
 
 #include <local_client.hpp>
 
+#include <client_base.hpp>
 #include <client_config.hpp>
 #include <level_container_md.hpp>
 #include <level_element.hpp>
-#include <methylome_client_base.hpp>
 #include <query_container.hpp>
 
 #include <listobject.h>  // for PyList_New
