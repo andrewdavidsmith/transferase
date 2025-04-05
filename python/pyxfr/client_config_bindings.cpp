@@ -69,10 +69,10 @@ client_config_bindings(nanobind::class_<transferase::client_config> &cls)
   cls.def("save", nb::overload_cast<>(&xfr::client_config::save, nb::const_),
           R"doc(
     Save the configuration values associated with this object back to the
-    directory associated with this object, which is the value in 'config_dir'.
-    The main reason to use this function is to update a configuration. You
-    would first use MConfig() to load an object. Then modify one of the
-    instance variables, then call 'save'.
+    directory associated with the calling MConfig object, which is the value
+    in 'config_dir'.  The main reason to use this function is to update a
+    configuration. You would first use MConfig() to load an object. Then
+    modify one of the instance variables, then call 'save'.
     )doc");
   cls.def(
     "install",
@@ -108,15 +108,18 @@ client_config_bindings(nanobind::class_<transferase::client_config> &cls)
     has been assigned by the user. This is also the directory where this
     configuration will be written using the 'save' or 'install' functions, and
     unless you change the values, this determines the values for 'index_dir'
-    and 'metadata_file'.
+    (needed for both local and remote queries), along with 'methylome_dir'
+    (needed for local queries) and 'methylome_list' ((which assists remote
+    queries).
     )doc");
   cls.def_rw("hostname", &xfr::client_config::hostname,
              R"doc(
     URL or IP address for the remote transferase server.  For example,
-    transferase.usc.edu. This must be a valid hostname. Don't specify a
-    protocol or slashes, just the hostname.  An IP address is also ok.  You
-    should only change this if there is a problem setting the server or if you
-    have setup your own server.
+    'transferase.usc.edu', the public transferase server. This must be a valid
+    hostname. Don't specify a protocol or slashes, just the hostname.  An IP
+    address is also ok, and for some queries transferase is so fast that the
+    DNS step can even cause slowdown.  You should only change this if there is
+    a problem setting the server or if you have setup your own server.
     )doc");
   cls.def_rw("port", &xfr::client_config::port, R"doc(
     The server port number. You will find this along with the hostname of the
@@ -126,17 +129,31 @@ client_config_bindings(nanobind::class_<transferase::client_config> &cls)
   cls.def_rw("index_dir", &xfr::client_config::index_dir,
              R"doc(
     The directory where genome index files are stored. For human and mouse,
-    this occupies roughly 200MB and for all available genomes the total size
-    is under 3GB. This defaults to '${HOME}/.config/transferase/indexes' and
-    there is no reason to change it unless you are working with your own
-    methylomes and started the data analysis with your own reference genome.
+    combined, this occupies roughly 200MB. For all genomes served by the
+    public transferase server, the total size is under 3GB. This defaults to
+    '${HOME}/.config/transferase/indexes' and there is no reason to change it
+    unless you are working with your own methylomes and started the data
+    analysis with your own reference genome.
     )doc");
-  cls.def_rw("metadata_file", &xfr::client_config::metadata_file, R"doc(
-    This file contains information about available methylomes, reference
-    genomes, and biological sample information for available methylomes.  By
-    default this file is pulled from a remote server and can be updated.  As
-    with 'index_dir' there is no reason to change this unless you are working
-    with your own data.
+  cls.def_rw("methylome_list", &xfr::client_config::methylome_list,
+             R"doc(
+    If this value is non-empty, it is the name of a JSON file that contains
+    each species/genome with data in the configured remote database (which
+    might be running on the local server). For each species, this file has a
+    list of available methylomes that can be queried through the server.  By
+    default, if transferase is configured for the public server, this file is
+    pulled from a remote configuration server and can be updated. As with
+    'index_dir' there is no reason to change this unless you are working with
+    your own data.
+    )doc");
+  cls.def_rw("metadata_dataframe", &xfr::client_config::metadata_dataframe,
+             R"doc(
+    If this value is non-empty, it is the name of a file with rows
+    corresponding to methylomes. This file is fetched when configuring
+    transferase to use the public server. This is a dataframe/table and the
+    format is 'tab-separated value'.  For each methylome in this file, the
+    columns indicate summary statistics along with metadata related to the
+    biological sample.
     )doc");
   cls.def_rw("methylome_dir", &xfr::client_config::methylome_dir,
              R"doc(
@@ -148,22 +165,29 @@ client_config_bindings(nanobind::class_<transferase::client_config> &cls)
     )doc");
   cls.def_rw("log_level", &xfr::client_config::log_level,
              R"doc(
-    How much to log {debug, info, warning, error, critical}.
+    How much information to log or print {debug, info, warning, error,
+    critical}, ordered more, to less. The default is 'info'.
     )doc");
   cls.def("__repr__", &xfr::client_config::tostring,
           R"doc(
     Print the contents of a MConfig object.
     )doc");
   cls.doc() = R"doc(
-    A MConfig object provides an interface to use when setting up the
-    transferase environment for the first time, or for revising the
-    configuration afterwards, retrieving updated metadata, etc.  Most users
-    will simply run:
+    A MConfig object provides an interface to use when "configuring", or
+    setting up, the transferase environment. This must be done before first
+    using transferase. It can also be done to revise the configuration
+    afterwards, to retrieve updated metadata, etc. Most users will simply run:
 
     >>> config = MConfig()
     >>> config.install(["hg38"])
 
-    Using the defaults and installing the genome they need.
+    This does a default configuration that installs everything needed to use
+    the public transferase server and query the human methylomes. If you did a
+    configuration using the transferase command line app, you do not need to
+    repeat the process. If you want to use the public server alongside your
+    own local server, for your own private data, you should run
+    'MConfig(dir_name)' using two different directory names, and for each
+    MConfig object, modify the instance variables accordingly.
     )doc"
     //
     ;
