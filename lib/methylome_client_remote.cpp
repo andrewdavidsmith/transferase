@@ -39,8 +39,17 @@ methylome_client_remote::tostring_derived() const noexcept -> std::string {
 }
 
 auto
-methylome_client_remote::validate_derived(std::error_code &error) noexcept
-  -> void {
+methylome_client_remote::load_methylome_name_list(
+  const std::string &metadata_file, std::error_code &error) -> void {
+  /// ADS: this is instantiating the transferase metadata object using the
+  /// labels file, which for now has all the info needed.
+  meta = methylome_name_list::read(metadata_file, error);
+}
+
+auto
+methylome_client_remote::validate_derived(
+  const bool require_metadata, std::error_code &error) noexcept -> void {
+  // ADS: at this point we should check for existing files and directories?
   if (config.hostname.empty()) {
     error = methylome_client_remote_error_code::hostname_not_found;
     return;
@@ -53,8 +62,8 @@ methylome_client_remote::validate_derived(std::error_code &error) noexcept
     error = methylome_client_base_error_code::index_dir_not_found;
     return;
   }
-  if (config.metadata_file.empty()) {
-    error = methylome_client_base_error_code::transferase_metadata_not_found;
+  if (require_metadata && config.methylome_list.empty()) {
+    error = methylome_client_base_error_code::methylome_name_list_not_found;
     return;
   }
 }
