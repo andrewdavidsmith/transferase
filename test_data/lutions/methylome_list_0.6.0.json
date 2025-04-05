@@ -1,0 +1,17 @@
+{
+    "eFlareon": [
+        "eFlareon_brain",
+        "eFlareon_tail",
+        "eFlareon_ear"
+    ],
+    "eJolteon": [
+        "eJolteon_brain",
+        "eJolteon_tail",
+        "eJolteon_ear"
+    ],
+    "eVaporeon": [
+        "eVaporeon_brain",
+        "eVaporeon_tail",
+        "eVaporeon_ear"
+    ]
+}
