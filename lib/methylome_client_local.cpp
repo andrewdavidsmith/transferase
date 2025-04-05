@@ -54,10 +54,8 @@ methylome_client_local::validate_derived(std::error_code &error) noexcept
     error = methylome_client_base_error_code::index_dir_not_found;
     return;
   }
-  if (config.metadata_file.empty()) {
-    error = methylome_client_base_error_code::transferase_metadata_not_found;
-    return;
-  }
+  // ADS: no validation in local client for methylome_name_list; local
+  // clients do not need transferase metadata, only remote ones do.
 }
 
 [[nodiscard]] auto
