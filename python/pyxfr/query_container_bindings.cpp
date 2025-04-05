@@ -63,8 +63,8 @@ query_container_bindings(nb::class_<transferase::query_container> &cls)
     can do with a MQuery object is get a list of the number of CpG sites per
     query interval. The MQuery objects allow you to avoid repeating work if
     you want to use the same set of GenomicIntervals in more than one
-    query. This makes repeated queries with different methylomes, but the same
-    genomic intervals, faster.
+    query. This makes consecutive queries with different methylomes, but the
+    same genomic intervals, faster.
     )doc"
     //
     ;
