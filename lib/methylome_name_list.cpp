@@ -51,7 +51,7 @@ methylome_name_list::get_genome(const std::vector<std::string> &methylome_names,
     const auto genome_itr = methylome_to_genome.find(name);
     if (genome_itr == std::cend(methylome_to_genome)) {
       // ERROR not found
-      error = methylome_name_list_error_code::methylome_not_found_in_metadata;
+      error = methylome_name_list_error_code::methylome_name_not_found;
       return {};
     }
     if (!genome.empty() && genome != genome_itr->second) {
@@ -69,10 +69,8 @@ methylome_name_list::get_genome(const std::vector<std::string> &methylome_names,
 methylome_name_list::read(const std::string &json_filename,
                           std::error_code &error) noexcept
   -> methylome_name_list {
-  constexpr auto read_error =
-    methylome_name_list_error_code::error_reading_methylome_name_list_json_file;
-  constexpr auto parse_error =
-    methylome_name_list_error_code::error_parsing_methylome_name_list_json_file;
+  constexpr auto read_error = methylome_name_list_error_code::read_error;
+  constexpr auto parse_error = methylome_name_list_error_code::parse_error;
 
   std::ifstream in(json_filename);
   if (!in) {
@@ -85,7 +83,7 @@ methylome_name_list::read(const std::string &json_filename,
     return {};
   }
 
-  std::map<std::string, std::map<std::string, std::string>> data;
+  std::map<std::string, std::vector<std::string>> data;
   try {
     data = payload;
   }
@@ -95,11 +93,7 @@ methylome_name_list::read(const std::string &json_filename,
   }
 
   methylome_name_list m;
-  std::ranges::for_each(data, [&](const auto &d) {
-    m.genome_to_methylomes.emplace(
-      d.first, d.second | std::views::elements<0> |
-                 std::ranges::to<std::vector<std::string>>());
-  });
+  m.genome_to_methylomes = data;
 
   for (const auto &genome : m.genome_to_methylomes) {
     const auto &genome_name = genome.first;

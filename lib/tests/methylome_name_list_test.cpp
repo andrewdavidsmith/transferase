@@ -32,17 +32,21 @@
 #include <vector>
 
 using namespace transferase;  // NOLINT
+namespace fs = std::filesystem;
 
 class methylome_name_list_mock : public ::testing::Test {
 protected:
   auto
-  SetUp() -> void override {}
+  SetUp() -> void override {
+    methylome_list_filename = fs::path{"data"} / fs::path{"lutions"} /
+                              methylome_name_list::get_default_filename();
+  }
   auto
   TearDown() -> void override {}
 
 public:
   // cppcheck-suppress unusedStructMember
-  std::string metadata_filename{"data/lutions/metadata.json"};
+  std::string methylome_list_filename;
   std::uint32_t n_lutions_available{3};
   std::uint32_t n_lutions_tissues{3};
 };
@@ -57,11 +61,9 @@ TEST_F(methylome_name_list_mock, read_failure) {
 
 TEST_F(methylome_name_list_mock, read_success) {
   std::error_code error;
+  EXPECT_TRUE(fs::exists(methylome_list_filename));
 
-  EXPECT_TRUE(std::filesystem::exists(metadata_filename));
-
-  const methylome_name_list names =
-    methylome_name_list::read(metadata_filename, error);
+  const auto names = methylome_name_list::read(methylome_list_filename, error);
   EXPECT_FALSE(error) << error.message() << '\n';
   EXPECT_EQ(std::size(names.genome_to_methylomes), n_lutions_available);
   for (const auto &d : names.genome_to_methylomes)
