@@ -26,6 +26,8 @@
 
 #include "nlohmann/json.hpp"
 
+#include <config.h>
+
 #include <cstdint>
 #include <format>  // for std::vector??
 #include <ranges>
@@ -39,8 +41,10 @@
 namespace transferase {
 
 struct methylome_name_list {
-  std::unordered_map<std::string, std::vector<std::string>>
-    genome_to_methylomes;
+  static constexpr auto methylome_list_default_filename =
+    "methylome_list_{}.json";
+
+  std::map<std::string, std::vector<std::string>> genome_to_methylomes;
   std::unordered_map<std::string, std::string> methylome_to_genome;
 
   [[nodiscard]] auto
@@ -65,8 +69,12 @@ struct methylome_name_list {
   [[nodiscard]] auto
   tostring() const -> std::string;
 
-  NLOHMANN_DEFINE_TYPE_INTRUSIVE(methylome_name_list, genome_to_methylomes,
-                                 methylome_to_genome)
+  [[nodiscard]] static auto
+  get_default_filename() -> std::string {
+    return std::format(methylome_list_default_filename, VERSION);
+  }
+
+  NLOHMANN_DEFINE_TYPE_INTRUSIVE(methylome_name_list, genome_to_methylomes)
 };
 
 }  // namespace transferase
@@ -74,9 +82,9 @@ struct methylome_name_list {
 /// @brief Enum for error codes related to methylome_name_list
 enum class methylome_name_list_error_code : std::uint8_t {
   ok = 0,
-  error_reading_methylome_name_list_json_file = 1,
-  error_parsing_methylome_name_list_json_file = 2,
-  methylome_not_found_in_metadata = 3,
+  read_error = 1,
+  parse_error = 2,
+  methylome_name_not_found = 3,
 };
 
 template <>
@@ -90,9 +98,9 @@ struct methylome_name_list_error_category : std::error_category {
     using std::string_literals::operator""s;
     switch (code) {
     case 0: return "ok"s;
-    case 1: return "error reading transferase metadata json file"s;
-    case 2: return "error parsing transferase metadata json file"s;
-    case 3: return "methylome not found in metadata"s;
+    case 1: return "error reading json file"s;
+    case 2: return "error parsing json file"s;
+    case 3: return "methylome name not found"s;
     }
     std::unreachable();
   }
