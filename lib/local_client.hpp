@@ -39,7 +39,6 @@
 #include <memory>
 #include <string>
 #include <system_error>
-#include <utility>
 #include <vector>
 
 // forward declarations
