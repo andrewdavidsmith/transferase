@@ -95,6 +95,7 @@ protected:
     };
     for (const auto &s : species)
       for (const auto &t : tissues)
+        // cppcheck-suppress useStlAlgorithm
         accessions.push_back(std::format("{}_{}", s, t));
 
     // accessions =
