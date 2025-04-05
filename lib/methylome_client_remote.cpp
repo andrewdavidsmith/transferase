@@ -24,48 +24,31 @@
 #include "methylome_client_remote.hpp"
 
 #include "client_config.hpp"
-#include "nlohmann/json.hpp"
 
 #include <string>
 #include <system_error>
 
 namespace transferase {
 
-[[nodiscard]] auto
-methylome_client_remote::tostring_derived() const noexcept -> std::string {
-  static constexpr auto n_indent = 4;
-  nlohmann::json data = *this;
-  return data.dump(n_indent);
-}
-
 auto
-methylome_client_remote::load_methylome_name_list(
-  const std::string &metadata_file, std::error_code &error) -> void {
-  /// ADS: this is instantiating the transferase metadata object using the
-  /// labels file, which for now has all the info needed.
-  meta = methylome_name_list::read(metadata_file, error);
-}
-
-auto
-methylome_client_remote::validate_derived(
-  const bool require_metadata, std::error_code &error) noexcept -> void {
+methylome_client_remote::validate(std::error_code &error) noexcept -> void {
   // ADS: at this point we should check for existing files and directories?
   if (config.hostname.empty()) {
-    error = methylome_client_remote_error_code::hostname_not_found;
+    error = client_error_code::hostname_not_configured;
     return;
   }
   if (config.port.empty()) {
-    error = methylome_client_remote_error_code::port_not_found;
+    error = client_error_code::port_not_configured;
     return;
   }
   if (config.index_dir.empty()) {
-    error = methylome_client_base_error_code::index_dir_not_found;
+    error = client_error_code::index_dir_not_configured;
     return;
   }
-  if (require_metadata && config.methylome_list.empty()) {
-    error = methylome_client_base_error_code::methylome_name_list_not_found;
-    return;
-  }
+  // if (require_metadata && config.methylome_list.empty()) {
+  //   error = client_error_code::methylome_name_list_not_found;
+  //   return;
+  // }
 }
 
 }  // namespace transferase
