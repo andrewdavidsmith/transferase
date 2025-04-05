@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef LIB_METHYLOME_CLIENT_BASE_HPP_
-#define LIB_METHYLOME_CLIENT_BASE_HPP_
+#ifndef LIB_CLIENT_BASE_HPP_
+#define LIB_CLIENT_BASE_HPP_
 
 #include "client_config.hpp"
 #include "genome_index.hpp"  // for genome_index::list
@@ -54,32 +54,37 @@ struct level_element_covered_t;
 struct genome_index_set;
 }  // namespace transferase
 
-/// @brief Enum for error codes related to methylome_client_base
-enum class methylome_client_base_error_code : std::uint8_t {
+/// @brief Enum for error codes related to client_base
+enum class client_error_code : std::uint8_t {
   ok = 0,
   error_reading_config_file = 1,
   required_config_values_not_found = 2,
-  index_dir_not_found = 3,
+  index_dir_not_configured = 3,
   failed_to_read_index_dir = 4,
-  methylome_name_list_not_found = 5,
+  methylome_dir_not_configured = 5,
+  inconsistent_methylome_metadata = 6,
+  hostname_not_configured = 7,
+  port_not_configured = 8,
 };
 
 template <>
-struct std::is_error_code_enum<methylome_client_base_error_code>
-  : public std::true_type {};
+struct std::is_error_code_enum<client_error_code> : public std::true_type {};
 
-struct methylome_client_base_error_category : std::error_category {
+struct client_error_category : std::error_category {
   // clang-format off
-  auto name() const noexcept -> const char * override { return "methylome_client_base"; }
+  auto name() const noexcept -> const char * override { return "client_base"; }
   auto message(int code) const noexcept -> std::string override {
     using std::string_literals::operator""s;
     switch (code) {
     case 0: return "ok"s;
-    case 1: return "error reading default config file"s;
+    case 1: return "error reading config file"s;
     case 2: return "required config values not found"s;
-    case 3: return "index dir not found"s;
+    case 3: return "index dir not configured"s;
     case 4: return "failed to read index dir"s;
-    case 5: return "transferase metadata not found"s;
+    case 5: return "methylome dir not configured"s;
+    case 6: return "inconsistent methylome metadata"s;
+    case 7: return "hostname not configured"s;
+    case 8: return "port not configured"s;
     }
     std::unreachable();
   }
@@ -87,25 +92,25 @@ struct methylome_client_base_error_category : std::error_category {
 };
 
 inline auto
-make_error_code(methylome_client_base_error_code e) noexcept
-  -> std::error_code {
-  static auto category = methylome_client_base_error_category{};
+make_error_code(client_error_code e) noexcept -> std::error_code {
+  static auto category = client_error_category{};
   return std::error_code(std::to_underlying(e), category);
 }
 
 namespace transferase {
 
-template <typename Derived> class methylome_client_base {
+template <typename Derived> class client_base {
 public:
   client_config config;
   std::shared_ptr<genome_index_set> indexes;
 
   [[nodiscard]] auto
-  tostring() const noexcept -> std::string {
-    return self().tostring_derived();
+  tostring() const -> std::string {
+    static constexpr auto n_indent = 4;
+    nlohmann::json data = *this;
+    return data.dump(n_indent);
   }
 
-#ifndef TRANSFERASE_NOEXCEPT
   [[nodiscard]] auto
   configured_genomes() const -> std::vector<std::string> {
     std::error_code error;
@@ -114,11 +119,10 @@ public:
       throw std::system_error(error);
     return obj;
   }
-#endif
 
 protected:
   // API function
-  explicit methylome_client_base(std::string config_dir) {
+  explicit client_base(std::string config_dir) {
     std::error_code error;
     if (config_dir.empty()) {
       config_dir = client_config::get_default_config_dir(error);
@@ -136,31 +140,13 @@ protected:
       indexes = std::make_shared<genome_index_set>(config.get_index_dir());
   }
 
-  methylome_client_base() = default;
-  methylome_client_base(const std::string &config_dir,
-                        std::error_code &error) noexcept :
+  client_base() = default;
+  client_base(const std::string &config_dir, std::error_code &error) noexcept :
     config(config_dir, error) {}
 
-  // clang-format off
-  auto self() -> Derived & {return static_cast<Derived &>(*this);}
-  auto self() const -> const Derived & {return static_cast<const Derived &>(*this);}
-  // clang-format on
-
-  auto
-  tostring_derived() const = delete;
-
-  [[nodiscard]] auto
-  get_index_hash(const std::string &genome_name,
-                 std::error_code &error) const noexcept -> std::uint64_t {
-    const auto index = indexes->get_genome_index(genome_name, error);
-    if (error)  // ADS: need to confirm error code here
-      return 0;
-    return index->get_hash();
-  }
-
-  NLOHMANN_DEFINE_TYPE_INTRUSIVE(methylome_client_base, config)
+  NLOHMANN_DEFINE_TYPE_INTRUSIVE(client_base, config)
 };
 
 }  // namespace transferase
 
-#endif  // LIB_METHYLOME_CLIENT_BASE_HPP_
+#endif  // LIB_CLIENT_BASE_HPP_
