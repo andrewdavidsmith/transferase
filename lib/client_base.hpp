@@ -121,17 +121,13 @@ public:
   }
 
 protected:
-  // API function
   explicit client_base(std::string config_dir) {
     std::error_code error;
     if (config_dir.empty()) {
       config_dir = client_config::get_default_config_dir(error);
-      if (error) {
-        const auto msg = "[Failed to get default config dir]";
-        throw std::system_error(error, msg);
-      }
+      if (error)
+        throw std::system_error(error, "[Failed to get default config dir]");
     }
-
     // client_config should read the transferase metadata if possible
     config = client_config::read(config_dir);
 
