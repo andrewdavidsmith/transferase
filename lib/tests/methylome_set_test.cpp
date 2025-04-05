@@ -98,6 +98,7 @@ protected:
         // cppcheck-suppress useStlAlgorithm
         accessions.push_back(std::format("{}_{}", s, t));
 
+    /// ADS: AppleClang can't handle the code below
     // accessions =
     //   std::views::cartesian_product(species, tissues) |
     //   std::views::transform([](const auto &both) {

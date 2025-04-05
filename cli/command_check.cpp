@@ -64,7 +64,6 @@ xfr check -x index_dir -d methylome_dir
 #include <map>
 #include <memory>  // for std::shared_ptr
 #include <print>
-#include <ranges>
 #include <string>
 #include <string_view>
 #include <system_error>
