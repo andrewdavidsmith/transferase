@@ -21,7 +21,7 @@
  * SOFTWARE.
  */
 
-#include "methylome_client_remote.hpp"
+#include "remote_client.hpp"
 
 #include "client_config.hpp"
 
@@ -31,7 +31,7 @@
 namespace transferase {
 
 auto
-methylome_client_remote::validate(std::error_code &error) noexcept -> void {
+remote_client::validate(std::error_code &error) noexcept -> void {
   // ADS: at this point we should check for existing files and directories?
   if (config.hostname.empty()) {
     error = client_error_code::hostname_not_configured;
