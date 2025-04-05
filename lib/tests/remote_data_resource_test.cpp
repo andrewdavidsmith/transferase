@@ -25,6 +25,8 @@
 
 #include <remote_data_resource.hpp>
 
+#include <config.h>
+
 #include <gtest/gtest.h>
 
 #include <filesystem>
@@ -46,10 +48,11 @@ TEST(remote_data_resource_test, form_index_target_stem_success) {
     << index_target_stem << "\t" << expected;
 }
 
-TEST(remote_data_resource_test, form_metadata_target_stem_success) {
-  static constexpr auto expected = "metadata/latest/metadata.txt";
+TEST(remote_data_resource_test, form_metadata_dataframe_target_stem_success) {
+  static const auto expected =
+    std::format("metadata/latest/select_metadata_{}.json", VERSION);
   remote_data_resource rdr;
-  const std::string metadata_target_stem = rdr.form_metadata_target();
+  const std::string metadata_target_stem = rdr.form_select_metadata_target();
   EXPECT_EQ(metadata_target_stem, expected)
     << metadata_target_stem << "\t" << expected;
 }
