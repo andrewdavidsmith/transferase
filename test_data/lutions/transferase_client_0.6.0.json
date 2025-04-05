@@ -1,0 +1,12 @@
+{
+    "config_dir": "",
+    "hostname": "bulbapedia.bulbagarden.net",
+    "port": "9000",
+    "index_dir": "indexes",
+    "methylome_list": "methylome_list_0.6.0.json",
+    "metadata_dataframe": "",
+    "select_metadata": "",
+    "methylome_dir": "methylomes",
+    "log_file": "",
+    "log_level": "info"
+}
