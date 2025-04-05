@@ -21,7 +21,7 @@
  * SOFTWARE.
  */
 
-#include <methylome_client_remote.hpp>
+#include <remote_client.hpp>
 
 #include <logger.hpp>
 #include <methylome_name_list.hpp>
@@ -41,7 +41,7 @@
 
 using namespace transferase;  // NOLINT
 
-class methylome_client_remote_mock : public ::testing::Test {
+class remote_client_mock : public ::testing::Test {
 protected:
   auto
   SetUp() -> void override {
@@ -66,35 +66,22 @@ public:
   std::string config_file;
 };
 
-TEST_F(methylome_client_remote_mock, read_failure) {
+TEST_F(remote_client_mock, read_failure) {
   static constexpr auto config_dir_mock = ".../asdf";
   EXPECT_THROW(
-    {
-      [[maybe_unused]] const auto _ = methylome_client_remote(config_dir_mock);
-    },
+    { [[maybe_unused]] const auto _ = remote_client(config_dir_mock); },
     std::system_error);
 }
 
-TEST_F(methylome_client_remote_mock, read_success_throwing) {
-  EXPECT_NO_THROW({
-    [[maybe_unused]] const auto client = methylome_client_remote(config_dir);
-  });
+TEST_F(remote_client_mock, read_success_throwing) {
+  EXPECT_NO_THROW(
+    { [[maybe_unused]] const auto client = remote_client(config_dir); });
 }
 
-TEST_F(methylome_client_remote_mock, read_success) {
-  constexpr auto require_methylome_names = true;
-  const auto client =
-    methylome_client_remote(config_dir, require_methylome_names);
+TEST_F(remote_client_mock, read_success) {
+  const auto client = remote_client(config_dir);
   EXPECT_EQ(client.config.hostname, hostname)
     << client.config.tostring() << "\n";
   EXPECT_EQ(client.config.port, port);
   EXPECT_FALSE(client.config.index_dir.empty());
-  EXPECT_FALSE(client.config.metadata_file.empty());
-
-  EXPECT_EQ(std::size(client.meta.genome_to_methylomes), n_lutions_available);
-  for (const auto &d : client.meta.genome_to_methylomes)
-    EXPECT_EQ(std::size(d.second), n_lutions_tissues);
-
-  EXPECT_EQ(std::size(client.meta.methylome_to_genome),
-            n_lutions_available * n_lutions_tissues);
 }
