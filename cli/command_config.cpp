@@ -120,8 +120,12 @@ command_config_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
   app.add_option("-p,--port", cfg.port, "transferase server port");
   app.add_option("-x,--index-dir", cfg.index_dir,
                  "name of a directory to store genome index files");
-  app.add_option("-L,--metadata-file", cfg.metadata_file,
-                 "name of the MethBase2 metadata file");
+  app.add_option("--metadata-dataframe", cfg.metadata_dataframe,
+                 "name of the MethBase2 metadata dataframe");
+  app.add_option("--methylome-list", cfg.methylome_list,
+                 "name of the methylome list (for a remote or local server)");
+  app.add_option("--select-metadata", cfg.select_metadata,
+                 "name of the 'select' metadata");
   app.add_option("-d,--methylome-dir", cfg.methylome_dir,
                  "name of a local directory to search for methylomes");
   app.add_option("-v,--log-level", cfg.log_level,
@@ -220,7 +224,9 @@ command_config_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
     {"Port", or_none(cfg.port)},
     {"Index dir", or_none(cfg.index_dir)},
     {"Methylome dir", or_none(cfg.methylome_dir)},
-    {"Metadata file", or_none(cfg.metadata_file)},
+    {"Metadata dataframe", or_none(cfg.metadata_dataframe)},
+    {"Select metadata", or_none(cfg.select_metadata)},
+    {"Methylome list", or_none(cfg.methylome_list)},
     {"Log level", to_string(cfg.log_level)},
     {"Genomes", or_none(genomes_joined)},
     {"Download policy", xfr::get_download_policy_message(download_policy)},
