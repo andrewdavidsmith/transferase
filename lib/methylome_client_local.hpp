@@ -81,31 +81,35 @@ public:
   // intervals: takes a query
   template <typename lvl_elem_t>
   [[nodiscard]] auto
-  get_levels_derived(const std::vector<std::string> &methylome_names,
-                     const query_container &query, std::error_code &error)
-    const noexcept -> level_container_md<lvl_elem_t> {
+  get_levels(const std::vector<std::string> &methylome_names,
+             const query_container &query) const
+    -> level_container_md<lvl_elem_t> {
     request_type_code req_type = request_type_code::intervals;
     if constexpr (std::is_same_v<lvl_elem_t, level_element_covered_t>)
       req_type = request_type_code::intervals_covered;
+    std::error_code error{};
     const auto [_, index_hash] =
       get_genome_and_index_hash(methylome_names, error);
     if (error)
       return {};
     const auto req =
       request{req_type, index_hash, std::size(query), methylome_names};
-    return get_levels_impl<lvl_elem_t>(req, query, error);
+    auto result = get_levels_impl<lvl_elem_t>(req, query, error);
+    if (error)
+      throw std::system_error(error);
+    return result;
   }
 
   // intervals: takes a vector of genomic intervals
   template <typename lvl_elem_t>
   [[nodiscard]] auto
-  get_levels_derived(const std::vector<std::string> &methylome_names,
-                     const std::vector<genomic_interval> &intervals,
-                     std::error_code &error) const noexcept
+  get_levels(const std::vector<std::string> &methylome_names,
+             const std::vector<genomic_interval> &intervals) const
     -> level_container_md<lvl_elem_t> {
     request_type_code req_type = request_type_code::intervals;
     if constexpr (std::is_same_v<lvl_elem_t, level_element_covered_t>)
       req_type = request_type_code::intervals_covered;
+    std::error_code error{};
     const auto [genome_name, index_hash] =
       get_genome_and_index_hash(methylome_names, error);
     if (error)
@@ -116,18 +120,22 @@ public:
     const auto query = index->make_query(intervals);
     const auto req =
       request{req_type, index_hash, std::size(query), methylome_names};
-    return get_levels_impl<lvl_elem_t>(req, query, error);
+    auto result = get_levels_impl<lvl_elem_t>(req, query, error);
+    if (error)
+      throw std::system_error(error);
+    return result;
   }
 
   // bins: takes an index
   template <typename lvl_elem_t>
   [[nodiscard]] auto
-  get_levels_derived(const std::vector<std::string> &methylome_names,
-                     const std::uint32_t bin_size, std::error_code &error)
-    const noexcept -> level_container_md<lvl_elem_t> {
+  get_levels(const std::vector<std::string> &methylome_names,
+             const std::uint32_t bin_size) const
+    -> level_container_md<lvl_elem_t> {
     request_type_code req_type = request_type_code::bins;
     if constexpr (std::is_same_v<lvl_elem_t, level_element_covered_t>)
       req_type = request_type_code::bins_covered;
+    std::error_code error{};
     const auto [genome_name, index_hash] =
       get_genome_and_index_hash(methylome_names, error);
     if (error)
@@ -136,7 +144,10 @@ public:
     if (error)
       return {};
     const auto req = request{req_type, index_hash, bin_size, methylome_names};
-    return get_levels_impl<lvl_elem_t>(req, *index, error);
+    auto result = get_levels_impl<lvl_elem_t>(req, *index, error);
+    if (error)
+      throw std::system_error(error);
+    return result;
   }
 
 private:
