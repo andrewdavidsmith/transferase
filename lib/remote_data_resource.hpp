@@ -24,7 +24,11 @@
 #ifndef LIB_REMOTE_DATA_RESOURCE_HPP_
 #define LIB_REMOTE_DATA_RESOURCE_HPP_
 
+#include "client_config.hpp"  // for filenames
+
 #include "nlohmann/json.hpp"
+
+#include <config.h>
 
 #include <filesystem>
 #include <format>
@@ -53,9 +57,19 @@ struct remote_data_resource {
   /// Used to identify both the remote url and local relative path for
   /// metadata table.
   [[nodiscard]] auto
-  form_metadata_target() const {
+  form_metadata_dataframe_target() const {
     return (std::filesystem::path{path} / "metadata" / "latest" /
-            "metadata.txt")
+            std::format(client_config::metadata_dataframe_default, VERSION))
+      .string();
+  }
+
+  /// Used to identify both the remote url and local relative path for the
+  /// 'select' metadata file in JSON format. This might last because it seems
+  /// reasonable to keep the visualization stuff separate.
+  [[nodiscard]] auto
+  form_select_metadata_target() const {
+    return (std::filesystem::path{path} / "metadata" / "latest" /
+            std::format(client_config::select_metadata_default, VERSION))
       .string();
   }
 
@@ -63,9 +77,9 @@ struct remote_data_resource {
   /// in JSON format. This will be deprecated in favor of only using one file
   /// for all metadata.
   [[nodiscard]] auto
-  form_labels_target() const {
+  form_methylome_list_target() const {
     return (std::filesystem::path{path} / "metadata" / "latest" /
-            "metadata.json")
+            std::format(client_config::select_metadata_default, VERSION))
       .string();
   }
 
