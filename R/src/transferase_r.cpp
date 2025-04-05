@@ -32,6 +32,7 @@
 
 #include <Rcpp.h>
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <filesystem>
