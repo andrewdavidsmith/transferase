@@ -21,17 +21,16 @@
  * SOFTWARE.
  */
 
-#ifndef PYTHON_PYXFR_METHYLOME_CLIENT_LOCAL_BINDINGS_HPP_
-#define PYTHON_PYXFR_METHYLOME_CLIENT_LOCAL_BINDINGS_HPP_
+#ifndef PYTHON_PYXFR_LOCAL_CLIENT_BINDINGS_HPP_
+#define PYTHON_PYXFR_LOCAL_CLIENT_BINDINGS_HPP_
 
 #include <nanobind/nanobind.h>
 
 namespace transferase {
-class methylome_client_local;
+class local_client;
 }  // namespace transferase
 
 auto
-methylome_client_local_bindings(
-  nanobind::class_<transferase::methylome_client_local> &cls) -> void;
+local_client_bindings(nanobind::class_<transferase::local_client> &cls) -> void;
 
-#endif  // PYTHON_PYXFR_METHYLOME_CLIENT_LOCAL_BINDINGS_HPP_
+#endif  // PYTHON_PYXFR_LOCAL_CLIENT_BINDINGS_HPP_
