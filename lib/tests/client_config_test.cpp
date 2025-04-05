@@ -79,14 +79,8 @@ protected:
   auto
   TearDown() -> void override {
     std::error_code error;
-    const auto exists = std::filesystem::exists(config_dir, error);
-    if (exists) {
-      const auto is_dir = std::filesystem::is_directory(config_dir, error);
-      if (is_dir) {
-        [[maybe_unused]] const auto remove_ok =
-          std::filesystem::remove_all(config_dir, error);
-      }
-    }
+    remove_directories(config_file, error);
+    EXPECT_FALSE(error) << error.message();
   }
 
 public:
@@ -165,7 +159,7 @@ TEST_F(client_config_mock, get_defaults_success) {
   EXPECT_FALSE(error);
 
   EXPECT_NE(cfg.index_dir, std::string{});
-  EXPECT_NE(cfg.metadata_file, std::string{});
+  EXPECT_NE(cfg.metadata_dataframe, std::string{});
 
   EXPECT_FALSE(cfg.hostname.empty());
   EXPECT_FALSE(cfg.port.empty());
@@ -216,7 +210,7 @@ TEST_F(client_config_mock, re_read_config_file_success) {
   EXPECT_EQ(cfg.methylome_dir, mock_methylome_dir);
   EXPECT_EQ(cfg.port, "");
   EXPECT_EQ(cfg.index_dir, "");
-  EXPECT_EQ(cfg.metadata_file, "");
+  EXPECT_EQ(cfg.metadata_dataframe, "");
 
   std::error_code error;
   cfg.read_config_file_no_overwrite(error);
@@ -226,6 +220,7 @@ TEST_F(client_config_mock, re_read_config_file_success) {
   EXPECT_EQ(cfg.methylome_dir, mock_methylome_dir) << cfg.tostring() << "\n";
   EXPECT_EQ(cfg.port, "9000") << cfg.tostring() << "\n";
   EXPECT_EQ(cfg.index_dir, "indexes") << cfg.tostring() << "\n";
-  EXPECT_EQ(cfg.metadata_file, "metadata.txt") << cfg.tostring() << "\n";
-  EXPECT_EQ(cfg.labels_file, "metadata.json") << cfg.tostring() << "\n";
+  EXPECT_EQ(cfg.metadata_dataframe, std::string{}) << cfg.tostring() << "\n";
+  EXPECT_EQ(cfg.methylome_list, std::format("methylome_list_{}.json", VERSION))
+    << cfg.tostring() << "\n";
 }
