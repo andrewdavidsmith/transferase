@@ -176,13 +176,13 @@ client_config::assign_defaults_to_missing(std::string sys_config_dir,
       port = cfg.port;
   }
   if (index_dir.empty())
-    index_dir = index_dirname_default;
+    index_dir = std::format(index_dirname_default, VERSION);
   if (metadata_dataframe.empty())
-    metadata_dataframe = metadata_dataframe_default;
+    metadata_dataframe = std::format(metadata_dataframe_default, VERSION);
   if (select_metadata.empty())
-    select_metadata = select_metadata_default;
+    select_metadata = std::format(select_metadata_default, VERSION);
   if (methylome_list.empty())
-    methylome_list = methylome_list_default;
+    methylome_list = std::format(methylome_list_default, VERSION);
 }
 
 client_config::client_config(const std::string &config_dir_arg,
@@ -197,10 +197,10 @@ client_config::client_config(const std::string &config_dir_arg,
   const system_config sys_conf(sys_config_dir);
   hostname = sys_conf.hostname;
   port = sys_conf.port;
-  index_dir = index_dirname_default;
-  metadata_dataframe = metadata_dataframe_default;
-  select_metadata = select_metadata_default;
-  methylome_list = methylome_list_default;
+  index_dir = std::format(index_dirname_default, VERSION);
+  metadata_dataframe = std::format(metadata_dataframe_default, VERSION);
+  select_metadata = std::format(select_metadata_default, VERSION);
+  methylome_list = std::format(methylome_list_default, VERSION);
 }
 
 client_config::client_config(const std::string &config_dir_arg,
@@ -215,10 +215,10 @@ client_config::client_config(const std::string &config_dir_arg,
   const system_config sys_conf(sys_conf_dir);
   hostname = sys_conf.hostname;
   port = sys_conf.port;
-  index_dir = index_dirname_default;
-  metadata_dataframe = metadata_dataframe_default;
-  select_metadata = select_metadata_default;
-  methylome_list = methylome_list_default;
+  index_dir = std::format(index_dirname_default, VERSION);
+  metadata_dataframe = std::format(metadata_dataframe_default, VERSION);
+  select_metadata = std::format(select_metadata_default, VERSION);
+  methylome_list = std::format(methylome_list_default, VERSION);
 }
 
 client_config::client_config(const std::string &config_dir_arg,
@@ -233,10 +233,10 @@ client_config::client_config(const std::string &config_dir_arg,
   const system_config sys_conf(sys_config_dir);
   hostname = sys_conf.hostname;
   port = sys_conf.port;
-  index_dir = index_dirname_default;
-  metadata_dataframe = metadata_dataframe_default;
-  select_metadata = select_metadata_default;
-  methylome_list = methylome_list_default;
+  index_dir = std::format(index_dirname_default, VERSION);
+  metadata_dataframe = std::format(metadata_dataframe_default, VERSION);
+  select_metadata = std::format(select_metadata_default, VERSION);
+  methylome_list = std::format(methylome_list_default, VERSION);
 }
 
 /// Create all the directories involved in the client config, if they
@@ -448,8 +448,7 @@ client_config::save(std::error_code &error) const noexcept -> void {
 client_config::tostring() const -> std::string {
   static constexpr auto n_indent = 4;
   nlohmann::json data = *this;
-  const std::string dump = data.dump(n_indent);
-  return std::format("{}\n", dump);
+  return data.dump(n_indent);
 }
 
 [[nodiscard]] static auto
@@ -546,7 +545,8 @@ download_metadata_dataframe_file(
   const download_policy_t download_policy) -> std::error_code {
   const auto metadata_dataframe = remote.form_metadata_dataframe_target();
   const auto local_metadata_dataframe =
-    std::filesystem::path{dirname} / client_config::metadata_dataframe_default;
+    std::filesystem::path{dirname} /
+    std::format(client_config::metadata_dataframe_default, VERSION);
   auto &lgr = transferase::logger::instance();
 
   std::error_code error;
@@ -596,7 +596,8 @@ download_methylome_list(
   const download_policy_t download_policy) -> std::error_code {
   const auto methylome_list = remote.form_methylome_list_target();
   const auto local_methylome_list =
-    std::filesystem::path{dirname} / client_config::methylome_list_default;
+    std::filesystem::path{dirname} /
+    std::format(client_config::methylome_list_default, VERSION);
   auto &lgr = transferase::logger::instance();
 
   std::error_code error;
