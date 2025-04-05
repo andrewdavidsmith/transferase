@@ -24,18 +24,15 @@
 #ifndef LIB_METHYLOME_CLIENT_REMOTE_HPP_
 #define LIB_METHYLOME_CLIENT_REMOTE_HPP_
 
+#include "client_base.hpp"
 #include "client_config.hpp"
 #include "client_connection.hpp"
 #include "genome_index.hpp"
 #include "genome_index_set.hpp"
 #include "level_container_md.hpp"
-#include "methylome_client_base.hpp"
 #include "query_container.hpp"
 #include "request.hpp"
 #include "request_type_code.hpp"
-#include "transferase_metadata.hpp"
-
-#include "nlohmann/json.hpp"
 
 #include <cstdint>
 #include <format>
@@ -56,82 +53,84 @@ struct level_element_covered_t;  // for is_same_v
 
 namespace transferase {
 
-class methylome_client_remote
-  : public methylome_client_base<methylome_client_remote> {
+class methylome_client_remote : public client_base<methylome_client_remote> {
 public:
-  typedef methylome_client_base<methylome_client_remote>
-    methylome_client_remote_parent;
+  typedef client_base<methylome_client_remote> methylome_client_remote_parent;
 
   explicit methylome_client_remote(const std::string &config_dir) :
-    methylome_client_base(config_dir) {
+    client_base(config_dir) {
     std::error_code error;
-    validate_derived(error);
+    validate(error);
     if (error)
       throw std::system_error(error, "[Failed in remote constructor]");
   }
 
-  [[nodiscard]] auto
-  tostring_derived() const noexcept -> std::string;
-
   auto
-  validate_derived(std::error_code &error) noexcept -> void;
+  validate(std::error_code &error) noexcept -> void;
 
-  // intervals: takes a query
+  // intervals: takes a query, genome name specified
   template <typename lvl_elem_t>
   [[nodiscard]] auto
-  get_levels_derived(const std::vector<std::string> &methylome_names,
-                     const query_container &query, std::error_code &error)
-    const noexcept -> level_container_md<lvl_elem_t> {
+  get_levels(
+    const std::string &genome, const std::vector<std::string> &methylome_names,
+    const query_container &query) const -> level_container_md<lvl_elem_t> {
     request_type_code req_type = request_type_code::intervals;
     if constexpr (std::is_same_v<lvl_elem_t, level_element_covered_t>)
       req_type = request_type_code::intervals_covered;
-    const auto [_, index_hash] =
-      get_genome_and_index_hash(methylome_names, error);
+    std::error_code error{};
+    const auto index = indexes->get_genome_index(genome, error);
     if (error)
-      return {};
+      throw std::system_error(error);
     const auto req =
-      request{req_type, index_hash, std::size(query), methylome_names};
-    return get_levels_impl<lvl_elem_t>(req, query, error);
+      request{req_type, index->get_hash(), std::size(query), methylome_names};
+    auto result = get_levels_impl<lvl_elem_t>(req, query, error);
+    if (error)
+      throw std::system_error(error);
+    return result;
   }
 
-  // intervals: takes a vector of genomic intervals
+  // intervals: takes a vector of genomic intervals, genome name specified
   template <typename lvl_elem_t>
   [[nodiscard]] auto
-  get_levels_derived(const std::vector<std::string> &methylome_names,
-                     const std::vector<genomic_interval> &intervals,
-                     std::error_code &error) const noexcept
+  get_levels(const std::string &genome,
+             const std::vector<std::string> &methylome_names,
+             const std::vector<genomic_interval> &intervals) const
     -> level_container_md<lvl_elem_t> {
     request_type_code req_type = request_type_code::intervals;
     if constexpr (std::is_same_v<lvl_elem_t, level_element_covered_t>)
       req_type = request_type_code::intervals_covered;
-    const auto [genome_name, index_hash] =
-      get_genome_and_index_hash(methylome_names, error);
+    std::error_code error{};
+    const auto index = indexes->get_genome_index(genome, error);
     if (error)
-      return {};
-    const auto index = indexes->get_genome_index(genome_name, error);
-    if (error)
-      return {};
+      throw std::system_error(error);
     const auto query = index->make_query(intervals);
     const auto req =
-      request{req_type, index_hash, std::size(query), methylome_names};
-    return get_levels_impl<lvl_elem_t>(req, query, error);
+      request{req_type, index->get_hash(), std::size(query), methylome_names};
+    auto result = get_levels_impl<lvl_elem_t>(req, query, error);
+    if (error)
+      throw std::system_error(error);
+    return result;
   }
 
   // bins: takes an index
   template <typename lvl_elem_t>
   [[nodiscard]] auto
-  get_levels_derived(const std::vector<std::string> &methylome_names,
-                     const std::uint32_t bin_size, std::error_code &error)
-    const noexcept -> level_container_md<lvl_elem_t> {
+  get_levels(
+    const std::string &genome, const std::vector<std::string> &methylome_names,
+    const std::uint32_t bin_size) const -> level_container_md<lvl_elem_t> {
     request_type_code req_type = request_type_code::bins;
     if constexpr (std::is_same_v<lvl_elem_t, level_element_covered_t>)
       req_type = request_type_code::bins_covered;
-    const auto [_, index_hash] =
-      get_genome_and_index_hash(methylome_names, error);
+    std::error_code error{};
+    const auto index = indexes->get_genome_index(genome, error);
     if (error)
-      return {};
-    const auto req = request{req_type, index_hash, bin_size, methylome_names};
-    return get_levels_impl<lvl_elem_t>(req, error);
+      throw std::system_error(error);
+    const auto req =
+      request{req_type, index->get_hash(), bin_size, methylome_names};
+    auto result = get_levels_impl<lvl_elem_t>(req, error);
+    if (error)
+      throw std::system_error(error);
+    return result;
   }
 
 private:
@@ -158,66 +157,8 @@ private:
       return {};
     return cl.take_levels();
   }
-
-  [[nodiscard]] auto
-  get_genome_and_index_hash(const std::vector<std::string> &methylome_names,
-                            std::error_code &error) const noexcept
-    -> std::tuple<std::string, std::uint64_t> {
-    const auto genome_name = config.meta.get_genome(methylome_names, error);
-    if (error)  // ADS: need to confirm error code here
-      return {std::string{}, 0};
-    return {genome_name, get_index_hash(genome_name, error)};
-  }
-
-public:
-  NLOHMANN_DEFINE_TYPE_INTRUSIVE(methylome_client_remote, config)
 };
 
 }  // namespace transferase
-
-/// @brief Enum for error codes related to methylome_client_remote
-enum class methylome_client_remote_error_code : std::uint8_t {
-  ok = 0,
-  error_reading_config_file = 1,
-  required_config_values_not_found = 2,
-  hostname_not_found = 3,
-  port_not_found = 4,
-  index_dir_not_found = 5,
-  metadata_not_found = 6,
-  failed_to_read_index_dir = 7,
-  failed_to_read_metadata_file = 8,
-};
-
-template <>
-struct std::is_error_code_enum<methylome_client_remote_error_code>
-  : public std::true_type {};
-
-struct methylome_client_remote_error_category : std::error_category {
-  // clang-format off
-  auto name() const noexcept -> const char * override { return "methylome_client_remote"; }
-  auto message(int code) const noexcept -> std::string override {
-    using std::string_literals::operator""s;
-    switch (code) {
-    case 0: return "ok"s;
-    case 1: return "error reading default config file"s;
-    case 2: return "required config values not found"s;
-    case 3: return "hostname not found"s;
-    case 4: return "port not found"s;
-    case 5: return "index dir not found"s;
-    case 6: return "metadata not found"s;
-    case 7: return "failed to read index dir"s;
-    case 8: return "failed to read metadata file"s;
-    }
-    std::unreachable();
-  }
-  // clang-format on
-};
-
-inline auto
-make_error_code(methylome_client_remote_error_code e) noexcept
-  -> std::error_code {
-  static auto category = methylome_client_remote_error_category{};
-  return std::error_code(std::to_underlying(e), category);
-}
 
 #endif  // LIB_METHYLOME_CLIENT_REMOTE_HPP_

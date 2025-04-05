@@ -24,7 +24,7 @@
 #ifndef LIB_METHYLOME_CLIENT_LOCAL_HPP_
 #define LIB_METHYLOME_CLIENT_LOCAL_HPP_
 
-#include "methylome_client_base.hpp"
+#include "client_base.hpp"
 
 #include "client_config.hpp"
 #include "genome_index.hpp"
@@ -34,8 +34,6 @@
 #include "query_container.hpp"
 #include "request.hpp"
 #include "request_type_code.hpp"
-
-#include "nlohmann/json.hpp"
 
 #include <cassert>
 #include <cstdint>
@@ -58,25 +56,20 @@ struct level_element_covered_t;
 
 namespace transferase {
 
-class methylome_client_local
-  : public methylome_client_base<methylome_client_local> {
+class methylome_client_local : public client_base<methylome_client_local> {
 public:
-  typedef methylome_client_base<methylome_client_local>
-    methylome_client_local_parent;
+  typedef client_base<methylome_client_local> methylome_client_local_parent;
 
   explicit methylome_client_local(const std::string &config_dir) :
-    methylome_client_base(config_dir) {
+    client_base(config_dir) {
     std::error_code error;
-    validate_derived(error);
+    validate(error);
     if (error)
       throw std::system_error(error, "[Failed in local constructor]");
   }
 
-  [[nodiscard]] auto
-  tostring_derived() const noexcept -> std::string;
-
   auto
-  validate_derived(std::error_code &error) noexcept -> void;
+  validate(std::error_code &error) noexcept -> void;
 
   // intervals: takes a query
   template <typename lvl_elem_t>
@@ -84,17 +77,8 @@ public:
   get_levels(const std::vector<std::string> &methylome_names,
              const query_container &query) const
     -> level_container_md<lvl_elem_t> {
-    request_type_code req_type = request_type_code::intervals;
-    if constexpr (std::is_same_v<lvl_elem_t, level_element_covered_t>)
-      req_type = request_type_code::intervals_covered;
     std::error_code error{};
-    const auto [_, index_hash] =
-      get_genome_and_index_hash(methylome_names, error);
-    if (error)
-      return {};
-    const auto req =
-      request{req_type, index_hash, std::size(query), methylome_names};
-    auto result = get_levels_impl<lvl_elem_t>(req, query, error);
+    auto result = get_levels_impl<lvl_elem_t>(methylome_names, query, error);
     if (error)
       throw std::system_error(error);
     return result;
@@ -106,21 +90,16 @@ public:
   get_levels(const std::vector<std::string> &methylome_names,
              const std::vector<genomic_interval> &intervals) const
     -> level_container_md<lvl_elem_t> {
-    request_type_code req_type = request_type_code::intervals;
-    if constexpr (std::is_same_v<lvl_elem_t, level_element_covered_t>)
-      req_type = request_type_code::intervals_covered;
     std::error_code error{};
-    const auto [genome_name, index_hash] =
-      get_genome_and_index_hash(methylome_names, error);
+    const auto [genome_name, _] = methylome::get_genome_info(
+      config.get_methylome_dir(), methylome_names.at(0), error);
     if (error)
-      return {};
+      throw std::system_error(error);
     const auto index = indexes->get_genome_index(genome_name, error);
     if (error)
-      return {};
+      throw std::system_error(error);
     const auto query = index->make_query(intervals);
-    const auto req =
-      request{req_type, index_hash, std::size(query), methylome_names};
-    auto result = get_levels_impl<lvl_elem_t>(req, query, error);
+    auto result = get_levels_impl<lvl_elem_t>(methylome_names, query, error);
     if (error)
       throw std::system_error(error);
     return result;
@@ -132,19 +111,16 @@ public:
   get_levels(const std::vector<std::string> &methylome_names,
              const std::uint32_t bin_size) const
     -> level_container_md<lvl_elem_t> {
-    request_type_code req_type = request_type_code::bins;
-    if constexpr (std::is_same_v<lvl_elem_t, level_element_covered_t>)
-      req_type = request_type_code::bins_covered;
     std::error_code error{};
-    const auto [genome_name, index_hash] =
-      get_genome_and_index_hash(methylome_names, error);
+    const auto [genome_name, _] = methylome::get_genome_info(
+      config.get_methylome_dir(), methylome_names.at(0), error);
     if (error)
       return {};
     const auto index = indexes->get_genome_index(genome_name, error);
     if (error)
       return {};
-    const auto req = request{req_type, index_hash, bin_size, methylome_names};
-    auto result = get_levels_impl<lvl_elem_t>(req, *index, error);
+    auto result =
+      get_levels_impl<lvl_elem_t>(methylome_names, *index, bin_size, error);
     if (error)
       throw std::system_error(error);
     return result;
@@ -153,18 +129,27 @@ public:
 private:
   template <typename lvl_elem_t>
   [[nodiscard]] auto
-  get_levels_impl(const request &req, const query_container &query,
-                  std::error_code &error) const noexcept
-    -> level_container_md<lvl_elem_t> {
-    assert(req.n_intervals() == std::size(query));
-    level_container_md<lvl_elem_t> results(req.n_intervals(),
-                                           req.n_methylomes());
+  get_levels_impl(const std::vector<std::string> &methylome_names,
+                  const query_container &query, std::error_code &error)
+    const noexcept -> level_container_md<lvl_elem_t> {
+    level_container_md<lvl_elem_t> results(std::size(query),
+                                           std::size(methylome_names));
+    bool first_methylome = true;
+    std::uint64_t index_hash = 0;
     std::uint32_t col_id = 0;
-    for (const auto &methylome_name : req.methylome_names) {
+    for (const auto &methylome_name : methylome_names) {
       const auto meth =
         methylome::read(config.get_methylome_dir(), methylome_name, error);
       if (error)
         return {};
+      if (first_methylome) {
+        index_hash = meth.get_index_hash();
+        first_methylome = false;
+      }
+      else if (index_hash != meth.get_index_hash()) {
+        error = client_error_code::inconsistent_methylome_metadata;
+        return {};
+      }
       meth.get_levels<lvl_elem_t>(query, results.column_itr(col_id++));
     }
     return results;
@@ -172,69 +157,35 @@ private:
 
   template <typename lvl_elem_t>
   [[nodiscard]] auto
-  get_levels_impl(const request &req, const genome_index &index,
+  get_levels_impl(const std::vector<std::string> &methylome_names,
+                  const genome_index &index, const std::uint32_t bin_size,
                   std::error_code &error) const noexcept
     -> level_container_md<lvl_elem_t> {
-    level_container_md<lvl_elem_t> results(index.get_n_bins(req.bin_size()),
-                                           req.n_methylomes());
+    level_container_md<lvl_elem_t> results(index.get_n_bins(bin_size),
+                                           std::size(methylome_names));
+    bool first_methylome = true;
+    std::uint64_t index_hash = 0;
     std::uint32_t col_id = 0;
-    for (const auto &methylome_name : req.methylome_names) {
+    for (const auto &methylome_name : methylome_names) {
       const auto meth =
         methylome::read(config.get_methylome_dir(), methylome_name, error);
       if (error)
         return {};
-      meth.get_levels<lvl_elem_t>(req.bin_size(), index,
+      if (first_methylome) {
+        index_hash = meth.get_index_hash();
+        first_methylome = false;
+      }
+      else if (index_hash != meth.get_index_hash()) {
+        error = client_error_code::inconsistent_methylome_metadata;
+        return {};
+      }
+      meth.get_levels<lvl_elem_t>(bin_size, index,
                                   results.column_itr(col_id++));
     }
     return results;
   }
-
-  [[nodiscard]] auto
-  get_genome_and_index_hash(const std::vector<std::string> &methylome_names,
-                            std::error_code &error) const noexcept
-    -> std::tuple<std::string, std::uint64_t>;
-
-public:
-  NLOHMANN_DEFINE_TYPE_INTRUSIVE(methylome_client_local, config)
 };
 
 }  // namespace transferase
-
-/// @brief Enum for error codes related to methylome_client_local
-enum class methylome_client_local_error_code : std::uint8_t {
-  ok = 0,
-  error_reading_config_file = 1,
-  required_config_values_not_found = 2,
-  methylome_dir_not_found_in_config = 3,
-  inconsistent_methylome_metadata = 4,
-};
-
-template <>
-struct std::is_error_code_enum<methylome_client_local_error_code>
-  : public std::true_type {};
-
-struct methylome_client_local_error_category : std::error_category {
-  // clang-format off
-  auto name() const noexcept -> const char * override { return "methylome_client_local"; }
-  auto message(int code) const noexcept -> std::string override {
-    using std::string_literals::operator""s;
-    switch (code) {
-    case 0: return "ok"s;
-    case 1: return "error reading default config file"s;
-    case 2: return "required config values not found"s;
-    case 3: return "methylome dir not found in config"s;
-    case 4: return "inconsistent methylome metadata"s;
-    }
-    std::unreachable();
-  }
-  // clang-format on
-};
-
-inline auto
-make_error_code(methylome_client_local_error_code e) noexcept
-  -> std::error_code {
-  static auto category = methylome_client_local_error_category{};
-  return std::error_code(std::to_underlying(e), category);
-}
 
 #endif  // LIB_METHYLOME_CLIENT_LOCAL_HPP_
