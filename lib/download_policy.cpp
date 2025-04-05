@@ -24,7 +24,6 @@
 #include "download_policy.hpp"
 
 #include <array>
-#include <format>
 #include <iostream>
 #include <ranges>  // IWYU pragma: keep
 #include <string>

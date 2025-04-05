@@ -92,6 +92,7 @@ command_select_main([[maybe_unused]] int argc,
 #include <tuple>
 #include <unordered_set>
 #include <utility>  // for std::pair
+#include <variant>  // for std::tuple
 #include <vector>
 
 namespace xfr = transferase;

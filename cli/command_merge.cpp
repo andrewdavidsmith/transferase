@@ -53,6 +53,7 @@ xfr merge -o merged.m16 -i SRX0123*.m16
 #include "CLI11/CLI11.hpp"
 
 #include <chrono>
+#include <cstdint>
 #include <cstdlib>  // for EXIT_FAILURE, EXIT_SUCCESS
 #include <format>
 #include <iterator>  // for std::size

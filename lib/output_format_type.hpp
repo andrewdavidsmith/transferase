@@ -28,6 +28,7 @@
 #include <cstdint>
 #include <format>
 #include <iostream>
+#include <iterator>
 #include <map>
 #include <string>
 #include <string_view>

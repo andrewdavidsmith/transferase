@@ -32,26 +32,19 @@
 #include "level_container_md.hpp"
 #include "methylome.hpp"
 #include "query_container.hpp"
-#include "request.hpp"
-#include "request_type_code.hpp"
 
-#include <cassert>
 #include <cstdint>
 #include <format>    // for std::vector??
 #include <iterator>  // for std::size
 #include <memory>
 #include <string>
 #include <system_error>
-#include <tuple>
-#include <type_traits>
 #include <utility>
-#include <variant>  // for std::tuple
 #include <vector>
 
 // forward declarations
 namespace transferase {
 struct genomic_interval;
-struct level_element_covered_t;
 }  // namespace transferase
 
 namespace transferase {

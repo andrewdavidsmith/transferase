@@ -29,7 +29,7 @@
 #include <charconv>
 #include <iostream>
 #include <iterator>  // for std::size
-#include <ranges>
+#include <ranges>    // IWYU pragma: keep
 #include <string>
 #include <tuple>        // IWYU pragma: keep
 #include <type_traits>  // for std::underlying_type_t

@@ -32,7 +32,6 @@
 #include <cstdint>
 #include <format>
 #include <string>
-#include <string_view>
 #include <system_error>
 #include <tuple>
 #include <utility>  // std::unreachable
