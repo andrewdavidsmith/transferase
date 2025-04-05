@@ -26,8 +26,9 @@
 
 #include "download_policy.hpp"  // IWYU pragma: keep
 #include "logger.hpp"           // IWYU pragma: keep
-#include "nlohmann/json.hpp"    // IWYU pragma: keep
-#include "transferase_metadata.hpp"
+#include "methylome_name_list.hpp"
+
+#include "nlohmann/json.hpp"  // IWYU pragma: keep
 
 #include <cstdint>
 #include <format>
@@ -42,20 +43,22 @@ namespace transferase {
 struct client_config {
   static constexpr auto transferase_config_dirname_default =
     ".config/transferase";
-  static constexpr auto metadata_filename_default = "metadata.txt";
-  static constexpr auto labels_filename_default = "metadata.json";
   static constexpr auto index_dirname_default = "indexes";
   static constexpr auto client_config_filename_default =
     "transferase_client.json";
   static constexpr auto client_log_filename_default = "transferase.log";
+  static constexpr auto metadata_dataframe_default =
+    "metadata_dataframe_{}.tsv";
+  static constexpr auto select_metadata_default = "select_metadata_{}.json";
+  static constexpr auto methylome_list_default = "methylome_list_{}.json";
 
-  transferase_metadata meta;
   std::string config_dir;
   std::string hostname;
   std::string port{};
   std::string index_dir;
-  std::string metadata_file;
-  std::string labels_file;
+  std::string metadata_dataframe;
+  std::string select_metadata;
+  std::string methylome_list;
   std::string methylome_dir;
   std::string log_file;
   log_level_t log_level{};
@@ -85,13 +88,17 @@ struct client_config {
   [[nodiscard]] auto
   get_index_dir() const noexcept -> std::string;
 
-  /// Get the path to the metadata file
+  /// Get the path to the metadata dataframe file
   [[nodiscard]] auto
-  get_metadata_file() const noexcept -> std::string;
+  get_metadata_dataframe_file() const noexcept -> std::string;
 
   /// Get the path to the labels file
   [[nodiscard]] auto
-  get_labels_file() const noexcept -> std::string;
+  get_methylome_list_file() const noexcept -> std::string;
+
+  /// Get the metadata file used by the 'select' command
+  [[nodiscard]] auto
+  get_select_metadata_file() const noexcept -> std::string;
 
   /// Get the path to the methylome directory
   [[nodiscard]] auto
@@ -101,16 +108,10 @@ struct client_config {
   [[nodiscard]] auto
   get_log_file() const noexcept -> std::string;
 
-  /// Read the transferase metadata file. Note: currently this loading from
-  /// the labels file, as that provide all the metadata for a transferase
-  /// metadata object.
-  auto
-  load_transferase_metadata(std::error_code &error) -> void;
-
-  [[nodiscard]] auto
-  available_genomes() const noexcept -> std::vector<std::string> {
-    return meta.available_genomes();
-  }
+  // [[nodiscard]] auto
+  // available_genomes() const noexcept -> std::vector<std::string> {
+  //   return meta.available_genomes();
+  // }
 
   /// Read the client configuration.
   [[nodiscard]] static auto
@@ -191,8 +192,9 @@ struct client_config {
   client_config() = default;
 
   NLOHMANN_DEFINE_TYPE_INTRUSIVE(client_config, config_dir, hostname, port,
-                                 index_dir, metadata_file, labels_file,
-                                 methylome_dir, log_file, log_level)
+                                 index_dir, methylome_dir, metadata_dataframe,
+                                 select_metadata, methylome_list, log_file,
+                                 log_level)
 };
 
 }  // namespace transferase
@@ -208,7 +210,7 @@ enum class client_config_error_code : std::uint8_t {
   error_identifying_transferase_server = 6,
   invalid_client_config_information = 7,
   error_obtaining_sytem_config_dir = 8,
-  failed_to_read_transferase_metadata_file = 9,
+  failed_to_read_metadata_file = 9,
   failed_to_read_client_config_file = 10,
   failed_to_parse_client_config_file = 11,
   invalid_client_config_file = 12,
@@ -233,7 +235,7 @@ struct client_config_error_category : std::error_category {
     case 6: return "error identifying transferase server"s;
     case 7: return "invalid client config information"s;
     case 8: return "error obtaining system config dir"s;
-    case 9: return "failed to read transferase metadata file"s;
+    case 9: return "failed to read metadata file"s;
     case 10: return "failed to read client config file"s;
     case 11: return "failed to parse client config file"s;
     case 12: return "invalid client config file"s;
