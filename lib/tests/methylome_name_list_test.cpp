@@ -21,7 +21,7 @@
  * SOFTWARE.
  */
 
-#include <transferase_metadata.hpp>
+#include <methylome_name_list.hpp>
 
 #include <gtest/gtest.h>
 
@@ -33,7 +33,7 @@
 
 using namespace transferase;  // NOLINT
 
-class transferase_metadata_mock : public ::testing::Test {
+class methylome_name_list_mock : public ::testing::Test {
 protected:
   auto
   SetUp() -> void override {}
@@ -47,25 +47,25 @@ public:
   std::uint32_t n_lutions_tissues{3};
 };
 
-TEST_F(transferase_metadata_mock, read_failure) {
+TEST_F(methylome_name_list_mock, read_failure) {
   static constexpr auto list_file_mock = ".../asdf.not_json";
   std::error_code error;
-  [[maybe_unused]] const transferase_metadata mg =
-    transferase_metadata::read(list_file_mock, error);
+  [[maybe_unused]] const methylome_name_list names =
+    methylome_name_list::read(list_file_mock, error);
   EXPECT_TRUE(error);
 }
 
-TEST_F(transferase_metadata_mock, read_success) {
+TEST_F(methylome_name_list_mock, read_success) {
   std::error_code error;
 
   EXPECT_TRUE(std::filesystem::exists(metadata_filename));
 
-  const transferase_metadata mg =
-    transferase_metadata::read(metadata_filename, error);
+  const methylome_name_list names =
+    methylome_name_list::read(metadata_filename, error);
   EXPECT_FALSE(error) << error.message() << '\n';
-  EXPECT_EQ(std::size(mg.genome_to_methylomes), n_lutions_available);
-  for (const auto &d : mg.genome_to_methylomes)
+  EXPECT_EQ(std::size(names.genome_to_methylomes), n_lutions_available);
+  for (const auto &d : names.genome_to_methylomes)
     EXPECT_EQ(std::size(d.second), n_lutions_tissues);
-  EXPECT_EQ(std::size(mg.methylome_to_genome),
+  EXPECT_EQ(std::size(names.methylome_to_genome),
             n_lutions_available * n_lutions_tissues);
 }
