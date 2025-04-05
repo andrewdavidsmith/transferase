@@ -51,6 +51,8 @@ When in doubt, consult the module reference at the location listed above.
 #include <query_container.hpp>
 #include <remote_client.hpp>
 
+#include <config.h>
+
 #include <moduleobject.h>
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/string.h>  // IWYU pragma: keep
@@ -81,6 +83,8 @@ NB_MODULE(pyxfr, the_module) {
                     .value("warning", xfr::log_level_t::warning)
                     .value("error", xfr::log_level_t::error)
                     .value("critical", xfr::log_level_t::critical);
+
+  the_module.attr("__version__") = VERSION;
 
   the_module.def("set_log_level", [](const xfr::log_level_t lvl) {
     xfr::logger::instance().set_level(lvl);
