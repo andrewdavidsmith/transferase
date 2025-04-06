@@ -39,7 +39,7 @@ library(R6)
 #' @export
 #' @examples
 #' # Mostly leave the config_dir empty
-#' config_xfr(c("hg38"), "usually_empty_but_in_examples")
+#' config_xfr(c("hg38"), "usually_left_empty")
 config_xfr <- function(genomes, config_dir = "") {
   invisible(.Call(`_Rxfr_config_xfr`, genomes, config_dir))
 }
@@ -73,6 +73,31 @@ set_xfr_log_level <- function(log_level) {
 #' get_xfr_log_level()
 get_xfr_log_level <- function() {
   .Call(`_Rxfr_get_xfr_log_level`)
+}
+
+#' Get weighted mean methylation
+#'
+#' Convert a counts-based methylation levels matrix, as obtained from a
+#' transferase query, to weighted means, with NA in each entry where no reads
+#' were observed.
+#'
+#' @param levels_matrix A methylation levels matrix as retuned by
+#'   MClient$do_query.
+#'
+#' @param has_n_covered Boolean parameter indicating the levels_matrix
+#'   includes columns for numbers of covered CpG sites in each interval.
+#'
+#' @param min_count An integer giving a count below which levels should be set
+#'   to NA
+#'
+#' @return A data frame with the weighted means for each interval and
+#'   methylome
+#'
+#' @export
+#' @examples
+#' get_xfr_log_level()
+get_wmeans <- function(levels_matrix, has_n_covered, min_count = 1) {
+  .Call(`_Rxfr_get_wmeans`, levels_matrix, has_n_covered, min_count)
 }
 
 #' Load transferase metadata
@@ -136,8 +161,8 @@ get_xfr_log_level <- function() {
 #' @export
 #' @examples
 #' # Mostly leave the config_dir empty
-#' config_xfr(c("hg38"), "usually_empty_but_in_examples")
-#' meta <- load_xfr_metadata("hg38", "usually_empty_but_in_examples")
+#' config_xfr(c("hg38"), "usually_left_empty")
+#' meta <- load_xfr_metadata("hg38", "usually_left_empty")
 load_xfr_metadata <- function(genome, config_dir = "") {
   if (config_dir == "") {
     home_dir <- Sys.getenv("HOME")
@@ -271,8 +296,8 @@ MClient <- R6Class(
     #' @export
     #' @examples
     #' # Mostly leave the config_dir empty
-    #' config_xfr(c("hg38"), "usually_empty_but_in_examples")
-    #' client <- MClient$new("usually_empty_but_in_examples")
+    #' config_xfr(c("hg38"), "usually_left_empty")
+    #' client <- MClient$new("usually_left_empty")
     initialize = function(config_dir = "") {
       if (config_dir == "") {
         home_dir <- Sys.getenv("HOME")
@@ -341,8 +366,8 @@ MClient <- R6Class(
     #' @export
     #' @examples
     #' # Mostly leave the config_dir empty
-    #' config_xfr(c("hg38"), "usually_empty_but_in_examples")
-    #' client <- MClient$new("usually_empty_but_in_examples")
+    #' config_xfr(c("hg38"), "usually_left_empty")
+    #' client <- MClient$new("usually_left_empty")
     #'
     #' genome <- "hg38"
     #' methylomes <- c("SRX3468816", "SRX3468835")
@@ -472,13 +497,13 @@ MClient <- R6Class(
     #' @export
     #' @examples
     #' # Mostly leave the config_dir empty
-    #' config_xfr(c("hg38"), "usually_empty_but_in_examples")
+    #' config_xfr(c("hg38"), "usually_left_empty")
     #'
     #' # Names of columns below are not needed
     #' intervals <- data.frame(chrom=c("chr1", "chr2", "chr3"),
     #'                         start=c(10468, 197437, 308977),
     #'                         stops=c(11240, 198535, 309210))
-    #' client <- MClient$new("usually_empty_but_in_examples")
+    #' client <- MClient$new("usually_left_empty")
     #' query <- client$format_query("hg38", intervals)
     format_query = function(genome, intervals) {
       if (!is.data.frame(intervals)) {
