@@ -131,6 +131,8 @@ get_xfr_log_level <- function() {
 #' sample, and only detailed reading can uncover the differences. Your
 #' feedback can help improve these.
 #'
+#' details: General metadata about the sample, in long form.
+#'
 #' @export
 #' @examples
 #' # Mostly leave the config_dir empty
@@ -144,12 +146,14 @@ load_xfr_metadata <- function(genome, config_dir = "") {
     fmt <- "directory does not exist: %s. See the config_xfr function"
     stop(sprintf(fmt, config_dir), call. = FALSE)
   }
-  metadata_file <- file.path(config_dir, "metadata.txt")
-  if (!file.exists(metadata_file)) {
+  metadata_filename <- sprintf("metadata_dataframe_%s.tsv",
+                               packageVersion("Rxfr"))
+  metadata_path <- file.path(config_dir, metadata_filename)
+  if (!file.exists(metadata_path)) {
     fmt <- "config file does not exist: %s. See the config_xfr function"
-    stop(sprintf(fmt, metadata_file), call. = FALSE)
+    stop(sprintf(fmt, metadata_path), call. = FALSE)
   }
-  full_table <- read.table(metadata_file, header=TRUE)
+  full_table <- read.table(metadata_path, header=TRUE)
   selected <- full_table[, "assembly"] == genome
   full_table[selected, ]
 }
@@ -157,8 +161,7 @@ load_xfr_metadata <- function(genome, config_dir = "") {
 #' Initialize logger
 #'
 #' Initialize logging for transferase. This function is called automatically
-#' when 'library(Rxfr)' is called. You will never need to use it, and
-#' it takes no arguments anyway.
+#' when 'library(Rxfr)' is called. You will never need to use it.
 #'
 #' @export
 #' @examples
@@ -278,10 +281,12 @@ MClient <- R6Class(
         fmt <- "directory does not exist: %s. See the config_xfr function"
         stop(sprintf(fmt, config_dir), call. = FALSE)
       }
-      config_file <- file.path(config_dir, "transferase_client.json")
-      if (!file.exists(config_file)) {
+      config_filename <- sprintf("transferase_client_%s.json",
+                                 packageVersion("Rxfr"))
+      config_file_path <- file.path(config_dir, config_filename)
+      if (!file.exists(config_file_path)) {
         fmt <- "config file does not exist: %s. See the config_xfr function"
-        stop(sprintf(fmt, config_file), call. = FALSE)
+        stop(sprintf(fmt, config_file_path), call. = FALSE)
       }
       self$config_dir <- config_dir
       private$client <- .Call(`_Rxfr_create_mclient`, config_dir)
