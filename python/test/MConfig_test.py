@@ -25,7 +25,7 @@ import shutil
 import tempfile
 import os
 
-
+import pyxfr
 from pyxfr import MConfig
 
 
@@ -50,7 +50,7 @@ def test_assign_and_write_success():
     Test that data members of the created object can be assigned to
     and that writing succeeds
     """
-    config_filename = "transferase_client.json"
+    config_filename = f"transferase_client_{pyxfr.__version__}.json"
     outdir = create_temp_directory()
     obj = MConfig()
     obj.hostname = "not-not-kernel.org"
