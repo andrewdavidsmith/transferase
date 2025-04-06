@@ -367,36 +367,45 @@ MClient <- R6Class(
         is.data.frame(query)
       }
 
-      get_query_response <- function(methylomes, query, genome, covered) {
+      if (genome == NULL) {
+        if (is_mquery(query)) {
+          genome = query$genome
+        } else {
+          msg <- "'genome' is required unless query is an MQuery object"
+          stop(msg, call. = FALSE)
+        }
+      }
+
+      get_query_response <- function(genome, methylomes, query, covered) {
         if (is_intervals(query)) {
           if (covered) {
-            .Call(`_Rxfr_query_intervals_cov`, private$client,
-                  methylomes, genome, query)
+            .Call(`_Rxfr_query_intervals_cov`, private$client, genome,
+                  methylomes, query)
           } else {
-            .Call(`_Rxfr_query_intervals`, private$client,
-                  methylomes, genome, query)
+            .Call(`_Rxfr_query_intervals`, private$client, genome,
+                  methylomes, query)
           }
         } else if (is_bins(query)) {
           if (covered) {
-            .Call(`_Rxfr_query_bins_cov`, private$client,
+            .Call(`_Rxfr_query_bins_cov`, private$client, genome,
                   methylomes, query)
           } else {
-            .Call(`_Rxfr_query_bins`, private$client,
+            .Call(`_Rxfr_query_bins`, private$client, genome,
                   methylomes, query)
           }
         } else if (is_mquery(query)) {
           if (covered) {
-            .Call(`_Rxfr_query_preprocessed_cov`, private$client,
+            .Call(`_Rxfr_query_preprocessed_cov`, private$client, genome,
                   methylomes, query$data)
           } else {
-            .Call(`_Rxfr_query_preprocessed`, private$client,
+            .Call(`_Rxfr_query_preprocessed`, private$client, genome,
                   methylomes, query$data)
           }
         } else {
           stop("Invalid 'query' argument", call. = FALSE)
         }
       }
-      response <- get_query_response(methylomes, query, genome, covered)
+      response <- get_query_response(genome, methylomes, query, covered)
 
       # Add a header to the results
       if (add_header) {
