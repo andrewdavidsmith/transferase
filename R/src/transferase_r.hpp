@@ -89,6 +89,11 @@ get_n_cpgs_bins(const Rcpp::XPtr<transferase::remote_client> client,
 Rcpp::NumericMatrix
 get_n_cpgs_query(const Rcpp::XPtr<transferase::query_container> query);
 
+// [[Rcpp::export]]
+Rcpp::NumericMatrix
+get_wmeans(const Rcpp::NumericMatrix m, const bool has_n_covered,
+           const std::uint32_t min_count);
+
 // ADS: declarations for query functions below (3 inputs x 2 outputs)
 
 // not covered

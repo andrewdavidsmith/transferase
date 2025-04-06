@@ -400,3 +400,45 @@ get_n_cpgs_bins(const Rcpp::XPtr<transferase::remote_client> client,
     m(i, 0) = n_cpgs[i];
   return m;
 }
+
+[[nodiscard]] auto
+get_wmeans(const Rcpp::NumericMatrix m, const bool has_n_covered,
+           const std::uint32_t min_count) -> Rcpp::NumericMatrix {
+  const auto n_rows = m.rows();
+  const auto stride = has_n_covered ? 3 : 2;
+  const auto n_methylomes = m.cols() / stride;
+  Rcpp::NumericMatrix w(m.rows(), n_methylomes);
+  for (const auto row_id : std::views::iota(0, n_rows))
+    for (const auto methylome_id : std::views::iota(0, n_methylomes)) {
+      const auto n_meth = m(row_id, methylome_id * stride);
+      const auto n_unmeth = m(row_id, methylome_id * stride + 1);
+      const auto n_total = n_meth + n_unmeth;
+      w(row_id, methylome_id) =
+        n_total < min_count ? NA_REAL : static_cast<double>(n_meth) / n_total;
+    }
+
+  if (m.hasAttribute("dimnames")) {
+    const Rcpp::List dimnames = m.attr("dimnames");
+    // do row names
+    if (dimnames.size() > 0 && !Rf_isNull(dimnames[0]))
+      Rcpp::rownames(w) = Rcpp::rownames(m);
+    // do column names
+    if (dimnames.size() > 1 && !Rf_isNull(dimnames[1])) {
+      // update the column names
+      Rcpp::CharacterVector orig_cn = Rcpp::colnames(m);
+      std::vector<std::string> updated_cn(n_methylomes);
+      for (const auto meth_id : std::views::iota(0, n_methylomes)) {
+        const std::string name = orig_cn(meth_id * stride);
+        if (!name.ends_with("_M")) {
+          const auto fmt = R"(Expected column name with "_M", found {})";
+          Rcpp::stop(std::format(fmt, name));
+        }
+        updated_cn[meth_id] = name.substr(0, std::size(name) - 2);
+        Rcpp::colnames(w) =
+          Rcpp::CharacterVector(std::cbegin(updated_cn), std::cend(updated_cn));
+      }
+    }
+  }
+
+  return w;
+}
