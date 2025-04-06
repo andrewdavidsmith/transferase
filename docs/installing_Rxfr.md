@@ -1,35 +1,58 @@
 # Installing the transferase R package
 
-The transferase R package is named Rxfr. This file has multiple ways to do the
-installation. Hopefull I can get this on CRAN and make it much easier. All of
-these instructions assume you are using R version 4.4 or greater. It will not
-work on earlier versions of R.
+The transferase R package is named Rxfr. This file explains multiple ways to
+do the installation. Hopefull I can get Rxfr on CRAN or R-universe and make it
+much easier. All of these instructions assume you are using R version 4.4 or
+greater. It will not work on earlier versions of R.
 
-## Installing on Debian
+## Installing on Linux
 
-Here I'm using Debian "sid" which is ahead of the stable release (Note: also
-tested and working with Ubuntu "plucky"). These instructions should work on
+The following instructions work on both Debian "sid" and Ubuntu "plucky", both
+of which are ahead of the stable releases. These instructions should work on
 latest stable Ubuntu or Debian by late April 2025.
 
-Assuming a clean Debian, get the dependencies:
+### Using devtools
+
+This approach has fewer commands, but might take longer if you have a slow
+network due to the size of the dependencies. We get the in Ubuntu/Debian like
+this:
 
 ```console
+export DEBIAN_FRONTEND=noninteractive &&
+apt-get update &&
+apt-get install -y --no-install-recommends \
+    r-base \
+    r-base-dev \
+    r-cran-devtools \
+    libssl-dev
+```
+
+Then, from inside R, use these commands (replace 0.6.0 with any version):
+
+```R
+library(devtools)
+devtools::install_url("https://github.com/andrewdavidsmith/transferase/releases/download/v0.6.0/Rxfr_0.6.0.tar.gz")
+```
+
+### More packages but faster
+
+This method has more packages to install but is faster:
+
+```console
+export DEBIAN_FRONTEND=noninteractive && \
 apt-get update && \
-DEBIAN_FRONTEND=noninteractive \
 apt-get install -y --no-install-recommends \
     r-base \
     make \
     g++ \
-    libssl-dev \
-    zlib1g-dev
+    zlib1g-dev \
+    wget \
+    libssl-dev
 ```
 
-You could also install `r-base-dev` instead of `r-base`, and skip the others
-except `libssl-dev`, but it would result in a larger total install, and isn't
-needed.
-
 Then get the R dependencies. We do that separately because the auto-install of
-dependencies is annoying when installing our own package from a local archive:
+dependencies isn't very convenient when installing our own package from a
+local file (which we will). Also, this needs to be done before installing:
 
 ```console
 R -e "install.packages(c('Rcpp', 'R6'), repos = 'https://cloud.r-project.org')"
@@ -49,7 +72,7 @@ R CMD INSTALL Rxfr_0.6.0.tar.gz
 
 Or within R if you prefer:
 
-```console
+```R
 install.packages("Rxfr_0.6.0.tar.gz")
 ```
 
@@ -62,30 +85,47 @@ In these instructions I use `mamba` instead of `conda`, and I use it through
 the following, but likely you already have these:
 
 ```console
-apt-get update && apt-get install -y ca-certificates wget
+apt-get update && \
+apt-get install -y ca-certificates wget
 ```
 
-Then we can get Minforge like this:
+Then we can download Minforge and install it like this (it will ask some questions):
 
 ```console
-wget https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh
-```
-
-And install it like this (it will ask questions):
-
-```console
+wget https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh &&
 sh Miniforge3-Linux-x86_64.sh
 ```
 
-To install R through Conda:
+To install R through Conda (along with ZLib, which we need):
 
 ```console
-mamba install conda-forge::r-base
+mamba install -y conda-forge::r-base conda-forge::zlib
 ```
 
-Fortunately, as of late April 2025, for most "latest" releases of Linux the
-Conda R package will have a compiler that can build Rxfr. To install the R
-packages that Rxfr needs:
+Next do this:
+
+```console
+R CMD config CXX23
+```
+
+If you got any output, then you can skip the next step. Otherwise we need to
+make sure that R (through Conda) knows the compiler it will try to use can do
+C++23. Fortunately, as of late April 2025, for most "latest" releases of Linux
+the Conda R package have a compiler that can build Rxfr. I've been successful
+just copying the existing configuration for C++17, and changing the "17" to
+"23" where it matters. The commands below will make your `~/R` directory if it
+doesn't exist, then setup some values for C++23 in your personal `Makevars`
+file:
+
+```console
+mkdir -p ${HOME}/.R && \
+R CMD config --all | grep CXX17 | \
+    sed "s/CXX17/CXX23/g; s/++17/++23/g" >> ${HOME}/.R/Makevars
+```
+
+If you already had a `Makevars` file, this won't overwrite whatever was in it.
+
+To install the R packages that Rxfr needs:
 
 ```console
 R -e "install.packages(c('Rcpp', 'R6'), repos = 'https://cloud.r-project.org')"
@@ -106,32 +146,30 @@ MAKEFLAGS="-j32" R CMD INSTALL Rxfr_0.6.0.tar.gz
 
 ### macOS
 
-This method only works on macOS-15 and later, because the compiler that R uses
-when obtained through Conda on macOS is the native Apple Clang compiler, and
-earlier versions are unable to build Rxfr (they lag behind in support for
-standards). In addition, we might need to help R and the compiler interact.
+This method only works on macOS-15 (Sequoia) and later, because the compiler
+that R uses when obtained through Conda on macOS is the native Apple Clang
+compiler, and earlier versions are unable to build Rxfr (they lag behind in
+support for standards). In addition, we might need to help R and the compiler
+interact.
 
-Get Miniforge like this:
-
-```console
-wget https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-MacOSX-arm64.sh
-```
-
-Install it like this, and pay attention to what it asks you to do:
+If you don't already have conda or mamba installed, get Miniforge like this
+and then install it:
 
 ```console
+wget https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-MacOSX-arm64.sh && \
 sh Miniforge3-Linux-x86_64.sh
 ```
 
-Install R through Conda like this:
+The installation asks questions. Pay attention at the end because it will tell
+you how to activate it.
+
+Install R through Conda like this, along with zlib:
 
 ```console
-mamba install conda-forge::r-base
+mamba install -y conda-forge::r-base conda-forge::zlib
 ```
 
-Fortunately, as of late April 2025, for most "latest" releases of Linux the
-Conda R package will have a compiler that can build Rxfr. To install the R
-packages that Rxfr needs:
+To install the R packages that Rxfr needs:
 
 ```console
 R -e "install.packages(c('Rcpp', 'R6'), repos = 'https://cloud.r-project.org')"
@@ -146,20 +184,15 @@ R CMD config CXX23
 If you got any output, then you can skip the next step. Otherwise we need to
 make sure that R (through Conda) knows the standard compiler with macOS-15 can
 do C++23. We will put some info in `$HOME/.R/Makevars`, which is your personal
-configuration for tweaking the compiler settings used by R. I've been
-successful just copying the existing configuration for C++17, and changing the
-17 to 23 where it matters. The commands below will make your `~/R` directory
-if it doesn't exist, then extract R's information about C++17, change the "17"
-to "23", and append it to your personal `Makevars` file:
+configuration for tweaking the compiler settings used by R (this was explained
+above for Linux, search for the "C++23"). We will use the same method of
+copying the config for C++17 and changing the "17" to "23":
 
 ```console
 mkdir -p ${HOME}/.R && \
 R CMD config --all | grep CXX17 | \
     sed "s/CXX17/CXX23/g; s/++17/++23/g" >> ${HOME}/.R/Makevars
 ```
-
-If you already had a `Makevars` file, this won't overwrite whatever was in it,
-and if you had already done setup for C++23, you are probably way ahead of me.
 
 Now we can proceed. These two commands install the R dependencies for Rxfr and
 then get the source package:
