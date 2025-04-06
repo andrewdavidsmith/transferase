@@ -367,7 +367,7 @@ MClient <- R6Class(
         is.data.frame(query)
       }
 
-      if (genome == NULL) {
+      if (is.null(genome)) {
         if (is_mquery(query)) {
           genome = query$genome
         } else {
