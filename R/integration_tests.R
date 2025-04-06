@@ -20,7 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-library(transferase)
+library(Rxfr)
 
 bin_size <- 100000
 methylomes <- c("SRX3468816", "SRX3468835")
