@@ -48,7 +48,8 @@ TEST(remote_data_resource_test, form_index_target_stem_success) {
     << index_target_stem << "\t" << expected;
 }
 
-TEST(remote_data_resource_test, form_metadata_dataframe_target_stem_success) {
+TEST(remote_data_resource_test,
+     form_methbase_metadata_dataframe_target_stem_success) {
   static const auto expected =
     std::format("metadata/latest/select_metadata_{}.json", VERSION);
   remote_data_resource rdr;

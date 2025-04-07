@@ -57,9 +57,10 @@ struct remote_data_resource {
   /// Used to identify both the remote url and local relative path for
   /// metadata table.
   [[nodiscard]] auto
-  form_metadata_dataframe_target() const {
+  form_methbase_metadata_dataframe_target() const {
     return (std::filesystem::path{path} / "metadata" / "latest" /
-            std::format(client_config::metadata_dataframe_default, VERSION))
+            std::format(client_config::methbase_metadata_dataframe_default,
+                        VERSION))
       .string();
   }
 
