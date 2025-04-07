@@ -120,7 +120,7 @@ command_config_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
   app.add_option("-p,--port", cfg.port, "transferase server port");
   app.add_option("-x,--index-dir", cfg.index_dir,
                  "name of a directory to store genome index files");
-  app.add_option("--metadata-dataframe", cfg.metadata_dataframe,
+  app.add_option("--methbase-metadata", cfg.methbase_metadata_dataframe,
                  "name of the MethBase2 metadata dataframe");
   app.add_option("--methylome-list", cfg.methylome_list,
                  "name of the methylome list (for a remote or local server)");
@@ -230,7 +230,7 @@ command_config_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
     {"Port", or_none(cfg.port)},
     {"Index dir", or_none(cfg.index_dir)},
     {"Methylome dir", or_none(cfg.methylome_dir)},
-    {"Metadata dataframe", or_none(cfg.metadata_dataframe)},
+    {"Metadata dataframe", or_none(cfg.methbase_metadata_dataframe)},
     {"Select metadata", or_none(cfg.select_metadata)},
     {"Methylome list", or_none(cfg.methylome_list)},
     {"Log level", to_string(cfg.log_level)},
