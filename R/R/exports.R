@@ -171,7 +171,7 @@ load_methbase_metadata <- function(genome, config_dir = "") {
     fmt <- "directory does not exist: %s. See the config_xfr function"
     stop(sprintf(fmt, config_dir), call. = FALSE)
   }
-  metadata_filename <- sprintf("metadata_dataframe_%s.tsv",
+  metadata_filename <- sprintf("methbase_metadata_dataframe_%s.tsv",
                                packageVersion("Rxfr"))
   metadata_path <- file.path(config_dir, metadata_filename)
   if (!file.exists(metadata_path)) {
