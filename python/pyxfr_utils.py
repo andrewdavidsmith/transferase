@@ -25,9 +25,18 @@ Utilities associated with pyxfr, the Python API for Transferase, but that
 are not implemented within the pyxfr C++ bindings.
 """
 
+import json
+import os
+
 from .pyxfr import GenomeIndex
 
-import json
+try:
+    import pandas
+
+    pandas_available = True
+except ImportError:
+    pandas_available = False
+
 
 def generate_bins(genome_index, bin_size):
     """
@@ -51,8 +60,8 @@ def generate_bins(genome_index, bin_size):
     # ADS: if we get here, we assume for now that everything is ok
     meta = index_as_dict["meta"]
     chrom_names = [
-        i[-1] for i in
-        sorted([(v, k) for k, v in meta["chrom_index"].items()])
+        i[-1]
+        for i in sorted([(v, k) for k, v in meta["chrom_index"].items()])
     ]
     chrom_sizes = dict(zip(chrom_names, meta["chrom_size"]))
     for chrom_name, chrom_size in chrom_sizes.items():
@@ -62,3 +71,40 @@ def generate_bins(genome_index, bin_size):
             stop = min(start + bin_size, chrom_size)
             yield (chrom_name, start, stop)
             start = stop
+
+
+def load_methbase_metadata(genome, config_dir=None):
+    """
+    Load the MethBase2 metadata as a pandas data frame. Returns a pandas data
+    frame.
+
+    Parameters
+    ----------
+
+    genome (str): load the MethBase2 metadata for this genome assembly.
+    """
+    if not pandas_available:
+        raise ImportError(
+            "'load_methbase_metadata' requires pandas, "
+            "which could not be imported"
+        )
+    if not config_dir:
+        home_dir = os.getenv("HOME")
+        if not home_dir:
+            raise KeyError("failed to identify home directory")
+        config_dir = os.path.join(home_dir, ".config", "transferase")
+    elif not os.path.exists(config_dir):
+        raise Exception(
+            f"directory does not exist: {config_dir}. "
+            "See documentation for MConfig"
+        )
+    from .pyxfr import __version__ as pyxfr_version
+
+    metadata_filename = f"metadata_dataframe_{pyxfr_version}.tsv"
+    metadata_path = os.path.join(config_dir, metadata_filename)
+    if not os.path.exists(metadata_path):
+        raise OSError(
+            errno.ENOENT, "methbase metadata file not found", metadata_path
+        )
+    full_table = pandas.read_csv(metadata_path, sep="\t")
+    return full_table
