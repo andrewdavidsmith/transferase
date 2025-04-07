@@ -100,7 +100,7 @@ def load_methbase_metadata(genome, config_dir=None):
         )
     from .pyxfr import __version__ as pyxfr_version
 
-    metadata_filename = f"metadata_dataframe_{pyxfr_version}.tsv"
+    metadata_filename = f"methbase_metadata_dataframe_{pyxfr_version}.tsv"
     metadata_path = os.path.join(config_dir, metadata_filename)
     if not os.path.exists(metadata_path):
         raise OSError(
