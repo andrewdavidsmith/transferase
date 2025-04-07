@@ -4,7 +4,7 @@
     "port": "9000",
     "index_dir": "indexes",
     "methylome_list": "methylome_list_0.6.0.json",
-    "metadata_dataframe": "",
+    "methbase_metadata_dataframe": "",
     "select_metadata": "",
     "methylome_dir": "methylomes",
     "log_file": "",
