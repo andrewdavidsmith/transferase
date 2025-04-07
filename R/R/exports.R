@@ -100,16 +100,16 @@ get_wmeans <- function(levels_matrix, has_n_covered, min_count = 1) {
   .Call(`_Rxfr_get_wmeans`, levels_matrix, has_n_covered, min_count)
 }
 
-#' Load transferase metadata
+#' Load methbase metadata
 #'
-#' Load a data frame with the current transferase metadata.
+#' Load a data frame with the current metadata from MethBase2.
 #'
 #' @param genome The reference genome for which you want metadata.
 #'
 #' @param config_dir The configuration directory. Unless set specifically with
 #'   the config_xfr() function, this should be left empty.
 #'
-#' @return A data frame with the current transferase metadata.
+#' @return A data frame with the current MethBase2 metadata.
 #'
 #' @details
 #'
@@ -162,8 +162,8 @@ get_wmeans <- function(levels_matrix, has_n_covered, min_count = 1) {
 #' @examples
 #' # Mostly leave the config_dir empty
 #' config_xfr(c("hg38"), "usually_left_empty")
-#' meta <- load_xfr_metadata("hg38", "usually_left_empty")
-load_xfr_metadata <- function(genome, config_dir = "") {
+#' meta <- load_methbase_metadata("hg38", "usually_left_empty")
+load_methbase_metadata <- function(genome, config_dir = "") {
   if (config_dir == "") {
     home_dir <- Sys.getenv("HOME")
     config_dir <- file.path(home_dir, ".config", "transferase")
@@ -175,7 +175,7 @@ load_xfr_metadata <- function(genome, config_dir = "") {
                                packageVersion("Rxfr"))
   metadata_path <- file.path(config_dir, metadata_filename)
   if (!file.exists(metadata_path)) {
-    fmt <- "config file does not exist: %s. See the config_xfr function"
+    fmt <- "metadata file does not exist: %s. See the config_xfr function"
     stop(sprintf(fmt, metadata_path), call. = FALSE)
   }
   full_table <- read.table(metadata_path, header=TRUE)
