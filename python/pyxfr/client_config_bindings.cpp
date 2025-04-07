@@ -146,7 +146,8 @@ client_config_bindings(nanobind::class_<transferase::client_config> &cls)
     'index_dir' there is no reason to change this unless you are working with
     your own data.
     )doc");
-  cls.def_rw("metadata_dataframe", &xfr::client_config::metadata_dataframe,
+  cls.def_rw("methbase_metadata_dataframe",
+             &xfr::client_config::methbase_metadata_dataframe,
              R"doc(
     If this value is non-empty, it is the name of a file with rows
     corresponding to methylomes. This file is fetched when configuring
