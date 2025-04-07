@@ -30,10 +30,11 @@ Likely that won't work, so see
 
 ### Load transferase metadata
 
-The `load_xfr_metadata` function will return a data frame with metadata about
-the methylomes you can query using transferase. These are the high-quality
-methylomes in MethBase2. The `load_xfr_metadata` function needs the name of a
-reference genome (the assembly, using UCSC Genome Browser names, like hg38).
+The `load_methbase_metadata` function will return a data frame with metadata
+about the methylomes you can query using transferase. These are the
+high-quality methylomes in MethBase2. The `load_methbase_metadata` function
+needs the name of a reference genome (the assembly, using UCSC Genome Browser
+names, like hg38).
 
 Usage:
 ```R
