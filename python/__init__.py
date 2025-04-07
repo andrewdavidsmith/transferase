@@ -1,17 +1,12 @@
-"""pyxfr: the transferase Python API. See help for individual classes.
+"""
+pyxfr: the transferase Python API. For detailed help, see individual modules
+within this package:
 
-Transeferase is a system for downloading DNA methylation data from the
-MethBase2 database. You can also use it with your own data. If you
-want to list the classes available in this Python API, you can do the
-following:
-
-  import pyxfr, inspect
-  classes = [
-      cls for cls, obj in inspect.getmembers(transferase, inspect.isclass)
-  ]
-  print(classes)
+  >>> from pyxfr import pyxfr, pyxfr_utils
+  >>> help(pyxfr)
+  >>> help(pyxfr_utils)
 """
 
 from .pyxfr import *
 
-from .pyxfr_utils import *
+from .pyxfr_utils import generate_bins, load_methbase_metadata
