@@ -107,4 +107,8 @@ def load_methbase_metadata(genome, config_dir=None):
             errno.ENOENT, "methbase metadata file not found", metadata_path
         )
     full_table = pandas.read_csv(metadata_path, sep="\t")
-    return full_table
+    rows_to_keep = full_table['assembly'] == genome
+    if not rows_to_keep.any():
+        raise KeyError(f"no data found for genome {genome}")
+    cols_to_keep = full_table.columns.drop(['assembly'])
+    return full_table[rows_to_keep][cols_to_keep]
