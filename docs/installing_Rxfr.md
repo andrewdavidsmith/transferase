@@ -80,7 +80,8 @@ install.packages("Rxfr_0.6.1.tar.gz")
 
 ### Linux
 
-In these instructions I use `mamba` instead of `conda`, and I use it through
+These instructions have been tested and work on the "ubuntu:latest" image. In
+these instructions I use `mamba` instead of `conda`, and I use it through
 `miniforge3`. On a fresh install of Ubuntu (docker `ubuntu:latest`), we need
 the following, but likely you already have these:
 
