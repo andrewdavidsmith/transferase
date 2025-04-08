@@ -1,147 +1,198 @@
 # Transferase
 
-[What's New](#whats-new)
+[**What's New**](#whats-new)
 
-The MethBase2 database currently has roughly 13,500 *high-quality* methylomes
-for vertebrate species, mostly split equally between human and mouse. For most
-epigenomics scientists, answering important questions requires identifying
-relevant data sets and obtaining methylation levels summarized at relavant
-parts of the genome.  Transferase provides fast access to MethBase2 via
-queries made up of two parts: a set of genomic intervals and one or more
-methylomes of interest. Queries return methylation levels in each interval for
-each specified methylome. There is no need to download entire methylomes
-because the server can quickly respond with the methylation levels in query
-regions -- tens of thousands of intervals in a single query, with responses as
-fast as a few seconds over regular home internet.  In some situations the
-transferse server can respond faster than you could load the data files if had
-them locally on your laptop or workstation.
+## What is transferase?
 
-- As of v0.5.0, the server open to the public. I don't yet know how well the
-  server can stand up to heavy traffic -- even from a small number of users
-  with big queries. So I might need to put restrictions on the sizes of
-  queries. As of now, it's quite open.
+Transferase is a system for retrieving DNA methylation levels through
+user-defined sets of genomic intervals. When analyzing whole-genome DNA
+methylation profiles ("methylomes"), this form of summary statistic is central
+to both hypothesis testing and exploratory data analysis. In particular, it is
+the basis of identifying differentially methylated regions, clustering
+methylomes based on subsets of genes and other genomic features, and
+clustering genomic features according to their methylation dynamics.
 
-- The current version (v0.6.0) is still in an early development stage,
-  although many improvements have been made. The command line tools are
-  maturing, but hasn't seen enough use to know if there are any serious bugs
-  lurking. This is especially true for the Python bindings, and even more for
-  the R package (Rxfr).
+The motivation behind transferase is simple. Methylomes derived from
+whole-genome sequencing are huge. Even with access to high-performance
+computing, downloading, moving and processing a collection of methylomes takes
+time. Any study leveraging this type of data will examine multiple different
+sets of genomic features and explore a variety of contrasts between
+methylomes. This process can and should be faster and more convenient. But
+attaining these goals requires methods that synergize to exploit certain
+unique characteristics of sequencing-based whole-genome DNA methylation
+profiles.
 
-- I appreciate feedback. You can open an issue on github or contact me
-  (Andrew) directly.
+Transferase is a complete system: it includes server software, a collection of
+file formats and algorithms, client apps and APIs, all co-designed to maximize
+efficiency of data retrieval. Transferase can run on a local system for an
+individual user, or remotely granting more users access to larger volumes of
+data. With a good network connection, queries to a remote transferase server
+can be faster than similar analysis of locally stored files.
 
-- If you have a lot of methylome data, whether it's from whole-genome
-  bisulfite sequencing, or from Nanopore, you can use transferase locally to
-  do very fast data analysis.
+A public transferase server currently provides access to MethBase2, a
+methylome database with roughly 13,500 vertebrate methylomes that are
+whole-genome, sequencing-based and *high-quality*. Most of these are split
+between human and mouse. The transferase clients include tools to help
+identify which among those methylomes might be useful to inform specific
+biological questions.
 
-- Target systems are Mac and Linux. As of v0.6.0, there are binary releases
-  that should work on any Linux and any Mac machine. Only two users have
-  reported that the binaries don't work on their systems.
+- If you work on Mac or Linux, there are lots of ways to get and use
+  transferase.
 
-- Target platforms are command line, Python and R. The R API is available as
-  of v0.6.0.
+- Transferase is in early development and is improving quickly.
 
-- The Python package needs Python 3.13, but otherwise will run on almost any
-  Linux machine. The R package needs at least R version 4.4.
+- But this means frequent changes -- check back for updates, and star or watch
+  this repo.
+
+- I appreciate your feedback. You can open an issue on GitHub or contact me
+  (Andrew) directly via the email in my GitHub profile.
+
+- A table-of-contents for the documentation should be "here" but I don't have
+  it organized yet. All current documentation can be found in the [docs](docs)
+  directory of this repo.
 
 ## What's new
 
 * The transferase Python package, pyxfr, can now be installed using
-  [pip](https://pypi.org/project/pyxfr/0.6.0) with Python >= 3.12 on Linux
+  [pip](https://pypi.org/project/pyxfr/0.6.5) with Python >= 3.12 on Linux
   and macOS (at least Ventura):
   ```console
   pip install pyxfr
   ```
 
+* The Python and R packages each include a function that loads a data frame
+  with extra information about the methylomes available through the public
+  transferase server.
+
+* The `select` command in the transferase command line app now includes more
+  details about available methylomes (hit 'd' to turn on details).
+
+## Current status
+
+- Public server: It's open and currently serving a lot of high-quality
+  methylomes. Right now (2025-04-07) the only restriction on use is that
+  individual queries are limited to roughly 45 methylomes, and roughly 1M
+  query intervals. If you need more, just do multiple queries.
+
+- Linux: The binary installation for Linux should work on any Linux machine
+  going back 15 years.
+
+- macOS: The binary installation for macOS should work on any Mac hardware
+  that is running at least Ventura (macos-13; October 2022).
+
+- Python: The python package, pyxfr, can be installed with `pip install pyxfr`
+  and requires Python >= 3.12 but otherwise should work on any Linux and any
+  Mac running at least Ventura.
+
+- R: The R package, Rxfr, can be installed on Linux and macOS, but it needs R
+  version >= 4.4 and is not yet easy to install.
+
 ## Documentation
 
-The instructions for using transferase on the command line are in the
-`docs/command_line.md` file and very basic docs for the Python API are in
-`docs/python.md`. There is now built-in Python documentation (e.g., using
-`help(transferase)` within Python), and similarly for R.
+The instructions for using transferase on the command line are in
+[docs/command_line.md](docs/command_line.md). Instructions for setting up a
+server are in [docs/server.md](docs/server.md). Basic usage examples for
+pyxfr are in [docs/python.md](docs/python.md). There is also built-in
+documentation in Python and R (use `help(pyxfr)` in Python or
+`library(help=Rxfr)` in R).
 
-## Installing transferase
-
-### Building from source
-
-Detailed (maybe too detailed) instructions for building transferase from
-source can be found in the `docs/building.md` file in this repo.
+## Installation
 
 ### Linux
 
-You can find all the available installers from "releases" page (assuming you
-are reading this on github.com).  You can download a shell installer
-[here](https://github.com/andrewdavidsmith/transferase/releases/download/v0.6.0/transferase-0.6.0-Linux.sh).
-Then run the downloaded installer (likely you want to first install it beneath
-your home dir):
+The binary releases for Linux should work on any Linux system. You can find
+the installers
+[here](https://github.com/andrewdavidsmith/transferase/releases/v0.6.5). If
+you aren't familiar with installing command line tools, try using the [shell
+installer](https://github.com/andrewdavidsmith/transferase/releases/download/v0.6.5/transferase-0.6.5-Linux.sh)
+like this:
 
 ```console
-sh transferase-0.6.0-Linux.sh --prefix=${PREFIX}
+sh transferase-0.6.5-Linux.sh --prefix=/desired/install/location
 ```
 
-This will prompt you to accept the license, and then it will install the
-transferase binaries in `${PREFIX}/bin`, along with some config files in
-`${PREFIX}/share`. If you want to install it system-wide, and have admin
-privileges, you can do:
+If you run this and see output, it worked:
 
 ```console
-sh transferase-0.6.0-Linux.sh --prefix=/usr/local
+/desired/install/location/bin/xfr
 ```
 
-If you are on Debian or Ubuntu, and have admin privileges, you can use the
-Debian package and then transferase will be tracked in the package management
-system. Similarly, there is an RPM for Linux distributions that use those. You
-can get these from the "releases" page. For Ubuntu and Debian, install like
-this:
+To remove it just delete the installation directory:
 
 ```console
-sudo dpkg -i ./transferase-0.6.0-Linux.deb
+rm -r /desired/install/location
 ```
 
-For Red Hat, Fedora or SUSE, install like this:
-
-```console
-sudo rpm -i ./transferase-0.6.0-Linux.rpm
-```
+Packages are available for Linux: a
+[deb](https://github.com/andrewdavidsmith/transferase/releases/download/v0.6.5/transferase-0.6.5-Linux.deb)
+for Ubuntu or Debian and an
+[rpm](https://github.com/andrewdavidsmith/transferase/releases/download/v0.6.5/transferase-0.6.5-Linux.rpm)
+for Red Hat, Fedora or SUSE. If you plan to install system-wide, using the
+package managers is a very good idea. More [here](#Linux-package-managers).
 
 ### Mac
 
-For Mac two architectures are supported: the older "x86_64" and the the arm64
-("Apple Silicon"). If you are using an older Mac, then the binaries built on
-macOS 13 should work for you. If you are using a newer Mac, then the binaries
-built on macOS 14 or 15 should work for you. I think this should be true
-regardless of which version of macOS you are actually using -- as long as you
-have the right hardware architecture. However, I can't test all systems in all
-combinations, so feedback is appreciated.
-
-Curently only a shell installer is available. You can download the installer
-matching your version at the releases page on github. Assuming it's macos-15
-and ARM64, then do this:
+As of v0.6.5, the transferase binary release for Mac is a "universal binary"
+which should work on any Mac hardware. It is built to work on Ventura or
+later, but it has worked on a much older system. You can find the installers
+[here](https://github.com/andrewdavidsmith/transferase/releases/v0.6.5). If
+you aren't familiar with installing command line tools, try using the [shell
+installer](https://github.com/andrewdavidsmith/transferase/releases/download/v0.6.5/transferase-0.6.5-macOS.sh)
+like this:
 
 ```console
-sh transferase-0.6.0-Linux.sh --prefix=${PREFIX}
+sh transferase-0.6.5-macOS.sh --prefix=/desired/install/location
 ```
 
-This will prompt you to accept the license, and then it will install the
-transferase binaries in `${PREFIX}/bin`, along with some config files in
-`${PREFIX}/share`. For v0.6.0, be careful with the bash completions file on
-macos -- it's still a bit unstable.
-
-## Installing the Python package
-
-The transferase Python package, pyxfr, can now be installed using
-[pip](https://pypi.org/project/pyxfr/0.6.0) with Python >= 3.12 on Linux
-and macOS (at least Ventura):
+Then check that it worked like this:
 
 ```console
+/desired/install/location/bin/xfr
+```
+
+And to remove it just delete the installation directory:
+
+```console
+rm -r /desired/install/location
+```
+
+### The Python package
+
+The Python package is named pyxfr, and it can be installed using
+[pip](https://pypi.org/project/pyxfr/0.6.5) with Python >= 3.12 on Linux and
+macOS (at least Ventura):
+
+```console
+# Use a virtual environment
 python3 -m venv .venv
 . .venv/bin/activate
 pip install pyxfr
-# To test -- if you see output, it worked!
-python3 -c "from pyxfr import *; help(pyxfr)"
+# Check that it worked
+python3 -c "from pyxfr import pyxfr; help(pyxfr)"
 ```
 
-## Installing the R API
+### The R package
 
-Please see the instructions in
-[`docs/installing_Rxfr.md`](docs/installing_Rxfr.md).
+The R package is named Rxfr. Please see the instructions in
+[docs/installing_Rxfr.md](docs/installing_Rxfr.md).
+
+### Building from source
+
+Detailed instructions for building transferase from source can be found in
+[docs/building.md](docs/building.md).
+
+### Linux package managers
+
+```console
+# Red Hat or Fedora (not sure SUSE has dnf)
+rpm -i transferase-0.6.5-Linux.rpm            # See what will be installed
+sudo dnf install transferase-0.6.5-Linux.rpm  # Install
+dnf info transferase                          # See what was installed
+sudo dnf remove transferase                   # Uninstall
+
+# Ubuntu or Debian
+dpkg --info transferase-0.6.5-Linux.deb       # See what will be installed
+sudo apt install transferase-0.6.5-Linux.deb  # Install
+apt info transferase                          # See what was installed
+sudo apt remove transferase                   # Uninstall
+```
