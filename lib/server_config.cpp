@@ -144,7 +144,7 @@ server_config::read_config_file_no_overwrite(
   if (pid_file.empty())
     pid_file = tmp.pid_file;
 
-  if (n_threads == 0)
+  if (n_threads == 1)
     n_threads = tmp.n_threads;
   if (max_resident == 0)
     max_resident = tmp.max_resident;
