@@ -126,9 +126,9 @@ on your system to cleanly uninstall it. You can use `dpkg`:
 
 ```console
 # Examine what will be installed
-dpkg --info build/transferase-0.6.0-Linux.deb
+dpkg --info build/transferase-0.6.5-Linux.deb
 # Do the install
-dpkg --install build/transferase-0.6.0-Linux.deb
+dpkg --install build/transferase-0.6.5-Linux.deb
 # See what has been installed
 dpkg --status transferase
 # Remove it
@@ -138,7 +138,7 @@ dpkg --remove transferase
 Or `apt` (note how the path is formed):
 
 ```console
-apt install ./build/transferase-0.6.0-Linux.deb
+apt install ./build/transferase-0.6.5-Linux.deb
 apt info transferase
 apt remove transferase
 ```
@@ -188,7 +188,7 @@ installed with pip. Here is what I got and how to install it (we are still in
 a venv):
 
 ```console
-pip install build/python/dist/pyxfr-0.6.0-cp312-none-manylinux_2_38_x86_64.whl
+pip install build/python/dist/pyxfr-0.6.5-cp312-none-manylinux_2_38_x86_64.whl
 ```
 
 In the above naming, the `cp312` is the Python version. The `none` means no
@@ -217,6 +217,7 @@ along with some version information for the dnf packages I found.
 - cmake: cmake (3.30.8/3.28)
 - ncurses: ncurses-devel (for the 'select' command)
 - ZLib: zlib-devel
+- OpenSSL: openssl-devel
 
 The above can be installed as follows:
 
@@ -227,7 +228,8 @@ dnf install -y \
     g++ \
     cmake \
     zlib-devel \
-    ncurses-devel
+    ncurses-devel \
+    openssl-devel
 ```
 
 Similar to case for Ubuntu, we clone transferase, configure the build and then
@@ -271,7 +273,7 @@ cpack -B build --config build/CPackConfig.cmake
 You can install/remove the RPM with `dnf`:
 
 ```console
-dnf install build/transferase-0.6.0-Linux.rpm
+dnf install build/transferase-0.6.5-Linux.rpm
 dnf info transferase
 dnf remove transferase
 ```
@@ -279,7 +281,7 @@ dnf remove transferase
 Or with `rpm`:
 
 ```console
-rpm -i build/transferase-0.6.0-Linux.rpm
+rpm -i build/transferase-0.6.5-Linux.rpm
 rpm -qi transferase  # Info
 rpm -e transferase  # Remove
 ```
@@ -433,23 +435,23 @@ R CMD build Rxfr
 ```
 
 The `build` above is a sub-command to `R CMD` and not the name of a CMake
-build directory. This command generates a file named `Rxfr_0.6.0.tar.gz`
+build directory. This command generates a file named `Rxfr_0.6.5.tar.gz`
 (unless I forgot to update these docs with a new version number...).
 
 The final step tells us how well we did by running the "check" command:
 
 ```console
-MAKEFLAGS="-j32" R CMD check Rxfr_0.6.0.tar.gz
+MAKEFLAGS="-j32" R CMD check Rxfr_0.6.5.tar.gz
 ```
 
 Since the above command will build all the code, using the `-j32` helps with
 speed.
 
 If the above command works without "warnings", congratulate both yourself and
-me. Now you can use the `Rxfr_0.6.0.tar.gz` as follows to install:
+me. Now you can use the `Rxfr_0.6.5.tar.gz` as follows to install:
 
 ```R
-install.packages("Rxfr_0.6.0.tar.gz")
+install.packages("Rxfr_0.6.5.tar.gz")
 library(Rxfr)
 library(help=Rxfr)
 ```
@@ -505,7 +507,7 @@ R -e "library(roxygen2, R6); roxygen2::roxygenize('Rxfr')" && \
 mkdir Rxfr/doc && \
 R CMD Rd2pdf -o Rxfr/doc/Rxfr.pdf --no-preview Rxfr && \
 R CMD build Rxfr && \
-R CMD check Rxfr_0.6.0.tar.gz
+R CMD check Rxfr_0.6.5.tar.gz
 ```
 
 ## Building for tests
