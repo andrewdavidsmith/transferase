@@ -54,12 +54,12 @@ from pyxfr import GenomicInterval
 intervals = GenomicInterval.read(genome_index, intervals_filename)
 
 # Do the query using the intervals
-levels = client.get_levels(methylome_names, intervals)
+levels = client.get_levels(genome, methylome_names, intervals)
 
 print("\n".join([str(levels.at(i, 1)) for i in range(10)]))
 
 query = genome_index.make_query(intervals)
-levels = client.get_levels_covered(methylome_names, query)
+levels = client.get_levels_covered(genome, methylome_names, query)
 
 for j in range(levels.n_methylomes):
     for i in range(10):
