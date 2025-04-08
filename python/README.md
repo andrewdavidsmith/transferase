@@ -1,19 +1,8 @@
 # pyxfr
 
-Transferase enables access to massive volumes of remotely stored
-sequencing-based whole genome DNA methylation profiles, with the aim
-delivering results at speeds expected from locally stored data. Transferase
-include a collection of data formats and algorithms for fast computation of
-methylation levels through arbitrary genomic intervals, supporting flexible
-queries for the most useful summary statistics. The client apps and APIs of
-transferase are designed to facilitate exploratory data analysis and
-hypothesis testing. The public transferase server interfaces with MethBase2, a
-database that includes over 13,000 high-quality WGBS methylomes from mammalian
-species (04/2025). The transferase clients include command line apps for Linux
-and macOS, along with a Python package and an R package.
-
-The pyxfr Python package is an API for transferase. This package allows the
-same queries to be done within Python as with the transferase command line
+The pyxfr package is an API for transferase. Learn more about transferase
+[here](https://github.com/andrewdavidsmith/transferase). This package allows
+the same queries to be done within Python as with the transferase command line
 app. Almost all other utilities for manipulating transferase data are
 available through pyxfr.
 
@@ -44,9 +33,9 @@ from pyxfr import LogLevel
 pyxfr.set_log_level(LogLevel.debug)
 ```
 
-Next we want to set up transferase for the user (i.e., you) on the host system
-(e.g., your laptop). The following will do a default setup, and might take up
-to a minute:
+Next we want to set up transferase for the user (i.e., your login account) on
+the host system (e.g., your laptop). The following will do a default setup,
+and might take up to a minute:
 
 ```python
 from pyxfr import MConfig
@@ -101,7 +90,8 @@ intervals = GenomicInterval.read(genome_index, "intervals.bed")
 At this point we can do a query:
 
 ```python
-levels = client.get_levels(["ERX9474770","ERX9474769"], intervals)
+genome_name = "hg38"
+levels = client.get_levels(genome_name, ["ERX9474770","ERX9474769"], intervals)
 ```
 
 The `levels` is an object of class `MLevels`, which is a matrix where rows
@@ -136,8 +126,10 @@ done internally by the query above, but the work to do it can be skipped if
 they you already have them. Here is an example:
 
 ```python
+genome_name = "hg38"
+methylome_names = ["ERX9474770","ERX9474769"]
 query = genome_index.make_query(intervals)
-levels = client.get_levels_covered(["ERX9474770","ERX9474769"], query)
+levels = client.get_levels_covered(genome_name, methylome_names, query)
 ```
 
 If you want to see the methylation levels alongside the original genomic
@@ -173,12 +165,14 @@ methylation level for the corresponding interval. This is likely the most
 useful summary statistic in all of methylome analysis.
 
 You can convert an `MLevels` object into a numpy array, which is already
-familiar to many Python users:
+familiar to many Python users. The following commands assume that the `levels`
+object was obtained from a `get_levels_covered` query, hence the `3` as the
+final dimension in `a.shape`:
 
 ```python
 a = levels.view_nparray()
 methylome_names = ["ERX9474770","ERX9474769"]
-assert a.shape == (len(methylome_names), len(intervals), 2)
+assert a.shape == (len(methylome_names), len(intervals), 3)
 ```
 
 The `intervals` in that command came from an earlier command above. The full
@@ -187,7 +181,7 @@ set of weighted mean methylation levels can be obtained as a numpy array
 `levels` object. The `min_reads` parameter indicates a value below which the
 fraction is not interpretable. This is needed, because the information about
 whether there are even any reads at all for a given interval would be
-lost. Entries without enough reads are assigned a value of -1.0. Here is an
+lost. Entries without enough reads are assigned a value of `-1.0`. Here is an
 example (the output is a numpy array):
 
 ```python
@@ -206,4 +200,32 @@ total number of CpG sites in each interval like this:
 ```python
 n_cpgs_intervals = genome_index.get_n_cpgs(intervals)
 print("\n".join([str(i) for i in n_cpgs_intervals[0:10]]))
+```
+
+And an addition in v0.6.1: you can get the metadata for MethBase2 methylomes
+available on the public transferase server. As of v0.6.1, the function
+requires a string argument, with the intention of only returning information
+about methylomes for that genome, but at the time of the v0.6.1 release a bug
+causes all species to be returned. Just be careful about that.  Here is the
+command and along with what you might expect to see:
+
+```python
+methbase_metadata = pyxfr_utils.load_methbase_metadata("hg38")
+methbase_metadata.sample_name
+# 0                      Blastocyst
+# 1                      Blastocyst
+# 2        Embryonic Stem (ES) Cell
+# 3                           Sperm
+# 4                           Sperm
+#                    ...
+# 13586                       Sperm
+# 13587                       Sperm
+# 13588                       Sperm
+# 13589                       Sperm
+# 13590                       Sperm
+# Name: sample_name, Length: 13591, dtype: object
+sum(methbase_metadata.sample_name == "Sperm")
+# 476
+list(methbase_metadata.columns.values)
+# ['study', 'experiment', 'assembly', 'bsrate', 'meth', ...
 ```
