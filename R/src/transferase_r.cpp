@@ -404,6 +404,7 @@ get_n_cpgs_bins(const Rcpp::XPtr<transferase::remote_client> client,
 [[nodiscard]] auto
 get_wmeans(const Rcpp::NumericMatrix m, const bool has_n_covered,
            const std::uint32_t min_count) -> Rcpp::NumericMatrix {
+  constexpr auto hdr_err_fmt = "Expected column name with \"_M\", found {}";
   const auto n_rows = m.rows();
   const auto stride = has_n_covered ? 3 : 2;
   const auto n_methylomes = m.cols() / stride;
@@ -428,11 +429,10 @@ get_wmeans(const Rcpp::NumericMatrix m, const bool has_n_covered,
       Rcpp::CharacterVector orig_cn = Rcpp::colnames(m);
       std::vector<std::string> updated_cn(n_methylomes);
       for (const auto meth_id : std::views::iota(0, n_methylomes)) {
-        const std::string name = orig_cn(meth_id * stride);
-        if (!name.ends_with("_M")) {
-          const auto fmt = R"(Expected column name with "_M", found {})";
-          Rcpp::stop(std::format(fmt, name));
-        }
+        const std::string name =
+          Rcpp::as<std::string>(orig_cn(meth_id * stride));
+        if (!name.ends_with("_M"))
+          Rcpp::stop(std::format(hdr_err_fmt, name));
         updated_cn[meth_id] = name.substr(0, std::size(name) - 2);
         Rcpp::colnames(w) =
           Rcpp::CharacterVector(std::cbegin(updated_cn), std::cend(updated_cn));
