@@ -462,7 +462,7 @@ Here are some things to try:
    TERM=xterm xfr select -g hg38 -o out.txt
    ```
    On one of my systems I need to do this when I'm using tmux. I also figured
-   out how to eliminate this problem for versions starting with 0.6.5.
+   out how to eliminate this problem for versions starting with 0.6.1.
 
 2. The terminal configuration file is not being found. I had this issue due to
    conda assigning the environment variable TERMCAP, which helps terminals

@@ -54,7 +54,7 @@ biological questions.
 ## What's new
 
 * The transferase Python package, pyxfr, can now be installed using
-  [pip](https://pypi.org/project/pyxfr/0.6.5) with Python >= 3.12 on Linux
+  [pip](https://pypi.org/project/pyxfr/0.6.1) with Python >= 3.12 on Linux
   and macOS (at least Ventura):
   ```console
   pip install pyxfr
@@ -102,13 +102,13 @@ documentation in Python and R (use `help(pyxfr)` in Python or
 
 The binary releases for Linux should work on any Linux system. You can find
 the installers
-[here](https://github.com/andrewdavidsmith/transferase/releases/v0.6.5). If
+[here](https://github.com/andrewdavidsmith/transferase/releases/v0.6.1). If
 you aren't familiar with installing command line tools, try using the [shell
-installer](https://github.com/andrewdavidsmith/transferase/releases/download/v0.6.5/transferase-0.6.5-Linux.sh)
+installer](https://github.com/andrewdavidsmith/transferase/releases/download/v0.6.1/transferase-0.6.1-Linux.sh)
 like this:
 
 ```console
-sh transferase-0.6.5-Linux.sh --prefix=/desired/install/location
+sh transferase-0.6.1-Linux.sh --prefix=/desired/install/location
 ```
 
 If you run this and see output, it worked:
@@ -124,24 +124,24 @@ rm -r /desired/install/location
 ```
 
 Packages are available for Linux: a
-[deb](https://github.com/andrewdavidsmith/transferase/releases/download/v0.6.5/transferase-0.6.5-Linux.deb)
+[deb](https://github.com/andrewdavidsmith/transferase/releases/download/v0.6.1/transferase-0.6.1-Linux.deb)
 for Ubuntu or Debian and an
-[rpm](https://github.com/andrewdavidsmith/transferase/releases/download/v0.6.5/transferase-0.6.5-Linux.rpm)
+[rpm](https://github.com/andrewdavidsmith/transferase/releases/download/v0.6.1/transferase-0.6.1-Linux.rpm)
 for Red Hat, Fedora or SUSE. If you plan to install system-wide, using the
 package managers is a very good idea. More [here](#Linux-package-managers).
 
 ### Mac
 
-As of v0.6.5, the transferase binary release for Mac is a "universal binary"
+As of v0.6.1, the transferase binary release for Mac is a "universal binary"
 which should work on any Mac hardware. It is built to work on Ventura or
 later, but it has worked on a much older system. You can find the installers
-[here](https://github.com/andrewdavidsmith/transferase/releases/v0.6.5). If
+[here](https://github.com/andrewdavidsmith/transferase/releases/v0.6.1). If
 you aren't familiar with installing command line tools, try using the [shell
-installer](https://github.com/andrewdavidsmith/transferase/releases/download/v0.6.5/transferase-0.6.5-macOS.sh)
+installer](https://github.com/andrewdavidsmith/transferase/releases/download/v0.6.1/transferase-0.6.1-macOS.sh)
 like this:
 
 ```console
-sh transferase-0.6.5-macOS.sh --prefix=/desired/install/location
+sh transferase-0.6.1-macOS.sh --prefix=/desired/install/location
 ```
 
 Then check that it worked like this:
@@ -159,7 +159,7 @@ rm -r /desired/install/location
 ### The Python package
 
 The Python package is named pyxfr, and it can be installed using
-[pip](https://pypi.org/project/pyxfr/0.6.5) with Python >= 3.12 on Linux and
+[pip](https://pypi.org/project/pyxfr/0.6.1) with Python >= 3.12 on Linux and
 macOS (at least Ventura):
 
 ```console
@@ -185,14 +185,14 @@ Detailed instructions for building transferase from source can be found in
 
 ```console
 # Red Hat or Fedora (not sure SUSE has dnf)
-rpm -i transferase-0.6.5-Linux.rpm            # See what will be installed
-sudo dnf install transferase-0.6.5-Linux.rpm  # Install
+rpm -i transferase-0.6.1-Linux.rpm            # See what will be installed
+sudo dnf install transferase-0.6.1-Linux.rpm  # Install
 dnf info transferase                          # See what was installed
 sudo dnf remove transferase                   # Uninstall
 
 # Ubuntu or Debian
-dpkg --info transferase-0.6.5-Linux.deb       # See what will be installed
-sudo apt install transferase-0.6.5-Linux.deb  # Install
+dpkg --info transferase-0.6.1-Linux.deb       # See what will be installed
+sudo apt install transferase-0.6.1-Linux.deb  # Install
 apt info transferase                          # See what was installed
 sudo apt remove transferase                   # Uninstall
 ```

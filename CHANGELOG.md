@@ -1,6 +1,6 @@
 # Changelog
 
-## transferase 0.6.5 (2025-04-07)
+## transferase 0.6.1 (2025-04-07)
 
 Feature changes:
 * Added more detail about samples in the 'select' command.
