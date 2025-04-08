@@ -91,7 +91,8 @@ At this point we can do a query:
 
 ```python
 genome_name = "hg38"
-levels = client.get_levels(genome_name, ["ERX9474770","ERX9474769"], intervals)
+methylome_names = ["ERX9474770","ERX9474769"]
+levels = client.get_levels(genome_name, methylome_names, intervals)
 ```
 
 The `levels` is an object of class `MLevels`, which is a matrix where rows
@@ -203,29 +204,13 @@ print("\n".join([str(i) for i in n_cpgs_intervals[0:10]]))
 ```
 
 And an addition in v0.6.1: you can get the metadata for MethBase2 methylomes
-available on the public transferase server. As of v0.6.1, the function
-requires a string argument, with the intention of only returning information
-about methylomes for that genome, but at the time of the v0.6.1 release a bug
-causes all species to be returned. Just be careful about that.  Here is the
-command and along with what you might expect to see:
+available on the public transferase server. Here is the command and along with
+what you might expect to see:
 
 ```python
 methbase_metadata = pyxfr_utils.load_methbase_metadata("hg38")
-methbase_metadata.sample_name
-# 0                      Blastocyst
-# 1                      Blastocyst
-# 2        Embryonic Stem (ES) Cell
-# 3                           Sperm
-# 4                           Sperm
-#                    ...
-# 13586                       Sperm
-# 13587                       Sperm
-# 13588                       Sperm
-# 13589                       Sperm
-# 13590                       Sperm
-# Name: sample_name, Length: 13591, dtype: object
 sum(methbase_metadata.sample_name == "Sperm")
-# 476
+# 174
 list(methbase_metadata.columns.values)
-# ['study', 'experiment', 'assembly', 'bsrate', 'meth', ...
+# ['study', 'experiment', 'bsrate', 'meth', 'depth', 'mapping', 'uniq',...
 ```
