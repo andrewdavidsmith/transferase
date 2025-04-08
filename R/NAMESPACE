@@ -1,3 +1,4 @@
 useDynLib(Rxfr, .registration = TRUE)
 import(R6, methods, Rcpp)
+importFrom("utils", "packageVersion", "read.table")
 exportPattern("^[[:alpha:]]+")
