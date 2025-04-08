@@ -9,8 +9,8 @@ queries for the most useful summary statistics. The client apps and APIs of
 transferase are designed to facilitate exploratory data analysis and
 hypothesis testing. The public transferase server interfaces with MethBase2, a
 database that includes over 13,000 high-quality WGBS methylomes from mammalian
-species (04/2025). Since version 0.6.0, transferase clients include command
-line apps for Linux and macOS, along with a Python package and an R package.
+species (04/2025). The transferase clients include command line apps for Linux
+and macOS, along with a Python package and an R package.
 
 The pyxfr Python package is an API for transferase. This package allows the
 same queries to be done within Python as with the transferase command line
@@ -21,8 +21,9 @@ Although documentation is still sparse for pyxfr, each class and function in
 pyxfr has built-in documentation:
 
 ```python
-from pyxfr import *
+from pyxfr import pyxfr, pyxfr_utils
 help(pyxfr)
+help(pyxfr_utils)
 ```
 
 ## Requirements
