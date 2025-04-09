@@ -81,6 +81,7 @@ NLOHMANN_JSON_SERIALIZE_ENUM(log_level_t, {
     {log_level_t::debug, "debug"},
     {log_level_t::info, "info"},
     {log_level_t::warning, "warning"},
+    {log_level_t::error, "error"},
     {log_level_t::critical, "critical"},
   })
 // clang-format on
@@ -95,6 +96,9 @@ static constexpr auto level_name = std::array{
   "critical"sv,
   // clang-format on
 };
+
+static constexpr auto log_level_help_str =
+  "{debug, info, warning, error, critical}";
 
 using std::literals::string_literals::operator""s;
 static constexpr auto level_name_str = std::array{
@@ -114,7 +118,7 @@ to_name(const log_level_t l) -> const std::string_view {
 
 inline auto
 operator<<(std::ostream &o, const log_level_t &l) -> std::ostream & {
-  return o << to_name(l);
+  return o << std::to_underlying(l);
 }
 
 inline auto
