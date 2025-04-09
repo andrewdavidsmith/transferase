@@ -242,7 +242,7 @@ TEST_F(level_container_md_mock, write_with_intervals_writer_test) {
   const auto writer_dataframe = intervals_writer{
     tmp_filename,
     index,
-    output_format_t::dataframe,
+    output_format_t::dfcounts,
     methylomes_names,
     min_reads,
     empty_n_cpgs,
@@ -261,7 +261,7 @@ TEST_F(level_container_md_mock, write_with_intervals_writer_test) {
   const auto writer_dataframe_for_vec = intervals_writer{
     tmp_filename_vec,
     index,
-    output_format_t::dataframe,
+    output_format_t::dfcounts,
     methylomes_names,
     min_reads,
     empty_n_cpgs,
@@ -400,7 +400,7 @@ TEST_F(level_container_md_mock, write_with_bins_writer_test) {
   const auto writer_dataframe = bins_writer{
     tmp_filename,
     index,
-    output_format_t::dataframe,
+    output_format_t::dfcounts,
     methylomes_names,
     min_reads,
     empty_n_cpgs,
@@ -419,7 +419,7 @@ TEST_F(level_container_md_mock, write_with_bins_writer_test) {
   const auto writer_dataframe_for_vec = bins_writer{
     tmp_filename_vec,
     index,
-    output_format_t::dataframe,
+    output_format_t::dfcounts,
     methylomes_names,
     min_reads,
     empty_n_cpgs,
