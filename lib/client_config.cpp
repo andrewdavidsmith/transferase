@@ -714,7 +714,7 @@ client_config::install(const std::vector<std::string> &genomes,
   std::error_code error;
   const bool valid = validate(error);
   if (!valid || error)
-    throw std::system_error(error, "[Calling validate]");
+    throw std::runtime_error("Configuration is empty");
 
   lgr.debug("Making configuration directories");
   lgr.debug("progress {}", show_progress);
@@ -799,32 +799,9 @@ client_config::install(const std::vector<std::string> &genomes,
 [[nodiscard]] auto
 client_config::validate(std::error_code &error) const noexcept -> bool {
   // validate the hostname
-  if (hostname.empty()) {
-    error = client_config_error_code::invalid_client_config_information;
-    return false;
-  }
-  // validate the port
-  if (port.empty()) {
-    error = client_config_error_code::invalid_client_config_information;
-    return false;
-  }
-  // validate the index_dir
-  if (index_dir.empty()) {
-    error = client_config_error_code::invalid_client_config_information;
-    return false;
-  }
-  // validate the metadata_file
-  if (methbase_metadata_dataframe.empty()) {
-    error = client_config_error_code::invalid_client_config_information;
-    return false;
-  }
-  // validate the select_metadata
-  if (select_metadata.empty()) {
-    error = client_config_error_code::invalid_client_config_information;
-    return false;
-  }
-  // validate the methylome_list
-  if (methylome_list.empty()) {
+  if (hostname.empty() && port.empty() && index_dir.empty() &&
+      methbase_metadata_dataframe.empty() && select_metadata.empty() &&
+      methylome_list.empty() && methylome_dir.empty() && log_file.empty()) {
     error = client_config_error_code::invalid_client_config_information;
     return false;
   }
