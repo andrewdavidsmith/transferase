@@ -90,20 +90,18 @@ template <typename T> struct writer_base {
   [[nodiscard]] auto
   write_output(const auto &levels) const noexcept -> std::error_code {
     switch (out_fmt) {
-    case output_format_t::none:
-      return write_bedlike(levels, level_element_mode::counts);
     case output_format_t::counts:
       return write_bedlike(levels, level_element_mode::counts);
     case output_format_t::classic:
       return write_bedlike(levels, level_element_mode::classic);
-    case output_format_t::bedgraph:
+    case output_format_t::scores:
       return write_dfscores(levels, '\t', false);
-    case output_format_t::dfscores:
-      return write_dfscores(levels);
-    case output_format_t::dataframe:
+    case output_format_t::dfcounts:
       return write_dataframe(levels, level_element_mode::counts);
     case output_format_t::dfclassic:
       return write_dataframe(levels, level_element_mode::classic);
+    case output_format_t::dfscores:
+      return write_dfscores(levels);
     }
     std::unreachable();
   }
