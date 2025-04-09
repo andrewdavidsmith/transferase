@@ -114,7 +114,7 @@ TEST(command_query_test, intervals_basic_local_test_scores) {
     "-o",
     output_file,
     "-f",
-    "bedgraph",
+    "scores",
     // clang-format on
   };
   const int argc = static_cast<int>(std::size(argv));
