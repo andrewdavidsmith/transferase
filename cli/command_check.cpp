@@ -96,7 +96,7 @@ command_check_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
   if (argc >= 2)
     app.footer(description_msg);
   app.get_formatter()->column_width(column_width_default);
-  app.get_formatter()->label("REQUIRED", "REQD");
+  app.get_formatter()->label("REQUIRED", "");
   app.set_help_flag("-h,--help", "Print a detailed help message and exit");
   // clang-format off
   app.add_option("-x,--index-dir", index_dir,
@@ -112,8 +112,8 @@ command_check_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
   app.add_option("-m,--methylomes", methylome_names,
                  "names of methylome (default: all in directory)");
   app.add_option("-v,--log-level", log_level,
-                 "{debug, info, warning, error, critical}")
-    ->option_text(std::format("ENUM [{}]", log_level_default))
+                 std::format("log level {}", xfr::log_level_help_str))
+    ->option_text(std::format("[{}]", log_level_default))
     ->transform(CLI::CheckedTransformer(xfr::str_to_level, CLI::ignore_case));
   // clang-format on
 

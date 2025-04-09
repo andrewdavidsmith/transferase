@@ -415,8 +415,8 @@ command_format_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
     ->required();
   app.add_flag("-z,--zip", zip, "zip the output");
   app.add_option("-v,--log-level", log_level,
-                 "{debug, info, warning, error, critical}")
-    ->option_text(std::format("ENUM [{}]", log_level_default))
+                 std::format("log level {}", xfr::log_level_help_str))
+    ->option_text(std::format("[{}]", log_level_default))
     ->transform(CLI::CheckedTransformer(xfr::str_to_level, CLI::ignore_case));
   // clang-format on
 

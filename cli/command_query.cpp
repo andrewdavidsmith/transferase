@@ -328,7 +328,7 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
   // where to put the output and in what format
   std::string output_file;
   xfr::output_format_t out_fmt{out_fmt_default};
-  std::uint32_t min_reads{0};  // relevant for dfscores and bedgraph
+  std::uint32_t min_reads{0};  // relevant for 'scores' and 'dfscores'
 
   // run in local mode
   bool local_mode{};
@@ -340,44 +340,50 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
 
   CLI::App app{about_msg};
   argv = app.ensure_utf8(argv);
+  app.formatter(std::make_shared<transferase_formatter>());
+
   app.usage(usage);
   if (argc >= 2)
     app.footer(description_msg);
-  app.get_formatter()->column_width(column_width_default);
-  app.get_formatter()->label("REQUIRED", "REQD");
-  app.set_help_flag("-h,--help", "Print a detailed help message and exit");
+  app.get_formatter()->label("REQUIRED", "");
+  app.set_help_flag("-h,--help", "print a detailed help message and exit");
   // clang-format off
   app.add_option("-c,--config-dir", cfg.config_dir, "specify a config directory")
-    ->option_text("TEXT:DIR")
+    ->option_text("DIR")
     ->check(CLI::ExistingDirectory);
   const auto intervals_file_opt =
-    app.add_option("-i,--intervals-file", intervals_file, "intervals file")
+    app.add_option("-i,--intervals-file", intervals_file,
+                   "input query intervals file in BED format")
     ->option_text("FILE")
     ->check(CLI::ExistingFile);
-  app.add_option("-b,--bin-size", bin_size, "size of genomic bins")
-    ->option_text("UINT")
+  app.add_option("-b,--bin-size", bin_size, "size of genomic bins to query")
+    ->option_text("INT")
     ->excludes(intervals_file_opt);
-  app.add_option("-g,--genome", genome_name, "genome name")
+  app.add_option("-g,--genome", genome_name, "name of the reference genome")
     ->required();
   app.add_option("-m,--methylomes", methylome_names,
-                 "names of methylomes or a file with one per line")
+                 "one or more methylomes names, or a file "
+                 "with one methylome name per line")
     ->required();
   app.add_option("-o,--out-file", output_file, "output file");
   app.add_flag("-C,--covered", count_covered,
-               "count covered sites for each interval");
+               "count covered sites for each query interval");
   app.add_option("-f,--out-fmt", out_fmt,
-                 "output format {counts=1, bedgraph=2, dataframe=3, dfscores=4}")
-    ->option_text(std::format("ENUM [{}]", out_fmt_default))
+                 std::format("output format {}", xfr::output_format_help_str))
+    ->option_text(std::format("[{}]", out_fmt_default))
     ->transform(CLI::CheckedTransformer(xfr::output_format_cli11, CLI::ignore_case));
   app.add_flag("--n-cpgs", write_n_cpgs,
-               "write the number of CpG sites for each query interval");
+               "write the number of CpG sites for each query interval "
+               "as the final column of the output");
   app.add_option("-r,--min-reads", min_reads,
-                 "for fractional output, require this many reads");
+                 "for scores output, if the score is based on fewer "
+                 "than this number of reads, output a value of NA")
+    ->option_text("INT");
   const auto hostname_opt =
     app.add_option("-s,--hostname", cfg.hostname, "server hostname")
     ->option_text("TEXT");
   app.add_option("-p,--port", cfg.port, "server port")
-    ->option_text("UINT")
+    ->option_text("INT")
     ->needs(hostname_opt);
   const auto local_mode_opt =
     app.add_flag("-L,--local", local_mode, "run in local mode")
@@ -389,10 +395,12 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
     ->needs(local_mode_opt)
     ->check(CLI::ExistingDirectory);
   app.add_option("-x,--index-dir", cfg.index_dir,
-                 "genome index directory");
+                 "genome index directory")
+    ->option_text("DIR")
+    ->check(CLI::ExistingDirectory);
   app.add_option("-v,--log-level", cfg.log_level,
-                 "{debug, info, warning, error, critical}")
-    ->option_text(std::format("ENUM [{}]", log_level_default))
+                 std::format("log level {}", xfr::log_level_help_str))
+    ->option_text(std::format("[{}]", log_level_default))
     ->transform(CLI::CheckedTransformer(xfr::str_to_level, CLI::ignore_case));
   // clang-format on
 

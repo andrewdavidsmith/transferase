@@ -143,8 +143,8 @@ command_server_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
   app.add_option("--max-intervals", xfr::request::max_intervals,
                  "maximum number of intervals in a query");
   app.add_option("-v,--log-level", cfg.log_level,
-                 "{debug, info, warning, error, critical}")
-    ->option_text(std::format("ENUM [{}]", log_level_default))
+                 std::format("log level {}", xfr::log_level_help_str))
+    ->option_text(std::format("[{}]", log_level_default))
     ->transform(CLI::CheckedTransformer(xfr::str_to_level, CLI::ignore_case));
   app.add_option("-l,--log-file", cfg.log_file,
                  "log file name");

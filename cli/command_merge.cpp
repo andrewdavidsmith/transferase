@@ -105,8 +105,9 @@ command_merge_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
     ->check(CLI::ExistingDirectory);
   app.add_option("-n,--name", merged_name, "merged methylome name")
     ->required();
-  app.add_option("-v,--log-level", log_level, "{debug, info, warning, error, critical}")
-    ->option_text(std::format("ENUM [{}]", log_level_default))
+  app.add_option("-v,--log-level", log_level,
+                 std::format("log level {}", xfr::log_level_help_str))
+    ->option_text(std::format("[{}]", log_level_default))
     ->transform(CLI::CheckedTransformer(xfr::str_to_level, CLI::ignore_case));
   // clang-format on
 

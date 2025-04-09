@@ -29,12 +29,16 @@ configure a transferase client
 
 static constexpr auto description = R"(
 Configure transferase on your system. The default config directory is
-'${HOME}/.config/transferase'. This command will also retrieve other data. It
-will get index files that are used to accelerate queries. And it will retrieve
-files with MethBase2 metadata. This command has modes that allow you to
-update an existing configuration or reset a configuration to default
-values. Note: configuration is not strictly needed, as most other commands can
-run with all information provided on the command line.
+'${HOME}/.config/transferase'. This command will also retrieve other data,
+depending on how you specify the '--download' argument. By default it will get
+index files that are used to accelerate queries, and retrieve metadata files
+for MethBase2. This command has modes that allow you to update an existing
+configuration or reset a configuration to default values. Note: configuration
+is not strictly needed, as most other commands can run with all information
+provided on the command line. If you are interacting with multiple servers,
+for example a private server with your own data, and the public transferase
+server, you should run this command twice, specifying different directires
+for the configuration.
 )";
 
 static constexpr auto examples = R"(
@@ -44,9 +48,10 @@ xfr config --defaults
 
 xfr config --genomes hg38,mm39
 
-xfr config -s example.com -p 5009 --genomes hg38,mm39
+xfr config  --update -s example.com -p 5009 --genomes hg38,mm39
 
-xfr config --update -s localhost -p 5000
+xfr config -c ./local_server_config --download none \
+    -d my_methylomes -x my_indexes -s localhost -p 5000
 )";
 
 #include "cli_common.hpp"
@@ -105,11 +110,13 @@ command_config_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
 
   CLI::App app{about_msg};
   argv = app.ensure_utf8(argv);
+  app.formatter(std::make_shared<transferase_formatter>());
+
   app.usage(usage);
   if (argc >= 2)
     app.footer(description_msg);
   app.get_formatter()->column_width(column_width_default);
-  app.get_formatter()->label("REQUIRED", "REQD");
+  app.get_formatter()->label("REQUIRED", "");
   app.set_help_flag("-h,--help", "Print a detailed help message and exit");
   // clang-format off
   app.add_option("-c,--config-dir", cfg.config_dir,
@@ -123,28 +130,28 @@ command_config_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
   app.add_option("--methbase-metadata", cfg.methbase_metadata_dataframe,
                  "name of the MethBase2 metadata dataframe");
   app.add_option("--methylome-list", cfg.methylome_list,
-                 "name of the methylome list (for a remote or local server)");
+                 "name of the methylome list file");
   app.add_option("--select-metadata", cfg.select_metadata,
                  "name of the 'select' metadata");
   app.add_option("-d,--methylome-dir", cfg.methylome_dir,
                  "name of a local directory to search for methylomes");
   app.add_option("-v,--log-level", cfg.log_level,
-                 "{debug, info, warning, error, critical}")
-    ->option_text(std::format("ENUM [{}]", log_level_default))
+                 std::format("log level {}", xfr::log_level_help_str))
+    ->option_text(std::format("[{}]", log_level_default))
     ->transform(CLI::CheckedTransformer(xfr::str_to_level, CLI::ignore_case));
   app.add_option("-g,--genomes", genomes,
                  "download index files for these genomes "
                  "(comma separated list, e.g. hg38,mm39)")
     ->delimiter(',');
   app.add_option("--download", download_policy,
-                 "download policy (none, missing, update, all) " +
-                 std::format("default: {}", download_policy_default))
-    ->option_text("ENUM")
+                 "download policy (none, missing, update, all)")
+    ->option_text(std::format("[{}]", to_string(download_policy_default)))
     ->transform(CLI::CheckedTransformer(xfr::download_policy_cli11, CLI::ignore_case));
   const auto all_defaults_opt =
     app.add_flag("--defaults", all_defaults, "allow all default config values")
     ->option_text(" ");
-  app.add_flag("--no-defaults", no_defaults, "use no defaults for missing values")
+  app.add_flag("--no-defaults", no_defaults,
+               "use no defaults and leave unspecified values empty")
     ->option_text(" ")
     ->excludes(all_defaults_opt);
   app.add_flag("--update", update_config, "keep values previously configured");
