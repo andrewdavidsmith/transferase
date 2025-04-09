@@ -40,9 +40,7 @@ namespace transferase {
 auto
 operator<<(std::ostream &o,
            const transferase::output_format_t &of) -> std::ostream & {
-  // NOLINTBEGIN(cppcoreguidelines-pro-bounds-constant-array-index)
-  return o << transferase::output_format_t_name[std::to_underlying(of)];
-  // NOLINTEND(cppcoreguidelines-pro-bounds-constant-array-index)
+  return o << static_cast<int>(std::to_underlying(of));
 }
 
 auto
@@ -58,7 +56,7 @@ operator>>(std::istream &in,
   if (std::ranges::all_of(tmp, is_digit)) {
     std::underlying_type_t<transferase::output_format_t> num{};
     const auto last = tmp.data() + std::size(tmp);  // NOLINT
-    const auto res = std::from_chars(tmp.data(), last, num);
+    const auto res  = std::from_chars(tmp.data(), last, num);
     if (res.ptr != last) {
       in.setstate(std::ios::failbit);
       return in;
