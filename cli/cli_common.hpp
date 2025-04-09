@@ -24,6 +24,36 @@
 #ifndef CLI_CLI_COMMON_HPP_
 #define CLI_CLI_COMMON_HPP_
 
+#include "CLI11/CLI11.hpp"
+
 static const int column_width_default = 30;
+
+class transferase_formatter : public CLI::Formatter {
+  static constexpr auto max_descr_width = 50;
+
+public:
+  auto
+  make_option_desc(const CLI::Option *opt) const -> std::string override {
+    static constexpr auto max_descr_width = 50;
+    std::istringstream iss{opt->get_description()};
+    const std::vector<std::string> words{
+      std::istream_iterator<std::string>{iss}, {}};
+    std::string r{words[0]};
+    std::uint32_t width = std::size(words[0]);
+    for (auto i = 1u; i < std::size(words); ++i) {
+      if (width == 0 || width + std::size(words[i]) < max_descr_width) {
+        r += ' ';
+        ++width;
+      }
+      else {
+        r += '\n';
+        width = 0;
+      }
+      r += words[i];
+      width += std::size(words[i]);
+    }
+    return r;
+  }
+};
 
 #endif  // CLI_CLI_COMMON_HPP_
