@@ -10,8 +10,7 @@ debugging.
 
 ```python
 import pyxfr
-from pyxfr import LogLevel
-pyxfr.set_log_level(LogLevel.debug)
+pyxfr.set_log_level("debug")
 ```
 
 Next we want to set up transferase for the user (i.e., you) on the host system
