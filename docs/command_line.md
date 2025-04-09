@@ -138,6 +138,14 @@ number or word:
 * dfscores (4): Same as "dataframe" but with the scores that are like
   "bedgraph". There is a parameter that allows for "NA" values to be used when
   the counts would have been too low for an interpretable fraction.
+* classic (5): Like bedgraph, but with a column for total read counts for each
+  methylome in the query.
+* dfclassic (6): Like dfscores, but with a column for total read counts for each
+  methylome in the query.
+
+Important: At the time of release v0.6.1, two other output formats are
+available, 'classic' and 'dfclassic', numbered 5 and 6, respectively.  These
+do not appear in the usage message when running `xfr query`.
 
 Just as the total counts being too low means that fractions are tough to
 interpret (a standard error issue), if the number of CpG sites in the interval
@@ -194,8 +202,11 @@ chr1.70000.80000        0.769231        0.75
 chr1.80000.90000        0.793103        0.839695
 ```
 
-Note: as suggested by the words `dataframe` and `dfscores`, this format is an
+Note1: as suggested by the words `dataframe` and `dfscores`, this format is an
 R data frame, so it can be loaded with `read.table("results_df.txt")` in R.
+
+Note2: after release 0.6.1, the names of output formats for the query command
+will change to better reflect how the formats relate to each other.
 
 Be aware that if you try to use a bin size that is too small, the server will
 reject your query. At the same time, if your bin size is too small most of the
@@ -401,17 +412,26 @@ don't likely have any reason to do it.
 This is really great if you are doing exploratory data analysis, wrapping the
 transferase commands into a pipeline that makes multiple queries. The reason
 is that the transferase server can keep each methylome in memory, and after
-the first query you make, subsequent queries will not need to load the
-data. If you have an 8GB laptop, you can easily keep 50 methylomes live at the
-same time, and many queries will be almost instantaneous.
+the first query you make, subsequent queries will not need to load the data.
+If you have an 8GB laptop, you can easily keep 50 methylomes live at the same
+time, and many queries will be almost instantaneous.
 
 Assuming you started the server in a different terminal window as explained
 above, you will need to generate a configuration to query it. This command
 will do the configuration and also download the genome index for hg38:
 
 ```console
-xfr config -c my_config -s localhost -p 5000 -g hg38
+xfr config -c my_config -s localhost -p 5000 \
+    -x /path/to/my_indexes --download none
 ```
+
+If you are still using the same example directories from earlier commands, you
+should have a genome index for hg38 already in the `my_indexes` directory.
+Notice that when configuring the client, above, the full path was given to the
+`my_indexes` directory. If the full path was not given, then the path would be
+assumed to be inside the `my_config` directory. If you are still working in
+the directory that contains `my_indexes`, you can specify it on the command
+line like `-x $(pwd)/my_indexes ...`.
 
 With this configuration, you can do a query almost exactly as if you were
 querying MethBase2 on the transferase server:
@@ -446,33 +466,12 @@ name", "isolate", "biomaterial provider", "cell type", "tissue", "cell line",
 "source name" and more are all available to use, and in some cases it can be
 difficult to decide which one to use.
 
-**Terminals** I ran into various problems when using the `xfr select` command
-across machines. All of this assumes that `xfr` works in general, but that the
-`xfr` command tells you something like this when you try to run it:
+**Update on labels** As of v0.6.1, the `xfr select` command can show
+"detailed" information that was used to derive the labels, so you can take a
+quick look at these to judge if you think the label was incorrectly assigned.
 
-```
-Error opening terminal: screen-256color
-```
-
-Here are some things to try:
-
-1. Try to sepcify a terminal that `xfr` understands without making any general
-   changes to your session:
-   ```
-   TERM=xterm xfr select -g hg38 -o out.txt
-   ```
-   On one of my systems I need to do this when I'm using tmux. I also figured
-   out how to eliminate this problem for versions starting with 0.6.1.
-
-2. The terminal configuration file is not being found. I had this issue due to
-   conda assigning the environment variable TERMCAP, which helps terminals
-   find their configuration files. I can't reproduce it now, but the issue was
-   solved by reassign the TERMCAP variable to the original system location:
-   ```
-   TERMCAP=/usr/share/terminfo xfr select -g hg38 -o out.txt
-   ```
-
-The use of `xfr select` as a terminal app was just a quick way to get an app
-running that didn't require adding code for a local browser app or setting up
-a web system for the selection. But I think one of those will eventually be
-needed. I'm very happy to accept advice on making this more robust.
+**Terminals** I am no longer able to reproduce earlier problems I encountered
+related to Terminals and the 'select' command. If you use one of the binaries
+from a release, then I expect this will be more stable. If you build
+transferase yourself, it is almost guaranteed to work in the terminal where
+you do the build.
