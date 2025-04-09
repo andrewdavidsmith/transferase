@@ -33,8 +33,7 @@ bin_size = 100000
 
 # Set the log level to debug to see all
 import pyxfr
-from pyxfr import LogLevel
-pyxfr.set_log_level(LogLevel.debug)
+pyxfr.set_log_level("debug")
 
 # Do the config
 from pyxfr import MConfig
