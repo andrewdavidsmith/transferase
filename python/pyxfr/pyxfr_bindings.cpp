@@ -86,9 +86,19 @@ NB_MODULE(pyxfr, the_module) {
 
   the_module.attr("__version__") = VERSION;
 
-  the_module.def("set_log_level", [](const xfr::log_level_t lvl) {
-    xfr::logger::instance().set_level(lvl);
-  });
+  the_module.def(
+    "set_log_level",
+    [](const std::string &lvl) {
+      const auto itr = xfr::str_to_level.find(lvl);
+      if (itr == std::cend(xfr::str_to_level))
+        throw std::runtime_error(std::format("Invalid log level: {}."
+                                             "Choose among {}",
+                                             lvl, xfr::log_level_help_str));
+      xfr::logger::instance().set_level(itr->second);
+    },
+    R"doc(
+  Set the transferse log level.
+  )doc");
 
   auto DLPolicy = nb::enum_<xfr::download_policy_t>(the_module, "DLPolicy")
                     .value("none", xfr::download_policy_t::none)
