@@ -26,6 +26,9 @@
 
 #include "CLI11/CLI11.hpp"
 
+#include <string>
+#include <vector>
+
 static const int column_width_default = 30;
 
 class transferase_formatter : public CLI::Formatter {
