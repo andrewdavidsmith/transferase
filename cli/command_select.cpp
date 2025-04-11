@@ -58,13 +58,10 @@ command_select_main([[maybe_unused]] int argc,
 
 #include "cli_common.hpp"
 #include "client_config.hpp"
-#include "nlohmann/json.hpp"
+#include "macos_helper.hpp"
 #include "utilities.hpp"
 
-#include "macos_helper.hpp"
-
 #include "CLI11/CLI11.hpp"
-
 #include "nlohmann/json.hpp"
 
 #include <ncurses.h>
