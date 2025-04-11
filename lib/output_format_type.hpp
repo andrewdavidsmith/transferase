@@ -34,7 +34,8 @@
 #include <string_view>
 #include <utility>  // for std::to_underlying
 
-static const std::string output_format_details = R"(
+// NOLINTNEXTLINE
+static const auto output_format_details = R"(
 The output formats for the 'query' command are the following:
 
 * classic
