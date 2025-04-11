@@ -131,6 +131,7 @@ load_data(const std::string &json_filename, std::error_code &error)
 
 static auto
 mvprintw_wrap(const int x, const int y, const std::string &s) {
+  // NLINTNEXTLINE (*-vararg)
   const auto ret = mvprintw(x, y, "%s", s.substr(0, COLS - 1).data());
   if (ret != OK)
     throw std::runtime_error(
@@ -147,7 +148,7 @@ get_to_show(const auto &filtered, const auto disp_start, const auto disp_end) {
 format_current_entry(const auto &entry, const auto horiz_pos,
                      const bool show_details) {
   // Form the label by appending the colon
-  const auto label = std::format("{}: ", std::get<0>(entry));
+  auto label = std::format("{}: ", std::get<0>(entry));
 
   auto sample_name = std::get<1>(entry);
   if (show_details)

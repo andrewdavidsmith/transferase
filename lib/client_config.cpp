@@ -36,11 +36,11 @@
 #include <cassert>
 #include <chrono>  // for std::chrono::operator-
 #include <cstdlib>
-#include <exception>  // for std::exception
 #include <filesystem>
 #include <format>
 #include <fstream>
 #include <iterator>  // for std::size
+#include <stdexcept>
 #include <string>
 #include <system_error>
 #include <unordered_map>
@@ -342,7 +342,7 @@ client_config::read_config_file(const std::string &config_file,
   try {
     config = data;
   }
-  catch (const std::exception &e) {
+  catch (const nlohmann::json::exception &_) {
     error = client_config_error_code::invalid_client_config_file;
     return {};
   }

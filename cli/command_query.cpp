@@ -295,7 +295,7 @@ read_methylomes_json(const std::string &json_filename, std::error_code &ec)
   try {
     should_be_pairs = data;
   }
-  catch (const json::exception &_) {
+  catch (const nlohmann::json::exception &_) {
     ec = std::make_error_code(std::errc::invalid_argument);
     return {{}, {}};
   }
