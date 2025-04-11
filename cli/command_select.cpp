@@ -65,6 +65,8 @@ command_select_main([[maybe_unused]] int argc,
 
 #include "CLI11/CLI11.hpp"
 
+#include "nlohmann/json.hpp"
+
 #include <ncurses.h>
 
 #include <algorithm>
@@ -131,8 +133,8 @@ load_data(const std::string &json_filename, std::error_code &error)
 }
 
 static auto
-mvprintw(const int x, const int y, const std::string &s) {
-  const auto ret = mvprintw(x, y, "%s", s.data());  // NOLINT
+mvprintw_wrap(const int x, const int y, const std::string &s) {
+  const auto ret = mvprintw(x, y, "%s", s.substr(0, COLS - 1).data());
   if (ret != OK)
     throw std::runtime_error(
       std::format("Error updating display (writing: {})", s));
@@ -145,18 +147,22 @@ get_to_show(const auto &filtered, const auto disp_start, const auto disp_end) {
 }
 
 [[nodiscard]] static inline auto
-format_current_entry(const auto &entry, const auto horiz_pos, const auto max_x,
-                     const auto margin, const bool show_details) {
-  auto label = std::format("{}:", std::get<0>(entry));
+format_current_entry(const auto &entry, const auto horiz_pos,
+                     const bool show_details) {
+  // Form the label by appending the colon
+  const auto label = std::format("{}: ", std::get<0>(entry));
+
   auto sample_name = std::get<1>(entry);
   if (show_details)
     sample_name += std::format(" | {}", std::get<2>(entry));
-  const auto line_width = margin + std::ssize(sample_name);
-  if (horiz_pos > line_width)
+
+  // If the horizontal position within the sample would be larger than the
+  // same name, just return the label
+  if (horiz_pos > std::ssize(sample_name))
     return label;
-  const auto full_line =
-    std::format("{:{}}{}", label, margin, sample_name.substr(horiz_pos));
-  return full_line.substr(0, max_x - 1);
+
+  // Full line starting at the horizontal position in the sampel name
+  return std::format("{}{}", label, sample_name.substr(horiz_pos));
 }
 
 static inline auto
@@ -189,14 +195,32 @@ static inline auto
 show_selected_keys(const auto &selected_keys) {
   using std::string_literals::operator""s;
   clear();
-  mvprintw(0, 0, "Selected keys: "s);  // NOLINT (*-type-vararg)
+  mvprintw_wrap(0, 0, "Selected keys: "s);
   if (selected_keys.empty())
-    mvprintw(1, 0, "Empty selection."s);  // NOLINT (*-type-vararg)
+    mvprintw_wrap(1, 0, "Empty selection."s);
   else {
     // const auto joined = selected_keys | std::views::join_with(',') |
     //                     std::ranges::to<std::string>();
     const auto joined = join_with(selected_keys, ',');
-    mvprintw(1, 0, joined);
+    mvprintw_wrap(1, 0, joined);
+  }
+  refresh();
+  getch();  // any key will go back to list for selection
+}
+
+static inline auto
+show_groups(const auto &groups) {
+  using std::string_literals::operator""s;
+  clear();
+  mvprintw_wrap(0, 0, "Groups: "s);
+  if (groups.empty())
+    mvprintw_wrap(1, 0, "No groups defined."s);
+  else {
+    int row = 1;
+    for (const auto &[name, group] : groups) {
+      const auto line = std::format("{}: {}", name, std::size(group));
+      mvprintw_wrap(row++, 0, line);
+    }
   }
   refresh();
   getch();  // any key will go back to list for selection
@@ -217,11 +241,14 @@ show_help() {
     std::pair{"Space/Enter"sv, "Select or deselect current item"sv},
     std::pair{"c"sv, "Clear current selections"sv},
     std::pair{"v"sv, "View current selections"sv},
+    std::pair{"V"sv, "View defined groups"sv},
     std::pair{"d"sv, "Toggle detailed view"sv},
     std::pair{"a"sv, "Toggle multi-select mode"sv},
     std::pair{"r"sv, "Toggle multi-remove mode"sv},
     std::pair{"s"sv, "Enter search phrase"sv},
     std::pair{"w"sv, "Write selections to file"sv},
+    std::pair{"g"sv, "Define and name a set of methylomes"sv},
+    std::pair{"W"sv, "Write sets of methylomes to a json file"sv},
     std::pair{"q"sv, "Quit"sv},
     std::pair{"C-c"sv, "Quit without saving"sv},
     std::pair{"h"sv, "This message (any key to leave)"sv},
@@ -230,7 +257,7 @@ show_help() {
   std::int32_t line_num = 0;
   for (const auto &kv : keys) {
     const auto line = std::format("{}: {}", kv.first, kv.second);
-    mvprintw(line_num++, 0, line);
+    mvprintw_wrap(line_num++, 0, line);
   }
   refresh();
   getch();  // any key will go back to list for selection
@@ -240,10 +267,10 @@ static inline auto
 get_query(std::string &query, std::regex &query_re) {
   static constexpr auto escape_key_code = 27;
   static constexpr auto enter_key_code = 10;
-  clear();
-  mvprintw(0, 0, std::format("Search Query: {}", query));
-  refresh();
   while (true) {
+    clear();
+    mvprintw_wrap(0, 0, std::format("Search Query: {}", query));
+    refresh();
     const auto query_ch = getch();
     if (query_ch == escape_key_code)
       break;  // ESC to cancel
@@ -255,9 +282,6 @@ get_query(std::string &query, std::regex &query_re) {
       if (!query.empty())
         query.pop_back();
     }
-    clear();
-    mvprintw(0, 0, std::format("Search Query: {}", query));
-    refresh();
   }
   query_re = std::regex(query, std::regex_constants::icase);
 }
@@ -277,13 +301,12 @@ get_filename(std::string &filename) {
 
   const std::string original_filename{filename};
 
-  clear();
-  mvprintw(0, 0, header1);  // NOLINT (*-type-vararg)
-  mvprintw(1, 0, header2);  // NOLINT (*-type-vararg)
-  mvprintw(2, 0, std::format(msg_fmt, filename));
-  refresh();
-
   while (true) {
+    clear();
+    mvprintw_wrap(0, 0, header1);
+    mvprintw_wrap(1, 0, header2);
+    mvprintw_wrap(2, 0, std::format(msg_fmt, filename));
+    refresh();
     const auto filename_ch = getch();
     if (filename_ch == escape_key_code) {
       filename = original_filename;
@@ -299,13 +322,125 @@ get_filename(std::string &filename) {
       if (!filename.empty())
         filename.pop_back();
     }
-
-    clear();
-    mvprintw(0, 0, header1);  // NOLINT (*-type-vararg)
-    mvprintw(1, 0, header2);  // NOLINT (*-type-vararg)
-    mvprintw(2, 0, std::format(msg_fmt, filename));
-    refresh();
   }
+}
+
+static inline auto
+get_groupname(std::string &groupname) {
+  static constexpr auto escape_key_code = 27;
+  static constexpr auto enter_key_code = 10;
+  static constexpr auto header1 = "Delete and backspace to change. Use "
+                                  "alphanumeric characters or '.', '_'";
+  static constexpr auto header2 = "Enter to confirm, Escape to cancel";
+  static constexpr auto msg_fmt = "Groupname: {}";
+
+  const auto valid_char_for_groupname = [](const auto x) {
+    return std::isalnum(x) || x == '.' || x == '_';
+  };
+
+  const std::string original_groupname{groupname};
+
+  while (true) {
+    clear();
+    mvprintw_wrap(0, 0, header1);
+    mvprintw_wrap(1, 0, header2);
+    mvprintw_wrap(2, 0, std::format(msg_fmt, groupname));
+    refresh();
+
+    const auto groupname_ch = getch();
+    if (groupname_ch == escape_key_code) {
+      groupname = original_groupname;
+      break;  // ESC to cancel
+    }
+    else if (groupname_ch == enter_key_code) {
+      break;  // Enter to submit
+    }
+    else if (valid_char_for_groupname(groupname_ch)) {
+      groupname += static_cast<char>(groupname_ch);
+    }
+    else if (groupname_ch == KEY_BACKSPACE || groupname_ch == KEY_DC) {
+      if (!groupname.empty())
+        groupname.pop_back();
+    }
+  }
+}
+
+auto
+make_named_group(
+  const auto &data, const std::vector<std::string> &queries,
+  std::map<std::string, std::map<std::string, std::string>> &groups) {
+  constexpr auto msg_fmt1_name =
+    "Selected {} methylomes. Current group name: {}";
+  constexpr auto msg_fmt1_empty =
+    "Selected {} methylomes. Current group name: {}";
+  constexpr auto msg_fmt2 = "y: accept, e: edit name, c: cancel";
+  constexpr auto msg_fmt2_empty = "e: edit name, c: cancel";
+  constexpr auto msg_fmt3 = "[Saving will not clear your selections]";
+  int confirmation{};
+
+  // No selection, inform and continue
+  if (data.empty()) {
+    const auto empty_sel_msg = "Selection is empty. Any key to return.";
+    confirmation = '\0';
+    while (confirmation != '\0') {
+      erase();
+      mvprintw_wrap(0, 0, empty_sel_msg);
+      refresh();
+      confirmation = std::getchar();
+    }
+    return;
+  }
+
+  const auto confirming_name = [](const auto x, const auto &group_name) {
+    const auto l = std::tolower(x);
+    return (l != 'y' || group_name.empty()) && l != 'c';
+  };
+  const auto awaiting_input = [](const auto x) {
+    return std::tolower(x) != 'y' && std::tolower(x) != 'c' &&
+           std::tolower(x) != 'e';
+  };
+
+  // Get default group name
+  std::string group_name = join_with(queries, '_');
+  std::ranges::replace(group_name, ' ', '_');
+  std::uint32_t j = 0;
+  for (std::uint32_t i = 0; i < std::size(group_name); ++i)
+    if (group_name[i] != '_' || group_name[i - 1] != '_')
+      group_name[j++] = group_name[i];
+  group_name.resize(j);
+
+  // A selection exists, apply the save dialogue
+  confirmation = '\0';
+  while (confirming_name(confirmation, group_name)) {
+    confirmation = '\0';
+    while (awaiting_input(confirmation)) {
+      erase();
+      if (group_name.empty()) {
+        mvprintw_wrap(0, 0,
+                      std::format(msg_fmt1_empty, std::size(data), group_name));
+        mvprintw_wrap(1, 0, msg_fmt2_empty);
+      }
+      else {
+        mvprintw_wrap(0, 0,
+                      std::format(msg_fmt1_name, std::size(data), group_name));
+        mvprintw_wrap(1, 0, msg_fmt2);
+      }
+      mvprintw_wrap(2, 0, msg_fmt3);
+      refresh();
+      confirmation = std::getchar();
+    }
+    if (std::tolower(confirmation) == 'e')
+      get_groupname(group_name);
+  }
+  if (std::tolower(confirmation) != 'y')
+    return;
+
+  // Create names for all methylomes in the group
+  std::map<std::string, std::string> group;
+  int idx = 1;
+  for (const auto &d : data)
+    group.emplace(std::format("{}_{:0>4}", group_name, idx++), d);
+  groups.emplace(group_name, group);
 }
 
 auto
@@ -313,23 +448,19 @@ write_output(const auto &data, std::string &outfile) {
   constexpr auto msg_fmt1 = "Selected {} methylomes. Save to file: {}?";
   constexpr auto msg_fmt1_empty =
     "Selected {} methylomes. No filename specified.";
-  constexpr auto msg_fmt2 = "y: accept, n: enter file name, c: cancel";
-  constexpr auto msg_fmt2_empty = "n: enter file name, c: cancel";
+  constexpr auto msg_fmt2 = "y: accept, e: enter file name, c: cancel";
+  constexpr auto msg_fmt2_empty = "e: enter file name, c: cancel";
   constexpr auto msg_fmt3 = "[Saving will not clear your selections]";
   int confirmation{};
   if (data.empty()) {
     const auto empty_sel_msg = "Selection is empty. Any key to return.";
     confirmation = '\0';
-    while (confirmation != '\0') {
+    while (confirmation == '\0') {
       erase();
-      // NOLINTNEXTLINE (*-type-vararg)
-      mvprintw(0, 0, empty_sel_msg);
+      mvprintw_wrap(0, 0, empty_sel_msg);
       refresh();
       confirmation = std::getchar();
     }
-    erase();
-    mvprintw(0, 0, empty_sel_msg + std::string(" {}", confirmation));
-    refresh();
     return;
   }
 
@@ -339,7 +470,7 @@ write_output(const auto &data, std::string &outfile) {
   };
   const auto awaiting_input = [](const auto x) {
     return std::tolower(x) != 'y' && std::tolower(x) != 'c' &&
-           std::tolower(x) != 'n';
+           std::tolower(x) != 'e';
   };
 
   // A selection exists, apply the save dialogue
@@ -349,18 +480,18 @@ write_output(const auto &data, std::string &outfile) {
     while (awaiting_input(confirmation)) {
       erase();
       if (outfile.empty()) {
-        mvprintw(0, 0, std::format(msg_fmt1_empty, std::size(data)));
-        mvprintw(1, 0, msg_fmt2_empty);  // NOLINT (*-type-vararg)
+        mvprintw_wrap(0, 0, std::format(msg_fmt1_empty, std::size(data)));
+        mvprintw_wrap(1, 0, msg_fmt2_empty);
       }
       else {
-        mvprintw(0, 0, std::format(msg_fmt1, std::size(data), outfile));
-        mvprintw(1, 0, msg_fmt2);  // NOLINT (*-type-vararg)
+        mvprintw_wrap(0, 0, std::format(msg_fmt1, std::size(data), outfile));
+        mvprintw_wrap(1, 0, msg_fmt2);
       }
-      mvprintw(2, 0, msg_fmt3);  // NOLINT (*-type-vararg)
+      mvprintw_wrap(2, 0, msg_fmt3);
       refresh();
       confirmation = std::getchar();
     }
-    if (std::tolower(confirmation) == 'n')
+    if (std::tolower(confirmation) == 'e')
       get_filename(outfile);
   }
 
@@ -377,13 +508,89 @@ write_output(const auto &data, std::string &outfile) {
     confirmation = '\0';
     while (confirmation != '\0') {
       erase();
-      mvprintw(0, 0, done_message);  // NOLINT (*-type-vararg)
+      mvprintw_wrap(0, 0, done_message);
       refresh();
       confirmation = std::getchar();
     }
-    erase();
-    mvprintw(0, 0, done_message);  // NOLINT (*-type-vararg)
-    refresh();
+  }
+}
+
+auto
+write_groups(const auto &data, std::string &outfile) {
+  constexpr auto msg_fmt1 = "Defined {} groups. Save to file: {}?";
+  constexpr auto msg_fmt1_empty = "Defined {} groups. No filename specified.";
+  constexpr auto msg_fmt2 = "y: accept, e: enter file name, c: cancel";
+  constexpr auto msg_fmt2_empty = "e: enter file name, c: cancel";
+  constexpr auto msg_fmt3 = "[Saving will not clear your groups]";
+  int confirmation{};
+  if (data.empty()) {
+    const auto empty_sel_msg = "Selection is empty. Any key to return.";
+    confirmation = '\0';
+    while (confirmation != '\0') {
+      erase();
+      mvprintw_wrap(0, 0, empty_sel_msg);
+      refresh();
+      confirmation = std::getchar();
+    }
+    return;
+  }
+
+  const auto confirming_save = [](const auto x, const auto &filename) {
+    const auto l = std::tolower(x);
+    return (l != 'y' || filename.empty()) && l != 'c';
+  };
+  const auto awaiting_input = [](const auto x) {
+    return std::tolower(x) != 'y' && std::tolower(x) != 'c' &&
+           std::tolower(x) != 'e';
+  };
+
+  // A selection exists, apply the save dialogue
+  confirmation = '\0';
+  while (confirming_save(confirmation, outfile)) {
+    confirmation = '\0';
+    while (awaiting_input(confirmation)) {
+      erase();
+      if (outfile.empty()) {
+        mvprintw_wrap(0, 0, std::format(msg_fmt1_empty, std::size(data)));
+        mvprintw_wrap(1, 0, msg_fmt2_empty);
+      }
+      else {
+        mvprintw_wrap(0, 0, std::format(msg_fmt1, std::size(data), outfile));
+        mvprintw_wrap(1, 0, msg_fmt2);
+      }
+      mvprintw_wrap(2, 0, msg_fmt3);
+      refresh();
+      confirmation = std::getchar();
+    }
+    if (std::tolower(confirmation) == 'e')
+      get_filename(outfile);
+  }
+
+  if (std::tolower(confirmation) == 'y') {
+    std::ofstream out(outfile);
+    if (!out) {
+      const auto err = std::make_error_code(std::errc(errno));
+      throw std::system_error(err, std::format("writing output {}", outfile));
+    }
+
+    // Put all groups into one vector of pairs
+    std::map<std::string, std::string> accn_name;
+    for (const auto &g : data)
+      for (const auto &p : g.second)
+        accn_name.emplace(p.second, p.first);
+
+    static constexpr auto n_indent = 4;
+    nlohmann::json json_data = accn_name;
+    std::println(out, "{}", json_data.dump(n_indent));
+
+    const auto done_message = "Groups saved. Any key to return.";
+    confirmation = '\0';
+    while (confirmation != '\0') {
+      erase();
+      mvprintw_wrap(0, 0, done_message);
+      refresh();
+      confirmation = std::getchar();
+    }
   }
 }
 
@@ -394,13 +601,10 @@ confirm_quit() -> bool {
   while (std::tolower(confirmation) != 'y' &&
          std::tolower(confirmation) != 'n') {
     erase();
-    mvprintw(0, 0, message);  // NOLINT (*-type-vararg)
+    mvprintw_wrap(0, 0, message);
     refresh();
     confirmation = std::getchar();
   }
-  erase();
-  mvprintw(0, 0, message);  // NOLINT (*-type-vararg)
-  refresh();
   return (confirmation == 'y' || confirmation == 'Y');
 }
 
@@ -436,6 +640,8 @@ main_loop(
       return std::size(std::get<0>(s));
     });
   const std::int32_t margin = std::ranges::max(key_sizes) + extra_margin_space;
+
+  std::map<std::string, std::map<std::string, std::string>> groups;
 
   // Initialize ncurses
   initscr();
@@ -507,7 +713,7 @@ main_loop(
 
     // Clear to prepare for redraw and display the legend
     erase();  // performs better than using clear();
-    mvprintw(0, 0, current_legend);
+    mvprintw_wrap(0, 0, current_legend);
 
     // for (const auto [idx, entry] : std::views::enumerate(to_show)) {
     std::int32_t idx = 0;  // ADS: need to compare with signed cursor_pos
@@ -530,10 +736,10 @@ main_loop(
           attron(COLOR_PAIR(2));
       }
 
+      const auto line = format_current_entry(entry, horiz_pos, show_details);
+
       // Display (key: paragraph) with horizontal range
-      mvprintw(
-        y_pos, 0,
-        format_current_entry(entry, horiz_pos, COLS, margin, show_details));
+      mvprintw_wrap(y_pos, 0, line);
 
       // Reset attribute
       attroff(COLOR_PAIR(2));
@@ -557,9 +763,6 @@ main_loop(
       }
       cursor_pos = 0;
     }
-    else if (ch == 'w') {  // w key to save selection
-      write_output(selected_keys, filename);
-    }
     else if (ch == KEY_RIGHT) {  // Scroll right
       // ADS: the "+ 3" below is for std::size(" | ");
       // NOLINTBEGIN (*-narrowing-conversions)
@@ -567,8 +770,8 @@ main_loop(
         std::size(std::get<1>(filtered.back()[cursor_pos])) +
         std::size(std::get<2>(filtered.back()[cursor_pos])) + 3;
       // NOLINTEND (*-narrowing-conversions)
-      if (margin + width > COLS)
-        horiz_pos = std::min(horiz_pos + 1, (margin + width) - COLS);
+      if (margin + width + 1 > COLS)
+        horiz_pos = std::min(horiz_pos + 1, (margin + width) + 1 - COLS);
     }
     else if (ch == KEY_LEFT) {  // Scroll left
       horiz_pos = std::max(horiz_pos - 1, 0);
@@ -643,6 +846,18 @@ main_loop(
     }
     else if (ch == 'v') {  // Display selected keys
       show_selected_keys(selected_keys);
+    }
+    else if (ch == 'w') {  // w key to save selection
+      write_output(selected_keys, filename);
+    }
+    else if (ch == 'g') {  // g key to make a named group
+      make_named_group(selected_keys, queries, groups);
+    }
+    else if (ch == 'W') {  // w key to save selected groups
+      write_groups(groups, filename);
+    }
+    else if (ch == 'V') {  // Display groups
+      show_groups(groups);
     }
     else if (ch == 'a') {  // Toggle multi-select mode
       multi_add = !multi_add;
@@ -726,17 +941,17 @@ command_select_main(int argc,
   if (argc >= 2)
     app.footer(description_msg);
   app.get_formatter()->column_width(column_width_default);
-  app.get_formatter()->label("REQUIRED", "REQD");
+  app.get_formatter()->label("REQUIRED", "");
   app.set_help_flag("-h,--help", "Print a detailed help message and exit");
   // clang-format off
   app.add_option("-g,--genome", genome_name, "use this genome")->required();
   app.add_option("-o,--output", output_file, "output file (you will be promoted before saving)");
   const auto input_file_opt =
     app.add_option("-i,--input-file", input_file, "specify an input file")
-    ->option_text("TEXT:FILE")
+    ->option_text("FILE")
     ->check(CLI::ExistingFile);
   app.add_option("-c,--config-dir", config_dir, "specify a config directory")
-    ->option_text("TEXT:DIR")
+    ->option_text("DIR")
     ->check(CLI::ExistingDirectory)
     ->excludes(input_file_opt);
   // clang-format on
@@ -801,6 +1016,7 @@ command_select_main(int argc,
     main_loop(data_itr->second, output_file);
   }
   catch (std::runtime_error &e) {
+    signal_handler(SIGTERM);
     std::println("{}", e.what());
     return EXIT_FAILURE;
   }
