@@ -131,7 +131,7 @@ load_data(const std::string &json_filename, std::error_code &error)
 
 static auto
 mvprintw_wrap(const int x, const int y, const std::string &s) {
-  // NLINTNEXTLINE (*-vararg)
+  // NOLINTNEXTLINE (*-vararg)
   const auto ret = mvprintw(x, y, "%s", s.substr(0, COLS - 1).data());
   if (ret != OK)
     throw std::runtime_error(
