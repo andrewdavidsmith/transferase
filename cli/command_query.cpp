@@ -63,6 +63,7 @@ xfr query --local -d methylome_dir -x index_dir -g hg38 \
 #include "intervals_writer.hpp"
 #include "level_element.hpp"
 #include "logger.hpp"
+#include "macos_helper.hpp"
 #include "methylome.hpp"
 #include "methylome_interface.hpp"
 #include "output_format_type.hpp"
@@ -71,9 +72,8 @@ xfr query --local -d methylome_dir -x index_dir -g hg38 \
 #include "request_type_code.hpp"
 #include "utilities.hpp"
 
-#include "macos_helper.hpp"
-
 #include "CLI11/CLI11.hpp"
+#include "nlohmann/json.hpp"
 
 #include <asio.hpp>
 
@@ -280,7 +280,7 @@ do_bins_query(const std::uint32_t bin_size,
 
 [[nodiscard]] static inline auto
 read_methylomes_json(const std::string &json_filename, std::error_code &ec)
-  -> std::pair<std::vector<std::string>, std::vector<std::string>> {
+  -> std::tuple<std::vector<std::string>, std::vector<std::string>> {
   std::ifstream in(json_filename);
   if (!in) {
     ec = std::make_error_code(std::errc(errno));
@@ -295,7 +295,7 @@ read_methylomes_json(const std::string &json_filename, std::error_code &ec)
   try {
     should_be_pairs = data;
   }
-  catch (const std::exception &_) {
+  catch (const json::exception &_) {
     ec = std::make_error_code(std::errc::invalid_argument);
     return {{}, {}};
   }
@@ -311,7 +311,7 @@ read_methylomes_json(const std::string &json_filename, std::error_code &ec)
 [[nodiscard]] static inline auto
 get_methylome_names(const std::vector<std::string> &possibly_methylome_names,
                     std::error_code &error)
-  -> std::pair<std::vector<std::string>, std::vector<std::string>> {
+  -> std::tuple<std::vector<std::string>, std::vector<std::string>> {
   if (possibly_methylome_names.size() > 1)
     return {possibly_methylome_names, possibly_methylome_names};
   const bool is_file =
