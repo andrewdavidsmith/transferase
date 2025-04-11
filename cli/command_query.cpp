@@ -164,6 +164,7 @@ do_intervals_query(const std::string &intervals_file,
                    const transferase::genome_index &index,
                    const transferase::methylome_interface &interface,
                    const std::vector<std::string> &methylome_names,
+                   const std::vector<std::string> &alt_names,
                    const transferase::request_type_code &request_type,
                    const bool write_n_cpgs) {
   auto &lgr = transferase::logger::instance();
@@ -202,7 +203,7 @@ do_intervals_query(const std::string &intervals_file,
     output_file,
     index,
     out_fmt,
-    methylome_names,
+    alt_names,
     min_reads,
     n_cpgs,
     intervals,
@@ -230,6 +231,7 @@ do_bins_query(const std::uint32_t bin_size,
               const transferase::genome_index &index,
               const transferase::methylome_interface &interface,
               const std::vector<std::string> &methylome_names,
+              const std::vector<std::string> &alt_names,
               const transferase::request_type_code &request_type,
               const bool write_n_cpgs) {
   auto &lgr = transferase::logger::instance();
@@ -255,7 +257,7 @@ do_bins_query(const std::uint32_t bin_size,
     output_file,
     index,
     out_fmt,
-    methylome_names,
+    alt_names,
     min_reads,
     n_cpgs,
     bin_size,
@@ -277,21 +279,58 @@ do_bins_query(const std::uint32_t bin_size,
 }
 
 [[nodiscard]] static inline auto
+read_methylomes_json(const std::string &json_filename, std::error_code &ec)
+  -> std::pair<std::vector<std::string>, std::vector<std::string>> {
+  std::ifstream in(json_filename);
+  if (!in) {
+    ec = std::make_error_code(std::errc(errno));
+    return {};
+  }
+  const nlohmann::json data = nlohmann::json::parse(in, nullptr, false);
+  if (data.is_discarded()) {
+    ec = std::make_error_code(std::errc::invalid_argument);
+    return {{}, {}};
+  }
+  std::map<std::string, std::string> should_be_pairs;
+  try {
+    should_be_pairs = data;
+  }
+  catch (const std::exception &_) {
+    ec = std::make_error_code(std::errc::invalid_argument);
+    return {{}, {}};
+  }
+  std::vector<std::string> names;
+  std::vector<std::string> alt_names;
+  for (const auto &[name, alt_name] : should_be_pairs) {
+    names.push_back(name);
+    alt_names.push_back(alt_name);
+  }
+  return {names, alt_names};
+}
+
+[[nodiscard]] static inline auto
 get_methylome_names(const std::vector<std::string> &possibly_methylome_names,
-                    std::error_code &error) -> std::vector<std::string> {
+                    std::error_code &error)
+  -> std::pair<std::vector<std::string>, std::vector<std::string>> {
   if (possibly_methylome_names.size() > 1)
-    return possibly_methylome_names;
+    return {possibly_methylome_names, possibly_methylome_names};
   const bool is_file =
     std::filesystem::exists(possibly_methylome_names.front()) &&
     std::filesystem::is_regular_file(possibly_methylome_names.front());
   if (is_file) {
-    auto names_from_file =
+    // attept to read as json
+    const auto [names_from_json, alt_names_from_json] =
+      read_methylomes_json(possibly_methylome_names.front(), error);
+    if (!error)
+      return {names_from_json, alt_names_from_json};
+    // if json didn't work, try just one name per file
+    const auto names_from_file =
       read_methylomes_file(possibly_methylome_names.front(), error);
     if (!error)
-      return names_from_file;
-    return {};
+      return {names_from_file, names_from_file};
+    return {{}, {}};
   }
-  return possibly_methylome_names;
+  return {possibly_methylome_names, possibly_methylome_names};
 }
 
 auto
@@ -492,7 +531,8 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
   };
 
   // get methylome names either parsed from command line or in a file
-  const auto methylomes = get_methylome_names(methylome_names, error);
+  const auto [methylomes, alt_names] =
+    get_methylome_names(methylome_names, error);
   if (error) {
     lgr.error("Error identifying methylomes from {}: {}",
               format_methylome_names_brief(methylome_names), error);
@@ -535,21 +575,26 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
                     : (count_covered ? xfr::request_type_code::bins_covered
                                      : xfr::request_type_code::bins);
 
+  // ADS: This mess below is a consequence of using static polymorphism for
+  // the type of client connection, starting here. Not sure if it's worth it,
+  // but after this point things simplify again. However it seems like these
+  // functions have too many arguments.
+
   // clang-format off
   error =
     intervals_query
     ? (count_covered ? do_intervals_query<xfr::level_element_covered_t>(
                          intervals_file, out_fmt, min_reads, output_file, index,
-                         interface, methylomes, request_type, write_n_cpgs)
+                         interface, methylomes, alt_names, request_type, write_n_cpgs)
                      : do_intervals_query<xfr::level_element_t>(
                          intervals_file, out_fmt, min_reads, output_file, index,
-                         interface, methylomes, request_type, write_n_cpgs))
+                         interface, methylomes, alt_names, request_type, write_n_cpgs))
     : (count_covered ? do_bins_query<xfr::level_element_covered_t>(
                          bin_size, out_fmt, min_reads, output_file, index,
-                         interface, methylomes, request_type, write_n_cpgs)
+                         interface, methylomes, alt_names, request_type, write_n_cpgs)
                      : do_bins_query<xfr::level_element_t>(
                          bin_size, out_fmt, min_reads, output_file, index,
-                         interface, methylomes, request_type, write_n_cpgs));
+                         interface, methylomes, alt_names, request_type, write_n_cpgs));
   // clang-format on
 
   // ADS: below is because error code '0' is printed as "Undefined
