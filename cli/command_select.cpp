@@ -437,7 +437,7 @@ make_named_group(
   std::map<std::string, std::string> group;
   int idx = 1;
   for (const auto &d : data)
-    group.emplace(std::format("{}_{:0>4}", group_name, idx++), d);
+    group.emplace(std::format("{}_{:0>5}", group_name, idx++), d);
   groups.emplace(group_name, group);
 }
 
