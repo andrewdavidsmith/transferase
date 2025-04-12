@@ -291,17 +291,25 @@ read_methylomes_json(const std::string &json_filename, std::error_code &ec)
     ec = std::make_error_code(std::errc::invalid_argument);
     return {{}, {}};
   }
-  std::map<std::string, std::string> should_be_pairs;
+  std::map<std::string, std::string> name_alt;
   try {
-    should_be_pairs = data;
+    name_alt = data;
   }
   catch (const nlohmann::json::exception &_) {
     ec = std::make_error_code(std::errc::invalid_argument);
     return {{}, {}};
   }
+
+  std::vector<std::pair<std::string, std::string>> sorted_by_alt;
+  std::ranges::copy(name_alt, std::back_inserter(sorted_by_alt));
+
+  std::ranges::sort(sorted_by_alt, [](const auto &a, const auto &b) {
+    return a.second < b.second;
+  });
+
   std::vector<std::string> names;
   std::vector<std::string> alt_names;
-  for (const auto &[name, alt_name] : should_be_pairs) {
+  for (const auto &[name, alt_name] : sorted_by_alt) {
     names.push_back(name);
     alt_names.push_back(alt_name);
   }
