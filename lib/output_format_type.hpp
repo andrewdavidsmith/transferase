@@ -115,7 +115,7 @@ static constexpr auto output_format_t_name = std::array{
   "classic"sv,
   "scores"sv,
   "dfcounts"sv,
-  "daclassic"sv,
+  "dfclassic"sv,
   "dfscores"sv,
   // clang-format on
 };
