@@ -183,16 +183,20 @@ Detailed instructions for building transferase from source can be found in
 
 ### Linux package managers
 
+Note that the "install" steps below might need some indication that the
+package filename is a file and not the name of some remote resource. That's
+why I prepended the dot-slash below.
+
 ```console
 # Red Hat or Fedora (not sure SUSE has dnf)
-rpm -i transferase-0.6.1-Linux.rpm            # See what will be installed
-sudo dnf install transferase-0.6.1-Linux.rpm  # Install
-dnf info transferase                          # See what was installed
-sudo dnf remove transferase                   # Uninstall
+rpm -i transferase-0.6.1-Linux.rpm              # See what will be installed
+sudo dnf install ./transferase-0.6.1-Linux.rpm  # Install
+dnf info transferase                            # See what was installed
+sudo dnf remove transferase                     # Uninstall
 
 # Ubuntu or Debian
-dpkg --info transferase-0.6.1-Linux.deb       # See what will be installed
-sudo apt install transferase-0.6.1-Linux.deb  # Install
-apt info transferase                          # See what was installed
-sudo apt remove transferase                   # Uninstall
+dpkg --info transferase-0.6.1-Linux.deb         # See what will be installed
+sudo apt install ./transferase-0.6.1-Linux.deb  # Install
+apt info transferase                            # See what was installed
+sudo apt remove transferase                     # Uninstall
 ```
