@@ -67,7 +67,7 @@ levels <- client$do_query(methylomes, intervals, genome,
                           add_n_cpgs = TRUE, add_header = TRUE)
 print(head(levels))
 
-levels <- client$do_query(methylomes, bin_size)
+levels <- client$do_query(methylomes, bin_size, genome)
 print(head(levels))
 
 levels <- client$do_query(methylomes, query)
@@ -79,7 +79,7 @@ levels <- client$do_query(methylomes, intervals, genome,
                           add_rownames = TRUE)
 print(head(levels))
 
-levels <- client$do_query(methylomes, bin_size, genome = genome,
+levels <- client$do_query(methylomes, bin_size, genome,
                           covered = TRUE, add_rownames = TRUE)
 print(head(levels))
 
