@@ -146,7 +146,11 @@ server_config::read_config_file_no_overwrite(
 
   if (n_threads == 1)
     n_threads = tmp.n_threads;
-  if (max_resident == 0)
+
+  // replace the max_resident if it seems as though max_resident was set to 0
+  // (invalid) or set to 1, in which case the read value would be at least as
+  // large.
+  if (max_resident <= 1 && tmp.max_resident > 1)
     max_resident = tmp.max_resident;
   if (min_bin_size == 0)
     min_bin_size = tmp.min_bin_size;
