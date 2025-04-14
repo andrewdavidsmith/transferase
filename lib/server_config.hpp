@@ -40,7 +40,7 @@ struct server_config {
   static constexpr auto max_n_threads = 1024;
   static constexpr auto max_max_resident = 8192;
   static constexpr auto default_n_threads = 1;
-  static constexpr auto default_max_resident = 128;
+  static constexpr auto default_max_resident = 1;
   static constexpr auto server_config_filename_default =
     "transferase_server.json";
 
