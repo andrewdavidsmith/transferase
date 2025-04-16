@@ -134,7 +134,7 @@ connection::read_query() -> void {
                                                           resp);
           if (resp_hdr.status) {
             lgr.warning("{} Error computing levels: {}", conn_id,
-                        error.message());
+                        resp_hdr.status.message());
             respond_with_error();
           }
           else {
@@ -164,7 +164,8 @@ connection::compute_bins() -> void {
   else
     handler.bins_get_levels<level_element_t>(req, resp_hdr, resp);
   if (resp_hdr.status) {
-    lgr.warning("{} Error computing levels: {}", conn_id, error.message());
+    lgr.warning("{} Error computing levels: {}", conn_id,
+                resp_hdr.status.message());
     respond_with_error();
   }
   else {
