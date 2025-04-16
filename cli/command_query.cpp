@@ -409,8 +409,10 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
   app.add_option("-g,--genome", genome_name, "name of the reference genome")
     ->required();
   app.add_option("-m,--methylomes", methylome_names,
-                 "one or more methylomes names, or a file "
-                 "with one methylome name per line")
+                 "one or more methylomes names, a file "
+                 "with one methylome name per line, "
+                 "or a JSON mapping of methylome name to "
+                 "label (see docs)")
     ->required();
   app.add_option("-o,--out-file", output_file, "output file");
   app.add_flag("-C,--covered", count_covered,
@@ -547,14 +549,6 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
     return EXIT_FAILURE;
   }
 
-  // validate the methylome names
-  const auto invalid_name =
-    std::ranges::find_if_not(methylomes, &xfr::methylome::is_valid_name);
-  if (invalid_name != std::cend(methylomes)) {
-    lgr.error("Error: invalid methylome name \"{}\"", *invalid_name);
-    return EXIT_FAILURE;
-  }
-
   std::vector<std::tuple<std::string, std::string>> args_to_log{
     // clang-format off
     {"Config dir", cfg.config_dir},
@@ -575,6 +569,14 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
     // clang-format on
   };
   xfr::log_args<xfr::log_level_t::debug>(args_to_log);
+
+  // validate the methylome names
+  const auto invalid_name =
+    std::ranges::find_if_not(methylomes, &xfr::methylome::is_valid_name);
+  if (invalid_name != std::cend(methylomes)) {
+    lgr.error("Error: invalid methylome name \"{}\"", *invalid_name);
+    return EXIT_FAILURE;
+  }
 
   const bool intervals_query = (bin_size == 0);
   const auto request_type =
