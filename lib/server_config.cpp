@@ -173,13 +173,14 @@ server_config::write(const std::string &config_file,
                      std::error_code &error) const -> void {
   // Set the version here; it is forced to take the value from VERSION on
   // config.h
-  version = VERSION;
+  server_config tmp{*this};
+  tmp.version = VERSION;
   std::ofstream out(config_file);
   if (!out) {
     error = server_config_error_code::error_writing_server_config_file;
     return;
   }
-  const std::string payload = tostring();
+  const std::string payload = tmp.tostring();
   out.write(payload.data(), static_cast<std::streamsize>(std::size(payload)));
   if (!out)
     error = server_config_error_code::error_writing_server_config_file;
