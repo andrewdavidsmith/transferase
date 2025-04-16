@@ -25,6 +25,8 @@
 
 #include "nlohmann/json.hpp"
 
+#include <config.h>
+
 #include <cassert>
 #include <cerrno>
 #include <cstdlib>  // for getenv
@@ -70,7 +72,8 @@ server_config::get_default_config_dir(std::error_code &error) -> std::string {
 [[nodiscard]] auto
 server_config::get_config_file(const std::string &config_dir) noexcept
   -> std::string {
-  return (std::filesystem::path(config_dir) / server_config_filename_default)
+  return (std::filesystem::path(config_dir) /
+          std::format(server_config_filename_default, VERSION))
     .lexically_normal();
 }
 

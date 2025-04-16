@@ -28,6 +28,8 @@
 
 #include "nlohmann/json.hpp"
 
+#include <config.h>
+
 #include <cstdint>
 #include <string>
 #include <system_error>
@@ -42,8 +44,9 @@ struct server_config {
   static constexpr auto default_n_threads = 1;
   static constexpr auto default_max_resident = 1;
   static constexpr auto server_config_filename_default =
-    "transferase_server.json";
+    "transferase_server_{}.json";
 
+  std::string version{VERSION};
   std::string config_dir;
   std::string hostname;
   std::string port{};
@@ -131,9 +134,9 @@ struct server_config {
   [[nodiscard]] auto
   validate(std::error_code &error) const noexcept -> bool;
 
-  NLOHMANN_DEFINE_TYPE_INTRUSIVE(server_config, config_dir, hostname, port,
-                                 methylome_dir, index_dir, log_file, pid_file,
-                                 log_level, n_threads, max_resident,
+  NLOHMANN_DEFINE_TYPE_INTRUSIVE(server_config, version, config_dir, hostname,
+                                 port, methylome_dir, index_dir, log_file,
+                                 pid_file, log_level, n_threads, max_resident,
                                  min_bin_size, max_intervals)
 };
 
