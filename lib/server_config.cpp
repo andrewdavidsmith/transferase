@@ -134,6 +134,8 @@ server_config::read_config_file_no_overwrite(
 
   if (config_dir.empty())
     config_dir = tmp.config_dir;
+  if (version.empty())
+    version = tmp.version;
   if (hostname.empty())
     hostname = tmp.hostname;
   if (port.empty())
