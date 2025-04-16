@@ -24,23 +24,21 @@
 #include "command_server.hpp"
 
 static constexpr auto about = R"(
-start an transferase server
+start a transferase server
 )";
 
 static constexpr auto description = R"(
-A transferase server transfers methylation features to clients. The
-server must be provided with one directory for methylomes and one
-directory for genome indexes. The methylome directory must include pairs
-of methylome data and metadata files as produced by the 'format'
-command. The indexes directory must include pairs of genome index data
-and metadata files as produced by the 'index' command. For each
-methylome in the methylomes directory, the corresponding index must be
-present in the indexes directory. For example, if a methylome was
-analyzed using human reference hg38, then an index for hg38 must be
-available. Note: the hostname or ip address for the server needs to be
-used exactly by the client. If the server is started using 'localhost'
-as the hostname, it will not be reachable by any remote client. The
-server can run in detached mode.
+Start a transferase server instance. The server must be provided with one
+directory for methylomes and one directory for genome indexes. The methylome
+directory must include pairs of methylome data and metadata files as produced
+by the 'format' command. The indexes directory must include pairs of genome
+index data and metadata files as produced by the 'index' command. For each
+methylome in the methylomes directory, the corresponding index must be present
+in the indexes directory. For example, if a methylome was analyzed using human
+reference hg38, then an index for hg38 must be available. Note: the hostname
+or ip address for the server needs to be used exactly by the client. If the
+server is started using 'localhost' as the hostname, it will not be reachable
+by any remote client. The server can run in detached mode.
 )";
 
 static constexpr auto examples = R"(
@@ -58,6 +56,8 @@ xfr server -s localhost -d methylomes -x indexes
 #include "utilities.hpp"
 
 #include "CLI11/CLI11.hpp"
+
+#include <config.h>
 
 #include <cstdlib>  // for EXIT_FAILURE, EXIT_SUCCESS
 #include <filesystem>
@@ -208,7 +208,8 @@ command_server_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
   std::vector<std::tuple<std::string, std::string>> args_to_log{
     // clang-format off
     {"Config file", config_file},
-    {"Hostname", cfg.hostname},
+    {"VERSION", VERSION},
+    {"Version from config file", cfg.version},
     {"Port", cfg.port},
     {"Methylome dir", cfg.methylome_dir},
     {"Index dir", cfg.index_dir},
@@ -221,6 +222,10 @@ command_server_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
     {"Max intervals", std::format("{}", cfg.max_intervals)},
     // clang-format on
   };
+
+  if (cfg.version != VERSION)
+    lgr.warning("Version ({}) not the same as found in config file ({})",
+                VERSION, cfg.version);
 
   xfr::log_args<transferase::log_level_t::info>(args_to_log);
 
