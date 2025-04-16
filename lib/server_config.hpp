@@ -28,8 +28,6 @@
 
 #include "nlohmann/json.hpp"
 
-#include <config.h>
-
 #include <cstdint>
 #include <string>
 #include <system_error>
@@ -46,7 +44,8 @@ struct server_config {
   static constexpr auto server_config_filename_default =
     "transferase_server_{}.json";
 
-  std::string version{VERSION};
+  // version is set when file is written based on VERSION of code
+  std::string version;
   std::string config_dir;
   std::string hostname;
   std::string port{};
