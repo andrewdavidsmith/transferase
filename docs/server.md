@@ -157,6 +157,20 @@ Note that the running daemonized requires that a log file be specified since
 the deamon has no stdout. If you use a file to store the PID this file will be
 cleaned up when the server shuts down.
 
+About log file rotation
+-----------------------
+
+Currently the transferase server just appends to any log file. There is no
+mechanism for re-opening a log file, for example on receiving a signal. This
+means log rotation risks losing information. If, for your application, it is
+absolutely critical not to lose any logging information, then please open an
+issue on this topic. Allowing logrotate to truncate the log file (i.e.,
+`copytruncate`) should be acceptable in most situations, as the logging
+information was designed to assist with identifying server performance
+issues. An alternative implementation might assume a delay in file compression
+after log rotation, and re-open the log file at fixed times or after fixed
+bytes written.
+
 Server behaviors
 ----------------
 
