@@ -171,6 +171,9 @@ server_config::tostring() const -> std::string {
 auto
 server_config::write(const std::string &config_file,
                      std::error_code &error) const -> void {
+  // Set the version here; it is forced to take the value from VERSION on
+  // config.h
+  version = VERSION;
   std::ofstream out(config_file);
   if (!out) {
     error = server_config_error_code::error_writing_server_config_file;
