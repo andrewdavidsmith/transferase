@@ -25,6 +25,8 @@
 
 #include "unit_test_utils.hpp"
 
+#include <config.h>
+
 #include <gtest/gtest.h>
 
 #include <fstream>
@@ -52,14 +54,20 @@ protected:
     "min_bin_size": 100,
     "n_threads": 128,
     "pid_file": "",
-    "port": "5003"
-}
-)config";
+    "port": "5003",
+    "version": )config";
+
+    // the 'config_dir' isn't created for these tests
+    config_file = server_config::get_config_file(".");
+    const std::string with_version =
+      payload + "\"" + std::string(VERSION) + "\"\n}";
+
     std::ofstream out(config_file);
     if (!out)
-      throw std::runtime_error("failed to open config file to write mock");
-    const auto sz = static_cast<std::streamsize>(std::size(payload));
-    out.write(payload.data(), sz);
+      throw std::runtime_error(std::format(
+        "failed to open config file to write mock: {}", config_file));
+    const auto sz = static_cast<std::streamsize>(std::size(with_version));
+    out.write(with_version.data(), sz);
   }
 
   auto
@@ -69,7 +77,7 @@ protected:
       std::filesystem::remove(config_file);
   }
 
-  std::string config_file{server_config::server_config_filename_default};
+  std::string config_file;
   std::string config_dir{"a_server_config_dir"};
   std::string hostname{"localhost"};
   std::string port{"5003"};
