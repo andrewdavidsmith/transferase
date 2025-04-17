@@ -76,12 +76,13 @@ request_handler::handle_request(const request &req,
 
   std::error_code ec;
   // get one methylome so we can associate a genome with this request
-  const auto methylome_name = req.methylome_names.front();
-  const auto meth = methylomes.get_methylome(methylome_name, ec);
-  if (ec) {
-    lgr.warning("Error reading methylome {}: {}", methylome_name, ec);
-    resp_hdr.status = server_error_code::methylome_not_found;
-    return;
+  for (const auto &methylome_name : req.methylome_names) {
+    const auto meth = methylomes.get_methylome(methylome_name, ec);
+    if (ec) {
+      lgr.warning("Error reading methylome {}: {}", methylome_name, ec);
+      resp_hdr.status = server_error_code::methylome_not_found;
+      return;
+    }
   }
 
   // load the genome index (a preload)
