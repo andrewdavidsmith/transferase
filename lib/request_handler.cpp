@@ -65,28 +65,33 @@ request_handler::handle_request(const request &req,
     return;
   }
 
-  // verify that the methylome names makes sense
-  for (const auto &methylome_name : req.methylome_names)
-    // cppcheck-suppress useStlAlgorithm
+  std::error_code ec;
+  std::string genome_name;
+  // pre-load all methylomes and check their availability and corresponding
+  // genome names at the same time
+  for (const auto &methylome_name : req.methylome_names) {
     if (!methylome::is_valid_name(methylome_name)) {
       lgr.warning("Malformed methylome name: {}", methylome_name);
       resp_hdr.status = server_error_code::invalid_methylome_name;
       return;
     }
-
-  std::error_code ec;
-  // get one methylome so we can associate a genome with this request
-  for (const auto &methylome_name : req.methylome_names) {
     const auto meth = methylomes.get_methylome(methylome_name, ec);
     if (ec) {
       lgr.warning("Error reading methylome {}: {}", methylome_name, ec);
       resp_hdr.status = server_error_code::methylome_not_found;
       return;
     }
+    const auto &curr_genome = meth->get_genome_name();
+    if (genome_name.empty())
+      genome_name = curr_genome;
+    if (genome_name != curr_genome) {
+      lgr.warning("Inconsistent genomes: {} / {}", genome_name, curr_genome);
+      resp_hdr.status = server_error_code::inconsistent_genomes;
+      return;
+    }
   }
 
   // load the genome index (a preload)
-  const auto genome_name = meth->get_genome_name();
   const auto index = indexes.get_genome_index(genome_name, ec);
   if (ec) {
     lgr.error("Failed to load genome index for {}: {}", genome_name, ec);
@@ -95,9 +100,9 @@ request_handler::handle_request(const request &req,
   }
 
   // confirm that the methylome size is as expected
-  if (req.index_hash != meth->get_index_hash()) {
+  if (req.index_hash != index->get_hash()) {
     lgr.warning("Incorrect index_hash (provided={}, expected={})",
-                req.index_hash, meth->get_index_hash());
+                req.index_hash, index->get_hash());
     resp_hdr.status = server_error_code::invalid_index_hash;
     return;
   }
