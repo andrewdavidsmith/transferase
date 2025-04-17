@@ -42,6 +42,7 @@ enum class server_error_code : std::uint8_t {
   index_not_found =        7,
   server_failure =         8,
   bad_request =            9,
+  inconsistent_genomes =  10,
   // clang-format on
 };
 
@@ -64,6 +65,7 @@ struct server_error_category : std::error_category {
     case 7: return "index not found"s;
     case 8: return "server failure"s;
     case 9: return "bad request"s;
+    case 10: return "inconsistent genomes"s;
     }
     std::unreachable();
   }
