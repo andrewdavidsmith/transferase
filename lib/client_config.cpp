@@ -558,6 +558,8 @@ download_methbase_metadata_dataframe_file(
     std::format(client_config::methbase_metadata_dataframe_default, VERSION);
   auto &lgr = transferase::logger::instance();
 
+  lgr.debug("Methbase metadata: {}", methbase_metadata_dataframe);
+
   std::error_code error;
   const bool methbase_metadata_dataframe_exists =
     std::filesystem::exists(local_methbase_metadata_dataframe, error);
@@ -600,7 +602,7 @@ download_methbase_metadata_dataframe_file(
   return {};
 }
 
-[[nodiscard]] static auto
+[[nodiscard, maybe_unused]] static auto
 download_methylome_list(
   const remote_data_resource &remote, const std::string &dirname,
   const download_policy_t download_policy) -> std::error_code {
@@ -608,6 +610,8 @@ download_methylome_list(
   const auto local_methylome_list = std::filesystem::path{dirname} /
                                     methylome_name_list::get_default_filename();
   auto &lgr = transferase::logger::instance();
+
+  lgr.debug("Methylome list: {}", methylome_list);
 
   std::error_code error;
   const bool methylome_list_exists =
@@ -753,16 +757,18 @@ client_config::install(const std::vector<std::string> &genomes,
       lgr.debug("Error obtaining 'select' metadata file: {}",
                 select_metadata_err.message());
 
+    /// ADS: not currently populating the methylome list
+
     // methylome list
-    const auto methylome_list_err =
-      download_methylome_list(remote, metadata_dir, download_policy);
-    if (methylome_list_err)
-      lgr.debug("Error obtaining methylome list file: {}",
-                methylome_list_err.message());
+    // const auto methylome_list_err =
+    //   download_methylome_list(remote, metadata_dir, download_policy);
+    // if (methylome_list_err)
+    //   lgr.debug("Error obtaining methylome list file: {}",
+    //             methylome_list_err.message());
 
     // check that it all worked
-    if (!methbase_metadata_dataframe_err && !select_metadata_err &&
-        !methylome_list_err) {
+    if (!methbase_metadata_dataframe_err && !select_metadata_err
+        /* && !methylome_list_err*/) {
       metadata_downloads_ok = true;
       break;
     }
