@@ -38,7 +38,13 @@ def get_platform_tags_linux(whl_file):
         check=False,
     )
     text = p.stdout.decode().strip().replace("\n", " ").replace("  ", " ")
-    tag_match = re.search('tag: "([a-zA-Z0-9_]*)"', text)
+    # ADS: Updated match here grabs the part of the auditwheel output that is
+    # below all the dependencies and seems to be more specific.
+    tag_match = re.search(
+        'This constrains the platform tag to "([a-zA-Z0-9_]*)"', text
+    )
+    # ADS: previous pattern below didn't always grab the right tag
+    # tag_match = re.search('tag: "([a-zA-Z0-9_]*)"', text)
     return tag_match.group(1) if tag_match and tag_match.groups() else None
 
 
