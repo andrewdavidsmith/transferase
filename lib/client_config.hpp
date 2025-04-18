@@ -49,6 +49,7 @@ struct client_config {
   static constexpr auto methbase_metadata_dataframe_default =
     "methbase_metadata_dataframe_{}.tsv";
   static constexpr auto select_metadata_default = "select_metadata_{}.json";
+  static constexpr auto methylome_list_default = "methylome_list_{}.json";
 
   std::string config_dir;
   std::string hostname;
