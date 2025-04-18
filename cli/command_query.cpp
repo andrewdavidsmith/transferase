@@ -610,7 +610,7 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
   // ADS: below is because error code '0' is printed as "Undefined
   // error" on macos.
   if (error) {
-    lgr.critical("Failed to complete query: {}", error);
+    lgr.error("Failed to complete query: {}", error);
     return EXIT_FAILURE;
   }
 
