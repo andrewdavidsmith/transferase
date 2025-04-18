@@ -188,20 +188,18 @@ auto
 https_client::connect(const asio::ip::tcp::resolver::results_type &endpoints)
   -> void {
   deadline.expires_after(connect_timeout);
-  asio::async_connect(
-    sock.lowest_layer(), endpoints,
-    [this](const std::error_code &error,
-           const asio::ip::tcp::endpoint & /*endpoint*/) {
+  // clang-format off
+  asio::async_connect(sock.lowest_layer(), endpoints,
+    [this](const std::error_code &error, const auto & /*endpoint*/) {
       deadline.expires_at(asio::steady_timer::time_point::max());
       if (!error) {
-        const auto endpoint_str =
-          (std::ostringstream() << sock.lowest_layer().remote_endpoint()).str();
         handshake();
       }
       else {
         finish(http_error_code::connect_failed);
       }
     });
+  // clang-format on
 }
 
 auto
