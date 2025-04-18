@@ -9,9 +9,10 @@ keep things together.
 
 ## Ubuntu
 
-I'm using the Ubuntu 24.04 docker image. I will list all the steps, even
-though most of them won't be needed on your system. First is to build the
-command line tools, then the Python package.
+These instructions assume Ubuntu 24.04 and I'm using the Ubuntu 24.04 docker
+image. I will list all the steps, even though most of them won't be needed on
+your system. First is to build the command line tools, then the Python
+package.
 
 ### Command line app
 
@@ -200,6 +201,36 @@ worked, do this:
 python3 -c "from pyxfr import *; help(pyxfr)"
 ```
 
+Full Python build, from dependencies to test, in Ubuntu 24.04 is the
+following. Note that the final built filename
+(`pyxfr-0.6.1-cp312-none-manylinux_2_38_x86_64.whl`) depends on using Ubuntu
+24.04 and all the earlier steps:
+
+```console
+apt-get update && \
+DEBIAN_FRONTEND=noninteractive \
+apt-get install -y --no-install-recommends \
+    ca-certificates \
+    git \
+    g++-14 \
+    gcc-14 \
+    cmake \
+    make \
+    libssl-dev \
+    python3.12-dev \
+    python3.12-venv && \
+python3.12 -m venv .venv && . .venv/bin/activate && \
+pip install nanobind pytest wheel auditwheel hatch numpy && \
+git clone https://github.com/andrewdavidsmith/transferase && \
+cd transferase && \
+export CC=gcc-14 && \
+cmake -B build -DCMAKE_CXX_COMPILER=g++-14 \
+    -DPACKAGE_PYTHON=on -DCMAKE_BUILD_TYPE=Release && \
+cmake --build build -j32 && \
+pip install build/python/dist/pyxfr-0.6.1-cp312-none-manylinux_2_38_x86_64.whl && \
+python3 -c "from pyxfr import *; help(pyxfr)"
+```
+
 ## Fedora
 
 I'm using the Fedora version 41 docker image. I will do this slightly
@@ -287,6 +318,8 @@ rpm -e transferase  # Remove
 ```
 
 ## The R API
+
+**(Note: these instructions work on Ubuntu 25.04, released on 2025-05-17)**
 
 The transferase API for R is called Rxfr.  In mid-March 2025, I'm using the
 unstable ("sid") Debian docker image to build the R API for transferase
@@ -611,3 +644,107 @@ pip install build/python/dist/pyxfr-*.whl
 # Run the pytest unit tests
 pytest --rootdir=build/python/test -v -x build/python
 ```
+
+And starting from a fresh image:
+
+```console
+# Get system dependencies
+apt-get update && \
+DEBIAN_FRONTEND=noninteractive \
+apt-get install -y --no-install-recommends \
+    ca-certificates \
+    git \
+    g++-14 \
+    gcc-14 \
+    cmake \
+    make \
+    libssl-dev \
+    python3.12-dev \
+    python3.12-venv \
+    libgtest-dev
+# Get Python dependencies
+python3.12 -m venv .venv && . .venv/bin/activate && \
+pip install nanobind pytest wheel auditwheel hatch numpy
+# Download transferase
+git clone https://github.com/andrewdavidsmith/transferase && \
+cd transferase
+# Set the C compiler for building zlib with fpic
+export CC=gcc-14
+# Configure the build
+cmake -B build -DCMAKE_CXX_COMPILER=g++-14 \
+    -DPACKAGE_PYTHON=on -DLIB_ONLY=on -DPYTHON_TESTS=on -DCMAKE_BUILD_TYPE=Build
+# Do the build
+cmake --build build -j32
+# Install the Python package (this catches whatever tags the whl file is given)
+pip install build/python/dist/pyxfr-*.whl
+# Run the pytest unit tests
+pytest --rootdir=build/python/test -v -x build/python
+```
+
+## Ubuntu 25.04 (2025-04-17)
+
+The instructions here are updated for the
+[Ubuntu 25.04](https://hub.docker.com/_/ubuntu) docker image, which is current
+the one labeled "rolling" as of 2025-04-17. If you are in a container, and
+don't worry about messing up your environment, just copy-paste all these at
+once. Otherwise please go line-by-line.
+
+* Command line app: Full instructions. Notable difference wrt 24.04 is that
+  we use default g++ on Ubuntu 25.04:
+
+  ```console
+  # Get dependencies
+  apt-get update && \
+  DEBIAN_FRONTEND=noninteractive \
+  apt-get install -y --no-install-recommends \
+      ca-certificates \
+      git \
+      g++ \
+      cmake \
+      make \
+      libncurses5-dev \
+      libssl-dev \
+      zlib1g-dev
+  # Download transferase
+  git clone https://github.com/andrewdavidsmith/transferase && \
+  cd transferase
+  # Configure the build
+  cmake -B build -DCMAKE_CXX_COMPILER=g++ -DCMAKE_BUILD_TYPE=Release
+  # Build the software (-j indicates the number of cores to use)
+  cmake --build build -j32
+  # Install to $HOME; change to wherever you want to install
+  cmake --install build --prefix=$HOME
+  ```
+
+* Python package: Notable difference wrt 24.04 is that we use default gcc/g++
+  on Ubuntu 25.04, and python3.13.
+
+  ```console
+  # Get dependencies (need Python, don't need zlib or ncurses)
+  apt-get update && \
+  DEBIAN_FRONTEND=noninteractive \
+  apt-get install -y --no-install-recommends \
+      ca-certificates \
+      git \
+      gcc \
+      g++ \
+      cmake \
+      make \
+      libssl-dev \
+      python3.13-dev \
+      python3.13-venv
+  # Install Python dependencies
+  python3.13 -m venv .venv && . .venv/bin/activate
+  pip install nanobind pytest wheel auditwheel hatch numpy
+  # Download transferase
+  git clone https://github.com/andrewdavidsmith/transferase && \
+  cd transferase
+  # Building zlib with fPIC needs CC, but our CMake code doesn't handle it yet
+  export CC=gcc && \
+  cmake -B build -DCMAKE_CXX_COMPILER=g++ -DPACKAGE_PYTHON=on \
+      -DCMAKE_BUILD_TYPE=Release && \
+  cmake --build build -j32
+  pip install build/python/dist/pyxfr-0.6.1-cp313-none-manylinux_2_38_x86_64.whl
+  # Test that it worked
+  python3 -c "from pyxfr import *; help(pyxfr)"
+  ```
