@@ -25,7 +25,7 @@ import shutil
 import tempfile
 import os
 
-import pyxfr
+from pyxfr import pyxfr
 from pyxfr import MConfig
 
 
