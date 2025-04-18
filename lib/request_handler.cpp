@@ -117,11 +117,19 @@ request_handler::intervals_get_levels<level_element_t>(
   std::error_code ec;
   resp_data.resize(resp_hdr.rows, resp_hdr.cols);
   std::uint32_t col_id = 0;
+  std::uint64_t index_hash = 0;  // check all methylomes use same genome
   for (const auto &methylome_name : req.methylome_names) {
     const auto meth = methylomes.get_methylome(methylome_name, ec);
     if (ec) {
       lgr.error("Failed to load methylome {}: {}", methylome_name, ec);
-      resp_hdr.status = ec;
+      resp_hdr.status = server_error_code::methylome_not_found;
+      return;
+    }
+    if (index_hash == 0)
+      index_hash = meth->get_index_hash();
+    if (index_hash != meth->get_index_hash()) {
+      lgr.warning("Inconsistent index hash values found");
+      resp_hdr.status = server_error_code::inconsistent_genomes;
       return;
     }
     lgr.debug("Computing levels for methylome: {} (intervals)", methylome_name);
@@ -139,11 +147,19 @@ request_handler::intervals_get_levels<level_element_covered_t>(
 
   resp_data.resize(resp_hdr.rows, resp_hdr.cols);
   std::uint32_t col_id = 0;
+  std::uint64_t index_hash = 0;  // check all methylomes use same genome
   for (const auto &methylome_name : req.methylome_names) {
     const auto meth = methylomes.get_methylome(methylome_name, ec);
     if (ec) {
       lgr.error("Failed to load methylome {}: {}", methylome_name, ec);
-      resp_hdr.status = ec;
+      resp_hdr.status = server_error_code::methylome_not_found;
+      return;
+    }
+    if (index_hash == 0)
+      index_hash = meth->get_index_hash();
+    if (index_hash != meth->get_index_hash()) {
+      lgr.warning("Inconsistent index hash values found");
+      resp_hdr.status = server_error_code::inconsistent_genomes;
       return;
     }
     lgr.debug("Computing levels for methylome: {} (intervals, covered)",
@@ -169,7 +185,7 @@ request_handler::bins_get_levels<level_element_t>(
     const auto meth = methylomes.get_methylome(methylome_name, ec);
     if (ec) {
       lgr.error("Failed to load methylome {}: {}", methylome_name, ec);
-      resp_hdr.status = ec;
+      resp_hdr.status = server_error_code::methylome_not_found;
       return;
     }
     // need genome index to know the bins
@@ -178,7 +194,7 @@ request_handler::bins_get_levels<level_element_t>(
       index = indexes.get_genome_index(genome_name, ec);
       if (ec) {
         lgr.error("Failed to load genome index for {}: {}", genome_name, ec);
-        resp_hdr.status = ec;
+        resp_hdr.status = server_error_code::index_not_found;
         return;
       }
     }
@@ -211,7 +227,7 @@ request_handler::bins_get_levels<level_element_covered_t>(
     const auto meth = methylomes.get_methylome(methylome_name, ec);
     if (ec) {
       lgr.error("Failed to load methylome {}: {}", methylome_name, ec);
-      resp_hdr.status = ec;
+      resp_hdr.status = server_error_code::methylome_not_found;
       return;
     }
     // need genome index to know the bins
@@ -220,7 +236,7 @@ request_handler::bins_get_levels<level_element_covered_t>(
       index = indexes.get_genome_index(genome_name, ec);
       if (ec) {
         lgr.error("Failed to load genome index for {}: {}", genome_name, ec);
-        resp_hdr.status = ec;
+        resp_hdr.status = server_error_code::index_not_found;
         return;
       }
     }
