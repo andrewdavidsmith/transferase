@@ -80,7 +80,7 @@ struct remote_data_resource {
   [[nodiscard]] auto
   form_methylome_list_target() const {
     return (std::filesystem::path{path} / "metadata" / "latest" /
-            std::format(client_config::select_metadata_default, VERSION))
+            std::format(client_config::methylome_list_default, VERSION))
       .string();
   }
 
