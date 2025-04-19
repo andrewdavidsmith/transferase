@@ -71,8 +71,8 @@ struct comm_stats {
 
 struct connection : public std::enable_shared_from_this<connection> {
   connection(const connection &) = delete;
-  connection &
-  operator=(const connection &) = delete;
+  auto
+  operator=(const connection &) -> connection & = delete;
 
   connection(asio::ip::tcp::socket socket_to_move, request_handler &handler,
              logger &lgr, std::uint32_t conn_id) :
