@@ -56,27 +56,10 @@ connection::compute_intervals() noexcept -> void {
   using elem_cov_t = level_element_covered_t;
   using elem_t = level_element_t;
 
-<<<<<<< Updated upstream
-  set_deadline(work_timeout_sec);
-=======
->>>>>>> Stashed changes
   if (req.is_covered_request())
     handler.intervals_get_levels<elem_cov_t>(req, query, resp_hdr, resp_cov);
   else
     handler.intervals_get_levels<elem_t>(req, query, resp_hdr, resp);
-<<<<<<< Updated upstream
-
-  if (resp_hdr.status) {
-    lgr.warning("{} Error computing levels: {}", conn_id,
-                resp_hdr.status.message());
-    respond_with_error();
-    return;
-  }
-
-  lgr.debug("{} Finished computing levels in intervals", conn_id);
-  respond_with_header();
-=======
->>>>>>> Stashed changes
 }
 
 auto
