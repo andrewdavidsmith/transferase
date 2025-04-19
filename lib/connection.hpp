@@ -117,11 +117,14 @@ struct connection : public std::enable_shared_from_this<connection> {
   // clang-format on
 
   auto
-  respond_with_header() -> void;  // send success header
+  respond_with_header() noexcept -> void;  // send success header
   auto
-  respond_with_error() -> void;  // send error header
+  respond_with_error() noexcept -> void;  // send error header
   auto
-  respond_with_levels() -> void;  // send levels
+  respond_with_levels() noexcept -> void;  // send levels
+
+  auto
+  handle_request() noexcept -> void;
 
   auto
   check_deadline() -> void;
@@ -172,8 +175,8 @@ struct connection : public std::enable_shared_from_this<connection> {
   std::size_t levels_byte{};
   std::size_t levels_remaining{};
 
-  comm_stats write_stats{};
-  comm_stats read_stats{};
+  comm_stats reply_stats{};
+  comm_stats query_stats{};
 };
 
 }  // namespace transferase
