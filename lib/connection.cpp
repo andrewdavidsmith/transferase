@@ -45,9 +45,11 @@ connection::set_deadline(const std::chrono::seconds delta) -> void {
 [[nodiscard]] auto
 connection::get_send_buf(const std::uint32_t offset) const noexcept -> const
   char * {
+  // NOLINTBEGIN (*-reinterpret-cast)
   const auto buf_beg = req.is_covered_request()
                          ? reinterpret_cast<const char *>(resp_cov.data())
                          : reinterpret_cast<const char *>(resp.data());
+  // NOLINTEND (*-reinterpret-cast)
   return buf_beg + offset;  // NOLINT (*-pointer-arithmetic)
 }
 
@@ -118,7 +120,6 @@ connection::read_request() -> void {
     socket, asio::buffer(req_buf), asio::transfer_exactly(request_buffer_size),
     [this, self](const std::error_code ec, auto /*n_bytes*/) {
       if (ec) {
-        // problem reading request
         lgr.warning("{} Failed to read request: {}", conn_id, ec);
         stop();
         return;
@@ -152,8 +153,7 @@ connection::read_query() -> void {
   auto self = shared_from_this();
   socket.async_read_some(
     asio::buffer(query.data(query_byte), query_remaining),
-    [this, self](const std::error_code ec,
-                 const std::size_t bytes_transferred) {
+    [this, self](const std::error_code ec, const std::size_t n_bytes) {
       if (ec) {
         lgr.warning("{} Error reading query: {}", conn_id, ec);
         resp_hdr = {request_error_code::error_reading_query, 0};
@@ -161,10 +161,10 @@ connection::read_query() -> void {
         return;
       }
 
-      query_remaining -= bytes_transferred;
-      query_byte += bytes_transferred;
+      query_remaining -= n_bytes;
+      query_byte += n_bytes;
 
-      query_stats.update(bytes_transferred);
+      query_stats.update(n_bytes);
       if (query_remaining == 0) {
         set_deadline(work_timeout_sec);
         lgr.debug("{} Finished reading query ({})", conn_id, query_stats.str());
