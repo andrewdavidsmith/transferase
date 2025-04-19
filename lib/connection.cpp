@@ -121,17 +121,15 @@ connection::read_request() -> void {
       set_deadline(work_timeout_sec);
       lgr.debug("{} Received request: {}", conn_id, req.summary());
       handler.handle_request(req, resp_hdr);
-      if (!resp_hdr.error()) {
-        if (req.is_intervals_request()) {
-          init_read_query();
-        }
-        else {  // req.is_bins_request()
-          compute_bins();
-        }
-      }
-      else {
+      if (resp_hdr.error()) {
         respond_with_error();
+        return;
       }
+
+      if (req.is_intervals_request())
+        init_read_query();
+      else  // req.is_bins_request()
+        compute_bins();
     });
 }
 
@@ -152,15 +150,11 @@ connection::read_query() -> void {
 
       query_remaining -= bytes_transferred;
       query_byte += bytes_transferred;
-      ++n_reads;
-      max_read_size = std::max(max_read_size, bytes_transferred);
-      min_read_size = std::min(min_read_size, bytes_transferred);
+
+      read_stats.update(bytes_transferred);
       if (query_remaining == 0) {
         set_deadline(work_timeout_sec);
-        lgr.debug("{} Finished reading query ({}B, reads={}, max={}B, "
-                  "min={}B, mean={}B)",
-                  conn_id, query_byte, n_reads, max_read_size, min_read_size,
-                  query_byte / n_reads);
+        lgr.debug("{} Finished reading query ({})", conn_id, read_stats.str());
         compute_intervals();
         if (resp_hdr.status) {
           lgr.warning("{} Error computing levels: {}", conn_id,
@@ -185,11 +179,11 @@ connection::respond_with_error() -> void {
     stop();
     return;
   }
+
   set_deadline(comm_timeout_sec);
   auto self = shared_from_this();
   asio::async_write(socket, asio::buffer(resp_hdr_buf),
                     [this, self](const std::error_code ec, auto) {
-                      set_deadline(work_timeout_sec);
                       if (ec)
                         lgr.error("{} Error responding: {}", conn_id, ec);
                       stop();
@@ -234,15 +228,9 @@ connection::respond_with_levels() -> void {
       levels_remaining -= n_bytes;
       levels_byte += n_bytes;
 
-      // ADS: collect the stats here; should be refactored
-      ++n_writes;
-      max_write_size = std::max(max_write_size, n_bytes);
-      min_write_size = std::min(min_write_size, n_bytes);
+      write_stats.update(n_bytes);
       if (levels_remaining == 0) {
-        lgr.info(
-          "{} Response complete ({}B, writes={}, max={}B, min={}B, mean={}B)",
-          conn_id, levels_byte, n_writes, max_write_size, min_write_size,
-          levels_byte / n_writes);
+        lgr.info("{} Response complete ({})", conn_id, write_stats.str());
         stop();
         return;
       }
