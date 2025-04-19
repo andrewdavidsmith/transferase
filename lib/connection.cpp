@@ -39,7 +39,8 @@ namespace transferase {
 
 auto
 connection::set_deadline(const std::chrono::seconds delta) -> void {
-  deadline = std::chrono::steady_clock::now() + std::chrono::seconds(delta);
+  namespace chrono = std::chrono;
+  deadline = chrono::steady_clock::now() + chrono::seconds(delta);
 }
 
 [[nodiscard]] auto
@@ -53,57 +54,28 @@ connection::get_send_buf(const std::uint32_t offset) const noexcept -> const
 
 auto
 connection::compute_intervals() noexcept -> void {
-  using elem_cov_t = level_element_covered_t;
-  using elem_t = level_element_t;
-
   if (req.is_covered_request())
-    handler.intervals_get_levels<elem_cov_t>(req, query, resp_hdr, resp_cov);
+    handler.intervals_get_levels<level_element_covered_t>(req, query, resp_hdr,
+                                                          resp_cov);
   else
-    handler.intervals_get_levels<elem_t>(req, query, resp_hdr, resp);
+    handler.intervals_get_levels<level_element_t>(req, query, resp_hdr, resp);
 }
 
 auto
 connection::compute_bins() noexcept -> void {
-  using elem_cov_t = level_element_covered_t;
-  using elem_t = level_element_t;
-
   if (req.is_covered_request())
-    handler.bins_get_levels<elem_cov_t>(req, resp_hdr, resp_cov);
+    handler.bins_get_levels<level_element_covered_t>(req, resp_hdr, resp_cov);
   else
-    handler.bins_get_levels<elem_t>(req, resp_hdr, resp);
-
+    handler.bins_get_levels<level_element_t>(req, resp_hdr, resp);
   if (resp_hdr.status) {
     lgr.warning("{} Error computing levels: {}", conn_id,
                 resp_hdr.status.message());
     respond_with_error();
-    return;
   }
-
-  lgr.debug("{} Finished computing levels in bins", conn_id);
-  respond_with_header();
-}
-
-auto
-connection::handle_request() noexcept -> void {
-  set_deadline(work_timeout_sec);
-  if (const auto parse_err = parse(req_buf, req); parse_err) {
-    lgr.warning("{} Request parse error: {}", conn_id, parse_err);
-    resp_hdr = {parse_err, 0};
-    respond_with_error();
-    return;
+  else {
+    lgr.debug("{} Finished computing levels in bins", conn_id);
+    respond_with_header();
   }
-
-  lgr.debug("{} Received request: {}", conn_id, req.summary());
-  handler.handle_request(req, resp_hdr);
-  if (resp_hdr.error()) {
-    respond_with_error();
-    return;
-  }
-
-  if (req.is_intervals_request())
-    init_read_query();
-  else  // req.is_bins_request()
-    compute_bins();
 }
 
 // Server logic below
@@ -133,12 +105,31 @@ connection::read_request() -> void {
     socket, asio::buffer(req_buf), asio::transfer_exactly(request_buffer_size),
     [this, self](const std::error_code ec, auto /*n_bytes*/) {
       if (ec) {
+        // problem reading request
         lgr.warning("{} Failed to read request: {}", conn_id, ec);
         stop();
         return;
       }
+
+      if (const auto parse_err = parse(req_buf, req); parse_err) {
+        lgr.warning("{} Request parse error: {}", conn_id, parse_err);
+        resp_hdr = {parse_err, 0};
+        respond_with_error();
+        return;
+      }
+
+      set_deadline(work_timeout_sec);
       lgr.debug("{} Received request: {}", conn_id, req.summary());
-      handle_request();
+      handler.handle_request(req, resp_hdr);
+      if (resp_hdr.error()) {
+        respond_with_error();
+        return;
+      }
+
+      if (req.is_intervals_request())
+        init_read_query();
+      else  // req.is_bins_request()
+        compute_bins();
     });
 }
 
@@ -165,6 +156,15 @@ connection::read_query() -> void {
         set_deadline(work_timeout_sec);
         lgr.debug("{} Finished reading query ({})", conn_id, query_stats.str());
         compute_intervals();
+        if (resp_hdr.status) {
+          lgr.warning("{} Error computing levels: {}", conn_id,
+                      resp_hdr.status.message());
+          respond_with_error();
+          return;
+        }
+
+        lgr.debug("{} Finished computing levels in intervals", conn_id);
+        respond_with_header();
         return;
       }
       read_query();
@@ -172,7 +172,26 @@ connection::read_query() -> void {
 }
 
 auto
-connection::respond_with_header() noexcept -> void {
+connection::respond_with_error() -> void {
+  lgr.warning("{} Responding with error: {}", conn_id, resp_hdr.summary());
+  if (const auto comp_err = compose(resp_hdr_buf, resp_hdr); comp_err) {
+    lgr.error("{} Error responding: {}", conn_id, comp_err);
+    stop();
+    return;
+  }
+
+  set_deadline(comm_timeout_sec);
+  auto self = shared_from_this();
+  asio::async_write(socket, asio::buffer(resp_hdr_buf),
+                    [this, self](const std::error_code ec, auto) {
+                      if (ec)
+                        lgr.error("{} Error responding: {}", conn_id, ec);
+                      stop();
+                    });
+}
+
+auto
+connection::respond_with_header() -> void {
   lgr.debug("{} Responding with header: {}", conn_id, resp_hdr.summary());
   if (const auto ec = compose(resp_hdr_buf, resp_hdr); ec) {
     lgr.error("{} Error composing response header: {}", conn_id, ec);
@@ -194,7 +213,7 @@ connection::respond_with_header() noexcept -> void {
 }
 
 auto
-connection::respond_with_levels() noexcept -> void {
+connection::respond_with_levels() -> void {
   set_deadline(comm_timeout_sec);
   auto self = shared_from_this();
   socket.async_write_some(
@@ -217,25 +236,6 @@ connection::respond_with_levels() noexcept -> void {
       }
       respond_with_levels();
     });
-}
-
-auto
-connection::respond_with_error() noexcept -> void {
-  lgr.warning("{} Responding with error: {}", conn_id, resp_hdr.summary());
-  if (const auto comp_err = compose(resp_hdr_buf, resp_hdr); comp_err) {
-    lgr.error("{} Error responding: {}", conn_id, comp_err);
-    stop();
-    return;
-  }
-
-  set_deadline(comm_timeout_sec);
-  auto self = shared_from_this();
-  asio::async_write(socket, asio::buffer(resp_hdr_buf),
-                    [this, self](const std::error_code ec, auto) {
-                      if (ec)
-                        lgr.error("{} Error responding: {}", conn_id, ec);
-                      stop();
-                    });
 }
 
 auto

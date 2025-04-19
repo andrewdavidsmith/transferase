@@ -117,14 +117,11 @@ struct connection : public std::enable_shared_from_this<connection> {
   // clang-format on
 
   auto
-  respond_with_header() noexcept -> void;  // send success header
+  respond_with_header() -> void;  // send success header
   auto
-  respond_with_error() noexcept -> void;  // send error header
+  respond_with_error() -> void;  // send error header
   auto
-  respond_with_levels() noexcept -> void;  // send levels
-
-  auto
-  handle_request() noexcept -> void;
+  respond_with_levels() -> void;  // send levels
 
   auto
   check_deadline() -> void;
