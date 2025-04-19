@@ -60,6 +60,16 @@ connection::compute_intervals() noexcept -> void {
     handler.intervals_get_levels<elem_cov_t>(req, query, resp_hdr, resp_cov);
   else
     handler.intervals_get_levels<elem_t>(req, query, resp_hdr, resp);
+
+  if (resp_hdr.status) {
+    lgr.warning("{} Error computing levels: {}", conn_id,
+                resp_hdr.status.message());
+    respond_with_error();
+    return;
+  }
+
+  lgr.debug("{} Finished computing levels in intervals", conn_id);
+  respond_with_header();
 }
 
 auto
@@ -76,14 +86,12 @@ connection::compute_bins() noexcept -> void {
     lgr.warning("{} Error computing levels: {}", conn_id,
                 resp_hdr.status.message());
     respond_with_error();
+    return;
   }
-  else {
-    lgr.debug("{} Finished computing levels in bins", conn_id);
-    respond_with_header();
-  }
-}
 
-// Server logic below
+  lgr.debug("{} Finished computing levels in bins", conn_id);
+  respond_with_header();
+}
 
 auto
 connection::init_read_query() -> void {
@@ -161,15 +169,6 @@ connection::read_query() -> void {
         set_deadline(work_timeout_sec);
         lgr.debug("{} Finished reading query ({})", conn_id, query_stats.str());
         compute_intervals();
-        if (resp_hdr.status) {
-          lgr.warning("{} Error computing levels: {}", conn_id,
-                      resp_hdr.status.message());
-          respond_with_error();
-          return;
-        }
-
-        lgr.debug("{} Finished computing levels in intervals", conn_id);
-        respond_with_header();
         return;
       }
       read_query();
