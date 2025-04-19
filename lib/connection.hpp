@@ -78,17 +78,21 @@ struct connection : public std::enable_shared_from_this<connection> {
     return !socket.is_open();
   }
 
-  // Allocate space for offsets and initialize the variables that
-  // track where we are in the buffer as data arrives.
+  // Allocate space for offsets, initialize tracking variables, the start
+  // rading query
   auto
-  prepare_to_read_query() -> void;
+  init_read_query() -> void;
 
   auto
   read_request() -> void;  // read 'request'
   auto
   read_query() -> void;  // read the 'query' part of request
-  auto
-  compute_bins() -> void;  // do the computation for bins
+
+  // Compute the levels for intervals and bins
+  // clang-format off
+  auto compute_intervals() noexcept -> void;
+  auto compute_bins() noexcept -> void;
+  // clang-format on
 
   auto
   respond_with_header() -> void;  // send success header
@@ -101,23 +105,19 @@ struct connection : public std::enable_shared_from_this<connection> {
   check_deadline() -> void;
 
   [[nodiscard]] auto
-  get_outgoing_n_bytes() const -> std::uint32_t {
+  get_response_size() const -> std::uint32_t {
     return req.is_covered_request() ? resp_cov.get_n_bytes()
                                     : resp.get_n_bytes();
   }
 
   auto
-  prepare_to_write_response_payload() -> void {
-    outgoing_bytes_remaining = get_outgoing_n_bytes();  // init counters
-    outgoing_bytes_sent = 0;
-  }
+  init_write_response() -> void;
 
   [[nodiscard]] auto
-  get_outgoing_data_buffer() const noexcept -> const char * {
-    return req.is_covered_request()
-             ? reinterpret_cast<const char *>(resp_cov.data())
-             : reinterpret_cast<const char *>(resp.data());
-  }
+  get_send_buf(const std::uint32_t bytes_sent) const noexcept -> const char *;
+
+  auto
+  set_deadline(const std::chrono::seconds delta) -> void;
 
   asio::ip::tcp::socket socket;  // this connection's socket
   asio::steady_timer watchdog_timer;
@@ -137,8 +137,9 @@ struct connection : public std::enable_shared_from_this<connection> {
 
   logger &lgr;
   std::uint32_t conn_id{};  // identifer for this connection
-  std::uint32_t work_timeout_seconds{120};
-  std::uint32_t read_timeout_seconds{10};
+
+  std::chrono::seconds work_timeout_sec{120};
+  std::chrono::seconds comm_timeout_sec{10};
 
   // These help keep track of where we are in the incoming offsets;
   // they might best be associated with the request.
@@ -146,8 +147,8 @@ struct connection : public std::enable_shared_from_this<connection> {
   std::size_t query_byte{};
   std::size_t query_remaining{};
 
-  std::size_t outgoing_bytes_sent{};
-  std::size_t outgoing_bytes_remaining{};
+  std::size_t levels_byte{};
+  std::size_t levels_remaining{};
 
   std::size_t n_writes{};
   std::size_t min_write_size{std::numeric_limits<std::size_t>::max()};
