@@ -46,10 +46,10 @@ connection::set_deadline(const std::chrono::seconds delta) -> void {
 [[nodiscard]] auto
 connection::get_send_buf(const std::uint32_t offset) const noexcept -> const
   char * {
-  const auto r = req.is_covered_request()
-                   ? reinterpret_cast<const char *>(resp_cov.data())
-                   : reinterpret_cast<const char *>(resp.data());
-  return r + offset;  // NOLINT (*-pointer-arithmetic)
+  const auto buf_beg = req.is_covered_request()
+                         ? reinterpret_cast<const char *>(resp_cov.data())
+                         : reinterpret_cast<const char *>(resp.data());
+  return buf_beg + offset;  // NOLINT (*-pointer-arithmetic)
 }
 
 auto
@@ -112,35 +112,27 @@ connection::read_request() -> void {
         stop();
         return;
       }
+      if (const auto parse_err = parse(req_buf, req); parse_err) {
+        lgr.warning("{} Request parse error: {}", conn_id, parse_err);
+        resp_hdr = {parse_err, 0};
+        respond_with_error();
+      }
       else {
-        if (const auto parse_err = parse(req_buf, req); parse_err) {
-          lgr.warning("{} Request parse error: {}", conn_id, parse_err);
-          resp_hdr = {parse_err, 0};
-          respond_with_error();
+        lgr.debug("{} Received request: {}", conn_id, req.summary());
+        handler.handle_request(req, resp_hdr);
+        if (!resp_hdr.error()) {
+          if (req.is_intervals_request()) {
+            init_read_query();
+          }
+          else {  // req.is_bins_request()
+            compute_bins();
+          }
         }
         else {
-          lgr.debug("{} Received request: {}", conn_id, req.summary());
-          handler.handle_request(req, resp_hdr);
-          if (!resp_hdr.error()) {
-            if (req.is_intervals_request()) {
-              init_read_query();
-            }
-            else {  // req.is_bins_request()
-              compute_bins();
-            }
-          }
-          else {
-            // response header already contains the error code
-            respond_with_error();
-          }
+          respond_with_error();
         }
       }
     });
-  // ADS: on error: no new asyncs start; references to this
-  // connection disappear; this connection gets destroyed when
-  // *both* this handler returns and the timer completes; that
-  // destructor destroys the socket
-  // });
 }
 
 auto
@@ -194,17 +186,15 @@ connection::respond_with_error() -> void {
     stop();
     return;
   }
-  else {
-    set_deadline(comm_timeout_sec);
-    auto self = shared_from_this();
-    asio::async_write(socket, asio::buffer(resp_hdr_buf),
-                      [this, self](const std::error_code ec, auto) {
-                        set_deadline(work_timeout_sec);
-                        if (ec)
-                          lgr.error("{} Error responding: {}", conn_id, ec);
-                        stop();
-                      });
-  }
+  set_deadline(comm_timeout_sec);
+  auto self = shared_from_this();
+  asio::async_write(socket, asio::buffer(resp_hdr_buf),
+                    [this, self](const std::error_code ec, auto) {
+                      set_deadline(work_timeout_sec);
+                      if (ec)
+                        lgr.error("{} Error responding: {}", conn_id, ec);
+                      stop();
+                    });
 }
 
 auto
@@ -215,23 +205,21 @@ connection::respond_with_header() -> void {
     stop();
     return;
   }
-  else {
-    set_deadline(comm_timeout_sec);
-    auto self = shared_from_this();
-    asio::async_write(socket, asio::buffer(resp_hdr_buf),
-                      [this, self](const std::error_code ec, auto) {
-                        set_deadline(work_timeout_sec);
-                        if (ec) {
-                          lgr.warning("{} Error sending header: {}", conn_id,
-                                      ec);
-                          stop();
-                          return;
-                        }
-                        else {
-                          init_write_response();
-                        }
-                      });
-  }
+
+  set_deadline(comm_timeout_sec);
+  auto self = shared_from_this();
+  asio::async_write(socket, asio::buffer(resp_hdr_buf),
+                    [this, self](const std::error_code ec, auto) {
+                      set_deadline(work_timeout_sec);
+                      if (ec) {
+                        lgr.warning("{} Error sending header: {}", conn_id, ec);
+                        stop();
+                        return;
+                      }
+                      else {
+                        init_write_response();
+                      }
+                    });
 }
 
 auto
@@ -246,26 +234,24 @@ connection::respond_with_levels() -> void {
         stop();
         return;
       }
-      else {
-        levels_remaining -= n_bytes;
-        levels_byte += n_bytes;
 
-        // ADS: collect the stats here; should be refactored
-        ++n_writes;
-        max_write_size = std::max(max_write_size, n_bytes);
-        min_write_size = std::min(min_write_size, n_bytes);
-        if (levels_remaining == 0) {
-          lgr.info(
-            "{} Responded with levels ({}B, writes={}, max={}B, min={}B, "
-            "mean={}B)",
-            conn_id, levels_byte, n_writes, max_write_size, min_write_size,
-            levels_byte / n_writes);
-          stop();
-          return;
-        }
-        else {
-          respond_with_levels();
-        }
+      levels_remaining -= n_bytes;
+      levels_byte += n_bytes;
+
+      // ADS: collect the stats here; should be refactored
+      ++n_writes;
+      max_write_size = std::max(max_write_size, n_bytes);
+      min_write_size = std::min(min_write_size, n_bytes);
+      if (levels_remaining == 0) {
+        lgr.info(
+          "{} Response complete ({}B, writes={}, max={}B, min={}B, mean={}B)",
+          conn_id, levels_byte, n_writes, max_write_size, min_write_size,
+          levels_byte / n_writes);
+        stop();
+        return;
+      }
+      else {
+        respond_with_levels();
       }
     });
 }
@@ -280,9 +266,7 @@ connection::watchdog() -> void {
         self->stop();
         return;
       }
-      else {
-        self->watchdog();
-      }
+      self->watchdog();
     }
   });
 }
