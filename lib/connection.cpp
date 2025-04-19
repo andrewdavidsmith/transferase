@@ -104,33 +104,33 @@ connection::read_request() -> void {
   asio::async_read(
     socket, asio::buffer(req_buf), asio::transfer_exactly(request_buffer_size),
     [this, self](const std::error_code ec, auto /*n_bytes*/) {
-      // transfer_exactly means no reenter so relax deadline
-      set_deadline(work_timeout_sec);
       if (ec) {
         // problem reading request
         lgr.warning("{} Failed to read request: {}", conn_id, ec);
         stop();
         return;
       }
+
       if (const auto parse_err = parse(req_buf, req); parse_err) {
         lgr.warning("{} Request parse error: {}", conn_id, parse_err);
         resp_hdr = {parse_err, 0};
         respond_with_error();
+        return;
+      }
+
+      set_deadline(work_timeout_sec);
+      lgr.debug("{} Received request: {}", conn_id, req.summary());
+      handler.handle_request(req, resp_hdr);
+      if (!resp_hdr.error()) {
+        if (req.is_intervals_request()) {
+          init_read_query();
+        }
+        else {  // req.is_bins_request()
+          compute_bins();
+        }
       }
       else {
-        lgr.debug("{} Received request: {}", conn_id, req.summary());
-        handler.handle_request(req, resp_hdr);
-        if (!resp_hdr.error()) {
-          if (req.is_intervals_request()) {
-            init_read_query();
-          }
-          else {  // req.is_bins_request()
-            compute_bins();
-          }
-        }
-        else {
-          respond_with_error();
-        }
+        respond_with_error();
       }
     });
 }
@@ -143,38 +143,37 @@ connection::read_query() -> void {
     asio::buffer(query.data(query_byte), query_remaining),
     [this, self](const std::error_code ec,
                  const std::size_t bytes_transferred) {
-      set_deadline(work_timeout_sec);
-      if (!ec) {
-        query_remaining -= bytes_transferred;
-        query_byte += bytes_transferred;
-        ++n_reads;
-        max_read_size = std::max(max_read_size, bytes_transferred);
-        min_read_size = std::min(min_read_size, bytes_transferred);
-        if (query_remaining == 0) {
-          lgr.debug("{} Finished reading query ({}B, reads={}, max={}B, "
-                    "min={}B, mean={}B)",
-                    conn_id, query_byte, n_reads, max_read_size, min_read_size,
-                    query_byte / n_reads);
-          compute_intervals();
-          if (resp_hdr.status) {
-            lgr.warning("{} Error computing levels: {}", conn_id,
-                        resp_hdr.status.message());
-            respond_with_error();
-          }
-          else {
-            lgr.debug("{} Finished computing levels in intervals", conn_id);
-            respond_with_header();
-          }
-        }
-        else {
-          read_query();
-        }
-      }
-      else {
+      if (ec) {
         lgr.warning("{} Error reading query: {}", conn_id, ec);
         resp_hdr = {request_error_code::error_reading_query, 0};
         respond_with_error();
+        return;
       }
+
+      query_remaining -= bytes_transferred;
+      query_byte += bytes_transferred;
+      ++n_reads;
+      max_read_size = std::max(max_read_size, bytes_transferred);
+      min_read_size = std::min(min_read_size, bytes_transferred);
+      if (query_remaining == 0) {
+        set_deadline(work_timeout_sec);
+        lgr.debug("{} Finished reading query ({}B, reads={}, max={}B, "
+                  "min={}B, mean={}B)",
+                  conn_id, query_byte, n_reads, max_read_size, min_read_size,
+                  query_byte / n_reads);
+        compute_intervals();
+        if (resp_hdr.status) {
+          lgr.warning("{} Error computing levels: {}", conn_id,
+                      resp_hdr.status.message());
+          respond_with_error();
+          return;
+        }
+
+        lgr.debug("{} Finished computing levels in intervals", conn_id);
+        respond_with_header();
+        return;
+      }
+      read_query();
     });
 }
 
@@ -210,15 +209,12 @@ connection::respond_with_header() -> void {
   auto self = shared_from_this();
   asio::async_write(socket, asio::buffer(resp_hdr_buf),
                     [this, self](const std::error_code ec, auto) {
-                      set_deadline(work_timeout_sec);
                       if (ec) {
                         lgr.warning("{} Error sending header: {}", conn_id, ec);
                         stop();
                         return;
                       }
-                      else {
-                        init_write_response();
-                      }
+                      init_write_response();
                     });
 }
 
@@ -250,9 +246,7 @@ connection::respond_with_levels() -> void {
         stop();
         return;
       }
-      else {
-        respond_with_levels();
-      }
+      respond_with_levels();
     });
 }
 
