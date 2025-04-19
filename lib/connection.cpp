@@ -44,6 +44,7 @@ connection::stop() -> void {
   (void)socket.shutdown(asio::ip::tcp::socket::shutdown_both, shutdown_ec);
   if (shutdown_ec)
     lgr.warning("{} Shutdown error: {}", conn_id, shutdown_ec);
+  watchdog_timer.cancel();
 }
 
 auto
@@ -67,7 +68,10 @@ connection::read_request() -> void {
     [this, self](const std::error_code ec,
                  [[maybe_unused]] const std::size_t bytes_transferred) {
       // waiting is done; remove deadline for now
-      deadline.expires_at(asio::steady_timer::time_point::max());
+      // watchdog_timer.expires_at(asio::steady_timer::time_point::max());
+      deadline = std::chrono::steady_clock::now() +
+                 std::chrono::seconds(work_timeout_seconds);
+
       if (!ec) {
         if (const auto req_parse_error = parse(req_buf, req);
             !req_parse_error) {
@@ -100,8 +104,11 @@ connection::read_request() -> void {
       // *both* this handler returns and the timer completes; that
       // destructor destroys the socket
     });
+
   // ADS: put this before or after the call to asio::async?
-  deadline.expires_after(std::chrono::seconds(read_timeout_seconds));
+  // watchdog_timer.expires_after(std::chrono::seconds(read_timeout_seconds));
+  deadline = std::chrono::steady_clock::now() +
+             std::chrono::seconds(read_timeout_seconds);
 }
 
 auto
@@ -114,7 +121,10 @@ connection::read_query() -> void {
     [this, self](const std::error_code ec,
                  const std::size_t bytes_transferred) {
       // remove deadline while doing computation
-      deadline.expires_at(asio::steady_timer::time_point::max());
+      // watchdog_timer.expires_at(asio::steady_timer::time_point::max());
+      deadline = std::chrono::steady_clock::now() +
+                 std::chrono::seconds(work_timeout_seconds);
+
       if (!ec) {
         query_remaining -= bytes_transferred;
         query_byte += bytes_transferred;
@@ -153,12 +163,17 @@ connection::read_query() -> void {
         respond_with_error();
       }
     });
-  deadline.expires_after(std::chrono::seconds(read_timeout_seconds));
+  // watchdog_timer.expires_after(std::chrono::seconds(read_timeout_seconds));
+  deadline = std::chrono::steady_clock::now() +
+             std::chrono::seconds(read_timeout_seconds);
 }
 
 auto
 connection::compute_bins() -> void {
-  deadline.expires_at(asio::steady_timer::time_point::max());
+  // watchdog_timer.expires_at(asio::steady_timer::time_point::max());
+  deadline = std::chrono::steady_clock::now() +
+             std::chrono::seconds(work_timeout_seconds);
+
   if (req.is_covered_request())
     handler.bins_get_levels<level_element_covered_t>(req, resp_hdr, resp_cov);
   else
@@ -184,12 +199,17 @@ connection::respond_with_error() -> void {
       socket, asio::buffer(resp_hdr_buf),
       [this, self](const std::error_code ec,
                    [[maybe_unused]] const std::size_t bytes_transferred) {
-        deadline.expires_at(asio::steady_timer::time_point::max());
+        // watchdog_timer.expires_at(asio::steady_timer::time_point::max());
+        deadline = std::chrono::steady_clock::now() +
+                   std::chrono::seconds(work_timeout_seconds);
+
         if (ec)
           lgr.error("{} Error responding: {}", conn_id, ec);
         stop();
       });
-    deadline.expires_after(std::chrono::seconds(read_timeout_seconds));
+    // watchdog_timer.expires_after(std::chrono::seconds(read_timeout_seconds));
+    deadline = std::chrono::steady_clock::now() +
+               std::chrono::seconds(read_timeout_seconds);
   }
   else {
     lgr.error("{} Error responding: {}", conn_id, compose_error);
@@ -207,7 +227,10 @@ connection::respond_with_header() -> void {
       socket, asio::buffer(resp_hdr_buf),
       [this, self](const std::error_code ec,
                    [[maybe_unused]] const std::size_t bytes_transferred) {
-        deadline.expires_at(asio::steady_timer::time_point::max());
+        // watchdog_timer.expires_at(asio::steady_timer::time_point::max());
+        deadline = std::chrono::steady_clock::now() +
+                   std::chrono::seconds(work_timeout_seconds);
+
         if (!ec) {
           prepare_to_write_response_payload();
           respond_with_levels();
@@ -217,7 +240,9 @@ connection::respond_with_header() -> void {
           stop();
         }
       });
-    deadline.expires_after(std::chrono::seconds(read_timeout_seconds));
+    // watchdog_timer.expires_after(std::chrono::seconds(read_timeout_seconds));
+    deadline = std::chrono::steady_clock::now() +
+               std::chrono::seconds(read_timeout_seconds);
   }
   else {
     lgr.error("{} Error composing response header: {}", conn_id, compose_error);
@@ -235,7 +260,10 @@ connection::respond_with_levels() -> void {
       outgoing_bytes_remaining),
     [this, self](const std::error_code ec,
                  const std::size_t bytes_transferred) {
-      deadline.expires_at(asio::steady_timer::time_point::max());
+      // watchdog_timer.expires_at(asio::steady_timer::time_point::max());
+      deadline = std::chrono::steady_clock::now() +
+                 std::chrono::seconds(work_timeout_seconds);
+
       if (!ec) {
         outgoing_bytes_remaining -= bytes_transferred;
         outgoing_bytes_sent += bytes_transferred;
@@ -274,7 +302,9 @@ connection::respond_with_levels() -> void {
           lgr.warning("{} Socket close error: {}", conn_id, socket_close_ec);
       }
     });
-  deadline.expires_after(std::chrono::seconds(read_timeout_seconds));
+  // watchdog_timer.expires_after(std::chrono::seconds(read_timeout_seconds));
+  deadline = std::chrono::steady_clock::now() +
+             std::chrono::seconds(read_timeout_seconds);
 }
 
 auto
@@ -285,13 +315,13 @@ connection::check_deadline() -> void {
   // ADS: use deadline set in place of socket.close so we don't need
   // to check if socket is_open?
 
-  if (deadline.expiry() <= asio::steady_timer::clock_type::now()) {
+  if (watchdog_timer.expiry() <= asio::steady_timer::clock_type::now()) {
     // deadline passed: close socket so remaining async ops are
     // cancelled (see comment below)
 
     stop();
 
-    deadline.expires_at(asio::steady_timer::time_point::max());
+    watchdog_timer.expires_at(asio::steady_timer::time_point::max());
 
     /* ADS: closing here but not sure it makes sense; RAII? see comment in
      * respond_with_levels */
@@ -303,9 +333,26 @@ connection::check_deadline() -> void {
   else {
     // ADS: wait again; any issue if the underlying socket is closed?
     // What is the reasoning it will not be closed?
-    deadline.async_wait(
+    watchdog_timer.async_wait(
       std::bind(&connection::check_deadline, shared_from_this()));
   }
+}
+
+auto
+connection::watchdog() -> void {
+  auto self = shared_from_this();
+  watchdog_timer.expires_at(deadline);
+  watchdog_timer.async_wait([self](auto /*error*/) {
+    if (!self->is_stopped()) {
+      const auto now = std::chrono::steady_clock::now();
+      if (self->deadline > now) {
+        self->watchdog();
+      }
+      else {
+        self->stop();
+      }
+    }
+  });
 }
 
 }  // namespace transferase

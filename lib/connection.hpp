@@ -55,7 +55,7 @@ struct connection : public std::enable_shared_from_this<connection> {
   connection(asio::ip::tcp::socket socket_to_move, request_handler &handler,
              logger &lgr, std::uint32_t conn_id) :
     // 'socket' below can get confused if arg has exact same name
-    socket{std::move(socket_to_move)}, deadline{socket.get_executor()},
+    socket{std::move(socket_to_move)}, watchdog_timer{socket.get_executor()},
     handler{handler}, lgr{lgr}, conn_id{conn_id} {
     lgr.info("Connection id: {}. Request endpoint: {}", conn_id,
              (std::ostringstream() << socket.remote_endpoint()).str());
@@ -64,18 +64,19 @@ struct connection : public std::enable_shared_from_this<connection> {
   auto
   start() -> void {
     read_request();  // start first async op; sets deadline
-
-    // This might best be done at the end of read_request, then
-    // cleared and re-done at the appropriate times in read_offsets
-    // NOTE: deadline already set for this one inside read_request().
-    // Completion handler must be bound to a shared pointer so the
-    // session remains alive for the timer
-    deadline.async_wait(
-      std::bind(&connection::check_deadline, shared_from_this()));
+    watchdog();
   }
 
   auto
+  watchdog() -> void;
+
+  auto
   stop() -> void;  // shutdown the socket
+
+  auto
+  is_stopped() const -> bool {
+    return !socket.is_open();
+  }
 
   // Allocate space for offsets and initialize the variables that
   // track where we are in the buffer as data arrives.
@@ -119,7 +120,10 @@ struct connection : public std::enable_shared_from_this<connection> {
   }
 
   asio::ip::tcp::socket socket;  // this connection's socket
-  asio::steady_timer deadline;
+  asio::steady_timer watchdog_timer;
+  // update the deadline, rather than the expiry of the watchdog_timer
+  std::chrono::steady_clock::time_point deadline{};
+
   request_handler &handler;  // handles incoming requests
   request_buffer req_buf{};
   request req;  // this connection's request
@@ -133,6 +137,7 @@ struct connection : public std::enable_shared_from_this<connection> {
 
   logger &lgr;
   std::uint32_t conn_id{};  // identifer for this connection
+  std::uint32_t work_timeout_seconds{120};
   std::uint32_t read_timeout_seconds{10};
 
   // These help keep track of where we are in the incoming offsets;
