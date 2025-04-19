@@ -39,8 +39,7 @@ namespace transferase {
 
 auto
 connection::set_deadline(const std::chrono::seconds delta) -> void {
-  namespace chrono = std::chrono;
-  deadline = chrono::steady_clock::now() + chrono::seconds(delta);
+  deadline = std::chrono::steady_clock::now() + std::chrono::seconds(delta);
 }
 
 [[nodiscard]] auto
@@ -54,19 +53,25 @@ connection::get_send_buf(const std::uint32_t offset) const noexcept -> const
 
 auto
 connection::compute_intervals() noexcept -> void {
+  using elem_cov_t = level_element_covered_t;
+  using elem_t = level_element_t;
+
   if (req.is_covered_request())
-    handler.intervals_get_levels<level_element_covered_t>(req, query, resp_hdr,
-                                                          resp_cov);
+    handler.intervals_get_levels<elem_cov_t>(req, query, resp_hdr, resp_cov);
   else
-    handler.intervals_get_levels<level_element_t>(req, query, resp_hdr, resp);
+    handler.intervals_get_levels<elem_t>(req, query, resp_hdr, resp);
 }
 
 auto
 connection::compute_bins() noexcept -> void {
+  using elem_cov_t = level_element_covered_t;
+  using elem_t = level_element_t;
+
   if (req.is_covered_request())
-    handler.bins_get_levels<level_element_covered_t>(req, resp_hdr, resp_cov);
+    handler.bins_get_levels<elem_cov_t>(req, resp_hdr, resp_cov);
   else
-    handler.bins_get_levels<level_element_t>(req, resp_hdr, resp);
+    handler.bins_get_levels<elem_t>(req, resp_hdr, resp);
+
   if (resp_hdr.status) {
     lgr.warning("{} Error computing levels: {}", conn_id,
                 resp_hdr.status.message());
