@@ -38,6 +38,9 @@ struct transfer_stats {
 
   auto
   update(const std::uint32_t n_bytes) -> void {
+    // Don't count zero-byte reads
+    if (n_bytes == 0)
+      return;
     ++n_xfrs;
     xfr_bytes += n_bytes;
     max_xfr_size = std::max(max_xfr_size, n_bytes);
