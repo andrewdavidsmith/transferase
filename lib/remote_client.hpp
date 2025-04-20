@@ -135,8 +135,7 @@ private:
   get_levels_impl(const request &req, const query_container &query,
                   std::error_code &error) const noexcept
     -> level_container_md<lvl_elem_t> {
-    intervals_client_connection<lvl_elem_t> cl(config.hostname, config.port,
-                                               req, query);
+    intervals_client<lvl_elem_t> cl(config.hostname, config.port, req, query);
     error = cl.run();
     if (error)
       return {};
@@ -147,7 +146,7 @@ private:
   [[nodiscard]] auto
   get_levels_impl(const request &req, std::error_code &error) const noexcept
     -> level_container_md<lvl_elem_t> {
-    bins_client_connection<lvl_elem_t> cl(config.hostname, config.port, req);
+    bins_client<lvl_elem_t> cl(config.hostname, config.port, req);
     error = cl.run();
     if (error)
       return {};
