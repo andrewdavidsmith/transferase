@@ -24,6 +24,7 @@
 #ifndef LIB_CLIENT_CONNECTION_HPP_
 #define LIB_CLIENT_CONNECTION_HPP_
 
+#include "customize_asio.hpp"
 #include "level_container_md.hpp"
 #include "logger.hpp"
 #include "query_container.hpp"
@@ -85,9 +86,8 @@ public:
   // clang-format on
 
 private:
-  auto
-  handle_resolve(const std::error_code ec,
-                 const asio::ip::tcp::resolver::results_type &endpoints)
+  auto handle_resolve(const std::error_code ec,
+                      const asio::ip::tcp::resolver::results_type &endpoints)
     -> void;
 
   // clang-format off
@@ -135,9 +135,9 @@ public:
   logger &lgr;
   transfer_stats reply_stats;
   /// Timeout for individual read/write async ops
-  std::chrono::seconds comm_timeout_sec{3};  // NOLINT
+  std::chrono::seconds comm_timeout_sec{10};  // NOLINT
   /// Timeout when waiting for server to do work
-  std::chrono::seconds work_timeout_sec{120};  // NOLINT
+  std::chrono::seconds work_timeout_sec{300};  // NOLINT
 };  // class client_connection
 
 template <typename D, typename L>
@@ -146,6 +146,12 @@ client_connection<D, L>::client_connection(const std::string &hostname,
                                            const request &req) :
   resolver(io_context), socket(io_context),
   watchdog_timer{socket.get_executor()}, req{req}, lgr{logger::instance()} {
+  // Compose the request data before connecting
+  if (const auto comp_err = compose(req_buf, req); comp_err) {
+    lgr.debug("Error forming request: {}", comp_err.message());
+    status = comp_err;
+    return;
+  }
   const auto token = [this](const auto &error, const auto &results) {
     handle_resolve(error, results);
   };
@@ -156,7 +162,6 @@ client_connection<D, L>::client_connection(const std::string &hostname,
     resolver.async_resolve(hostname, port, token);
   }
   else {  // hostname given as IP address
-    lgr.debug("Avoiding address resolution (ip: {})", hostname);
     const auto ns = asio::ip::resolver_query_base::numeric_service;
     resolver.async_resolve(hostname, port, ns, token);
   }
@@ -192,12 +197,6 @@ client_connection<D, L>::handle_connect(std::error_code ec) -> void {
 
   const auto name = (std::ostringstream() << socket.remote_endpoint()).str();
   lgr.debug("Connected to server: {}", name);
-
-  if (const auto comp_err = compose(req_buf, req); comp_err) {
-    lgr.debug("Error forming request: {}", ec.message());
-    stop(ec);
-    return;
-  }
 
   static_cast<D *>(this)->write_request_header();
 }
@@ -269,14 +268,14 @@ client_connection<D, L>::read_response_payload() -> void {
     socket, asio::buffer(levels_buffer(), levels_size()),
     // completion condition
     [this](const auto ec, const auto n_bytes) -> std::size_t {
-      auto completion_condition = asio::transfer_all();
+      reply_stats.update(n_bytes);
       set_deadline(comm_timeout_sec);
-      if (n_bytes > 0)
-        reply_stats.update(n_bytes);
+      auto completion_condition = transfer_all_higher_max();
       return is_stopped() ? 0 : completion_condition(ec, n_bytes);
     },
     // completion token
-    [this](const auto ec, auto) {
+    [this](const auto ec, const auto n_bytes) {
+      reply_stats.update(n_bytes);
       lgr.debug("Response transfer stats: {}", reply_stats.str());
       if (ec)
         lgr.error("Error reading levels: {}", ec.message());
@@ -344,14 +343,14 @@ private:
       base_t::socket, asio::buffer(query.data(), query.n_bytes()),
       // completion condition
       [this](const auto ec, const auto n_bytes) -> std::size_t {
-        auto completion_condition = asio::transfer_all();
+        query_stats.update(n_bytes);
         base_t::set_deadline(base_t::comm_timeout_sec);
-        if (n_bytes > 0)
-          query_stats.update(n_bytes);
+        auto completion_condition = transfer_all_higher_max();
         return base_t::is_stopped() ? 0 : completion_condition(ec, n_bytes);
       },
       // completion token
-      [this](const auto ec, auto) {
+      [this](const auto ec, const auto n_bytes) {
+        query_stats.update(n_bytes);
         base_t::lgr.debug("Sent query ({})", query_stats.str());
         if (ec)
           base_t::handle_write_failure(ec);
