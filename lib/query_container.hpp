@@ -68,7 +68,7 @@ struct query_container {
 
   /// @brief Get the number of bytes used by this container.
   [[nodiscard]] auto
-  get_n_bytes() const -> std::size_t {
+  n_bytes() const -> std::size_t {
     return sizeof(query_element) * std::size(v);
   }
 
