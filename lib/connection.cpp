@@ -116,10 +116,8 @@ connection::read_request() -> void {
         return;
       }
 
-      if (req.is_intervals_request()) {
-        query.resize(req.aux_value);
+      if (req.is_intervals_request())
         read_query();
-      }
       else  // only alternative is bins request
         compute_bins();
     });
@@ -127,10 +125,11 @@ connection::read_request() -> void {
 
 auto
 connection::read_query() -> void {
+  query.resize(req.aux_value);
   set_deadline(comm_timeout_sec);
   auto self = shared_from_this();
   asio::async_read(
-    socket, asio::buffer(query.data(), query.get_n_bytes()),
+    socket, asio::buffer(query.data(), query.n_bytes()),
     // completion condition
     [this, self](const auto ec, const auto n_bytes) -> std::size_t {
       auto completion_condition = asio::transfer_all();
@@ -226,7 +225,7 @@ connection::watchdog() -> void {
   watchdog_timer.expires_at(deadline);
   watchdog_timer.async_wait([self](auto) {
     if (!self->is_stopped()) {
-      if (self->deadline <= std::chrono::steady_clock::now()) {
+      if (self->deadline < std::chrono::steady_clock::now()) {
         self->timeout = true;
         self->stop();
         return;
