@@ -53,13 +53,10 @@ connection::get_send_buf() const noexcept -> const char * {
 
 auto
 connection::compute_intervals() noexcept -> void {
-  using elem_cov_t = level_element_covered_t;
-  using elem_t = level_element_t;
-
   if (req.is_covered_request())
-    handler.intervals_get_levels<elem_cov_t>(req, query, resp_hdr, resp_cov);
+    handler.intervals_get_levels(req, query, resp_hdr, resp_cov);
   else
-    handler.intervals_get_levels<elem_t>(req, query, resp_hdr, resp);
+    handler.intervals_get_levels(req, query, resp_hdr, resp);
 
   if (resp_hdr.status) {
     lgr.warning("{} Error computing levels: {}", conn_id,
@@ -74,13 +71,10 @@ connection::compute_intervals() noexcept -> void {
 
 auto
 connection::compute_bins() noexcept -> void {
-  using elem_cov_t = level_element_covered_t;
-  using elem_t = level_element_t;
-
   if (req.is_covered_request())
-    handler.bins_get_levels<elem_cov_t>(req, resp_hdr, resp_cov);
+    handler.bins_get_levels(req, resp_hdr, resp_cov);
   else
-    handler.bins_get_levels<elem_t>(req, resp_hdr, resp);
+    handler.bins_get_levels(req, resp_hdr, resp);
 
   if (resp_hdr.status) {
     lgr.warning("{} Error computing levels: {}", conn_id,
@@ -99,7 +93,7 @@ connection::read_request() -> void {
   auto self = shared_from_this();
   asio::async_read(
     socket, asio::buffer(req_buf), asio::transfer_exactly(request_buffer_size),
-    [this, self](const std::error_code ec, auto /*n_bytes*/) {
+    [this, self](const auto ec, auto) {
       if (ec) {
         lgr.warning("{} Failed to read request: {}", conn_id, ec);
         stop();
@@ -125,7 +119,7 @@ connection::read_request() -> void {
         query.resize(req.aux_value);
         read_query();
       }
-      else  // req.is_bins_request()
+      else  // only alternative is bins request
         compute_bins();
     });
 }
