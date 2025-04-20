@@ -43,6 +43,7 @@ enum class server_error_code : std::uint8_t {
   server_failure =         8,
   bad_request =            9,
   inconsistent_genomes =  10,
+  connection_timeout   =  11,
   // clang-format on
 };
 
@@ -66,6 +67,7 @@ struct server_error_category : std::error_category {
     case 8: return "server failure"s;
     case 9: return "bad request"s;
     case 10: return "inconsistent genomes"s;
+    case 11: return "connection timeout"s;
     }
     std::unreachable();
   }
