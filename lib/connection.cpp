@@ -23,6 +23,7 @@
 
 #include "connection.hpp"
 
+#include "customize_asio.hpp"
 #include "query_container.hpp"
 #include "request_handler.hpp"
 #include "response.hpp"
@@ -131,12 +132,13 @@ connection::read_query() -> void {
   asio::async_read(
     socket, asio::buffer(query.data(), query.n_bytes()),
     [this, self](const auto ec, const auto n_bytes) -> std::size_t {
-      auto completion_condition = asio::transfer_all();
-      set_deadline(comm_timeout_sec);
       query_stats.update(n_bytes);
+      set_deadline(comm_timeout_sec);
+      auto completion_condition = transfer_all_higher_max();
       return is_stopped() ? 0 : completion_condition(ec, n_bytes);
     },
-    [this, self](const auto ec, auto) {
+    [this, self](const auto ec, const auto n_bytes) {
+      query_stats.update(n_bytes);
       if (ec) {
         lgr.warning("{} Error reading query: {}", conn_id, ec);
         resp_hdr = {request_error_code::error_reading_query, 0};
@@ -202,13 +204,14 @@ connection::respond_with_levels() -> void {
     socket, asio::buffer(get_send_buf(), get_response_size()),
     // completion condition
     [this, self](const auto ec, const auto n_bytes) -> std::size_t {
-      auto completion_condition = asio::transfer_all();
-      set_deadline(comm_timeout_sec);
       reply_stats.update(n_bytes);
+      set_deadline(comm_timeout_sec);
+      auto completion_condition = transfer_all_higher_max();
       return is_stopped() ? 0 : completion_condition(ec, n_bytes);
     },
     // completion token
     [this, self](const auto ec, auto) {
+      reply_stats.update(n_bytes);
       if (ec)
         lgr.warning("{} Error sending levels: {}", conn_id, ec);
       else
