@@ -188,7 +188,7 @@ do_intervals_query(const std::string &intervals_file,
 
   const auto results = interface.get_levels<level_element>(req, query, error);
   if (error) {
-    lgr.error("Error obtaining levels: {}", error);
+    lgr.debug("Error obtaining levels: {}", error);
     return error;
   }
   const auto query_stop{std::chrono::high_resolution_clock::now()};
@@ -242,7 +242,7 @@ do_bins_query(const std::uint32_t bin_size,
   const auto query_start{std::chrono::high_resolution_clock::now()};
   const auto results = interface.get_levels<level_element>(req, index, error);
   if (error) {
-    lgr.error("Error obtaining levels: {}", error);
+    lgr.debug("Error obtaining levels: {}", error);
     return error;
   }
   const auto query_stop{std::chrono::high_resolution_clock::now()};
