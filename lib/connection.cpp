@@ -26,6 +26,7 @@
 #include "query_container.hpp"
 #include "request_handler.hpp"
 #include "response.hpp"
+#include "transfer_stats.hpp"
 
 #include <asio.hpp>
 
