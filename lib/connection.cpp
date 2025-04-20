@@ -43,14 +43,12 @@ connection::set_deadline(const std::chrono::seconds delta) -> void {
 }
 
 [[nodiscard]] auto
-connection::get_send_buf(const std::uint32_t offset) const noexcept -> const
-  char * {
+connection::get_send_buf() const noexcept -> const char * {
   // NOLINTBEGIN (*-reinterpret-cast)
-  const auto buf_beg = req.is_covered_request()
-                         ? reinterpret_cast<const char *>(resp_cov.data())
-                         : reinterpret_cast<const char *>(resp.data());
+  return req.is_covered_request()
+           ? reinterpret_cast<const char *>(resp_cov.data())
+           : reinterpret_cast<const char *>(resp.data());
   // NOLINTEND (*-reinterpret-cast)
-  return buf_beg + offset;  // NOLINT (*-pointer-arithmetic)
 }
 
 auto
@@ -96,23 +94,6 @@ connection::compute_bins() noexcept -> void {
 }
 
 auto
-connection::init_read_query() -> void {
-  query.resize(req.aux_value);
-  query_remaining = query.get_n_bytes();
-  query_byte = 0;
-
-  read_query();
-}
-
-auto
-connection::init_write_response() -> void {
-  levels_remaining = get_response_size();
-  levels_byte = 0;
-
-  respond_with_levels();
-}
-
-auto
 connection::read_request() -> void {
   set_deadline(comm_timeout_sec);
   auto self = shared_from_this();
@@ -140,8 +121,10 @@ connection::read_request() -> void {
         return;
       }
 
-      if (req.is_intervals_request())
-        init_read_query();
+      if (req.is_intervals_request()) {
+        query.resize(req.aux_value);
+        read_query();
+      }
       else  // req.is_bins_request()
         compute_bins();
     });
@@ -151,27 +134,26 @@ auto
 connection::read_query() -> void {
   set_deadline(comm_timeout_sec);
   auto self = shared_from_this();
-  socket.async_read_some(
-    asio::buffer(query.data(query_byte), query_remaining),
-    [this, self](const std::error_code ec, const std::size_t n_bytes) {
+  asio::async_read(
+    socket, asio::buffer(query.data(), query.get_n_bytes()),
+    // completion condition
+    [this, self](const auto ec, const auto n_bytes) -> std::size_t {
+      auto completion_condition = asio::transfer_all();
+      set_deadline(comm_timeout_sec);
+      query_stats.update(n_bytes);
+      return is_stopped() ? 0 : completion_condition(ec, n_bytes);
+    },
+    // completion token
+    [this, self](const auto ec, auto) {
       if (ec) {
         lgr.warning("{} Error reading query: {}", conn_id, ec);
         resp_hdr = {request_error_code::error_reading_query, 0};
         respond_with_error();
         return;
       }
-
-      query_remaining -= n_bytes;
-      query_byte += n_bytes;
-
-      query_stats.update(n_bytes);
-      if (query_remaining == 0) {
-        set_deadline(work_timeout_sec);
-        lgr.debug("{} Finished reading query ({})", conn_id, query_stats.str());
-        compute_intervals();
-        return;
-      }
-      read_query();
+      set_deadline(work_timeout_sec);
+      lgr.debug("{} Finished reading query ({})", conn_id, query_stats.str());
+      compute_intervals();
     });
 }
 
@@ -187,7 +169,7 @@ connection::respond_with_error() -> void {
   set_deadline(comm_timeout_sec);
   auto self = shared_from_this();
   asio::async_write(socket, asio::buffer(resp_hdr_buf),
-                    [this, self](const std::error_code ec, auto) {
+                    [this, self](const auto ec, auto) {
                       if (ec)
                         lgr.error("{} Error responding: {}", conn_id, ec);
                       stop();
@@ -206,13 +188,13 @@ connection::respond_with_header() -> void {
   set_deadline(comm_timeout_sec);
   auto self = shared_from_this();
   asio::async_write(socket, asio::buffer(resp_hdr_buf),
-                    [this, self](const std::error_code ec, auto) {
+                    [this, self](const auto ec, auto) {
                       if (ec) {
                         lgr.warning("{} Error sending header: {}", conn_id, ec);
                         stop();
                         return;
                       }
-                      init_write_response();
+                      respond_with_levels();
                     });
 }
 
@@ -220,25 +202,22 @@ auto
 connection::respond_with_levels() -> void {
   set_deadline(comm_timeout_sec);
   auto self = shared_from_this();
-  socket.async_write_some(
-    asio::buffer(get_send_buf(levels_byte), levels_remaining),
-    [this, self](const auto ec, const auto n_bytes) {
-      if (ec) {
-        lgr.warning("{} Error sending levels: {}", conn_id, ec);
-        stop();
-        return;
-      }
-
-      levels_remaining -= n_bytes;
-      levels_byte += n_bytes;
-
+  asio::async_write(
+    socket, asio::buffer(get_send_buf(), get_response_size()),
+    // completion condition
+    [this, self](const auto ec, const auto n_bytes) -> std::size_t {
+      auto completion_condition = asio::transfer_all();
+      set_deadline(comm_timeout_sec);
       reply_stats.update(n_bytes);
-      if (levels_remaining == 0) {
+      return is_stopped() ? 0 : completion_condition(ec, n_bytes);
+    },
+    // completion token
+    [this, self](const auto ec, auto) {
+      if (ec)
+        lgr.warning("{} Error sending levels: {}", conn_id, ec);
+      else
         lgr.info("{} Response complete ({})", conn_id, reply_stats.str());
-        stop();
-        return;
-      }
-      respond_with_levels();
+      stop();
     });
 }
 
@@ -246,7 +225,7 @@ auto
 connection::watchdog() -> void {
   auto self = shared_from_this();
   watchdog_timer.expires_at(deadline);
-  watchdog_timer.async_wait([self](auto /*error*/) {
+  watchdog_timer.async_wait([self](auto) {
     if (!self->is_stopped()) {
       if (self->deadline <= std::chrono::steady_clock::now()) {
         self->stop();
