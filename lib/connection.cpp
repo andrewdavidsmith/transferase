@@ -227,6 +227,7 @@ connection::watchdog() -> void {
   watchdog_timer.async_wait([self](auto) {
     if (!self->is_stopped()) {
       if (self->deadline <= std::chrono::steady_clock::now()) {
+        self->timeout = true;
         self->stop();
         return;
       }
@@ -237,6 +238,9 @@ connection::watchdog() -> void {
 
 auto
 connection::stop() -> void {
+  if (timeout)
+    lgr.warning("{} Timeout happened", conn_id);
+
   lgr.debug("{} Initiating connection shutdown", conn_id);
   std::error_code ec;
   (void)socket.shutdown(asio::ip::tcp::socket::shutdown_both, ec);

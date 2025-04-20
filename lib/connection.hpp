@@ -66,7 +66,7 @@ struct connection : public std::enable_shared_from_this<connection> {
 
   auto
   start() -> void {
-    read_request();  // start first async op; sets deadline
+    read_request();
     watchdog();
   }
 
@@ -83,6 +83,7 @@ struct connection : public std::enable_shared_from_this<connection> {
 
   auto
   read_request() -> void;  // read 'request'
+
   auto
   read_query() -> void;  // read the 'query' part of request
 
@@ -135,15 +136,11 @@ struct connection : public std::enable_shared_from_this<connection> {
 
   std::chrono::seconds work_timeout_sec{120};
   std::chrono::seconds comm_timeout_sec{10};
+  bool timeout{false};
 
   // These help keep track of where we are in the incoming offsets;
   // they might best be associated with the request.
   transferase::query_container query;
-  std::size_t query_byte{};
-  std::size_t query_remaining{};
-
-  std::size_t levels_byte{};
-  std::size_t levels_remaining{};
 
   transfer_stats reply_stats{};
   transfer_stats query_stats{};
