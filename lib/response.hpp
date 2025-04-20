@@ -38,8 +38,8 @@ namespace transferase {
 
 template <typename level_element_type> struct level_container_md;
 
-static constexpr std::uint32_t response_header_buffer_size = 256;
-typedef std::array<char, response_header_buffer_size> response_header_buffer;
+static constexpr std::uint32_t resp_hdr_sz = 256;
+typedef std::array<char, resp_hdr_sz> response_header_buffer;
 
 struct response_header {
   std::error_code status{};
