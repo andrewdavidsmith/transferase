@@ -32,8 +32,6 @@
 static const int column_width_default = 30;
 
 class transferase_formatter : public CLI::Formatter {
-  static constexpr auto max_descr_width = 50;
-
 public:
   auto
   make_option_desc(const CLI::Option *opt) const -> std::string override {
