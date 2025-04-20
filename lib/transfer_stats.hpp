@@ -42,9 +42,10 @@ struct transfer_stats {
     if (n_bytes == 0)
       return;
     ++n_xfrs;
-    xfr_bytes += n_bytes;
-    max_xfr_size = std::max(max_xfr_size, n_bytes);
-    min_xfr_size = std::min(min_xfr_size, n_bytes);
+    const auto delta_bytes = n_bytes - xfr_bytes;
+    xfr_bytes = n_bytes;
+    max_xfr_size = std::max(max_xfr_size, delta_bytes);
+    min_xfr_size = std::min(min_xfr_size, delta_bytes);
   }
 
   [[nodiscard]] auto
