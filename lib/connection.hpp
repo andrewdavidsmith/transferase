@@ -63,7 +63,7 @@ struct comm_stats {
 
   [[nodiscard]] auto
   str() const noexcept -> std::string {
-    static constexpr auto fmt = "{}B, reads={}, max={}B, min={}B, mean={}B";
+    static constexpr auto fmt = "{}B, ops={}, max={}B, min={}B, mean={}B";
     return std::format(fmt, comm_bytes, n_comms, max_comm_size, min_comm_size,
                        comm_bytes / n_comms);
   }
@@ -100,11 +100,6 @@ struct connection : public std::enable_shared_from_this<connection> {
     return !socket.is_open();
   }
 
-  // Allocate space for offsets, initialize tracking variables, the start
-  // rading query
-  auto
-  init_read_query() -> void;
-
   auto
   read_request() -> void;  // read 'request'
   auto
@@ -132,11 +127,8 @@ struct connection : public std::enable_shared_from_this<connection> {
                                     : resp.get_n_bytes();
   }
 
-  auto
-  init_write_response() -> void;
-
   [[nodiscard]] auto
-  get_send_buf(const std::uint32_t bytes_sent) const noexcept -> const char *;
+  get_send_buf() const noexcept -> const char *;
 
   auto
   set_deadline(const std::chrono::seconds delta) -> void;
