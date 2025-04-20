@@ -76,8 +76,7 @@ private:
   get_levels_remote_impl(const request &req, const query_container &query,
                          std::error_code &ec) const noexcept
     -> level_container_md<lvl_elem_t> {
-    intervals_client_connection<lvl_elem_t> cl(hostname, port_number, req,
-                                               query);
+    intervals_client<lvl_elem_t> cl(hostname, port_number, req, query);
     ec = cl.run();
     if (ec)
       return {};
@@ -107,7 +106,7 @@ private:
   [[nodiscard]] auto
   get_levels_remote_impl(const request &req, std::error_code &ec) const noexcept
     -> level_container_md<lvl_elem_t> {
-    bins_client_connection<lvl_elem_t> cl(hostname, port_number, req);
+    bins_client<lvl_elem_t> cl(hostname, port_number, req);
     ec = cl.run();
     if (ec)
       return {};
