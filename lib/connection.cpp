@@ -210,7 +210,7 @@ connection::respond_with_levels() -> void {
       return is_stopped() ? 0 : completion_condition(ec, n_bytes);
     },
     // completion token
-    [this, self](const auto ec, auto) {
+    [this, self](const auto ec, const auto n_bytes) {
       reply_stats.update(n_bytes);
       if (ec)
         lgr.warning("{} Error sending levels: {}", conn_id, ec);
