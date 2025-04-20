@@ -52,56 +52,35 @@ struct request_handler;
 
 struct connection : public std::enable_shared_from_this<connection> {
   connection(const connection &) = delete;
-  auto
-  operator=(const connection &) -> connection & = delete;
+  auto operator=(const connection &) -> connection & = delete;
 
   connection(asio::ip::tcp::socket socket_to_move, request_handler &handler,
              logger &lgr, std::uint32_t conn_id) :
-    // 'socket' below can get confused if arg has exact same name
+    // ADS: 'socket_to_move' has a different name to avoid use after move
     socket{std::move(socket_to_move)}, watchdog_timer{socket.get_executor()},
     handler{handler}, lgr{lgr}, conn_id{conn_id} {
     lgr.info("Connection id: {}. Request endpoint: {}", conn_id,
              (std::ostringstream() << socket.remote_endpoint()).str());
   }
 
+  auto watchdog() -> void;      // run the timer
+  auto read_request() -> void;  // read request header
+  auto read_query() -> void;    // read payload of intervals query
+  auto compute_intervals() -> void;
+  auto compute_bins() -> void;
+  auto stop() -> void;                 // shutdown and close
+  auto respond_with_header() -> void;  // send success header
+  auto respond_with_error() -> void;   // send failure header
+  auto respond_with_levels() -> void;  // send payload of levels
+
+  auto set_deadline(const std::chrono::seconds delta) -> void;
+  [[nodiscard]] auto get_send_buf() const -> const char *;
+
   auto
   start() -> void {
     read_request();
     watchdog();
   }
-
-  auto
-  watchdog() -> void;
-
-  auto
-  stop() -> void;  // shutdown the socket
-
-  auto
-  is_stopped() const -> bool {
-    return !socket.is_open();
-  }
-
-  auto
-  read_request() -> void;  // read 'request'
-
-  auto
-  read_query() -> void;  // read the 'query' part of request
-
-  // Compute the levels for intervals and bins
-  // clang-format off
-  auto compute_intervals() noexcept -> void;
-  auto compute_bins() noexcept -> void;
-  // clang-format on
-
-  auto
-  respond_with_header() -> void;  // send success header
-  auto
-  respond_with_error() -> void;  // send error header
-  auto
-  respond_with_levels() -> void;  // send levels
-
-  auto
-  check_deadline() -> void;
 
   [[nodiscard]] auto
   get_response_size() const -> std::uint32_t {
@@ -110,40 +89,46 @@ struct connection : public std::enable_shared_from_this<connection> {
   }
 
   [[nodiscard]] auto
-  get_send_buf() const noexcept -> const char *;
+  is_stopped() const -> bool {
+    return !socket.is_open();
+  }
 
-  auto
-  set_deadline(const std::chrono::seconds delta) -> void;
-
-  asio::ip::tcp::socket socket;  // this connection's socket
+  asio::ip::tcp::socket socket;
   asio::steady_timer watchdog_timer;
-  // update the deadline, rather than the expiry of the watchdog_timer
   std::chrono::steady_clock::time_point deadline{};
 
-  request_handler &handler;  // handles incoming requests
-  request_buffer req_buf{};
-  request req;  // this connection's request
-  response_header_buffer resp_hdr_buf{};
-  response_header resp_hdr;  // header of the response
+  request_handler &handler;               // handles incoming requests
+  request req;                            // this connection's request
+  request_buffer req_buf{};               // bffer for the request
+  response_header resp_hdr;               // header of the response
+  response_header_buffer resp_hdr_buf{};  // buffer for the resp_hdr
+  query_container query;                  // 'query' is its own buffer
 
-  // ADS: keeping instance of both below bc alternatives aren't that much
-  // better -- reminder that this was a choice and not an accident.
+  // ADS: keeping both resp and resp_cov is intended (so far)
   level_container_md<level_element_t> resp;
   level_container_md<level_element_covered_t> resp_cov;
 
   logger &lgr;
-  std::uint32_t conn_id{};  // identifer for this connection
+  std::uint32_t conn_id{};  // identifies this connection for logging purposes
 
-  std::chrono::seconds work_timeout_sec{120};
+  /// ADS: 'work_timeout_sec' is the timeout while doing work. This is a high
+  /// value that essentially removes the timeout. The 'work' is blocking, so
+  /// there should be no opportunity for the timer to wake up. In the future,
+  /// file reads might be async, but for now as long as the work is going, we
+  /// want it to keep going. If the work encounters a problem, it will move to
+  /// respond with an error, and return to async ops.
+  std::chrono::seconds work_timeout_sec{300};
+
+  /// ADS: 'comm_timeout_sec' is the wait time between consecutive
+  /// 'async_read_some' and 'async_write_some' calls within the 'async_read'
+  /// and 'async_write'. If these see no activity for 'comm_timeout_sec'
+  /// seconds, then a problems is assumed.
   std::chrono::seconds comm_timeout_sec{10};
-  bool timeout{false};
+  bool timeout_happened{false};
 
-  // These help keep track of where we are in the incoming offsets;
-  // they might best be associated with the request.
-  transferase::query_container query;
-
-  transfer_stats reply_stats{};
+  /// ADS: Keeping stats on both the query and the reply
   transfer_stats query_stats{};
+  transfer_stats reply_stats{};
 };
 
 }  // namespace transferase
