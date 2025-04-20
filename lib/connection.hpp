@@ -30,6 +30,7 @@
 #include "query_container.hpp"
 #include "request.hpp"
 #include "response.hpp"
+#include "transfer_stats.hpp"
 
 #include <asio.hpp>
 
@@ -48,28 +49,6 @@
 namespace transferase {
 
 struct request_handler;
-
-struct comm_stats {
-  std::uint32_t n_comms{};
-  std::uint32_t comm_bytes{};
-  std::uint32_t min_comm_size{std::numeric_limits<std::uint32_t>::max()};
-  std::uint32_t max_comm_size{};
-
-  auto
-  update(const std::uint32_t n_bytes) noexcept -> void {
-    ++n_comms;
-    comm_bytes += n_bytes;
-    max_comm_size = std::max(max_comm_size, n_bytes);
-    min_comm_size = std::min(min_comm_size, n_bytes);
-  }
-
-  [[nodiscard]] auto
-  str() const noexcept -> std::string {
-    static constexpr auto fmt = "{}B, ops={}, max={}B, min={}B, mean={}B";
-    return std::format(fmt, comm_bytes, n_comms, max_comm_size, min_comm_size,
-                       comm_bytes / n_comms);
-  }
-};
 
 struct connection : public std::enable_shared_from_this<connection> {
   connection(const connection &) = delete;
@@ -166,8 +145,8 @@ struct connection : public std::enable_shared_from_this<connection> {
   std::size_t levels_byte{};
   std::size_t levels_remaining{};
 
-  comm_stats reply_stats{};
-  comm_stats query_stats{};
+  transfer_stats reply_stats{};
+  transfer_stats query_stats{};
 };
 
 }  // namespace transferase
