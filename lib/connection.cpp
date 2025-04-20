@@ -1,6 +1,6 @@
 /* MIT License
  *
- * Copyright (c) 2024 Andrew D Smith
+ * Copyright (c) 2024-2025 Andrew D Smith
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -162,12 +162,14 @@ connection::respond_with_error() -> void {
 
   set_deadline(comm_timeout_sec);
   auto self = shared_from_this();
+  // clang-format off
   asio::async_write(socket, asio::buffer(resp_hdr_buf),
-                    [this, self](const auto ec, auto) {
-                      if (ec)
-                        lgr.error("{} Error responding: {}", conn_id, ec);
-                      stop();
-                    });
+    [this, self](const auto ec, auto) {
+      if (ec)
+        lgr.error("{} Error responding: {}", conn_id, ec);
+      stop();
+    });
+  // clang-format on
 }
 
 auto
@@ -181,15 +183,17 @@ connection::respond_with_header() -> void {
 
   set_deadline(comm_timeout_sec);
   auto self = shared_from_this();
+  // clang-format off
   asio::async_write(socket, asio::buffer(resp_hdr_buf),
-                    [this, self](const auto ec, auto) {
-                      if (ec) {
-                        lgr.warning("{} Error sending header: {}", conn_id, ec);
-                        stop();
-                        return;
-                      }
-                      respond_with_levels();
-                    });
+    [this, self](const auto ec, auto) {
+      if (ec) {
+        lgr.warning("{} Error sending header: {}", conn_id, ec);
+        stop();
+        return;
+      }
+      respond_with_levels();
+    });
+  // clang-format on
 }
 
 auto
@@ -232,7 +236,7 @@ connection::watchdog() -> void {
 
 auto
 connection::stop() -> void {
-  lgr.debug("{} Initiating connection shutdown.", conn_id);
+  lgr.debug("{} Initiating connection shutdown", conn_id);
   std::error_code ec;
   (void)socket.shutdown(asio::ip::tcp::socket::shutdown_both, ec);
   if (ec)
