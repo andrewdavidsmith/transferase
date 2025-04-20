@@ -44,7 +44,7 @@ connection::set_deadline(const std::chrono::seconds delta) -> void {
 }
 
 [[nodiscard]] auto
-connection::get_send_buf() const noexcept -> const char * {
+connection::get_send_buf() const -> const char * {
   // NOLINTBEGIN (*-reinterpret-cast)
   return req.is_covered_request()
            ? reinterpret_cast<const char *>(resp_cov.data())
@@ -53,7 +53,7 @@ connection::get_send_buf() const noexcept -> const char * {
 }
 
 auto
-connection::compute_intervals() noexcept -> void {
+connection::compute_intervals() -> void {
   if (req.is_covered_request())
     handler.intervals_get_levels(req, query, resp_hdr, resp_cov);
   else
@@ -71,7 +71,7 @@ connection::compute_intervals() noexcept -> void {
 }
 
 auto
-connection::compute_bins() noexcept -> void {
+connection::compute_bins() -> void {
   if (req.is_covered_request())
     handler.bins_get_levels(req, resp_hdr, resp_cov);
   else
@@ -108,7 +108,7 @@ connection::read_request() -> void {
         return;
       }
 
-      set_deadline(work_timeout_sec);
+      set_deadline(work_timeout_sec);  // handle_request might need time
       lgr.debug("{} Received request: {}", conn_id, req.summary());
       handler.handle_request(req, resp_hdr);
       if (resp_hdr.error()) {
@@ -130,14 +130,12 @@ connection::read_query() -> void {
   auto self = shared_from_this();
   asio::async_read(
     socket, asio::buffer(query.data(), query.n_bytes()),
-    // completion condition
     [this, self](const auto ec, const auto n_bytes) -> std::size_t {
       auto completion_condition = asio::transfer_all();
       set_deadline(comm_timeout_sec);
       query_stats.update(n_bytes);
       return is_stopped() ? 0 : completion_condition(ec, n_bytes);
     },
-    // completion token
     [this, self](const auto ec, auto) {
       if (ec) {
         lgr.warning("{} Error reading query: {}", conn_id, ec);
@@ -226,7 +224,7 @@ connection::watchdog() -> void {
   watchdog_timer.async_wait([self](auto) {
     if (!self->is_stopped()) {
       if (self->deadline < std::chrono::steady_clock::now()) {
-        self->timeout = true;
+        self->timeout_happened = true;
         self->stop();
         return;
       }
@@ -237,7 +235,7 @@ connection::watchdog() -> void {
 
 auto
 connection::stop() -> void {
-  if (timeout)
+  if (timeout_happened)
     lgr.warning("{} Timeout happened", conn_id);
 
   lgr.debug("{} Initiating connection shutdown", conn_id);
