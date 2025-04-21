@@ -55,11 +55,13 @@ public:
     resolver(ioc), socket(ioc), watchdog_timer{socket.get_executor()},
     hostname{hostname}, port{port}, req{req}, lgr{logger::instance()} {}
 
+  // clang-format off
   client_connection(const client_connection &) = delete;
   auto operator=(const client_connection &) -> client_connection & = delete;
   client_connection(client_connection &&) = delete;
   auto operator=(client_connection &&) -> client_connection & = delete;
   ~client_connection() = default;
+  // clang-format on
 
   [[nodiscard]] auto
   run() -> std::error_code {
