@@ -46,7 +46,8 @@ struct request_handler;
 
 struct connection : public std::enable_shared_from_this<connection> {
   connection(const connection &) = delete;
-  auto operator=(const connection &) -> connection & = delete;
+  auto
+  operator=(const connection &) -> connection & = delete;
 
   connection(asio::ip::tcp::socket socket_to_move, request_handler &handler,
              logger &lgr, std::uint32_t conn_id) :
@@ -57,6 +58,7 @@ struct connection : public std::enable_shared_from_this<connection> {
              (std::ostringstream() << socket.remote_endpoint()).str());
   }
 
+  // clang-format off
   auto watchdog() -> void;      // run the timer
   auto read_request() -> void;  // read request header
   auto read_query() -> void;    // read payload of intervals query
@@ -66,9 +68,13 @@ struct connection : public std::enable_shared_from_this<connection> {
   auto respond_with_header() -> void;  // send success header
   auto respond_with_error() -> void;   // send failure header
   auto respond_with_levels() -> void;  // send payload of levels
+  // clang-format on
 
-  auto set_deadline(const std::chrono::seconds delta) -> void;
-  [[nodiscard]] auto get_send_buf() const -> const char *;
+  auto
+  set_deadline(const std::chrono::seconds delta) -> void;
+
+  [[nodiscard]] auto
+  get_send_buf() const -> const char *;
 
   auto
   start() -> void {
