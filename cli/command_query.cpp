@@ -80,6 +80,7 @@ xfr query --local -d methylome_dir -x index_dir -g hg38 \
 #include <algorithm>  // IWYU pragma: keep
 #include <cerrno>     // for errno
 #include <chrono>
+#include <compare>  // for std::operator<
 #include <cstdint>
 #include <cstdlib>
 #include <filesystem>
@@ -94,6 +95,7 @@ xfr query --local -d methylome_dir -x index_dir -g hg38 \
 #include <string_view>
 #include <system_error>
 #include <tuple>
+#include <utility>  // for std::pair
 #include <variant>  // for std::tuple
 #include <vector>
 
@@ -590,22 +592,22 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
   // but after this point things simplify again. However it seems like these
   // functions have too many arguments.
 
-  // clang-format off
   error =
     intervals_query
-    ? (count_covered ? do_intervals_query<xfr::level_element_covered_t>(
-                         intervals_file, out_fmt, min_reads, output_file, index,
-                         interface, methylomes, alt_names, request_type, write_n_cpgs)
-                     : do_intervals_query<xfr::level_element_t>(
-                         intervals_file, out_fmt, min_reads, output_file, index,
-                         interface, methylomes, alt_names, request_type, write_n_cpgs))
-    : (count_covered ? do_bins_query<xfr::level_element_covered_t>(
-                         bin_size, out_fmt, min_reads, output_file, index,
-                         interface, methylomes, alt_names, request_type, write_n_cpgs)
-                     : do_bins_query<xfr::level_element_t>(
-                         bin_size, out_fmt, min_reads, output_file, index,
-                         interface, methylomes, alt_names, request_type, write_n_cpgs));
-  // clang-format on
+      ? (count_covered
+           ? do_intervals_query<xfr::level_element_covered_t>(
+               intervals_file, out_fmt, min_reads, output_file, index,
+               interface, methylomes, alt_names, request_type, write_n_cpgs)
+           : do_intervals_query<xfr::level_element_t>(
+               intervals_file, out_fmt, min_reads, output_file, index,
+               interface, methylomes, alt_names, request_type, write_n_cpgs))
+      : (count_covered
+           ? do_bins_query<xfr::level_element_covered_t>(
+               bin_size, out_fmt, min_reads, output_file, index, interface,
+               methylomes, alt_names, request_type, write_n_cpgs)
+           : do_bins_query<xfr::level_element_t>(
+               bin_size, out_fmt, min_reads, output_file, index, interface,
+               methylomes, alt_names, request_type, write_n_cpgs));
 
   // ADS: below is because error code '0' is printed as "Undefined
   // error" on macos.

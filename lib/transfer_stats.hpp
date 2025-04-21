@@ -50,9 +50,8 @@ struct transfer_stats {
 
   [[nodiscard]] auto
   str() const -> std::string {
-    static constexpr auto fmt = "{}B, xfrs={}, max={}B, min={}B, mean={}B";
-    return std::format(fmt, xfr_bytes, n_xfrs, max_xfr_size, min_xfr_size,
-                       xfr_bytes / n_xfrs);
+    static constexpr auto fmt = "{}B, N={}, max={}B, min={}B";
+    return std::format(fmt, xfr_bytes, n_xfrs, max_xfr_size, min_xfr_size);
   }
 };
 

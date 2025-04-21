@@ -31,6 +31,7 @@
 #include <cerrno>
 #include <cstdlib>  // for getenv
 #include <filesystem>
+#include <format>
 #include <fstream>
 #include <iterator>  // for std::size
 #include <ranges>    // IWYU pragma: keep
@@ -58,7 +59,7 @@ server_config::make_paths_absolute() noexcept -> void {
 [[nodiscard]] auto
 server_config::get_default_config_dir(std::error_code &error) -> std::string {
   static const auto config_dir_rhs =
-    std::filesystem::path(".config/transferase");
+    std::filesystem::path{".config"} / std::filesystem::path{"transferase"};
   static const auto env_home = std::getenv("HOME");
   if (!env_home) {
     error = std::make_error_code(std::errc{errno});
