@@ -164,8 +164,8 @@ private:
   resolve() -> void {
     std::error_code ec;
     asio::ip::make_address(hostname, ec);
-    const auto flags = ec ? asio::ip::resolver_query_base::flags(0)
-                          : asio::ip::resolver_query_base::numeric_host;
+    const auto flags =
+      ec ? tcp::resolver::flags() : tcp::resolver::numeric_host;
     resolver.async_resolve(
       hostname, port, flags, [this](const auto &ec, const auto &res) {
         if (ec) {
@@ -224,10 +224,11 @@ private:
   }
 
   auto
-  stop(std::error_code ec) -> void {
+  stop(const std::error_code ec) -> void {
     status = ec;
-    (void)socket.shutdown(tcp::socket::shutdown_both, ec);
-    (void)socket.close(ec);
+    std::error_code unchecked;
+    (void)socket.shutdown(tcp::socket::shutdown_both, unchecked);
+    (void)socket.close(unchecked);
     watchdog_timer.cancel();
   }
 
