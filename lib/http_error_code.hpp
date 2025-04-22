@@ -36,8 +36,8 @@ enum class http_error_code : std::uint8_t {
   handshake_failed = 2,
   send_request_failed = 3,
   receive_header_failed = 4,
-  unknown_body_length = 5,
-  reading_body_failed = 6,
+  unknown_content_length = 5,
+  reading_content_failed = 6,
   inactive_timeout = 7,
 };
 
@@ -55,8 +55,8 @@ struct http_error_category : std::error_category {
     case 2: return "handshake failed"s;
     case 3: return "send request failed"s;
     case 4: return "receive header failed"s;
-    case 5: return "unknown body length"s;
-    case 6: return "reading body failed"s;
+    case 5: return "unknown content length"s;
+    case 6: return "reading content failed"s;
     case 7: return "inactive timeout"s;
     }
     std::unreachable();
