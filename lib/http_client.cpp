@@ -47,7 +47,7 @@
 
 namespace transferase {
 
-using namespace std::chrono_literals;
+using namespace std::chrono_literals;  // NOLINT
 
 template <typename derived> class http_client_base {
 public:
@@ -359,7 +359,6 @@ download_http(const std::string &host, const std::string &port,
               const std::string &target, const std::string &outfile,
               const std::chrono::microseconds timeout, const bool show_progress)
   -> std::tuple<http_header, std::error_code> {
-
   std::string progress_label;
   if (show_progress)
     progress_label = std::filesystem::path(target).filename().string();
