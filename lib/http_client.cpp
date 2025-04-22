@@ -238,6 +238,7 @@ public:
   read_content() -> void {
     reset_deadline();
     asio::async_read(
+      // NOLINTNEXTLINE (*-pointer-arithmetic)
       sock, asio::buffer(buf.data() + buf_pos, content_remaining),
       [this](const auto ec, const auto n_bytes) -> std::size_t {
         // custom completion condition updates deadline
@@ -320,6 +321,7 @@ public:
   read_content() -> void {
     reset_deadline();
     asio::async_read(
+      // NOLINTNEXTLINE (*-pointer-arithmetic)
       sock, asio::buffer(buf.data() + buf_pos, content_remaining),
       [this](const auto ec, const auto n_bytes) -> std::size_t {
         // custom completion condition is to update deadline
