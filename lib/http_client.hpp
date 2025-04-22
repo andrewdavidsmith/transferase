@@ -24,18 +24,13 @@
 #ifndef LIB_HTTP_CLIENT_HPP_
 #define LIB_HTTP_CLIENT_HPP_
 
-#include "http_error_code.hpp"
 #include "http_header.hpp"
 
-#include <asio.hpp>
-
 #include <chrono>
-#include <cstdint>
 #include <string>
-#include <string_view>
 #include <system_error>
 #include <tuple>
-#include <utility>
+#include <variant>
 
 namespace transferase {
 
