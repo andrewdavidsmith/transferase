@@ -104,7 +104,8 @@ public:
 
   auto
   stop(std::error_code ec) -> void {
-    status = ec;
+    if (!status)
+      status = ec;
     (void)self().get_sock().shutdown(asio::ip::tcp::socket::shutdown_both, ec);
     (void)self().get_sock().lowest_layer().close(ec);
     watchdog_timer.cancel();
