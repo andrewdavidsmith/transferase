@@ -51,10 +51,9 @@ to_string(const auto &maplike) -> std::string {
 }
 
 TEST(download_test, send_request_timeout) {
-  const auto target = std::filesystem::path{"/delay/1"};
+  const auto target = "/delay/1";
   const auto outdir = std::filesystem::path{"/tmp"};
-  const std::chrono::microseconds connect_timeout{1};
-  const std::chrono::microseconds download_timeout{0'500};  // 0.5s
+  const std::chrono::microseconds timeout{1};
   // clang-format off
   download_request dr{
     "httpbin.org",
@@ -62,55 +61,25 @@ TEST(download_test, send_request_timeout) {
     target,
     outdir,
   };
-  dr.set_connect_timeout(connect_timeout);
-  dr.set_download_timeout(download_timeout);
+  dr.set_timeout(timeout);
   // clang-format on
-  const auto expected_outfile = outdir / target.filename();
+  const auto expected_outfile = std::filesystem::path{outdir} / target;
 
   // Simulate the download
   const auto [headers, ec] = download(dr);
 
   EXPECT_TRUE(ec.value() ==
               std::to_underlying(http_error_code::inactive_timeout))
-    << to_string(headers) << '\t' << ec.message() << '\t' << ec.value() << '\t'
-    << "underlying: \"" << http_error_code::inactive_timeout << "\"\n";
-  std::error_code error;
-  remove_file(expected_outfile, error);
-  EXPECT_FALSE(error);
-}
-
-TEST(download_test, receive_download_timeout) {
-  const auto target = std::filesystem::path{"/delay/1"};
-  const auto outdir = std::filesystem::path{"/tmp"};
-  const std::chrono::milliseconds connect_timeout{1'500};  // 1.5s
-  const std::chrono::milliseconds download_timeout{1};     // 0.001s
-  // clang-format off
-  const download_request dr{
-    "httpbin.org",
-    "80",
-    target,
-    outdir,
-    connect_timeout,
-    download_timeout,
-  };
-  // clang-format on
-  const auto expected_outfile = outdir / target.filename();
-
-  const auto [headers, ec] = download(dr);  // do the download
-  std::ignore = headers;
-
-  EXPECT_TRUE(ec.value() ==
-              std::to_underlying(http_error_code::inactive_timeout))
-    << to_string(headers);
-
+    << to_string(headers) << '\t' << "message=" << ec.message() << '\t'
+    << "value=" << ec.value() << '\t' << "underlying: \""
+    << http_error_code::inactive_timeout << "\"\n";
   std::error_code error;
   remove_file(expected_outfile, error);
   EXPECT_FALSE(error);
 }
 
 TEST(download_test, download_non_existent_file) {
-  const std::chrono::milliseconds connect_timeout{3'000};   // 3s
-  const std::chrono::milliseconds download_timeout{3'000};  // 3s
+  const std::chrono::microseconds timeout{3'000'000};  // 3s
   // ADS: note the prefix slash below
   const std::filesystem::path target{generate_temp_filename("/file", "txt")};
   // ADS: need to make sure this will be unique; got caught with an
@@ -122,8 +91,7 @@ TEST(download_test, download_non_existent_file) {
     "80",           // port
     target,
     outdir,
-    connect_timeout,
-    download_timeout,
+    timeout,
   };
   // clang-format on
   const auto expected_outfile = outdir / target.filename();
