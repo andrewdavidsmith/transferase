@@ -71,9 +71,8 @@ download(const download_request &dr)
       return {m, out_ec};
   }
 
-  const auto [header, error] =
-    download_http(dr.host, dr.port, dr.target, outfile, dr.download_timeout,
-                  dr.show_progress);
+  const auto [header, error] = download_http(
+    dr.host, dr.port, dr.target, outfile, dr.timeout, dr.show_progress);
 
   if (error)
     return {m, error};
@@ -92,7 +91,7 @@ get_timestamp(const download_request &dr)
   -> std::chrono::time_point<std::chrono::file_clock> {
   static constexpr auto http_time_format = "%a, %d %b %Y %H:%M:%S GMT";
   const auto header =
-    download_header_http(dr.host, dr.port, dr.target, dr.download_timeout);
+    download_header_http(dr.host, dr.port, dr.target, dr.timeout);
   struct tm t;
   strptime(header.last_modified.data(), http_time_format, &t);
   const auto stime = std::chrono::system_clock::from_time_t(std::mktime(&t));
