@@ -29,15 +29,21 @@
 #include <asio.hpp>
 #include <asio/ssl.hpp>  // IWYU pragma: keep
 
+#include <cerrno>
 #include <chrono>
-#include <cstdint>
+#include <compare>
+#include <cstring>
 #include <filesystem>
+#include <format>
 #include <fstream>
+#include <functional>
+#include <iterator>
+#include <new>
 #include <string>
-#include <string_view>
 #include <system_error>
 #include <tuple>
 #include <utility>
+#include <vector>
 
 namespace transferase {
 
@@ -64,7 +70,7 @@ public:
   }
 
   [[nodiscard]] auto
-  take_data() const -> std::vector<char> {
+  take_data() -> std::vector<char> {
     return std::move(buf);
   }
 
@@ -125,7 +131,7 @@ public:
   auto
   connect(const auto &resolved) -> void {
     asio::async_connect(self().get_sock().lowest_layer(), resolved,
-                        [this](const auto ec, auto) {
+                        [this](const auto ec, const auto &) {
                           if (ec)
                             stop(http_error_code::connect_failed);
                           else
@@ -152,6 +158,7 @@ public:
       return;
     }
     buf_pos = std::size(buf) - n_bytes;
+    // NOLINTNEXTLINE (*-pointer-arithmetic)
     std::memcpy(buf.data(), buf.data() + n_bytes, buf_pos);
     buf.resize(header.content_length);
     content_remaining = header.content_length - buf_pos;
@@ -175,10 +182,10 @@ public:
   asio::io_context ioc;
   asio::ip::tcp::resolver resolver;
 
-  const std::string server;
-  const std::string port;
-  const std::string target;
-  const bool header_only{false};
+  std::string server;
+  std::string port;
+  std::string target;
+  bool header_only{false};
 
   std::chrono::steady_clock::time_point deadline{};
   std::chrono::microseconds duration{1s};

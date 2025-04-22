@@ -92,7 +92,9 @@ get_timestamp(const download_request &dr)
   static constexpr auto http_time_format = "%a, %d %b %Y %H:%M:%S GMT";
   const auto header =
     download_header_http(dr.host, dr.port, dr.target, dr.timeout);
-  struct tm t;
+  // clang-format off
+  struct tm t{};
+  // clang-format on
   strptime(header.last_modified.data(), http_time_format, &t);
   const auto stime = std::chrono::system_clock::from_time_t(std::mktime(&t));
   return std::chrono::file_clock::from_sys(stime);
