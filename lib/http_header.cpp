@@ -143,4 +143,17 @@ http_header::tostring() const -> std::string {
                      status_line, status_code, last_modified, content_length);
 }
 
-}  // namespace transferase
+// auto
+// parse_header(const std::string_view &header_block) -> void {
+//   for (const auto &v : header_block | std::views::split('\n')) {
+//     const auto line = std::string(std::cbegin(v), std::cend(v));
+//     const auto colon_pos = line.find(':');
+//     if (colon_pos == std::string::npos)
+//       header.emplace("response", line);
+//     else
+//       header.emplace(line.substr(0, colon_pos), line.substr(colon_pos +
+//       1));
+//   }
+// }
+
+};  // namespace transferase
