@@ -22,257 +22,387 @@
  */
 
 #include "http_client.hpp"
-
 #include "download_progress.hpp"
 #include "http_error_code.hpp"
 #include "http_header.hpp"
 
 #include <asio.hpp>
+#include <asio/ssl.hpp>  // IWYU pragma: keep
 
-#include <algorithm>
-#include <cerrno>
-#include <compare>
-#include <cstdlib>
+#include <chrono>
+#include <cstdint>
 #include <filesystem>
-#include <format>
 #include <fstream>
-#include <iterator>
-#include <memory>
-#include <new>
 #include <string>
+#include <string_view>
+#include <system_error>
 #include <tuple>
 #include <utility>
 
 namespace transferase {
 
-[[nodiscard]] auto
-download_http(
-  const std::string &host, const std::string &port, const std::string &target,
-  const std::string &outfile, const std::chrono::microseconds connect_timeout,
-  const std::chrono::microseconds download_timeout,
-  const bool show_progress) -> std::tuple<http_header, std::error_code> {
-  asio::io_context io_context;
+using namespace std::chrono_literals;
 
-  asio::ip::tcp::resolver resolver(io_context);
-  auto endpoints = resolver.resolve(host, port);
+template <typename derived> class http_client_base {
+public:
+  http_client_base(const std::string &server, const std::string &port,
+                   const std::string &target, const std::string &progress_label,
+                   const bool header_only = false) :
+    resolver{ioc}, server{server}, port{port}, target{target},
+    header_only{header_only}, watchdog_timer{ioc},
+    progress_label{progress_label}, progress{progress_label} {}
+
+  auto
+  download() -> void {
+    resolve();
+    ioc.run();
+  }
+
+  [[nodiscard]] auto
+  get_status() const -> std::error_code {
+    return status;
+  }
+
+  [[nodiscard]] auto
+  take_data() const -> std::vector<char> {
+    return std::move(buf);
+  }
+
+  [[nodiscard]] auto
+  get_header() const -> http_header {
+    return header;
+  }
+
+  auto
+  set_timeout(const auto t) {
+    duration = t;
+  }
+
+  // private:
+  auto
+  reset_deadline() -> void {
+    deadline = std::chrono::steady_clock::now() + duration;
+  }
+
+  auto
+  watchdog() -> void {
+    watchdog_timer.expires_at(deadline);
+    watchdog_timer.async_wait([this](auto) {
+      if (!is_stopped()) {
+        if (deadline < std::chrono::steady_clock::now())
+          stop(http_error_code::inactive_timeout);
+        else
+          watchdog();
+      }
+    });
+  }
+
+  [[nodiscard]] auto
+  is_stopped() const -> bool {
+    return !self().get_sock().is_open();
+  }
+
+  auto
+  stop(std::error_code ec) -> void {
+    status = ec;
+    (void)self().get_sock().shutdown(asio::ip::tcp::socket::shutdown_both, ec);
+    (void)self().get_sock().lowest_layer().close(ec);
+    watchdog_timer.cancel();
+  }
+
+  auto
+  resolve() -> void {
+    resolver.async_resolve(server, port,
+                           [this](const auto &ec, const auto &res) {
+                             if (ec)
+                               stop(http_error_code::connect_failed);
+                             else
+                               connect(res);
+                           });
+  }
+
+  auto
+  connect(const auto &resolved) -> void {
+    asio::async_connect(self().get_sock().lowest_layer(), resolved,
+                        [this](const auto ec, auto) {
+                          if (ec)
+                            stop(http_error_code::connect_failed);
+                          else
+                            self().connect_handler();
+                        });
+    reset_deadline();
+    watchdog();
+  }
+
+  auto
+  process_header(const std::error_code ec, const std::size_t n_bytes) {
+    if (ec) {
+      stop(http_error_code::receive_header_failed);
+      return;
+    }
+
+    header = http_header(std::string(buf.data(), n_bytes));
+    if (header_only) {
+      stop(std::error_code{});
+      return;
+    }
+    if (header.content_length == 0) {
+      stop(http_error_code::unknown_content_length);
+      return;
+    }
+    buf_pos = std::size(buf) - n_bytes;
+    std::memcpy(buf.data(), buf.data() + n_bytes, buf_pos);
+    buf.resize(header.content_length);
+    content_remaining = header.content_length - buf_pos;
+
+    if (!progress_label.empty())
+      progress.set_total_size(content_remaining);
+
+    self().read_content();
+  }
+
+  [[nodiscard]] auto
+  self() -> derived & {
+    return static_cast<derived &>(*this);
+  }
+
+  [[nodiscard]] auto
+  self() const -> const derived & {
+    return static_cast<const derived &>(*this);
+  }
+
+  asio::io_context ioc;
+  asio::ip::tcp::resolver resolver;
+
+  const std::string server;
+  const std::string port;
+  const std::string target;
+  const bool header_only{false};
+
+  std::chrono::steady_clock::time_point deadline{};
+  std::chrono::microseconds duration{1s};
+  asio::steady_timer watchdog_timer;
+
+  http_header header;
+  std::vector<char> buf;
+  std::size_t buf_pos{};
+  std::size_t content_remaining{};
+
+  std::string progress_label;
+  download_progress progress;
+
+  std::error_code status{};
+};
+
+class http_client : public http_client_base<http_client> {
+public:
+  http_client(const std::string &server, const std::string &port,
+              const std::string &target, const std::string &progress_label,
+              const bool header_only = false) :
+    http_client_base(server, port, target, progress_label, header_only),
+    sock{http_client_base::ioc} {}
+
+  auto
+  connect_handler() -> void {
+    send_request();
+  }
+
+  [[nodiscard]] auto
+  get_sock() -> asio::ip::tcp::socket & {
+    return sock;
+  }
+
+  [[nodiscard]] auto
+  get_sock() const -> const asio::ip::tcp::socket & {
+    return sock;
+  }
+
+  auto
+  read_header() -> void {
+    reset_deadline();
+    asio::async_read_until(sock, asio::dynamic_buffer(buf), "\r\n\r\n",
+                           std::bind(&http_client_base::process_header, this,
+                                     std::placeholders::_1,
+                                     std::placeholders::_2));
+  }
+
+  auto
+  read_content() -> void {
+    reset_deadline();
+    asio::async_read(
+      sock, asio::buffer(buf.data() + buf_pos, content_remaining),
+      [this](const auto ec, const auto n_bytes) -> std::size_t {
+        // custom completion condition updates deadline
+        reset_deadline();
+        if (!progress_label.empty())
+          progress.update(n_bytes);
+        return is_stopped() ? 0 : asio::transfer_all()(ec, n_bytes);
+      },
+      [this](const auto ec, const auto n_bytes) {
+        if (!progress_label.empty())
+          progress.update(n_bytes);
+        if (ec && (ec != asio::error::eof || n_bytes != content_remaining))
+          stop(http_error_code::reading_content_failed);
+        else
+          stop(std::error_code{});
+      });
+  }
+
+  auto
+  send_request() -> void {
+    static constexpr auto req_fmt = "GET {} HTTP/1.1\r\nHost: {}\r\n\r\n";
+    const auto req = std::format(req_fmt, target, server);
+    reset_deadline();
+    asio::async_write(sock, asio::buffer(req), [this](const auto ec, auto) {
+      if (ec)
+        stop(http_error_code::send_request_failed);
+      else
+        read_header();
+    });
+  }
+
+  asio::ip::tcp::socket sock;
+};
+
+class https_client : public http_client_base<https_client> {
+public:
+  https_client(const std::string &server, const std::string &port,
+               const std::string &target, const std::string &progress_label,
+               asio::ssl::context &ssl_context,
+               const bool header_only = false) :
+    http_client_base(server, port, target, progress_label, header_only),
+    sock{http_client_base::ioc, ssl_context} {
+    sock.set_verify_mode(asio::ssl::verify_none);
+    sock.set_verify_callback(
+      [](const auto preverified, asio::ssl::verify_context &) {
+        return preverified;
+      });
+  }
+
+  auto
+  connect_handler() -> void {
+    sock.async_handshake(asio::ssl::stream_base::client, [this](const auto ec) {
+      if (ec)
+        stop(http_error_code::handshake_failed);
+      else
+        send_request();
+    });
+  }
+
+  [[nodiscard]] auto
+  get_sock() -> asio::ip::tcp::socket & {
+    return sock.next_layer();
+  }
+
+  [[nodiscard]] auto
+  get_sock() const -> const asio::ip::tcp::socket & {
+    return sock.next_layer();
+  }
+
+  auto
+  read_header() -> void {
+    reset_deadline();
+    asio::async_read_until(sock, asio::dynamic_buffer(buf), "\r\n\r\n",
+                           std::bind(&http_client_base::process_header, this,
+                                     std::placeholders::_1,
+                                     std::placeholders::_2));
+  }
+
+  auto
+  read_content() -> void {
+    reset_deadline();
+    asio::async_read(
+      sock, asio::buffer(buf.data() + buf_pos, content_remaining),
+      [this](const auto ec, const auto n_bytes) -> std::size_t {
+        // custom completion condition is to update deadline
+        reset_deadline();
+        progress.update(n_bytes);
+        return is_stopped() ? 0 : asio::transfer_all()(ec, n_bytes);
+      },
+      [this](const auto ec, const auto n_bytes) {
+        progress.update(n_bytes);
+        if (ec && (ec != asio::error::eof || n_bytes != content_remaining))
+          stop(http_error_code::reading_content_failed);
+        else
+          stop(std::error_code{});
+      });
+  }
+
+  auto
+  send_request() -> void {
+    static constexpr auto req_fmt = "GET {} HTTP/1.1\r\nHost: {}\r\n\r\n";
+    const auto req = std::format(req_fmt, target, server);
+    reset_deadline();
+    asio::async_write(sock, asio::buffer(req), [this](const auto ec, auto) {
+      if (ec)
+        stop(http_error_code::send_request_failed);
+      else
+        read_header();
+    });
+  }
+
+  asio::ssl::stream<asio::ip::tcp::socket> sock;
+};
+
+[[nodiscard]] auto
+download_http(const std::string &host, const std::string &port,
+              const std::string &target, const std::string &outfile,
+              const std::chrono::microseconds timeout, const bool show_progress)
+  -> std::tuple<http_header, std::error_code> {
 
   std::string progress_label;
   if (show_progress)
     progress_label = std::filesystem::path(target).filename().string();
 
-  http_client c(io_context, endpoints, host, port, target, connect_timeout,
-                download_timeout, progress_label);
+  const auto [data, header, status] = [&] {
+    if (port == "443") {
+      // ADS: verification currently disabled
+      asio::ssl::context ctx(asio::ssl::context::sslv23);
+      // ctx.load_verify_file("ca.pem");
+      https_client c(host, port, target, progress_label, ctx);
+      c.set_timeout(timeout);
+      c.download();
+      return std::tuple{c.take_data(), c.get_header(), c.get_status()};
+    }
+    else {
+      http_client c(host, port, target, progress_label);
+      c.set_timeout(timeout);
+      c.download();
+      return std::tuple{c.take_data(), c.get_header(), c.get_status()};
+    }
+  }();
 
-  io_context.run();
+  if (status)
+    return std::tuple{http_header{}, status};
 
-  const std::error_code error = c.get_status();
-  if (error)
-    return {http_header{}, error};
-
-  const auto &data = c.get_data();
   std::ofstream out(outfile);
   if (!out)
     return {http_header{}, std::make_error_code(std::errc(errno))};
 
   out.write(data.data(), std::ssize(data));
 
-  return {c.get_header(), std::error_code{}};
+  return {header, status};
 }
 
 [[nodiscard]] auto
-download_header_http(
-  const std::string &host, const std::string &port, const std::string &target,
-  const std::chrono::microseconds connect_timeout,
-  const std::chrono::microseconds download_timeout) -> http_header {
-  asio::io_context io_context;
-  asio::ip::tcp::resolver resolver(io_context);
-  auto endpoints = resolver.resolve(host, port);
-  http_client c(io_context, endpoints, host, port, target, connect_timeout,
-                download_timeout, true);
-  io_context.run();
-  return c.get_header();
-}
-
-http_client::http_client(asio::io_context &io_context,
-                         const asio::ip::tcp::resolver::results_type &endpoints,
-                         const std::string &host, const std::string &port,
-                         const std::string &target,
-                         const std::chrono::microseconds connect_timeout,
-                         const std::chrono::microseconds read_timeout) :
-  sock(io_context), host{host}, port{port}, target{target},
-  connect_timeout{connect_timeout}, read_timeout{read_timeout},
-  deadline{sock.get_executor()} {
-  connect(endpoints);
-  deadline.expires_after(connect_timeout);
-  deadline.async_wait([this](auto) { check_deadline(); });
-}
-
-http_client::http_client(asio::io_context &io_context,
-                         const asio::ip::tcp::resolver::results_type &endpoints,
-                         const std::string &host, const std::string &port,
-                         const std::string &target,
-                         const std::chrono::microseconds connect_timeout,
-                         const std::chrono::microseconds read_timeout,
-                         const std::string &progress_label) :
-  sock(io_context), host{host}, port{port}, target{target},
-  connect_timeout{connect_timeout}, read_timeout{read_timeout},
-  progress_label{progress_label}, progress(progress_label),
-  deadline{sock.get_executor()} {
-  connect(endpoints);
-  deadline.expires_after(connect_timeout);
-  deadline.async_wait([this](auto) { check_deadline(); });
-}
-
-http_client::http_client(asio::io_context &io_context,
-                         const asio::ip::tcp::resolver::results_type &endpoints,
-                         const std::string &host, const std::string &port,
-                         const std::string &target,
-                         const std::chrono::microseconds connect_timeout,
-                         const std::chrono::microseconds read_timeout,
-                         const bool header_only) :
-  sock(io_context), host{host}, port{port}, target{target},
-  header_only{header_only}, connect_timeout{connect_timeout},
-  read_timeout{read_timeout}, deadline{sock.get_executor()} {
-  connect(endpoints);
-  deadline.expires_after(connect_timeout);
-  deadline.async_wait([this](auto) { check_deadline(); });
-}
-
-auto
-http_client::allocate_buffer(const std::size_t file_size) -> void {
-  bytes_remaining = file_size;
-  bytes_received = 0;
-  buf.resize(bytes_remaining);
-  std::copy_n(asio::buffers_begin(response.data()), std::size(response),
-              std::begin(buf));
-  bytes_remaining -= std::size(response);
-  bytes_received += std::size(response);
-}
-
-auto
-http_client::connect(const asio::ip::tcp::resolver::results_type &endpoints)
-  -> void {
-  deadline.expires_after(connect_timeout);
-  // clang-format off
-  asio::async_connect(sock.lowest_layer(), endpoints,
-    [this](const std::error_code &error, const auto & /*endpoint*/) {
-      deadline.expires_at(asio::steady_timer::time_point::max());
-      if (!error) {
-        send_request();
-      }
-      else {
-        finish(http_error_code::connect_failed);
-      }
-    });
-  // clang-format on
-}
-
-auto
-http_client::send_request() -> void {
-  constexpr auto get_fmt = "GET {} HTTP/1.1\r\nHost: {}\r\n\r\n";
-  request = std::format(get_fmt, target, host);
-  deadline.expires_after(connect_timeout);
-  asio::async_write(
-    sock, asio::buffer(request),
-    [this](const std::error_code &error, const std::size_t /*size*/) {
-      deadline.expires_at(asio::steady_timer::time_point::max());
-      if (error) {
-        finish(http_error_code::send_request_failed);
-      }
-      else {
-        receive_header();
-      }
-    });
-}
-
-auto
-http_client::receive_header() -> void {
-  deadline.expires_after(read_timeout);
-  asio::async_read_until(
-    sock, response, http_end,
-    [this](const std::error_code &error, const std::size_t size) {
-      deadline.expires_at(asio::steady_timer::time_point::max());
-      if (error) {
-        finish(http_error_code::receive_header_failed);
-      }
-      else {
-        header = http_header(response, size);
-        // ADS: This is where the choice is made to just get headers
-        if (header_only)
-          finish(error);
-        response.consume(size);
-        if (header.content_length != 0) {
-          allocate_buffer(header.content_length);
-          if (!progress_label.empty())
-            progress.set_total_size(header.content_length);
-          receive_body();
-        }
-        else {
-          finish(http_error_code::unknown_body_length);
-        }
-      }
-    });
-}
-
-auto
-http_client::receive_body() -> void {
-  deadline.expires_after(read_timeout);
-  sock.async_read_some(
-    // NOLINTNEXTLINE (*-pointer-arithmetic)
-    asio::buffer(buf.data() + bytes_received, bytes_remaining),
-    [this](const std::error_code error, const std::size_t bytes_transferred) {
-      deadline.expires_at(asio::steady_timer::time_point::max());
-      if (!error) {
-        bytes_remaining -= bytes_transferred;
-        bytes_received += bytes_transferred;
-
-        progress.update(bytes_received);
-
-        if (bytes_remaining == 0) {
-          finish(error);
-        }
-        else {
-          receive_body();
-        }
-      }
-      else {
-        finish(http_error_code::reading_body_failed);
-      }
-    });
-}
-
-auto
-http_client::finish(const std::error_code error) -> void {
-  // same consequence as canceling
-  deadline.expires_at(asio::steady_timer::time_point::max());
-  if (!status)  // could have been a timeout
-    status = error;
-  std::error_code unused_error;  // for non-throwing
-  // nothing actually returned below
-  (void)sock.shutdown(asio::ip::tcp::socket::shutdown_both, unused_error);
-  // nothing actually returned below
-  (void)sock.close(unused_error);
-}
-
-auto
-http_client::check_deadline() -> void {
-  if (!sock.is_open())  // ADS: when can this happen?
-    return;
-
-  if (const auto right_now = asio::steady_timer::clock_type::now();
-      deadline.expiry() <= right_now) {
-    status = http_error_code::inactive_timeout;
-    std::error_code unused_error;  // for non-throwing
-    // nothing actually returned below
-    (void)sock.shutdown(asio::ip::tcp::socket::shutdown_both, unused_error);
-    deadline.expires_at(asio::steady_timer::time_point::max());
-
-    /* ADS: closing here if needed?? */
-    (void)sock.close(unused_error);
+download_header_http(const std::string &host, const std::string &port,
+                     const std::string &target,
+                     const std::chrono::microseconds timeout) -> http_header {
+  if (port == "443") {
+    // ADS: verification currently disabled
+    asio::ssl::context ctx(asio::ssl::context::sslv23);
+    // ctx.load_verify_file("ca.pem");
+    https_client c(host, port, target, "", ctx, true);
+    c.set_timeout(timeout);
+    c.download();
+    return c.get_header();
   }
-
-  // wait again
-  deadline.async_wait([this](auto) { check_deadline(); });
+  else {
+    http_client c(host, port, target, "", true);
+    c.set_timeout(timeout);
+    c.download();
+    return c.get_header();
+  }
 }
 
 };  // namespace transferase
