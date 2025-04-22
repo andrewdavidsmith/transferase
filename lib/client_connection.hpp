@@ -141,9 +141,9 @@ public:
         auto completion_condition = transfer_all_higher_max();
         return is_stopped() ? 0 : completion_condition(ec, n_bytes);
       },
-      // completion token
       [this](const auto ec, const auto n_bytes) {
         reply_stats.update(n_bytes);
+        reset_deadline();
         lgr.debug("Response transfer stats: {}", reply_stats.str());
         if (ec)
           lgr.error("Error reading levels: {}", ec.message());
@@ -302,6 +302,7 @@ private:
       },
       [this](const auto ec, const auto n_bytes) {
         query_stats.update(n_bytes);
+        base_t::reset_deadline();
         base_t::lgr.debug("Sent query ({})", query_stats.str());
         if (ec)
           base_t::handle_write_failure(ec);
