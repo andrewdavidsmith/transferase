@@ -413,6 +413,11 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
   app.add_option("-b,--bin-size", bin_size, "size of genomic bins to query")
     ->option_text("INT")
     ->excludes(intervals_file_opt);
+  // ADS: Genome will feel a bit redundant to users. Moving forward, if a
+  // query consists of intervals and a methylome, if those are inconsistent
+  // (e.g., specifying 'chr22' and asking for a mouse methylome), the "tie
+  // breaker" of having the user specify the genome will allow for more
+  // informative error reporting.
   app.add_option("-g,--genome", genome_name, "name of the reference genome")
     ->required();
   app
@@ -587,8 +592,11 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
   const auto index =
     xfr::genome_index::read(cfg.get_index_dir(), genome_name, error);
   if (error) {
-    lgr.error("Failed to read genome index {} {}: {}", cfg.get_index_dir(),
-              genome_name, error);
+    lgr.error(
+      "Failed to load index for genome {} [index directory: {}][error: {}]",
+      genome_name, cfg.get_index_dir(), error);
+    lgr.error("Please verify that {} is correct and has been configured",
+              genome_name);
     return EXIT_FAILURE;
   }
 
