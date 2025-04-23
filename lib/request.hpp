@@ -81,7 +81,7 @@ struct request {
 
   [[nodiscard]] auto
   is_valid_type() const -> bool {
-    return request_type < request_type_code::n_request_types;
+    return static_cast<std::uint8_t>(request_type) < n_xfr_request_types;
   }
 
   [[nodiscard]] auto
