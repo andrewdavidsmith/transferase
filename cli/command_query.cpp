@@ -99,6 +99,16 @@ xfr query --local -d methylome_dir -x index_dir -g hg38 \
 #include <variant>  // for std::tuple
 #include <vector>
 
+namespace xfr = transferase;
+
+/// Gather options related to output
+struct output_options {
+  std::string output_file;
+  xfr::output_format_t out_fmt{};
+  std::uint32_t min_reads{};
+  bool write_n_cpgs{};
+};
+
 [[nodiscard]] static inline auto
 format_methylome_names_brief(const std::vector<std::string> &names)
   -> std::string {
@@ -132,22 +142,21 @@ read_methylomes_file(const std::string &filename,
 
 /// Read query intervals, check that they are sorted and valid
 [[nodiscard]] static auto
-read_intervals(const transferase::genome_index &index,
-               const std::string &intervals_file, std::error_code &error)
-  -> std::vector<transferase::genomic_interval> {
-  auto &lgr = transferase::logger::instance();
-  auto intervals =
-    transferase::genomic_interval::read(index, intervals_file, error);
+read_intervals(const xfr::genome_index &index,
+               const std::string &intervals_file,
+               std::error_code &error) -> std::vector<xfr::genomic_interval> {
+  auto &lgr = xfr::logger::instance();
+  auto intervals = xfr::genomic_interval::read(index, intervals_file, error);
   if (error) {
     lgr.error("Error reading intervals file {}: {}", intervals_file, error);
     return {};
   }
-  if (!transferase::genomic_interval::are_sorted(intervals)) {
+  if (!xfr::genomic_interval::are_sorted(intervals)) {
     lgr.error("Intervals not sorted: {}", intervals_file);
     error = std::make_error_code(std::errc::invalid_argument);
     return {};
   }
-  if (!transferase::genomic_interval::are_valid(intervals)) {
+  if (!xfr::genomic_interval::are_valid(intervals)) {
     lgr.error("Intervals not valid: {} (negative size found)", intervals_file);
     error = std::make_error_code(std::errc::invalid_argument);
     return {};
@@ -157,19 +166,18 @@ read_intervals(const transferase::genome_index &index,
   return intervals;
 }
 
-template <typename level_element>
+template <typename level_element = xfr::level_element_t>
 [[nodiscard]] static auto
-do_intervals_query(const std::string &intervals_file,
-                   const transferase::output_format_t out_fmt,
-                   const std::uint32_t min_reads,
-                   const std::string &output_file,
-                   const transferase::genome_index &index,
-                   const transferase::methylome_interface &interface,
-                   const std::vector<std::string> &methylome_names,
-                   const std::vector<std::string> &alt_names,
-                   const transferase::request_type_code &request_type,
-                   const bool write_n_cpgs) {
-  auto &lgr = transferase::logger::instance();
+query_intervals(const std::string &intervals_file,
+                const output_options &outopts, const xfr::genome_index &index,
+                const xfr::methylome_interface &interface,
+                const std::vector<std::string> &methylome_names,
+                const std::vector<std::string> &alt_names) {
+  auto request_type = xfr::request_type_code::intervals;
+  if constexpr (std::is_same_v<level_element, xfr::level_element_covered_t>)
+    request_type = xfr::request_type_code::intervals_covered;
+
+  auto &lgr = xfr::logger::instance();
   // Read query intervals and validate them
   std::error_code error;
   const auto intervals = read_intervals(index, intervals_file, error);
@@ -183,8 +191,8 @@ do_intervals_query(const std::string &intervals_file,
   lgr.debug("Elapsed time to prepare query: {:.3}s",
             duration(format_query_start, format_query_stop));
 
-  const auto req = transferase::request{request_type, index.get_hash(),
-                                        std::size(intervals), methylome_names};
+  const auto req = xfr::request{request_type, index.get_hash(),
+                                std::size(intervals), methylome_names};
 
   const auto query_start{std::chrono::high_resolution_clock::now()};
 
@@ -198,87 +206,89 @@ do_intervals_query(const std::string &intervals_file,
             duration(query_start, query_stop));
 
   const auto n_cpgs =
-    write_n_cpgs ? query.get_n_cpgs() : std::vector<std::uint32_t>{};
+    outopts.write_n_cpgs ? query.get_n_cpgs() : std::vector<std::uint32_t>{};
 
-  const auto outmgr = transferase::intervals_writer{
+  const auto outmgr = xfr::intervals_writer{
     // clang-format off
-    output_file,
+    outopts.output_file,
     index,
-    out_fmt,
+    outopts.out_fmt,
     alt_names,
-    min_reads,
+    outopts.min_reads,
     n_cpgs,
     intervals,
     // clang-format on
   };
 
-  const auto output_start{std::chrono::high_resolution_clock::now()};
+  const auto out_start{std::chrono::high_resolution_clock::now()};
   error = outmgr.write_output(results);
   if (error) {
     lgr.error("Error writing output: {}", error);
     return error;
   }
-  const auto output_stop{std::chrono::high_resolution_clock::now()};
-  lgr.debug("Elapsed time for output: {:.3}s",
-            duration(output_start, output_stop));
+  const auto out_stop{std::chrono::high_resolution_clock::now()};
+  lgr.debug("Elapsed time for output: {:.3}s", duration(out_start, out_stop));
 
   return std::error_code{};
 }
 
-template <typename level_element>
+const auto query_intervals_cov = &query_intervals<xfr::level_element_covered_t>;
+
+template <typename level_element = xfr::level_element_t>
 [[nodiscard]] static auto
-do_bins_query(const std::uint32_t bin_size,
-              const transferase::output_format_t out_fmt,
-              const std::uint32_t min_reads, const std::string &output_file,
-              const transferase::genome_index &index,
-              const transferase::methylome_interface &interface,
-              const std::vector<std::string> &methylome_names,
-              const std::vector<std::string> &alt_names,
-              const transferase::request_type_code &request_type,
-              const bool write_n_cpgs) {
-  auto &lgr = transferase::logger::instance();
+query_bins(const std::uint32_t bin_size, const output_options &outopts,
+           const xfr::genome_index &index,
+           const xfr::methylome_interface &interface,
+           const std::vector<std::string> &methylome_names,
+           const std::vector<std::string> &alt_names) {
+  auto request_type = xfr::request_type_code::bins;
+  if constexpr (std::is_same_v<level_element, xfr::level_element_covered_t>)
+    request_type = xfr::request_type_code::bins_covered;
+
+  using hr_clock = std::chrono::high_resolution_clock;
+  auto &lgr = xfr::logger::instance();
   // Read query intervals and validate them
-  const auto req = transferase::request{request_type, index.get_hash(),
-                                        bin_size, methylome_names};
+  const auto req =
+    xfr::request{request_type, index.get_hash(), bin_size, methylome_names};
   std::error_code error;
-  const auto query_start{std::chrono::high_resolution_clock::now()};
+  const auto query_start{hr_clock::now()};
   const auto results = interface.get_levels<level_element>(req, index, error);
   if (error) {
     lgr.debug("Error obtaining levels: {}", error);
     return error;
   }
-  const auto query_stop{std::chrono::high_resolution_clock::now()};
+  const auto query_stop{hr_clock::now()};
   lgr.debug("Elapsed time for query: {:.3}s",
             duration(query_start, query_stop));
 
-  const auto n_cpgs =
-    write_n_cpgs ? index.get_n_cpgs(bin_size) : std::vector<std::uint32_t>{};
+  const auto n_cpgs = outopts.write_n_cpgs ? index.get_n_cpgs(bin_size)
+                                           : std::vector<std::uint32_t>{};
 
-  const auto outmgr = transferase::bins_writer{
+  const auto outmgr = xfr::bins_writer{
     // clang-format off
-    output_file,
+    outopts.output_file,
     index,
-    out_fmt,
+    outopts.out_fmt,
     alt_names,
-    min_reads,
+    outopts.min_reads,
     n_cpgs,
     bin_size,
     // clang-format on
   };
 
-  const auto output_start{std::chrono::high_resolution_clock::now()};
-
+  const auto out_start{hr_clock::now()};
   error = outmgr.write_output(results);
-
-  const auto output_stop{std::chrono::high_resolution_clock::now()};
-  lgr.debug("Elapsed time for output: {:.3}s",
-            duration(output_start, output_stop));
   if (error) {
     lgr.error("Error writing output: {}", error);
     return error;
   }
+  const auto out_stop{hr_clock::now()};
+  lgr.debug("Elapsed time for output: {:.3}s", duration(out_start, out_stop));
+
   return std::error_code{};
 }
+
+const auto query_bins_cov = &query_bins<xfr::level_element_covered_t>;
 
 [[nodiscard]] static inline auto
 read_methylomes_json(const std::string &json_filename, std::error_code &ec)
@@ -345,16 +355,14 @@ get_methylome_names(const std::vector<std::string> &possibly_methylome_names,
 
 auto
 command_query_main(int argc, char *argv[]) -> int {  // NOLINT
-  static constexpr auto log_level_default = transferase::log_level_t::info;
-  static constexpr auto out_fmt_default = transferase::output_format_t::counts;
+  static constexpr auto log_level_default = xfr::log_level_t::info;
+  static constexpr auto out_fmt_default = xfr::output_format_t::counts;
   static constexpr auto command = "query";
   static const auto usage = std::format("Usage: xfr {} [options]", command);
   static const auto about_msg =
     std::format("xfr {}: {}", rstrip(command), rstrip(about));
   static const auto description_msg =
     std::format("{}\n{}", rstrip(description), rstrip(examples));
-
-  namespace xfr = transferase;
 
   // arguments that can be set in the client_config are held there
   xfr::client_config cfg;
@@ -365,7 +373,6 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
   std::uint32_t bin_size{};
   std::string intervals_file;
   bool count_covered{false};
-  bool write_n_cpgs{false};
 
   // the two possible sources of names of methylomes to query
   std::vector<std::string> methylome_names;
@@ -374,13 +381,13 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
   // lookup in transferase metadata
   std::string genome_name;
 
-  // where to put the output and in what format
-  std::string output_file;
-  xfr::output_format_t out_fmt{out_fmt_default};
-  std::uint32_t min_reads{0};  // relevant for 'scores' and 'dfscores'
+  // gather options related to output
+  output_options outopts{};
+  outopts.out_fmt = out_fmt_default;
+  outopts.min_reads = 0;
 
   // run in local mode
-  bool local_mode{};
+  bool local_mode{false};
 
   // get the default config directory to use as a fallback
   std::error_code default_config_dir_error;
@@ -416,17 +423,17 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
                  "or a JSON mapping of methylome name to "
                  "label (see docs)")
     ->required();
-  app.add_option("-o,--out-file", output_file, "output file");
+  app.add_option("-o,--out-file", outopts.output_file, "output file");
   app.add_flag("-C,--covered", count_covered,
                "count covered sites for each query interval");
-  app.add_option("-f,--out-fmt", out_fmt,
+  app.add_option("-f,--out-fmt", outopts.out_fmt,
                  std::format("output format {}", xfr::output_format_help_str))
     ->option_text(std::format("[{}]", out_fmt_default))
     ->transform(CLI::CheckedTransformer(xfr::output_format_cli11, CLI::ignore_case));
-  app.add_flag("--n-cpgs", write_n_cpgs,
+  app.add_flag("--n-cpgs", outopts.write_n_cpgs,
                "write the number of CpG sites for each query interval "
                "as the final column of the output");
-  app.add_option("-r,--min-reads", min_reads,
+  app.add_option("-r,--min-reads", outopts.min_reads,
                  "for scores output, if the score is based on fewer "
                  "than this number of reads, output a value of NA")
     ->option_text("INT");
@@ -564,9 +571,9 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
     {"Count covered", std::format("{}", count_covered)},
     {"Methylome names", format_methylome_names_brief(methylomes)},
     {"Genome name", genome_name},
-    {"Output file", output_file},
-    {"Output format", std::format("{}", out_fmt)},
-    {"Min reads", std::format("{}", min_reads)},
+    {"Output file", outopts.output_file},
+    {"Output format", std::format("{}", outopts.out_fmt)},
+    {"Min reads", std::format("{}", outopts.min_reads)},
     {"Local mode", std::format("{}", local_mode)},
     // clang-format on
   };
@@ -580,34 +587,22 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
     return EXIT_FAILURE;
   }
 
-  const bool intervals_query = (bin_size == 0);
-  const auto request_type =
-    intervals_query ? (count_covered ? xfr::request_type_code::intervals_covered
-                                     : xfr::request_type_code::intervals)
-                    : (count_covered ? xfr::request_type_code::bins_covered
-                                     : xfr::request_type_code::bins);
-
-  // ADS: This mess below is a consequence of using static polymorphism for
-  // the type of client connection, starting here. Not sure if it's worth it,
-  // but after this point things simplify again. However it seems like these
-  // functions have too many arguments.
-
-  error =
-    intervals_query
-      ? (count_covered
-           ? do_intervals_query<xfr::level_element_covered_t>(
-               intervals_file, out_fmt, min_reads, output_file, index,
-               interface, methylomes, alt_names, request_type, write_n_cpgs)
-           : do_intervals_query<xfr::level_element_t>(
-               intervals_file, out_fmt, min_reads, output_file, index,
-               interface, methylomes, alt_names, request_type, write_n_cpgs))
-      : (count_covered
-           ? do_bins_query<xfr::level_element_covered_t>(
-               bin_size, out_fmt, min_reads, output_file, index, interface,
-               methylomes, alt_names, request_type, write_n_cpgs)
-           : do_bins_query<xfr::level_element_t>(
-               bin_size, out_fmt, min_reads, output_file, index, interface,
-               methylomes, alt_names, request_type, write_n_cpgs));
+  error = [&] {
+    const bool intervals_query = (bin_size == 0);
+    if (intervals_query && count_covered)
+      return query_intervals_cov(intervals_file, outopts, index, interface,
+                                 methylomes, alt_names);
+    if (intervals_query && !count_covered)
+      return query_intervals(intervals_file, outopts, index, interface,
+                             methylomes, alt_names);
+    if (!intervals_query && count_covered)
+      return query_bins_cov(bin_size, outopts, index, interface, methylomes,
+                            alt_names);
+    if (!intervals_query && !count_covered)
+      return query_bins(bin_size, outopts, index, interface, methylomes,
+                        alt_names);
+    std::unreachable();
+  }();
 
   // ADS: below is because error code '0' is printed as "Undefined
   // error" on macos.
