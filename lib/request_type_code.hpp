@@ -38,8 +38,6 @@ enum class request_type_code : std::uint8_t {
   intervals_covered = 1,
   bins = 2,
   bins_covered = 3,
-  unknown = 4,
-  n_request_types = 5,
 };
 
 static constexpr auto request_type_code_names = std::array{
@@ -48,9 +46,11 @@ static constexpr auto request_type_code_names = std::array{
   "intervals_covered",
   "bins",
   "bins_covered",
-  "unknown",
   // clang-format on
 };
+
+static constexpr std::underlying_type_t<request_type_code> n_xfr_request_types =
+  std::size(request_type_code_names);
 
 [[nodiscard]] inline auto
 to_string(const request_type_code c) -> std::string {
