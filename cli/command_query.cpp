@@ -459,8 +459,8 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
   app.add_flag("--covered", count_covered,
                "count covered sites for each reported level");
   app
-    .add_option("--bed", outfmt_bedlike,
-                "no header and first three output columns are BED")
+    .add_flag("--bed", outfmt_bedlike,
+              "no header and first three output columns are BED")
     ->option_text(" ");
   app
     .add_option("--dataframe", outfmt_dataframe,
