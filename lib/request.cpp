@@ -67,8 +67,7 @@ parse(char const *first, char const *last, request &req) -> std::error_code {
   static constexpr auto delim = '\t';
   static constexpr auto term = '\n';
 
-  req.index_hash = 0;
-  req.request_type = request_type_code::unknown;
+  req = request{};  // reset everything
 
   auto cursor = first;
 
