@@ -303,7 +303,7 @@ private:
       [this](const auto ec, const auto n_bytes) {
         query_stats.update(n_bytes);
         base_t::reset_deadline();
-        base_t::lgr.debug("Sent query ({})", query_stats.str());
+        base_t::lgr.debug("Sent query: {}", query_stats.str());
         if (ec)
           base_t::handle_write_failure(ec);
         else
