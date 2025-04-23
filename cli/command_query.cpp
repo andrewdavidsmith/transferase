@@ -383,7 +383,7 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
   bool outfmt_scores{false};
   bool outfmt_classic{false};
   bool outfmt_counts{true};
-  bool outfmt_bedlike{false};
+  bool outfmt_bed{false};
   bool outfmt_dataframe{true};
 
   // get the default config directory to use as a fallback
@@ -459,7 +459,7 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
   app.add_flag("--covered", count_covered,
                "count covered sites for each reported level");
   app
-    .add_flag("--bed", outfmt_bedlike,
+    .add_flag("--bed", outfmt_bed,
               "no header and first three output columns are BED")
     ->option_text(" ");
   app
@@ -500,21 +500,21 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
 
   // set the output format based on combination of user options
   outopts.outfmt = [&] {
-    if (outfmt_dataframe) {
-      if (outfmt_scores)
-        return xfr::output_format_t::dfscores;
-      else if (outfmt_classic)
-        return xfr::output_format_t::dfclassic;
-      else  // if (outfmt_counts)
-        return xfr::output_format_t::dfcounts;
-    }
-    else /* if (outfmt_bed) */ {
+    if (outfmt_bed) {
       if (outfmt_scores)
         return xfr::output_format_t::scores;
       else if (outfmt_classic)
         return xfr::output_format_t::classic;
       else  // if (outfmt_counts)
         return xfr::output_format_t::counts;
+    }
+    else /*if (outfmt_dataframe) */ {
+      if (outfmt_scores)
+        return xfr::output_format_t::dfscores;
+      else if (outfmt_classic)
+        return xfr::output_format_t::dfclassic;
+      else  // if (outfmt_counts)
+        return xfr::output_format_t::dfcounts;
     }
   }();
 
