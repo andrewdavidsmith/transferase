@@ -103,8 +103,8 @@ namespace xfr = transferase;
 
 /// Gather options related to output
 struct output_options {
-  std::string output_file;
-  xfr::output_format_t out_fmt{};
+  std::string outfile;
+  xfr::output_format_t outfmt{};
   std::uint32_t min_reads{};
   bool write_n_cpgs{};
 };
@@ -117,8 +117,7 @@ format_methylome_names_brief(const std::vector<std::string> &names)
   //   names | std::views::join_with(' ') | std::ranges::to<std::string>();
   auto joined = join_with(names, ' ');
   if (std::size(joined) > max_names_width)
-    return std::format("{}...{} ({} methylomes)", names.front(), names.back(),
-                       std::size(names));
+    return joined.substr(0, max_names_width) + std::string("...");
   return joined;
 }
 
@@ -210,9 +209,9 @@ query_intervals(const std::string &intervals_file,
 
   const auto outmgr = xfr::intervals_writer{
     // clang-format off
-    outopts.output_file,
+    outopts.outfile,
     index,
-    outopts.out_fmt,
+    outopts.outfmt,
     alt_names,
     outopts.min_reads,
     n_cpgs,
@@ -245,19 +244,18 @@ query_bins(const std::uint32_t bin_size, const output_options &outopts,
   if constexpr (std::is_same_v<level_element, xfr::level_element_covered_t>)
     request_type = xfr::request_type_code::bins_covered;
 
-  using hr_clock = std::chrono::high_resolution_clock;
   auto &lgr = xfr::logger::instance();
   // Read query intervals and validate them
   const auto req =
     xfr::request{request_type, index.get_hash(), bin_size, methylome_names};
   std::error_code error;
-  const auto query_start{hr_clock::now()};
+  const auto query_start{std::chrono::high_resolution_clock::now()};
   const auto results = interface.get_levels<level_element>(req, index, error);
   if (error) {
     lgr.debug("Error obtaining levels: {}", error);
     return error;
   }
-  const auto query_stop{hr_clock::now()};
+  const auto query_stop{std::chrono::high_resolution_clock::now()};
   lgr.debug("Elapsed time for query: {:.3}s",
             duration(query_start, query_stop));
 
@@ -266,9 +264,9 @@ query_bins(const std::uint32_t bin_size, const output_options &outopts,
 
   const auto outmgr = xfr::bins_writer{
     // clang-format off
-    outopts.output_file,
+    outopts.outfile,
     index,
-    outopts.out_fmt,
+    outopts.outfmt,
     alt_names,
     outopts.min_reads,
     n_cpgs,
@@ -276,13 +274,13 @@ query_bins(const std::uint32_t bin_size, const output_options &outopts,
     // clang-format on
   };
 
-  const auto out_start{hr_clock::now()};
+  const auto out_start{std::chrono::high_resolution_clock::now()};
   error = outmgr.write_output(results);
   if (error) {
     lgr.error("Error writing output: {}", error);
     return error;
   }
-  const auto out_stop{hr_clock::now()};
+  const auto out_stop{std::chrono::high_resolution_clock::now()};
   lgr.debug("Elapsed time for output: {:.3}s", duration(out_start, out_stop));
 
   return std::error_code{};
@@ -338,12 +336,12 @@ get_methylome_names(const std::vector<std::string> &possibly_methylome_names,
     std::filesystem::exists(possibly_methylome_names.front()) &&
     std::filesystem::is_regular_file(possibly_methylome_names.front());
   if (is_file) {
-    // attept to read as json
+    // attept to read as JSON with pairs of {name,label}
     const auto [names_from_json, alt_names_from_json] =
       read_methylomes_json(possibly_methylome_names.front(), error);
     if (!error)
       return {names_from_json, alt_names_from_json};
-    // if json didn't work, try just one name per file
+    // JSON didn't work, try just one name per line
     const auto names_from_file =
       read_methylomes_file(possibly_methylome_names.front(), error);
     if (!error)
@@ -355,8 +353,6 @@ get_methylome_names(const std::vector<std::string> &possibly_methylome_names,
 
 auto
 command_query_main(int argc, char *argv[]) -> int {  // NOLINT
-  static constexpr auto log_level_default = xfr::log_level_t::info;
-  static constexpr auto out_fmt_default = xfr::output_format_t::counts;
   static constexpr auto command = "query";
   static const auto usage = std::format("Usage: xfr {} [options]", command);
   static const auto about_msg =
@@ -364,12 +360,9 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
   static const auto description_msg =
     std::format("{}\n{}", rstrip(description), rstrip(examples));
 
-  // arguments that can be set in the client_config are held there
   xfr::client_config cfg;
-  cfg.log_level = log_level_default;
 
-  // arguments that determine the type of computation done on the
-  // server and the type of data communicated
+  // arguments that determine what the server computes
   std::uint32_t bin_size{};
   std::string intervals_file;
   bool count_covered{false};
@@ -377,17 +370,21 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
   // the two possible sources of names of methylomes to query
   std::vector<std::string> methylome_names;
 
-  // the genome associated with the methylomes -- could come from a
-  // lookup in transferase metadata
+  // requiring user to specify assumed genome for safety
   std::string genome_name;
 
-  // gather options related to output
-  output_options outopts{};
-  outopts.out_fmt = out_fmt_default;
-  outopts.min_reads = 0;
-
-  // run in local mode
   bool local_mode{false};
+
+  bool verbose{false};
+  bool quiet{false};
+
+  // options related to output
+  output_options outopts{};
+  bool outfmt_scores{false};
+  bool outfmt_classic{false};
+  bool outfmt_counts{true};
+  bool outfmt_bedlike{false};
+  bool outfmt_dataframe{true};
 
   // get the default config directory to use as a fallback
   std::error_code default_config_dir_error;
@@ -397,76 +394,129 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
   CLI::App app{about_msg};
   argv = app.ensure_utf8(argv);
   app.formatter(std::make_shared<transferase_formatter>());
-
   app.usage(usage);
   if (argc >= 2)
     app.footer(description_msg);
-  app.get_formatter()->label("REQUIRED", "");
+  app.get_formatter()->label("REQUIRED", " ");
+
   app.set_help_flag("-h,--help", "print a detailed help message and exit");
-  // clang-format off
-  app.add_option("-c,--config-dir", cfg.config_dir, "specify a config directory")
+  app
+    .add_option("-c,--config-dir", cfg.config_dir, "specify a config directory")
     ->option_text("DIR")
     ->check(CLI::ExistingDirectory);
   const auto intervals_file_opt =
-    app.add_option("-i,--intervals-file", intervals_file,
-                   "input query intervals file in BED format")
-    ->option_text("FILE")
-    ->check(CLI::ExistingFile);
+    app
+      .add_option("-i,--intervals", intervals_file,
+                  "input query intervals file in BED format")
+      ->option_text("FILE")
+      ->check(CLI::ExistingFile);
   app.add_option("-b,--bin-size", bin_size, "size of genomic bins to query")
     ->option_text("INT")
     ->excludes(intervals_file_opt);
   app.add_option("-g,--genome", genome_name, "name of the reference genome")
     ->required();
-  app.add_option("-m,--methylomes", methylome_names,
-                 "one or more methylomes names, a file "
-                 "with one methylome name per line, "
-                 "or a JSON mapping of methylome name to "
-                 "label (see docs)")
+  app
+    .add_option("-m,--methylomes", methylome_names,
+                "names of methylomes or a file with names")
     ->required();
-  app.add_option("-o,--out-file", outopts.output_file, "output file");
-  app.add_flag("-C,--covered", count_covered,
-               "count covered sites for each query interval");
-  app.add_option("-f,--out-fmt", outopts.out_fmt,
-                 std::format("output format {}", xfr::output_format_help_str))
-    ->option_text(std::format("[{}]", out_fmt_default))
-    ->transform(CLI::CheckedTransformer(xfr::output_format_cli11, CLI::ignore_case));
-  app.add_flag("--n-cpgs", outopts.write_n_cpgs,
-               "write the number of CpG sites for each query interval "
-               "as the final column of the output");
-  app.add_option("-r,--min-reads", outopts.min_reads,
-                 "for scores output, if the score is based on fewer "
-                 "than this number of reads, output a value of NA")
-    ->option_text("INT");
-  const auto hostname_opt =
-    app.add_option("-s,--hostname", cfg.hostname, "server hostname")
-    ->option_text("TEXT");
+  const auto hostname_opt = app
+                              .add_option("-s,--hostname", cfg.hostname,
+                                          "server hostname or IP address")
+                              ->option_text("TEXT");
   app.add_option("-p,--port", cfg.port, "server port")
     ->option_text("INT")
     ->needs(hostname_opt);
   const auto local_mode_opt =
     app.add_flag("-L,--local", local_mode, "run in local mode")
-    ->option_text(" ")
-    ->excludes(hostname_opt);
-  app.add_option("-d,--methylome-dir", cfg.methylome_dir,
-                 "methylome directory for local mode")
+      ->option_text(" ")
+      ->excludes(hostname_opt);
+  app
+    .add_option("-d,--methylome-dir", cfg.methylome_dir,
+                "methylome directory to use in local mode")
     ->option_text("DIR")
     ->needs(local_mode_opt)
     ->check(CLI::ExistingDirectory);
-  app.add_option("-x,--index-dir", cfg.index_dir,
-                 "genome index directory")
+  app.add_option("-x,--index-dir", cfg.index_dir, "genome index directory")
     ->option_text("DIR")
     ->check(CLI::ExistingDirectory);
-  app.add_option("-v,--log-level", cfg.log_level,
-                 std::format("log level {}", xfr::log_level_help_str))
-    ->option_text(std::format("[{}]", log_level_default))
-    ->transform(CLI::CheckedTransformer(xfr::str_to_level, CLI::ignore_case));
-  // clang-format on
+
+  app
+    .add_option("-o,--output", outopts.outfile,
+                "output filename (directory must exist)")
+    ->option_text("FILE")
+    ->required();
+  const auto scores_opt =
+    app.add_flag("--scores", outfmt_scores, "scores output format")
+      ->option_text(" ");
+  const auto classic_opt =
+    app.add_option("--classic", outfmt_classic, "classic output format")
+      ->excludes(scores_opt)
+      ->option_text(" ");
+  app.add_option("--counts", outfmt_counts, "counts output format (default)")
+    ->excludes(scores_opt)
+    ->excludes(classic_opt)
+    ->option_text(" ");
+  app.add_flag("--covered", count_covered,
+               "count covered sites for each reported level");
+  app
+    .add_option("--bed", outfmt_bedlike,
+                "no header and first three output columns are BED")
+    ->option_text(" ");
+  app
+    .add_option("--dataframe", outfmt_dataframe,
+                "output has row and column names")
+    ->option_text(" ");
+  app.add_flag("--cpgs", outopts.write_n_cpgs,
+               "report the number of CpGs in each query interval");
+  app
+    .add_option("-r,--reads", outopts.min_reads,
+                "minimum reads below which a score is set to NA")
+    ->needs(scores_opt)
+    ->option_text("INT");
+
+  const auto verbose_opt = app
+                             .add_flag("-v,--verbose", verbose,
+                                       "report debug information while running")
+                             ->option_text(" ");
+  app.add_flag("-q,--quiet", quiet, "only report errors while running")
+    ->excludes(verbose_opt)
+    ->option_text(" ");
 
   if (argc < 2) {
     std::println("{}", app.help());
     return EXIT_SUCCESS;
   }
   CLI11_PARSE(app, argc, argv);
+
+  // set the log level based on user options
+  cfg.log_level = [&] {
+    if (verbose)
+      return xfr::log_level_t::debug;
+    else if (quiet)
+      return xfr::log_level_t::error;
+    else
+      return xfr::log_level_t::info;
+  }();
+
+  // set the output format based on combination of user options
+  outopts.outfmt = [&] {
+    if (outfmt_dataframe) {
+      if (outfmt_scores)
+        return xfr::output_format_t::dfscores;
+      else if (outfmt_classic)
+        return xfr::output_format_t::dfclassic;
+      else  // if (outfmt_counts)
+        return xfr::output_format_t::dfcounts;
+    }
+    else /* if (outfmt_bed) */ {
+      if (outfmt_scores)
+        return xfr::output_format_t::scores;
+      else if (outfmt_classic)
+        return xfr::output_format_t::classic;
+      else  // if (outfmt_counts)
+        return xfr::output_format_t::counts;
+    }
+  }();
 
   // make any assigned paths absolute so that subsequent composition
   // with any config_dir will not overwrite any relative path
@@ -561,7 +611,7 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
   std::vector<std::tuple<std::string, std::string>> args_to_log{
     // clang-format off
     {"Config dir", cfg.config_dir},
-    {"Hostname", cfg.hostname},
+    {"Server", cfg.hostname},
     {"Port", cfg.port},
     {"Methylome dir", cfg.methylome_dir},
     {"Index dir", cfg.index_dir},
@@ -569,10 +619,12 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
     {"Bin size", std::format("{}", bin_size)},
     {"Intervals file", intervals_file},
     {"Count covered", std::format("{}", count_covered)},
+    {"Number of methylomes", std::format("{}", std::size(methylomes))},
     {"Methylome names", format_methylome_names_brief(methylomes)},
+    {"Methylome labels", format_methylome_names_brief(alt_names)},
     {"Genome name", genome_name},
-    {"Output file", outopts.output_file},
-    {"Output format", std::format("{}", outopts.out_fmt)},
+    {"Output file", outopts.outfile},
+    {"Output format", std::format("{}", outopts.outfmt)},
     {"Min reads", std::format("{}", outopts.min_reads)},
     {"Local mode", std::format("{}", local_mode)},
     // clang-format on
@@ -586,6 +638,8 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
     lgr.error("Error: invalid methylome name \"{}\"", *invalid_name);
     return EXIT_FAILURE;
   }
+
+  lgr.info("Initiating");
 
   error = [&] {
     const bool intervals_query = (bin_size == 0);
@@ -610,6 +664,7 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
     lgr.error("Failed to complete query: {}", error);
     return EXIT_FAILURE;
   }
+  lgr.info("Completed query");
 
   return EXIT_SUCCESS;
 }
