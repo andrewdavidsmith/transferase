@@ -63,6 +63,7 @@ TEST(command_query_test, intervals_basic_local_test) {
     intervals_file,
     "-o",
     output_file,
+    "--bed",
     // clang-format on
   };
   const int argc = static_cast<int>(std::size(argv));
@@ -113,8 +114,7 @@ TEST(command_query_test, intervals_basic_local_test_scores) {
     intervals_file,
     "-o",
     output_file,
-    "-f",
-    "scores",
+    "--scores",
     // clang-format on
   };
   const int argc = static_cast<int>(std::size(argv));
@@ -212,6 +212,7 @@ TEST(command_query_test, bins_basic_local_test) {
     output_file,
     "-b",
     "100",
+    "--bed",
     // clang-format on
   };
   const int argc = static_cast<int>(std::size(argv));
