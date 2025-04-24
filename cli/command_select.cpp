@@ -627,11 +627,12 @@ main_loop(
   static constexpr auto escape_delay{25};
   // lines to keep at top of display
   static constexpr std::int32_t legend_height{2};
-  static constexpr auto legend =
-    "h=Help, q=Quit, Move: Arrows/PgUp/PgDn/Home/End Space=Add/remove "
-    "[{}/{}, selected={}]\n"
-    "a/r=Toggle multi-add/remove, v/c=View/clear selection, "
-    "s/Esc=Enter/clear ";
+  static constexpr auto legend1 =
+    "h=Help q=Quit Nav=Arrow/PgUp/PgDn/Home/End Spc=Add/remove "
+    "[{}/{}, selected={}]\n";
+  static constexpr auto legend2 =
+    "a/r=Toggle multi-Add/Remove, v/c=View/Clear selection, "
+    "s/Esc=Search/Clear ";
   // margin must be max key width plus room
   const auto key_sizes =
     std::views::transform(data, [](const auto &s) -> std::int32_t {
@@ -695,12 +696,12 @@ main_loop(
     const std::int32_t n_filtered = std::size(filtered.back());
 
     // Include the query in the legened if appropriate
-    const std::string current_legend =
-      queries.empty() ? std::format(legend, cursor_pos + 1, n_filtered,
-                                    std::size(selected_keys))
-                      : std::format(legend, cursor_pos + 1, n_filtered,
-                                    std::size(selected_keys)) +
-                          format_queries(queries);
+    const std::string current_legend1 = std::format(
+      legend1, cursor_pos + 1, n_filtered, std::size(selected_keys));
+    const std::string current_legend2 =
+      std::format(legend2, cursor_pos + 1, n_filtered,
+                  std::size(selected_keys)) +
+      format_queries(queries);
 
     const auto disp_start =
       std::max(0, std::min(n_filtered + legend_height - LINES,
@@ -711,7 +712,8 @@ main_loop(
 
     // Clear to prepare for redraw and display the legend
     erase();  // performs better than using clear();
-    mvprintw_wrap(0, 0, current_legend);
+    mvprintw_wrap(0, 0, current_legend1);
+    mvprintw_wrap(1, 0, current_legend2);
 
     // for (const auto [idx, entry] : std::views::enumerate(to_show)) {
     std::int32_t idx = 0;  // ADS: need to compare with signed cursor_pos
