@@ -24,35 +24,46 @@
 #include "command_query.hpp"
 
 static constexpr auto about = R"(
-query methylation levels in genomic intervals or bins
+query methylation levels in genomic intervals
 )";
 
 static constexpr auto description = R"(
-The query command accepts either a set of genomic intervals or a bin
-size, along with a set of methylome names. It generates a summary of
-the methylation levels in each interval/bin, for each methylome. This
-command runs in two modes, local and remote. The local mode is for
-analyzing data on your local storage: either your own data or data
-that you downloaded. The remote mode is for analyzing methylomes in a
-remote database on a server. Depending on the mode you select, the
-options you must specify will differ.
+The central command in transferase.  The input has two parts:
+
+- A BED format file of genomic intervals or a bin size.
+- Methylome names specified directly or in a file.
+
+The output format is highly customizable.  A server should be configured,
+either in the default location or a specified directory. Alternatively, all
+server information can be specified.  A local most exists, and does not use
+any network communication, but even if all data is on the same machine, local
+mode is only advantageous in special situations.
 )";
 
 static constexpr auto examples = R"(
 Examples:
 
-xfr query -g hg38 -m methylome_name -o output.bed -i input.bed
+xfr query -g hg38 -o output.txt -i intervals.bed -m SRX081761
 
-xfr query -g hg38 -m methylomes_file.txt -o output.bed -i input.bed
+xfr query -g hg38 -o output.txt -i intervals.bed -m SRX081761 \
+    --bed --scores --verbose
 
-xfr query --local -x index_dir -g hg38 -d methylome_dir \
-    -m methylome_name -o output.bed -i input.bed
+xfr query -g hg38 -o output.txt -i intervals.bed -m methylomes.txt
 
-xfr query -x index_dir -g hg38 -s example.com -m SRX012345 \
-    -o output.bed -b 5000
+xfr query -g hg38 -o output.txt -i intervals.bed -m methylomes.json
 
-xfr query --local -d methylome_dir -x index_dir -g hg38 \
-    -m methylome_name -o output.bed -b 1000
+xfr query --local -x index_dir -d methylome_dir \
+    -g hg38 -i intervals.bed -o output.txt -m methylomes.txt
+
+xfr query -g hg38 -o output.txt -b 100000 -m SRX081761
+
+xfr query -g panTro6 -o output.txt -i chimp_intervals.bed -m SRX081763
+
+xfr query -c private_server_config \
+    -g hg38 -o output.txt -i intervals.bed -m private_methylomes.txt
+
+xfr query -s localhost -p 5000 -x index_dir \
+    -g hg38 -o output.txt -i intervals.bed -m methylomes.txt
 )";
 
 #include "bins_writer.hpp"
