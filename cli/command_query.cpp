@@ -465,10 +465,10 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
     app.add_flag("--scores", outfmt_scores, "scores output format")
       ->option_text(" ");
   const auto classic_opt =
-    app.add_option("--classic", outfmt_classic, "classic output format")
+    app.add_flag("--classic", outfmt_classic, "classic output format")
       ->excludes(scores_opt)
       ->option_text(" ");
-  app.add_option("--counts", outfmt_counts, "counts output format (default)")
+  app.add_flag("--counts", outfmt_counts, "counts output format (default)")
     ->excludes(scores_opt)
     ->excludes(classic_opt)
     ->option_text(" ");
@@ -479,8 +479,8 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
               "no header and first three output columns are BED")
     ->option_text(" ");
   app
-    .add_option("--dataframe", outfmt_dataframe,
-                "output has row and column names")
+    .add_flag("--dataframe", outfmt_dataframe,
+              "output has row and column names")
     ->option_text(" ");
   app.add_flag("--cpgs", outopts.write_n_cpgs,
                "report the number of CpGs in each query interval");
