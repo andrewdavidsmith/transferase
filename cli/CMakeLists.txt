@@ -77,25 +77,16 @@ target_link_options(transferase_cli PRIVATE ${GLOBAL_LINKER_OPTIONS})
 # have the proper order on the compiler command
 target_link_libraries(transferase_cli PUBLIC ${LIBRARY_OBJECTS})
 
-# ADS: this approach is the most reliable way so far to have the alias
-# both installed properly and linked the same way as tranferase.
-set(TRANSFERASE_NAMES "transferase")
-if(BUILD_XFR_ALIAS)
-  list(APPEND TRANSFERASE_NAMES "xfr")
-endif()
-
 # Create the executable
-foreach(name ${TRANSFERASE_NAMES})
-  add_executable(${name} transferase.cpp)
-  # Make sure that the 'config.h' is visible to include
-  target_include_directories(${name} PRIVATE ${PROJECT_BINARY_DIR})
-  target_link_libraries(${name} PRIVATE transferase_cli)
-  if(CURSES_FOUND)
-    target_link_libraries(${name} PRIVATE ${CURSES_LIBRARIES})
-  endif()
-  target_link_options(${name} PRIVATE ${GLOBAL_LINKER_OPTIONS})
-  target_compile_options(${name} PRIVATE ${GLOBAL_COMPILE_OPTIONS})
-endforeach()
+add_executable(xfr transferase.cpp)
+# Make sure that the 'config.h' is visible to include
+target_include_directories(xfr PRIVATE ${PROJECT_BINARY_DIR})
+target_link_libraries(xfr PRIVATE transferase_cli)
+if(CURSES_FOUND)
+  target_link_libraries(xfr PRIVATE ${CURSES_LIBRARIES})
+endif()
+target_link_options(xfr PRIVATE ${GLOBAL_LINKER_OPTIONS})
+target_compile_options(xfr PRIVATE ${GLOBAL_COMPILE_OPTIONS})
 
 if(TEST_CLI)
   # The UNIT_TEST preprocessor variable turns off the static and inline
