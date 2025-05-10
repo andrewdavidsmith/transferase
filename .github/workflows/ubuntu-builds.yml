@@ -25,4 +25,4 @@ jobs:
           cmake --build build -j4
       - name: Check that it runs
         run: |
-          ./build/cli/transferase
+          ./build/cli/xfr
