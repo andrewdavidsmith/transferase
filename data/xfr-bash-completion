@@ -1,16 +1,16 @@
-# Function to handle autocompletion for 'transferase'
-_transferase_completion() {
+# Function to handle autocompletion for 'xfr'
+_xfr_completion() {
     local cur prev subcommands options
 
     # Attempt to determine the binary path from the first word (which
     # might be a relative/absolute path)
     binary_path="${COMP_WORDS[0]}"
 
-    # If the first word is just the command name (e.g., 'transferase'
+    # If the first word is just the command name (e.g., 'xfr'
     # without a path)
     if [ ! -x "${binary_path}" ]; then
         # If no path is provided, fall back to searching in $PATH
-        binary_path=$(command -v transferase)
+        binary_path=$(command -v xfr)
         # If the binary isn't found, just return silently without doing anything
         if [ ! -x "$binary_path" ]; then
             return
@@ -22,7 +22,7 @@ _transferase_completion() {
 
     # Below needs to be fixed because not all grep has the Perl mode
 
-    # Get list of subcommands from 'transferase --help'
+    # Get list of subcommands from 'xfr --help'
     subcommands=$("$binary_path" | awk '/^    /{print $1}' | tr '\n' ' ')
     # If we're completing the subcommand (the first argument after the command
     # itself)
@@ -55,7 +55,4 @@ _transferase_completion() {
     return
 }
 
-# Register the completion function for the 'transferase' command and
-# the 'xfr' alias
-complete -F _transferase_completion transferase
-complete -F _transferase_completion xfr
+complete -F _xfr_completion xfr
