@@ -21,11 +21,10 @@ Installation
 The instructions here assume that you are installing from a package like the
 STGZ, RPM or Debian package for a transferase release.  If you build
 transferase from source, the installation with make or cmake should allow you
-to get the same outcome. The commands will begin by assuming the STGZ file,
-where the v7.7.7 is just a placeholder:
+to get the same outcome. The commands will begin by assuming the STGZ file:
 
 ```console
-sh transferase-7.7.7-Linux.sh --prefix=${PREFIX}
+sh transferase-0.6.1-Linux.sh --prefix=${PREFIX}
 ```
 
 Assuming `PREFIX=/usr/local` then the following files should have been
@@ -34,7 +33,6 @@ created:
 ```
 /usr/local
 ├── bin
-│   ├── transferase
 │   └── xfr
 ├── lib
 │   └── systemd
@@ -45,7 +43,7 @@ created:
     │   └── completions
     │       └── transferase
     └── transferase
-        └── transferase_data_7.7.7.json
+        └── transferase_data_0.6.1.json
 ```
 
 Not all of these files are needed to run the transferase server, but one other
