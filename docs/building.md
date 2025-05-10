@@ -72,9 +72,10 @@ faster code. The `CMAKE_CXX_COMPILER` is needed because cmake won't use
 `g++-14` if it is not specified. Even if you have a different compiler, be
 aware that transferase uses the c++23 standard, so you will need either g++
 with at least version 14.2.0, or clang++ with at least version 20.0.0, the
-latter not yet available in packages as I write this. The `-B build` tells it
-to put all the work inside the `build` directory, so you can easily delete it
-all if you made a mistake.
+latter not yet available in packages as I write this (Note: LLVM Clang 20 is
+available in packages as of 04/2025). The `-B build` tells it to put all the
+work inside the `build` directory, so you can easily delete it all if you made
+a mistake.
 
 Now is time for the build. The following basically runs make. Use `-j` to
 specify how many cores you want to use when building:
