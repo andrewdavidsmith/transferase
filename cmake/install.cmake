@@ -23,10 +23,7 @@
 # One way to install:
 # cmake --install build_dir --prefix /path/to/install/root
 
-install(TARGETS transferase RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
-if(BUILD_XFR_ALIAS)
-  install(TARGETS xfr RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
-endif()
+install(TARGETS xfr RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 # Versioned JSON file (e.g., /usr/share/transferase)
 set(DATA_ORIGIN_DIR ${PROJECT_BINARY_DIR}/share/transferase)
@@ -40,9 +37,9 @@ install(FILES ${PROJECT_SOURCE_DIR}/data/LICENSE
 )
 
 # Bash completions script (e.g., /usr/share/bash-completion/completions/)
-install(FILES ${PROJECT_SOURCE_DIR}/data/transferase-bash-completion
+install(FILES ${PROJECT_SOURCE_DIR}/data/xfr-bash-completion
   DESTINATION ${CMAKE_INSTALL_DATADIR}/bash-completion/completions
-  RENAME transferase
+  RENAME xfr
 )
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
