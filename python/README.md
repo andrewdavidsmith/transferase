@@ -202,9 +202,9 @@ n_cpgs_intervals = genome_index.get_n_cpgs(intervals)
 print("\n".join([str(i) for i in n_cpgs_intervals[0:10]]))
 ```
 
-And an addition in v0.6.1: you can get the metadata for MethBase2 methylomes
-available on the public transferase server. Here is the command and along with
-what you might expect to see:
+You can get the metadata for MethBase2 methylomes available on the public
+transferase server. Here is the command and along with what you might expect
+to see:
 
 ```python
 methbase_metadata = pyxfr_utils.load_methbase_metadata("hg38")
