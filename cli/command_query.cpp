@@ -106,8 +106,9 @@ xfr query -s localhost -p 5000 -x index_dir \
 #include <string_view>
 #include <system_error>
 #include <tuple>
-#include <utility>  // for std::pair
-#include <variant>  // for std::tuple
+#include <type_traits>  // for std::is_same_v
+#include <utility>      // for std::pair
+#include <variant>      // for std::tuple
 #include <vector>
 
 namespace xfr = transferase;
