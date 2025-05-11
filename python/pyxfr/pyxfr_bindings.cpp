@@ -40,7 +40,6 @@ When in doubt, consult the module reference at the location listed above.
 #include "remote_client_bindings.hpp"
 
 #include <client_config.hpp>  // IWYU pragma: keep
-#include <download_policy.hpp>
 #include <genome_index.hpp>
 #include <genomic_interval.hpp>
 #include <level_container_md.hpp>
@@ -77,13 +76,6 @@ NB_MODULE(pyxfr, the_module) {
 
   initialize_pyxfr();
 
-  auto LogLevel = nb::enum_<xfr::log_level_t>(the_module, "LogLevel")
-                    .value("debug", xfr::log_level_t::debug)
-                    .value("info", xfr::log_level_t::info)
-                    .value("warning", xfr::log_level_t::warning)
-                    .value("error", xfr::log_level_t::error)
-                    .value("critical", xfr::log_level_t::critical);
-
   the_module.attr("__version__") = VERSION;
 
   the_module.def(
@@ -99,12 +91,6 @@ NB_MODULE(pyxfr, the_module) {
     R"doc(
   Set the transferse log level.
   )doc");
-
-  auto DLPolicy = nb::enum_<xfr::download_policy_t>(the_module, "DLPolicy")
-                    .value("none", xfr::download_policy_t::none)
-                    .value("all", xfr::download_policy_t::all)
-                    .value("missing", xfr::download_policy_t::missing)
-                    .value("update", xfr::download_policy_t::update);
 
   auto MConfig = nb::class_<xfr::client_config>(
     the_module, "MConfig", "Class to help configure transferase");
