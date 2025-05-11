@@ -6,7 +6,6 @@ Feature changes:
 * Queries can accept more options to customize output formats.
 * Users can customize how methylome are named in query output.
 * The select command now supports methylome groups defined by users.
-* Simplified log level selection in the query and config commands.
 
 Changes:
 * Documentation for the query command has been expanded.
@@ -19,6 +18,8 @@ Changes:
 * The transferase Dockerfile has been removed as it is unneeded.
 * Fixed bug in which the server kept working on a query after seeing a
   non-existing methylome
+* In the query and config commands, log levels are determined by choices of
+  quiet and verbose, instead of log levels.
 
 ## transferase 0.6.1 (2025-04-07)
 
