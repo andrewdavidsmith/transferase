@@ -77,9 +77,13 @@ client_config_bindings(nanobind::class_<transferase::client_config> &cls)
   cls.def(
     "install",
     [](const xfr::client_config &self, const std::vector<std::string> &genomes,
-       const xfr::download_policy_t download_policy) -> void {
+       const std::string &download_policy) -> void {
       const auto sys_config_dir = xfr::find_python_sys_config_dir();
-      self.install(genomes, download_policy, sys_config_dir);
+      const auto dlp_itr = xfr::download_policy_lookup.find(download_policy);
+      if (dlp_itr == std::cend(xfr::download_policy_lookup))
+        throw std::runtime_error(
+          std::format("Invalid download policy: {}", download_policy));
+      self.install(genomes, dlp_itr->second, sys_config_dir);
     },
     R"doc(
     Does the work related to downloading information needed by MClient
@@ -90,17 +94,18 @@ client_config_bindings(nanobind::class_<transferase::client_config> &cls)
     depending on internet speed. The configuration will be written to the
     directory associated with this object. Typically this should be left as
     the default. This command could make web requests unless 'download_policy'
-    is set to 'DLPolicy.none'.
+    is set to 'none'.
 
     Parameters
     ----------
 
     genomes (list[str]): A list of genomes, for example: ["mm39", "bosTau9"]
 
-    download_policy (DownloadPolicy): Indication of what to (re)download.
+    download_policy (str): Indication of what to (re)download. Possible values
+    are 'none', 'missing' (get missing files), 'update' (get outdated files),
+    or 'all'.
     )doc",
-    "genomes"_a = std::vector<std::string>{},
-    "download_policy"_a = xfr::download_policy_t::missing);
+    "genomes"_a = std::vector<std::string>{}, "download_policy"_a = "missing");
   cls.def_rw("config_dir", &xfr::client_config::config_dir,
              R"doc(
     The directory associated with this configuration. This is either the
