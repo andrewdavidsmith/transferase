@@ -1,5 +1,25 @@
 # Changelog
 
+## transferase 0.6.2 (2025-05-10)
+
+Feature changes:
+* Queries can accept more options to customize output formats.
+* Users can customize how methylome are named in query output.
+* The select command now supports methylome groups defined by users.
+* Simplified log level selection in the query and config commands.
+
+Changes:
+* Documentation for the query command has been expanded.
+* LogLevel objects have been replaced by strings in the Python and R APIs.
+* Bug fixes now avoid redundant downloads during user (re)configuration.
+* Bug fixes allow for faster server responses.
+* Incorrect error codes reported to users by the server have been fixed.
+* Query output writing performance has been improved.
+* Fixed bugs in horizontal scrolling within the select command.
+* The transferase Dockerfile has been removed as it is unneeded.
+* Fixed bug in which the server kept working on a query after seeing a
+  non-existing methylome
+
 ## transferase 0.6.1 (2025-04-07)
 
 Feature changes:
