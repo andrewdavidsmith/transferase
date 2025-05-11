@@ -27,11 +27,12 @@ apt-get install -y --no-install-recommends \
     libssl-dev
 ```
 
-Then, from inside R, use these commands (replace 0.6.1 with any version):
+Then, from inside R, use these commands (replace 0.6.2 with any more recent
+version):
 
 ```R
 library(devtools)
-devtools::install_url("https://github.com/andrewdavidsmith/transferase/releases/download/v0.6.1/Rxfr_0.6.1.tar.gz")
+devtools::install_url("https://github.com/andrewdavidsmith/transferase/releases/download/v0.6.2/Rxfr_0.6.2.tar.gz")
 ```
 
 ### More packages but faster
@@ -61,19 +62,19 @@ R -e "install.packages(c('Rcpp', 'R6'), repos = 'https://cloud.r-project.org')"
 Get the Rxfr source package:
 
 ```console
-wget https://github.com/andrewdavidsmith/transferase/releases/download/v0.6.1/Rxfr_0.6.1.tar.gz
+wget https://github.com/andrewdavidsmith/transferase/releases/download/v0.6.2/Rxfr_0.6.2.tar.gz
 ```
 
 And install it like this:
 
 ```console
-R CMD INSTALL Rxfr_0.6.1.tar.gz
+R CMD INSTALL Rxfr_0.6.2.tar.gz
 ```
 
 Or within R if you prefer:
 
 ```R
-install.packages("Rxfr_0.6.1.tar.gz")
+install.packages("Rxfr_0.6.2.tar.gz")
 ```
 
 ## Installing with Conda
@@ -135,14 +136,14 @@ R -e "install.packages(c('Rcpp', 'R6'), repos = 'https://cloud.r-project.org')"
 Then we can download the Rxfr sources like this:
 
 ```console
-wget https://github.com/andrewdavidsmith/transferase/releases/download/v0.6.1/Rxfr_0.6.1.tar.gz
+wget https://github.com/andrewdavidsmith/transferase/releases/download/v0.6.2/Rxfr_0.6.2.tar.gz
 ```
 
 Now we just need to build and install Rxfr. If you can, use more cores by
 setting `MAKEFLAGS`.
 
 ```console
-MAKEFLAGS="-j32" R CMD INSTALL Rxfr_0.6.1.tar.gz
+MAKEFLAGS="-j32" R CMD INSTALL Rxfr_0.6.2.tar.gz
 ```
 
 ### macOS
@@ -200,14 +201,14 @@ then get the source package:
 
 ```console
 R -e "install.packages(c('Rcpp', 'R6'), repos = 'https://cloud.r-project.org')"
-wget https://github.com/andrewdavidsmith/transferase/releases/download/v0.6.1/Rxfr_0.6.1.tar.gz
+wget https://github.com/andrewdavidsmith/transferase/releases/download/v0.6.2/Rxfr_0.6.2.tar.gz
 ```
 
 The final step is just to do the install (using `MAKEFLAGS` to speed up the
 process with more cores):
 
 ```console
-MAKEFLAGS="-j16" R CMD INSTALL Rxfr_0.6.1.tar.gz
+MAKEFLAGS="-j16" R CMD INSTALL Rxfr_0.6.2.tar.gz
 ```
 
 ## Installing on macOS with Homebrew
@@ -253,14 +254,14 @@ and then get the Rxfr source package:
 
 ```console
 R -e "install.packages(c('Rcpp', 'R6'), repos = 'https://cloud.r-project.org')"
-wget https://github.com/andrewdavidsmith/transferase/releases/download/v0.6.1/Rxfr_0.6.1.tar.gz
+wget https://github.com/andrewdavidsmith/transferase/releases/download/v0.6.2/Rxfr_0.6.2.tar.gz
 ```
 
 The final step is just to do the install (using `MAKEFLAGS` to speed up the
 process with more cores):
 
 ```console
-MAKEFLAGS="-j16" R CMD INSTALL Rxfr_0.6.1.tar.gz
+MAKEFLAGS="-j16" R CMD INSTALL Rxfr_0.6.2.tar.gz
 ```
 
 If you get any errors related to OpenSSL, the fix that works for me is to put
