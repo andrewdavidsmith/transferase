@@ -83,7 +83,7 @@ to_string(const download_policy_t p) -> std::string {
   return std::string(std::cbegin(m), std::cend(m));
 }
 
-static const std::map<std::string, download_policy_t> download_policy_cli11{
+static const std::map<std::string, download_policy_t> download_policy_lookup{
   // clang-format off
   {"none", download_policy_t::none},
   {"missing", download_policy_t::missing},

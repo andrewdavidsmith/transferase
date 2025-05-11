@@ -146,7 +146,7 @@ command_config_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
   app.add_option("--download", download_policy,
                  "download policy (none, missing, update, all)")
     ->option_text(std::format("[{}]", to_string(download_policy_default)))
-    ->transform(CLI::CheckedTransformer(xfr::download_policy_cli11, CLI::ignore_case));
+    ->transform(CLI::CheckedTransformer(xfr::download_policy_lookup, CLI::ignore_case));
   const auto all_defaults_opt =
     app.add_flag("--defaults", all_defaults, "allow all default config values")
     ->option_text(" ");
