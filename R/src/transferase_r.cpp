@@ -77,7 +77,7 @@ get_package_paths() -> std::vector<std::string> {
   std::vector<std::string> results;
   const auto n_paths = LENGTH(lib_paths);
   for (const auto i : std::views::iota(0, n_paths)) {
-    const auto curr_path = STRING_PTR(lib_paths)[i];
+    const auto curr_path = STRING_PTR_RO(lib_paths)[i];
     results.emplace_back(CHAR(curr_path), LENGTH(curr_path));
   }
   return results;
