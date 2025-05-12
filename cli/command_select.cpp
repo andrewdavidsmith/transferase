@@ -97,19 +97,19 @@ command_select_main([[maybe_unused]] int argc,
 namespace xfr = transferase;
 
 [[nodiscard]] auto
-load_data(const std::string &json_filename, std::error_code &error)
+load_data(const std::string &json_filename)
   -> std::map<std::string,
               std::vector<std::tuple<std::string, std::string, std::string>>> {
   std::ifstream in(json_filename);
-  if (!in) {
-    error = std::make_error_code(std::errc(errno));
-    return {};
-  }
+  if (!in)
+    throw std::runtime_error(
+      std::format("Failed to open file: {}", json_filename));
+
   const nlohmann::json payload = nlohmann::json::parse(in, nullptr, false);
-  if (payload.is_discarded()) {
-    error = std::make_error_code(std::errc::invalid_argument);
-    return {};
-  }
+  if (payload.is_discarded())
+    throw std::runtime_error(
+      std::format("Failed to parse file: {}", json_filename));
+
   std::map<std::string, std::map<std::string, std::vector<std::string>>> data =
     payload;
 
@@ -966,8 +966,8 @@ command_select_main(int argc,
   try {
     using transferase::client_config;
 
-    std::error_code error{};
     if (input_file.empty()) {
+      std::error_code error{};
       if (config_dir.empty()) {
         config_dir = client_config::get_default_config_dir(error);
         if (error)
@@ -981,10 +981,7 @@ command_select_main(int argc,
       input_file = config.get_select_metadata_file();
     }
 
-    const auto all_data = load_data(input_file, error);
-    if (error)
-      throw std::runtime_error(
-        std::format("Error reading input {}: {}", input_file, error.message()));
+    const auto all_data = load_data(input_file);
 
     const auto data_itr = all_data.find(genome_name);
     if (data_itr == std::cend(all_data)) {
@@ -1016,8 +1013,8 @@ command_select_main(int argc,
     main_loop(data_itr->second, output_file);
   }
   catch (std::runtime_error &e) {
-    signal_handler(SIGTERM);
     std::println("{}", e.what());
+    signal_handler(SIGTERM);
     return EXIT_FAILURE;
   }
 
