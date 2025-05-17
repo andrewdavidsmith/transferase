@@ -295,9 +295,10 @@ show_selected_keys(const auto &selected_keys) {
 
   using input_type =
     typename std::remove_cvref_t<decltype(selected_keys)>::value_type;
-  std::vector<input_type> data;
+  std::vector<input_type> data(std::size(selected_keys));
+  std::int32_t idx = 0;
   for (const auto &k : selected_keys)
-    data.push_back(k);
+    data[idx++] = k;
   std::ranges::sort(data);
 
   while (true) {
@@ -393,9 +394,10 @@ make_named_group(
     mvprintw_wrap(0, 0, "Aborting group naming due to empty name "s + akr);
   else {
     // make names for all methylomes in the group
-    std::vector<std::string> sorted_items;
+    std::vector<std::string> sorted_items(std::size(selected_items));
+    std::uint32_t idx = 0;
     for (const auto &item : selected_items)
-      sorted_items.emplace_back(item);
+      sorted_items[idx++] = item;
     std::ranges::sort(sorted_items);
     std::map<std::string, std::string> group;
     int idx = 1;
@@ -448,9 +450,10 @@ show_group(const std::string &group_name, auto &group, const auto &labels,
   std::int32_t n_items = std::size(group);
   std::int32_t cursor_pos = 0;
 
-  std::vector<std::pair<std::string, std::string>> data;
+  std::vector<std::pair<std::string, std::string>> data(std::size(group));
+  std::uint32_t idx = 0;
   for (const auto &elem : group)
-    data.push_back(elem);
+    data[idx++] = elem;
   std::ranges::sort(data);
 
   std::int32_t display_mode = 0;  // 1 or 2
@@ -578,9 +581,10 @@ show_groups(auto &groups, const auto &labels, const auto &metadata) {
   std::int32_t cursor_pos = 0;
 
   using input_type = typename std::remove_cvref_t<decltype(groups)>::key_type;
-  std::vector<input_type> data;
+  std::vector<input_type> data(std::size(groups));
+  std::uint32_t idx = 0;
   for (const auto &k : groups)
-    data.push_back(k.first);
+    data[idx++] = k.first;
 
   while (true) {
     const auto n_lines = LINES - header_height - footer_height;
@@ -593,7 +597,7 @@ show_groups(auto &groups, const auto &labels, const auto &metadata) {
     mvprintw_wrap(0, 0,
                   header_line +
                     std::format(" | item {}/{}", cursor_pos + 1, n_items));
-    std::int32_t idx = 0;
+    idx = 0;
     for (const auto &k : to_show) {
       const auto data_idx = disp_start + idx;  // global data index
       if (data_idx == cursor_pos)
