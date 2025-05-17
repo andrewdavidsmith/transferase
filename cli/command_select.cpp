@@ -443,7 +443,8 @@ show_group(const std::string &group_name, auto &group, const auto &labels,
   static constexpr std::int32_t footer_height = 0;
   static constexpr auto escape_key_code = 27;
   static constexpr auto header_line =
-    "group: {} | esc to exit | arrows to navigate | del to remove methylome";
+    "group: {} | esc to exit | arrows to navigate | del to remove entry | "
+    "d to toggle detail";
   clear();
 
   // NOLINTNEXTLINE (*-narrowing-conversions)
