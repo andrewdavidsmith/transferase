@@ -310,7 +310,7 @@ show_selected_keys(const auto &selected_keys) {
 
     erase();  // performs better than using clear();
     mvprintw_wrap(0, 0, header_line);
-    std::int32_t idx = 0;
+    idx = 0;
     for (const auto &k : to_show) {
       const auto data_idx = disp_start + idx;  // global data index
       if (data_idx == cursor_pos)
@@ -395,7 +395,7 @@ make_named_group(
   else {
     // make names for all methylomes in the group
     std::vector<std::string> sorted_items(std::size(selected_items));
-    std::uint32_t idx = 0;
+    std::int32_t idx = 0;
     for (const auto &item : selected_items)
       sorted_items[idx++] = item;
     std::ranges::sort(sorted_items);
@@ -452,7 +452,7 @@ show_group(const std::string &group_name, auto &group, const auto &labels,
   std::int32_t cursor_pos = 0;
 
   std::vector<std::pair<std::string, std::string>> data(std::size(group));
-  std::uint32_t idx = 0;
+  std::int32_t idx = 0;
   for (const auto &elem : group)
     data[idx++] = elem;
   std::ranges::sort(data);
@@ -472,7 +472,7 @@ show_group(const std::string &group_name, auto &group, const auto &labels,
     mvprintw_wrap(0, 0,
                   std::format(header_line, group_name) +
                     std::format(" item {}/{}", cursor_pos + 1, n_items));
-    std::int32_t idx = 0;
+    idx = 0;
     for (const auto &k : to_show) {
       const auto &alt_name = k.first;
       const auto &accession = k.second;
@@ -583,7 +583,7 @@ show_groups(auto &groups, const auto &labels, const auto &metadata) {
 
   using input_type = typename std::remove_cvref_t<decltype(groups)>::key_type;
   std::vector<input_type> data(std::size(groups));
-  std::uint32_t idx = 0;
+  std::int32_t idx = 0;
   for (const auto &k : groups)
     data[idx++] = k.first;
 
@@ -1055,8 +1055,6 @@ main_loop(
       const auto data_idx = disp_start + idx;
       const auto y_pos = static_cast<std::int32_t>(idx + legend_height);
       assert(y_pos < LINES);
-      // if (y_pos >= LINES)
-      //   break;
 
       // color this item if it's among the selections
       if (selected_keys.contains(std::get<0>(entry)))
