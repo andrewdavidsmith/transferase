@@ -400,7 +400,7 @@ make_named_group(
       sorted_items[idx++] = item;
     std::ranges::sort(sorted_items);
     std::map<std::string, std::string> group;
-    int idx = 1;
+    idx = 1;
     for (const auto &item : sorted_items)
       group.emplace(std::format("{}_{:0>5}", group_name, idx++), item);
     groups.emplace(group_name, group);
