@@ -70,7 +70,6 @@ command_select_main([[maybe_unused]] int argc,
 #include <array>
 #include <cassert>
 #include <cctype>  // for std::isprint
-#include <cerrno>
 #include <csignal>
 #include <cstdint>
 #include <cstdlib>
@@ -78,6 +77,7 @@ command_select_main([[maybe_unused]] int argc,
 #include <fstream>
 #include <iostream>
 #include <iterator>
+#include <limits>
 #include <map>
 #include <memory>
 #include <print>
@@ -88,6 +88,8 @@ command_select_main([[maybe_unused]] int argc,
 #include <string_view>
 #include <system_error>
 #include <tuple>
+#include <type_traits>  // for std::remove_cvref_t
+#include <unordered_map>
 #include <unordered_set>
 #include <utility>  // for std::pair
 #include <variant>  // for std::tuple
@@ -287,6 +289,7 @@ show_selected_keys(const auto &selected_keys) {
     return;
   }
 
+  // NOLINTNEXTLINE (*-narrowing-conversions)
   const std::int32_t n_items = std::size(selected_keys);
   std::int32_t cursor_pos = 0;
 
@@ -441,6 +444,7 @@ show_group(const std::string &group_name, auto &group, const auto &labels,
     "group: {} | esc to exit | arrows to navigate | del to remove methylome";
   clear();
 
+  // NOLINTNEXTLINE (*-narrowing-conversions)
   std::int32_t n_items = std::size(group);
   std::int32_t cursor_pos = 0;
 
@@ -485,6 +489,7 @@ show_group(const std::string &group_name, auto &group, const auto &labels,
         extra_line += std::format(" | {}", meta_itr->second);
 
       if (data_idx == cursor_pos) {
+        // NOLINTNEXTLINE (*-narrowing-conversions)
         current_line_width = std::size(line) + std::size(extra_line);
         if (current_line_width >= COLS)
           extra_line = extra_line.substr(horiz_pos, COLS - current_line_width);
@@ -568,6 +573,7 @@ show_groups(auto &groups, const auto &labels, const auto &metadata) {
     return;
   }
 
+  // NOLINTNEXTLINE (*-narrowing-conversions)
   std::int32_t n_items = std::size(groups);
   std::int32_t cursor_pos = 0;
 
@@ -636,7 +642,6 @@ show_groups(auto &groups, const auto &labels, const auto &metadata) {
       data.clear();
       for (const auto &k : groups)
         data.push_back(k.first);
-
       continue;
     }
 
@@ -840,6 +845,7 @@ write_groups(
 
   std::unordered_set<std::string> selected_groups;
 
+  // NOLINTNEXTLINE (*-narrowing-conversions)
   const std::int32_t n_items = std::size(groups);
   std::int32_t cursor_pos = 0;
 
