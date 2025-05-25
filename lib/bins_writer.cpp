@@ -32,7 +32,6 @@
 
 #include "macos_helper.hpp"
 
-#include <algorithm>  // std::min
 #include <cerrno>
 #include <cstdint>  // for std::uint32_t
 #include <format>
