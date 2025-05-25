@@ -13,11 +13,11 @@ jobs:
     runs-on: macos-15
     steps:
     - uses: actions/checkout@v4
-    # - name: Update Homebrew
-    #   run: brew update
+    - name: Update Homebrew
+      run: brew update
     - name: Install dependencies
       run: |
-        brew install zlib googletest
+        brew install zlib googletest@1.16.0
     - name: Configure for unit tests
       run: |
         cmake -B build \
