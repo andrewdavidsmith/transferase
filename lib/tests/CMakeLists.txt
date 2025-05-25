@@ -34,8 +34,8 @@ foreach(cpp_file ${cpp_files})
   get_filename_component(BASE_NAME ${cpp_file} NAME_WE)
   add_executable(${BASE_NAME} ${cpp_file})
   target_link_libraries(${BASE_NAME} PRIVATE
-    GTest::GTest
-    GTest::Main
+    GTest::gtest
+    GTest::gtest_main
     ZLIB::ZLIB
     ${Boost_LIBRARIES}
     Threads::Threads
