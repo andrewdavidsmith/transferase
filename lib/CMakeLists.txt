@@ -71,10 +71,5 @@ target_link_libraries(transferase_system PUBLIC
 )
 
 if(TEST_LIB)
-  # The UNIT_TEST preprocessor variable turns off the static and inline
-  # on several functions so they can be tested; all sources could need this.
-  add_compile_definitions(UNIT_TEST)
-  enable_testing()
-  include(GoogleTest)
   add_subdirectory(tests)
 endif()
