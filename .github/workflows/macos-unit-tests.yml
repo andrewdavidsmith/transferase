@@ -17,7 +17,7 @@ jobs:
       run: brew update
     - name: Install dependencies
       run: |
-        brew install zlib googletest
+        brew install zlib
     - name: Configure for unit tests
       run: |
         cmake -B build \
@@ -28,7 +28,6 @@ jobs:
         -DCMAKE_CXX_COMPILER=clang++ \
         -DCMAKE_C_COMPILER=clang \
         -DUNIT_TESTS=on \
-        -DGET_GOOGLETEST=on \
         -DCMAKE_BUILD_TYPE=Build
     - name: Build transferase
       run: |
