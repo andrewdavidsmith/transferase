@@ -25,12 +25,6 @@
 
 message(STATUS "Enabling unit tests for cli")
 
-# The UNIT_TEST preprocessor variable turns off the static and inline on
-# several functions so they can be tested; all sources could need this.
-add_compile_definitions(UNIT_TEST)
-enable_testing()
-include(GoogleTest)
-
 add_library(unit_test_utils_cli OBJECT unit_test_utils_cli.cpp unit_test_utils_cli.hpp)
 
 file(GLOB cpp_files "*_test.cpp")
