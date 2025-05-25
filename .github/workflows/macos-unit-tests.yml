@@ -12,9 +12,9 @@ jobs:
   macos-unit-tests:
     runs-on: macos-15
     steps:
-    - uses: actions/checkout@v4
-    - name: Update Homebrew
-      run: brew update
+    # - uses: actions/checkout@v4
+    # - name: Update Homebrew
+    #   run: brew update
     - name: Install dependencies
       run: |
         brew install zlib googletest
