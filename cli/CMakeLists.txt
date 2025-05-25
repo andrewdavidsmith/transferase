@@ -93,7 +93,6 @@ if(TEST_CLI)
   # on several functions so they can be tested; all sources could need this.
   add_compile_definitions(UNIT_TEST)
   enable_testing()
-  find_package(GTest REQUIRED)
   include(GoogleTest)
   add_subdirectory(tests)
 endif()
