@@ -113,12 +113,14 @@ endif()
 
 message(STATUS "Finished global compile and linker configuration")
 
-if(GET_GOOGLETEST)
+if(UNIT_TESTS)
   include(FetchContent)
   FetchContent_Declare(
     googletest
+    GIT_TAG main
     GIT_REPOSITORY https://github.com/google/googletest.git
-    GIT_TAG origin/main
+    FIND_PACKAGE_ARGS NAMES GTest
+    SYSTEM
   )
   FetchContent_MakeAvailable(googletest)
 endif()
