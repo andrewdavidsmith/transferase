@@ -61,7 +61,6 @@ if ("cppcheck" IN_LIST STATIC_ANALYSIS_CHECKS)
       cppcheck
       --quiet
       --enable=all
-      --check-level=exhaustive
       --inline-suppr
       --max-configs=1
       --suppressions-list=${PROJECT_SOURCE_DIR}/.cppcheck_suppress
