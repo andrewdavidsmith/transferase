@@ -17,7 +17,7 @@ jobs:
       run: brew update
     - name: Install dependencies
       run: |
-        brew install zlib googletest@1.16.0
+        brew install zlib
     - name: Configure for unit tests
       run: |
         cmake -B build \
