@@ -28,7 +28,6 @@ jobs:
         -DCMAKE_CXX_COMPILER=clang++ \
         -DCMAKE_C_COMPILER=clang \
         -DUNIT_TESTS=on \
-        -DGET_GOOGLETEST=on \
         -DCMAKE_BUILD_TYPE=Build
     - name: Build transferase
       run: |
