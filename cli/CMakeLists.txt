@@ -89,10 +89,5 @@ target_link_options(xfr PRIVATE ${GLOBAL_LINKER_OPTIONS})
 target_compile_options(xfr PRIVATE ${GLOBAL_COMPILE_OPTIONS})
 
 if(TEST_CLI)
-  # The UNIT_TEST preprocessor variable turns off the static and inline
-  # on several functions so they can be tested; all sources could need this.
-  add_compile_definitions(UNIT_TEST)
-  enable_testing()
-  include(GoogleTest)
   add_subdirectory(tests)
 endif()
