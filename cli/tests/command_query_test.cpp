@@ -74,14 +74,17 @@ TEST(command_query_test, intervals_basic_local_test) {
 
   // Check that the output file is created
   EXPECT_EQ(result, EXIT_SUCCESS);
-  std::error_code ignored_ec;
-  EXPECT_TRUE(std::filesystem::exists(output_file, ignored_ec));
-  EXPECT_TRUE(files_are_identical_cli(output_file, expected_output_file));
+  std::error_code error;
+  EXPECT_TRUE(std::filesystem::exists(output_file, error));
 
-  // Clean up: delete test files
-  if (std::filesystem::exists(output_file)) {
-    const auto remove_ok = std::filesystem::remove(output_file);
-    EXPECT_TRUE(remove_ok);
+  const bool output_files_identical =
+    files_are_identical_cli(output_file, expected_output_file);
+  EXPECT_TRUE(output_files_identical);
+
+  // Clean up: delete test files only if tests pass
+  if (output_files_identical) {
+    remove_file_cli(output_file, error);
+    EXPECT_FALSE(error);
   }
 }
 
@@ -93,9 +96,9 @@ TEST(command_query_test, intervals_basic_local_test_scores) {
   static constexpr auto methylome_name = "SRX012346";
   static constexpr auto intervals_file = "data/pAntiquusx_promoters.bed";
   // Output filename and expected output
-  static constexpr auto output_file = "data/output_file.bed";
+  static constexpr auto output_file = "data/output_file.txt";
   static constexpr auto unexpected_output_file =
-    "data/pAntiquusx_promoters_local.bed";
+    "data/pAntiquusx_promoters_local.txt";
 
   // Define command line arguments
   const auto argv = std::array{
@@ -120,19 +123,21 @@ TEST(command_query_test, intervals_basic_local_test_scores) {
   const int argc = static_cast<int>(std::size(argv));
 
   // Run the main function
-  // NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast)
+  // NOLINTNEXTLINE(*-const-cast)
   const int result = command_query_main(argc, const_cast<char **>(argv.data()));
 
   // Check that the output file is created
   EXPECT_EQ(result, EXIT_SUCCESS);
-  EXPECT_TRUE(std::filesystem::exists(output_file));
-  EXPECT_FALSE(files_are_identical_cli(output_file, unexpected_output_file));
+  std::error_code error;
+  EXPECT_TRUE(std::filesystem::exists(output_file, error));
+  const bool output_files_identical =
+    files_are_identical_cli(output_file, unexpected_output_file);
+  EXPECT_FALSE(output_files_identical);
 
-  // Clean up: delete test files
-  std::error_code ignored_ec;
-  if (std::filesystem::exists(output_file, ignored_ec)) {
-    const auto remove_ok = std::filesystem::remove(output_file, ignored_ec);
-    EXPECT_TRUE(remove_ok);
+  // Clean up: delete test files only if tests pass
+  if (!output_files_identical) {
+    remove_file_cli(output_file, error);
+    EXPECT_FALSE(error);
   }
 }
 
@@ -144,7 +149,7 @@ TEST(command_query_test, intervals_failing_remote_test) {
   static constexpr auto intervals_file = "data/pAntiquusx_promoters.bed";
   static constexpr auto bad_port = "123";
   // Output filename and expected output
-  static constexpr auto output_file = "data/remote_output_file.bed";
+  static constexpr auto output_file = "data/remote_output_file.txt";
 
   // Define command line arguments
   const auto argv = std::array{
@@ -178,9 +183,8 @@ TEST(command_query_test, intervals_failing_remote_test) {
 
   // Clean up: delete test files
   if (std::filesystem::exists(output_file)) {
-    std::error_code error;
-    remove_file_cli(output_file, error);
-    EXPECT_FALSE(error);
+    const auto remove_ok = std::filesystem::remove(output_file);
+    EXPECT_TRUE(remove_ok);
   }
 }
 
@@ -191,9 +195,9 @@ TEST(command_query_test, bins_basic_local_test) {
   static constexpr auto methylome_directory = "data";
   static constexpr auto methylome_name = "SRX012346";
   // Output filename and expected output
-  static constexpr auto output_file = "data/output_file.bed";
+  static constexpr auto output_file = "data/output_file.txt";
   static constexpr auto expected_output_file =
-    "data/SRX012346_bin100_local.bed";
+    "data/SRX012346_bin100_local.txt";
 
   // Define command line arguments
   const auto argv = std::array{
