@@ -100,6 +100,8 @@ namespace xfr = transferase;
 [[nodiscard]] auto
 load_selected_groups(const std::string &json_filename)
   -> std::map<std::string, std::map<std::string, std::string>> {
+  static constexpr auto err_msg_fmt = "Failed to parse file: {}. Check that "
+                                      "the file was produced by xfr select.";
   std::ifstream in(json_filename);
   if (!in)
     throw std::runtime_error(
@@ -107,22 +109,17 @@ load_selected_groups(const std::string &json_filename)
 
   const nlohmann::json payload = nlohmann::json::parse(in, nullptr, false);
   if (payload.is_discarded())
-    throw std::runtime_error(std::format("Failed to parse file: {}. Check that "
-                                         "the file was produced by xfr select.",
-                                         json_filename));
+    throw std::runtime_error(std::format(err_msg_fmt, json_filename));
 
   std::map<std::string, std::string> name_alt;
   try {
     name_alt = payload;
   }
   catch (const nlohmann::json::exception &_) {
-    throw std::runtime_error(std::format("Failed to parse file: {}. Check that "
-                                         "the file was produced by xfr select.",
-                                         json_filename));
+    throw std::runtime_error(std::format(err_msg_fmt, json_filename));
   }
 
   std::map<std::string, std::map<std::string, std::string>> groups;
-
   for (const auto &[name, alt] : name_alt) {
     const auto groupname = alt.substr(0, alt.find_last_of('_'));
     groups[groupname].emplace(alt, name);
@@ -131,26 +128,62 @@ load_selected_groups(const std::string &json_filename)
   return groups;
 }
 
+// Ensure that 'groups' of methylomes specified by the user for loading as
+// initial groups are valid for the given metadata. This might fail, for
+// example, if the metadata changed since the user formed the groups, or if
+// the information in the groups file was modified.
 [[nodiscard]] auto
 validate_groups(const std::string &genome, const std::string &metadata_file,
                 const auto &groups, const auto &data) {
+  static constexpr auto msg_fmt =
+    "Accession {} from group {} not among methylomes for {} in {}";
   std::unordered_set<std::string> accessions;
   for (const auto &d : data)
-    accessions.emplace(std::get<0>(d));
+    accessions.emplace(d.accession);
   for (const auto &group : groups) {
     for (const auto &[_, accession] : group.second) {
       if (accessions.find(accession) == std::cend(accessions))
-        throw std::runtime_error(std::format(
-          "Accession {} from group {} not among methylomes for {} in {}",
-          accession, group.first, genome, metadata_file));
+        throw std::runtime_error(
+          std::format(msg_fmt, accession, group.first, genome, metadata_file));
     }
   }
 }
 
+struct methylome_info {
+  static constexpr auto sep = " | ";
+  static constexpr std::int32_t sep_size = 3;
+  std::string accession;
+  std::string label;
+  std::string metadata;
+
+  [[nodiscard]] auto
+  detail_size() const -> std::int32_t {
+    // ADS: the "+ 3" below is for the separator std::size(" | ");
+    // NOLINTNEXTLINE (*-narrowing-conversions)
+    return std::size(label) + std::size(metadata) + sep_size;
+  }
+
+  [[nodiscard]] auto
+  format(const std::int32_t horiz_pos,
+         const bool show_details) const -> std::string {
+    // Form the label by appending the colon
+    auto acn = std::format("{}: ", accession);
+    auto sample_name = label;
+    if (show_details)
+      sample_name += std::format("{}{}", sep, metadata);
+    // If the horizontal position within the sample would be larger than the
+    // sample name, just return the label
+    if (horiz_pos > std::ssize(sample_name))
+      return acn;
+
+    // Full line starting at the horizontal position in the sampel name
+    return std::format("{}{}", acn, sample_name.substr(horiz_pos));
+  }
+};
+
 [[nodiscard]] auto
 load_data(const std::string &json_filename)
-  -> std::map<std::string,
-              std::vector<std::tuple<std::string, std::string, std::string>>> {
+  -> std::map<std::string, std::vector<methylome_info>> {
   std::ifstream in(json_filename);
   if (!in)
     throw std::runtime_error(
@@ -164,11 +197,13 @@ load_data(const std::string &json_filename)
   std::map<std::string, std::map<std::string, std::vector<std::string>>> data =
     payload;
 
-  typedef std::vector<std::tuple<std::string, std::string, std::string>>
-    vec_key_vals;
-  std::map<std::string, vec_key_vals> r;
-  const auto to_vec_key_vals = [&](const auto &x) -> vec_key_vals {
-    vec_key_vals v;
+  // typedef std::vector<std::tuple<std::string, std::string, std::string>>
+  //   vec_key_vals;
+  std::map<std::string, std::vector<methylome_info>> r;
+  const auto to_vec_key_vals =
+    [&](const auto &x) -> std::vector<methylome_info> {  // vec_key_vals {
+    std::vector<methylome_info> v;
+    // vec_key_vals v;
     for (const auto &u : x)
       if (!u.second.empty())
         v.emplace_back(u.first, u.second.front(), u.second.back());
@@ -221,11 +256,11 @@ get_to_show(const auto &filtered, const auto disp_start, const auto disp_end) {
 format_current_entry(const auto &entry, const auto horiz_pos,
                      const bool show_details) {
   // Form the label by appending the colon
-  auto label = std::format("{}: ", std::get<0>(entry));
+  auto label = std::format("{}: ", entry.accession);
 
-  auto sample_name = std::get<1>(entry);
+  auto sample_name = entry.label;
   if (show_details)
-    sample_name += std::format(" | {}", std::get<2>(entry));
+    sample_name += std::format(" | {}", entry.metadata);
 
   // If the horizontal position within the sample would be larger than the
   // same name, just return the label
@@ -239,9 +274,9 @@ format_current_entry(const auto &entry, const auto horiz_pos,
 static inline auto
 do_select(const auto &filtered, const auto cursor_pos, auto &selected_keys) {
   const auto curr_fltr = std::cbegin(filtered) + cursor_pos;
-  const auto itr = selected_keys.find(std::get<0>(*curr_fltr));
+  const auto itr = selected_keys.find(curr_fltr->accession);
   if (itr == std::cend(selected_keys))
-    selected_keys.insert(std::get<0>(*curr_fltr));
+    selected_keys.insert(curr_fltr->accession);
   else
     selected_keys.erase(itr);
 }
@@ -260,17 +295,17 @@ do_select_group(const auto &filtered, const auto cursor_pos,
 static inline auto
 do_add(const auto &filtered, const auto cursor_pos, auto &selected_keys) {
   const auto curr_fltr = std::cbegin(filtered) + cursor_pos;
-  const auto itr = selected_keys.find(std::get<0>(*curr_fltr));
+  const auto itr = selected_keys.find(curr_fltr->accession);
   if (itr == std::cend(selected_keys))
-    selected_keys.insert(std::get<0>(*curr_fltr));
+    selected_keys.insert(curr_fltr->accession);
 }
 
 static inline auto
 do_remove(const auto &filtered, const auto cursor_pos, auto &selected_keys) {
   const auto curr_fltr = std::cbegin(filtered) + cursor_pos;
-  const auto itr = selected_keys.find(std::get<0>(*curr_fltr));
+  const auto itr = selected_keys.find(curr_fltr->accession);
   if (itr != std::cend(selected_keys))
-    selected_keys.erase(std::get<0>(*curr_fltr));
+    selected_keys.erase(curr_fltr->accession);
 }
 
 static inline auto
@@ -439,6 +474,7 @@ static inline auto
 show_group(const std::string &group_name, auto &group, const auto &labels,
            const auto &metadata) {
   using std::string_literals::operator""s;
+  static constexpr auto sep = " | ";
   static constexpr std::int32_t header_height = 1;
   static constexpr std::int32_t footer_height = 0;
   static constexpr auto escape_key_code = 27;
@@ -487,16 +523,19 @@ show_group(const std::string &group_name, auto &group, const auto &labels,
         throw std::runtime_error("failed to find metadata for " + accession);
       std::string line = std::format("{}: {}", alt_name, accession);
       std::string extra_line;
-      if (display_mode >= 1)
-        extra_line += std::format(" | {}", labels_itr->second);
+      if (display_mode >= 1) {
+        line += sep;
+        extra_line += std::format("{}", labels_itr->second);
+      }
       if (display_mode >= 2)
-        extra_line += std::format(" | {}", meta_itr->second);
+        extra_line += std::format("{}{}", sep, meta_itr->second);
 
       if (data_idx == cursor_pos) {
         // NOLINTNEXTLINE (*-narrowing-conversions)
         current_line_width = std::size(line) + std::size(extra_line);
         if (current_line_width >= COLS)
-          extra_line = extra_line.substr(horiz_pos, COLS - current_line_width);
+          extra_line =
+            extra_line.substr(horiz_pos);  // , COLS - current_line_width);
       }
 
       line += extra_line;
@@ -719,7 +758,7 @@ get_query(std::string &query, std::regex &query_re) {
   static constexpr auto enter_key_code = 10;
   while (true) {
     clear();
-    mvprintw_wrap(0, 0, std::format("Search Query: {}", query));
+    mvprintw_wrap(0, 0, std::format("Search: {}", query));
     refresh();
     const auto query_ch = getch();
     if (query_ch == escape_key_code)
@@ -946,7 +985,8 @@ format_queries(const std::vector<std::string> &queries) -> std::string {
 
 auto
 main_loop(
-  const std::vector<std::tuple<std::string, std::string, std::string>> &data,
+  // const std::vector<std::tuple<std::string, std::string, std::string>> &data,
+  const std::vector<methylome_info> &data,
   std::map<std::string, std::map<std::string, std::string>> &groups,
   std::string &filename) -> std::vector<std::string> {
   static constexpr auto extra_margin_space = 2;  // colon, space and safety?
@@ -961,10 +1001,8 @@ main_loop(
     "a/r=Toggle multi-Add/Remove, v/c=View/Clear selection, "
     "s/Esc=Search/Clear ";
   // margin must be max key width plus room
-  const auto key_sizes =
-    std::views::transform(data, [](const auto &s) -> std::int32_t {
-      return std::size(std::get<0>(s));
-    });
+  const auto key_sizes = std::views::transform(
+    data, [](const auto &s) -> std::int32_t { return std::size(s.accession); });
   const std::int32_t margin = std::ranges::max(key_sizes) + extra_margin_space;
 
   // Initialize ncurses
@@ -984,11 +1022,11 @@ main_loop(
 
   std::unordered_map<std::string, std::string> labels;
   for (const auto &d : data)
-    labels.emplace(std::get<0>(d), std::get<1>(d));
+    labels.emplace(d.accession, d.label);
 
   std::unordered_map<std::string, std::string> metadata;
   for (const auto &d : data)
-    metadata.emplace(std::get<0>(d), std::get<2>(d));
+    metadata.emplace(d.accession, d.metadata);
 
   bool show_details = false;  // show detailed sample info
   std::unordered_set<std::string> selected_keys;
@@ -999,22 +1037,21 @@ main_loop(
   bool multi_remove = false;
   std::int32_t horiz_pos = 0;
   std::int32_t cursor_pos = 0;
-  std::vector<std::vector<std::tuple<std::string, std::string, std::string>>>
-    filtered;
+  std::vector<std::vector<methylome_info>> filtered;
   filtered.push_back(data);
 
   while (true) {
     if (!query_update.empty() &&
         (queries.empty() || query_update != queries.back())) {
       // Filter data based on the query
-      const auto query_found = [&](const auto &x) -> bool {
+      const auto query_found = [&](const methylome_info &x) -> bool {
         // ADS: need to take care of upper/lower case here
-        return std::regex_search(std::get<1>(x), query_re) ||
-               std::regex_search(std::get<2>(x), query_re);
+        return std::regex_search(x.label, query_re) ||
+               std::regex_search(x.metadata, query_re);
       };
       filtered.push_back({});
       assert(std::size(filtered) >= 2u);
-      const auto &prev_filtered = filtered[filtered.size() - 2];
+      const auto &prev_filtered = filtered[std::size(filtered) - 2];
       std::ranges::copy_if(prev_filtered, std::back_inserter(filtered.back()),
                            query_found);
       if (filtered.back().empty())
@@ -1057,7 +1094,7 @@ main_loop(
       assert(y_pos < LINES);
 
       // color this item if it's among the selections
-      if (selected_keys.contains(std::get<0>(entry)))
+      if (selected_keys.contains(entry.accession))
         attron(COLOR_PAIR(3));
 
       // highlight this item if it's at the cursor position
@@ -1068,7 +1105,7 @@ main_loop(
           attron(COLOR_PAIR(2));
       }
 
-      const auto line = format_current_entry(entry, horiz_pos, show_details);
+      const auto line = entry.format(horiz_pos, show_details);
 
       // Display (key: paragraph) with horizontal range
       mvprintw_wrap(y_pos, 0, line);
@@ -1094,14 +1131,10 @@ main_loop(
         filtered.pop_back();
       }
       cursor_pos = 0;
+      horiz_pos = 0;
     }
     else if (ch == KEY_RIGHT) {  // Scroll right
-      // ADS: the "+ 3" below is for std::size(" | ");
-      // NOLINTBEGIN (*-narrowing-conversions)
-      const std::int32_t width =
-        std::size(std::get<1>(filtered.back()[cursor_pos])) +
-        std::size(std::get<2>(filtered.back()[cursor_pos])) + 3;
-      // NOLINTEND (*-narrowing-conversions)
+      const auto width = filtered.back()[cursor_pos].detail_size();
       if (margin + width + 1 > COLS)
         horiz_pos = std::min(horiz_pos + 1, (margin + width) + 1 - COLS);
     }
