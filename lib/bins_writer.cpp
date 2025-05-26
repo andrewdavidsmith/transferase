@@ -32,6 +32,7 @@
 
 #include "macos_helper.hpp"
 
+#include <algorithm>
 #include <cerrno>
 #include <cstdint>  // for std::uint32_t
 #include <format>
@@ -74,7 +75,8 @@ write_bedlike_bins_impl(const std::string &outfile,
   const auto zipped = std::views::zip(meta.chrom_size, meta.chrom_order);
   for (const auto [chrom_size, chrom_name] : zipped) {
     for (std::uint32_t bin_beg = 0; bin_beg < chrom_size; bin_beg += bin_size) {
-      std::print(out, "{}{}{}", chrom_name, delim, bin_beg);
+      const auto bin_end = std::min(bin_beg + bin_size, chrom_size);
+      std::print(out, "{}{}{}{}{}", chrom_name, delim, bin_beg, delim, bin_end);
       for (const auto j : std::views::iota(0u, n_levels))
         std::print(out, "{}{}", delim, lvl_to_string(levels[j][i]));
       if (write_n_cpgs)
@@ -234,8 +236,9 @@ write_bedlike_bins_impl(
     push_buffer(line_beg, line_end, error, chrom_name, rowname_delim);
 
     for (std::uint32_t bin_beg = 0; bin_beg < chrom_size; bin_beg += bin_size) {
+      const auto bin_end = std::min(bin_beg + bin_size, chrom_size);
       auto cursor = line_beg;
-      push_buffer(cursor, line_end, error, bin_beg);
+      push_buffer(cursor, line_end, error, bin_beg, rowname_delim, bin_end);
 
       for (const auto j : std::views::iota(0u, n_levels))
         push_buffer_elem(cursor, line_end, error, levels[i, j], mode, delim);
