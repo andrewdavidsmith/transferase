@@ -457,7 +457,10 @@ chr1.700000.800000      0.629851        0.614279
 chr1.800000.900000      0.699224        0.67415
 ```
 
-This redundancy is planned for removal in future versions.
+This redundancy is planned for removal in future versions.  **Update**
+(05/25/2025) This has been fixed in the main branch so that the second
+(redundant) bin end is no longer shown when output is dataframe.
+
 
 ### Methylomes
 
