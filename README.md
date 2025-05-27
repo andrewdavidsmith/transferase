@@ -30,7 +30,7 @@ data. With a good network connection, queries to a remote transferase server
 can be faster than similar analysis of locally stored files.
 
 A public transferase server currently provides access to MethBase2, a
-methylome database with roughly 13,500 vertebrate methylomes that are
+methylome database with roughly 13,800 vertebrate methylomes that are
 whole-genome, sequencing-based and *high-quality*. Most of these are split
 between human and mouse. The transferase clients include tools to help
 identify which among those methylomes might be useful to inform specific
@@ -64,7 +64,7 @@ biological questions.
 
 * The transferase Python package, pyxfr, can now be installed using
   [pip](https://pypi.org/project/pyxfr/0.6.1) with Python >= 3.12 on Linux
-  and macOS (at least Ventura):
+  and macOS:
   ```console
   pip install pyxfr
   ```
@@ -87,8 +87,8 @@ biological questions.
   that is running at least Ventura (macos-13; October 2022).
 
 - Python: The python package, pyxfr, can be installed with `pip install pyxfr`
-  and requires Python >= 3.12 but otherwise should work on any Linux and any
-  Mac running at least Ventura.
+  and requires Python >= 3.12 but otherwise should work on any Linux and
+  macOS-13 or later.
 
 - R: The R package, Rxfr, can be installed on Linux and macOS, but it needs R
   version >= 4.4 and is not yet easy to install. Popular Linux distributions,
@@ -125,12 +125,6 @@ If you run this and see output, it worked:
 /desired/install/location/bin/xfr
 ```
 
-To remove it just delete the installation directory:
-
-```console
-rm -r /desired/install/location
-```
-
 Packages are available for Linux: a
 [deb](https://github.com/andrewdavidsmith/transferase/releases/download/v0.6.2/transferase-0.6.2-Linux.deb)
 for Ubuntu or Debian and an
@@ -158,17 +152,11 @@ Then check that it worked like this:
 /desired/install/location/bin/xfr
 ```
 
-And to remove it just delete the installation directory:
-
-```console
-rm -r /desired/install/location
-```
-
 ### The Python package
 
 The Python package is named pyxfr, and it can be installed using
 [pip](https://pypi.org/project/pyxfr/0.6.2) with Python >= 3.12 on Linux and
-macOS (at least Ventura):
+macOS:
 
 ```console
 # Use a virtual environment
