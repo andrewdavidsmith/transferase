@@ -47,7 +47,7 @@ parse_counts_line(const std::string &line, std::uint32_t &pos,
                   std::uint32_t &n_meth, uint32_t &n_unmeth) -> bool {
   constexpr auto is_sep = [](const char x) { return x == ' ' || x == '\t'; };
 
-  // NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+  // NOLINTBEGIN(*-pointer-arithmetic)
   const auto c_end = line.data() + std::size(line);
   auto field_s = line.data();
 
@@ -81,7 +81,7 @@ parse_counts_line(const std::string &line, std::uint32_t &pos,
   field_s = res.ptr + 1;
   res = std::from_chars(std::min(field_s, c_end), c_end, n_reads);
   failed = failed || (res.ec != std::errc{});
-  // NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+  // NOLINTEND(*-pointer-arithmetic)
 
   n_meth = static_cast<std::remove_reference_t<decltype(n_meth)>>(
     std::round(meth * n_reads));
@@ -92,7 +92,7 @@ parse_counts_line(const std::string &line, std::uint32_t &pos,
 
 [[nodiscard]] STATIC auto
 is_counts_format(const std::string &filename) -> bool {
-  static constexpr auto max_lines_to_read = 10000;
+  static constexpr auto max_lines_to_read = 100000;
 
   std::error_code unused_error{};
   gzinfile in(filename, unused_error);
@@ -121,7 +121,7 @@ is_counts_format(const std::string &filename) -> bool {
 
 [[nodiscard]] STATIC auto
 is_xcounts_format(const std::string &filename) -> bool {
-  static constexpr auto max_lines_to_read = 10000;
+  static constexpr auto max_lines_to_read = 100000;
 
   std::error_code unused_error{};
   gzinfile in(filename, unused_error);
