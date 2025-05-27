@@ -111,19 +111,17 @@ load_selected_groups(const std::string &json_filename)
   if (payload.is_discarded())
     throw std::runtime_error(std::format(err_msg_fmt, json_filename));
 
-  std::map<std::string, std::string> name_alt;
+  std::map<std::string, std::string> group_accn;
   try {
-    name_alt = payload;
+    group_accn = payload;
   }
   catch (const nlohmann::json::exception &_) {
     throw std::runtime_error(std::format(err_msg_fmt, json_filename));
   }
 
   std::map<std::string, std::map<std::string, std::string>> groups;
-  for (const auto &[name, alt] : name_alt) {
-    const auto groupname = alt.substr(0, alt.find_last_of('_'));
-    groups[groupname].emplace(alt, name);
-  }
+  for (const auto &[group, accn] : group_accn)
+    groups[group.substr(0, group.find_last_of('_'))].emplace(group, accn);
 
   return groups;
 }
@@ -184,26 +182,31 @@ struct methylome_info {
 [[nodiscard]] auto
 load_data(const std::string &json_filename)
   -> std::map<std::string, std::vector<methylome_info>> {
+  static constexpr auto err_msg_fmt =
+    "Failed to parse file: {}. Ensure xfr config was run and succeeded.\n"
+    "If an input file was specified, verify the file format.";
+
   std::ifstream in(json_filename);
   if (!in)
-    throw std::runtime_error(
-      std::format("Failed to open file: {}", json_filename));
+    throw std::runtime_error("Failed to open file: " + json_filename);
 
   const nlohmann::json payload = nlohmann::json::parse(in, nullptr, false);
   if (payload.is_discarded())
-    throw std::runtime_error(
-      std::format("Failed to parse file: {}", json_filename));
+    throw std::runtime_error("Failed to parse file: " + json_filename);
 
-  std::map<std::string, std::map<std::string, std::vector<std::string>>> data =
-    payload;
+  std::map<std::string, std::map<std::string, std::vector<std::string>>> data;
 
-  // typedef std::vector<std::tuple<std::string, std::string, std::string>>
-  //   vec_key_vals;
+  try {
+    data = payload;
+  }
+  catch (const nlohmann::json::exception &_) {
+    throw std::runtime_error(std::format(err_msg_fmt, json_filename));
+  }
+
   std::map<std::string, std::vector<methylome_info>> r;
   const auto to_vec_key_vals =
-    [&](const auto &x) -> std::vector<methylome_info> {  // vec_key_vals {
+    [&](const auto &x) -> std::vector<methylome_info> {
     std::vector<methylome_info> v;
-    // vec_key_vals v;
     for (const auto &u : x)
       if (!u.second.empty())
         v.emplace_back(u.first, u.second.front(), u.second.back());
@@ -356,7 +359,7 @@ show_selected_keys(const auto &selected_keys) {
     }
     refresh();
 
-    // Handle user input
+    // user input
     const auto ch = getch();
     if (ch == escape_key_code)
       break;
@@ -460,7 +463,7 @@ remove_from_group(const std::string &group_name, auto &data,
   data.clear();
   int idx = 1;
   for (const auto &[k, v] : group) {
-    auto d = std::pair{std::format("{}_{:0>5}", group_name, idx++), v};
+    const auto d = std::pair{std::format("{}_{:0>5}", group_name, idx++), v};
     data.emplace_back(d);
   }
 
@@ -546,7 +549,7 @@ show_group(const std::string &group_name, auto &group, const auto &labels,
     }
     refresh();
 
-    // Handle user input
+    // user input
     const auto ch = getch();
     if (ch == escape_key_code)
       break;
@@ -655,7 +658,7 @@ show_groups(auto &groups, const auto &labels, const auto &metadata) {
     }
     refresh();
 
-    // Handle user input
+    // user input
     const auto ch = getch();
     if (ch == escape_key_code) {
       break;
@@ -853,17 +856,19 @@ write_groups2(const auto &data, std::string &outfile) {
       mvprintw_wrap(0, 0, "Aborting save due to empty filename"s + akr);
     else {
       // put all groups into one vector of pairs
-      std::map<std::string, std::string> accn_name;
+      std::map<std::string, std::string> altname_name;
       for (const auto &g : data)
-        for (const auto &p : g.second)
-          accn_name.emplace(p.second, p.first);
+        std::ranges::copy(g.second,
+                          std::inserter(altname_name, std::end(altname_name)));
+      // for (const auto &p : g.second)
+      //   altname_name.emplace(p.first, p.second);
 
       std::ofstream out(outfile);
       if (!out)
         throw std::runtime_error("error writing to file: " + outfile);
 
       static constexpr auto n_indent = 4;
-      nlohmann::json json_data = accn_name;
+      nlohmann::json json_data = altname_name;
       std::println(out, "{}", json_data.dump(n_indent));
       mvprintw_wrap(0, 0, "Selected groups saved"s + akr);
     }
@@ -873,7 +878,7 @@ write_groups2(const auto &data, std::string &outfile) {
 }
 
 static inline auto
-write_groups(
+write_groups_dialogue(
   const std::map<std::string, std::map<std::string, std::string>> &groups,
   std::string &outfile) {
   using std::string_literals::operator""s;
@@ -931,7 +936,7 @@ write_groups(
     }
     refresh();
 
-    // Handle user input
+    // user input
     const auto ch = getch();
     if (ch == escape_key_code)
       break;
@@ -1119,7 +1124,7 @@ main_loop(
     }
     refresh();
 
-    // Handle user input
+    // user input
     const auto ch = getch();
     if (ch == 'q') {
       if (confirm_quit())
@@ -1217,8 +1222,8 @@ main_loop(
     else if (ch == 'g') {  // g key to make a named group
       make_named_group(selected_keys, join_with(queries, '_'), groups);
     }
-    else if (ch == 'W') {  // w key to save selected groups
-      write_groups(groups, filename);
+    else if (ch == 'W') {  // W key to save selected groups
+      write_groups_dialogue(groups, filename);
     }
     else if (ch == 'V') {  // Display groups
       show_groups(groups, labels, metadata);
@@ -1313,10 +1318,10 @@ command_select_main(int argc,
   app.add_option("-s,--selected", selected_groups_file, "previously selected groups");
   app.add_option("-o,--output", output_file, "output file (you will be promoted before saving)");
   const auto input_file_opt =
-    app.add_option("-i,--input-file", input_file, "specify an input file")
+    app.add_option("--input-file", input_file, "specify a non-default metadata input file")
     ->option_text("FILE")
     ->check(CLI::ExistingFile);
-  app.add_option("-c,--config-dir", config_dir, "specify a config directory")
+  app.add_option("-c,--config-dir", config_dir, "specify a non-default config directory")
     ->option_text("DIR")
     ->check(CLI::ExistingDirectory)
     ->excludes(input_file_opt);
