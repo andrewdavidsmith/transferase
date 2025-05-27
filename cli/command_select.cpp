@@ -860,8 +860,6 @@ write_groups2(const auto &data, std::string &outfile) {
       for (const auto &g : data)
         std::ranges::copy(g.second,
                           std::inserter(altname_name, std::end(altname_name)));
-      // for (const auto &p : g.second)
-      //   altname_name.emplace(p.first, p.second);
 
       std::ofstream out(outfile);
       if (!out)
