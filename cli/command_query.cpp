@@ -313,9 +313,9 @@ read_methylomes_json(const std::string &json_filename, std::error_code &ec)
     ec = std::make_error_code(std::errc::invalid_argument);
     return {{}, {}};
   }
-  std::map<std::string, std::string> name_alt;
+  std::map<std::string, std::string> altname_name;
   try {
-    name_alt = data;
+    altname_name = data;
   }
   catch (const nlohmann::json::exception &_) {
     ec = std::make_error_code(std::errc::invalid_argument);
@@ -323,15 +323,13 @@ read_methylomes_json(const std::string &json_filename, std::error_code &ec)
   }
 
   std::vector<std::pair<std::string, std::string>> sorted_by_alt;
-  std::ranges::copy(name_alt, std::back_inserter(sorted_by_alt));
+  std::ranges::copy(altname_name, std::back_inserter(sorted_by_alt));
 
-  std::ranges::sort(sorted_by_alt, [](const auto &a, const auto &b) {
-    return a.second < b.second;
-  });
+  std::ranges::sort(sorted_by_alt);
 
   std::vector<std::string> names;
   std::vector<std::string> alt_names;
-  for (const auto &[name, alt_name] : sorted_by_alt) {
+  for (const auto &[alt_name, name] : sorted_by_alt) {
     names.push_back(name);
     alt_names.push_back(alt_name);
   }
