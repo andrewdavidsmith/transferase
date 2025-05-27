@@ -508,23 +508,21 @@ specify methylomes. All of them use the `-m` or `--methylomes` argument.
 
    ```json
    {
-       "SRX10768294": "b_cell_00004",
-       "SRX10768295": "b_cell_00003",
-       "SRX10768296": "b_cell_00002",
-       "SRX10768297": "b_cell_00001",
-       "SRX12292982": "t_cell_00004",
-       "SRX12292983": "t_cell_00002",
-       "SRX12292984": "t_cell_00003",
-       "SRX12292985": "t_cell_00001"
+       "b_cell_00001": "SRX10768297",
+       "b_cell_00002": "SRX10768296",
+       "b_cell_00003": "SRX10768295",
+       "b_cell_00004": "SRX10768294",
+       "t_cell_00001": "SRX12292985",
+       "t_cell_00002": "SRX12292983",
+       "t_cell_00003": "SRX12292984",
+       "t_cell_00004": "SRX12292982",
    }
    ```
 
    The pairs above are "name" and "label" of each methylome for the query. The
    name must be valid, and the label can be anything you choose. The `select`
    command has functions to automatically create a mapping like the one
-   above. The methylomes are not necessarily ordered in this JSON file, but
-   when the query completes, the columns in the output will be sorted by their
-   label. This will also help, for example, color a PCA plot based on parts of
+   above. This will also help, for example, color a PCA plot based on parts of
    the chosen labels. The reason to do this in the query command, and not
    later, is because I often combine these files, and when they get larger
    changing the header can become annoying. So I have the labels inserted as
