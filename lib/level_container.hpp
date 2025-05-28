@@ -184,12 +184,12 @@ template <typename level_element_type> struct level_container {
 
 [[nodiscard]] auto
 read_level_container(const std::string &filename,
-                        std::error_code &error) noexcept
+                     std::error_code &error) noexcept
   -> level_container<level_element_t>;
 
 [[nodiscard]] auto
 read_level_container_covered(const std::string &filename,
-                                std::error_code &error) noexcept
+                             std::error_code &error) noexcept
   -> level_container<level_element_covered_t>;
 
 }  // namespace transferase

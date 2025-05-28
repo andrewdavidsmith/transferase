@@ -123,7 +123,7 @@ private:
                   const query_container &query, std::error_code &error)
     const noexcept -> level_container<lvl_elem_t> {
     level_container<lvl_elem_t> results(std::size(query),
-                                           std::size(methylome_names));
+                                        std::size(methylome_names));
     bool first_methylome = true;
     std::uint64_t index_hash = 0;
     std::uint32_t col_id = 0;
@@ -152,7 +152,7 @@ private:
                   std::error_code &error) const noexcept
     -> level_container<lvl_elem_t> {
     level_container<lvl_elem_t> results(index.get_n_bins(bin_size),
-                                           std::size(methylome_names));
+                                        std::size(methylome_names));
     bool first_methylome = true;
     std::uint64_t index_hash = 0;
     std::uint32_t col_id = 0;

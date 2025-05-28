@@ -226,8 +226,7 @@ template <>
 auto
 methylome_data::get_levels<level_element_t>(
   const transferase::query_container &query,
-  level_container<level_element_t>::iterator d_first) const noexcept
-  -> void {
+  level_container<level_element_t>::iterator d_first) const noexcept -> void {
   const auto beg = std::cbegin(cpgs);
   // for (const auto [i, q] : std::views::enumerate(query))
   for (const auto q : query)
@@ -335,10 +334,10 @@ get_levels_impl(const std::uint32_t bin_size, const genome_index &index,
 
 template <typename T>
 static auto
-get_levels_impl(const std::uint32_t bin_size, const genome_index &index,
-                const methylome_data::vec &cpgs,
-                typename transferase::level_container<T>::iterator
-                  d_first) noexcept -> void {
+get_levels_impl(
+  const std::uint32_t bin_size, const genome_index &index,
+  const methylome_data::vec &cpgs,
+  typename transferase::level_container<T>::iterator d_first) noexcept -> void {
   const auto zipped = std::views::zip(
     index.data.positions, index.meta.chrom_size, index.meta.chrom_offset);
   for (const auto [positions, chrom_size, offset] : zipped) {
@@ -365,8 +364,7 @@ template <>
 auto
 methylome_data::get_levels<level_element_t>(
   const std::uint32_t bin_size, const genome_index &index,
-  level_container<level_element_t>::iterator d_first) const noexcept
-  -> void {
+  level_container<level_element_t>::iterator d_first) const noexcept -> void {
   get_levels_impl<level_element_t>(bin_size, index, cpgs, d_first);
 }
 

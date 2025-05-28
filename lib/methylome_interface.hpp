@@ -88,8 +88,7 @@ private:
   get_levels_local_impl(const request &req, const query_container &query,
                         std::error_code &ec) const noexcept
     -> level_container<lvl_elem_t> {
-    level_container<lvl_elem_t> results(req.n_intervals(),
-                                           req.n_methylomes());
+    level_container<lvl_elem_t> results(req.n_intervals(), req.n_methylomes());
     std::uint32_t col_id = 0;
     for (const auto &methylome_name : req.methylome_names) {
       const auto meth = methylome::read(directory, methylome_name, ec);
@@ -119,7 +118,7 @@ private:
                         std::error_code &ec) const noexcept
     -> level_container<lvl_elem_t> {
     level_container<lvl_elem_t> results(index.get_n_bins(req.bin_size()),
-                                           req.n_methylomes());
+                                        req.n_methylomes());
     std::uint32_t col_id = 0;
     for (const auto &methylome_name : req.methylome_names) {
       const auto meth = methylome::read(directory, methylome_name, ec);

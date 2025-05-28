@@ -49,8 +49,8 @@ namespace nb = nanobind;
 
 auto
 level_container_bindings(
-  nb::class_<transferase::level_container<transferase::level_element_t>>
-    &cls) -> void {
+  nb::class_<transferase::level_container<transferase::level_element_t>> &cls)
+  -> void {
   using namespace nanobind::literals;  // NOLINT
   using level_container =
     transferase::level_container<transferase::level_element_t>;
@@ -193,9 +193,8 @@ level_container_bindings(
 
 auto
 level_container_covered_bindings(
-  nb::class_<
-    transferase::level_container<transferase::level_element_covered_t>> &cls)
-  -> void {
+  nb::class_<transferase::level_container<transferase::level_element_covered_t>>
+    &cls) -> void {
   using namespace nanobind::literals;  // NOLINT
   using level_container =
     transferase::level_container<transferase::level_element_covered_t>;

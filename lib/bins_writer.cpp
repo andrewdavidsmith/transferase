@@ -25,8 +25,8 @@
 
 #include "genome_index.hpp"
 #include "genome_index_metadata.hpp"
-#include "level_container_flat.hpp"
 #include "level_container.hpp"  // IWYU pragma: keep
+#include "level_container_flat.hpp"
 #include "level_element.hpp"
 #include "level_element_formatter.hpp"
 
@@ -399,9 +399,9 @@ bins_writer::write_bedlike_impl(
 
 template <>
 [[nodiscard]] auto
-bins_writer::write_bedlike_impl(
-  const level_container<level_element_t> &levels,
-  const level_element_mode mode) const noexcept -> std::error_code {
+bins_writer::write_bedlike_impl(const level_container<level_element_t> &levels,
+                                const level_element_mode mode) const noexcept
+  -> std::error_code {
   return write_bedlike_bins_impl(outfile, index.get_metadata(), bin_size,
                                  n_cpgs, levels, mode);
 }
@@ -483,8 +483,8 @@ bins_writer::write_dataframe_impl(
 template <>
 [[nodiscard]] auto
 bins_writer::write_dataframe_impl(
-  const level_container<level_element_t> &levels,
-  const level_element_mode mode, const char rowname_delim,
+  const level_container<level_element_t> &levels, const level_element_mode mode,
+  const char rowname_delim,
   const bool write_header) const noexcept -> std::error_code {
   return write_bins_dataframe_impl(outfile, names, index.get_metadata(),
                                    bin_size, n_cpgs, levels, mode,
