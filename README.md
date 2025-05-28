@@ -1,6 +1,13 @@
 # Transferase
 
-[**What's New**](#whats-new)
+- [What is transferase](#what-is-transferase)
+- [What's new](#whats-new)
+- [Current status](#current-status)
+- [Installation](#installation)
+- [Command line app](docs/command_line.md)
+- [The Python package](docs/pyxfr.md)
+- [The R package](docs/rxfr.md)
+- [All documentation](docs)
 
 ## What is transferase?
 
@@ -30,11 +37,11 @@ data. With a good network connection, queries to a remote transferase server
 can be faster than similar analysis of locally stored files.
 
 A public transferase server currently provides access to MethBase2, a
-methylome database with roughly 13,800 vertebrate methylomes that are
-whole-genome, sequencing-based and *high-quality*. Most of these are split
-between human and mouse. The transferase clients include tools to help
-identify which among those methylomes might be useful to inform specific
-biological questions.
+methylome database with roughly 13,800 vertebrate methylomes (as of
+2025-05-27) that are whole-genome, sequencing-based and *high-quality*. Most
+of these are split between human and mouse. The transferase clients include
+tools to help identify which among those methylomes might be useful to inform
+specific biological questions.
 
 - If you work on Mac or Linux, there are lots of ways to get and use
   transferase.
@@ -46,10 +53,6 @@ biological questions.
 
 - I appreciate your feedback. You can open an issue on GitHub or contact me
   (Andrew) directly via the email in my GitHub profile.
-
-- A table-of-contents for the documentation should be "here" but I don't have
-  it organized yet. All current documentation can be found in the [docs](docs)
-  directory of this repo.
 
 ## What's new
 
@@ -95,104 +98,55 @@ biological questions.
   and macOS 15, now include the right compilers. When the maintainers of R
   update some of their configurations, installing Rxfr will become simpler.
 
-## Documentation
-
-The instructions for using transferase on the command line are in
-[docs/command_line.md](docs/command_line.md). Instructions for setting up a
-server are in [docs/server.md](docs/server.md). Basic usage examples for
-pyxfr are in [docs/python.md](docs/python.md). There is also built-in
-documentation in Python and R (use `help(pyxfr)` in Python or
-`library(help=Rxfr)` in R).
-
 ## Installation
 
-### Linux
+- **Linux**
+  The Linux binary releases should work on any Linux system. You
+  can find installers
+  [here](https://github.com/andrewdavidsmith/transferase/releases/v0.6.2),
+  including packages deb and rpm-based systems. The easiest is the [shell
+  installer](https://github.com/andrewdavidsmith/transferase/releases/download/v0.6.2/transferase-0.6.2-Linux.sh):
+  ```console
+  sh transferase-0.6.2-Linux.sh --prefix=/desired/install/location
+  /desired/install/location/bin/xfr  # check that it worked
+  ```
+- **Mac**
+  The transferase binary for Mac is a "universal binary" and
+  should work on any Mac. It is built to work on Ventura or later, but it has
+  worked on a much older system. The easiest is the [shell
+  installer](https://github.com/andrewdavidsmith/transferase/releases/download/v0.6.2/transferase-0.6.2-macOS.sh):
+  ```console
+  sh transferase-0.6.2-macOS.sh --prefix=/desired/install/location
+  /desired/install/location/bin/xfr  # check that it worked
+  ```
 
-The binary releases for Linux should work on any Linux system. You can find
-the installers
-[here](https://github.com/andrewdavidsmith/transferase/releases/v0.6.2). If
-you aren't familiar with installing command line tools, try using the [shell
-installer](https://github.com/andrewdavidsmith/transferase/releases/download/v0.6.2/transferase-0.6.2-Linux.sh)
-like this:
+- **Python**
+  pyxfr can be installed using
+  [pip](https://pypi.org/project/pyxfr/0.6.2) with Python (>= 3.12) on Linux
+  and macOS:
+  ```console
+  pip install pyxfr
+  python3 -c "from pyxfr import pyxfr; help(pyxfr)"  # check that it worked
+  ```
 
-```console
-sh transferase-0.6.2-Linux.sh --prefix=/desired/install/location
-```
+- **R**
+  Detailed instructions to install Rxfr are in
+  [docs/installing_Rxfr.md](docs/installing_Rxfr.md).
 
-If you run this and see output, it worked:
+- **Source** Detailed instructions for building from source are in
+  [docs/building.md](docs/building.md).
 
-```console
-/desired/install/location/bin/xfr
-```
+- **Linux packages**
+  ```console
+  # Red Hat or Fedora (not sure SUSE has dnf)
+  rpm -i transferase-0.6.2-Linux.rpm              # See what will be installed
+  sudo dnf install ./transferase-0.6.2-Linux.rpm  # Install (note the dot-slash)
+  dnf info transferase                            # See what was installed
+  sudo dnf remove transferase                     # Uninstall
 
-Packages are available for Linux: a
-[deb](https://github.com/andrewdavidsmith/transferase/releases/download/v0.6.2/transferase-0.6.2-Linux.deb)
-for Ubuntu or Debian and an
-[rpm](https://github.com/andrewdavidsmith/transferase/releases/download/v0.6.2/transferase-0.6.2-Linux.rpm)
-for Red Hat, Fedora or SUSE. If you plan to install system-wide, using the
-package managers is a very good idea. More [here](#Linux-package-managers).
-
-### Mac
-
-The transferase binary release for Mac is a "universal binary" which should
-work on any Mac. It is built to work on Ventura or later, but it has worked on
-a much older system. You can find the installers
-[here](https://github.com/andrewdavidsmith/transferase/releases/v0.6.2). If
-you aren't familiar with installing command line tools, try using the [shell
-installer](https://github.com/andrewdavidsmith/transferase/releases/download/v0.6.2/transferase-0.6.2-macOS.sh)
-like this:
-
-```console
-sh transferase-0.6.2-macOS.sh --prefix=/desired/install/location
-```
-
-Then check that it worked like this:
-
-```console
-/desired/install/location/bin/xfr
-```
-
-### The Python package
-
-The Python package is named pyxfr, and it can be installed using
-[pip](https://pypi.org/project/pyxfr/0.6.2) with Python >= 3.12 on Linux and
-macOS:
-
-```console
-# Use a virtual environment
-python3 -m venv .venv
-. .venv/bin/activate
-pip install pyxfr
-# Check that it worked
-python3 -c "from pyxfr import pyxfr; help(pyxfr)"
-```
-
-### The R package
-
-The R package is named Rxfr. Please see the instructions in
-[docs/installing_Rxfr.md](docs/installing_Rxfr.md).
-
-### Building from source
-
-Detailed instructions for building transferase from source can be found in
-[docs/building.md](docs/building.md).
-
-### Linux package managers
-
-Note that the "install" steps below might need some indication that the
-package filename is a file and not the name of some remote resource. That's
-why I prepended the dot-slash below.
-
-```console
-# Red Hat or Fedora (not sure SUSE has dnf)
-rpm -i transferase-0.6.2-Linux.rpm              # See what will be installed
-sudo dnf install ./transferase-0.6.2-Linux.rpm  # Install
-dnf info transferase                            # See what was installed
-sudo dnf remove transferase                     # Uninstall
-
-# Ubuntu or Debian
-dpkg --info transferase-0.6.2-Linux.deb         # See what will be installed
-sudo apt install ./transferase-0.6.2-Linux.deb  # Install
-apt info transferase                            # See what was installed
-sudo apt remove transferase                     # Uninstall
-```
+  # Ubuntu or Debian
+  dpkg --info transferase-0.6.2-Linux.deb         # See what will be installed
+  sudo apt install ./transferase-0.6.2-Linux.deb  # Install (note the dot-slash)
+  apt info transferase                            # See what was installed
+  sudo apt remove transferase                     # Uninstall
+  ```
