@@ -25,7 +25,7 @@
 
 #include "genome_index.hpp"
 #include "genome_index_metadata.hpp"
-#include "level_container.hpp"
+#include "level_container_flat.hpp"
 #include "level_container_md.hpp"  // IWYU pragma: keep
 #include "level_element.hpp"
 #include "level_element_formatter.hpp"
@@ -382,7 +382,7 @@ write_bins_dataframe_impl(
 template <>
 [[nodiscard]] auto
 bins_writer::write_bedlike_impl(
-  const std::vector<level_container<level_element_t>> &levels,
+  const std::vector<level_container_flat<level_element_t>> &levels,
   const level_element_mode mode) const noexcept -> std::error_code {
   return write_bedlike_bins_impl(outfile, index.get_metadata(), bin_size,
                                  n_cpgs, levels, mode);
@@ -391,7 +391,7 @@ bins_writer::write_bedlike_impl(
 template <>
 [[nodiscard]] auto
 bins_writer::write_bedlike_impl(
-  const std::vector<level_container<level_element_covered_t>> &levels,
+  const std::vector<level_container_flat<level_element_covered_t>> &levels,
   const level_element_mode mode) const noexcept -> std::error_code {
   return write_bedlike_bins_impl(outfile, index.get_metadata(), bin_size,
                                  n_cpgs, levels, mode);
@@ -418,7 +418,7 @@ bins_writer::write_bedlike_impl(
 template <>
 [[nodiscard]] auto
 bins_writer::write_dfscores_impl(
-  const std::vector<level_container<level_element_t>> &levels,
+  const std::vector<level_container_flat<level_element_t>> &levels,
   const char rowname_delim,
   const bool write_header) const noexcept -> std::error_code {
   return write_bins_dfscores_impl(outfile, names, index.get_metadata(),
@@ -429,7 +429,7 @@ bins_writer::write_dfscores_impl(
 template <>
 [[nodiscard]] auto
 bins_writer::write_dfscores_impl(
-  const std::vector<level_container<level_element_covered_t>> &levels,
+  const std::vector<level_container_flat<level_element_covered_t>> &levels,
   const char rowname_delim,
   const bool write_header) const noexcept -> std::error_code {
   return write_bins_dfscores_impl(outfile, names, index.get_metadata(),
@@ -461,7 +461,7 @@ bins_writer::write_dfscores_impl(
 template <>
 [[nodiscard]] auto
 bins_writer::write_dataframe_impl(
-  const std::vector<level_container<level_element_t>> &levels,
+  const std::vector<level_container_flat<level_element_t>> &levels,
   const level_element_mode mode, const char rowname_delim,
   const bool write_header) const noexcept -> std::error_code {
   return write_bins_dataframe_impl(outfile, names, index.get_metadata(),
@@ -472,7 +472,7 @@ bins_writer::write_dataframe_impl(
 template <>
 [[nodiscard]] auto
 bins_writer::write_dataframe_impl(
-  const std::vector<level_container<level_element_covered_t>> &levels,
+  const std::vector<level_container_flat<level_element_covered_t>> &levels,
   const level_element_mode mode, const char rowname_delim,
   const bool write_header) const noexcept -> std::error_code {
   return write_bins_dataframe_impl(outfile, names, index.get_metadata(),
