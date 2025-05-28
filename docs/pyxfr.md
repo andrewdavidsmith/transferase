@@ -1,7 +1,35 @@
-# Python usage examples
+# pyxfr
 
-The transferase Python API is named pyxfr. These examples assume you have
-already successfully installed pyxfr package.
+## Installing
+
+The pyxfr package can be installed using
+[pip](https://pypi.org/project/pyxfr/0.6.2). It requires that the Python
+version be at least 3.12. It will install on any Linux machine, and on Mac as
+long as the macOS version is 13 or greater (macOS-13 is Ventura; released in
+October 2022). The installation only requires you to do this:
+
+```console
+pip install pyxfr
+```
+
+I recommend always working in a virtual environment, which would look like
+this:
+
+```console
+python3 -m venv .venv
+. .venv/bin/activate
+pip install pyxfr
+```
+
+And you can check that it worked by running:
+
+```console
+python3 -c "from pyxfr import pyxfr; help(pyxfr)"
+```
+
+If it worked, you will see the documentation for all the functions in pyxfr.
+
+## Usage examples
 
 First we import the pyxfr module so we can set our preferred log level for the
 session or in your Python scripts. Setting it to "debug" let's us see
