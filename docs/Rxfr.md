@@ -9,22 +9,20 @@ Note: I don't expect this to work at all on Windows.
 ## Installing the package
 
 In R, packages are usually installed by building from source. The file
-[`docs/installing_Rxfr.md`](docs/installing_Rxfr.md) has instructions for two
-ways to install the R package on Linux, and two ways to do it on macOS. These
-are "source" installations, but the R package archive
+[`installing_Rxfr.md`](installing_Rxfr.md) has instructions for two ways to
+install the R package on Linux, and two ways to do it on macOS. These are
+"source" installations, but the R package archive
 [`Rxfr_0.6.2.tar.gz`](releases/download/v0.6.2/Rxfr_0.6.2.tar.gz) you would be
 installing is not the same as the source you would get from a clone of the
 repo. If you really want to start from the cloned repo, the instructions are
-in [`docs/building.md`](docs/building.md). If you have a file named
-`Rxfr_0.6.2.tar.gz`, and if the stars are perfectly aligned, you can install
-it within R like this:
+in [`building.md`](building.md). If you have a file named `Rxfr_0.6.2.tar.gz`,
+and if the stars are perfectly aligned, you can install it within R like this:
 
 ```R
 install.packages("Rxfr_0.6.2.tar.gz")
 ```
 
-Likely that won't work, so see
-[`docs/installing_Rxfr.md`](docs/installing_Rxfr.md).
+Likely that won't work, so see [`installing_Rxfr.md`](installing_Rxfr.md).
 
 ## Functions
 
