@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef LIB_LEVEL_CONTAINER_MD_HPP_
-#define LIB_LEVEL_CONTAINER_MD_HPP_
+#ifndef LIB_LEVEL_CONTAINER_HPP_
+#define LIB_LEVEL_CONTAINER_HPP_
 
 #include "level_element.hpp"
 
@@ -194,4 +194,4 @@ read_level_container_covered(const std::string &filename,
 
 }  // namespace transferase
 
-#endif  // LIB_LEVEL_CONTAINER_MD_HPP_
+#endif  // LIB_LEVEL_CONTAINER_HPP_
