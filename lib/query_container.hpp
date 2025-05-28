@@ -37,6 +37,7 @@ namespace transferase {
 
 struct query_container {
   typedef std::vector<query_element>::size_type size_type;
+  typedef query_element value_type;
 
   /// @brief v the underlying container of query_element objects
   std::vector<query_element> v;
@@ -53,6 +54,11 @@ struct query_container {
   query_container(query_container &&) noexcept = default;
   query_container &operator=(query_container &&) noexcept = default;
   // clang-format on
+
+  auto
+  push_back(const query_element e) -> void {
+    v.push_back(e);
+  }
 
   /// @brief Resize the container.
   auto
