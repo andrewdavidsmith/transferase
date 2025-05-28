@@ -62,7 +62,7 @@ parse_line(const std::string &line) -> std::vector<level_element_t> {
 
 [[nodiscard]] auto
 read_level_container(const std::string &filename,
-                        std::error_code &error) noexcept
+                     std::error_code &error) noexcept
   -> level_container<level_element_t> {
   std::ifstream in(filename);
   if (!in) {
@@ -97,9 +97,8 @@ read_level_container(const std::string &filename,
 }
 
 [[nodiscard]] auto
-read_level_container_covered(
-  [[maybe_unused]] const std::string &filename,
-  [[maybe_unused]] std::error_code &error) noexcept
+read_level_container_covered([[maybe_unused]] const std::string &filename,
+                             [[maybe_unused]] std::error_code &error) noexcept
   -> level_container<level_element_covered_t> {
   return level_container<level_element_covered_t>();
 }

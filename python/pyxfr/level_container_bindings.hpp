@@ -33,8 +33,9 @@ template <typename level_element_type> struct level_container;
 }  // namespace transferase
 
 auto
-level_container_bindings(nanobind::class_<transferase::level_container<
-                           transferase::level_element_t>> &cls) -> void;
+level_container_bindings(
+  nanobind::class_<transferase::level_container<transferase::level_element_t>>
+    &cls) -> void;
 
 auto
 level_container_covered_bindings(

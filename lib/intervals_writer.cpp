@@ -26,8 +26,8 @@
 #include "genome_index.hpp"
 #include "genome_index_metadata.hpp"
 #include "genomic_interval.hpp"
-#include "level_container_flat.hpp"
 #include "level_container.hpp"  // IWYU pragma: keep
+#include "level_container_flat.hpp"
 #include "level_element.hpp"
 #include "level_element_formatter.hpp"
 
@@ -518,8 +518,8 @@ intervals_writer::write_dataframe_impl(
 template <>
 [[nodiscard]] auto
 intervals_writer::write_dataframe_impl(
-  const level_container<level_element_t> &levels,
-  const level_element_mode mode, const char rowname_delim,
+  const level_container<level_element_t> &levels, const level_element_mode mode,
+  const char rowname_delim,
   const bool write_header) const noexcept -> std::error_code {
   return write_intervals_dataframe_impl(outfile, names, index.get_metadata(),
                                         intervals, n_cpgs, levels, mode,

@@ -261,8 +261,8 @@ struct methylome {
   /// windows, which may overlap).
   template <typename lvl_elem_t>
   [[nodiscard]] auto
-  get_levels(const std::uint32_t bin_size, const genome_index &index) const
-    -> level_container<lvl_elem_t> {
+  get_levels(const std::uint32_t bin_size,
+             const genome_index &index) const -> level_container<lvl_elem_t> {
     return data.get_levels<lvl_elem_t>(bin_size, index);
   }
 
