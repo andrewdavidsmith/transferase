@@ -91,7 +91,6 @@ xfr query -s localhost -p 5000 -x index_dir \
 #include <algorithm>  // IWYU pragma: keep
 #include <cerrno>     // for errno
 #include <chrono>
-#include <compare>  // for std::operator<
 #include <cstdint>
 #include <cstdlib>
 #include <filesystem>

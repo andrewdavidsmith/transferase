@@ -87,12 +87,10 @@ command_select_main([[maybe_unused]] int argc,
 #include <string>
 #include <string_view>
 #include <system_error>
-#include <tuple>
 #include <type_traits>  // for std::remove_cvref_t
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>  // for std::pair
-#include <variant>  // for std::tuple
 #include <vector>
 
 namespace xfr = transferase;
