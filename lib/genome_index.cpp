@@ -222,9 +222,8 @@ get_chrom_name_stops(std::vector<std::size_t> starts, const char *data,
                      const std::size_t sz) noexcept
   -> std::vector<std::size_t> {
   const auto next_stop = [&](const std::size_t start) -> std::size_t {
-    // NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+    // NOLINTNEXTLINE(*-pointer-arithmetic)
     return std::distance(data, std::find(data + start, data + sz, '\n'));
-    // NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic)
   };  // finds the stop position following each start position
   std::ranges::transform(starts, std::begin(starts), next_stop);
   return starts;
@@ -246,9 +245,8 @@ get_chroms(const char *data, const std::size_t sz,
   std::ranges::for_each(seq_starts, [](auto &x) { ++x; });
   std::vector<std::string_view> chroms;
   for (const auto [sta, sto] : std::views::zip(seq_starts, seq_stops)) {
-    // NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+    // NOLINTNEXTLINE(*-pointer-arithmetic)
     chroms.emplace_back(data + sta, sto - sta);
-    // NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic)
   }
 
   return chroms;
@@ -271,7 +269,7 @@ make_genome_index_plain(const std::string &genome_filename,
     return {};
   }
 
-  // NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+  // NOLINTBEGIN(*-pointer-arithmetic)
 
   // initialize the chromosome order
   std::vector<std::pair<std::uint32_t, std::string>> chrom_sorter;
@@ -365,8 +363,7 @@ make_genome_index_gzip(const std::string &genome_filename,
     return {};
   }
 
-  // NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-
+  // NOLINTBEGIN(*-pointer-arithmetic)
   // initialize the chromosome order
   std::vector<std::pair<std::uint32_t, std::string>> chrom_sorter;
   for (auto idx = 0;
@@ -374,12 +371,10 @@ make_genome_index_gzip(const std::string &genome_filename,
     // ADS: "+1" below to skip the ">" character
     chrom_sorter.emplace_back(
       idx++, std::string(raw.data() + start + 1, raw.data() + stop));
-
   std::ranges::sort(chrom_sorter, [](const auto &a, const auto &b) {
     return a.second < b.second;
   });
-
-  // NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+  // NOLINTEND(*-pointer-arithmetic)
 
   genome_index_metadata meta;
   meta.chrom_order =
