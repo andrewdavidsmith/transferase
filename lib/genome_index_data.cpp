@@ -174,13 +174,15 @@ genome_index_data::make_query(const genome_index_metadata &meta,
 
   transferase::query_container query;
   query.reserve(std::size(intervals));
+  std::vector<chrom_range_t> tmp;
   for (const auto &intervals_for_chrom :
        intervals | std::views::chunk_by(same_chrom)) {
-    std::vector<chrom_range_t> tmp(std::size(intervals_for_chrom));
+    tmp.clear();  // Hope to re-use previously allocated space
+    tmp.resize(std::size(intervals_for_chrom));
     std::ranges::transform(intervals_for_chrom, std::begin(tmp), start_stop);
     const auto ch_id = intervals_for_chrom.front().ch_id;
     std::ranges::copy(make_query_chrom(ch_id, meta, tmp),
-                      std::back_inserter(query.v));
+                      std::back_inserter(query));
   }
   return query;
 }
