@@ -113,8 +113,8 @@ struct genome_index_data {
 
   [[nodiscard]] static auto
   compose_filename(const auto &directory, const auto &name) {
-    const auto withou_ext = (std::filesystem::path{directory} / name).string();
-    return std::format("{}{}", withou_ext, filename_extension);
+    const auto without_ext = (std::filesystem::path{directory} / name).string();
+    return std::format("{}{}", without_ext, filename_extension);
   }
 
   std::vector<genome_index_data::vec> positions;
