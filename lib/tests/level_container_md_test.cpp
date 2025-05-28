@@ -28,7 +28,7 @@
 #include <genome_index.hpp>
 #include <genomic_interval.hpp>
 #include <intervals_writer.hpp>
-#include <level_container.hpp>
+#include <level_container_flat.hpp>
 #include <level_element.hpp>
 
 #include "unit_test_utils.hpp"
@@ -180,7 +180,7 @@ TEST_F(level_container_md_mock, write_with_intervals_writer_test) {
   };
 
   // make an equivalent vector of level_container
-  using cont_type = level_container<level_element_t>;
+  using cont_type = level_container_flat<level_element_t>;
   auto vec = std::vector<cont_type>(n_cols);
   for (auto c = 0u; c < n_cols; ++c) {
     vec[c] = cont_type(n_rows);
@@ -336,7 +336,7 @@ TEST_F(level_container_md_mock, write_with_bins_writer_test) {
   index.meta.chrom_size.push_back(4);
 
   // make an equivalent vector of level_container
-  using cont_type = level_container<level_element_t>;
+  using cont_type = level_container_flat<level_element_t>;
   auto vec = std::vector<cont_type>(n_cols);
   for (auto c = 0u; c < n_cols; ++c) {
     vec[c] = cont_type(n_rows);
