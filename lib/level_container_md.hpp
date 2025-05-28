@@ -92,10 +92,9 @@ template <typename level_element_type> struct level_container_md {
   [[nodiscard]] auto
   get_wmeans(const std::uint32_t min_reads) const -> std::vector<float> {
     std::vector<float> u(n_rows * n_cols);
-    std::ranges::transform(
-      v, std::begin(u), [min_reads](const auto &val) -> float {
-        return val.n_reads() >= min_reads ? val.get_wmean() : -1.0f;
-      });
+    std::ranges::transform(v, std::begin(u), [&](const auto &x) -> float {
+      return x.n_reads() >= min_reads ? x.get_wmean() : -1.0f;
+    });
     return u;
   }
 
