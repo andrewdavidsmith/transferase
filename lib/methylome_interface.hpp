@@ -26,7 +26,7 @@
 
 #include "client_connection.hpp"
 #include "genome_index.hpp"
-#include "level_container_md.hpp"
+#include "level_container.hpp"
 #include "methylome.hpp"
 #include "request.hpp"
 
@@ -56,7 +56,7 @@ public:
   [[nodiscard]] auto
   get_levels(const request &req, const query_container &query,
              std::error_code &ec) const noexcept
-    -> level_container_md<lvl_elem_t> {
+    -> level_container<lvl_elem_t> {
     return local_mode ? get_levels_local_impl<lvl_elem_t>(req, query, ec)
                       : get_levels_remote_impl<lvl_elem_t>(req, query, ec);
   }
@@ -65,7 +65,7 @@ public:
   template <typename lvl_elem_t>
   [[nodiscard]] auto
   get_levels(const request &req, const genome_index &index, std::error_code &ec)
-    const noexcept -> level_container_md<lvl_elem_t> {
+    const noexcept -> level_container<lvl_elem_t> {
     return local_mode ? get_levels_local_impl<lvl_elem_t>(req, index, ec)
                       : get_levels_remote_impl<lvl_elem_t>(req, ec);
   }
@@ -75,7 +75,7 @@ private:
   [[nodiscard]] auto
   get_levels_remote_impl(const request &req, const query_container &query,
                          std::error_code &ec) const noexcept
-    -> level_container_md<lvl_elem_t> {
+    -> level_container<lvl_elem_t> {
     intervals_client<lvl_elem_t> cl(hostname, port_number, req, query);
     ec = cl.run();
     if (ec)
@@ -87,8 +87,8 @@ private:
   [[nodiscard]] auto
   get_levels_local_impl(const request &req, const query_container &query,
                         std::error_code &ec) const noexcept
-    -> level_container_md<lvl_elem_t> {
-    level_container_md<lvl_elem_t> results(req.n_intervals(),
+    -> level_container<lvl_elem_t> {
+    level_container<lvl_elem_t> results(req.n_intervals(),
                                            req.n_methylomes());
     std::uint32_t col_id = 0;
     for (const auto &methylome_name : req.methylome_names) {
@@ -105,7 +105,7 @@ private:
   template <typename lvl_elem_t>
   [[nodiscard]] auto
   get_levels_remote_impl(const request &req, std::error_code &ec) const noexcept
-    -> level_container_md<lvl_elem_t> {
+    -> level_container<lvl_elem_t> {
     bins_client<lvl_elem_t> cl(hostname, port_number, req);
     ec = cl.run();
     if (ec)
@@ -117,8 +117,8 @@ private:
   [[nodiscard]] auto
   get_levels_local_impl(const request &req, const genome_index &index,
                         std::error_code &ec) const noexcept
-    -> level_container_md<lvl_elem_t> {
-    level_container_md<lvl_elem_t> results(index.get_n_bins(req.bin_size()),
+    -> level_container<lvl_elem_t> {
+    level_container<lvl_elem_t> results(index.get_n_bins(req.bin_size()),
                                            req.n_methylomes());
     std::uint32_t col_id = 0;
     for (const auto &methylome_name : req.methylome_names) {

@@ -24,7 +24,7 @@
 #ifndef LIB_METHYLOME_HPP_
 #define LIB_METHYLOME_HPP_
 
-#include "level_container_md.hpp"
+#include "level_container.hpp"
 #include "level_element.hpp"
 #include "methylome_data.hpp"
 #include "methylome_metadata.hpp"
@@ -243,7 +243,7 @@ struct methylome {
   template <typename lvl_elem_t>
   [[nodiscard]] auto
   get_levels(const transferase::query_container &query) const
-    -> level_container_md<lvl_elem_t> {
+    -> level_container<lvl_elem_t> {
     return data.get_levels<lvl_elem_t>(query);
   }
 
@@ -252,7 +252,7 @@ struct methylome {
   template <typename lvl_elem_t>
   auto
   get_levels(const transferase::query_container &query,
-             level_container_md<lvl_elem_t>::iterator d_first) const -> void {
+             level_container<lvl_elem_t>::iterator d_first) const -> void {
     data.get_levels<lvl_elem_t>(query, d_first);
   }
 
@@ -262,7 +262,7 @@ struct methylome {
   template <typename lvl_elem_t>
   [[nodiscard]] auto
   get_levels(const std::uint32_t bin_size, const genome_index &index) const
-    -> level_container_md<lvl_elem_t> {
+    -> level_container<lvl_elem_t> {
     return data.get_levels<lvl_elem_t>(bin_size, index);
   }
 
@@ -272,7 +272,7 @@ struct methylome {
   template <typename lvl_elem_t>
   auto
   get_levels(const std::uint32_t bin_size, const genome_index &index,
-             level_container_md<lvl_elem_t>::iterator d_first) const -> void {
+             level_container<lvl_elem_t>::iterator d_first) const -> void {
     data.get_levels<lvl_elem_t>(bin_size, index, d_first);
   }
 

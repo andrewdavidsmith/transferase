@@ -25,7 +25,7 @@
 #define LIB_CLIENT_CONNECTION_HPP_
 
 #include "customize_asio.hpp"
-#include "level_container_md.hpp"
+#include "level_container.hpp"
 #include "logger.hpp"
 #include "query_container.hpp"
 #include "request.hpp"
@@ -71,7 +71,7 @@ public:
   }
 
   [[nodiscard]] auto
-  take_levels() -> level_container_md<level_t> {
+  take_levels() -> level_container<level_t> {
     return std::move(resp_container);
   }
 
@@ -260,7 +260,7 @@ private:
   request req{};
   response_header_buffer resp_hdr_buf{};
   response_header resp_hdr{};
-  level_container_md<level_t> resp_container{};
+  level_container<level_t> resp_container{};
   std::error_code status{};
   transfer_stats reply_stats;
 

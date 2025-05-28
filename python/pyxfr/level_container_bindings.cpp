@@ -23,7 +23,7 @@
 
 #include "level_container_bindings.hpp"
 
-#include <level_container_md.hpp>
+#include <level_container.hpp>
 #include <level_element.hpp>
 
 #include <nanobind/nanobind.h>
@@ -49,20 +49,20 @@ namespace nb = nanobind;
 
 auto
 level_container_bindings(
-  nb::class_<transferase::level_container_md<transferase::level_element_t>>
+  nb::class_<transferase::level_container<transferase::level_element_t>>
     &cls) -> void {
   using namespace nanobind::literals;  // NOLINT
-  using level_container_md =
-    transferase::level_container_md<transferase::level_element_t>;
+  using level_container =
+    transferase::level_container<transferase::level_element_t>;
   cls.def(nb::init<>());
-  cls.def("__len__", &level_container_md::size);
-  cls.def_ro("n_rows", &level_container_md::n_rows);
-  cls.def_ro("n_intervals", &level_container_md::n_rows);
-  cls.def_ro("n_cols", &level_container_md::n_cols);
-  cls.def_ro("n_methylomes", &level_container_md::n_cols);
+  cls.def("__len__", &level_container::size);
+  cls.def_ro("n_rows", &level_container::n_rows);
+  cls.def_ro("n_intervals", &level_container::n_rows);
+  cls.def_ro("n_cols", &level_container::n_cols);
+  cls.def_ro("n_methylomes", &level_container::n_cols);
   cls.def(
     "view_nparray",
-    [](level_container_md &self) {
+    [](level_container &self) {
       using nparray = nb::ndarray<std::uint32_t, nb::numpy,
                                   nb::shape<-1, -1, 2>, nb::c_contig>;
       return nparray(self.v.data(), {self.n_cols, self.n_rows, 2}).cast();
@@ -70,7 +70,7 @@ level_container_bindings(
     nb::rv_policy::reference_internal);
   cls.def(
     "at",
-    [](const level_container_md &self, const std::size_t i,
+    [](const level_container &self, const std::size_t i,
        const std::size_t j) -> std::tuple<std::uint32_t, std::uint32_t> {
       if (i >= self.n_rows || j >= self.n_cols)
         throw std::out_of_range("Index out of range");
@@ -93,7 +93,7 @@ level_container_bindings(
     )doc");
   cls.def(
     "get_n_meth",
-    [](const level_container_md &self, const std::size_t i,
+    [](const level_container &self, const std::size_t i,
        const std::size_t j) -> std::uint32_t {
       if (i >= self.n_rows || j >= self.n_cols)
         throw std::out_of_range("Index out of range");
@@ -114,7 +114,7 @@ level_container_bindings(
     )doc");
   cls.def(
     "get_n_unmeth",
-    [](const level_container_md &self, const std::size_t i,
+    [](const level_container &self, const std::size_t i,
        const std::size_t j) -> std::uint32_t {
       if (i >= self.n_rows || j >= self.n_cols)
         throw std::out_of_range("Index out of range");
@@ -135,7 +135,7 @@ level_container_bindings(
     )doc");
   cls.def(
     "get_wmean",
-    [](const level_container_md &self, const std::size_t i,
+    [](const level_container &self, const std::size_t i,
        const std::size_t j) -> float {
       if (i >= self.n_rows || j >= self.n_cols)
         throw std::out_of_range("Index out of range");
@@ -157,7 +157,7 @@ level_container_bindings(
     )doc");
   cls.def(
     "all_wmeans",
-    [](const level_container_md &self, const std::uint32_t min_reads) {
+    [](const level_container &self, const std::uint32_t min_reads) {
       using nparray =
         nb::ndarray<float, nb::numpy, nb::shape<-1, -1, 2>, nb::c_contig>;
       auto m = self.get_wmeans(min_reads);
@@ -178,7 +178,7 @@ level_container_bindings(
         desired depending on your application.
     )doc",
     "min_reads"_a = 0u);
-  cls.def("__str__", [](const level_container_md &self) -> std::string {
+  cls.def("__str__", [](const level_container &self) -> std::string {
     return std::format("MLevels size={}", std::size(self));
   });
   cls.doc() = R"doc(
@@ -194,20 +194,20 @@ level_container_bindings(
 auto
 level_container_covered_bindings(
   nb::class_<
-    transferase::level_container_md<transferase::level_element_covered_t>> &cls)
+    transferase::level_container<transferase::level_element_covered_t>> &cls)
   -> void {
   using namespace nanobind::literals;  // NOLINT
-  using level_container_md =
-    transferase::level_container_md<transferase::level_element_covered_t>;
+  using level_container =
+    transferase::level_container<transferase::level_element_covered_t>;
   cls.def(nb::init<>());
-  cls.def("__len__", &level_container_md::size);
-  cls.def_ro("n_rows", &level_container_md::n_rows);
-  cls.def_ro("n_intervals", &level_container_md::n_rows);
-  cls.def_ro("n_cols", &level_container_md::n_cols);
-  cls.def_ro("n_methylomes", &level_container_md::n_cols);
+  cls.def("__len__", &level_container::size);
+  cls.def_ro("n_rows", &level_container::n_rows);
+  cls.def_ro("n_intervals", &level_container::n_rows);
+  cls.def_ro("n_cols", &level_container::n_cols);
+  cls.def_ro("n_methylomes", &level_container::n_cols);
   cls.def(
     "view_nparray",
-    [](level_container_md &self) {
+    [](level_container &self) {
       using nparray = nb::ndarray<std::uint32_t, nb::numpy,
                                   nb::shape<-1, -1, 3>, nb::c_contig>;
       return nparray(self.v.data(), {self.n_cols, self.n_rows, 3}).cast();
@@ -215,7 +215,7 @@ level_container_covered_bindings(
     nb::rv_policy::reference_internal);
   cls.def(
     "at",
-    [](const level_container_md &self, const std::size_t i, const std::size_t j)
+    [](const level_container &self, const std::size_t i, const std::size_t j)
       -> std::tuple<std::uint32_t, std::uint32_t, std::uint32_t> {
       if (i >= self.n_rows || j >= self.n_cols)
         throw std::out_of_range("Index out of range");
@@ -240,7 +240,7 @@ level_container_covered_bindings(
     )doc");
   cls.def(
     "get_n_meth",
-    [](const level_container_md &self, const std::size_t i,
+    [](const level_container &self, const std::size_t i,
        const std::size_t j) -> std::uint32_t {
       if (i >= self.n_rows || j >= self.n_cols)
         throw std::out_of_range("Index out of range");
@@ -261,7 +261,7 @@ level_container_covered_bindings(
     )doc");
   cls.def(
     "get_n_unmeth",
-    [](const level_container_md &self, const std::size_t i,
+    [](const level_container &self, const std::size_t i,
        const std::size_t j) -> std::uint32_t {
       if (i >= self.n_rows || j >= self.n_cols)
         throw std::out_of_range("Index out of range");
@@ -282,7 +282,7 @@ level_container_covered_bindings(
     )doc");
   cls.def(
     "get_n_covered",
-    [](const level_container_md &self, const std::size_t i,
+    [](const level_container &self, const std::size_t i,
        const std::size_t j) -> std::uint32_t {
       if (i >= self.n_rows || j >= self.n_cols)
         throw std::out_of_range("Index out of range");
@@ -303,7 +303,7 @@ level_container_covered_bindings(
     )doc");
   cls.def(
     "get_wmean",
-    [](const level_container_md &self, const std::size_t i,
+    [](const level_container &self, const std::size_t i,
        const std::size_t j) -> double {
       if (i >= self.n_rows || j >= self.n_cols)
         throw std::out_of_range("Index out of range");
@@ -325,7 +325,7 @@ level_container_covered_bindings(
     )doc");
   cls.def(
     "all_wmeans",
-    [](const level_container_md &self, const std::uint32_t min_reads) {
+    [](const level_container &self, const std::uint32_t min_reads) {
       using nparray =
         nb::ndarray<float, nb::numpy, nb::shape<-1, -1, 2>, nb::c_contig>;
       auto m = self.get_wmeans(min_reads);
@@ -349,7 +349,7 @@ level_container_covered_bindings(
     "min_reads"_a = 0u);
   cls
     .def("__str__",
-         [](const level_container_md &self) -> std::string {
+         [](const level_container &self) -> std::string {
            return std::format("MLevelsCovered size={}", std::size(self));
          })
     .doc() = R"doc(

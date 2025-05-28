@@ -29,7 +29,7 @@
 #include "client_config.hpp"
 #include "genome_index.hpp"
 #include "genome_index_set.hpp"
-#include "level_container_md.hpp"
+#include "level_container.hpp"
 #include "methylome.hpp"
 #include "query_container.hpp"
 
@@ -66,7 +66,7 @@ public:
   [[nodiscard]] auto
   get_levels(const std::vector<std::string> &methylome_names,
              const query_container &query) const
-    -> level_container_md<lvl_elem_t> {
+    -> level_container<lvl_elem_t> {
     std::error_code error{};
     auto result = get_levels_impl<lvl_elem_t>(methylome_names, query, error);
     if (error)
@@ -79,7 +79,7 @@ public:
   [[nodiscard]] auto
   get_levels(const std::vector<std::string> &methylome_names,
              const std::vector<genomic_interval> &intervals) const
-    -> level_container_md<lvl_elem_t> {
+    -> level_container<lvl_elem_t> {
     std::error_code error{};
     const auto [genome_name, _] = methylome::get_genome_info(
       config.get_methylome_dir(), methylome_names.at(0), error);
@@ -100,7 +100,7 @@ public:
   [[nodiscard]] auto
   get_levels(const std::vector<std::string> &methylome_names,
              const std::uint32_t bin_size) const
-    -> level_container_md<lvl_elem_t> {
+    -> level_container<lvl_elem_t> {
     std::error_code error{};
     const auto [genome_name, _] = methylome::get_genome_info(
       config.get_methylome_dir(), methylome_names.at(0), error);
@@ -121,8 +121,8 @@ private:
   [[nodiscard]] auto
   get_levels_impl(const std::vector<std::string> &methylome_names,
                   const query_container &query, std::error_code &error)
-    const noexcept -> level_container_md<lvl_elem_t> {
-    level_container_md<lvl_elem_t> results(std::size(query),
+    const noexcept -> level_container<lvl_elem_t> {
+    level_container<lvl_elem_t> results(std::size(query),
                                            std::size(methylome_names));
     bool first_methylome = true;
     std::uint64_t index_hash = 0;
@@ -150,8 +150,8 @@ private:
   get_levels_impl(const std::vector<std::string> &methylome_names,
                   const genome_index &index, const std::uint32_t bin_size,
                   std::error_code &error) const noexcept
-    -> level_container_md<lvl_elem_t> {
-    level_container_md<lvl_elem_t> results(index.get_n_bins(bin_size),
+    -> level_container<lvl_elem_t> {
+    level_container<lvl_elem_t> results(index.get_n_bins(bin_size),
                                            std::size(methylome_names));
     bool first_methylome = true;
     std::uint64_t index_hash = 0;

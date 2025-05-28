@@ -27,7 +27,7 @@
 #include "genome_index_metadata.hpp"
 #include "genomic_interval.hpp"
 #include "level_container_flat.hpp"
-#include "level_container_md.hpp"  // IWYU pragma: keep
+#include "level_container.hpp"  // IWYU pragma: keep
 #include "level_element.hpp"
 #include "level_element_formatter.hpp"
 
@@ -219,7 +219,7 @@ write_bedlike_intervals_impl(
   const genome_index_metadata &meta,
   const std::vector<genomic_interval> &intervals,
   const std::vector<std::uint32_t> &n_cpgs,
-  const level_container_md<level_element> &levels,
+  const level_container<level_element> &levels,
   const level_element_mode mode
   // clang-format on
   ) noexcept -> std::error_code {
@@ -279,7 +279,7 @@ write_intervals_dfscores_impl(
   const std::vector<genomic_interval> &intervals,
   const std::uint32_t min_reads,
   const std::vector<std::uint32_t> &n_cpgs,
-  const level_container_md<level_element> &levels,
+  const level_container<level_element> &levels,
   const char rowname_delim,
   const bool write_header
   // clang-format on
@@ -346,7 +346,7 @@ write_intervals_dataframe_impl(
   const genome_index_metadata &meta,
   const std::vector<genomic_interval> &intervals,
   const std::vector<std::uint32_t> &n_cpgs,
-  const level_container_md<level_element> &levels,
+  const level_container<level_element> &levels,
   const level_element_mode mode,
   const char rowname_delim,
   const bool write_header
@@ -435,7 +435,7 @@ intervals_writer::write_bedlike_impl(
 template <>
 [[nodiscard]] auto
 intervals_writer::write_bedlike_impl(
-  const level_container_md<level_element_t> &levels,
+  const level_container<level_element_t> &levels,
   const level_element_mode mode) const noexcept -> std::error_code {
   return write_bedlike_intervals_impl(outfile, index.get_metadata(), intervals,
                                       n_cpgs, levels, mode);
@@ -444,7 +444,7 @@ intervals_writer::write_bedlike_impl(
 template <>
 [[nodiscard]] auto
 intervals_writer::write_bedlike_impl(
-  const level_container_md<level_element_covered_t> &levels,
+  const level_container<level_element_covered_t> &levels,
   const level_element_mode mode) const noexcept -> std::error_code {
   return write_bedlike_intervals_impl(outfile, index.get_metadata(), intervals,
                                       n_cpgs, levels, mode);
@@ -475,7 +475,7 @@ intervals_writer::write_dfscores_impl(
 template <>
 [[nodiscard]] auto
 intervals_writer::write_dfscores_impl(
-  const level_container_md<level_element_t> &levels, const char rowname_delim,
+  const level_container<level_element_t> &levels, const char rowname_delim,
   const bool write_header) const noexcept -> std::error_code {
   return write_intervals_dfscores_impl(outfile, names, index.get_metadata(),
                                        intervals, min_reads, n_cpgs, levels,
@@ -485,7 +485,7 @@ intervals_writer::write_dfscores_impl(
 template <>
 [[nodiscard]] auto
 intervals_writer::write_dfscores_impl(
-  const level_container_md<level_element_covered_t> &levels,
+  const level_container<level_element_covered_t> &levels,
   const char rowname_delim,
   const bool write_header) const noexcept -> std::error_code {
   return write_intervals_dfscores_impl(outfile, names, index.get_metadata(),
@@ -518,7 +518,7 @@ intervals_writer::write_dataframe_impl(
 template <>
 [[nodiscard]] auto
 intervals_writer::write_dataframe_impl(
-  const level_container_md<level_element_t> &levels,
+  const level_container<level_element_t> &levels,
   const level_element_mode mode, const char rowname_delim,
   const bool write_header) const noexcept -> std::error_code {
   return write_intervals_dataframe_impl(outfile, names, index.get_metadata(),
@@ -529,7 +529,7 @@ intervals_writer::write_dataframe_impl(
 template <>
 [[nodiscard]] auto
 intervals_writer::write_dataframe_impl(
-  const level_container_md<level_element_covered_t> &levels,
+  const level_container<level_element_covered_t> &levels,
   const level_element_mode mode, const char rowname_delim,
   const bool write_header) const noexcept -> std::error_code {
   return write_intervals_dataframe_impl(outfile, names, index.get_metadata(),

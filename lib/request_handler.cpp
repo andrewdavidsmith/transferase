@@ -24,7 +24,7 @@
 #include "request_handler.hpp"
 
 #include "genome_index.hpp"
-#include "level_container_md.hpp"
+#include "level_container.hpp"
 #include "level_element.hpp"
 #include "logger.hpp"
 #include "methylome.hpp"
@@ -112,7 +112,7 @@ template <>
 auto
 request_handler::intervals_get_levels<level_element_t>(
   const request &req, const query_container &query, response_header &resp_hdr,
-  level_container_md<level_element_t> &resp_data) -> void {
+  level_container<level_element_t> &resp_data) -> void {
   auto &lgr = logger::instance();
   std::error_code ec;
   resp_data.resize(resp_hdr.rows, resp_hdr.cols);
@@ -141,7 +141,7 @@ template <>
 auto
 request_handler::intervals_get_levels<level_element_covered_t>(
   const request &req, const query_container &query, response_header &resp_hdr,
-  level_container_md<level_element_covered_t> &resp_data) -> void {
+  level_container<level_element_covered_t> &resp_data) -> void {
   auto &lgr = logger::instance();
   std::error_code ec;
 
@@ -173,7 +173,7 @@ template <>
 auto
 request_handler::bins_get_levels<level_element_t>(
   const request &req, response_header &resp_hdr,
-  level_container_md<level_element_t> &resp_data) -> void {
+  level_container<level_element_t> &resp_data) -> void {
   auto &lgr = logger::instance();
   std::error_code ec;
   std::shared_ptr<genome_index> index = nullptr;
@@ -215,7 +215,7 @@ template <>
 auto
 request_handler::bins_get_levels<level_element_covered_t>(
   const request &req, response_header &resp_hdr,
-  level_container_md<level_element_covered_t> &resp_data) -> void {
+  level_container<level_element_covered_t> &resp_data) -> void {
   auto &lgr = logger::instance();
   std::error_code ec;
   std::shared_ptr<genome_index> index = nullptr;

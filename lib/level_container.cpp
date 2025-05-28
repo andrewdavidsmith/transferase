@@ -21,7 +21,7 @@
  * SOFTWARE.
  */
 
-#include "level_container_md.hpp"
+#include "level_container.hpp"
 #include "level_element.hpp"
 
 #include <cerrno>
@@ -61,9 +61,9 @@ parse_line(const std::string &line) -> std::vector<level_element_t> {
 }
 
 [[nodiscard]] auto
-read_level_container_md(const std::string &filename,
+read_level_container(const std::string &filename,
                         std::error_code &error) noexcept
-  -> level_container_md<level_element_t> {
+  -> level_container<level_element_t> {
   std::ifstream in(filename);
   if (!in) {
     error = std::make_error_code(std::errc(errno));
@@ -93,15 +93,15 @@ read_level_container_md(const std::string &filename,
       v[i].push_back(row[i]);
     ++n_rows;
   }
-  return level_container_md<level_element_t>(n_rows, n_cols);
+  return level_container<level_element_t>(n_rows, n_cols);
 }
 
 [[nodiscard]] auto
-read_level_container_md_covered(
+read_level_container_covered(
   [[maybe_unused]] const std::string &filename,
   [[maybe_unused]] std::error_code &error) noexcept
-  -> level_container_md<level_element_covered_t> {
-  return level_container_md<level_element_covered_t>();
+  -> level_container<level_element_covered_t> {
+  return level_container<level_element_covered_t>();
 }
 
 }  // namespace transferase

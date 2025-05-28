@@ -36,7 +36,7 @@
 
 namespace transferase {
 
-template <typename level_element_type> struct level_container_md;
+template <typename level_element_type> struct level_container;
 
 static constexpr std::uint32_t resp_hdr_sz = 256;
 typedef std::array<char, resp_hdr_sz> response_header_buffer;
@@ -89,7 +89,7 @@ struct response_payload {
 
   template <typename lvl_elem>
   [[nodiscard]] static auto
-  from_levels(const level_container_md<lvl_elem> &levels,
+  from_levels(const level_container<lvl_elem> &levels,
               std::error_code &error) -> response_payload {
     // ADS: slower than needed; copy happening here is not needed
     error = std::error_code{};  // clear this in case it was set

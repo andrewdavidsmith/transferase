@@ -25,7 +25,7 @@
 
 #include <genome_index.hpp>
 #include <genomic_interval.hpp>
-#include <level_container_md.hpp>
+#include <level_container.hpp>
 #include <logger.hpp>  // ADS: so we can setup the logger
 #include <query_container.hpp>
 #include <query_element.hpp>
@@ -185,7 +185,7 @@ TEST_F(request_handler_mock, intervals_get_levels_success) {
   mock_request_handler->handle_request(req, resp_hdr);
 
   // ADS: payload stays on server side
-  level_container_md<transferase::level_element_t> resp_data;
+  level_container<transferase::level_element_t> resp_data;
   mock_request_handler->intervals_get_levels<transferase::level_element_t>(
     req, query, resp_hdr, resp_data);
 
@@ -219,7 +219,7 @@ TEST_F(request_handler_mock, bins_get_levels_success) {
   EXPECT_EQ(resp_hdr.rows, index.get_n_bins(bin_size)) << resp_hdr.summary();
   EXPECT_EQ(resp_hdr.cols, 1u) << resp_hdr.summary();
 
-  level_container_md<level_element_t> resp_data;
+  level_container<level_element_t> resp_data;
   mock_request_handler->bins_get_levels<level_element_t>(req, resp_hdr,
                                                          resp_data);
 
