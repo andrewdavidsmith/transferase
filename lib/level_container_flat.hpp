@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef LIB_LEVEL_CONTAINER_HPP_
-#define LIB_LEVEL_CONTAINER_HPP_
+#ifndef LIB_LEVEL_CONTAINER_FLAT_HPP_
+#define LIB_LEVEL_CONTAINER_FLAT_HPP_
 
 #include <algorithm>
 #include <concepts>          // for std::integral
@@ -36,7 +36,7 @@
 
 namespace transferase {
 
-template <typename level_element_type> struct level_container {
+template <typename level_element_type> struct level_container_flat {
   std::vector<level_element_type> v;
   typedef level_element_type value_type;
   typedef std::vector<level_element_type>::size_type size_type;
@@ -45,15 +45,15 @@ template <typename level_element_type> struct level_container {
   // of level_element
 
   // clang-format off
-  level_container() = default;
-  explicit level_container(const std::integral auto sz) noexcept : v(sz) {}
-  explicit level_container(std::vector<level_element_type> &&v) noexcept : v(std::move(v)) {}
+  level_container_flat() = default;
+  explicit level_container_flat(const std::integral auto sz) noexcept : v(sz) {}
+  explicit level_container_flat(std::vector<level_element_type> &&v) noexcept : v(std::move(v)) {}
 
   // prevent copying and allow moving
-  level_container(const level_container &) = delete;
-  auto operator=(const level_container &) -> level_container & = delete;
-  level_container(level_container &&) noexcept = default;
-  auto operator=(level_container &&) noexcept -> level_container & = default;
+  level_container_flat(const level_container_flat &) = delete;
+  auto operator=(const level_container_flat &) -> level_container_flat & = delete;
+  level_container_flat(level_container_flat &&) noexcept = default;
+  auto operator=(level_container_flat &&) noexcept -> level_container_flat & = default;
 
   [[nodiscard]] auto begin() {return std::begin(v);}
   [[nodiscard]] auto begin() const {return std::cbegin(v);}
@@ -106,4 +106,4 @@ template <typename level_element_type> struct level_container {
 
 }  // namespace transferase
 
-#endif  // LIB_LEVEL_CONTAINER_HPP_
+#endif  // LIB_LEVEL_CONTAINER_FLAT_HPP_
