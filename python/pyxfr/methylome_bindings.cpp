@@ -24,7 +24,7 @@
 #include "methylome_bindings.hpp"
 
 #include <genome_index.hpp>  // IWYU pragma: keep
-#include <level_container_md.hpp>
+#include <level_container.hpp>
 #include <level_element.hpp>  // for level_element_covered_t (ptr only)
 #include <methylome.hpp>
 #include <query_container.hpp>

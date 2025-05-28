@@ -21,7 +21,7 @@
  * SOFTWARE.
  */
 
-#include <level_container_md.hpp>
+#include <level_container.hpp>
 #include <level_element_formatter.hpp>
 
 #include <bins_writer.hpp>
@@ -50,23 +50,23 @@
 
 using namespace transferase;  // NOLINT
 
-TEST(level_container_md_test, default_constructor) {
-  level_container_md<level_element_t> container;
+TEST(level_container_test, default_constructor) {
+  level_container<level_element_t> container;
   EXPECT_EQ(container.n_rows, 0u);
   EXPECT_EQ(container.n_cols, 0u);
   EXPECT_TRUE(container.v.empty());
 }
 
-TEST(level_container_md_test, parameterized_constructor) {
+TEST(level_container_test, parameterized_constructor) {
   constexpr std::uint32_t n_rows = 2;
   constexpr std::uint32_t n_cols = 3;
-  level_container_md<level_element_t> container(2, 3);
+  level_container<level_element_t> container(2, 3);
   EXPECT_EQ(container.n_rows, n_rows);
   EXPECT_EQ(container.n_cols, n_cols);
   EXPECT_EQ(std::size(container), n_rows * n_cols);
 }
 
-TEST(level_container_md_test, vector_constructor) {
+TEST(level_container_test, vector_constructor) {
   constexpr std::uint32_t n_rows = 3;
   constexpr std::uint32_t n_cols = 1;
   auto vec = std::vector{
@@ -74,18 +74,18 @@ TEST(level_container_md_test, vector_constructor) {
     level_element_t{3, 4},
     level_element_t{5, 6},
   };
-  level_container_md<level_element_t> container(std::move(vec));
+  level_container<level_element_t> container(std::move(vec));
   EXPECT_EQ(container.n_rows, n_rows);
   EXPECT_EQ(container.n_cols, n_cols);
   EXPECT_EQ(container.v.size(), n_rows * n_cols);
   EXPECT_EQ((container[2, 0]), level_element_t(5, 6));
 }
 
-class level_container_md_mock : public ::testing::Test {
+class level_container_mock : public ::testing::Test {
 protected:
   auto
   SetUp() -> void override {
-    container = level_container_md<level_element_t>(n_rows, n_cols);
+    container = level_container<level_element_t>(n_rows, n_cols);
     container[0, 0] = level_element_t{1, 2};
     container[1, 0] = level_element_t{3, 4};
     container[2, 0] = level_element_t{5, 6};
@@ -98,7 +98,7 @@ protected:
   TearDown() -> void override {}
 
 public:
-  level_container_md<level_element_t> container;
+  level_container<level_element_t> container;
   const std::string expected_str = "1\t2\t7\t8\n"
                                    "3\t4\t9\t10\n"
                                    "5\t6\t11\t12\n";
@@ -106,7 +106,7 @@ public:
   const std::uint32_t n_cols = 2;
 };
 
-TEST_F(level_container_md_mock, access_operator) {
+TEST_F(level_container_mock, access_operator) {
   EXPECT_EQ((container[0, 0]), level_element_t(1, 2));
   EXPECT_EQ((container[1, 0]), level_element_t(3, 4));
   EXPECT_EQ((container[2, 0]), level_element_t(5, 6));
@@ -115,36 +115,36 @@ TEST_F(level_container_md_mock, access_operator) {
   EXPECT_EQ((container[2, 1]), level_element_t(11, 12));
 }
 
-TEST_F(level_container_md_mock, resize) {
+TEST_F(level_container_mock, resize) {
   constexpr std::uint32_t new_size = 10;
   container.resize(new_size);
   EXPECT_EQ(std::size(container), new_size);
 }
 
-TEST_F(level_container_md_mock, reserve) {
+TEST_F(level_container_mock, reserve) {
   constexpr std::uint32_t new_capacity = 10;
   container.reserve(new_capacity);
   EXPECT_LE(std::size(container), new_capacity);
 }
 
-TEST_F(level_container_md_mock, get_n_bytes) {
+TEST_F(level_container_mock, get_n_bytes) {
   EXPECT_EQ(container.get_n_bytes(), sizeof(level_element_t) * n_rows * n_cols);
 }
 
-TEST_F(level_container_md_mock, data_methods) {
+TEST_F(level_container_mock, data_methods) {
   const auto data_ptr = container.data();
   EXPECT_NE(data_ptr, nullptr);
   const auto const_data_ptr =
-    static_cast<const level_container_md<level_element_t> &>(container).data();
+    static_cast<const level_container<level_element_t> &>(container).data();
   EXPECT_NE(const_data_ptr, nullptr);
 }
 
-TEST_F(level_container_md_mock, tostring) {
+TEST_F(level_container_mock, tostring) {
   const std::string s = container.tostring();
   EXPECT_EQ(s, expected_str) << s;
 }
 
-TEST_F(level_container_md_mock, roundtrip_test) {
+TEST_F(level_container_mock, roundtrip_test) {
   const auto tmp_filename = generate_temp_filename("tmp");
   std::ofstream out(tmp_filename);
   if (!out)
@@ -154,14 +154,14 @@ TEST_F(level_container_md_mock, roundtrip_test) {
   out.close();
 
   std::error_code error;
-  const auto from_file = read_level_container_md(tmp_filename, error);
+  const auto from_file = read_level_container(tmp_filename, error);
   EXPECT_FALSE(error) << error.message();
 
   remove_file(tmp_filename, error);
   EXPECT_FALSE(error);
 }
 
-TEST_F(level_container_md_mock, write_with_intervals_writer_test) {
+TEST_F(level_container_mock, write_with_intervals_writer_test) {
   using std::literals::string_literals::operator""s;
   const std::uint32_t min_reads = 0;
   const auto methylomes_names = std::vector{
@@ -207,7 +207,7 @@ TEST_F(level_container_md_mock, write_with_intervals_writer_test) {
   };
   // clang-format on
 
-  // write the level_container_md
+  // write the level_container
   std::error_code write_container_err =
     writer_bedlike.write_bedlike(container, level_element_mode::classic);
   EXPECT_FALSE(write_container_err) << write_container_err.message();
@@ -250,7 +250,7 @@ TEST_F(level_container_md_mock, write_with_intervals_writer_test) {
   };
   // clang-format on
 
-  // write the level_container_md
+  // write the level_container
   write_container_err =
     writer_dataframe.write_dataframe(container, level_element_mode::counts);
   EXPECT_FALSE(write_container_err) << write_container_err.message();
@@ -293,7 +293,7 @@ TEST_F(level_container_md_mock, write_with_intervals_writer_test) {
   };
   // clang-format on
 
-  // write the level_container_md
+  // write the level_container
   write_container_err = writer_dataframe_scores.write_dfscores(container);
   EXPECT_FALSE(write_container_err) << write_container_err.message();
 
@@ -320,7 +320,7 @@ TEST_F(level_container_md_mock, write_with_intervals_writer_test) {
   EXPECT_FALSE(error);
 }
 
-TEST_F(level_container_md_mock, write_with_bins_writer_test) {
+TEST_F(level_container_mock, write_with_bins_writer_test) {
   using std::literals::string_literals::operator""s;
   const std::uint32_t bin_size = 2;
   const std::uint32_t min_reads = 1;
@@ -363,7 +363,7 @@ TEST_F(level_container_md_mock, write_with_bins_writer_test) {
   };
   // clang-format on
 
-  // write the level_container_md
+  // write the level_container
   std::error_code write_container_err =
     writer_bedlike.write_bedlike(container, level_element_mode::classic);
   EXPECT_FALSE(write_container_err) << write_container_err.message();
@@ -408,7 +408,7 @@ TEST_F(level_container_md_mock, write_with_bins_writer_test) {
   };
   // clang-format on
 
-  // write the level_container_md
+  // write the level_container
   write_container_err =
     writer_dataframe.write_dataframe(container, level_element_mode::counts);
   EXPECT_FALSE(write_container_err) << write_container_err.message();
@@ -453,7 +453,7 @@ TEST_F(level_container_md_mock, write_with_bins_writer_test) {
   };
   // clang-format on
 
-  // write the level_container_md
+  // write the level_container
   write_container_err = writer_dataframe_scores.write_dfscores(container);
   EXPECT_FALSE(write_container_err) << write_container_err.message();
 
@@ -483,7 +483,7 @@ TEST_F(level_container_md_mock, write_with_bins_writer_test) {
   }
 }
 
-TEST_F(level_container_md_mock, add_column_test) {
+TEST_F(level_container_mock, add_column_test) {
   const auto col_to_add = std::vector{
     level_element_t{13, 14},
     level_element_t{15, 16},

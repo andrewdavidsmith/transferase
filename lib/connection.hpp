@@ -24,7 +24,7 @@
 #ifndef LIB_CONNECTION_HPP_
 #define LIB_CONNECTION_HPP_
 
-#include "level_container_md.hpp"
+#include "level_container.hpp"
 #include "level_element.hpp"
 #include "logger.hpp"
 #include "query_container.hpp"
@@ -105,8 +105,8 @@ struct connection : public std::enable_shared_from_this<connection> {
   query_container query;                  // 'query' is its own buffer
 
   // ADS: keeping both resp and resp_cov is intended (so far)
-  level_container_md<level_element_t> resp;
-  level_container_md<level_element_covered_t> resp_cov;
+  level_container<level_element_t> resp;
+  level_container<level_element_covered_t> resp_cov;
 
   logger &lgr;
   std::uint32_t conn_id{};  // identifies this connection for logging purposes

@@ -189,7 +189,7 @@ init_logger() -> void {
 
 [[nodiscard]] static inline auto
 convert_to_numeric_matrix(
-  const transferase::level_container_md<transferase::level_element_t> &levels)
+  const transferase::level_container<transferase::level_element_t> &levels)
   -> Rcpp::NumericMatrix {
   Rcpp::NumericMatrix m(levels.n_rows, 2 * levels.n_cols);
   for (const auto row_id : std::views::iota(0u, levels.n_rows))
@@ -233,7 +233,7 @@ query_intervals(const Rcpp::XPtr<transferase::remote_client> client,
 
 [[nodiscard]] static inline auto
 convert_to_numeric_matrix(
-  const transferase::level_container_md<transferase::level_element_covered_t>
+  const transferase::level_container<transferase::level_element_covered_t>
     &levels) -> Rcpp::NumericMatrix {
   Rcpp::NumericMatrix m(levels.n_rows, 3 * levels.n_cols);
   for (const auto row_id : std::views::iota(0u, levels.n_rows))

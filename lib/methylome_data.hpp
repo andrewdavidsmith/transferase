@@ -24,7 +24,7 @@
 #ifndef LIB_METHYLOME_DATA_HPP_
 #define LIB_METHYLOME_DATA_HPP_
 
-#include "level_container_md.hpp"
+#include "level_container.hpp"
 
 #include <algorithm>
 #include <cmath>     // for std::round
@@ -131,13 +131,13 @@ struct methylome_data {
   template <typename lvl_elem_t>
   [[nodiscard]] auto
   get_levels(const transferase::query_container &query) const noexcept
-    -> level_container_md<lvl_elem_t>;
+    -> level_container<lvl_elem_t>;
 
   /// @brief Get methylation levels for each of a set of query intervals.
   template <typename lvl_elem_t>
   auto
   get_levels(const transferase::query_container &query,
-             level_container_md<lvl_elem_t>::iterator d_first) const noexcept
+             level_container<lvl_elem_t>::iterator d_first) const noexcept
     -> void;
 
   /// Get global methylation levels.
@@ -149,13 +149,13 @@ struct methylome_data {
   template <typename lvl_elem_t>
   [[nodiscard]] auto
   get_levels(const std::uint32_t bin_size, const genome_index &index)
-    const noexcept -> level_container_md<lvl_elem_t>;
+    const noexcept -> level_container<lvl_elem_t>;
 
   /// @brief Get methylation levels for each fixed size bin in the genome.
   template <typename lvl_elem_t>
   auto
   get_levels(const std::uint32_t bin_size, const genome_index &index,
-             level_container_md<lvl_elem_t>::iterator d_first) const noexcept
+             level_container<lvl_elem_t>::iterator d_first) const noexcept
     -> void;
 
   [[nodiscard]] static auto

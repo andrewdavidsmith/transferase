@@ -35,7 +35,7 @@ namespace transferase {
 struct request;
 struct response_header;
 struct query_container;
-template <typename level_element_type> struct level_container_md;
+template <typename level_element_type> struct level_container;
 
 /// @brief A handler that is shared by all connections; holds
 /// methylomes and genome indexes in memory.
@@ -67,13 +67,13 @@ struct request_handler {
   auto
   intervals_get_levels(const request &req, const query_container &query,
                        response_header &resp_hdr,
-                       level_container_md<lvl_elem_t> &resp_data) -> void;
+                       level_container<lvl_elem_t> &resp_data) -> void;
 
   /// Handle a request to get levels for query bins.
   template <typename lvl_elem_t>
   auto
   bins_get_levels(const request &req, response_header &resp_hdr,
-                  level_container_md<lvl_elem_t> &resp_data) -> void;
+                  level_container<lvl_elem_t> &resp_data) -> void;
 
   /// @brief Directory on the local filesystem with methylomes
   std::string methylome_dir;

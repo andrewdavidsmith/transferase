@@ -41,7 +41,7 @@
 
 namespace transferase {
 
-template <typename level_element_type> struct level_container_md {
+template <typename level_element_type> struct level_container {
   std::uint32_t n_rows{};
   std::uint32_t n_cols{};
   std::vector<level_element_type> v;
@@ -54,18 +54,18 @@ template <typename level_element_type> struct level_container_md {
   // of level_element
 
   // clang-format off
-  level_container_md() = default;
-  explicit level_container_md(const std::integral auto n_rows,
+  level_container() = default;
+  explicit level_container(const std::integral auto n_rows,
                               const std::integral auto n_cols) noexcept :
     n_rows(n_rows), n_cols(n_cols), v(n_rows*n_cols) {}
-  explicit level_container_md(std::vector<level_element_type> &&v) noexcept :
+  explicit level_container(std::vector<level_element_type> &&v) noexcept :
     n_rows(std::size(v)), n_cols(1), v(std::move(v)) {}
 
   // prevent copying and allow moving
-  level_container_md(const level_container_md &) = delete;
-  auto operator=(const level_container_md &) -> level_container_md & = delete;
-  level_container_md(level_container_md &&) = default;
-  auto operator=(level_container_md &&) -> level_container_md & = default;
+  level_container(const level_container &) = delete;
+  auto operator=(const level_container &) -> level_container & = delete;
+  level_container(level_container &&) = default;
+  auto operator=(level_container &&) -> level_container & = default;
 
   [[nodiscard]] auto
   operator[](const std::integral auto i,
@@ -171,7 +171,7 @@ template <typename level_element_type> struct level_container_md {
     return s;
   }
 
-  /// Add a column by growing the level_container_md underlying memory and
+  /// Add a column by growing the level_container underlying memory and
   /// copying the new column values into place.
   auto
   add_column(const auto &c) noexcept {
@@ -183,14 +183,14 @@ template <typename level_element_type> struct level_container_md {
 };
 
 [[nodiscard]] auto
-read_level_container_md(const std::string &filename,
+read_level_container(const std::string &filename,
                         std::error_code &error) noexcept
-  -> level_container_md<level_element_t>;
+  -> level_container<level_element_t>;
 
 [[nodiscard]] auto
-read_level_container_md_covered(const std::string &filename,
+read_level_container_covered(const std::string &filename,
                                 std::error_code &error) noexcept
-  -> level_container_md<level_element_covered_t>;
+  -> level_container<level_element_covered_t>;
 
 }  // namespace transferase
 

@@ -29,7 +29,7 @@
 #include "client_connection.hpp"
 #include "genome_index.hpp"
 #include "genome_index_set.hpp"
-#include "level_container_md.hpp"
+#include "level_container.hpp"
 #include "query_container.hpp"
 #include "request.hpp"
 #include "request_type_code.hpp"
@@ -69,7 +69,7 @@ public:
   [[nodiscard]] auto
   get_levels(
     const std::string &genome, const std::vector<std::string> &methylome_names,
-    const query_container &query) const -> level_container_md<lvl_elem_t> {
+    const query_container &query) const -> level_container<lvl_elem_t> {
     request_type_code req_type = request_type_code::intervals;
     if constexpr (std::is_same_v<lvl_elem_t, level_element_covered_t>)
       req_type = request_type_code::intervals_covered;
@@ -91,7 +91,7 @@ public:
   get_levels(const std::string &genome,
              const std::vector<std::string> &methylome_names,
              const std::vector<genomic_interval> &intervals) const
-    -> level_container_md<lvl_elem_t> {
+    -> level_container<lvl_elem_t> {
     request_type_code req_type = request_type_code::intervals;
     if constexpr (std::is_same_v<lvl_elem_t, level_element_covered_t>)
       req_type = request_type_code::intervals_covered;
@@ -113,7 +113,7 @@ public:
   [[nodiscard]] auto
   get_levels(
     const std::string &genome, const std::vector<std::string> &methylome_names,
-    const std::uint32_t bin_size) const -> level_container_md<lvl_elem_t> {
+    const std::uint32_t bin_size) const -> level_container<lvl_elem_t> {
     request_type_code req_type = request_type_code::bins;
     if constexpr (std::is_same_v<lvl_elem_t, level_element_covered_t>)
       req_type = request_type_code::bins_covered;
@@ -134,7 +134,7 @@ private:
   [[nodiscard]] auto
   get_levels_impl(const request &req, const query_container &query,
                   std::error_code &error) const noexcept
-    -> level_container_md<lvl_elem_t> {
+    -> level_container<lvl_elem_t> {
     intervals_client<lvl_elem_t> cl(config.hostname, config.port, req, query);
     error = cl.run();
     if (error)
@@ -145,7 +145,7 @@ private:
   template <typename lvl_elem_t>
   [[nodiscard]] auto
   get_levels_impl(const request &req, std::error_code &error) const noexcept
-    -> level_container_md<lvl_elem_t> {
+    -> level_container<lvl_elem_t> {
     bins_client<lvl_elem_t> cl(config.hostname, config.port, req);
     error = cl.run();
     if (error)
