@@ -110,6 +110,7 @@ specific biological questions.
   sh transferase-0.6.2-Linux.sh --prefix=/desired/install/location
   /desired/install/location/bin/xfr  # check that it worked
   ```
+
 - **Mac**
   The transferase binary for Mac is a "universal binary" and
   should work on any Mac. It is built to work on Ventura or later, but it has
