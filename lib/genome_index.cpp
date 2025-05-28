@@ -290,7 +290,7 @@ make_genome_index_plain(const std::string &genome_filename,
   // chroms is a view into 'gf.data' so don't free gf.data too early
   auto chroms = get_chroms(gf.data, gf.sz, name_starts, name_stops);
 
-  // NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+  // NOLINTEND(*-pointer-arithmetic)
 
   // order chrom sequences by the sorted order of their names
   chroms = std::views::transform(chrom_sorter | std::views::elements<0>,
