@@ -6,7 +6,7 @@
 - [Installation](#installation)
 - [Command line app](docs/command_line.md)
 - [The Python package](docs/pyxfr.md)
-- [The R package](docs/rxfr.md)
+- [The R package](docs/Rxfr.md)
 - [All documentation](docs)
 
 ## What is transferase?
@@ -66,7 +66,7 @@ specific biological questions.
   details about available methylomes (hit 'd' to turn on details).
 
 * The transferase Python package, pyxfr, can now be installed using
-  [pip](https://pypi.org/project/pyxfr/0.6.1) with Python >= 3.12 on Linux
+  [pip](https://pypi.org/project/pyxfr/0.6.2) with Python >= 3.12 on Linux
   and macOS:
   ```console
   pip install pyxfr
