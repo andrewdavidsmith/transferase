@@ -1,4 +1,4 @@
-name: Release on macOS
+name: Release (macOS)
 
 on:
   workflow_dispatch:
