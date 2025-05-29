@@ -1,4 +1,4 @@
-name: Build transferase on macOS
+name: Build (macOS)
 
 on:
   pull_request:

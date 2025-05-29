@@ -1,4 +1,4 @@
-name: Run unit tests on macOS
+name: Unit tests (macOS)
 
 # Should run at 2am Pacific time
 on:
