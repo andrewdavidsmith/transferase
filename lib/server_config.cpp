@@ -232,4 +232,16 @@ server_config::validate(std::error_code &error) const noexcept -> bool {
   return true;
 }
 
+[[nodiscard]] auto
+server_config::get_default_pid_file() const noexcept -> std::string {
+  return std::filesystem::path{"var"} / std::filesystem::path{"run"} /
+         std::filesystem::path{"TRANSFERASE_SERVER_PID"};
+}
+
+[[nodiscard]] auto
+server_config::get_default_log_file() const noexcept -> std::string {
+  return std::filesystem::path{"var"} / std::filesystem::path{"log"} /
+         std::filesystem::path{"transferase_server.log"};
+}
+
 }  // namespace transferase

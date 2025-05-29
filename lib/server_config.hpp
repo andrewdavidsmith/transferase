@@ -74,6 +74,14 @@ struct server_config {
   [[nodiscard]] auto
   get_log_file() const noexcept -> std::string;
 
+  /// Get the path to the default pid file
+  [[nodiscard]] auto
+  get_default_pid_file() const noexcept -> std::string;
+
+  /// Get the path to the default log file
+  [[nodiscard]] auto
+  get_default_log_file() const noexcept -> std::string;
+
   /// Initialize any empty values by reading the config file
   auto
   read_config_file_no_overwrite(const std::string &config_file,
