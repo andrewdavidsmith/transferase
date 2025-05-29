@@ -1,4 +1,4 @@
-name: Run unit (Ubuntu)
+name: Unit tests (Ubuntu)
 
 # Should run at 2am Pacific time
 on:
