@@ -145,18 +145,18 @@ validate_groups(const std::string &genome, const std::string &metadata_file,
   }
 }
 
-struct methylome_info {
+struct meth_meta {
   static constexpr auto sep = " | ";
   static constexpr std::int32_t sep_size = 3;
   std::string accession;
   std::string label;
-  std::string metadata;
+  std::string details;
 
   [[nodiscard]] auto
   detail_size() const -> std::int32_t {
     // ADS: the "+ 3" below is for the separator std::size(" | ");
     // NOLINTNEXTLINE (*-narrowing-conversions)
-    return std::size(label) + std::size(metadata) + sep_size;
+    return std::size(label) + std::size(details) + sep_size;
   }
 
   [[nodiscard]] auto
@@ -166,7 +166,7 @@ struct methylome_info {
     auto acn = std::format("{}: ", accession);
     auto sample_name = label;
     if (show_details)
-      sample_name += std::format("{}{}", sep, metadata);
+      sample_name += std::format("{}{}", sep, details);
     // If the horizontal position within the sample would be larger than the
     // sample name, just return the label
     if (horiz_pos > std::ssize(sample_name))
@@ -179,7 +179,7 @@ struct methylome_info {
 
 [[nodiscard]] auto
 load_data(const std::string &json_filename)
-  -> std::map<std::string, std::vector<methylome_info>> {
+  -> std::map<std::string, std::vector<meth_meta>> {
   static constexpr auto err_msg_fmt =
     "Failed to parse file: {}. Ensure xfr config was run and succeeded.\n"
     "If an input file was specified, verify the file format.";
@@ -201,10 +201,9 @@ load_data(const std::string &json_filename)
     throw std::runtime_error(std::format(err_msg_fmt, json_filename));
   }
 
-  std::map<std::string, std::vector<methylome_info>> r;
-  const auto to_vec_key_vals =
-    [&](const auto &x) -> std::vector<methylome_info> {
-    std::vector<methylome_info> v;
+  std::map<std::string, std::vector<meth_meta>> r;
+  const auto to_vec_key_vals = [&](const auto &x) -> std::vector<meth_meta> {
+    std::vector<meth_meta> v;
     for (const auto &u : x)
       if (!u.second.empty())
         v.emplace_back(u.first, u.second.front(), u.second.back());
@@ -223,6 +222,13 @@ mvprintw_wrap(const int y, const int x, const std::string &s) {
   if (ret != OK)
     throw std::runtime_error(
       std::format("Error updating display (writing: {})", s));
+}
+
+static auto
+mvprintw_wrap(int y, const int x, const std::vector<std::string> &lines) {
+  std::int32_t i = y;
+  for (const auto &line : lines)
+    mvprintw_wrap(i++, x, line);
 }
 
 [[nodiscard]] static inline auto
@@ -248,7 +254,8 @@ update_cursor_pos(const int ch, const std::int32_t cursor_pos,
 }
 
 [[nodiscard]] static inline auto
-get_to_show(const auto &filtered, const auto disp_start, const auto disp_end) {
+get_elements_to_display(const auto &filtered, const auto disp_start,
+                        const auto disp_end) {
   const auto i = std::cbegin(filtered);
   return std::ranges::subrange(i + disp_start, i + disp_end);
 }
@@ -261,7 +268,7 @@ format_current_entry(const auto &entry, const auto horiz_pos,
 
   auto sample_name = entry.label;
   if (show_details)
-    sample_name += std::format(" | {}", entry.metadata);
+    sample_name += std::format(" | {}", entry.details);
 
   // If the horizontal position within the sample would be larger than the
   // same name, just return the label
@@ -309,6 +316,13 @@ do_remove(const auto &filtered, const auto cursor_pos, auto &selected_keys) {
     selected_keys.erase(curr_fltr->accession);
 }
 
+[[nodiscard]] static inline auto
+get_display_start(const std::int32_t n_items, const std::int32_t n_lines,
+                  const std::int32_t cursor_pos) -> std::int32_t {
+  return std::max(
+    0, std::min(n_items - n_lines, std::max(0, cursor_pos - n_lines / 2)));
+}
+
 static inline auto
 show_selected_keys(const auto &selected_keys) {
   using std::string_literals::operator""s;
@@ -338,26 +352,26 @@ show_selected_keys(const auto &selected_keys) {
   std::ranges::sort(data);
 
   while (true) {
+    // define n_lines here in case terminal is resized
     const auto n_lines = LINES - header_height - footer_height;
-    const auto disp_start = std::max(
-      0, std::min(n_items - n_lines, std::max(0, cursor_pos - n_lines / 2)));
+    const auto disp_start = get_display_start(n_items, n_lines, cursor_pos);
     const auto disp_end = std::min(n_items, disp_start + n_lines);
-    const auto to_show = get_to_show(data, disp_start, disp_end);
+    const auto display = get_elements_to_display(data, disp_start, disp_end);
 
     erase();  // performs better than using clear();
     mvprintw_wrap(0, 0, header_line);
     idx = 0;
-    for (const auto &k : to_show) {
+    for (const auto &key : display) {
       const auto data_idx = disp_start + idx;  // global data index
       if (data_idx == cursor_pos)
         attron(COLOR_PAIR(2));
-      mvprintw_wrap(header_height + idx, 0, k);
-      attroff(COLOR_PAIR(2));
+      mvprintw_wrap(header_height + idx, 0, key);
+      if (data_idx == cursor_pos)
+        attroff(COLOR_PAIR(2));
       ++idx;  // enumerate
     }
     refresh();
 
-    // user input
     const auto ch = getch();
     if (ch == escape_key_code)
       break;
@@ -367,6 +381,9 @@ show_selected_keys(const auto &selected_keys) {
 
 [[nodiscard]] static inline auto
 get_groupname(std::string &groupname) -> bool {
+  static constexpr auto header_fmt = "use alphanumeric '.' '_' | "
+                                     "enter to confirm | esc to cancel\n"
+                                     "name: {}";
   static constexpr auto escape_key_code = 27;
   static constexpr auto enter_key_code = 10;
 
@@ -380,9 +397,7 @@ get_groupname(std::string &groupname) -> bool {
 
   while (true) {
     clear();
-    mvprintw_wrap(0, 0, "use alphanumeric characters or '.', '_'.");
-    mvprintw_wrap(1, 0, "enter to confirm. esc to cancel");
-    mvprintw_wrap(2, 0, std::format("Name: {}", groupname));
+    mvprintw_wrap(0, 0, std::format(header_fmt, groupname));
     refresh();
     const int ch = getch();
     if (ch == escape_key_code) {
@@ -472,16 +487,15 @@ remove_from_group(const std::string &group_name, auto &data,
 }
 
 static inline auto
-show_group(const std::string &group_name, auto &group, const auto &labels,
-           const auto &metadata) {
+show_group(const std::string &group_name, auto &group, const auto &info) {
   using std::string_literals::operator""s;
   static constexpr auto sep = " | ";
   static constexpr std::int32_t header_height = 1;
   static constexpr std::int32_t footer_height = 0;
   static constexpr auto escape_key_code = 27;
-  static constexpr auto header_line =
+  static constexpr auto hdr_fmt =
     "group: {} | esc to exit | arrows to navigate | del to remove entry | "
-    "d to toggle detail";
+    "d to toggle detail | item {}/{}";
   clear();
 
   // NOLINTNEXTLINE (*-narrowing-conversions)
@@ -499,16 +513,15 @@ show_group(const std::string &group_name, auto &group, const auto &labels,
   std::int32_t current_line_width = 0;
 
   while (true) {
+    // define n_lines here in case terminal is resized
     const auto n_lines = LINES - header_height - footer_height;
-    const auto disp_start = std::max(
-      0, std::min(n_items - n_lines, std::max(0, cursor_pos - n_lines / 2)));
+    const auto disp_start = get_display_start(n_items, n_lines, cursor_pos);
     const auto disp_end = std::min(n_items, disp_start + n_lines);
-    const auto to_show = get_to_show(data, disp_start, disp_end);
+    const auto to_show = get_elements_to_display(data, disp_start, disp_end);
 
     erase();  // performs better than using clear();
     mvprintw_wrap(0, 0,
-                  std::format(header_line, group_name) +
-                    std::format(" item {}/{}", cursor_pos + 1, n_items));
+                  std::format(hdr_fmt, group_name, cursor_pos + 1, n_items));
     idx = 0;
     for (const auto &k : to_show) {
       const auto &alt_name = k.first;
@@ -516,27 +529,23 @@ show_group(const std::string &group_name, auto &group, const auto &labels,
       const auto data_idx = disp_start + idx;  // global data index
       if (data_idx == cursor_pos)
         attron(COLOR_PAIR(2));
-      const auto labels_itr = labels.find(accession);
-      if (labels_itr == std::cend(labels))
-        throw std::runtime_error("failed to find label for " + accession);
-      const auto meta_itr = metadata.find(accession);
-      if (meta_itr == std::cend(metadata))
-        throw std::runtime_error("failed to find metadata for " + accession);
+      const auto info_itr = info.find(accession);
+      if (info_itr == std::cend(info))
+        throw std::runtime_error("failed to find info for " + accession);
       std::string line = std::format("{}: {}", alt_name, accession);
       std::string extra_line;
       if (display_mode >= 1) {
         line += sep;
-        extra_line += std::format("{}", labels_itr->second);
+        extra_line += std::format("{}", info_itr->second.label);
       }
       if (display_mode >= 2)
-        extra_line += std::format("{}{}", sep, meta_itr->second);
+        extra_line += std::format("{}{}", sep, info_itr->second.details);
 
       if (data_idx == cursor_pos) {
         // NOLINTNEXTLINE (*-narrowing-conversions)
         current_line_width = std::size(line) + std::size(extra_line);
         if (current_line_width >= COLS)
-          extra_line =
-            extra_line.substr(horiz_pos);  // , COLS - current_line_width);
+          extra_line = extra_line.substr(horiz_pos);
       }
 
       line += extra_line;
@@ -573,9 +582,8 @@ show_group(const std::string &group_name, auto &group, const auto &labels,
       horiz_pos = 0;
       if (n_items == 1) {
         clear();
-        mvprintw_wrap(0, 0, std::format(header_line, group_name));
         mvprintw_wrap(
-          1, 0,
+          0, 0,
           "no empty groups -- remove group instead -- any key to resume"s);
         refresh();
         getch();  // any key will go back to list for selection
@@ -604,7 +612,7 @@ no_groups_defined(const std::string &header_line) {
 }
 
 static inline auto
-show_groups(auto &groups, const auto &labels, const auto &metadata) {
+show_groups(auto &groups, const auto &info) {
   using std::string_literals::operator""s;
   static constexpr std::int32_t header_height = 1;
   static constexpr std::int32_t footer_height = 0;
@@ -632,23 +640,24 @@ show_groups(auto &groups, const auto &labels, const auto &metadata) {
     const auto disp_start = std::max(
       0, std::min(n_items - n_lines, std::max(0, cursor_pos - n_lines / 2)));
     const auto disp_end = std::min(n_items, disp_start + n_lines);
-    const auto to_show = get_to_show(data, disp_start, disp_end);
+    const auto to_show = get_elements_to_display(data, disp_start, disp_end);
 
     erase();  // performs better than using clear();
     mvprintw_wrap(0, 0,
                   header_line +
                     std::format(" | item {}/{}", cursor_pos + 1, n_items));
     idx = 0;
-    for (const auto &k : to_show) {
+    for (const auto &group_name : to_show) {
       const auto data_idx = disp_start + idx;  // global data index
       if (data_idx == cursor_pos)
         attron(COLOR_PAIR(2));
 
-      const auto itr = groups.find(k);
+      const auto itr = groups.find(group_name);
       if (itr == std::cend(groups))
-        throw std::runtime_error(std::format("failed to find group {}", k));
+        throw std::runtime_error("failed to find group " + group_name);
 
-      const auto line = std::format("{}: {}", k, std::size(itr->second));
+      const auto line =
+        std::format("{}: {}", group_name, std::size(itr->second));
       mvprintw_wrap(header_height + idx, 0, line);
 
       attroff(COLOR_PAIR(2));
@@ -667,7 +676,7 @@ show_groups(auto &groups, const auto &labels, const auto &metadata) {
       const auto itr = groups.find(name);
       if (itr == std::cend(groups))
         throw std::runtime_error(std::format("failed to find group {}", name));
-      show_group(itr->first, itr->second, labels, metadata);
+      show_group(itr->first, itr->second, info);
       continue;
     }
 
@@ -720,35 +729,34 @@ static inline auto
 show_help() {
   using std::literals::string_view_literals::operator""sv;
   static constexpr auto keys = std::array{
-    std::pair{"Up arrow"sv, "Up one item (wrap at top)"sv},
-    std::pair{"Down arrow"sv, "Down one item (wrap at bottom)"sv},
-    std::pair{"Right arrow"sv, "Scroll right (if needed)"sv},
-    std::pair{"Down arrow"sv, "Scroll left (if needed)"sv},
-    std::pair{"Page up"sv, "Move up one page"sv},
-    std::pair{"Page down"sv, "Move down one page"sv},
-    std::pair{"Home"sv, "Move to the beginning of the list"sv},
-    std::pair{"End"sv, "Move to the end of the list"sv},
-    std::pair{"Space/Enter"sv, "Select or deselect current item"sv},
+    std::pair{"up"sv, "Move up one item (wrap at top)"sv},
+    std::pair{"down"sv, "Move down one item (wrap at bottom)"sv},
+    std::pair{"right"sv, "Scroll right"sv},
+    std::pair{"left"sv, "Scroll left"sv},
+    std::pair{"page up"sv, "Move up one page"sv},
+    std::pair{"page down"sv, "Move down one page"sv},
+    std::pair{"home"sv, "Move to start of list"sv},
+    std::pair{"end"sv, "Move to end of list"sv},
+    std::pair{"space"sv, "Select or deselect current item"sv},
     std::pair{"c"sv, "Clear current selections"sv},
-    std::pair{"v"sv, "View current selections"sv},
-    std::pair{"V"sv, "View defined groups"sv},
+    std::pair{"v"sv, "View selections"sv},
+    std::pair{"V"sv, "View groups"sv},
     std::pair{"d"sv, "Toggle detailed view"sv},
-    std::pair{"a"sv, "Toggle multi-select mode"sv},
+    std::pair{"a"sv, "Toggle multi-add mode"sv},
     std::pair{"r"sv, "Toggle multi-remove mode"sv},
     std::pair{"s"sv, "Enter search phrase"sv},
     std::pair{"w"sv, "Write selections to file"sv},
-    std::pair{"g"sv, "Define and name a set of methylomes"sv},
-    std::pair{"W"sv, "Write methylome groups to a json file"sv},
+    std::pair{"W"sv, "Write defined methylome groups to file"sv},
+    std::pair{"g"sv, "Define and name a methylome group"sv},
     std::pair{"q"sv, "Quit"sv},
-    std::pair{"C-c"sv, "Quit without saving"sv},
+    std::pair{"ctrl-c"sv, "Quit without saving"sv},
     std::pair{"h"sv, "This message (any key to leave)"sv},
   };
   clear();
-  std::int32_t line_num = 0;
-  for (const auto &kv : keys) {
-    const auto line = std::format("{}: {}", kv.first, kv.second);
-    mvprintw_wrap(line_num++, 0, line);
-  }
+  mvprintw_wrap(0, 0, "Help for Interactive Commands");
+  std::int32_t line_num = 2;
+  for (const auto &kv : keys)
+    mvprintw_wrap(line_num++, 0, std::format("{}: {}", kv.first, kv.second));
   refresh();
   getch();  // any key will go back to list for selection
 }
@@ -778,6 +786,9 @@ get_query(std::string &query, std::regex &query_re) {
 
 [[nodiscard]] static inline auto
 get_filename(std::string &filename) -> bool {
+  static constexpr auto header_fmt = "use alphanumeric '.' '_' '-' | "
+                                     "enter to confirm | esc to cancel\n"
+                                     "filename: {}";
   static constexpr auto escape_key_code = 27;
   static constexpr auto enter_key_code = 10;
 
@@ -791,9 +802,7 @@ get_filename(std::string &filename) -> bool {
 
   while (true) {
     clear();
-    mvprintw_wrap(0, 0, "use alphanumeric characters or '.', '_', '-'.");
-    mvprintw_wrap(1, 0, "enter to confirm. esc to cancel");
-    mvprintw_wrap(2, 0, std::format("Filename: {}", filename));
+    mvprintw_wrap(0, 0, std::format(header_fmt, filename));
     refresh();
     const int ch = getch();
     if (ch == escape_key_code) {
@@ -838,7 +847,7 @@ write_output(const auto &data, std::string &outfile) {
 }
 
 auto
-write_groups2(const auto &data, std::string &outfile) {
+write_groups(const auto &data, std::string &outfile) {
   using std::string_literals::operator""s;
   constexpr auto akr = " -- any key to resume";
   if (data.empty()) {
@@ -881,8 +890,8 @@ write_groups_dialogue(
   static constexpr std::int32_t header_height = 1;
   static constexpr std::int32_t footer_height = 0;
   static constexpr auto escape_key_code = 27;
-  static const auto header_line =
-    "space or enter to (un)select group | esc to exit | w to enter filename"s;
+  static constexpr auto header_line =
+    "enter to proceed | space to (un)select group | esc to exit | item {}/{}";
   if (groups.empty()) {
     no_groups_defined(header_line);
     return;
@@ -906,12 +915,10 @@ write_groups_dialogue(
     const auto disp_start = std::max(
       0, std::min(n_items - n_lines, std::max(0, cursor_pos - n_lines / 2)));
     const auto disp_end = std::min(n_items, disp_start + n_lines);
-    const auto to_show = get_to_show(data, disp_start, disp_end);
+    const auto to_show = get_elements_to_display(data, disp_start, disp_end);
 
     erase();  // performs better than using clear();
-    mvprintw_wrap(0, 0,
-                  header_line +
-                    std::format(" | item {}/{}", cursor_pos + 1, n_items));
+    mvprintw_wrap(0, 0, std::format(header_line, cursor_pos + 1, n_items));
     std::int32_t idx = 0;
     for (const auto &k : to_show) {
       const auto data_idx = disp_start + idx;  // global data index
@@ -937,20 +944,25 @@ write_groups_dialogue(
     if (ch == escape_key_code)
       break;
 
-    if (ch == '\n' || ch == ' ') {  // Select group
+    if (ch == 'h') {  // show help
+      show_help();
+      continue;
+    }
+
+    if (ch == ' ') {  // select group
       do_select_group(data, cursor_pos, selected_groups);
       continue;
     }
 
-    if (ch == 'w') {  // Write the output
-      std::map<std::string, std::map<std::string, std::string>> groups2;
+    if (ch == '\n') {  // write the output
+      std::map<std::string, std::map<std::string, std::string>> to_write;
       for (const auto &sel : selected_groups) {
         const auto itr = groups.find(sel);
         if (itr == std::cend(groups))
           throw std::runtime_error("Error saving groups");
-        groups2.emplace(*itr);
+        to_write.emplace(*itr);
       }
-      write_groups2(groups2, outfile);
+      write_groups(to_write, outfile);
       continue;
     }
 
@@ -984,10 +996,44 @@ format_queries(const std::vector<std::string> &queries) -> std::string {
   return s;
 }
 
+[[nodiscard]] static inline auto
+in_multi_mode(const int multi_mode) -> bool {
+  return multi_mode != 0;
+}
+
+[[nodiscard]] static inline auto
+multi_add(const int multi_mode) -> bool {
+  return multi_mode == 1;
+}
+
+[[nodiscard]] static inline auto
+toggle_multi_add(int &multi_mode, const std::vector<meth_meta> &filtered,
+                 const std::int32_t cursor_pos,
+                 std::unordered_set<std::string> &selected_keys) {
+  multi_mode = (multi_mode == 0) ? 1 : 0;
+  if (multi_add(multi_mode))
+    do_add(filtered, cursor_pos, selected_keys);
+}
+
+[[nodiscard]] static inline auto
+multi_remove(const int multi_mode) -> bool {
+  return multi_mode == 2;
+}
+
+[[nodiscard]] static inline auto
+toggle_multi_remove(int &multi_mode, const std::vector<meth_meta> &filtered,
+                    const std::int32_t cursor_pos,
+                    std::unordered_set<std::string> &selected_keys) {
+  multi_mode = (multi_mode == 0) ? 2 : 0;
+  if (multi_remove(multi_mode))
+    do_remove(filtered, cursor_pos, selected_keys);
+}
+
 auto
 main_loop(
-  // const std::vector<std::tuple<std::string, std::string, std::string>> &data,
-  const std::vector<methylome_info> &data,
+  // const std::vector<std::tuple<std::string, std::string, std::string>>
+  // &data,
+  const std::vector<meth_meta> &data,
   std::map<std::string, std::map<std::string, std::string>> &groups,
   std::string &filename) -> std::vector<std::string> {
   static constexpr auto extra_margin_space = 2;  // colon, space and safety?
@@ -1021,34 +1067,31 @@ main_loop(
   init_pair(3, COLOR_GREEN, -1);  // Selected items
   init_pair(4, COLOR_BLUE, -1);   // Multiple selection mode active
 
-  std::unordered_map<std::string, std::string> labels;
+  std::unordered_map<std::string, meth_meta> info;
   for (const auto &d : data)
-    labels.emplace(d.accession, d.label);
-
-  std::unordered_map<std::string, std::string> metadata;
-  for (const auto &d : data)
-    metadata.emplace(d.accession, d.metadata);
+    info.emplace(d.accession, d);
 
   bool show_details = false;  // show detailed sample info
   std::unordered_set<std::string> selected_keys;
   std::vector<std::string> queries;
   std::string query_update;
   std::regex query_re;
-  bool multi_add = false;
-  bool multi_remove = false;
+
+  int multi_mode = 0;
+
   std::int32_t horiz_pos = 0;
   std::int32_t cursor_pos = 0;
-  std::vector<std::vector<methylome_info>> filtered;
+  std::vector<std::vector<meth_meta>> filtered;
   filtered.push_back(data);
 
   while (true) {
     if (!query_update.empty() &&
         (queries.empty() || query_update != queries.back())) {
       // Filter data based on the query
-      const auto query_found = [&](const methylome_info &x) -> bool {
+      const auto query_found = [&](const meth_meta &x) -> bool {
         // ADS: need to take care of upper/lower case here
         return std::regex_search(x.label, query_re) ||
-               std::regex_search(x.metadata, query_re);
+               std::regex_search(x.details, query_re);
       };
       filtered.push_back({});
       assert(std::size(filtered) >= 2u);
@@ -1065,6 +1108,13 @@ main_loop(
 
     // NOLINTNEXTLINE (*-narrowing-conversions)
     const std::int32_t n_filtered = std::size(filtered.back());
+    const auto n_lines = LINES - legend_height;
+    const auto disp_start = std::max(
+      0, std::min(n_filtered - n_lines, std::max(0, cursor_pos - n_lines / 2)));
+    const auto disp_end = std::min(n_filtered, disp_start + n_lines);
+
+    const auto to_show =
+      get_elements_to_display(filtered.back(), disp_start, disp_end);
 
     // Include the query in the legened if appropriate
     const std::string current_legend1 = std::format(
@@ -1074,47 +1124,43 @@ main_loop(
                   std::size(selected_keys)) +
       format_queries(queries);
 
-    const auto n_lines = LINES - legend_height;
-    const auto disp_start = std::max(
-      0, std::min(n_filtered - n_lines, std::max(0, cursor_pos - n_lines / 2)));
-    const auto disp_end = std::min(n_filtered, disp_start + n_lines);
-
-    const auto to_show = get_to_show(filtered.back(), disp_start, disp_end);
-
     // Clear to prepare for redraw and display the legend
     erase();  // performs better than using clear();
-    mvprintw_wrap(0, 0, current_legend1);
-    mvprintw_wrap(1, 0, current_legend2);
+
+    mvprintw_wrap(0, 0, std::vector{current_legend1, current_legend2});
 
     // for (const auto [idx, entry] : std::views::enumerate(to_show)) {
+    bool reset_color = false;
     std::int32_t idx = 0;  // ADS: need to compare with signed cursor_pos
     for (const auto &entry : to_show) {
       // Calculate the global data index
       const auto data_idx = disp_start + idx;
-      const auto y_pos = static_cast<std::int32_t>(idx + legend_height);
+      const auto y_pos = idx + legend_height;
       assert(y_pos < LINES);
-
-      // color this item if it's among the selections
-      if (selected_keys.contains(entry.accession))
-        attron(COLOR_PAIR(3));
 
       // highlight this item if it's at the cursor position
       if (data_idx == cursor_pos) {
-        if (multi_add || multi_remove)
+        if (in_multi_mode(multi_mode))
           attron(COLOR_PAIR(4));
         else
           attron(COLOR_PAIR(2));
+        reset_color = true;
+      }
+      else if (selected_keys.contains(entry.accession)) {
+        // color this item if it's among the selections
+        attron(COLOR_PAIR(3));
+        reset_color = true;
       }
 
-      const auto line = entry.format(horiz_pos, show_details);
-
       // Display (key: paragraph) with horizontal range
-      mvprintw_wrap(y_pos, 0, line);
+      mvprintw_wrap(y_pos, 0, entry.format(horiz_pos, show_details));
 
       // Reset attribute
-      attroff(COLOR_PAIR(2));
-      attroff(COLOR_PAIR(3));
-      attroff(COLOR_PAIR(4));
+      if (reset_color) {
+        attroff(COLOR_PAIR(2));
+        attroff(COLOR_PAIR(3));
+        attroff(COLOR_PAIR(4));
+      }
 
       ++idx;  // enumerate
     }
@@ -1142,65 +1188,69 @@ main_loop(
     else if (ch == KEY_LEFT) {  // Scroll left
       horiz_pos = std::max(horiz_pos - 1, 0);
     }
+    else if (ch == 'h') {  // show help
+      horiz_pos = 0;
+      show_help();
+    }
     else if (ch == KEY_DOWN) {
       horiz_pos = 0;
       cursor_pos = (cursor_pos + 1) % n_filtered;
-      if (multi_add)
+      if (multi_add(multi_mode))
         do_add(filtered.back(), cursor_pos, selected_keys);
-      if (multi_remove)
+      if (multi_remove(multi_mode))
         do_remove(filtered.back(), cursor_pos, selected_keys);
     }
     else if (ch == KEY_NPAGE) {
       horiz_pos = 0;
-      std::int32_t max_down = std::min(cursor_pos + n_lines, n_filtered - 1);
-      if (multi_add)
-        for (std::int32_t i = cursor_pos; i < max_down; ++i)
+      const auto max_down = std::min(cursor_pos + n_lines, n_filtered - 1);
+      if (multi_add(multi_mode))
+        for (auto i = cursor_pos; i < max_down; ++i)
           do_add(filtered.back(), i, selected_keys);
-      if (multi_remove)
-        for (std::int32_t i = cursor_pos; i < max_down; ++i)
+      if (multi_remove(multi_mode))
+        for (auto i = cursor_pos; i < max_down; ++i)
           do_remove(filtered.back(), i, selected_keys);
       cursor_pos = max_down;
     }
     else if (ch == KEY_END) {
       horiz_pos = 0;
-      if (multi_add)
-        for (std::int32_t i = cursor_pos; i < n_filtered; ++i)
+      if (multi_add(multi_mode))
+        for (auto i = cursor_pos; i < n_filtered; ++i)
           do_add(filtered.back(), i, selected_keys);
-      if (multi_remove)
-        for (std::int32_t i = cursor_pos; i < n_filtered; ++i)
+      if (multi_remove(multi_mode))
+        for (auto i = cursor_pos; i < n_filtered; ++i)
           do_remove(filtered.back(), i, selected_keys);
       cursor_pos = n_filtered - 1;
     }
     else if (ch == KEY_UP) {
       horiz_pos = 0;
       cursor_pos = (cursor_pos - 1 + n_filtered) % n_filtered;
-      if (multi_add)
+      if (multi_add(multi_mode))
         do_add(filtered.back(), cursor_pos, selected_keys);
-      if (multi_remove)
+      if (multi_remove(multi_mode))
         do_remove(filtered.back(), cursor_pos, selected_keys);
     }
     else if (ch == KEY_PPAGE) {
       horiz_pos = 0;
-      std::int32_t max_up = std::max(cursor_pos - n_lines, 0);
-      if (multi_add)
-        for (std::int32_t i = cursor_pos; i >= max_up; --i)
+      const auto max_up = std::max(cursor_pos - n_lines, 0);
+      if (multi_add(multi_mode))
+        for (auto i = cursor_pos; i >= max_up; --i)
           do_add(filtered.back(), i, selected_keys);
-      if (multi_remove)
-        for (std::int32_t i = cursor_pos; i >= max_up; --i)
+      if (multi_remove(multi_mode))
+        for (auto i = cursor_pos; i >= max_up; --i)
           do_remove(filtered.back(), i, selected_keys);
       cursor_pos = max_up;
     }
     else if (ch == KEY_HOME) {
       horiz_pos = 0;
-      if (multi_add)
-        for (std::int32_t i = cursor_pos; i >= 0; --i)
+      if (multi_add(multi_mode))
+        for (auto i = cursor_pos; i >= 0; --i)
           do_add(filtered.back(), i, selected_keys);
-      if (multi_remove)
-        for (std::int32_t i = cursor_pos; i >= 0; --i)
+      if (multi_remove(multi_mode))
+        for (auto i = cursor_pos; i >= 0; --i)
           do_remove(filtered.back(), i, selected_keys);
       cursor_pos = 0;
     }
-    else if (ch == ' ' || ch == '\n') {  // Select/deselect current item
+    else if (ch == ' ') {  // Select/deselect current item
       do_select(filtered.back(), cursor_pos, selected_keys);
     }
     else if (ch == 'd') {  // Toggle detailed view
@@ -1221,29 +1271,20 @@ main_loop(
     else if (ch == 'W') {  // W key to save selected groups
       write_groups_dialogue(groups, filename);
     }
-    else if (ch == 'V') {  // Display groups
-      show_groups(groups, labels, metadata);
+    else if (ch == 'V') {  // V key to display groups
+      show_groups(groups, info);
     }
-    else if (ch == 'a') {  // Toggle multi-select mode
-      multi_add = !multi_add;
-      multi_remove = false;
-      if (multi_add)
-        do_add(filtered.back(), cursor_pos, selected_keys);
+    else if (ch == 'a') {  // Toggle multi-add mode
+      toggle_multi_add(multi_mode, filtered.back(), cursor_pos, selected_keys);
     }
-    else if (ch == 'r') {  // Toggle multi-select mode
-      multi_remove = !multi_remove;
-      multi_add = false;
-      if (multi_remove)
-        do_remove(filtered.back(), cursor_pos, selected_keys);
+    else if (ch == 'r') {  // Toggle multi-remove mode
+      toggle_multi_remove(multi_mode, filtered.back(), cursor_pos,
+                          selected_keys);
     }
     else if (ch == '/' || ch == 's') {  // Start search query
       horiz_pos = 0;
-      get_query(query_update, query_re);
       cursor_pos = 0;
-    }
-    else if (ch == 'h') {  // show help
-      horiz_pos = 0;
-      show_help();
+      get_query(query_update, query_re);
     }
   }  // end while (true)
 
@@ -1368,7 +1409,7 @@ command_select_main(int argc,
     std::println("Number of items loaded: {}", std::size(data_itr->second));
     std::print("Type 'g' then Enter to proceed. Any other key to exit. ");
     if (std::cin.get() != 'g') {
-      std::println("Terminating on user request");
+      std::println("Exiting on user request");
       return EXIT_SUCCESS;
     }
     // ADS: register the signals so a handler can properly reset the
