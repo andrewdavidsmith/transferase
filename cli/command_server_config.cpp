@@ -28,27 +28,27 @@ generate a configuration file for a transferase server
 )";
 
 static constexpr auto description = R"(
-The configuration parameters used by the transferase server are listed
-among the arguments. Values must be specified for most parameters that
-the server uses. Recommended: if the configuration file will
-eventually be needed in a system directory, first generate it in a
-user directory then copy it there. This command will place the server
-configuration file in the specified directory with a default name.
+The configuration parameters used by the transferase server are listed among
+the arguments. Values must be specified for most parameters that the server
+uses. Recommended: if the configuration file will eventually be needed in a
+system directory, first generate it in a user directory then copy it
+there. This command will place the server configuration file in the specified
+directory with a default name.
 )";
 
 static constexpr auto examples = R"(
 Examples:
 
 xfr server-config -c a_server_config_dir \
-    --hostname=org.kernel.not \
-    --port=5003 \
+    --hostname=localhost \
+    --port=5001 \
     --methylome-dir=my_methylomes \
     --index-dir=my_indexes \
-    --log-file=/var/tmp/transferase_server.log \
+    --log-file=/var/log/transferase_server.log \
     --log-level=debug \
-    --max-resident=4096 \
-    --n-threads=128 \
-    --pid-file=/var/tmp/TRANSFERASE_SERVER_PID
+    --max-resident=128 \
+    --n-threads=16 \
+    --pid-file=/var/run/TRANSFERASE_SERVER_PID
 )";
 
 #include "cli_common.hpp"
