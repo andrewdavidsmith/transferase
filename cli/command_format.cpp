@@ -238,12 +238,12 @@ process_cpg_sites_xcounts(const std::string &infile, const genome_index &index)
     }
     else {
       std::uint32_t pos_step = 0, n_meth = 0, n_unmeth = 0;
-      // NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+      // NOLINTBEGIN(*-pointer-arithmetic)
       const auto end_line = line.data() + std::size(line);
       auto res = std::from_chars(line.data(), end_line, pos_step);
       res = std::from_chars(res.ptr + 1, end_line, n_meth);
       res = std::from_chars(res.ptr + 1, end_line, n_unmeth);
-      // NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+      // NOLINTEND(*-pointer-arithmetic)
       // ADS: check for errors here
 
       const auto curr_pos = pos + pos_step;
