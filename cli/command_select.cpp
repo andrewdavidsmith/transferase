@@ -128,7 +128,7 @@ load_selected_groups(const std::string &json_filename)
 // initial groups are valid for the given metadata. This might fail, for
 // example, if the metadata changed since the user formed the groups, or if
 // the information in the groups file was modified.
-[[nodiscard]] auto
+auto
 validate_groups(const std::string &genome, const std::string &metadata_file,
                 const auto &groups, const auto &data) {
   static constexpr auto msg_fmt =
@@ -685,8 +685,8 @@ show_groups(auto &groups, const auto &labels, const auto &metadata) {
       make_named_group(original_group, original_groupname, groups);
 
       data.clear();
-      for (const auto &k : groups)
-        data.push_back(k.first);
+      std::ranges::copy(groups | std::views::elements<0>,
+                        std::back_inserter(data));
       continue;
     }
 
@@ -698,8 +698,8 @@ show_groups(auto &groups, const auto &labels, const auto &metadata) {
       groups.erase(itr);
 
       data.clear();
-      for (const auto &k : groups)
-        data.push_back(k.first);
+      std::ranges::copy(groups | std::views::elements<0>,
+                        std::back_inserter(data));
 
       n_items = std::max(0, n_items - 1);
 
