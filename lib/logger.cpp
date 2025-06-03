@@ -58,6 +58,9 @@ logger::set_attributes(const std::string_view appname) -> std::error_code {
 
   // ADS TODO: error conditions on buffer sizes
 
+  // set the end of the buffer; minus 1 because we use a newline in the buffer
+  buf_lim = std::begin(buf) + buf_size - 1;
+
   // NOLINTBEGIN(*-pointer-arithmetic)
 
   // fill the buffer (after the time fields)

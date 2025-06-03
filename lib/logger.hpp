@@ -275,7 +275,8 @@ private:
   std::array<char, buf_size> buf{};
   std::shared_ptr<std::ostream> log_file{nullptr};
   std::mutex mtx{};
-  char *cursor{};
+  char *cursor{};   // start of buffer after identical prefix (e.g. timestamp)
+  char *buf_lim{};  // end of usable part of buffer
   log_level_t min_log_level{};
   std::error_code status{};
 
@@ -288,14 +289,21 @@ private:
   template <log_level_t the_level>
   [[nodiscard]] auto
   fill_buffer(const std::string_view msg) -> char * {
+    // assume buffer is large enough for preamble, which is of identical size
+    // for each line in the log file.
     static constexpr auto lvl = level_name[std::to_underlying(the_level)];
     static constexpr auto sz = std::size(lvl);
     auto buf_data_itr = cursor;
     std::memcpy(buf_data_itr, lvl.data(), sz);
     buf_data_itr += sz;
     *buf_data_itr++ = delim;
-    std::memcpy(buf_data_itr, msg.data(), std::size(msg));
-    buf_data_itr += std::size(msg);
+    // current message might be larger than remaining part of buffer, so
+    // truncate if needed.
+    const auto n_bytes =
+      std::min(std::size(msg),
+               static_cast<std::size_t>(std::distance(buf_data_itr, buf_lim)));
+    std::memcpy(buf_data_itr, msg.data(), n_bytes);
+    buf_data_itr += n_bytes;
     *buf_data_itr++ = '\n';
     return buf_data_itr;
   }
