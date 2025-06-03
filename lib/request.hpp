@@ -38,7 +38,7 @@
 
 namespace transferase {
 
-static constexpr std::uint32_t request_buffer_size{512};
+static constexpr std::uint32_t request_buffer_size{1024};
 typedef std::array<char, request_buffer_size> request_buffer;
 
 struct request {
