@@ -82,6 +82,7 @@ xfr query -s localhost -p 5000 -x index_dir \
 #include "request.hpp"
 #include "request_type_code.hpp"
 #include "utilities.hpp"
+#include "windows_writer.hpp"
 
 #include "CLI11/CLI11.hpp"
 #include "nlohmann/json.hpp"
@@ -299,6 +300,66 @@ query_bins(const std::uint32_t bin_size, const output_options &outopts,
 
 const auto query_bins_cov = &query_bins<xfr::level_element_covered_t>;
 
+template <typename level_element = xfr::level_element_t>
+[[nodiscard]] static auto
+query_windows(const std::uint32_t window_size, const std::uint32_t window_step,
+              const output_options &outopts, const xfr::genome_index &index,
+              const xfr::methylome_interface &interface,
+              const std::vector<std::string> &methylome_names,
+              const std::vector<std::string> &alt_names) {
+  auto request_type = xfr::request_type_code::windows;
+  if constexpr (std::is_same_v<level_element, xfr::level_element_covered_t>)
+    request_type = xfr::request_type_code::windows_covered;
+
+  auto &lgr = xfr::logger::instance();
+  // Read query intervals and validate them
+
+  const auto aux_val =
+    xfr::request::get_aux_for_windows(window_size, window_step);
+  const auto req =
+    xfr::request{request_type, index.get_hash(), aux_val, methylome_names};
+  std::error_code error;
+  const auto query_start{std::chrono::high_resolution_clock::now()};
+  const auto results = interface.get_levels<level_element>(req, index, error);
+  if (error) {
+    lgr.debug("Error obtaining levels: {}", error);
+    return error;
+  }
+  const auto query_stop{std::chrono::high_resolution_clock::now()};
+  lgr.debug("Elapsed time for query: {:.3}s",
+            duration(query_start, query_stop));
+
+  const auto n_cpgs = outopts.write_n_cpgs
+                        ? index.get_n_cpgs(window_size, window_step)
+                        : std::vector<std::uint32_t>{};
+
+  const auto outmgr = xfr::windows_writer{
+    // clang-format off
+    outopts.outfile,
+    index,
+    outopts.outfmt,
+    alt_names,
+    outopts.min_reads,
+    n_cpgs,
+    window_size,
+    window_step,
+    // clang-format on
+  };
+
+  const auto out_start{std::chrono::high_resolution_clock::now()};
+  error = outmgr.write_output(results);
+  if (error) {
+    lgr.error("Error writing output: {}", error);
+    return error;
+  }
+  const auto out_stop{std::chrono::high_resolution_clock::now()};
+  lgr.debug("Elapsed time for output: {:.3}s", duration(out_start, out_stop));
+
+  return std::error_code{};
+}
+
+const auto query_windows_cov = &query_windows<xfr::level_element_covered_t>;
+
 [[nodiscard]] static inline auto
 read_methylomes_json(const std::string &json_filename, std::error_code &ec)
   -> std::tuple<std::vector<std::string>, std::vector<std::string>> {
@@ -373,8 +434,10 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
 
   // arguments that determine what the server computes
   std::uint32_t bin_size{};
+  std::uint32_t window_step{};
+  std::uint32_t window_size{};
   std::string intervals_file;
-  bool count_covered{false};
+  bool count_covered{};
 
   // the two possible sources of names of methylomes to query
   std::vector<std::string> methylome_names;
@@ -382,17 +445,17 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
   // requiring user to specify assumed genome for safety
   std::string genome_name;
 
-  bool local_mode{false};
+  bool local_mode{};
 
-  bool verbose{false};
-  bool quiet{false};
+  bool verbose{};
+  bool quiet{};
 
   // options related to output
   output_options outopts{};
-  bool outfmt_scores{false};
-  bool outfmt_classic{false};
+  bool outfmt_scores{};
+  bool outfmt_classic{};
   bool outfmt_counts{true};
-  bool outfmt_bed{false};
+  bool outfmt_bed{};
   bool outfmt_dataframe{true};
 
   // get the default config directory to use as a fallback
@@ -419,9 +482,25 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
                   "input query intervals file in BED format")
       ->option_text("FILE")
       ->check(CLI::ExistingFile);
-  app.add_option("-b,--bin-size", bin_size, "size of genomic bins to query")
-    ->option_text("INT")
-    ->excludes(intervals_file_opt);
+  const auto bin_size_opt =
+    app.add_option("-b,--bin-size", bin_size, "size of genomic bins to query")
+      ->option_text("INT")
+      ->excludes(intervals_file_opt)
+      ->check(CLI::PositiveNumber);
+  auto window_size_opt =
+    app.add_option("--w-size", window_size, "size of sliding windows (in nt)")
+      ->option_text("INT")
+      ->excludes(intervals_file_opt)
+      ->excludes(bin_size_opt)
+      ->check(CLI::PositiveNumber);
+  const auto window_step_opt =
+    app.add_option("--w-step", window_step, "step for sliding windows (in nt)")
+      ->option_text("INT")
+      ->excludes(intervals_file_opt)
+      ->excludes(bin_size_opt)
+      ->needs(window_size_opt)
+      ->check(CLI::PositiveNumber);
+  window_size_opt->needs(window_step_opt);
   // ADS: Genome will feel a bit redundant to users. Moving forward, if a
   // query consists of intervals and a methylome, if those are inconsistent
   // (e.g., specifying 'chr22' and asking for a mouse methylome), the "tie
@@ -634,6 +713,8 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
     {"Index dir", cfg.index_dir},
     {"Log level", std::format("{}", cfg.log_level)},
     {"Bin size", std::format("{}", bin_size)},
+    {"Window size", std::format("{}", window_size)},
+    {"Window step", std::format("{}", window_step)},
     {"Intervals file", intervals_file},
     {"Count covered", std::format("{}", count_covered)},
     {"Number of methylomes", std::format("{}", std::size(methylomes))},
@@ -658,20 +739,38 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
 
   lgr.info("Initiating");
 
+  typedef xfr::request_type_code rc;
+  const auto rq = [&] {
+    if (!intervals_file.empty())
+      return count_covered ? rc::intervals_covered : rc::intervals;
+    if (bin_size > 0)
+      return count_covered ? rc::bins_covered : rc::bins;
+    if (window_size > 0)
+      return count_covered ? rc::windows_covered : rc::windows;
+    throw std::runtime_error("failed to identify request type");
+  }();
+
   error = [&] {
-    const bool intervals_query = (bin_size == 0);
-    if (intervals_query && count_covered)
-      return query_intervals_cov(intervals_file, outopts, index, interface,
-                                 methylomes, alt_names);
-    if (intervals_query && !count_covered)
+    switch (rq) {
+    case rc::intervals:
       return query_intervals(intervals_file, outopts, index, interface,
                              methylomes, alt_names);
-    if (!intervals_query && count_covered)
-      return query_bins_cov(bin_size, outopts, index, interface, methylomes,
-                            alt_names);
-    if (!intervals_query && !count_covered)
+    case rc::intervals_covered:
+      return query_intervals_cov(intervals_file, outopts, index, interface,
+                                 methylomes, alt_names);
+    case rc::bins:
       return query_bins(bin_size, outopts, index, interface, methylomes,
                         alt_names);
+    case rc::bins_covered:
+      return query_bins_cov(bin_size, outopts, index, interface, methylomes,
+                            alt_names);
+    case rc::windows:
+      return query_windows(window_size, window_step, outopts, index, interface,
+                           methylomes, alt_names);
+    case rc::windows_covered:
+      return query_windows_cov(window_size, window_step, outopts, index,
+                               interface, methylomes, alt_names);
+    }
     std::unreachable();
   }();
 
