@@ -45,8 +45,8 @@
 namespace transferase {
 
 auto
-request_handler::handle_request(const request &req,
-                                response_header &resp_hdr) -> void {
+request_handler::handle_request(const request &req, response_header &resp_hdr)
+  -> void {
   auto &lgr = logger::instance();
   resp_hdr = {};  // clear the response header
 
@@ -103,10 +103,11 @@ request_handler::handle_request(const request &req,
     return;
   }
 
-  // ensure we assign the appropriate number of rows and columns
-  resp_hdr.rows = req.is_intervals_request()
-                    ? req.n_intervals()
-                    : index->get_n_bins(req.bin_size());
+  // TODO: this needs to be checked
+  resp_hdr.rows = req.is_intervals_request() ? req.n_intervals()
+                  : req.is_bins_request()
+                    ? index->get_n_bins(req.bin_size())
+                    : index->get_n_bins(req.window_size());
   resp_hdr.cols = req.n_methylomes();
   // at this point we don't know n_bytes yet if we have a bins request
   resp_hdr.status = server_error_code::ok;
@@ -129,7 +130,7 @@ request_handler::intervals_get_levels<level_element_t>(
       resp_hdr.status = server_error_code::methylome_not_found;
       return;
     }
-    if (index_hash == 0)
+    if (index_hash == 0)  // on first iteration
       index_hash = meth->get_index_hash();
     if (index_hash != meth->get_index_hash()) {
       lgr.warning("Inconsistent index hash values found");
@@ -278,6 +279,92 @@ request_handler::bins_get_levels<level_element_covered_t>(
     // NOLINTNEXTLINE (*-reinterpret-cast)
     std::memcpy(reinterpret_cast<std::uint8_t *>(resp_data.v.data()),
                 tmp.data(), std::size(tmp));
+  }
+}
+
+template <>
+auto
+request_handler::windows_get_levels<level_element_t>(
+  const request &req, response_header &resp_hdr,
+  level_container<level_element_t> &resp_data) -> void {
+  auto &lgr = logger::instance();
+  std::error_code ec;
+  std::shared_ptr<genome_index> index = nullptr;
+  std::string genome_name;
+
+  resp_data.resize(resp_hdr.rows, resp_hdr.cols);
+  [[maybe_unused]] std::uint32_t col_id = 0;
+  for (const auto &methylome_name : req.methylome_names) {
+    const auto meth = methylomes.get_methylome(methylome_name, ec);
+    if (ec) {
+      lgr.error("Failed to load methylome {}: {}", methylome_name, ec);
+      resp_hdr.status = server_error_code::methylome_not_found;
+      return;
+    }
+    // need genome index to know the windows
+    if (index == nullptr) {
+      genome_name = meth->get_genome_name();
+      index = indexes.get_genome_index(genome_name, ec);
+      if (ec) {
+        lgr.error("Failed to load genome index for {}: {}", genome_name, ec);
+        resp_hdr.status = server_error_code::index_not_found;
+        return;
+      }
+    }
+    else if (meth->get_genome_name() != genome_name) {
+      lgr.error("Inconsistent genome names for methylomes in request "
+                "(expected={}, observed={} for {})",
+                genome_name, meth->get_genome_name(), methylome_name);
+      resp_hdr.status = server_error_code::bad_request;
+      return;
+    }
+    lgr.debug("Computing levels for methylome: {} (windows)", methylome_name);
+    meth->get_levels<level_element_t>(req.window_size(), req.window_step(),
+                                      *index, resp_data.column_itr(col_id++));
+  }
+}
+
+template <>
+auto
+request_handler::windows_get_levels<level_element_covered_t>(
+  const request &req, response_header &resp_hdr,
+  level_container<level_element_covered_t> &resp_data) -> void {
+  auto &lgr = logger::instance();
+  std::error_code ec;
+  std::shared_ptr<genome_index> index = nullptr;
+  std::string genome_name;
+
+  resp_data.resize(resp_hdr.rows, resp_hdr.cols);
+  std::uint32_t col_id = 0;
+  for (const auto &methylome_name : req.methylome_names) {
+    const auto meth = methylomes.get_methylome(methylome_name, ec);
+    if (ec) {
+      lgr.error("Failed to load methylome {}: {}", methylome_name, ec);
+      resp_hdr.status = server_error_code::methylome_not_found;
+      return;
+    }
+    // need genome index to know the windows
+    if (index == nullptr) {
+      genome_name = meth->get_genome_name();
+      index = indexes.get_genome_index(genome_name, ec);
+      if (ec) {
+        lgr.error("Failed to load genome index for {}: {}", genome_name, ec);
+        resp_hdr.status = server_error_code::index_not_found;
+        return;
+      }
+    }
+    else if (meth->get_genome_name() != genome_name) {
+      lgr.error("Inconsistent genome names for methylomes in request "
+                "(expected={}, observed={} for {})",
+                genome_name, meth->get_genome_name(), methylome_name);
+      resp_hdr.status = server_error_code::bad_request;
+      return;
+    }
+    lgr.debug("Computing levels for methylome: {} (windows, covered)",
+              methylome_name);
+    meth->get_levels<level_element_covered_t>(req.window_size(),
+                                              req.window_step(), *index,
+                                              resp_data.column_itr(col_id++));
   }
 }
 
