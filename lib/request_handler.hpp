@@ -75,6 +75,12 @@ struct request_handler {
   bins_get_levels(const request &req, response_header &resp_hdr,
                   level_container<lvl_elem_t> &resp_data) -> void;
 
+  /// Handle a request to get levels for query windows.
+  template <typename lvl_elem_t>
+  auto
+  windows_get_levels(const request &req, response_header &resp_hdr,
+                     level_container<lvl_elem_t> &resp_data) -> void;
+
   /// @brief Directory on the local filesystem with methylomes
   std::string methylome_dir;
   /// @brief Directory on the local filesystem with genome indexes
