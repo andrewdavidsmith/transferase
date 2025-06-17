@@ -156,6 +156,23 @@ struct methylome_data {
   get_levels(const std::uint32_t bin_size, const genome_index &index,
              level_container<lvl_elem_t>::iterator &res) const noexcept -> void;
 
+  /// @brief Get methylation levels for each fixed size sliding window in the
+  /// genome.
+  template <typename lvl_elem_t>
+  [[nodiscard]] auto
+  get_levels(const std::uint32_t window_size, const std::uint32_t window_step,
+             const genome_index &index) const noexcept
+    -> level_container<lvl_elem_t>;
+
+  /// @brief Get methylation levels for each fixed size sliding window in the
+  /// genome.
+  template <typename lvl_elem_t>
+  auto
+  get_levels(const std::uint32_t window_size, const std::uint32_t window_step,
+             const genome_index &index,
+             level_container<lvl_elem_t>::iterator d_first) const noexcept
+    -> void;
+
   [[nodiscard]] static auto
   compose_filename(auto wo_extension) {
     wo_extension += filename_extension;
