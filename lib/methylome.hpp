@@ -252,8 +252,8 @@ struct methylome {
   template <typename lvl_elem_t>
   auto
   get_levels(const transferase::query_container &query,
-             level_container<lvl_elem_t>::iterator d_first) const -> void {
-    data.get_levels<lvl_elem_t>(query, d_first);
+             level_container<lvl_elem_t>::iterator &res) const -> void {
+    data.get_levels<lvl_elem_t>(query, res);
   }
 
   /// @brief Get the methylation level for each genomic 'bin' (i.e.,
@@ -272,8 +272,8 @@ struct methylome {
   template <typename lvl_elem_t>
   auto
   get_levels(const std::uint32_t bin_size, const genome_index &index,
-             level_container<lvl_elem_t>::iterator d_first) const -> void {
-    data.get_levels<lvl_elem_t>(bin_size, index, d_first);
+             level_container<lvl_elem_t>::iterator &res) const -> void {
+    data.get_levels<lvl_elem_t>(bin_size, index, res);
   }
 
   /// @brief Returns true iff the methylome files exist for the given name.
