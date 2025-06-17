@@ -120,7 +120,7 @@ TEST_F(request_handler_mock, handle_request_bad_state) {
   static constexpr auto malformed_accession = "eFlareon_..brain";
   static constexpr auto valid_rq_type = request_type_code::intervals;
   // ADS: (below) not a valid type
-  static constexpr auto invalid_rq_type = static_cast<request_type_code>(5);
+  static constexpr auto invalid_rq_type = static_cast<request_type_code>(6);
   static constexpr auto n_intervals = 100u;
 
   request req{valid_rq_type, index_hash, n_intervals, {malformed_accession}};
