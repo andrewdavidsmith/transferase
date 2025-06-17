@@ -243,7 +243,7 @@ write_bedlike_windows_impl(
   const auto write_n_cpgs = !n_cpgs.empty();
 
   std::vector<char> line(windows_writer::output_buffer_size);
-  // NOLINT (*-pointer-arithmetic)
+  // NOLINTNEXTLINE (*-pointer-arithmetic)
   const auto line_end = line.data() + std::size(line);
   auto error = std::errc{};
 
