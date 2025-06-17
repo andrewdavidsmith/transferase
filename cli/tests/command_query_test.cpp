@@ -42,9 +42,11 @@ TEST(command_query_test, intervals_basic_local_test) {
   static constexpr auto methylome_name = "SRX012346";
   static constexpr auto intervals_file = "data/pAntiquusx_promoters.bed";
   // Output filename and expected output
-  static constexpr auto output_file = "data/output_file.txt";
   static constexpr auto expected_output_file =
     "data/pAntiquusx_promoters_local.txt";
+
+  const auto output_file =
+    generate_temp_filename_cli("intervals_basic_local_test.txt");
 
   // Define command line arguments
   const auto argv = std::array{
@@ -62,7 +64,7 @@ TEST(command_query_test, intervals_basic_local_test) {
     "-i",
     intervals_file,
     "-o",
-    output_file,
+    output_file.data(),
     "--bed",
     // clang-format on
   };
