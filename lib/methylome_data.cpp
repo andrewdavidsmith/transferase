@@ -1,6 +1,6 @@
 /* MIT License
  *
- * Copyright (c) 2024 Andrew D Smith
+ * Copyright (c) 2024-2025 Andrew D Smith
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -88,7 +88,7 @@ methylome_data_read(const std::string &filename,
     return {};
   }
 
-  // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
+  // NOLINTBEGIN(*-reinterpret-cast)
   methylome_data meth;
   if (metadata.is_compressed) {
     std::vector<std::uint8_t> buf(filesize);
@@ -119,8 +119,7 @@ methylome_data_read(const std::string &filename,
     ec = io_error;
     return {};
   }
-
-  // NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)
+  // NOLINTEND(*-reinterpret-cast)
 
   ec = std::error_code{};
   return meth;
@@ -167,7 +166,7 @@ methylome_data::write(const std::string &filename,
   if (!out)
     return std::make_error_code(std::errc(errno));
 
-  // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
+  // NOLINTBEGIN(*-reinterpret-cast)
   if (zip) {
     const auto n_bytes = static_cast<std::streamsize>(std::size(buf));
     if (!out.write(reinterpret_cast<const char *>(buf.data()), n_bytes))
@@ -179,7 +178,7 @@ methylome_data::write(const std::string &filename,
     if (!out.write(reinterpret_cast<const char *>(cpgs.data()), n_bytes))
       return io_error;
   }
-  // NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)
+  // NOLINTEND(*-reinterpret-cast)
   return std::error_code{};
 }
 
@@ -226,11 +225,11 @@ template <>
 auto
 methylome_data::get_levels<level_element_t>(
   const transferase::query_container &query,
-  level_container<level_element_t>::iterator d_first) const noexcept -> void {
+  level_container<level_element_t>::iterator &res) const noexcept -> void {
   const auto beg = std::cbegin(cpgs);
   // for (const auto [i, q] : std::views::enumerate(query))
   for (const auto q : query)
-    *d_first++ = get_levels_impl<level_element_t>(beg + q.start, beg + q.stop);
+    *res++ = get_levels_impl<level_element_t>(beg + q.start, beg + q.stop);
 }
 
 template <>
@@ -252,12 +251,12 @@ template <>
 auto
 methylome_data::get_levels<level_element_covered_t>(
   const transferase::query_container &query,
-  typename level_container<level_element_covered_t>::iterator d_first)
+  typename level_container<level_element_covered_t>::iterator &res)
   const noexcept -> void {
   const auto beg = std::cbegin(cpgs);
   // for (const auto [i, q] : std::views::enumerate(query))
   for (const auto q : query)
-    *d_first++ =
+    *res++ =
       get_levels_impl<level_element_covered_t>(beg + q.start, beg + q.stop);
 }
 
@@ -337,7 +336,7 @@ static auto
 get_levels_impl(
   const std::uint32_t bin_size, const genome_index &index,
   const methylome_data::vec &cpgs,
-  typename transferase::level_container<T>::iterator d_first) noexcept -> void {
+  typename transferase::level_container<T>::iterator &res) noexcept -> void {
   const auto zipped = std::views::zip(
     index.data.positions, index.meta.chrom_size, index.meta.chrom_offset);
   for (const auto [positions, chrom_size, offset] : zipped) {
@@ -347,7 +346,7 @@ get_levels_impl(
     for (std::uint32_t i = 0; i < chrom_size; i += bin_size) {
       // need bin_end like this because otherwise we go into next chrom
       const auto bin_end = std::min(i + bin_size, chrom_size);
-      *d_first++ = bin_levels_impl<T>(posn_itr, posn_end, bin_end, cpg_itr);
+      *res++ = bin_levels_impl<T>(posn_itr, posn_end, bin_end, cpg_itr);
     }
   }
 }
@@ -364,8 +363,8 @@ template <>
 auto
 methylome_data::get_levels<level_element_t>(
   const std::uint32_t bin_size, const genome_index &index,
-  level_container<level_element_t>::iterator d_first) const noexcept -> void {
-  get_levels_impl<level_element_t>(bin_size, index, cpgs, d_first);
+  level_container<level_element_t>::iterator &res) const noexcept -> void {
+  get_levels_impl<level_element_t>(bin_size, index, cpgs, res);
 }
 
 template <>
@@ -380,9 +379,9 @@ template <>
 auto
 methylome_data::get_levels<level_element_covered_t>(
   const std::uint32_t bin_size, const genome_index &index,
-  level_container<level_element_covered_t>::iterator d_first) const noexcept
+  level_container<level_element_covered_t>::iterator &res) const noexcept
   -> void {
-  get_levels_impl<level_element_covered_t>(bin_size, index, cpgs, d_first);
+  get_levels_impl<level_element_covered_t>(bin_size, index, cpgs, res);
 }
 
 [[nodiscard]] auto
