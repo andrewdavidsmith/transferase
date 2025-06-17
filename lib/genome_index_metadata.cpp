@@ -57,11 +57,17 @@ genome_index_metadata::init_env() noexcept -> std::error_code {
 genome_index_metadata::get_n_bins(const std::uint32_t bin_size) const noexcept
   -> std::uint32_t {
   const auto get_n_bins_for_chrom = [&](const auto chrom_size) {
-    return (chrom_size + bin_size) / bin_size;
+    return (chrom_size + bin_size - 1) / bin_size;
   };
   return std::transform_reduce(std::cbegin(chrom_size), std::cend(chrom_size),
                                static_cast<std::uint32_t>(0), std::plus{},
                                get_n_bins_for_chrom);
+}
+
+[[nodiscard]] auto
+genome_index_metadata::get_n_windows(
+  const std::uint32_t window_step) const noexcept -> std::uint32_t {
+  return get_n_bins(window_step);
 }
 
 [[nodiscard]] auto

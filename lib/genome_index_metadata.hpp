@@ -76,6 +76,10 @@ struct genome_index_metadata {
   [[nodiscard]] auto
   get_n_bins(const std::uint32_t bin_size) const noexcept -> std::uint32_t;
 
+  [[nodiscard]] auto
+  get_n_windows(const std::uint32_t window_step) const noexcept
+    -> std::uint32_t;
+
   [[nodiscard]] static auto
   compose_filename(auto wo_extension) {
     wo_extension += filename_extension;
