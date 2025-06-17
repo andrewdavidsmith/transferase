@@ -116,7 +116,7 @@ request_handler::intervals_get_levels<level_element_t>(
   auto &lgr = logger::instance();
   std::error_code ec;
   resp_data.resize(resp_hdr.rows, resp_hdr.cols);
-  std::uint32_t col_id = 0;
+  auto col_itr = std::begin(resp_data);
   std::uint64_t index_hash = 0;  // check all methylomes use same genome
   for (const auto &methylome_name : req.methylome_names) {
     const auto meth = methylomes.get_methylome(methylome_name, ec);
@@ -133,7 +133,7 @@ request_handler::intervals_get_levels<level_element_t>(
       return;
     }
     lgr.debug("Computing levels for methylome: {} (intervals)", methylome_name);
-    meth->get_levels<level_element_t>(query, resp_data.column_itr(col_id++));
+    meth->get_levels<level_element_t>(query, col_itr);
   }
 }
 
@@ -146,8 +146,8 @@ request_handler::intervals_get_levels<level_element_covered_t>(
   std::error_code ec;
 
   resp_data.resize(resp_hdr.rows, resp_hdr.cols);
-  std::uint32_t col_id = 0;
   std::uint64_t index_hash = 0;  // check all methylomes use same genome
+  auto col_itr = std::begin(resp_data);
   for (const auto &methylome_name : req.methylome_names) {
     const auto meth = methylomes.get_methylome(methylome_name, ec);
     if (ec) {
@@ -164,8 +164,7 @@ request_handler::intervals_get_levels<level_element_covered_t>(
     }
     lgr.debug("Computing levels for methylome: {} (intervals, covered)",
               methylome_name);
-    meth->get_levels<level_element_covered_t>(query,
-                                              resp_data.column_itr(col_id++));
+    meth->get_levels<level_element_covered_t>(query, col_itr);
   }
 }
 
@@ -180,7 +179,7 @@ request_handler::bins_get_levels<level_element_t>(
   std::string genome_name;
 
   resp_data.resize(resp_hdr.rows, resp_hdr.cols);
-  [[maybe_unused]] std::uint32_t col_id = 0;
+  auto col_itr = std::begin(resp_data);
   for (const auto &methylome_name : req.methylome_names) {
     const auto meth = methylomes.get_methylome(methylome_name, ec);
     if (ec) {
@@ -206,8 +205,7 @@ request_handler::bins_get_levels<level_element_t>(
       return;
     }
     lgr.debug("Computing levels for methylome: {} (bins)", methylome_name);
-    meth->get_levels<level_element_t>(req.bin_size(), *index,
-                                      resp_data.column_itr(col_id++));
+    meth->get_levels<level_element_t>(req.bin_size(), *index, col_itr);
   }
 }
 
@@ -222,7 +220,7 @@ request_handler::bins_get_levels<level_element_covered_t>(
   std::string genome_name;
 
   resp_data.resize(resp_hdr.rows, resp_hdr.cols);
-  std::uint32_t col_id = 0;
+  auto col_itr = std::begin(resp_data);
   for (const auto &methylome_name : req.methylome_names) {
     const auto meth = methylomes.get_methylome(methylome_name, ec);
     if (ec) {
@@ -249,8 +247,7 @@ request_handler::bins_get_levels<level_element_covered_t>(
     }
     lgr.debug("Computing levels for methylome: {} (bins, covered)",
               methylome_name);
-    meth->get_levels<level_element_covered_t>(req.bin_size(), *index,
-                                              resp_data.column_itr(col_id++));
+    meth->get_levels<level_element_covered_t>(req.bin_size(), *index, col_itr);
   }
 }
 
