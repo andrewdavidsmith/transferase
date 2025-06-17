@@ -42,6 +42,7 @@ static constexpr std::uint32_t request_buffer_size{512};
 typedef std::array<char, request_buffer_size> request_buffer;
 
 struct request {
+  static constexpr auto max_methylomes_per_request = 50;
   static constexpr auto max_intervals_default = 2'000'000;
   static constexpr auto min_bin_size_default = 100;
 
@@ -66,6 +67,22 @@ struct request {
   bin_size() const {
     return is_bins_request() ? aux_value : 0;
   }
+
+  [[nodiscard]] auto
+  window_size() const {
+    return is_windows_request() ? (aux_value >> 32) : 0;
+  }
+
+  [[nodiscard]] auto
+  window_step() const {
+    return is_windows_request() ? (aux_value & 0xffffffff) : 0;
+  }
+
+  [[nodiscard]] static auto
+  get_aux_for_windows(const std::uint64_t sz,
+                      const std::uint64_t stp) -> std::uint64_t {
+    return sz << 32 | stp;
+  };
 
   [[nodiscard]] auto
   operator<=>(const request &) const = default;
@@ -97,9 +114,16 @@ struct request {
   }
 
   [[nodiscard]] auto
+  is_windows_request() const -> bool {
+    return request_type == request_type_code::windows ||
+           request_type == request_type_code::windows_covered;
+  }
+
+  [[nodiscard]] auto
   is_covered_request() const -> bool {
     return request_type == request_type_code::intervals_covered ||
-           request_type == request_type_code::bins_covered;
+           request_type == request_type_code::bins_covered ||
+           request_type == request_type_code::windows_covered;
   }
 
   [[nodiscard]] auto
