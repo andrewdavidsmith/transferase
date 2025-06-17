@@ -26,6 +26,7 @@
 
 #include "level_element_formatter.hpp"
 #include "output_format_type.hpp"
+#include "request.hpp"
 
 #include <string>
 #include <string_view>
@@ -41,9 +42,12 @@ struct level_element_covered_t;
 enum class output_format_t : std::uint8_t;
 
 template <typename T> struct writer_base {
+  static constexpr auto max_digits = 10;
+  static constexpr auto max_cols = 3;
   // ADS: below = (max_digits) x (max_methylomes) x (max_cols)
-  // <= 10 x 100 x 3;
-  static constexpr auto output_buffer_size{4096u};
+  // <= 10 x 200 x 3;
+  static constexpr auto output_buffer_size{
+    max_digits * request::max_methylomes_per_request * max_cols};
 
   const std::string &outfile;
   const genome_index &index;
