@@ -672,8 +672,8 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
     return EXIT_FAILURE;
   }
 
-  if ((bin_size == 0) == intervals_file.empty()) {
-    lgr.error("Error: specify exactly one of bins-size or intervals-file");
+  if (bin_size == 0 && window_size == 0 && intervals_file.empty()) {
+    lgr.error("specify one of bins-size, window-size or intervals-file");
     return EXIT_FAILURE;
   }
 
@@ -740,8 +740,8 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
 
   lgr.info("Initiating");
 
-  typedef xfr::request_type_code rc;
   const auto rq = [&] {
+    typedef xfr::request_type_code rc;
     if (!intervals_file.empty())
       return count_covered ? rc::intervals_covered : rc::intervals;
     if (bin_size > 0)
@@ -752,6 +752,7 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
   }();
 
   error = [&] {
+    typedef xfr::request_type_code rc;
     switch (rq) {
     case rc::intervals:
       return query_intervals(intervals_file, outopts, index, interface,
