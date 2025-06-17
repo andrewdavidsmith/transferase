@@ -211,6 +211,13 @@ struct genome_index {
     return meta.get_n_bins(bin_size);
   }
 
+  /// @brief Get the number bins that have CpG sites for the underlying
+  /// reference genome
+  /// @param bin_size Size of bins to consider.
+  [[nodiscard]] auto
+  get_n_nonempty_bins(const std::uint32_t bin_size) const noexcept
+    -> std::uint32_t;
+
   /// @brief Make a genome_index for a reference genome.
   /// @param genome_name A reference genome file in FASTA format,
   /// possibly gzipped.

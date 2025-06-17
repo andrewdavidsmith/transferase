@@ -53,6 +53,26 @@ namespace transferase {
 
 struct genomic_interval;
 
+[[nodiscard]] auto
+genome_index::get_n_nonempty_bins(const std::uint32_t bin_size) const noexcept
+  -> std::uint32_t {
+  std::uint32_t n_nonempty_bins{};
+  const auto zipped = std::views::zip(data.positions, meta.chrom_size);
+  for (const auto [positions, chrom_size] : zipped) {
+    auto cpg_itr = std::cbegin(positions);
+    const auto cpg_end = std::cend(positions);
+    for (std::uint32_t bin_start = 0; bin_start < chrom_size;
+         bin_start += bin_size) {
+      const auto bin_end = std::min(bin_start + bin_size, chrom_size);
+      const auto prev_cpg_itr = cpg_itr;
+      while (cpg_itr != cpg_end && *cpg_itr < bin_end)
+        ++cpg_itr;
+      n_nonempty_bins += (cpg_itr != prev_cpg_itr);
+    }
+  }
+  return n_nonempty_bins;
+}
+
 auto
 genome_index::write(const std::string &directory, const std::string &name,
                     std::error_code &error) const noexcept -> void {
