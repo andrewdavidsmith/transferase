@@ -1,6 +1,6 @@
 /* MIT License
  *
- * Copyright (c) 2024 Andrew D Smith
+ * Copyright (c) 2024-2025 Andrew D Smith
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -88,7 +88,7 @@ methylome_data_read(const std::string &filename,
     return {};
   }
 
-  // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
+  // NOLINTBEGIN(*-reinterpret-cast)
   methylome_data meth;
   if (metadata.is_compressed) {
     std::vector<std::uint8_t> buf(filesize);
@@ -119,8 +119,7 @@ methylome_data_read(const std::string &filename,
     ec = io_error;
     return {};
   }
-
-  // NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)
+  // NOLINTEND(*-reinterpret-cast)
 
   ec = std::error_code{};
   return meth;
@@ -167,7 +166,7 @@ methylome_data::write(const std::string &filename,
   if (!out)
     return std::make_error_code(std::errc(errno));
 
-  // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
+  // NOLINTBEGIN(*-reinterpret-cast)
   if (zip) {
     const auto n_bytes = static_cast<std::streamsize>(std::size(buf));
     if (!out.write(reinterpret_cast<const char *>(buf.data()), n_bytes))
@@ -179,7 +178,7 @@ methylome_data::write(const std::string &filename,
     if (!out.write(reinterpret_cast<const char *>(cpgs.data()), n_bytes))
       return io_error;
   }
-  // NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)
+  // NOLINTEND(*-reinterpret-cast)
   return std::error_code{};
 }
 
@@ -261,33 +260,7 @@ methylome_data::get_levels<level_element_covered_t>(
       get_levels_impl<level_element_covered_t>(beg + q.start, beg + q.stop);
 }
 
-template <>
-[[nodiscard]] auto
-methylome_data::global_levels<level_element_covered_t>() const noexcept
-  -> level_element_covered_t {
-  std::uint32_t n_meth{};
-  std::uint32_t n_unmeth{};
-  std::uint32_t n_covered{};
-  for (const auto &cpg : cpgs) {
-    n_meth += cpg.n_meth;
-    n_unmeth += cpg.n_unmeth;
-    n_covered += (cpg != mcount_pair{});
-  }
-  return {n_meth, n_unmeth, n_covered};
-}
-
-template <>
-[[nodiscard]] auto
-methylome_data::global_levels<level_element_t>() const noexcept
-  -> level_element_t {
-  std::uint32_t n_meth{};
-  std::uint32_t n_unmeth{};
-  for (const auto &cpg : cpgs) {
-    n_meth += cpg.n_meth;
-    n_unmeth += cpg.n_unmeth;
-  }
-  return {n_meth, n_unmeth};
-}
+// bins code
 
 template <typename T>
 static auto
@@ -383,6 +356,177 @@ methylome_data::get_levels<level_element_covered_t>(
   level_container<level_element_covered_t>::iterator d_first) const noexcept
   -> void {
   get_levels_impl<level_element_covered_t>(bin_size, index, cpgs, d_first);
+}
+
+// sliding window code
+
+template <typename lvl_elem_t>
+static auto
+include_window_levels_impl(
+  genome_index_data::vec::const_iterator &posn_itr,
+  const genome_index_data::vec::const_iterator posn_end,
+  const std::uint32_t window_end, methylome_data::vec::const_iterator &cpg_itr,
+  lvl_elem_t &t) noexcept {
+  while (posn_itr != posn_end && *posn_itr < window_end) {
+    t.n_meth += cpg_itr->n_meth;
+    t.n_unmeth += cpg_itr->n_unmeth;
+    if constexpr (std::is_same<lvl_elem_t, level_element_covered_t>::value)
+      t.n_covered += (*cpg_itr != mcount_pair{});
+    ++cpg_itr;
+    ++posn_itr;
+  }
+}
+
+template <typename lvl_elem_t>
+static auto
+exclude_window_levels_impl(
+  genome_index_data::vec::const_iterator &posn_itr,
+  const genome_index_data::vec::const_iterator posn_end,
+  const std::uint32_t window_end, methylome_data::vec::const_iterator &cpg_itr,
+  lvl_elem_t &t) noexcept {
+  while (posn_itr != posn_end && *posn_itr < window_end) {
+    t.n_meth -= cpg_itr->n_meth;
+    t.n_unmeth -= cpg_itr->n_unmeth;
+    if constexpr (std::is_same<lvl_elem_t, level_element_covered_t>::value)
+      t.n_covered -= (*cpg_itr != mcount_pair{});
+    ++cpg_itr;
+    ++posn_itr;
+  }
+}
+
+template <typename T>
+[[nodiscard]] static auto
+get_levels_impl(const std::uint32_t window_size,
+                const std::uint32_t window_step, const genome_index &index,
+                const methylome_data::vec &cpgs) noexcept
+  -> level_container<T> {
+  std::vector<T> results;
+  // reserving all the windows; note the container returned from this function
+  // is a 1D container.
+  results.reserve(index.get_n_windows(window_size));
+  const auto zipped = std::views::zip(
+    index.data.positions, index.meta.chrom_size, index.meta.chrom_offset);
+  for (const auto [positions, chrom_size, offset] : zipped) {
+    auto leading_posn_itr = std::cbegin(positions);
+    auto lagging_posn_itr = leading_posn_itr;
+    const auto posn_end = std::cend(positions);
+    auto leading_cpg_itr = std::cbegin(cpgs) + offset;
+    auto lagging_cpg_itr = leading_cpg_itr;
+    T t{};
+    for (std::uint32_t window_beg = 0; window_beg < chrom_size;
+         window_beg += window_step) {
+      exclude_window_levels_impl(lagging_posn_itr, posn_end, window_beg,
+                                 lagging_cpg_itr, t);
+      const auto window_end = std::min(window_beg + window_size, chrom_size);
+      include_window_levels_impl(leading_posn_itr, posn_end, window_end,
+                                 leading_cpg_itr, t);
+      results.push_back(t);
+    }
+  }
+  return level_container<T>(std::move(results));
+}
+
+template <typename lvl_elem_t>
+static auto
+get_levels_impl(
+  // clang-format off
+  const std::uint32_t window_size,
+  const std::uint32_t window_step,
+  const genome_index &index,
+  const methylome_data::vec &cpgs,
+  typename transferase::level_container<lvl_elem_t>::iterator res_itr
+  // clang-format on
+  ) noexcept -> void {
+  const auto zipped = std::views::zip(
+    index.data.positions, index.meta.chrom_size, index.meta.chrom_offset);
+  for (const auto [positions, chrom_size, offset] : zipped) {
+    auto leading_posn_itr = std::cbegin(positions);
+    auto lagging_posn_itr = leading_posn_itr;
+    const auto posn_end = std::cend(positions);
+    auto leading_cpg_itr = std::cbegin(cpgs) + offset;
+    auto lagging_cpg_itr = leading_cpg_itr;
+    lvl_elem_t t{};
+    for (std::uint32_t window_beg = 0; window_beg < chrom_size;
+         window_beg += window_step) {
+      exclude_window_levels_impl(lagging_posn_itr, posn_end, window_beg,
+                                 lagging_cpg_itr, t);
+      const auto window_end = std::min(window_beg + window_size, chrom_size);
+      include_window_levels_impl(leading_posn_itr, posn_end, window_end,
+                                 leading_cpg_itr, t);
+      *res_itr++ = t;
+    }
+  }
+}
+
+template <>
+[[nodiscard]] auto
+methylome_data::get_levels<level_element_t>(const std::uint32_t window_size,
+                                            const std::uint32_t window_step,
+                                            const genome_index &index)
+  const noexcept -> level_container<level_element_t> {
+  return get_levels_impl<level_element_t>(window_size, window_step, index,
+                                          cpgs);
+}
+
+template <>
+auto
+methylome_data::get_levels<level_element_t>(
+  const std::uint32_t window_size, const std::uint32_t window_step,
+  const genome_index &index,
+  level_container<level_element_t>::iterator res_itr) const noexcept -> void {
+  get_levels_impl<level_element_t>(window_size, window_step, index, cpgs,
+                                   res_itr);
+}
+
+template <>
+[[nodiscard]] auto
+methylome_data::get_levels<level_element_covered_t>(
+  const std::uint32_t window_size, const std::uint32_t window_step,
+  const genome_index &index) const noexcept
+  -> level_container<level_element_covered_t> {
+  return get_levels_impl<level_element_covered_t>(window_size, window_step,
+                                                  index, cpgs);
+}
+
+template <>
+auto
+methylome_data::get_levels<level_element_covered_t>(
+  const std::uint32_t window_size, const std::uint32_t window_step,
+  const genome_index &index,
+  level_container<level_element_covered_t>::iterator res_itr) const noexcept
+  -> void {
+  get_levels_impl<level_element_covered_t>(window_size, window_step, index,
+                                           cpgs, res_itr);
+}
+
+// global code
+
+template <>
+[[nodiscard]] auto
+methylome_data::global_levels<level_element_covered_t>() const noexcept
+  -> level_element_covered_t {
+  std::uint32_t n_meth{};
+  std::uint32_t n_unmeth{};
+  std::uint32_t n_covered{};
+  for (const auto &cpg : cpgs) {
+    n_meth += cpg.n_meth;
+    n_unmeth += cpg.n_unmeth;
+    n_covered += (cpg != mcount_pair{});
+  }
+  return {n_meth, n_unmeth, n_covered};
+}
+
+template <>
+[[nodiscard]] auto
+methylome_data::global_levels<level_element_t>() const noexcept
+  -> level_element_t {
+  std::uint32_t n_meth{};
+  std::uint32_t n_unmeth{};
+  for (const auto &cpg : cpgs) {
+    n_meth += cpg.n_meth;
+    n_unmeth += cpg.n_unmeth;
+  }
+  return {n_meth, n_unmeth};
 }
 
 [[nodiscard]] auto
