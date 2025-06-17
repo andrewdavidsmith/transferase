@@ -38,6 +38,8 @@ enum class request_type_code : std::uint8_t {
   intervals_covered = 1,
   bins = 2,
   bins_covered = 3,
+  windows = 4,
+  windows_covered = 5,
 };
 
 static constexpr auto request_type_code_names = std::array{
@@ -46,6 +48,8 @@ static constexpr auto request_type_code_names = std::array{
   "intervals_covered",
   "bins",
   "bins_covered",
+  "windows",
+  "windows_covered",
   // clang-format on
 };
 
