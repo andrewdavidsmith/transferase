@@ -238,7 +238,38 @@ genome_index_data::get_n_cpgs(const genome_index_metadata &meta,
       counts[j++] = bin_count;
     }
   }
+  return counts;
+}
 
+[[nodiscard]] auto
+genome_index_data::get_n_cpgs(const genome_index_metadata &meta,
+                              const std::uint32_t window_size,
+                              const std::uint32_t window_step) const noexcept
+  -> std::vector<std::uint32_t> {
+  const auto n_windows = meta.get_n_windows(window_step);
+  std::vector<std::uint32_t> counts(n_windows);
+  std::uint32_t j = 0;
+  const auto zipped =
+    std::views::zip(positions, meta.chrom_size, meta.chrom_offset);
+  for (const auto [posn, chrom_size, offset] : zipped) {
+    auto leading_posn_itr = std::cbegin(posn);
+    auto lagging_posn_itr = std::cbegin(posn);
+    const auto posn_end = std::cend(posn);
+    std::uint32_t window_count{};
+    for (std::uint32_t window_beg = 0; window_beg < chrom_size;
+         window_beg += window_step) {
+      while (lagging_posn_itr != posn_end && *lagging_posn_itr < window_beg) {
+        --window_count;
+        ++lagging_posn_itr;
+      }
+      const auto window_end = std::min(window_beg + window_size, chrom_size);
+      while (leading_posn_itr != posn_end && *leading_posn_itr < window_end) {
+        ++window_count;
+        ++leading_posn_itr;
+      }
+      counts[j++] = window_count;
+    }
+  }
   return counts;
 }
 
