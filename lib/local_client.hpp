@@ -126,7 +126,7 @@ private:
                                         std::size(methylome_names));
     bool first_methylome = true;
     std::uint64_t index_hash = 0;
-    std::uint32_t col_id = 0;
+    auto col_itr = std::begin(results);
     for (const auto &methylome_name : methylome_names) {
       const auto meth =
         methylome::read(config.get_methylome_dir(), methylome_name, error);
@@ -140,7 +140,7 @@ private:
         error = client_error_code::inconsistent_methylome_metadata;
         return {};
       }
-      meth.get_levels<lvl_elem_t>(query, results.column_itr(col_id++));
+      meth.get_levels<lvl_elem_t>(query, col_itr);
     }
     return results;
   }
@@ -155,7 +155,7 @@ private:
                                         std::size(methylome_names));
     bool first_methylome = true;
     std::uint64_t index_hash = 0;
-    std::uint32_t col_id = 0;
+    auto col_itr = std::begin(results);
     for (const auto &methylome_name : methylome_names) {
       const auto meth =
         methylome::read(config.get_methylome_dir(), methylome_name, error);
@@ -169,8 +169,7 @@ private:
         error = client_error_code::inconsistent_methylome_metadata;
         return {};
       }
-      meth.get_levels<lvl_elem_t>(bin_size, index,
-                                  results.column_itr(col_id++));
+      meth.get_levels<lvl_elem_t>(bin_size, index, col_itr);
     }
     return results;
   }
