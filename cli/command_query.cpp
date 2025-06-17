@@ -102,6 +102,7 @@ xfr query -s localhost -p 5000 -x index_dir \
 #include <memory>
 #include <print>
 #include <ranges>
+#include <stdexcept>  // for std::runtime_error
 #include <string>
 #include <string_view>
 #include <system_error>
