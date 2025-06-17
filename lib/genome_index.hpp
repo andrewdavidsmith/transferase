@@ -204,11 +204,29 @@ struct genome_index {
     return data.get_n_cpgs(meta, bin_size);
   }
 
+  /// @brief Get the number of CpG sites in each window of a given size for a
+  /// given step.
+  /// @param window_size Size of windows to consider.
+  /// @param window_step Step size for sliding windows.
+  /// @return A vector of counts of CpG sites in each bin
+  [[nodiscard]] auto
+  get_n_cpgs(const std::uint32_t window_size, const std::uint32_t window_step)
+    const noexcept -> std::vector<std::uint32_t> {
+    return data.get_n_cpgs(meta, window_size, window_step);
+  }
+
   /// @brief Get the number bins for the underlying reference genome
   /// @param bin_size Size of bins to consider.
   [[nodiscard]] auto
   get_n_bins(const std::uint32_t bin_size) const noexcept {
     return meta.get_n_bins(bin_size);
+  }
+
+  /// @brief Get the number of windows for the underlying reference genome
+  /// @param window_step Step size for sliding windows.
+  [[nodiscard]] auto
+  get_n_windows(const std::uint32_t window_step) const noexcept {
+    return meta.get_n_windows(window_step);
   }
 
   /// @brief Make a genome_index for a reference genome.
