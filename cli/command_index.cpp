@@ -150,7 +150,7 @@ command_index_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
   // Check on the output directory; if it doesn't exist, make it
   validate_output_directory(index_directory, error);
   if (error) {
-    lgr.error("Terminating due to error");
+    lgr.error("Terminating due to error validating output directory");
     return EXIT_FAILURE;
   }
 
