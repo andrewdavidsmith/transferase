@@ -89,14 +89,14 @@ private:
                         std::error_code &ec) const noexcept
     -> level_container<lvl_elem_t> {
     level_container<lvl_elem_t> results(req.n_intervals(), req.n_methylomes());
-    std::uint32_t col_id = 0;
+    auto col_itr = std::begin(results);
     for (const auto &methylome_name : req.methylome_names) {
       const auto meth = methylome::read(directory, methylome_name, ec);
       if (ec)
         return {};
       // This should take the results as out-param and have results fully
       // pre-allocated
-      meth.get_levels<lvl_elem_t>(query, results.column_itr(col_id++));
+      meth.get_levels<lvl_elem_t>(query, col_itr);
     }
     return results;
   }
@@ -119,13 +119,12 @@ private:
     -> level_container<lvl_elem_t> {
     level_container<lvl_elem_t> results(index.get_n_bins(req.bin_size()),
                                         req.n_methylomes());
-    std::uint32_t col_id = 0;
+    auto col_itr = std::begin(results);
     for (const auto &methylome_name : req.methylome_names) {
       const auto meth = methylome::read(directory, methylome_name, ec);
       if (ec)
         return {};
-      meth.get_levels<lvl_elem_t>(req.bin_size(), index,
-                                  results.column_itr(col_id++));
+      meth.get_levels<lvl_elem_t>(req.bin_size(), index, col_itr);
     }
     return results;
   }
