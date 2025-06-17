@@ -276,6 +276,16 @@ struct methylome {
     data.get_levels<lvl_elem_t>(bin_size, index, d_first);
   }
 
+  /// @brief Get the methylation level for each genomic 'window' (i.e.,
+  /// overlapping intervals of fixed size and fixed step size).
+  template <typename lvl_elem_t>
+  auto
+  get_levels(const std::uint32_t window_size, const std::uint32_t window_step,
+             const genome_index &index,
+             level_container<lvl_elem_t>::iterator d_first) const -> void {
+    data.get_levels<lvl_elem_t>(window_size, window_step, index, d_first);
+  }
+
   /// @brief Returns true iff the methylome files exist for the given name.
   /// @param directory_name The directory in which to look for files.
   /// @param methylome_name The name of the methylome to look for.
