@@ -150,11 +150,26 @@ struct methylome_data {
   get_levels(const std::uint32_t bin_size, const genome_index &index)
     const noexcept -> level_container<lvl_elem_t>;
 
+  /// @brief Get methylation levels for each fixed size bin in the genome that
+  /// contains a CpG site.
+  template <typename lvl_elem_t>
+  [[nodiscard]] auto
+  get_levels_nonempty(const std::uint32_t bin_size, const genome_index &index)
+    const noexcept -> level_container<lvl_elem_t>;
+
   /// @brief Get methylation levels for each fixed size bin in the genome.
   template <typename lvl_elem_t>
   auto
   get_levels(const std::uint32_t bin_size, const genome_index &index,
              level_container<lvl_elem_t>::iterator &res) const noexcept -> void;
+
+  /// @brief Get methylation levels for each fixed size bin in the genome that
+  /// contains a CpG site.
+  template <typename lvl_elem_t>
+  auto
+  get_levels_nonempty(const std::uint32_t bin_size, const genome_index &index,
+                      level_container<lvl_elem_t>::iterator &res) const noexcept
+    -> void;
 
   [[nodiscard]] static auto
   compose_filename(auto wo_extension) {
