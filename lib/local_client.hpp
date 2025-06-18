@@ -21,6 +21,10 @@
  * SOFTWARE.
  */
 
+// This source file is used for the Python bindings to simulate the client
+// connection when acting locally. This allows for the same interface within
+// Python bindings for local and remote queries.
+
 #ifndef LIB_LOCAL_CLIENT_HPP_
 #define LIB_LOCAL_CLIENT_HPP_
 
