@@ -56,7 +56,7 @@ template <typename level_element_type> struct level_container {
   // clang-format off
   level_container() = default;
   explicit level_container(const std::integral auto n_rows,
-                              const std::integral auto n_cols) noexcept :
+                           const std::integral auto n_cols) noexcept :
     n_rows(n_rows), n_cols(n_cols), v(n_rows*n_cols) {}
   explicit level_container(std::vector<level_element_type> &&v) noexcept :
     n_rows(std::size(v)), n_cols(1), v(std::move(v)) {}
