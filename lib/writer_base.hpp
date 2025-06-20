@@ -50,15 +50,14 @@ template <typename T> struct writer_base {
   const output_format_t out_fmt;
   const std::vector<std::string> &names;
   const std::uint32_t min_reads{};
-  const std::vector<std::uint32_t> &n_cpgs;
+  const bool write_n_cpgs{};
 
   writer_base(const std::string &outfile, const genome_index &index,
               const output_format_t &out_fmt,
               const std::vector<std::string> &names,
-              const std::uint32_t min_reads,
-              const std::vector<std::uint32_t> &n_cpgs) :
+              const std::uint32_t min_reads, const bool write_n_cpgs) :
     outfile{outfile}, index{index}, out_fmt{out_fmt}, names{names},
-    min_reads{min_reads}, n_cpgs{n_cpgs} {}
+    min_reads{min_reads}, write_n_cpgs{write_n_cpgs} {}
 
   // clang-format off
   auto self() noexcept -> T & {return static_cast<T &>(*this);}
