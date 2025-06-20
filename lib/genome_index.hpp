@@ -211,6 +211,15 @@ struct genome_index {
     return meta.get_n_bins(bin_size);
   }
 
+  /// @brief Get the index of each non-empty bin in the underlying reference
+  /// genome for this index (which defines an order on chroms and their size).
+  /// @param bin_size Size of bins to consider.
+  [[nodiscard]] auto
+  get_nonempty_bins(const std::uint32_t bin_size) const noexcept
+    -> std::vector<std::uint32_t> {
+    return data.get_nonempty_bins(meta, bin_size);
+  }
+
   /// @brief Get the number bins that have CpG sites for the underlying
   /// reference genome
   /// @param bin_size Size of bins to consider.
