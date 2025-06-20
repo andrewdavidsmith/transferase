@@ -267,6 +267,17 @@ struct methylome {
   }
 
   /// @brief Get the methylation level for each genomic 'bin' (i.e.,
+  /// non-overlapping intervals of fixed size; not the same as windows, which
+  /// may overlap). Only produces levels for bins that have at least one CpG
+  /// site.
+  template <typename lvl_elem_t>
+  [[nodiscard]] auto
+  get_levels_nonempty(const std::uint32_t bin_size, const genome_index &index)
+    const -> level_container<lvl_elem_t> {
+    return data.get_levels_nonempty<lvl_elem_t>(bin_size, index);
+  }
+
+  /// @brief Get the methylation level for each genomic 'bin' (i.e.,
   /// non-overlapping intervals of fixed size; not the same as
   /// windows, which may overlap).
   template <typename lvl_elem_t>
@@ -274,6 +285,18 @@ struct methylome {
   get_levels(const std::uint32_t bin_size, const genome_index &index,
              level_container<lvl_elem_t>::iterator &res) const -> void {
     data.get_levels<lvl_elem_t>(bin_size, index, res);
+  }
+
+  /// @brief Get the methylation level for each genomic 'bin' (i.e.,
+  /// non-overlapping intervals of fixed size; not the same as
+  /// windows, which may overlap). Only produces levels for bins that have at
+  /// least one CpG site.
+  template <typename lvl_elem_t>
+  auto
+  get_levels_nonempty(const std::uint32_t bin_size, const genome_index &index,
+                      level_container<lvl_elem_t>::iterator &res) const
+    -> void {
+    data.get_levels_nonempty<lvl_elem_t>(bin_size, index, res);
   }
 
   /// @brief Returns true iff the methylome files exist for the given name.
