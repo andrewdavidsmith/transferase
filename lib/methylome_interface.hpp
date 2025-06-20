@@ -70,6 +70,15 @@ public:
                       : get_levels_remote_impl<lvl_elem_t>(req, ec);
   }
 
+  // bins nonempty: takes an index
+  template <typename lvl_elem_t>
+  [[nodiscard]] auto
+  get_levels_nonempty(const request &req, const genome_index &index,
+                      std::error_code &ec) const noexcept
+    -> level_container<lvl_elem_t> {
+    return get_levels_local_nonempty_impl<lvl_elem_t>(req, index, ec);
+  }
+
 private:
   template <typename lvl_elem_t>
   [[nodiscard]] auto
@@ -126,6 +135,26 @@ private:
         return {};
       meth.get_levels<lvl_elem_t>(req.bin_size(), index, col_itr);
     }
+    return results;
+  }
+
+  template <typename lvl_elem_t>
+  [[nodiscard]] auto
+  get_levels_local_nonempty_impl(const request &req, const genome_index &index,
+                                 std::error_code &ec) const noexcept
+    -> level_container<lvl_elem_t> {
+    level_container<lvl_elem_t> results(index.get_n_bins(req.bin_size()),
+                                        req.n_methylomes());
+    auto col_itr = std::begin(results);
+    for (const auto &methylome_name : req.methylome_names) {
+      const auto meth = methylome::read(directory, methylome_name, ec);
+      if (ec)
+        return {};
+      meth.get_levels_nonempty<lvl_elem_t>(req.bin_size(), index, col_itr);
+    }
+    // ADS: ensure this does not reallocate
+    const auto updated_size = std::distance(std::begin(results), col_itr);
+    results.resize_keep_n_cols(updated_size);
     return results;
   }
 
