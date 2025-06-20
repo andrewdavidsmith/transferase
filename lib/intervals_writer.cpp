@@ -50,10 +50,16 @@ namespace transferase {
 
 [[nodiscard]] static inline auto
 write_bedlike_intervals_impl(
-  const std::string &outfile, const genome_index_metadata &meta,
+  // clang-format off
+  const std::string &outfile,
+  const genome_index &index,
   const std::vector<genomic_interval> &intervals,
-  const std::vector<std::uint32_t> &n_cpgs, const auto &levels,
-  const level_element_mode mode) noexcept -> std::error_code {
+  const auto &levels,
+  const level_element_mode mode,
+  const bool write_n_cpgs,
+  const std::vector<std::uint32_t> &n_cpgs
+  // clang-format on
+  ) noexcept -> std::error_code {
   const auto lvl_to_string = [mode](const auto &l) {
     return mode == level_element_mode::classic ? l.tostring_classic()
                                                : l.tostring_counts();
@@ -63,8 +69,7 @@ write_bedlike_intervals_impl(
   if (!out)
     return std::make_error_code(std::errc(errno));
 
-  const auto write_n_cpgs = !n_cpgs.empty();
-
+  const auto &meta = index.get_metadata();
   const auto n_levels = std::size(levels);
   auto prev_ch_id = genomic_interval::not_a_chrom;
   std::string chrom_name;
@@ -88,14 +93,20 @@ write_bedlike_intervals_impl(
 }
 
 [[nodiscard]] static inline auto
-write_intervals_dfscores_impl(const std::string &outfile,
+write_intervals_dfscores_impl(
+  // clang-format off
+                              const std::string &outfile,
                               const std::vector<std::string> &names,
-                              const genome_index_metadata &meta,
+                              const genome_index &index,
                               const std::vector<genomic_interval> &intervals,
                               const std::uint32_t min_reads,
-                              const std::vector<std::uint32_t> &n_cpgs,
-                              const auto &levels, const char rowname_delim,
-                              const bool write_header) -> std::error_code {
+                              const auto &levels,
+                              const char rowname_delim,
+                              const bool write_header,
+                              const bool write_n_cpgs,
+                              const std::vector<std::uint32_t> &n_cpgs
+  // clang-format on
+  ) -> std::error_code {
   using std::literals::string_view_literals::operator""sv;
   static constexpr auto none_label = "NA"sv;
   static constexpr auto delim = '\t';
@@ -103,8 +114,6 @@ write_intervals_dfscores_impl(const std::string &outfile,
   std::ofstream out(outfile);
   if (!out)
     return std::make_error_code(std::errc(errno));
-
-  const auto write_n_cpgs = !n_cpgs.empty();
 
   if (write_header) {
     // auto joined =
@@ -115,6 +124,7 @@ write_intervals_dfscores_impl(const std::string &outfile,
     std::println(out, "{}", joined);
   }
 
+  const auto &meta = index.get_metadata();
   const auto n_levels = std::size(levels);
   auto prev_ch_id = genomic_interval::not_a_chrom;
   std::string chrom_name;
@@ -144,15 +154,16 @@ write_intervals_dfscores_impl(const std::string &outfile,
 [[nodiscard]] static inline auto
 write_intervals_dataframe_impl(
   // clang-format off
-  const std::string &outfile,
-  const std::vector<std::string> &names,
-  const genome_index_metadata &meta,
-  const std::vector<genomic_interval> &intervals,
-  const std::vector<std::uint32_t> &n_cpgs,
-  const auto &levels,
-  const level_element_mode mode,
-  const char rowname_delim,
-  const bool write_header
+                               const std::string &outfile,
+                               const std::vector<std::string> &names,
+                               const genome_index &index,
+                               const std::vector<genomic_interval> &intervals,
+                               const auto &levels,
+                               const level_element_mode mode,
+                               const char rowname_delim,
+                               const bool write_header,
+                               const bool write_n_cpgs,
+                               const std::vector<std::uint32_t> &n_cpgs
   // clang-format on
   ) -> std::error_code {
   static constexpr auto delim = '\t';  // not optional for now
@@ -173,8 +184,6 @@ write_intervals_dataframe_impl(
   if (!out)
     return std::make_error_code(std::errc(errno));
 
-  const auto write_n_cpgs = !n_cpgs.empty();
-
   if (write_header) {
     // auto joined = names | std::views::transform(hdr_formatter) |
     //               std::views::join_with(delim) |
@@ -186,6 +195,7 @@ write_intervals_dataframe_impl(
     std::println(out, "{}", joined);
   }
 
+  const auto &meta = index.get_metadata();
   const auto n_levels = std::size(levels);
   auto prev_ch_id = genomic_interval::not_a_chrom;
   std::string chrom_name;
@@ -215,12 +225,13 @@ template <typename level_element>
 [[nodiscard]] static inline auto
 write_bedlike_intervals_impl(
   // clang-format off
-  const std::string &outfile,
-  const genome_index_metadata &meta,
-  const std::vector<genomic_interval> &intervals,
-  const std::vector<std::uint32_t> &n_cpgs,
-  const level_container<level_element> &levels,
-  const level_element_mode mode
+                             const std::string &outfile,
+                             const genome_index &index,
+                             const std::vector<genomic_interval> &intervals,
+                             const level_container<level_element> &levels,
+                             const level_element_mode mode,
+                             const bool write_n_cpgs,
+                             const std::vector<std::uint32_t> &n_cpgs
   // clang-format on
   ) noexcept -> std::error_code {
   using std::literals::string_view_literals::operator""sv;
@@ -232,14 +243,13 @@ write_bedlike_intervals_impl(
   if (!out)
     return std::make_error_code(std::errc(errno));
 
-  const auto write_n_cpgs = !n_cpgs.empty();
-
   std::vector<char> line(intervals_writer::output_buffer_size);
   auto line_beg = line.data();
   // NOLINTNEXTLINE (*-pointer-arithmetic)
   const auto line_end = line.data() + std::size(line);
   auto error = std::errc{};
 
+  const auto &meta = index.get_metadata();
   const auto n_levels = levels.n_cols;
   auto prev_ch_id = genomic_interval::not_a_chrom;
   std::string chrom_name;
@@ -273,15 +283,16 @@ template <typename level_element>
 [[nodiscard]] static inline auto
 write_intervals_dfscores_impl(
   // clang-format off
-  const std::string &outfile,
-  const std::vector<std::string> &names,
-  const genome_index_metadata &meta,
-  const std::vector<genomic_interval> &intervals,
-  const std::uint32_t min_reads,
-  const std::vector<std::uint32_t> &n_cpgs,
-  const level_container<level_element> &levels,
-  const char rowname_delim,
-  const bool write_header
+                              const std::string &outfile,
+                              const std::vector<std::string> &names,
+                              const genome_index &index,
+                              const std::vector<genomic_interval> &intervals,
+                              const std::uint32_t min_reads,
+                              const level_container<level_element> &levels,
+                              const char rowname_delim,
+                              const bool write_header,
+                              const bool write_n_cpgs,
+                              const std::vector<std::uint32_t> &n_cpgs
   // clang-format on
   ) -> std::error_code {
   using std::literals::string_view_literals::operator""sv;
@@ -292,8 +303,6 @@ write_intervals_dfscores_impl(
   std::ofstream out(outfile);
   if (!out)
     return std::make_error_code(std::errc(errno));
-
-  const auto write_n_cpgs = !n_cpgs.empty();
 
   if (write_header) {
     // auto joined =
@@ -310,6 +319,7 @@ write_intervals_dfscores_impl(
   const auto line_end = line.data() + std::size(line);
   auto error = std::errc{};
 
+  const auto &meta = index.get_metadata();
   const auto n_levels = levels.n_cols;
   auto prev_ch_id = genomic_interval::not_a_chrom;
   std::string chrom_name;
@@ -341,15 +351,16 @@ template <typename level_element>
 [[nodiscard]] static inline auto
 write_intervals_dataframe_impl(
   // clang-format off
-  const std::string &outfile,
-  const std::vector<std::string> &names,
-  const genome_index_metadata &meta,
-  const std::vector<genomic_interval> &intervals,
-  const std::vector<std::uint32_t> &n_cpgs,
-  const level_container<level_element> &levels,
-  const level_element_mode mode,
-  const char rowname_delim,
-  const bool write_header
+                               const std::string &outfile,
+                               const std::vector<std::string> &names,
+                               const genome_index &index,
+                               const std::vector<genomic_interval> &intervals,
+                               const level_container<level_element> &levels,
+                               const level_element_mode mode,
+                               const char rowname_delim,
+                               const bool write_header,
+                               const bool write_n_cpgs,
+                               const std::vector<std::uint32_t> &n_cpgs
   // clang-format on
   ) -> std::error_code {
   static constexpr auto delim{'\t'};
@@ -364,8 +375,6 @@ write_intervals_dataframe_impl(
   std::ofstream out(outfile);
   if (!out)
     return std::make_error_code(std::errc(errno));
-
-  const auto write_n_cpgs = !n_cpgs.empty();
 
   if (write_header) {
     // auto joined = names | std::views::transform(hdr_formatter) |
@@ -384,6 +393,7 @@ write_intervals_dataframe_impl(
   const auto line_end = line.data() + std::size(line);
   auto error = std::errc{};
 
+  const auto &meta = index.get_metadata();
   const auto n_levels = levels.n_cols;
   auto prev_ch_id = genomic_interval::not_a_chrom;
   std::string chrom_name;
@@ -419,8 +429,8 @@ template <>
 intervals_writer::write_bedlike_impl(
   const std::vector<level_container_flat<level_element_covered_t>> &levels,
   const level_element_mode mode) const noexcept -> std::error_code {
-  return write_bedlike_intervals_impl(outfile, index.get_metadata(), intervals,
-                                      n_cpgs, levels, mode);
+  return write_bedlike_intervals_impl(outfile, index, intervals, levels, mode,
+                                      write_n_cpgs, n_cpgs);
 }
 
 template <>
@@ -428,8 +438,8 @@ template <>
 intervals_writer::write_bedlike_impl(
   const std::vector<level_container_flat<level_element_t>> &levels,
   const level_element_mode mode) const noexcept -> std::error_code {
-  return write_bedlike_intervals_impl(outfile, index.get_metadata(), intervals,
-                                      n_cpgs, levels, mode);
+  return write_bedlike_intervals_impl(outfile, index, intervals, levels, mode,
+                                      write_n_cpgs, n_cpgs);
 }
 
 template <>
@@ -437,8 +447,8 @@ template <>
 intervals_writer::write_bedlike_impl(
   const level_container<level_element_t> &levels,
   const level_element_mode mode) const noexcept -> std::error_code {
-  return write_bedlike_intervals_impl(outfile, index.get_metadata(), intervals,
-                                      n_cpgs, levels, mode);
+  return write_bedlike_intervals_impl(outfile, index, intervals, levels, mode,
+                                      write_n_cpgs, n_cpgs);
 }
 
 template <>
@@ -446,8 +456,8 @@ template <>
 intervals_writer::write_bedlike_impl(
   const level_container<level_element_covered_t> &levels,
   const level_element_mode mode) const noexcept -> std::error_code {
-  return write_bedlike_intervals_impl(outfile, index.get_metadata(), intervals,
-                                      n_cpgs, levels, mode);
+  return write_bedlike_intervals_impl(outfile, index, intervals, levels, mode,
+                                      write_n_cpgs, n_cpgs);
 }
 
 template <>
@@ -456,9 +466,9 @@ intervals_writer::write_dfscores_impl(
   const std::vector<level_container_flat<level_element_t>> &levels,
   const char rowname_delim,
   const bool write_header) const noexcept -> std::error_code {
-  return write_intervals_dfscores_impl(outfile, names, index.get_metadata(),
-                                       intervals, min_reads, n_cpgs, levels,
-                                       rowname_delim, write_header);
+  return write_intervals_dfscores_impl(outfile, names, index, intervals,
+                                       min_reads, levels, rowname_delim,
+                                       write_header, write_n_cpgs, n_cpgs);
 }
 
 template <>
@@ -467,9 +477,9 @@ intervals_writer::write_dfscores_impl(
   const std::vector<level_container_flat<level_element_covered_t>> &levels,
   const char rowname_delim,
   const bool write_header) const noexcept -> std::error_code {
-  return write_intervals_dfscores_impl(outfile, names, index.get_metadata(),
-                                       intervals, min_reads, n_cpgs, levels,
-                                       rowname_delim, write_header);
+  return write_intervals_dfscores_impl(outfile, names, index, intervals,
+                                       min_reads, levels, rowname_delim,
+                                       write_header, write_n_cpgs, n_cpgs);
 }
 
 template <>
@@ -477,9 +487,9 @@ template <>
 intervals_writer::write_dfscores_impl(
   const level_container<level_element_t> &levels, const char rowname_delim,
   const bool write_header) const noexcept -> std::error_code {
-  return write_intervals_dfscores_impl(outfile, names, index.get_metadata(),
-                                       intervals, min_reads, n_cpgs, levels,
-                                       rowname_delim, write_header);
+  return write_intervals_dfscores_impl(outfile, names, index, intervals,
+                                       min_reads, levels, rowname_delim,
+                                       write_header, write_n_cpgs, n_cpgs);
 }
 
 template <>
@@ -488,9 +498,9 @@ intervals_writer::write_dfscores_impl(
   const level_container<level_element_covered_t> &levels,
   const char rowname_delim,
   const bool write_header) const noexcept -> std::error_code {
-  return write_intervals_dfscores_impl(outfile, names, index.get_metadata(),
-                                       intervals, min_reads, n_cpgs, levels,
-                                       rowname_delim, write_header);
+  return write_intervals_dfscores_impl(outfile, names, index, intervals,
+                                       min_reads, levels, rowname_delim,
+                                       write_header, write_n_cpgs, n_cpgs);
 }
 
 template <>
@@ -499,9 +509,9 @@ intervals_writer::write_dataframe_impl(
   const std::vector<level_container_flat<level_element_t>> &levels,
   const level_element_mode mode, const char rowname_delim,
   const bool write_header) const noexcept -> std::error_code {
-  return write_intervals_dataframe_impl(outfile, names, index.get_metadata(),
-                                        intervals, n_cpgs, levels, mode,
-                                        rowname_delim, write_header);
+  return write_intervals_dataframe_impl(outfile, names, index, intervals,
+                                        levels, mode, rowname_delim,
+                                        write_header, write_n_cpgs, n_cpgs);
 }
 
 template <>
@@ -510,9 +520,9 @@ intervals_writer::write_dataframe_impl(
   const std::vector<level_container_flat<level_element_covered_t>> &levels,
   const level_element_mode mode, const char rowname_delim,
   const bool write_header) const noexcept -> std::error_code {
-  return write_intervals_dataframe_impl(outfile, names, index.get_metadata(),
-                                        intervals, n_cpgs, levels, mode,
-                                        rowname_delim, write_header);
+  return write_intervals_dataframe_impl(outfile, names, index, intervals,
+                                        levels, mode, rowname_delim,
+                                        write_header, write_n_cpgs, n_cpgs);
 }
 
 template <>
@@ -521,9 +531,9 @@ intervals_writer::write_dataframe_impl(
   const level_container<level_element_t> &levels, const level_element_mode mode,
   const char rowname_delim,
   const bool write_header) const noexcept -> std::error_code {
-  return write_intervals_dataframe_impl(outfile, names, index.get_metadata(),
-                                        intervals, n_cpgs, levels, mode,
-                                        rowname_delim, write_header);
+  return write_intervals_dataframe_impl(outfile, names, index, intervals,
+                                        levels, mode, rowname_delim,
+                                        write_header, write_n_cpgs, n_cpgs);
 }
 
 template <>
@@ -532,9 +542,9 @@ intervals_writer::write_dataframe_impl(
   const level_container<level_element_covered_t> &levels,
   const level_element_mode mode, const char rowname_delim,
   const bool write_header) const noexcept -> std::error_code {
-  return write_intervals_dataframe_impl(outfile, names, index.get_metadata(),
-                                        intervals, n_cpgs, levels, mode,
-                                        rowname_delim, write_header);
+  return write_intervals_dataframe_impl(outfile, names, index, intervals,
+                                        levels, mode, rowname_delim,
+                                        write_header, write_n_cpgs, n_cpgs);
 }
 
 }  // namespace transferase

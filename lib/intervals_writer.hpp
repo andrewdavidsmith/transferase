@@ -40,14 +40,19 @@ enum class level_element_mode : std::uint8_t;
 
 struct intervals_writer : public writer_base<intervals_writer> {
   const std::vector<genomic_interval> &intervals;
-  intervals_writer(const std::string &outfile, const genome_index &index,
+  const std::vector<std::uint32_t> &n_cpgs;
+  // clang-format off
+  intervals_writer(const std::string &outfile,
+                   const genome_index &index,
                    const output_format_t out_fmt,
                    const std::vector<std::string> &names,
                    const std::uint32_t min_reads,
-                   const std::vector<std::uint32_t> &n_cpgs,
-                   const std::vector<genomic_interval> &intervals) :
-    writer_base{outfile, index, out_fmt, names, min_reads, n_cpgs},
-    intervals{intervals} {}
+                   const bool write_n_cpgs,
+                   const std::vector<genomic_interval> &intervals,
+                   const std::vector<std::uint32_t> &n_cpgs) :
+    writer_base{outfile, index, out_fmt, names, min_reads, write_n_cpgs},
+    intervals{intervals}, n_cpgs{n_cpgs} {}
+  // clang-format on
 
   // prevent copy and move
   // clang-format off
