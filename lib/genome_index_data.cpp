@@ -1,6 +1,6 @@
 /* MIT License
  *
- * Copyright (c) 2024 Andrew D Smith
+ * Copyright (c) 2024-2025 Andrew D Smith
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -219,26 +219,49 @@ genome_index_data::get_n_cpgs(const genome_index_metadata &meta,
 genome_index_data::get_n_cpgs(const genome_index_metadata &meta,
                               const std::uint32_t bin_size) const noexcept
   -> std::vector<std::uint32_t> {
-  const auto n_bins = meta.get_n_bins(bin_size);
-  std::vector<std::uint32_t> counts(n_bins);
-  std::uint32_t j = 0;
-  const auto zipped =
-    std::views::zip(positions, meta.chrom_size, meta.chrom_offset);
-  for (const auto [posn, chrom_size, offset] : zipped) {
+  std::vector<std::uint32_t> counts(meta.get_n_bins(bin_size));
+  auto count_itr = std::begin(counts);
+  const auto zipped = std::views::zip(positions, meta.chrom_size);
+  for (const auto [posn, chrom_size] : zipped) {
     auto posn_itr = std::cbegin(posn);
     const auto posn_end = std::cend(posn);
-    for (std::uint32_t i = 0; i < chrom_size; i += bin_size) {
-      // need bin_end like this because otherwise we go into next chrom
-      const auto bin_end = std::min(i + bin_size, chrom_size);
-      std::uint32_t bin_count{};
-      while (posn_itr != posn_end && *posn_itr < bin_end) {
-        ++bin_count;
-        ++posn_itr;
-      }
-      counts[j++] = bin_count;
+    for (std::uint32_t bin_beg = 0; bin_beg < chrom_size; bin_beg += bin_size) {
+      const auto bin_end = bin_beg + bin_size;  // ok to go past chrom end here
+      const auto prev = posn_itr;
+      posn_itr = std::find_if_not(posn_itr, posn_end,
+                                  [&](const auto p) { return p < bin_end; });
+      *count_itr++ = std::distance(prev, posn_itr);
     }
   }
+  return counts;
+}
 
+[[nodiscard]] auto
+genome_index_data::get_nonempty_bins(
+  // clang-format off
+  const genome_index_metadata &meta,
+  const std::uint32_t bin_size)
+  const noexcept -> std::vector<std::uint32_t> {
+  // clang-format on
+  std::vector<std::uint32_t> counts;
+  // reserve instead of allocate to avoid possible realloc on later resize to
+  // smaller size
+  counts.reserve(meta.get_n_bins(bin_size));
+  const auto zipped = std::views::zip(positions, meta.chrom_size);
+  std::uint32_t bin_idx = 0;
+  for (const auto [posn, chrom_size] : zipped) {
+    auto posn_itr = std::cbegin(posn);
+    const auto posn_end = std::cend(posn);
+    for (std::uint32_t bin_beg = 0; bin_beg < chrom_size; bin_beg += bin_size) {
+      const auto bin_end = bin_beg + bin_size;  // ok to go past chrom end here
+      const auto prev = posn_itr;
+      posn_itr = std::find_if_not(posn_itr, posn_end,
+                                  [&](const auto p) { return p < bin_end; });
+      if (prev != posn_itr)
+        counts.push_back(bin_idx);
+      ++bin_idx;
+    }
+  }
   return counts;
 }
 

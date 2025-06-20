@@ -1,6 +1,6 @@
 /* MIT License
  *
- * Copyright (c) 2024 Andrew D Smith
+ * Copyright (c) 2024-2025 Andrew D Smith
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -94,6 +94,11 @@ struct genome_index_data {
   [[nodiscard]] auto
   get_n_cpgs(const genome_index_metadata &meta, const std::uint32_t bin_size)
     const noexcept -> std::vector<std::uint32_t>;
+
+  [[nodiscard]] auto
+  get_nonempty_bins(const genome_index_metadata &meta,
+                    const std::uint32_t bin_size) const noexcept
+    -> std::vector<std::uint32_t>;
 
   [[nodiscard]] auto
   make_query_chrom(const std::int32_t ch_id, const genome_index_metadata &meta,
