@@ -99,7 +99,8 @@ template <typename level_element_type> struct level_container {
   }
 
   auto
-  resize(const std::integral auto new_size) noexcept {
+  resize_keep_n_cols(const std::integral auto new_size) noexcept {
+    n_rows = new_size / n_cols;
     v.resize(new_size);
   }
 
