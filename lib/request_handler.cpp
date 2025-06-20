@@ -135,9 +135,6 @@ request_handler::intervals_get_levels<level_element_t>(
     lgr.debug("Computing levels for methylome: {} (intervals)", methylome_name);
     meth->get_levels<level_element_t>(query, col_itr);
   }
-  // ADS: ensure this does not reallocate
-  const auto updated_size = std::distance(std::begin(resp_data), col_itr);
-  resp_data.resize(updated_size);
 }
 
 template <>
@@ -169,9 +166,6 @@ request_handler::intervals_get_levels<level_element_covered_t>(
               methylome_name);
     meth->get_levels<level_element_covered_t>(query, col_itr);
   }
-  // ADS: ensure this does not reallocate
-  const auto updated_size = std::distance(std::begin(resp_data), col_itr);
-  resp_data.resize(updated_size);
 }
 
 template <>
@@ -215,7 +209,7 @@ request_handler::bins_get_levels<level_element_t>(
   }
   // ADS: ensure this does not reallocate
   const auto updated_size = std::distance(std::begin(resp_data), col_itr);
-  resp_data.resize(updated_size);
+  resp_data.resize_keep_n_cols(updated_size);
 }
 
 template <>
@@ -260,7 +254,7 @@ request_handler::bins_get_levels<level_element_covered_t>(
   }
   // ADS: ensure this does not reallocate
   const auto updated_size = std::distance(std::begin(resp_data), col_itr);
-  resp_data.resize(updated_size);
+  resp_data.resize_keep_n_cols(updated_size);
 }
 
 }  // namespace transferase
