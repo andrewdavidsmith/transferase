@@ -25,10 +25,12 @@
 #define LIB_LEVEL_ELEMENT_FORMATTER_HPP_
 
 #include "level_element.hpp"
+#include "writer_base.hpp"
 
 #include <charconv>
 #include <cstdint>
 #include <format>
+#include <ranges>
 #include <string>
 #include <string_view>
 #include <system_error>
@@ -42,24 +44,26 @@ enum class level_element_mode : std::uint8_t {
   score,
 };
 
+namespace level_format {
+
 static inline auto
-push_buffer(auto &a, const auto b, auto &e, const std::uint32_t val) -> void {
+push(auto &a, const auto b, auto &e, const std::uint32_t val) -> void {
   auto tcr = std::to_chars(a, b, val);
   e = e != std::errc{} ? e : tcr.ec;
   a = tcr.ptr;
 }
 
 static inline auto
-push_buffer(auto &a, const auto b, auto &e,
-            const std::floating_point auto val) -> void {
+push(auto &a, const auto b, auto &e,
+     const std::floating_point auto val) -> void {
   auto tcr = std::to_chars(a, b, val, std::chars_format::general, 6);
   e = e != std::errc{} ? e : tcr.ec;
   a = tcr.ptr;
 }
 
 static inline auto
-push_buffer(auto &a, const auto b, [[maybe_unused]] auto &e,
-            const std::string_view val) -> void {
+push(auto &a, const auto b, [[maybe_unused]] auto &e,
+     const std::string_view val) -> void {
   auto v = std::cbegin(val);
   while (a != b && v != std::cend(val))
     *a++ = *v++;
@@ -67,8 +71,8 @@ push_buffer(auto &a, const auto b, [[maybe_unused]] auto &e,
 }
 
 static inline auto
-push_buffer(auto &a, const auto b, [[maybe_unused]] auto &e,
-            const std::string &val) -> void {
+push(auto &a, const auto b, [[maybe_unused]] auto &e,
+     const std::string &val) -> void {
   auto v = std::cbegin(val);
   while (a != b && v != std::cend(val))
     *a++ = *v++;
@@ -76,62 +80,72 @@ push_buffer(auto &a, const auto b, [[maybe_unused]] auto &e,
 }
 
 static inline auto
-push_buffer(auto &a, const auto b, [[maybe_unused]] auto &e,
-            const char val) -> void {
+push(auto &a, const auto b, [[maybe_unused]] auto &e, const char val) -> void {
   if (a != b)
     *a++ = val;
 }
 
 template <typename... Args>
 inline auto
-push_buffer(auto &a, const auto b, auto &e, Args... args) -> void {
-  (push_buffer(a, b, e, args), ...);
+push(auto &a, const auto b, auto &e, Args... args) -> void {
+  (push(a, b, e, args), ...);
 }
 
 inline auto
-push_buffer_elem(auto &a, const auto b, auto &e, const level_element_t &elem,
-                 const level_element_mode mode, const char delim) -> void {
+push_elem(auto &a, const auto b, auto &e, const level_element_t &elem,
+          const level_element_mode mode, const char delim) -> void {
   switch (mode) {
   case level_element_mode::counts:
-    push_buffer(a, b, e, delim, elem.n_meth, delim, elem.n_unmeth);
+    push(a, b, e, delim, elem.n_meth, delim, elem.n_unmeth);
     break;
   case level_element_mode::classic:
-    push_buffer(a, b, e, delim, elem.get_wmean(), delim, elem.n_reads());
+    push(a, b, e, delim, elem.get_wmean(), delim, elem.n_reads());
     break;
   case level_element_mode::score:
-    push_buffer(a, b, e, delim, elem.get_wmean());
+    push(a, b, e, delim, elem.get_wmean());
     break;
   }
 }
 
 inline auto
-push_buffer_elem(auto &a, const auto b, auto &e,
-                 const level_element_covered_t &elem,
-                 const level_element_mode mode, const char delim) -> void {
+push_elem(auto &a, const auto b, auto &e, const level_element_covered_t &elem,
+          const level_element_mode mode, const char delim) -> void {
   switch (mode) {
   case level_element_mode::counts:
-    push_buffer(a, b, e, delim, elem.n_meth, delim, elem.n_unmeth, delim,
-                elem.n_covered);
+    push(a, b, e, delim, elem.n_meth, delim, elem.n_unmeth, delim,
+         elem.n_covered);
     break;
   case level_element_mode::classic:
-    push_buffer(a, b, e, delim, elem.get_wmean(), delim, elem.n_reads(), delim,
-                elem.n_covered);
+    push(a, b, e, delim, elem.get_wmean(), delim, elem.n_reads(), delim,
+         elem.n_covered);
     break;
   case level_element_mode::score:
-    push_buffer(a, b, e, delim, elem.get_wmean());
+    push(a, b, e, delim, elem.get_wmean(), delim, elem.n_covered);
     break;
   }
 }
 
 inline auto
-push_buffer_score(auto &a, const auto b, auto &e, const auto &elem,
-                  const std::string_view none_label,
-                  const std::uint32_t min_reads, const char delim) -> void {
+push_score(auto &a, const auto b, auto &e, const level_element_t &elem,
+           const std::string_view none_label, const std::uint32_t min_reads,
+           const char delim) -> void {
   if (elem.n_reads() >= min_reads)
-    push_buffer(a, b, e, delim, elem.get_wmean());
+    push(a, b, e, delim, elem.get_wmean());
   else
-    push_buffer(a, b, e, delim, none_label);
+    push(a, b, e, delim, none_label);
 }
+
+inline auto
+push_score(auto &a, const auto b, auto &e, const level_element_covered_t &elem,
+           const std::string_view none_label, const std::uint32_t min_reads,
+           const char delim) -> void {
+  if (elem.n_reads() >= min_reads)
+    push(a, b, e, delim, elem.get_wmean(), delim, elem.n_covered);
+  else
+    push(a, b, e, delim, none_label, delim, elem.n_covered);
+}
+
+}  // namespace level_format
 
 }  // namespace transferase
 
