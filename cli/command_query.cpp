@@ -1,6 +1,6 @@
 /* MIT License
  *
- * Copyright (c) 2024 Andrew D Smith
+ * Copyright (c) 2024-2025 Andrew D Smith
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -118,6 +118,7 @@ struct output_options {
   xfr::output_format_t outfmt{};
   std::uint32_t min_reads{};
   bool write_n_cpgs{};
+  bool write_empty_lines{};
 };
 
 [[nodiscard]] static inline auto
@@ -225,8 +226,9 @@ query_intervals(const std::string &intervals_file,
     outopts.outfmt,
     alt_names,
     outopts.min_reads,
-    n_cpgs,
+    outopts.write_n_cpgs,
     intervals,
+    n_cpgs,
     // clang-format on
   };
 
@@ -261,7 +263,8 @@ query_bins(const std::uint32_t bin_size, const output_options &outopts,
     xfr::request{request_type, index.get_hash(), bin_size, methylome_names};
   std::error_code error;
   const auto query_start{std::chrono::high_resolution_clock::now()};
-  const auto results = interface.get_levels<level_element>(req, index, error);
+  const auto results =
+    interface.get_levels_nonempty<level_element>(req, index, error);
   if (error) {
     lgr.debug("Error obtaining levels: {}", error);
     return error;
@@ -270,9 +273,6 @@ query_bins(const std::uint32_t bin_size, const output_options &outopts,
   lgr.debug("Elapsed time for query: {:.3}s",
             duration(query_start, query_stop));
 
-  const auto n_cpgs = outopts.write_n_cpgs ? index.get_n_cpgs(bin_size)
-                                           : std::vector<std::uint32_t>{};
-
   const auto outmgr = xfr::bins_writer{
     // clang-format off
     outopts.outfile,
@@ -280,7 +280,8 @@ query_bins(const std::uint32_t bin_size, const output_options &outopts,
     outopts.outfmt,
     alt_names,
     outopts.min_reads,
-    n_cpgs,
+    outopts.write_n_cpgs,
+    outopts.write_empty_lines,
     bin_size,
     // clang-format on
   };
@@ -482,6 +483,8 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
     ->option_text(" ");
   app.add_flag("--cpgs", outopts.write_n_cpgs,
                "report the number of CpGs in each query interval");
+  app.add_flag("--empty", outopts.write_empty_lines,
+               "output intervals that have no CpG sites");
   app
     .add_option("-r,--reads", outopts.min_reads,
                 "minimum reads below which a score is set to NA")
