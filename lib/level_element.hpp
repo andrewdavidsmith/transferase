@@ -71,11 +71,18 @@ struct level_element_t {
     return std::format("{:.6}\t{}", get_wmean(), n_reads());
   }
 
+  /// Get a string representation for the counts as weighted mean
+  [[nodiscard]] constexpr auto
+  tostring_wmean() const noexcept -> std::string {
+    return std::format("{:.6}", get_wmean());
+  }
+
   auto
   operator<=>(const level_element_t &) const = default;
 
   static constexpr auto hdr_fmt = "{}_M{}{}_U";
   static constexpr auto hdr_fmt_cls = "{}_M{}{}_R";
+  static constexpr auto hdr_fmt_scr = "{}_M";
 };
 
 /// @brief Triple of counts for methylation level with number of sites covered.
@@ -123,11 +130,18 @@ struct level_element_covered_t {
     return std::format("{:.6}\t{}\t{}", get_wmean(), n_reads(), n_covered);
   }
 
+  /// Get a string representation of as weighted mean
+  [[nodiscard]] constexpr auto
+  tostring_wmean() const noexcept -> std::string {
+    return std::format("{:.6}\t{}", get_wmean(), n_covered);
+  }
+
   auto
   operator<=>(const level_element_covered_t &) const = default;
 
   static constexpr auto hdr_fmt = "{}_M{}{}_U{}{}_C";
   static constexpr auto hdr_fmt_cls = "{}_M{}{}_R{}{}_C";
+  static constexpr auto hdr_fmt_scr = "{}_M{}{}_C";
 };
 
 }  // namespace transferase
