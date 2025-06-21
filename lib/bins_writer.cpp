@@ -49,114 +49,214 @@
 
 namespace transferase {
 
+template <typename level_element>
+[[nodiscard]] static auto
+get_empty_row(const bool write_empty_lines, const auto n_levels,
+              const auto delim, const level_element_mode mode) -> std::string {
+  if (!write_empty_lines)
+    return {};
+
+  std::vector<char> line(bins_writer::output_buffer_size);
+  // NOLINTNEXTLINE (*-pointer-arithmetic)
+  const auto line_end = line.data() + std::size(line);
+  auto cursor = line.data();
+  auto error = std::errc{};
+  const level_element empty_elem{};
+
+  for (const auto _ : std::views::iota(0u, n_levels))
+    level_format::push_elem(cursor, line_end, error, empty_elem, mode, delim);
+  return std::string(line.data(), std::distance(line.data(), cursor));
+}
+
+template <typename level_element>
+[[nodiscard]] static auto
+get_empty_row_scores(const bool write_empty_lines, const auto n_levels,
+                     const auto delim, const auto none_label) -> std::string {
+  static constexpr auto min_reads = 1u;  // there will never be a read here
+  if (!write_empty_lines)
+    return {};
+
+  std::vector<char> line(bins_writer::output_buffer_size);
+  // NOLINTNEXTLINE (*-pointer-arithmetic)
+  const auto line_end = line.data() + std::size(line);
+  auto cursor = line.data();
+  auto error = std::errc{};
+  const level_element empty_elem{};
+
+  for (const auto _ : std::views::iota(0u, n_levels))
+    level_format::push_score(cursor, line_end, error, empty_elem, none_label,
+                             min_reads, delim);
+  return std::string(line.data(), std::distance(line.data(), cursor));
+}
+
 // ADS: first functions that accept 2D vector
 
 [[nodiscard]] static inline auto
-write_bedlike_bins_impl(const std::string &outfile,
-                        const genome_index_metadata &meta,
-                        const std::uint32_t bin_size,
-                        const std::vector<std::uint32_t> &n_cpgs,
-                        const auto &levels,
-                        const level_element_mode mode) -> std::error_code {
+write_bedlike_bins_impl(
+  // clang-format off
+  const std::string &outfile,
+  const genome_index &index,
+  const std::uint32_t bin_size,
+  const auto &levels,
+  const level_element_mode mode,
+  const bool write_n_cpgs,
+  const bool write_empty_lines
+  // clang-format on
+  ) -> std::error_code {
   static constexpr auto delim{'\t'};
   const auto lvl_to_string = [mode](const auto &l) {
     return mode == level_element_mode::classic ? l.tostring_classic()
                                                : l.tostring_counts();
   };
 
+  // determine type
+  using outer_type = typename std::remove_cvref_t<decltype(levels)>::value_type;
+  using level_element = typename std::remove_cvref_t<outer_type>::value_type;
+
+  const auto n_cpgs = index.get_n_cpgs(bin_size);
+  const auto n_levels = std::size(levels);
+  const auto empty_row = bins_writer::get_empty_row<level_element>(
+    write_empty_lines, n_levels, delim, mode);
+
   std::ofstream out(outfile);
   if (!out)
     return std::make_error_code(std::errc(errno));
 
-  const auto write_n_cpgs = !n_cpgs.empty();
+  std::uint32_t bin_idx = 0;     // index for all bins
+  std::uint32_t ne_bin_idx = 0;  // index for bins that can be non-empty
 
-  const auto n_levels = std::size(levels);
-  std::uint32_t i = 0;
+  const auto &meta = index.get_metadata();
   const auto zipped = std::views::zip(meta.chrom_size, meta.chrom_order);
   for (const auto [chrom_size, chrom_name] : zipped) {
     for (std::uint32_t bin_beg = 0; bin_beg < chrom_size; bin_beg += bin_size) {
-      const auto bin_end = std::min(bin_beg + bin_size, chrom_size);
-      std::print(out, "{}{}{}{}{}", chrom_name, delim, bin_beg, delim, bin_end);
-      for (const auto j : std::views::iota(0u, n_levels))
-        std::print(out, "{}{}", delim, lvl_to_string(levels[j][i]));
-      if (write_n_cpgs)
-        std::print(out, "{}{}", delim, n_cpgs[i]);
-      /*println() without arg doesn't work on macos clang*/
-      // std::println(out);
-      std::print(out, "\n");
-      ++i;
+      if (n_cpgs[bin_idx] > 0) {
+        const auto bin_end = std::min(bin_beg + bin_size, chrom_size);
+        std::print(out, "{}{}{}{}{}", chrom_name, delim, bin_beg, delim,
+                   bin_end);
+        for (const auto col_idx : std::views::iota(0u, n_levels))
+          std::print(out, "{}{}", delim,
+                     lvl_to_string(levels[col_idx][ne_bin_idx]));
+        if (write_n_cpgs)
+          std::print(out, "{}{}", delim, n_cpgs[bin_idx]);
+        /* println() without arg doesn't work on macos clang */
+        // std::println(out);
+        std::print(out, "\n");
+        ++ne_bin_idx;
+      }
+      else if (write_empty_lines) {
+        const auto bin_end = std::min(bin_beg + bin_size, chrom_size);
+        std::print(out, "{}{}{}{}{}{}", chrom_name, delim, bin_beg, delim,
+                   bin_end, empty_row);
+        if (write_n_cpgs)
+          std::print(out, "{}0", delim);
+        /* println() without arg doesn't work on macos clang */
+        // std::println(out);
+        std::print(out, "\n");
+      }
+      ++bin_idx;
     }
   }
   return {};
 }
 
 [[nodiscard]] static inline auto
-write_bins_dfscores_impl(const std::string &outfile,
-                         const std::vector<std::string> &names,
-                         const genome_index_metadata &meta,
-                         const std::uint32_t bin_size,
-                         const std::uint32_t min_reads,
-                         const std::vector<std::uint32_t> &n_cpgs,
-                         const auto &levels, const char rowname_delim,
-                         const bool write_header) -> std::error_code {
+write_bins_dfscores_impl(
+  // clang-format off
+  const std::string &outfile,
+  const std::vector<std::string> &names,
+  const genome_index &index,
+  const std::uint32_t bin_size,
+  const std::uint32_t min_reads,
+  const auto &levels,
+  const char rowname_delim,
+  const bool write_header,
+  const bool write_n_cpgs,
+  const bool write_empty_lines
+  // clang-format on
+  ) -> std::error_code {
   using std::literals::string_view_literals::operator""sv;
   static constexpr auto none_label = "NA"sv;
   static constexpr auto delim{'\t'};
 
+  // determine type
+  using outer_type = typename std::remove_cvref_t<decltype(levels)>::value_type;
+  using level_element = typename std::remove_cvref_t<outer_type>::value_type;
+
+  const auto n_cpgs = index.get_n_cpgs(bin_size);
+  const auto n_levels = std::size(levels);
+  const auto empty_row = bins_writer::get_empty_row_scores<level_element>(
+    write_empty_lines, n_levels, delim, none_label);
+
   std::ofstream out(outfile);
   if (!out)
     return std::make_error_code(std::errc(errno));
 
-  const auto write_n_cpgs = !n_cpgs.empty();
-
   if (write_header) {
-    // auto joined =
-    //   names | std::views::join_with(delim) | std::ranges::to<std::string>();
-    auto joined = join_with(names, delim);
+    const auto hdr_fmtr = [&](const auto &r) {
+      return std::format(level_element::hdr_fmt_scr, r, delim, r);
+    };
+    auto joined = join_with(names | std::views::transform(hdr_fmtr), delim);
     if (write_n_cpgs)
       joined += std::format("{}{}", delim, "N_CPG"sv);
     std::println(out, "{}", joined);
   }
 
-  const auto n_levels = std::size(levels);
-  std::uint32_t i = 0;
+  std::uint32_t bin_idx = 0;     // index for all bins
+  std::uint32_t ne_bin_idx = 0;  // index for bins that can be non-empty
+
+  const auto &meta = index.get_metadata();
   const auto zipped = std::views::zip(meta.chrom_size, meta.chrom_order);
   for (const auto [chrom_size, chrom_name] : zipped) {
     for (std::uint32_t bin_beg = 0; bin_beg < chrom_size; bin_beg += bin_size) {
-      std::print(out, "{}{}{}", chrom_name, rowname_delim, bin_beg);
-      for (const auto j : std::views::iota(0u, n_levels))
-        if (levels[j][i].n_reads() >= min_reads)
-          std::print(out, "{}{:.6}", delim, levels[j][i].get_wmean());
-        else
-          std::print(out, "{}{}", delim, none_label);
-      /*println() without arg doesn't work on macos clang*/
-      // std::println(out);
-      std::print(out, "\n");
-      ++i;
+      if (n_cpgs[bin_idx] > 0) {
+        std::print(out, "{}{}{}", chrom_name, rowname_delim, bin_beg);
+        for (const auto col_idx : std::views::iota(0u, n_levels))
+          if (levels[col_idx][ne_bin_idx].n_reads() >= min_reads)
+            std::print(out, "{}{:.6}", delim,
+                       levels[col_idx][ne_bin_idx].get_wmean());
+          else
+            std::print(out, "{}{}", delim, none_label);
+        /* println() without arg doesn't work on macos clang */
+        // std::println(out);
+        std::print(out, "\n");
+        ++ne_bin_idx;
+      }
+      else if (write_empty_lines)
+        std::println(out, "{}{}{}{}", chrom_name, rowname_delim, bin_beg,
+                     empty_row);
+      ++bin_idx;
     }
   }
   return {};
 }
 
 [[nodiscard]] static inline auto
-write_bins_dataframe_impl(const std::string &outfile,
-                          const std::vector<std::string> &names,
-                          const genome_index_metadata &meta,
-                          const std::uint32_t bin_size,
-                          const std::vector<std::uint32_t> &n_cpgs,
-                          const auto &levels, const level_element_mode mode,
-                          const char rowname_delim,
-                          const bool write_header) -> std::error_code {
+write_bins_dataframe_impl(
+  // clang-format off
+  const std::string &outfile,
+  const std::vector<std::string> &names,
+  const genome_index &index,
+  const std::uint32_t bin_size,
+  const auto &levels,
+  const level_element_mode mode,
+  const char rowname_delim,
+  const bool write_header,
+  const bool write_n_cpgs,
+  const bool write_empty_lines
+  // clang-format on
+  ) -> std::error_code {
   using std::literals::string_view_literals::operator""sv;
   static constexpr auto delim = '\t';  // not optional for now
+
   // determine type
   using outer_type = typename std::remove_cvref_t<decltype(levels)>::value_type;
   using level_element = typename std::remove_cvref_t<outer_type>::value_type;
-  const auto hdr_formatter = [&](const auto &r) {
-    return mode == level_element_mode::classic
-             ? std::format(level_element::hdr_fmt_cls, r, delim, r, delim, r)
-             : std::format(level_element::hdr_fmt, r, delim, r, delim, r);
-  };
+
+  const auto n_cpgs = index.get_n_cpgs(bin_size);
+  const auto n_levels = std::size(levels);
+  const auto empty_row = bins_writer::get_empty_row<level_element>(
+    write_empty_lines, n_levels, delim, mode);
+
   const auto lvl_to_string = [mode](const auto &l) {
     return mode == level_element_mode::classic ? l.tostring_classic()
                                                : l.tostring_counts();
@@ -166,33 +266,41 @@ write_bins_dataframe_impl(const std::string &outfile,
   if (!out)
     return std::make_error_code(std::errc(errno));
 
-  const auto write_n_cpgs = !n_cpgs.empty();
-
   if (write_header) {
-    // auto joined = names | std::views::transform(hdr_formatter) |
-    //               std::views::join_with(delim) |
-    //               std::ranges::to<std::string>();
-    auto joined =
-      join_with(names | std::views::transform(hdr_formatter), delim);
+    const auto hdr_fmtr = [&](const auto &r) {
+      return mode == level_element_mode::classic
+               ? std::format(level_element::hdr_fmt_cls, r, delim, r, delim, r)
+               : std::format(level_element::hdr_fmt, r, delim, r, delim, r);
+    };
+    auto joined = join_with(names | std::views::transform(hdr_fmtr), delim);
     if (write_n_cpgs)
       joined += std::format("{}{}", delim, "N_CPG"sv);
     std::println(out, "{}", joined);
   }
 
-  const auto n_levels = std::size(levels);
-  std::uint32_t i = 0;
+  std::uint32_t bin_idx = 0;     // index for all bins
+  std::uint32_t ne_bin_idx = 0;  // index for bins that can be non-empty
+
+  const auto &meta = index.get_metadata();
   const auto zipped = std::views::zip(meta.chrom_size, meta.chrom_order);
   for (const auto [chrom_size, chrom_name] : zipped)
     for (std::uint32_t bin_beg = 0; bin_beg < chrom_size; bin_beg += bin_size) {
-      std::print(out, "{}{}{}", chrom_name, rowname_delim, bin_beg);
-      for (const auto j : std::views::iota(0u, n_levels))
-        std::print(out, "{}{}", delim, lvl_to_string(levels[j][i]));
-      if (write_n_cpgs)
-        std::print(out, "{}{}", delim, n_cpgs[i]);
-      /*println() without arg doesn't work on macos clang*/
-      // std::println(out);
-      std::print(out, "\n");
-      ++i;
+      if (n_cpgs[bin_idx] > 0) {
+        std::print(out, "{}{}{}", chrom_name, rowname_delim, bin_beg);
+        for (const auto col_idx : std::views::iota(0u, n_levels))
+          std::print(out, "{}{}", delim,
+                     lvl_to_string(levels[col_idx][ne_bin_idx]));
+        if (write_n_cpgs)
+          std::print(out, "{}{}", delim, n_cpgs[bin_idx]);
+        /* println() without arg doesn't work on macos clang */
+        // std::println(out);
+        std::print(out, "\n");
+        ++ne_bin_idx;
+      }
+      else if (write_empty_lines)
+        std::println(out, "{}{}{}{}", chrom_name, rowname_delim, bin_beg,
+                     empty_row);
+      ++bin_idx;
     }
 
   return {};
@@ -205,49 +313,73 @@ template <typename level_element>
 write_bedlike_bins_impl(
   // clang-format off
   const std::string &outfile,
-  const genome_index_metadata &meta,
+  const genome_index &index,
   const std::uint32_t bin_size,
-  const std::vector<std::uint32_t> &n_cpgs,
   const level_container<level_element> &levels,
-  const level_element_mode mode
+  const level_element_mode mode,
+  const bool write_n_cpgs,
+  const bool write_empty_lines
   // clang-format on
   ) -> std::error_code {
   static constexpr auto rowname_delim{'\t'};
   static constexpr auto delim{'\t'};
   static constexpr auto newline{'\n'};
 
-  std::ofstream out(outfile);
-  if (!out)
-    return std::make_error_code(std::errc(errno));
-
-  const auto write_n_cpgs = !n_cpgs.empty();
+  const auto n_cpgs = index.get_n_cpgs(bin_size);
+  const auto n_levels = levels.n_cols;
+  const auto empty_row = bins_writer::get_empty_row<level_element>(
+    write_empty_lines, n_levels, delim, mode);
+  const auto empty_row_size = std::size(empty_row);
 
   std::vector<char> line(bins_writer::output_buffer_size);
   // NOLINTNEXTLINE (*-pointer-arithmetic)
   const auto line_end = line.data() + std::size(line);
   auto error = std::errc{};
 
-  const auto n_levels = levels.n_cols;
-  std::uint32_t i = 0;
+  // open the output file
+  std::ofstream out(outfile);
+  if (!out)
+    return std::make_error_code(std::errc(errno));
 
+  std::uint32_t bin_idx = 0;     // index for all bins
+  std::uint32_t ne_bin_idx = 0;  // index for bins that can be non-empty
+
+  const auto &meta = index.get_metadata();
   const auto zipped = std::views::zip(meta.chrom_size, meta.chrom_order);
   for (const auto [chrom_size, chrom_name] : zipped) {
     auto line_beg = line.data();
-    push_buffer(line_beg, line_end, error, chrom_name, rowname_delim);
+    level_format::push(line_beg, line_end, error, chrom_name, rowname_delim);
 
     for (std::uint32_t bin_beg = 0; bin_beg < chrom_size; bin_beg += bin_size) {
-      const auto bin_end = std::min(bin_beg + bin_size, chrom_size);
-      auto cursor = line_beg;
-      push_buffer(cursor, line_end, error, bin_beg, rowname_delim, bin_end);
+      if (n_cpgs[bin_idx] > 0) {
+        const auto bin_end = std::min(bin_beg + bin_size, chrom_size);
+        auto cursor = line_beg;
+        level_format::push(cursor, line_end, error, bin_beg, rowname_delim,
+                           bin_end);
 
-      for (const auto j : std::views::iota(0u, n_levels))
-        push_buffer_elem(cursor, line_end, error, levels[i, j], mode, delim);
+        for (const auto col_idx : std::views::iota(0u, n_levels))
+          level_format::push_elem(cursor, line_end, error,
+                                  levels[ne_bin_idx, col_idx], mode, delim);
 
-      if (write_n_cpgs)
-        push_buffer(cursor, line_end, error, delim, n_cpgs[i]);
-      push_buffer(cursor, line_end, error, newline);
-      out.write(line.data(), std::distance(line.data(), cursor));
-      ++i;
+        if (write_n_cpgs)
+          level_format::push(cursor, line_end, error, delim, n_cpgs[bin_idx]);
+        level_format::push(cursor, line_end, error, newline);
+        out.write(line.data(), std::distance(line.data(), cursor));
+        ++ne_bin_idx;
+      }
+      else if (write_empty_lines) {
+        const auto bin_end = std::min(bin_beg + bin_size, chrom_size);
+        auto cursor = line_beg;
+        level_format::push(cursor, line_end, error, bin_beg, rowname_delim,
+                           bin_end);
+        std::memcpy(cursor, empty_row.data(), empty_row_size);
+        cursor += empty_row_size;
+        if (write_n_cpgs)
+          level_format::push(cursor, line_end, error, delim, 0u);
+        level_format::push(cursor, line_end, error, newline);
+        out.write(line.data(), std::distance(line.data(), cursor));
+      }
+      ++bin_idx;
     }
   }
   return std::make_error_code(error);
@@ -256,26 +388,39 @@ write_bedlike_bins_impl(
 template <typename level_element>
 [[nodiscard]] static inline auto
 write_bins_dfscores_impl(
-  const std::string &outfile, const std::vector<std::string> &names,
-  const genome_index_metadata &meta, const std::uint32_t bin_size,
-  const std::uint32_t min_reads, const std::vector<std::uint32_t> &n_cpgs,
-  const level_container<level_element> &levels, const char rowname_delim,
-  const bool write_header) -> std::error_code {
+  // clang-format off
+  const std::string &outfile,
+  const std::vector<std::string> &names,
+  const genome_index &index,
+  const std::uint32_t bin_size,
+  const std::uint32_t min_reads,
+  const level_container<level_element> &levels,
+  const char rowname_delim,
+  const bool write_header,
+  const bool write_n_cpgs,
+  const bool write_empty_lines
+  // clang-format on
+  ) -> std::error_code {
   using std::literals::string_view_literals::operator""sv;
   static constexpr auto delim{'\t'};
   static constexpr auto newline{'\n'};
   static constexpr auto none_label = "NA"sv;
 
+  const auto n_cpgs = index.get_n_cpgs(bin_size);
+  const auto n_levels = levels.n_cols;
+  const auto empty_row = bins_writer::get_empty_row_scores<level_element>(
+    write_empty_lines, n_levels, delim, none_label);
+  const auto empty_row_size = std::size(empty_row);
+
   std::ofstream out(outfile);
   if (!out)
     return std::make_error_code(std::errc(errno));
 
-  const auto write_n_cpgs = !n_cpgs.empty();
-
   if (write_header) {
-    // auto joined =
-    //   names | std::views::join_with(delim) | std::ranges::to<std::string>();
-    auto joined = join_with(names, delim);
+    const auto hdr_fmtr = [&](const auto &r) {
+      return std::format(level_element::hdr_fmt_scr, r, delim, r);
+    };
+    auto joined = join_with(names | std::views::transform(hdr_fmtr), delim);
     if (write_n_cpgs)
       joined += std::format("{}{}", delim, "N_CPG");
     std::println(out, "{}", joined);
@@ -286,24 +431,39 @@ write_bins_dfscores_impl(
   const auto line_end = line.data() + std::size(line);
   auto error = std::errc{};
 
-  const auto n_levels = levels.n_cols;
-  std::uint32_t i = 0;
+  std::uint32_t bin_idx = 0;     // index for all bins
+  std::uint32_t ne_bin_idx = 0;  // index for bins that can be non-empty
 
+  const auto &meta = index.get_metadata();
   const auto zipped = std::views::zip(meta.chrom_size, meta.chrom_order);
   for (const auto [chrom_size, chrom_name] : zipped) {
     auto line_beg = line.data();
-    push_buffer(line_beg, line_end, error, chrom_name, rowname_delim);
+    level_format::push(line_beg, line_end, error, chrom_name, rowname_delim);
     for (std::uint32_t bin_beg = 0; bin_beg < chrom_size; bin_beg += bin_size) {
-      auto cursor = line_beg;
-      push_buffer(cursor, line_end, error, bin_beg);
-      for (const auto j : std::views::iota(0u, n_levels))
-        push_buffer_score(cursor, line_end, error, levels[i, j], none_label,
-                          min_reads, delim);
-      if (write_n_cpgs)
-        push_buffer(cursor, line_end, error, delim, n_cpgs[i]);
-      push_buffer(cursor, line_end, error, newline);
-      out.write(line.data(), std::distance(line.data(), cursor));
-      ++i;
+      if (n_cpgs[bin_idx] > 0) {
+        auto cursor = line_beg;
+        level_format::push(cursor, line_end, error, bin_beg);
+        for (const auto col_idx : std::views::iota(0u, n_levels))
+          level_format::push_score(cursor, line_end, error,
+                                   levels[ne_bin_idx, col_idx], none_label,
+                                   min_reads, delim);
+        if (write_n_cpgs)
+          level_format::push(cursor, line_end, error, delim, n_cpgs[bin_idx]);
+        level_format::push(cursor, line_end, error, newline);
+        out.write(line.data(), std::distance(line.data(), cursor));
+        ++ne_bin_idx;
+      }
+      else if (write_empty_lines) {
+        auto cursor = line_beg;
+        level_format::push(cursor, line_end, error, bin_beg);
+        std::memcpy(cursor, empty_row.data(), empty_row_size);
+        cursor += empty_row_size;
+        if (write_n_cpgs)
+          level_format::push(cursor, line_end, error, delim, 0u);
+        level_format::push(cursor, line_end, error, newline);
+        out.write(line.data(), std::distance(line.data(), cursor));
+      }
+      ++bin_idx;
     }
   }
   return std::make_error_code(error);
@@ -315,36 +475,36 @@ write_bins_dataframe_impl(
   // clang-format off
   const std::string &outfile,
   const std::vector<std::string> &names,
-  const genome_index_metadata &meta,
+  const genome_index &index,
   const std::uint32_t bin_size,
-  const std::vector<std::uint32_t> &n_cpgs,
   const level_container<level_element> &levels,
   const level_element_mode mode,
   const char rowname_delim,
-  const bool write_header
+  const bool write_header,
+  const bool write_n_cpgs,
+  const bool write_empty_lines
   // clang-format on
   ) -> std::error_code {
   static constexpr auto delim{'\t'};
   static constexpr auto newline{'\n'};
 
-  const auto hdr_formatter = [&](const auto &r) {
-    return mode == level_element_mode::classic
-             ? std::format(level_element::hdr_fmt_cls, r, delim, r, delim, r)
-             : std::format(level_element::hdr_fmt, r, delim, r, delim, r);
-  };
+  const auto n_cpgs = index.get_n_cpgs(bin_size);
+  const auto n_levels = levels.n_cols;
+  const auto empty_row = bins_writer::get_empty_row<level_element>(
+    write_empty_lines, n_levels, delim, mode);
+  const auto empty_row_size = std::size(empty_row);
 
   std::ofstream out(outfile);
   if (!out)
     return std::make_error_code(std::errc(errno));
 
-  const auto write_n_cpgs = !n_cpgs.empty();
-
   if (write_header) {
-    // auto joined = names | std::views::transform(hdr_formatter) |
-    //               std::views::join_with(delim) |
-    //               std::ranges::to<std::string>();
-    auto joined =
-      join_with(names | std::views::transform(hdr_formatter), delim);
+    const auto hdr_fmtr = [&](const auto &r) {
+      return mode == level_element_mode::classic
+               ? std::format(level_element::hdr_fmt_cls, r, delim, r, delim, r)
+               : std::format(level_element::hdr_fmt, r, delim, r, delim, r);
+    };
+    auto joined = join_with(names | std::views::transform(hdr_fmtr), delim);
     if (write_n_cpgs)
       joined += std::format("{}{}", delim, "N_CPG");
     std::println(out, "{}", joined);
@@ -355,23 +515,37 @@ write_bins_dataframe_impl(
   const auto line_end = line.data() + std::size(line);
   auto error = std::errc{};
 
-  const auto n_levels = levels.n_cols;
-  std::uint32_t i = 0;
+  std::uint32_t bin_idx = 0;
+  std::uint32_t ne_bin_idx = 0;  // index for bins that can be non-empty
 
+  const auto &meta = index.get_metadata();
   const auto zipped = std::views::zip(meta.chrom_size, meta.chrom_order);
   for (const auto [chrom_size, chrom_name] : zipped) {
     auto line_beg = line.data();
-    push_buffer(line_beg, line_end, error, chrom_name, rowname_delim);
+    level_format::push(line_beg, line_end, error, chrom_name, rowname_delim);
     for (std::uint32_t bin_beg = 0; bin_beg < chrom_size; bin_beg += bin_size) {
       auto cursor = line_beg;
-      push_buffer(cursor, line_end, error, bin_beg);
-      for (const auto j : std::views::iota(0u, n_levels))
-        push_buffer_elem(cursor, line_end, error, levels[i, j], mode, delim);
-      if (write_n_cpgs)
-        push_buffer(cursor, line_end, error, delim, n_cpgs[i]);
-      push_buffer(cursor, line_end, error, newline);
-      out.write(line.data(), std::distance(line.data(), cursor));
-      ++i;
+      if (n_cpgs[bin_idx] > 0) {
+        level_format::push(cursor, line_end, error, bin_beg);
+        for (const auto col_idx : std::views::iota(0u, n_levels))
+          level_format::push_elem(cursor, line_end, error,
+                                  levels[ne_bin_idx, col_idx], mode, delim);
+        if (write_n_cpgs)
+          level_format::push(cursor, line_end, error, delim, n_cpgs[bin_idx]);
+        level_format::push(cursor, line_end, error, newline);
+        out.write(line.data(), std::distance(line.data(), cursor));
+        ++ne_bin_idx;  // increment the index of rows/cpgs with data
+      }
+      else if (write_empty_lines) {
+        level_format::push(cursor, line_end, error, bin_beg);
+        std::memcpy(cursor, empty_row.data(), empty_row_size);
+        cursor += empty_row_size;
+        if (write_n_cpgs)
+          level_format::push(cursor, line_end, error, delim, 0u);
+        level_format::push(cursor, line_end, error, newline);
+        out.write(line.data(), std::distance(line.data(), cursor));
+      }
+      ++bin_idx;  // increment the general index of rows/cpgs
     }
   }
   return std::make_error_code(error);
@@ -384,8 +558,8 @@ template <>
 bins_writer::write_bedlike_impl(
   const std::vector<level_container_flat<level_element_t>> &levels,
   const level_element_mode mode) const noexcept -> std::error_code {
-  return write_bedlike_bins_impl(outfile, index.get_metadata(), bin_size,
-                                 n_cpgs, levels, mode);
+  return write_bedlike_bins_impl(outfile, index, bin_size, levels, mode,
+                                 write_n_cpgs, write_empty_lines);
 }
 
 template <>
@@ -393,8 +567,8 @@ template <>
 bins_writer::write_bedlike_impl(
   const std::vector<level_container_flat<level_element_covered_t>> &levels,
   const level_element_mode mode) const noexcept -> std::error_code {
-  return write_bedlike_bins_impl(outfile, index.get_metadata(), bin_size,
-                                 n_cpgs, levels, mode);
+  return write_bedlike_bins_impl(outfile, index, bin_size, levels, mode,
+                                 write_n_cpgs, write_empty_lines);
 }
 
 template <>
@@ -402,8 +576,8 @@ template <>
 bins_writer::write_bedlike_impl(const level_container<level_element_t> &levels,
                                 const level_element_mode mode) const noexcept
   -> std::error_code {
-  return write_bedlike_bins_impl(outfile, index.get_metadata(), bin_size,
-                                 n_cpgs, levels, mode);
+  return write_bedlike_bins_impl(outfile, index, bin_size, levels, mode,
+                                 write_n_cpgs, write_empty_lines);
 }
 
 template <>
@@ -411,8 +585,8 @@ template <>
 bins_writer::write_bedlike_impl(
   const level_container<level_element_covered_t> &levels,
   const level_element_mode mode) const noexcept -> std::error_code {
-  return write_bedlike_bins_impl(outfile, index.get_metadata(), bin_size,
-                                 n_cpgs, levels, mode);
+  return write_bedlike_bins_impl(outfile, index, bin_size, levels, mode,
+                                 write_n_cpgs, write_empty_lines);
 }
 
 template <>
@@ -421,9 +595,9 @@ bins_writer::write_dfscores_impl(
   const std::vector<level_container_flat<level_element_t>> &levels,
   const char rowname_delim,
   const bool write_header) const noexcept -> std::error_code {
-  return write_bins_dfscores_impl(outfile, names, index.get_metadata(),
-                                  bin_size, min_reads, n_cpgs, levels,
-                                  rowname_delim, write_header);
+  return write_bins_dfscores_impl(outfile, names, index, bin_size, min_reads,
+                                  levels, rowname_delim, write_header,
+                                  write_n_cpgs, write_empty_lines);
 }
 
 template <>
@@ -432,9 +606,9 @@ bins_writer::write_dfscores_impl(
   const std::vector<level_container_flat<level_element_covered_t>> &levels,
   const char rowname_delim,
   const bool write_header) const noexcept -> std::error_code {
-  return write_bins_dfscores_impl(outfile, names, index.get_metadata(),
-                                  bin_size, min_reads, n_cpgs, levels,
-                                  rowname_delim, write_header);
+  return write_bins_dfscores_impl(outfile, names, index, bin_size, min_reads,
+                                  levels, rowname_delim, write_header,
+                                  write_n_cpgs, write_empty_lines);
 }
 
 template <>
@@ -442,9 +616,9 @@ template <>
 bins_writer::write_dfscores_impl(
   const level_container<level_element_t> &levels, const char rowname_delim,
   const bool write_header) const noexcept -> std::error_code {
-  return write_bins_dfscores_impl(outfile, names, index.get_metadata(),
-                                  bin_size, min_reads, n_cpgs, levels,
-                                  rowname_delim, write_header);
+  return write_bins_dfscores_impl(outfile, names, index, bin_size, min_reads,
+                                  levels, rowname_delim, write_header,
+                                  write_n_cpgs, write_empty_lines);
 }
 
 template <>
@@ -453,9 +627,9 @@ bins_writer::write_dfscores_impl(
   const level_container<level_element_covered_t> &levels,
   const char rowname_delim,
   const bool write_header) const noexcept -> std::error_code {
-  return write_bins_dfscores_impl(outfile, names, index.get_metadata(),
-                                  bin_size, min_reads, n_cpgs, levels,
-                                  rowname_delim, write_header);
+  return write_bins_dfscores_impl(outfile, names, index, bin_size, min_reads,
+                                  levels, rowname_delim, write_header,
+                                  write_n_cpgs, write_empty_lines);
 }
 
 template <>
@@ -464,9 +638,9 @@ bins_writer::write_dataframe_impl(
   const std::vector<level_container_flat<level_element_t>> &levels,
   const level_element_mode mode, const char rowname_delim,
   const bool write_header) const noexcept -> std::error_code {
-  return write_bins_dataframe_impl(outfile, names, index.get_metadata(),
-                                   bin_size, n_cpgs, levels, mode,
-                                   rowname_delim, write_header);
+  return write_bins_dataframe_impl(outfile, names, index, bin_size, levels,
+                                   mode, rowname_delim, write_header,
+                                   write_n_cpgs, write_empty_lines);
 }
 
 template <>
@@ -475,9 +649,9 @@ bins_writer::write_dataframe_impl(
   const std::vector<level_container_flat<level_element_covered_t>> &levels,
   const level_element_mode mode, const char rowname_delim,
   const bool write_header) const noexcept -> std::error_code {
-  return write_bins_dataframe_impl(outfile, names, index.get_metadata(),
-                                   bin_size, n_cpgs, levels, mode,
-                                   rowname_delim, write_header);
+  return write_bins_dataframe_impl(outfile, names, index, bin_size, levels,
+                                   mode, rowname_delim, write_header,
+                                   write_n_cpgs, write_empty_lines);
 }
 
 template <>
@@ -486,9 +660,9 @@ bins_writer::write_dataframe_impl(
   const level_container<level_element_t> &levels, const level_element_mode mode,
   const char rowname_delim,
   const bool write_header) const noexcept -> std::error_code {
-  return write_bins_dataframe_impl(outfile, names, index.get_metadata(),
-                                   bin_size, n_cpgs, levels, mode,
-                                   rowname_delim, write_header);
+  return write_bins_dataframe_impl(outfile, names, index, bin_size, levels,
+                                   mode, rowname_delim, write_header,
+                                   write_n_cpgs, write_empty_lines);
 }
 
 template <>
@@ -497,9 +671,9 @@ bins_writer::write_dataframe_impl(
   const level_container<level_element_covered_t> &levels,
   const level_element_mode mode, const char rowname_delim,
   const bool write_header) const noexcept -> std::error_code {
-  return write_bins_dataframe_impl(outfile, names, index.get_metadata(),
-                                   bin_size, n_cpgs, levels, mode,
-                                   rowname_delim, write_header);
+  return write_bins_dataframe_impl(outfile, names, index, bin_size, levels,
+                                   mode, rowname_delim, write_header,
+                                   write_n_cpgs, write_empty_lines);
 }
 
 }  // namespace transferase
