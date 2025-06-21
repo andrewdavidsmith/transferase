@@ -60,7 +60,7 @@ write_bedlike_intervals_impl(
   const std::vector<std::uint32_t> &n_cpgs
   // clang-format on
   ) noexcept -> std::error_code {
-  const auto lvl_to_string = [mode](const auto &l) {
+  const auto lvl_to_str = [mode](const auto &l) {
     return mode == level_element_mode::classic ? l.tostring_classic()
                                                : l.tostring_counts();
   };
@@ -73,8 +73,7 @@ write_bedlike_intervals_impl(
   const auto n_levels = std::size(levels);
   auto prev_ch_id = genomic_interval::not_a_chrom;
   std::string chrom_name;
-  // for (const auto [i, interval] : std::views::enumerate(intervals)) {
-  std::uint32_t i = 0;
+  std::uint32_t i = 0;  // some compilers can't do enumerate
   for (const auto &interval : intervals) {
     if (interval.ch_id != prev_ch_id) {
       chrom_name = meta.chrom_order[interval.ch_id];
@@ -82,11 +81,10 @@ write_bedlike_intervals_impl(
     }
     std::print(out, "{}\t{}\t{}", chrom_name, interval.start, interval.stop);
     for (auto j = 0u; j < n_levels; ++j)
-      std::print(out, "\t{}", lvl_to_string(levels[j][i]));
+      std::print(out, "\t{}", lvl_to_str(levels[j][i]));
     if (write_n_cpgs)
       std::print(out, "\t{}", n_cpgs[i]);
-    // std::println(out);
-    std::print(out, "\n");
+    std::print(out, "\n");  // some compilers can't do std::println()
     ++i;
   }
   return {};
@@ -95,30 +93,35 @@ write_bedlike_intervals_impl(
 [[nodiscard]] static inline auto
 write_intervals_dfscores_impl(
   // clang-format off
-                              const std::string &outfile,
-                              const std::vector<std::string> &names,
-                              const genome_index &index,
-                              const std::vector<genomic_interval> &intervals,
-                              const std::uint32_t min_reads,
-                              const auto &levels,
-                              const char rowname_delim,
-                              const bool write_header,
-                              const bool write_n_cpgs,
-                              const std::vector<std::uint32_t> &n_cpgs
+  const std::string &outfile,
+  const std::vector<std::string> &names,
+  const genome_index &index,
+  const std::vector<genomic_interval> &intervals,
+  const std::uint32_t min_reads,
+  const auto &levels,
+  const char rowname_delim,
+  const bool write_header,
+  const bool write_n_cpgs,
+  const std::vector<std::uint32_t> &n_cpgs
   // clang-format on
   ) -> std::error_code {
   using std::literals::string_view_literals::operator""sv;
   static constexpr auto none_label = "NA"sv;
   static constexpr auto delim = '\t';
 
+  // determine type
+  using outer_type = typename std::remove_cvref_t<decltype(levels)>::value_type;
+  using level_element = typename std::remove_cvref_t<outer_type>::value_type;
+
   std::ofstream out(outfile);
   if (!out)
     return std::make_error_code(std::errc(errno));
 
   if (write_header) {
-    // auto joined =
-    //   names | std::views::join_with('\t') | std::ranges::to<std::string>();
-    auto joined = join_with(names, delim);
+    const auto hdr_fmtr = [&](const auto &r) {
+      return std::format(level_element::hdr_fmt_scr, r, delim, r);
+    };
+    auto joined = join_with(names | std::views::transform(hdr_fmtr), delim);
     if (write_n_cpgs)
       joined += "\tN_CPG";
     std::println(out, "{}", joined);
@@ -128,8 +131,8 @@ write_intervals_dfscores_impl(
   const auto n_levels = std::size(levels);
   auto prev_ch_id = genomic_interval::not_a_chrom;
   std::string chrom_name;
-  // for (const auto [i, interval] : std::views::enumerate(intervals)) {
-  std::uint32_t i = 0;
+
+  std::uint32_t i = 0;  // enumerate  not always supported yet
   for (const auto &interval : intervals) {
     if (interval.ch_id != prev_ch_id) {
       chrom_name = meta.chrom_order[interval.ch_id];
@@ -144,8 +147,7 @@ write_intervals_dfscores_impl(
         std::print(out, "\t{}", none_label);
     if (write_n_cpgs)
       std::print(out, "\t{}", n_cpgs[i]);
-    // std::println(out);
-    std::print(out, "\n");
+    std::print(out, "\n");  // some compilers can't do std::println()
     ++i;
   }
   return {};
@@ -154,30 +156,25 @@ write_intervals_dfscores_impl(
 [[nodiscard]] static inline auto
 write_intervals_dataframe_impl(
   // clang-format off
-                               const std::string &outfile,
-                               const std::vector<std::string> &names,
-                               const genome_index &index,
-                               const std::vector<genomic_interval> &intervals,
-                               const auto &levels,
-                               const level_element_mode mode,
-                               const char rowname_delim,
-                               const bool write_header,
-                               const bool write_n_cpgs,
-                               const std::vector<std::uint32_t> &n_cpgs
+  const std::string &outfile,
+  const std::vector<std::string> &names,
+  const genome_index &index,
+  const std::vector<genomic_interval> &intervals,
+  const auto &levels,
+  const level_element_mode mode,
+  const char rowname_delim,
+  const bool write_header,
+  const bool write_n_cpgs,
+  const std::vector<std::uint32_t> &n_cpgs
   // clang-format on
   ) -> std::error_code {
   static constexpr auto delim = '\t';  // not optional for now
   // determine type
   using outer_type = typename std::remove_cvref_t<decltype(levels)>::value_type;
   using level_element = typename std::remove_cvref_t<outer_type>::value_type;
-  const auto lvl_to_string = [mode](const auto &l) {
+  const auto lvl_to_str = [mode](const auto &l) {
     return mode == level_element_mode::classic ? l.tostring_classic()
                                                : l.tostring_counts();
-  };
-  const auto hdr_formatter = [&](const auto &r) {
-    return mode == level_element_mode::classic
-             ? std::format(level_element::hdr_fmt_cls, r, delim, r, delim, r)
-             : std::format(level_element::hdr_fmt, r, delim, r, delim, r);
   };
 
   std::ofstream out(outfile);
@@ -185,11 +182,12 @@ write_intervals_dataframe_impl(
     return std::make_error_code(std::errc(errno));
 
   if (write_header) {
-    // auto joined = names | std::views::transform(hdr_formatter) |
-    //               std::views::join_with(delim) |
-    //               std::ranges::to<std::string>();
-    auto joined =
-      join_with(names | std::views::transform(hdr_formatter), delim);
+    const auto hdr_fmtr = [&](const auto &r) {
+      return mode == level_element_mode::classic
+               ? std::format(level_element::hdr_fmt_cls, r, delim, r, delim, r)
+               : std::format(level_element::hdr_fmt, r, delim, r, delim, r);
+    };
+    auto joined = join_with(names | std::views::transform(hdr_fmtr), delim);
     if (write_n_cpgs)
       joined += std::format("{}{}", delim, "N_CPG");
     std::println(out, "{}", joined);
@@ -199,8 +197,7 @@ write_intervals_dataframe_impl(
   const auto n_levels = std::size(levels);
   auto prev_ch_id = genomic_interval::not_a_chrom;
   std::string chrom_name;
-  // for (const auto [i, interval] : std::views::enumerate(intervals)) {
-  std::uint32_t i = 0;
+  std::uint32_t i = 0;  // no enumerate yet in all compilers
   for (const auto &interval : intervals) {
     if (interval.ch_id != prev_ch_id) {
       chrom_name = meta.chrom_order[interval.ch_id];
@@ -209,11 +206,10 @@ write_intervals_dataframe_impl(
     std::print(out, "{}{}{}{}{}", chrom_name, rowname_delim, interval.start,
                rowname_delim, interval.stop);
     for (auto j = 0u; j < n_levels; ++j)
-      std::print(out, "{}{}", delim, lvl_to_string(levels[j][i]));
+      std::print(out, "{}{}", delim, lvl_to_str(levels[j][i]));
     if (write_n_cpgs)
       std::print(out, "{}{}", delim, n_cpgs[i]);
-    // std::println(out);
-    std::print(out, "\n");
+    std::print(out, "\n");  // not all compilers can do std::println()
     ++i;
   }
   return {};
@@ -225,13 +221,13 @@ template <typename level_element>
 [[nodiscard]] static inline auto
 write_bedlike_intervals_impl(
   // clang-format off
-                             const std::string &outfile,
-                             const genome_index &index,
-                             const std::vector<genomic_interval> &intervals,
-                             const level_container<level_element> &levels,
-                             const level_element_mode mode,
-                             const bool write_n_cpgs,
-                             const std::vector<std::uint32_t> &n_cpgs
+  const std::string &outfile,
+  const genome_index &index,
+  const std::vector<genomic_interval> &intervals,
+  const level_container<level_element> &levels,
+  const level_element_mode mode,
+  const bool write_n_cpgs,
+  const std::vector<std::uint32_t> &n_cpgs
   // clang-format on
   ) noexcept -> std::error_code {
   using std::literals::string_view_literals::operator""sv;
@@ -254,25 +250,23 @@ write_bedlike_intervals_impl(
   auto prev_ch_id = genomic_interval::not_a_chrom;
   std::string chrom_name;
 
-  // for (const auto [i, interval] : std::views::enumerate(intervals)) {
-  std::uint32_t i = 0;
+  std::uint32_t i = 0;  // no enumerate yet in all compilers
   for (const auto &interval : intervals) {
     if (interval.ch_id != prev_ch_id) {
       chrom_name = meta.chrom_order[interval.ch_id];
       prev_ch_id = interval.ch_id;
       line_beg = line.data();
-      push_buffer(line_beg, line_end, error, chrom_name, rowname_delim);
+      level_format::push(line_beg, line_end, error, chrom_name, rowname_delim);
     }
     auto cursor = line_beg;
-    push_buffer(cursor, line_end, error, interval.start, rowname_delim,
-                interval.stop);
-
+    level_format::push(cursor, line_end, error, interval.start, rowname_delim,
+                       interval.stop);
     for (const auto j : std::views::iota(0u, n_levels))
-      push_buffer_elem(cursor, line_end, error, levels[i, j], mode, delim);
-
+      level_format::push_elem(cursor, line_end, error, levels[i, j], mode,
+                              delim);
     if (write_n_cpgs)
-      push_buffer(cursor, line_end, error, delim, n_cpgs[i]);
-    push_buffer(cursor, line_end, error, newline);
+      level_format::push(cursor, line_end, error, delim, n_cpgs[i]);
+    level_format::push(cursor, line_end, error, newline);
     out.write(line.data(), std::distance(line.data(), cursor));
     ++i;
   }
@@ -283,16 +277,16 @@ template <typename level_element>
 [[nodiscard]] static inline auto
 write_intervals_dfscores_impl(
   // clang-format off
-                              const std::string &outfile,
-                              const std::vector<std::string> &names,
-                              const genome_index &index,
-                              const std::vector<genomic_interval> &intervals,
-                              const std::uint32_t min_reads,
-                              const level_container<level_element> &levels,
-                              const char rowname_delim,
-                              const bool write_header,
-                              const bool write_n_cpgs,
-                              const std::vector<std::uint32_t> &n_cpgs
+  const std::string &outfile,
+  const std::vector<std::string> &names,
+  const genome_index &index,
+  const std::vector<genomic_interval> &intervals,
+  const std::uint32_t min_reads,
+  const level_container<level_element> &levels,
+  const char rowname_delim,
+  const bool write_header,
+  const bool write_n_cpgs,
+  const std::vector<std::uint32_t> &n_cpgs
   // clang-format on
   ) -> std::error_code {
   using std::literals::string_view_literals::operator""sv;
@@ -305,9 +299,10 @@ write_intervals_dfscores_impl(
     return std::make_error_code(std::errc(errno));
 
   if (write_header) {
-    // auto joined =
-    //   names | std::views::join_with(delim) | std::ranges::to<std::string>();
-    auto joined = join_with(names, delim);
+    const auto hdr_fmtr = [&](const auto &r) {
+      return std::format(level_element::hdr_fmt_scr, r, delim, r);
+    };
+    auto joined = join_with(names | std::views::transform(hdr_fmtr), delim);
     if (write_n_cpgs)
       joined += std::format("{}{}", delim, "N_CPG"sv);
     std::println(out, "{}", joined);
@@ -323,24 +318,23 @@ write_intervals_dfscores_impl(
   const auto n_levels = levels.n_cols;
   auto prev_ch_id = genomic_interval::not_a_chrom;
   std::string chrom_name;
-  // for (const auto [i, interval] : std::views::enumerate(intervals)) {
-  std::uint32_t i = 0;
+  std::uint32_t i = 0;  // enumerate not always supported in compilers still
   for (const auto &interval : intervals) {
     if (interval.ch_id != prev_ch_id) {
       chrom_name = meta.chrom_order[interval.ch_id];
       prev_ch_id = interval.ch_id;
       line_beg = line.data();
-      push_buffer(line_beg, line_end, error, chrom_name, rowname_delim);
+      level_format::push(line_beg, line_end, error, chrom_name, rowname_delim);
     }
     auto cursor = line_beg;
-    push_buffer(cursor, line_end, error, interval.start, rowname_delim,
-                interval.stop);
+    level_format::push(cursor, line_end, error, interval.start, rowname_delim,
+                       interval.stop);
     for (const auto j : std::views::iota(0u, n_levels))
-      push_buffer_score(cursor, line_end, error, levels[i, j], none_label,
-                        min_reads, delim);
+      level_format::push_score(cursor, line_end, error, levels[i, j],
+                               none_label, min_reads, delim);
     if (write_n_cpgs)
-      push_buffer(cursor, line_end, error, delim, n_cpgs[i]);
-    push_buffer(cursor, line_end, error, newline);
+      level_format::push(cursor, line_end, error, delim, n_cpgs[i]);
+    level_format::push(cursor, line_end, error, newline);
     out.write(line.data(), std::distance(line.data(), cursor));
     ++i;
   }
@@ -351,37 +345,32 @@ template <typename level_element>
 [[nodiscard]] static inline auto
 write_intervals_dataframe_impl(
   // clang-format off
-                               const std::string &outfile,
-                               const std::vector<std::string> &names,
-                               const genome_index &index,
-                               const std::vector<genomic_interval> &intervals,
-                               const level_container<level_element> &levels,
-                               const level_element_mode mode,
-                               const char rowname_delim,
-                               const bool write_header,
-                               const bool write_n_cpgs,
-                               const std::vector<std::uint32_t> &n_cpgs
+  const std::string &outfile,
+  const std::vector<std::string> &names,
+  const genome_index &index,
+  const std::vector<genomic_interval> &intervals,
+  const level_container<level_element> &levels,
+  const level_element_mode mode,
+  const char rowname_delim,
+  const bool write_header,
+  const bool write_n_cpgs,
+  const std::vector<std::uint32_t> &n_cpgs
   // clang-format on
   ) -> std::error_code {
   static constexpr auto delim{'\t'};
   static constexpr auto newline{'\n'};
-
-  const auto hdr_formatter = [&](const auto &r) {
-    return mode == level_element_mode::classic
-             ? std::format(level_element::hdr_fmt_cls, r, delim, r, delim, r)
-             : std::format(level_element::hdr_fmt, r, delim, r, delim, r);
-  };
 
   std::ofstream out(outfile);
   if (!out)
     return std::make_error_code(std::errc(errno));
 
   if (write_header) {
-    // auto joined = names | std::views::transform(hdr_formatter) |
-    //               std::views::join_with(delim) |
-    //               std::ranges::to<std::string>();
-    auto joined =
-      join_with(names | std::views::transform(hdr_formatter), delim);
+    const auto hdr_fmtr = [&](const auto &r) {
+      return mode == level_element_mode::classic
+               ? std::format(level_element::hdr_fmt_cls, r, delim, r, delim, r)
+               : std::format(level_element::hdr_fmt, r, delim, r, delim, r);
+    };
+    auto joined = join_with(names | std::views::transform(hdr_fmtr), delim);
     if (write_n_cpgs)
       joined += std::format("{}{}", delim, "N_CPG");
     std::println(out, "{}", joined);
@@ -398,24 +387,23 @@ write_intervals_dataframe_impl(
   auto prev_ch_id = genomic_interval::not_a_chrom;
   std::string chrom_name;
 
-  // for (const auto [i, interval] : std::views::enumerate(intervals)) {
-  std::uint32_t i = 0;
+  std::uint32_t i = 0;  // no enumerate yet in all compilers
   for (const auto &interval : intervals) {
     if (interval.ch_id != prev_ch_id) {
       chrom_name = meta.chrom_order[interval.ch_id];
       prev_ch_id = interval.ch_id;
       line_beg = line.data();
-      push_buffer(line_beg, line_end, error, chrom_name, rowname_delim);
+      level_format::push(line_beg, line_end, error, chrom_name, rowname_delim);
     }
     auto cursor = line_beg;
-    push_buffer(cursor, line_end, error, interval.start, rowname_delim,
-                interval.stop);
+    level_format::push(cursor, line_end, error, interval.start, rowname_delim,
+                       interval.stop);
     for (auto j = 0u; j < n_levels; ++j)
-      push_buffer_elem(cursor, line_end, error, levels[i, j], mode, delim);
-
+      level_format::push_elem(cursor, line_end, error, levels[i, j], mode,
+                              delim);
     if (write_n_cpgs)
-      push_buffer(cursor, line_end, error, delim, n_cpgs[i]);
-    push_buffer(cursor, line_end, error, newline);
+      level_format::push(cursor, line_end, error, delim, n_cpgs[i]);
+    level_format::push(cursor, line_end, error, newline);
     out.write(line.data(), std::distance(line.data(), cursor));
     ++i;
   }
