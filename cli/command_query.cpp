@@ -263,12 +263,20 @@ query_bins(const std::uint32_t bin_size, const output_options &outopts,
     xfr::request{request_type, index.get_hash(), bin_size, methylome_names};
   std::error_code error;
   const auto query_start{std::chrono::high_resolution_clock::now()};
-  const auto results =
-    interface.get_levels_nonempty<level_element>(req, index, error);
+
+  auto a = std::async(std::launch::async, [&]() {
+    return interface.get_levels_nonempty<level_element>(req, index, error);
+  });
+  const auto n_cpgs = index.get_n_cpgs(bin_size);
+  a.wait();
+  const auto results = a.get();
+  // const auto results =
+  //   interface.get_levels_nonempty<level_element>(req, index, error);
   if (error) {
     lgr.debug("Error obtaining levels: {}", error);
     return error;
   }
+
   const auto query_stop{std::chrono::high_resolution_clock::now()};
   lgr.debug("Elapsed time for query: {:.3}s",
             duration(query_start, query_stop));
@@ -281,8 +289,9 @@ query_bins(const std::uint32_t bin_size, const output_options &outopts,
     alt_names,
     outopts.min_reads,
     outopts.write_n_cpgs,
-    outopts.write_empty_lines,
     bin_size,
+    outopts.write_empty_lines,
+    n_cpgs,
     // clang-format on
   };
 
