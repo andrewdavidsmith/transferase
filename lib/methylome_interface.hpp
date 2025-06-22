@@ -76,7 +76,9 @@ public:
   get_levels_nonempty(const request &req, const genome_index &index,
                       std::error_code &ec) const noexcept
     -> level_container<lvl_elem_t> {
-    return get_levels_local_nonempty_impl<lvl_elem_t>(req, index, ec);
+    return local_mode
+             ? get_levels_local_nonempty_impl<lvl_elem_t>(req, index, ec)
+             : get_levels_remote_nonempty_impl<lvl_elem_t>(req, ec);
   }
 
 private:
@@ -114,6 +116,17 @@ private:
   [[nodiscard]] auto
   get_levels_remote_impl(const request &req, std::error_code &ec) const noexcept
     -> level_container<lvl_elem_t> {
+    bins_client<lvl_elem_t> cl(hostname, port_number, req);
+    ec = cl.run();
+    if (ec)
+      return {};
+    return cl.take_levels();
+  }
+
+  template <typename lvl_elem_t>
+  [[nodiscard]] auto
+  get_levels_remote_nonempty_impl(const request &req, std::error_code &ec)
+    const noexcept -> level_container<lvl_elem_t> {
     bins_client<lvl_elem_t> cl(hostname, port_number, req);
     ec = cl.run();
     if (ec)
