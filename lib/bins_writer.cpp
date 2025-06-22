@@ -100,7 +100,8 @@ write_bedlike_bins_impl(
   const auto &levels,
   const level_element_mode mode,
   const bool write_n_cpgs,
-  const bool write_empty
+  const bool write_empty,
+  const std::vector<std::uint32_t> &n_cpgs
   // clang-format on
   ) -> std::error_code {
   static constexpr auto delim{'\t'};
@@ -113,7 +114,6 @@ write_bedlike_bins_impl(
   using outer_type = typename std::remove_cvref_t<decltype(levels)>::value_type;
   using level_element = typename std::remove_cvref_t<outer_type>::value_type;
 
-  const auto n_cpgs = index.get_n_cpgs(bin_size);
   const auto n_levels = std::size(levels);
   const auto empty_row =
     get_empty_row<level_element>(write_empty, n_levels, delim, mode);
@@ -171,7 +171,8 @@ write_bins_dfscores_impl(
   const char rowname_delim,
   const bool write_header,
   const bool write_n_cpgs,
-  const bool write_empty
+  const bool write_empty,
+  const std::vector<std::uint32_t> &n_cpgs
   // clang-format on
   ) -> std::error_code {
   using std::literals::string_view_literals::operator""sv;
@@ -182,7 +183,6 @@ write_bins_dfscores_impl(
   using outer_type = typename std::remove_cvref_t<decltype(levels)>::value_type;
   using level_element = typename std::remove_cvref_t<outer_type>::value_type;
 
-  const auto n_cpgs = index.get_n_cpgs(bin_size);
   const auto n_levels = std::size(levels);
   const auto empty_row = get_empty_row_scores<level_element>(
     write_empty, n_levels, delim, none_label);
@@ -242,7 +242,8 @@ write_bins_dataframe_impl(
   const char rowname_delim,
   const bool write_header,
   const bool write_n_cpgs,
-  const bool write_empty
+  const bool write_empty,
+  const std::vector<std::uint32_t> &n_cpgs
   // clang-format on
   ) -> std::error_code {
   using std::literals::string_view_literals::operator""sv;
@@ -252,7 +253,6 @@ write_bins_dataframe_impl(
   using outer_type = typename std::remove_cvref_t<decltype(levels)>::value_type;
   using level_element = typename std::remove_cvref_t<outer_type>::value_type;
 
-  const auto n_cpgs = index.get_n_cpgs(bin_size);
   const auto n_levels = std::size(levels);
   const auto empty_row =
     get_empty_row<level_element>(write_empty, n_levels, delim, mode);
@@ -318,14 +318,14 @@ write_bedlike_bins_impl(
   const level_container<level_element> &levels,
   const level_element_mode mode,
   const bool write_n_cpgs,
-  const bool write_empty
+  const bool write_empty,
+  const std::vector<std::uint32_t> &n_cpgs
   // clang-format on
   ) -> std::error_code {
   static constexpr auto rowname_delim{'\t'};
   static constexpr auto delim{'\t'};
   static constexpr auto newline{'\n'};
 
-  const auto n_cpgs = index.get_n_cpgs(bin_size);
   const auto n_levels = levels.n_cols;
   const auto empty_row =
     get_empty_row<level_element>(write_empty, n_levels, delim, mode);
@@ -398,7 +398,8 @@ write_bins_dfscores_impl(
   const char rowname_delim,
   const bool write_header,
   const bool write_n_cpgs,
-  const bool write_empty
+  const bool write_empty,
+  const std::vector<std::uint32_t> &n_cpgs
   // clang-format on
   ) -> std::error_code {
   using std::literals::string_view_literals::operator""sv;
@@ -406,7 +407,6 @@ write_bins_dfscores_impl(
   static constexpr auto newline{'\n'};
   static constexpr auto none_label = "NA"sv;
 
-  const auto n_cpgs = index.get_n_cpgs(bin_size);
   const auto n_levels = levels.n_cols;
   const auto empty_row = get_empty_row_scores<level_element>(
     write_empty, n_levels, delim, none_label);
@@ -482,13 +482,13 @@ write_bins_dataframe_impl(
   const char rowname_delim,
   const bool write_header,
   const bool write_n_cpgs,
-  const bool write_empty
+  const bool write_empty,
+  const std::vector<std::uint32_t> &n_cpgs
   // clang-format on
   ) -> std::error_code {
   static constexpr auto delim{'\t'};
   static constexpr auto newline{'\n'};
 
-  const auto n_cpgs = index.get_n_cpgs(bin_size);
   const auto n_levels = levels.n_cols;
   const auto empty_row =
     get_empty_row<level_element>(write_empty, n_levels, delim, mode);
@@ -548,6 +548,7 @@ write_bins_dataframe_impl(
       ++bin_idx;  // increment the general index of rows/cpgs
     }
   }
+
   return std::make_error_code(error);
 }
 
@@ -559,7 +560,7 @@ bins_writer::write_bedlike_impl(
   const std::vector<level_container_flat<level_element_t>> &levels,
   const level_element_mode mode) const noexcept -> std::error_code {
   return write_bedlike_bins_impl(outfile, index, bin_size, levels, mode,
-                                 write_n_cpgs, write_empty);
+                                 write_n_cpgs, write_empty, n_cpgs);
 }
 
 template <>
@@ -568,7 +569,7 @@ bins_writer::write_bedlike_impl(
   const std::vector<level_container_flat<level_element_covered_t>> &levels,
   const level_element_mode mode) const noexcept -> std::error_code {
   return write_bedlike_bins_impl(outfile, index, bin_size, levels, mode,
-                                 write_n_cpgs, write_empty);
+                                 write_n_cpgs, write_empty, n_cpgs);
 }
 
 template <>
@@ -577,7 +578,7 @@ bins_writer::write_bedlike_impl(const level_container<level_element_t> &levels,
                                 const level_element_mode mode) const noexcept
   -> std::error_code {
   return write_bedlike_bins_impl(outfile, index, bin_size, levels, mode,
-                                 write_n_cpgs, write_empty);
+                                 write_n_cpgs, write_empty, n_cpgs);
 }
 
 template <>
@@ -586,7 +587,7 @@ bins_writer::write_bedlike_impl(
   const level_container<level_element_covered_t> &levels,
   const level_element_mode mode) const noexcept -> std::error_code {
   return write_bedlike_bins_impl(outfile, index, bin_size, levels, mode,
-                                 write_n_cpgs, write_empty);
+                                 write_n_cpgs, write_empty, n_cpgs);
 }
 
 template <>
@@ -597,7 +598,7 @@ bins_writer::write_dfscores_impl(
   const bool write_header) const noexcept -> std::error_code {
   return write_bins_dfscores_impl(outfile, names, index, bin_size, min_reads,
                                   levels, rowname_delim, write_header,
-                                  write_n_cpgs, write_empty);
+                                  write_n_cpgs, write_empty, n_cpgs);
 }
 
 template <>
@@ -608,7 +609,7 @@ bins_writer::write_dfscores_impl(
   const bool write_header) const noexcept -> std::error_code {
   return write_bins_dfscores_impl(outfile, names, index, bin_size, min_reads,
                                   levels, rowname_delim, write_header,
-                                  write_n_cpgs, write_empty);
+                                  write_n_cpgs, write_empty, n_cpgs);
 }
 
 template <>
@@ -618,7 +619,7 @@ bins_writer::write_dfscores_impl(
   const bool write_header) const noexcept -> std::error_code {
   return write_bins_dfscores_impl(outfile, names, index, bin_size, min_reads,
                                   levels, rowname_delim, write_header,
-                                  write_n_cpgs, write_empty);
+                                  write_n_cpgs, write_empty, n_cpgs);
 }
 
 template <>
@@ -629,7 +630,7 @@ bins_writer::write_dfscores_impl(
   const bool write_header) const noexcept -> std::error_code {
   return write_bins_dfscores_impl(outfile, names, index, bin_size, min_reads,
                                   levels, rowname_delim, write_header,
-                                  write_n_cpgs, write_empty);
+                                  write_n_cpgs, write_empty, n_cpgs);
 }
 
 template <>
@@ -640,7 +641,7 @@ bins_writer::write_dataframe_impl(
   const bool write_header) const noexcept -> std::error_code {
   return write_bins_dataframe_impl(outfile, names, index, bin_size, levels,
                                    mode, rowname_delim, write_header,
-                                   write_n_cpgs, write_empty);
+                                   write_n_cpgs, write_empty, n_cpgs);
 }
 
 template <>
@@ -651,7 +652,7 @@ bins_writer::write_dataframe_impl(
   const bool write_header) const noexcept -> std::error_code {
   return write_bins_dataframe_impl(outfile, names, index, bin_size, levels,
                                    mode, rowname_delim, write_header,
-                                   write_n_cpgs, write_empty);
+                                   write_n_cpgs, write_empty, n_cpgs);
 }
 
 template <>
@@ -662,7 +663,7 @@ bins_writer::write_dataframe_impl(
   const bool write_header) const noexcept -> std::error_code {
   return write_bins_dataframe_impl(outfile, names, index, bin_size, levels,
                                    mode, rowname_delim, write_header,
-                                   write_n_cpgs, write_empty);
+                                   write_n_cpgs, write_empty, n_cpgs);
 }
 
 template <>
@@ -673,7 +674,7 @@ bins_writer::write_dataframe_impl(
   const bool write_header) const noexcept -> std::error_code {
   return write_bins_dataframe_impl(outfile, names, index, bin_size, levels,
                                    mode, rowname_delim, write_header,
-                                   write_n_cpgs, write_empty);
+                                   write_n_cpgs, write_empty, n_cpgs);
 }
 
 }  // namespace transferase
