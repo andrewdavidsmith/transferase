@@ -274,7 +274,7 @@ struct methylome {
   [[nodiscard]] auto
   get_levels_nonempty(const std::uint32_t bin_size, const genome_index &index)
     const -> level_container<lvl_elem_t> {
-    return data.get_levels_nonempty<lvl_elem_t>(bin_size, index);
+    return data.get_levels_ne<lvl_elem_t>(bin_size, index);
   }
 
   /// @brief Get the methylation level for each genomic 'bin' (i.e.,
@@ -296,7 +296,7 @@ struct methylome {
   get_levels_nonempty(const std::uint32_t bin_size, const genome_index &index,
                       level_container<lvl_elem_t>::iterator &res) const
     -> void {
-    data.get_levels_nonempty<lvl_elem_t>(bin_size, index, res);
+    data.get_levels_ne<lvl_elem_t>(bin_size, index, res);
   }
 
   /// @brief Returns true iff the methylome files exist for the given name.
