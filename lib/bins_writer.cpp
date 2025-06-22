@@ -115,8 +115,8 @@ write_bedlike_bins_impl(
 
   const auto n_cpgs = index.get_n_cpgs(bin_size);
   const auto n_levels = std::size(levels);
-  const auto empty_row = bins_writer::get_empty_row<level_element>(
-    write_empty_lines, n_levels, delim, mode);
+  const auto empty_row =
+    get_empty_row<level_element>(write_empty_lines, n_levels, delim, mode);
 
   std::ofstream out(outfile);
   if (!out)
@@ -184,7 +184,7 @@ write_bins_dfscores_impl(
 
   const auto n_cpgs = index.get_n_cpgs(bin_size);
   const auto n_levels = std::size(levels);
-  const auto empty_row = bins_writer::get_empty_row_scores<level_element>(
+  const auto empty_row = get_empty_row_scores<level_element>(
     write_empty_lines, n_levels, delim, none_label);
 
   std::ofstream out(outfile);
@@ -254,8 +254,8 @@ write_bins_dataframe_impl(
 
   const auto n_cpgs = index.get_n_cpgs(bin_size);
   const auto n_levels = std::size(levels);
-  const auto empty_row = bins_writer::get_empty_row<level_element>(
-    write_empty_lines, n_levels, delim, mode);
+  const auto empty_row =
+    get_empty_row<level_element>(write_empty_lines, n_levels, delim, mode);
 
   const auto lvl_to_string = [mode](const auto &l) {
     return mode == level_element_mode::classic ? l.tostring_classic()
@@ -327,8 +327,8 @@ write_bedlike_bins_impl(
 
   const auto n_cpgs = index.get_n_cpgs(bin_size);
   const auto n_levels = levels.n_cols;
-  const auto empty_row = bins_writer::get_empty_row<level_element>(
-    write_empty_lines, n_levels, delim, mode);
+  const auto empty_row =
+    get_empty_row<level_element>(write_empty_lines, n_levels, delim, mode);
   const auto empty_row_size = std::size(empty_row);
 
   std::vector<char> line(bins_writer::output_buffer_size);
@@ -408,7 +408,7 @@ write_bins_dfscores_impl(
 
   const auto n_cpgs = index.get_n_cpgs(bin_size);
   const auto n_levels = levels.n_cols;
-  const auto empty_row = bins_writer::get_empty_row_scores<level_element>(
+  const auto empty_row = get_empty_row_scores<level_element>(
     write_empty_lines, n_levels, delim, none_label);
   const auto empty_row_size = std::size(empty_row);
 
@@ -490,8 +490,8 @@ write_bins_dataframe_impl(
 
   const auto n_cpgs = index.get_n_cpgs(bin_size);
   const auto n_levels = levels.n_cols;
-  const auto empty_row = bins_writer::get_empty_row<level_element>(
-    write_empty_lines, n_levels, delim, mode);
+  const auto empty_row =
+    get_empty_row<level_element>(write_empty_lines, n_levels, delim, mode);
   const auto empty_row_size = std::size(empty_row);
 
   std::ofstream out(outfile);
