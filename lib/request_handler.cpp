@@ -205,10 +205,12 @@ request_handler::bins_get_levels<level_element_t>(
       return;
     }
     lgr.debug("Computing levels for methylome: {} (bins)", methylome_name);
-    meth->get_levels<level_element_t>(req.bin_size(), *index, col_itr);
+    // meth->get_levels<level_element_t>(req.bin_size(), *index, col_itr);
+    meth->get_levels_nonempty<level_element_t>(req.bin_size(), *index, col_itr);
   }
-  // ADS: ensure this does not reallocate
   const auto updated_size = std::distance(std::begin(resp_data), col_itr);
+  resp_hdr.resize_keep_n_cols(updated_size);
+  // ADS: ensure this does not reallocate
   resp_data.resize_keep_n_cols(updated_size);
 }
 
@@ -250,10 +252,14 @@ request_handler::bins_get_levels<level_element_covered_t>(
     }
     lgr.debug("Computing levels for methylome: {} (bins, covered)",
               methylome_name);
-    meth->get_levels<level_element_covered_t>(req.bin_size(), *index, col_itr);
+    // meth->get_levels<level_element_covered_t>(req.bin_size(), *index,
+    // col_itr);
+    meth->get_levels_nonempty<level_element_covered_t>(req.bin_size(), *index,
+                                                       col_itr);
   }
-  // ADS: ensure this does not reallocate
   const auto updated_size = std::distance(std::begin(resp_data), col_itr);
+  resp_hdr.resize_keep_n_cols(updated_size);
+  // ADS: ensure this does not reallocate
   resp_data.resize_keep_n_cols(updated_size);
 }
 
