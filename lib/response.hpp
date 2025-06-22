@@ -51,6 +51,11 @@ struct response_header {
   }
   [[nodiscard]] auto
   summary() const noexcept -> std::string;
+
+  auto
+  resize_keep_n_cols(const std::uint32_t updated_size) {
+    rows = updated_size / cols;
+  }
 };
 
 [[nodiscard]] auto
