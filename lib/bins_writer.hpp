@@ -38,21 +38,20 @@ enum class output_format_t : std::uint8_t;
 enum class level_element_mode : std::uint8_t;
 
 struct bins_writer : public writer_base<bins_writer> {
-  const bool write_empty_lines{};
+  const bool write_empty{};  // output lines for bins without CpGs
   const std::uint32_t bin_size{};
   // clang-format off
-  bins_writer(
-              const std::string &outfile,
+  bins_writer(const std::string &outfile,
               const genome_index &index,
               const output_format_t out_fmt,
               const std::vector<std::string> &names,
               const std::uint32_t min_reads,
               const bool write_n_cpgs,
-              const bool write_empty_lines,
+              const bool write_empty,
               const std::uint32_t bin_size
     ) :
     writer_base{outfile, index, out_fmt, names, min_reads, write_n_cpgs},
-    write_empty_lines{write_empty_lines},
+    write_empty{write_empty},
     bin_size{bin_size} {}
   // clang-format on
 
