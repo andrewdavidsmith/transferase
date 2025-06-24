@@ -105,7 +105,7 @@ connection::read_request() -> void {
 
       if (const auto parse_err = parse(req_buf, req); parse_err) {
         lgr.warning("{} Request parse error: {}", conn_id, parse_err);
-        resp_hdr = {parse_err, 0};
+        resp_hdr = {parse_err, 0, 0, 0};
         respond_with_error();
         return;
       }
@@ -142,7 +142,7 @@ connection::read_query() -> void {
       query_stats.update(n_bytes);
       if (ec) {
         lgr.warning("{} Error reading query: {}", conn_id, ec);
-        resp_hdr = {request_error_code::error_reading_query, 0};
+        resp_hdr = {request_error_code::error_reading_query, 0, 0, 0};
         respond_with_error();
         return;
       }
@@ -202,7 +202,7 @@ connection::respond_with_levels() -> void {
   set_deadline(comm_timeout_sec);
   auto self = shared_from_this();
   asio::async_write(
-    socket, asio::buffer(get_send_buf(), get_response_size()),
+    socket, asio::buffer(get_send_buf(), resp_hdr.n_bytes),
     // completion condition
     [this, self](const auto ec, const auto n_bytes) -> std::size_t {
       reply_stats.update(n_bytes);
