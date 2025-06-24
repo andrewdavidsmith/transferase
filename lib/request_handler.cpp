@@ -35,6 +35,8 @@
 #include "response.hpp"
 #include "server_error_code.hpp"
 
+#include <cstring>
+#include <iterator>
 #include <memory>  // for std::shared_ptr
 #include <string>
 #include <system_error>
