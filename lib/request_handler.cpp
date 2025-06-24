@@ -40,8 +40,6 @@
 #include <system_error>
 #include <vector>
 
-static constexpr bool compress_levels{true};
-
 namespace transferase {
 
 auto
@@ -216,7 +214,7 @@ request_handler::bins_get_levels<level_element_t>(
     meth->get_levels<level_element_t>(req.bin_size(), *index, col_itr);
   }
   resp_hdr.n_bytes = sizeof(level_element_t) * resp_hdr.rows * resp_hdr.cols;
-  if (compress_levels) {
+  if (compress_bins_levels) {
     std::vector<std::uint8_t> tmp;
     const auto compress_err = libdeflate_compress(resp_data.v, tmp);
     if (compress_err)
@@ -269,7 +267,7 @@ request_handler::bins_get_levels<level_element_covered_t>(
     meth->get_levels<level_element_covered_t>(req.bin_size(), *index, col_itr);
   }
   resp_hdr.n_bytes = sizeof(level_element_t) * resp_hdr.rows * resp_hdr.cols;
-  if (compress_levels) {
+  if (compress_bins_levels) {
     std::vector<std::uint8_t> tmp;
     const auto compress_err = libdeflate_compress(resp_data.v, tmp);
     if (compress_err)
