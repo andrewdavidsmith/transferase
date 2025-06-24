@@ -68,6 +68,7 @@ target_link_libraries(transferase_system PUBLIC
   Threads::Threads
   OpenSSL::SSL
   OpenSSL::Crypto
+  deflate
 )
 
 if(TEST_LIB)

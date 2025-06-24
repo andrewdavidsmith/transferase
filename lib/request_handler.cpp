@@ -231,6 +231,17 @@ request_handler::bins_get_levels<level_element_t>(
     std::memcpy(reinterpret_cast<std::uint8_t *>(resp_data.v.data()),
                 tmp.data(), std::size(tmp));
   }
+  resp_hdr.n_bytes = sizeof(level_element_t) * resp_hdr.rows * resp_hdr.cols;
+  if (compress_bins_levels) {
+    std::vector<std::uint8_t> tmp;
+    const auto compress_err = libdeflate_compress(resp_data.v, tmp);
+    if (compress_err)
+      resp_hdr.status = compress_err;
+    resp_hdr.n_bytes = std::size(tmp);
+    // NOLINTNEXTLINE (*-reinterpret-cast)
+    std::memcpy(reinterpret_cast<std::uint8_t *>(resp_data.v.data()),
+                tmp.data(), std::size(tmp));
+  }
 }
 
 template <>
@@ -280,6 +291,17 @@ request_handler::bins_get_levels<level_element_covered_t>(
   resp_hdr.resize_keep_n_cols(updated_size);
   // ADS: ensure this does not reallocate
   // resp_data.resize_keep_n_cols(updated_size);
+  resp_hdr.n_bytes = sizeof(level_element_t) * resp_hdr.rows * resp_hdr.cols;
+  if (compress_bins_levels) {
+    std::vector<std::uint8_t> tmp;
+    const auto compress_err = libdeflate_compress(resp_data.v, tmp);
+    if (compress_err)
+      resp_hdr.status = compress_err;
+    resp_hdr.n_bytes = std::size(tmp);
+    // NOLINTNEXTLINE (*-reinterpret-cast)
+    std::memcpy(reinterpret_cast<std::uint8_t *>(resp_data.v.data()),
+                tmp.data(), std::size(tmp));
+  }
   resp_hdr.n_bytes = sizeof(level_element_t) * resp_hdr.rows * resp_hdr.cols;
   if (compress_bins_levels) {
     std::vector<std::uint8_t> tmp;

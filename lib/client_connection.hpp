@@ -26,6 +26,7 @@
 
 #include "customize_asio.hpp"
 #include "level_container.hpp"
+#include "libdeflate_adapter.hpp"
 #include "logger.hpp"
 #include "query_container.hpp"
 #include "request.hpp"
@@ -41,6 +42,7 @@
 #include <string>
 #include <system_error>
 #include <utility>  // std::move
+#include <vector>
 
 namespace transferase {
 
@@ -72,6 +74,12 @@ public:
 
   [[nodiscard]] auto
   take_levels() -> level_container<level_t> {
+    if (need_decompression() && !status) {
+      // NOLINTNEXTLINE (*-reinterpret-cast)
+      const auto buf = reinterpret_cast<std::uint8_t *>(levels_buffer());
+      std::vector<std::uint8_t> tmp(buf, buf + resp_hdr.n_bytes);
+      status = libdeflate_decompress(tmp, resp_container);
+    }
     return std::move(resp_container);
   }
 
@@ -134,7 +142,7 @@ public:
     resp_container.resize(resp_hdr.rows, resp_hdr.cols);
     reset_deadline();
     asio::async_read(
-      socket, asio::buffer(levels_buffer(), levels_size()),
+      socket, asio::buffer(levels_buffer(), resp_hdr.n_bytes),
       [this](const auto ec, const auto n_bytes) -> std::size_t {
         reply_stats.update(n_bytes);
         reset_deadline();
@@ -232,6 +240,14 @@ private:
     (void)socket.shutdown(tcp::socket::shutdown_both, unchecked);
     (void)socket.close(unchecked);
     watchdog_timer.cancel();
+  }
+
+  [[nodiscard]] auto
+  need_decompression() const {
+    // resp_hdr.n_bytes: number of bytes transferred; levels_size(): size of
+    // structure computed; levels_size() might be smaller than bytes for
+    // std::size(resp_container)
+    return resp_hdr.n_bytes != levels_size();
   }
 
   [[nodiscard]] auto

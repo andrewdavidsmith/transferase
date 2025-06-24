@@ -150,13 +150,13 @@ compress(const T &in, std::vector<std::uint8_t> &out) -> std::error_code {
   strm.next_in = reinterpret_cast<std::uint8_t *>(
     const_cast<typename T::value_type *>(in.data()));
   // bytes available to compress
-  const auto n_input_bytes = size(in) * sizeof(typename T::value_type);
+  const auto n_input_bytes = std::size(in) * sizeof(typename T::value_type);
   strm.avail_in = n_input_bytes;
 
   out.resize(deflateBound(&strm, n_input_bytes));
 
-  strm.next_out = out.data();  // pointer to bytes for compressed data
-  strm.avail_out = size(out);  // bytes available for compressed data
+  strm.next_out = out.data();       // pointer to bytes for compressed data
+  strm.avail_out = std::size(out);  // bytes available for compressed data
 
   {
     // ADS: here we want (ret == Z_STREAM_END) and not (ret == Z_OK)
@@ -203,13 +203,13 @@ decompress(std::vector<std::uint8_t> &in, T &out) -> std::error_code {
     assert(ret == Z_OK);
   }
 
-  strm.next_in = in.data();  // pointer to compressed bytes
-  strm.avail_in = size(in);  // bytes available to decompress
+  strm.next_in = in.data();       // pointer to compressed bytes
+  strm.avail_in = std::size(in);  // bytes available to decompress
 
   // pointer to bytes for decompressed data
   strm.next_out = reinterpret_cast<std::uint8_t *>(out.data());
   // bytes available for decompressed data
-  const auto n_output_bytes = size(out) * sizeof(typename T::value_type);
+  const auto n_output_bytes = std::size(out) * sizeof(typename T::value_type);
   strm.avail_out = n_output_bytes;
 
   {
