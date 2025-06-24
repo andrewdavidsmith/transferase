@@ -81,6 +81,7 @@ struct request_handler {
   std::string index_file_dir;
   methylome_set methylomes;
   genome_index_set indexes;
+  bool compress_bins_levels{true};
 };
 
 }  // namespace transferase
