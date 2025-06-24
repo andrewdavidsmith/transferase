@@ -17,7 +17,7 @@ jobs:
       run: brew update
     - name: Install dependencies
       run: |
-        brew install zlib
+        brew install zlib libdeflate
     - name: Configure for unit tests
       run: |
         cmake -B build \
