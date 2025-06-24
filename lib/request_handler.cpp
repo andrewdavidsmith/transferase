@@ -26,6 +26,7 @@
 #include "genome_index.hpp"
 #include "level_container.hpp"
 #include "level_element.hpp"
+#include "libdeflate_adapter.hpp"
 #include "logger.hpp"
 #include "methylome.hpp"
 #include "methylome_set.hpp"
@@ -38,6 +39,8 @@
 #include <string>
 #include <system_error>
 #include <vector>
+
+static constexpr bool compress_levels{true};
 
 namespace transferase {
 
@@ -213,6 +216,16 @@ request_handler::bins_get_levels<level_element_t>(
     meth->get_levels<level_element_t>(req.bin_size(), *index, col_itr);
   }
   resp_hdr.n_bytes = sizeof(level_element_t) * resp_hdr.rows * resp_hdr.cols;
+  if (compress_levels) {
+    std::vector<std::uint8_t> tmp;
+    const auto compress_err = libdeflate_compress(resp_data.v, tmp);
+    if (compress_err)
+      resp_hdr.status = compress_err;
+    resp_hdr.n_bytes = std::size(tmp);
+    // NOLINTNEXTLINE (*-reinterpret-cast)
+    std::memcpy(reinterpret_cast<std::uint8_t *>(resp_data.v.data()),
+                tmp.data(), std::size(tmp));
+  }
 }
 
 template <>
@@ -256,6 +269,16 @@ request_handler::bins_get_levels<level_element_covered_t>(
     meth->get_levels<level_element_covered_t>(req.bin_size(), *index, col_itr);
   }
   resp_hdr.n_bytes = sizeof(level_element_t) * resp_hdr.rows * resp_hdr.cols;
+  if (compress_levels) {
+    std::vector<std::uint8_t> tmp;
+    const auto compress_err = libdeflate_compress(resp_data.v, tmp);
+    if (compress_err)
+      resp_hdr.status = compress_err;
+    resp_hdr.n_bytes = std::size(tmp);
+    // NOLINTNEXTLINE (*-reinterpret-cast)
+    std::memcpy(reinterpret_cast<std::uint8_t *>(resp_data.v.data()),
+                tmp.data(), std::size(tmp));
+  }
 }
 
 }  // namespace transferase
