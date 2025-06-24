@@ -32,6 +32,7 @@
 #include "response.hpp"
 #include "server_error_code.hpp"
 #include "transfer_stats.hpp"
+#include "zlib_adapter.hpp"
 
 #include <asio.hpp>
 
@@ -72,6 +73,12 @@ public:
 
   [[nodiscard]] auto
   take_levels() -> level_container<level_t> {
+    if (need_decompression() && !status) {
+      const auto p =
+        static_cast<std::uint8_t *>(static_cast<void *>(resp_container.data()));
+      std::vector<std::uint8_t> tmp(p, p + resp_hdr.n_bytes);
+      status = decompress(tmp, resp_container);
+    }
     return std::move(resp_container);
   }
 
@@ -134,7 +141,7 @@ public:
     resp_container.resize(resp_hdr.rows, resp_hdr.cols);
     reset_deadline();
     asio::async_read(
-      socket, asio::buffer(levels_buffer(), levels_size()),
+      socket, asio::buffer(levels_buffer(), resp_hdr.n_bytes),
       [this](const auto ec, const auto n_bytes) -> std::size_t {
         reply_stats.update(n_bytes);
         reset_deadline();
@@ -232,6 +239,14 @@ private:
     (void)socket.shutdown(tcp::socket::shutdown_both, unchecked);
     (void)socket.close(unchecked);
     watchdog_timer.cancel();
+  }
+
+  [[nodiscard]] auto
+  need_decompression() const {
+    // resp_hdr.n_bytes: number of bytes transferred; levels_size(): size of
+    // structure computed; levels_size() might be smaller than bytes for
+    // std::size(resp_container)
+    return resp_hdr.n_bytes != levels_size();
   }
 
   [[nodiscard]] auto
