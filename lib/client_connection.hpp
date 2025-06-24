@@ -26,13 +26,13 @@
 
 #include "customize_asio.hpp"
 #include "level_container.hpp"
+#include "libdeflate_adapter.hpp"
 #include "logger.hpp"
 #include "query_container.hpp"
 #include "request.hpp"
 #include "response.hpp"
 #include "server_error_code.hpp"
 #include "transfer_stats.hpp"
-#include "zlib_adapter.hpp"
 
 #include <asio.hpp>
 
@@ -74,10 +74,10 @@ public:
   [[nodiscard]] auto
   take_levels() -> level_container<level_t> {
     if (need_decompression() && !status) {
-      const auto p =
-        static_cast<std::uint8_t *>(static_cast<void *>(resp_container.data()));
-      std::vector<std::uint8_t> tmp(p, p + resp_hdr.n_bytes);
-      status = decompress(tmp, resp_container);
+      // NOLINTNEXTLINE (*-reinterpret-cast)
+      const auto buf = reinterpret_cast<std::uint8_t *>(levels_buffer());
+      std::vector<std::uint8_t> tmp(buf, buf + resp_hdr.n_bytes);
+      status = libdeflate_decompress(tmp, resp_container);
     }
     return std::move(resp_container);
   }
