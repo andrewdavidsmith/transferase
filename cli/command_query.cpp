@@ -96,6 +96,7 @@ xfr query -s localhost -p 5000 -x index_dir \
 #include <filesystem>
 #include <format>
 #include <fstream>
+#include <future>    // for std::async, std::launch
 #include <iterator>  // for std::size, for std::cbegin
 #include <map>
 #include <memory>
@@ -206,19 +207,13 @@ query_intervals(const std::string &intervals_file,
                                 std::size(intervals), methylome_names};
 
   const auto query_start{std::chrono::high_resolution_clock::now()};
+  auto level_getter_async = std::async(std::launch::async, [&]() {
+    return interface.get_levels<level_element>(req, query, error);
+  });
 
-  const auto results = interface.get_levels<level_element>(req, query, error);
-  if (error) {
-    lgr.debug("Error obtaining levels: {}", error);
-    return error;
-  }
-  const auto query_stop{std::chrono::high_resolution_clock::now()};
-  lgr.debug("Elapsed time for query: {:.3}s",
-            duration(query_start, query_stop));
-
+  // ADS: do work while the query is happening
   const auto n_cpgs =
     outopts.write_n_cpgs ? query.get_n_cpgs() : std::vector<std::uint32_t>{};
-
   const auto outmgr = xfr::intervals_writer{
     // clang-format off
     outopts.outfile,
@@ -231,6 +226,15 @@ query_intervals(const std::string &intervals_file,
     n_cpgs,
     // clang-format on
   };
+
+  const auto results = level_getter_async.get();
+  if (error) {
+    lgr.debug("Error obtaining levels: {}", error);
+    return error;
+  }
+  const auto query_stop{std::chrono::high_resolution_clock::now()};
+  lgr.debug("Elapsed time for query: {:.3}s",
+            duration(query_start, query_stop));
 
   const auto out_start{std::chrono::high_resolution_clock::now()};
   error = outmgr.write_output(results);
@@ -261,26 +265,16 @@ query_bins(const std::uint32_t bin_size, const output_options &outopts,
   // Read query intervals and validate them
   const auto req =
     xfr::request{request_type, index.get_hash(), bin_size, methylome_names};
-  std::error_code error;
-  const auto query_start{std::chrono::high_resolution_clock::now()};
 
-  auto a = std::async(std::launch::async, [&]() {
+  std::error_code error;
+
+  const auto query_start{std::chrono::high_resolution_clock::now()};
+  auto level_getter_async = std::async(std::launch::async, [&]() {
     return interface.get_levels_nonempty<level_element>(req, index, error);
   });
+
+  // ADS: do work while the query is happening
   const auto n_cpgs = index.get_n_cpgs(bin_size);
-  a.wait();
-  const auto results = a.get();
-  // const auto results =
-  //   interface.get_levels_nonempty<level_element>(req, index, error);
-  if (error) {
-    lgr.debug("Error obtaining levels: {}", error);
-    return error;
-  }
-
-  const auto query_stop{std::chrono::high_resolution_clock::now()};
-  lgr.debug("Elapsed time for query: {:.3}s",
-            duration(query_start, query_stop));
-
   const auto outmgr = xfr::bins_writer{
     // clang-format off
     outopts.outfile,
@@ -294,6 +288,15 @@ query_bins(const std::uint32_t bin_size, const output_options &outopts,
     n_cpgs,
     // clang-format on
   };
+
+  const auto results = level_getter_async.get();
+  if (error) {
+    lgr.debug("Error obtaining levels: {}", error);
+    return error;
+  }
+  const auto query_stop{std::chrono::high_resolution_clock::now()};
+  lgr.debug("Elapsed time for query: {:.3}s",
+            duration(query_start, query_stop));
 
   const auto out_start{std::chrono::high_resolution_clock::now()};
   error = outmgr.write_output(results);
