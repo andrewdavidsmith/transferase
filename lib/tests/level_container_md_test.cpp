@@ -202,8 +202,9 @@ TEST_F(level_container_mock, write_with_intervals_writer_test) {
     output_format_t::counts,
     methylomes_names,
     min_reads,
-    empty_n_cpgs,
+    false,  // for write_n_cpgs
     intervals,
+    empty_n_cpgs,
   };
   // clang-format on
 
@@ -221,8 +222,9 @@ TEST_F(level_container_mock, write_with_intervals_writer_test) {
     output_format_t::counts,
     methylomes_names,
     min_reads,
-    empty_n_cpgs,
+    false,  // for write_n_cpgs
     intervals,
+    empty_n_cpgs,
   };
   // clang-format on
   std::error_code write_vec_err =
@@ -245,8 +247,9 @@ TEST_F(level_container_mock, write_with_intervals_writer_test) {
     output_format_t::dfcounts,
     methylomes_names,
     min_reads,
-    empty_n_cpgs,
+    false,  // for write_n_cpgs
     intervals,
+    empty_n_cpgs,
   };
   // clang-format on
 
@@ -264,8 +267,9 @@ TEST_F(level_container_mock, write_with_intervals_writer_test) {
     output_format_t::dfcounts,
     methylomes_names,
     min_reads,
-    empty_n_cpgs,
+    false,  // for write_n_cpgs
     intervals,
+    empty_n_cpgs,
   };
   // clang-format on
   write_vec_err =
@@ -288,8 +292,9 @@ TEST_F(level_container_mock, write_with_intervals_writer_test) {
     output_format_t::dfscores,
     methylomes_names,
     min_reads,
-    empty_n_cpgs,
+    false,  // for write_n_cpgs
     intervals,
+    empty_n_cpgs,
   };
   // clang-format on
 
@@ -306,8 +311,9 @@ TEST_F(level_container_mock, write_with_intervals_writer_test) {
     output_format_t::dfscores,
     methylomes_names,
     min_reads,
-    empty_n_cpgs,
+    false,  // for write_n_cpgs
     intervals,
+    empty_n_cpgs,
   };
   // clang-format on
   write_vec_err = writer_dataframe_scores_for_vec.write_dfscores(vec);
@@ -358,8 +364,10 @@ TEST_F(level_container_mock, write_with_bins_writer_test) {
     output_format_t::counts,
     methylomes_names,
     min_reads,
-    empty_n_cpgs,
+    false,  // for write_n_cpgs
     bin_size,
+    true,  // write_empty
+    empty_n_cpgs,
   };
   // clang-format on
 
@@ -377,8 +385,10 @@ TEST_F(level_container_mock, write_with_bins_writer_test) {
     output_format_t::counts,
     methylomes_names,
     min_reads,
-    empty_n_cpgs,
+    false,  // for write_n_cpgs
     bin_size,
+    true,  // write_empty
+    empty_n_cpgs,
   };
   // clang-format on
   std::error_code write_vec_err =
@@ -403,8 +413,10 @@ TEST_F(level_container_mock, write_with_bins_writer_test) {
     output_format_t::dfcounts,
     methylomes_names,
     min_reads,
-    empty_n_cpgs,
+    false,  // for write_n_cpgs
     bin_size,
+    true,  // write_empty
+    empty_n_cpgs,
   };
   // clang-format on
 
@@ -422,8 +434,10 @@ TEST_F(level_container_mock, write_with_bins_writer_test) {
     output_format_t::dfcounts,
     methylomes_names,
     min_reads,
-    empty_n_cpgs,
+    false,  // for write_n_cpgs
     bin_size,
+    true,  // write_empty
+    empty_n_cpgs,
   };
   // clang-format on
   write_vec_err =
@@ -448,8 +462,10 @@ TEST_F(level_container_mock, write_with_bins_writer_test) {
     output_format_t::dfscores,
     methylomes_names,
     min_reads,
-    empty_n_cpgs,
+    false,  // for write_n_cpgs
     bin_size,
+    true,  // write_empty
+    empty_n_cpgs,
   };
   // clang-format on
 
@@ -466,8 +482,10 @@ TEST_F(level_container_mock, write_with_bins_writer_test) {
     output_format_t::dfscores,
     methylomes_names,
     min_reads,
-    empty_n_cpgs,
+    false,  // for write_n_cpgs
     bin_size,
+    true,  // write_empty
+    empty_n_cpgs,
   };
   // clang-format on
   write_vec_err = writer_dataframe_scores_for_vec.write_dfscores(vec);
