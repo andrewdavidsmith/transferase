@@ -192,6 +192,7 @@ TEST_F(level_container_mock, write_with_intervals_writer_test) {
 
   // do bedlike
 
+  // ok to have empty n_cpgs if writing intervals
   const auto empty_n_cpgs = std::vector<std::uint32_t>{};
 
   auto tmp_filename = generate_temp_filename("tmp_md_c");
@@ -354,7 +355,7 @@ TEST_F(level_container_mock, write_with_bins_writer_test) {
 
   // do bedlike
 
-  const auto empty_n_cpgs = std::vector<std::uint32_t>{};
+  const auto n_cpgs = index.get_n_cpgs(bin_size);
 
   auto tmp_filename = generate_temp_filename("tmp_md_c");
   // clang-format off
@@ -367,7 +368,7 @@ TEST_F(level_container_mock, write_with_bins_writer_test) {
     false,  // for write_n_cpgs
     bin_size,
     true,  // write_empty
-    empty_n_cpgs,
+    n_cpgs,
   };
   // clang-format on
 
@@ -388,7 +389,7 @@ TEST_F(level_container_mock, write_with_bins_writer_test) {
     false,  // for write_n_cpgs
     bin_size,
     true,  // write_empty
-    empty_n_cpgs,
+    n_cpgs,
   };
   // clang-format on
   std::error_code write_vec_err =
@@ -416,7 +417,7 @@ TEST_F(level_container_mock, write_with_bins_writer_test) {
     false,  // for write_n_cpgs
     bin_size,
     true,  // write_empty
-    empty_n_cpgs,
+    n_cpgs,
   };
   // clang-format on
 
@@ -437,7 +438,7 @@ TEST_F(level_container_mock, write_with_bins_writer_test) {
     false,  // for write_n_cpgs
     bin_size,
     true,  // write_empty
-    empty_n_cpgs,
+    n_cpgs,
   };
   // clang-format on
   write_vec_err =
