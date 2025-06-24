@@ -42,6 +42,7 @@
 #include <string>
 #include <system_error>
 #include <utility>  // std::move
+#include <vector>
 
 namespace transferase {
 
