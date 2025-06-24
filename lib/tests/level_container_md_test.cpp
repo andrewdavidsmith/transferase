@@ -117,7 +117,7 @@ TEST_F(level_container_mock, access_operator) {
 
 TEST_F(level_container_mock, resize) {
   constexpr std::uint32_t new_size = 10;
-  container.resize(new_size);
+  container.resize_keep_n_cols(new_size);
   EXPECT_EQ(std::size(container), new_size);
 }
 
