@@ -25,7 +25,6 @@
 #define LIB_LEVEL_ELEMENT_FORMATTER_HPP_
 
 #include "level_element.hpp"
-#include "writer_base.hpp"
 
 #include <charconv>
 #include <cstdint>
