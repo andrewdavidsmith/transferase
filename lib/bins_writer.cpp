@@ -35,6 +35,7 @@
 #include <algorithm>
 #include <cerrno>
 #include <cstdint>  // for std::uint32_t
+#include <cstring>
 #include <format>
 #include <fstream>
 #include <iterator>  // for std::size, std::cbegin, std::cend
@@ -141,7 +142,7 @@ write_bedlike_bins_impl(
         /* println() without arg doesn't work on macos clang */
         // std::println(out);
         std::print(out, "\n");
-        ++ne_bin_idx;
+        ++ne_bin_idx;  // increment the index of rows/cpgs with data
       }
       else if (write_empty) {
         const auto bin_end = std::min(bin_beg + bin_size, chrom_size);
@@ -153,7 +154,7 @@ write_bedlike_bins_impl(
         // std::println(out);
         std::print(out, "\n");
       }
-      ++bin_idx;
+      ++bin_idx;  // increment the general index of rows/cpgs
     }
   }
   return {};
@@ -219,12 +220,12 @@ write_bins_dfscores_impl(
         /* println() without arg doesn't work on macos clang */
         // std::println(out);
         std::print(out, "\n");
-        ++ne_bin_idx;
+        ++ne_bin_idx;  // increment the index of rows/cpgs with data
       }
       else if (write_empty)
         std::println(out, "{}{}{}{}", chrom_name, rowname_delim, bin_beg,
                      empty_row);
-      ++bin_idx;
+      ++bin_idx;  // increment the general index of rows/cpgs
     }
   }
   return {};
@@ -295,12 +296,12 @@ write_bins_dataframe_impl(
         /* println() without arg doesn't work on macos clang */
         // std::println(out);
         std::print(out, "\n");
-        ++ne_bin_idx;
+        ++ne_bin_idx;  // increment the index of rows/cpgs with data
       }
       else if (write_empty)
         std::println(out, "{}{}{}{}", chrom_name, rowname_delim, bin_beg,
                      empty_row);
-      ++bin_idx;
+      ++bin_idx;  // increment the general index of rows/cpgs
     }
 
   return {};
@@ -365,7 +366,7 @@ write_bedlike_bins_impl(
           level_format::push(cursor, line_end, error, delim, n_cpgs[bin_idx]);
         level_format::push(cursor, line_end, error, newline);
         out.write(line.data(), std::distance(line.data(), cursor));
-        ++ne_bin_idx;
+        ++ne_bin_idx;  // increment the index of rows/cpgs with data
       }
       else if (write_empty) {
         const auto bin_end = std::min(bin_beg + bin_size, chrom_size);
@@ -373,13 +374,13 @@ write_bedlike_bins_impl(
         level_format::push(cursor, line_end, error, bin_beg, rowname_delim,
                            bin_end);
         std::memcpy(cursor, empty_row.data(), empty_row_size);
-        cursor += empty_row_size;
+        cursor += empty_row_size;  // NOLINT (*-pointer-arithmetic)
         if (write_n_cpgs)
           level_format::push(cursor, line_end, error, delim, 0u);
         level_format::push(cursor, line_end, error, newline);
         out.write(line.data(), std::distance(line.data(), cursor));
       }
-      ++bin_idx;
+      ++bin_idx;  // increment the general index of rows/cpgs
     }
   }
   return std::make_error_code(error);
@@ -451,19 +452,19 @@ write_bins_dfscores_impl(
           level_format::push(cursor, line_end, error, delim, n_cpgs[bin_idx]);
         level_format::push(cursor, line_end, error, newline);
         out.write(line.data(), std::distance(line.data(), cursor));
-        ++ne_bin_idx;
+        ++ne_bin_idx;  // increment the index of rows/cpgs with data
       }
       else if (write_empty) {
         auto cursor = line_beg;
         level_format::push(cursor, line_end, error, bin_beg);
         std::memcpy(cursor, empty_row.data(), empty_row_size);
-        cursor += empty_row_size;
+        cursor += empty_row_size;  // NOLINT (*-pointer-arithmetic)
         if (write_n_cpgs)
           level_format::push(cursor, line_end, error, delim, 0u);
         level_format::push(cursor, line_end, error, newline);
         out.write(line.data(), std::distance(line.data(), cursor));
       }
-      ++bin_idx;
+      ++bin_idx;  // increment the general index of rows/cpgs
     }
   }
   return std::make_error_code(error);
@@ -539,7 +540,7 @@ write_bins_dataframe_impl(
       else if (write_empty) {
         level_format::push(cursor, line_end, error, bin_beg);
         std::memcpy(cursor, empty_row.data(), empty_row_size);
-        cursor += empty_row_size;
+        cursor += empty_row_size;  // NOLINT (*-pointer-arithmetic)
         if (write_n_cpgs)
           level_format::push(cursor, line_end, error, delim, 0u);
         level_format::push(cursor, line_end, error, newline);
