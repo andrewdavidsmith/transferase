@@ -422,16 +422,16 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
   app.get_formatter()->label("REQUIRED", " ");
 
   app.set_help_flag("-h,--help", "print a detailed help message and exit");
-  app
-    .add_option("-c,--config-dir", cfg.config_dir, "specify a config directory")
+
+  // clang-format off
+  app.add_option("-c,--config-dir", cfg.config_dir, "specify a config directory")
     ->option_text("DIR")
     ->check(CLI::ExistingDirectory);
   const auto intervals_file_opt =
-    app
-      .add_option("-i,--intervals", intervals_file,
-                  "input query intervals file in BED format")
-      ->option_text("FILE")
-      ->check(CLI::ExistingFile);
+    app.add_option("-i,--intervals", intervals_file,
+                   "input query intervals file in BED format")
+    ->option_text("FILE")
+    ->check(CLI::ExistingFile);
   app.add_option("-b,--bin-size", bin_size, "size of genomic bins to query")
     ->option_text("INT")
     ->excludes(intervals_file_opt);
@@ -442,75 +442,66 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
   // informative error reporting.
   app.add_option("-g,--genome", genome_name, "name of the reference genome")
     ->required();
-  app
-    .add_option("-m,--methylomes", methylome_names,
-                "names of methylomes or a file with names")
+  app.add_option("-m,--methylomes", methylome_names,
+                 "names of methylomes or a file with names")
     ->required();
-  const auto hostname_opt = app
-                              .add_option("-s,--hostname", cfg.hostname,
-                                          "server hostname or IP address")
-                              ->option_text("TEXT");
+  const auto hostname_opt =
+    app.add_option("-s,--hostname", cfg.hostname, "server hostname or IP address")
+    ->option_text("TEXT");
   app.add_option("-p,--port", cfg.port, "server port")
     ->option_text("INT")
     ->needs(hostname_opt);
   const auto local_mode_opt =
     app.add_flag("-L,--local", local_mode, "run in local mode")
-      ->option_text(" ")
-      ->excludes(hostname_opt);
-  app
-    .add_option("-d,--methylome-dir", cfg.methylome_dir,
-                "methylome directory to use in local mode")
+    ->option_text(" ")
+    ->excludes(hostname_opt);
+  app.add_option("-d,--methylome-dir", cfg.methylome_dir,
+                 "methylome directory to use in local mode")
     ->option_text("DIR")
     ->needs(local_mode_opt)
     ->check(CLI::ExistingDirectory);
   app.add_option("-x,--index-dir", cfg.index_dir, "genome index directory")
     ->option_text("DIR")
     ->check(CLI::ExistingDirectory);
-
-  app
-    .add_option("-o,--output", outopts.outfile,
-                "output filename (directory must exist)")
+  app.add_option("-o,--output", outopts.outfile,
+                 "output filename (directory must exist)")
     ->option_text("FILE")
     ->required();
   const auto scores_opt =
     app.add_flag("--scores", outfmt_scores, "scores output format")
-      ->option_text(" ");
+    ->option_text(" ");
   const auto classic_opt =
     app.add_flag("--classic", outfmt_classic, "classic output format")
-      ->excludes(scores_opt)
-      ->option_text(" ");
+    ->excludes(scores_opt)
+    ->option_text(" ");
   app.add_flag("--counts", outfmt_counts, "counts output format (default)")
     ->excludes(scores_opt)
     ->excludes(classic_opt)
     ->option_text(" ");
   app.add_flag("--covered", count_covered,
                "count covered sites for each reported level");
-  app
-    .add_flag("--bed", outfmt_bed,
-              "no header and first three output columns are BED")
+  app .add_flag("--bed", outfmt_bed,
+                "no header and first three output columns are BED")
     ->option_text(" ");
-  app
-    .add_flag("--dataframe", outfmt_dataframe,
-              "output has row and column names")
+  app.add_flag("--dataframe", outfmt_dataframe,
+               "output has row and column names")
     ->option_text(" ");
   app.add_flag("--cpgs", outopts.write_n_cpgs,
                "report the number of CpGs in each query interval");
   app.add_flag("--empty", outopts.write_empty_lines,
                "output intervals that have no CpG sites");
-  app
-    .add_option("-r,--reads", outopts.min_reads,
-                "minimum reads below which a score is set to NA")
+  app.add_option("-r,--reads", outopts.min_reads,
+                 "minimum reads below which a score is set to NA")
     ->needs(scores_opt)
     ->option_text("INT");
-
-  const auto verbose_opt = app
-                             .add_flag("-v,--verbose", verbose,
-                                       "report debug information while running")
-                             ->option_text(" ");
+  const auto verbose_opt =
+    app.add_flag("-v,--verbose", verbose,
+                 "report debug information while running")
+    ->option_text(" ");
   app.add_flag("-q,--quiet", quiet, "only report errors while running")
     ->excludes(verbose_opt)
     ->option_text(" ");
-
+  // clang-format on
   if (argc < 2) {
     std::println("{}", app.help());
     return EXIT_SUCCESS;
