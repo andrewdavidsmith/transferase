@@ -45,8 +45,7 @@ auto
 request_handler::handle_request(const request &req,
                                 response_header &resp_hdr) -> void {
   auto &lgr = logger::instance();
-  resp_hdr.rows = 0;
-  resp_hdr.cols = 0;
+  resp_hdr = {};  // clear the response header
 
   // verify that the request type makes sense
   if (!req.is_valid_type()) {
@@ -101,10 +100,12 @@ request_handler::handle_request(const request &req,
     return;
   }
 
+  // ensure we assign the appropriate number of rows and columns
   resp_hdr.rows = req.is_intervals_request()
                     ? req.n_intervals()
                     : index->get_n_bins(req.bin_size());
   resp_hdr.cols = req.n_methylomes();
+  // at this point we don't know n_bytes yet if we have a bins request
   resp_hdr.status = server_error_code::ok;
 }
 
@@ -135,6 +136,8 @@ request_handler::intervals_get_levels<level_element_t>(
     lgr.debug("Computing levels for methylome: {} (intervals)", methylome_name);
     meth->get_levels<level_element_t>(query, col_itr);
   }
+  // we know n_bytes here (for intervals, we knew it earlier)
+  resp_hdr.n_bytes = sizeof(level_element_t) * resp_hdr.rows * resp_hdr.cols;
 }
 
 template <>
@@ -166,6 +169,8 @@ request_handler::intervals_get_levels<level_element_covered_t>(
               methylome_name);
     meth->get_levels<level_element_covered_t>(query, col_itr);
   }
+  // we know n_bytes here (for intervals, we knew it earlier)
+  resp_hdr.n_bytes = sizeof(level_element_t) * resp_hdr.rows * resp_hdr.cols;
 }
 
 template <>
@@ -207,6 +212,7 @@ request_handler::bins_get_levels<level_element_t>(
     lgr.debug("Computing levels for methylome: {} (bins)", methylome_name);
     meth->get_levels<level_element_t>(req.bin_size(), *index, col_itr);
   }
+  resp_hdr.n_bytes = sizeof(level_element_t) * resp_hdr.rows * resp_hdr.cols;
 }
 
 template <>
@@ -249,6 +255,7 @@ request_handler::bins_get_levels<level_element_covered_t>(
               methylome_name);
     meth->get_levels<level_element_covered_t>(req.bin_size(), *index, col_itr);
   }
+  resp_hdr.n_bytes = sizeof(level_element_t) * resp_hdr.rows * resp_hdr.cols;
 }
 
 }  // namespace transferase
