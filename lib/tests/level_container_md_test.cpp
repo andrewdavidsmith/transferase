@@ -466,7 +466,7 @@ TEST_F(level_container_mock, write_with_bins_writer_test) {
     false,  // for write_n_cpgs
     bin_size,
     true,  // write_empty
-    empty_n_cpgs,
+    n_cpgs,
   };
   // clang-format on
 
@@ -486,7 +486,7 @@ TEST_F(level_container_mock, write_with_bins_writer_test) {
     false,  // for write_n_cpgs
     bin_size,
     true,  // write_empty
-    empty_n_cpgs,
+    n_cpgs,
   };
   // clang-format on
   write_vec_err = writer_dataframe_scores_for_vec.write_dfscores(vec);
