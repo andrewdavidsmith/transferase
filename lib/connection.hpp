@@ -83,12 +83,6 @@ struct connection : public std::enable_shared_from_this<connection> {
   }
 
   [[nodiscard]] auto
-  get_response_size() const -> std::uint32_t {
-    return req.is_covered_request() ? resp_cov.get_n_bytes()
-                                    : resp.get_n_bytes();
-  }
-
-  [[nodiscard]] auto
   is_stopped() const -> bool {
     return !socket.is_open();
   }
