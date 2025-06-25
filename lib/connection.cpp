@@ -91,6 +91,24 @@ connection::compute_bins() -> void {
 }
 
 auto
+connection::compute_windows() -> void {
+  if (req.is_covered_request())
+    handler.windows_get_levels(req, resp_hdr, resp_cov);
+  else
+    handler.windows_get_levels(req, resp_hdr, resp);
+
+  if (resp_hdr.status) {
+    lgr.warning("{} Error computing levels: {}", conn_id,
+                resp_hdr.status.message());
+    respond_with_error();
+    return;
+  }
+
+  lgr.debug("{} Finished computing levels in windows", conn_id);
+  respond_with_header();
+}
+
+auto
 connection::read_request() -> void {
   set_deadline(comm_timeout_sec);
   auto self = shared_from_this();
@@ -120,8 +138,10 @@ connection::read_request() -> void {
 
       if (req.is_intervals_request())
         read_query();
-      else  // only alternative is bins request
+      else if (req.is_bins_request())
         compute_bins();
+      else  // if (req.is_windows_request())
+        compute_windows();
     });
 }
 
