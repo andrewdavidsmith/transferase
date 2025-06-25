@@ -564,7 +564,7 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
   app.add_flag("-q,--quiet", quiet, "only report errors while running")
     ->excludes(verbose_opt)
     ->option_text(" ");
-  // clang-format off
+  // clang-format on
 
   if (argc < 2) {
     std::println("{}", app.help());
@@ -575,7 +575,7 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
   // if windows are requested, but not step size given, set it to half the
   // window size
   if (window_size > 0 && window_step == 0)
-    window_step = window_step/2;
+    window_step = window_size / 2;
 
   // set the log level based on user options
   cfg.log_level = [&] {
