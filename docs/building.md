@@ -18,21 +18,9 @@ package.
 
 #### Dependencies
 
-We need the following packages. I will some of them along with the package
-names.  I will also indicate the versions I got while writing this, and the
-minimum versions that are required, if relevant.
-
-- git and ca-certificates (for using git and https)
-- g++: g++-14 (14.2.0/14.2.0)
-- cmake: cmake (3.28.3/3.28)
-- gnu make: make
-- ncurses: libncurses5-dev (for the 'select' command)
-- SSL: libssl-dev (for downloading config files)
-- ZLib: zlib1g-dev (seem needed sometimes)
-
-This next command will install all the packages listed above, and the
-`DEBIAN_FRONTEND=noninteractive` is to prevent from being asked your timezone
-in the process:
+This next command will install all the required packages, most of which you
+probably already have. The `DEBIAN_FRONTEND=noninteractive` is to prevent from
+being asked your timezone in the process:
 
 ```console
 apt-get update && \
@@ -45,11 +33,9 @@ apt-get install -y --no-install-recommends \
     make \
     libncurses5-dev \
     libssl-dev \
-    zlib1g-dev
+    zlib1g-dev \
+    libdeflate-dev
 ```
-
-It might take a few minutes and they install quickly, but one of them might
-ask for your timezone.
 
 #### Building
 
@@ -241,17 +227,7 @@ transferase.
 
 ### Command line app
 
-We need mostly the same packages as for Ubuntu. I will list them again here,
-along with some version information for the dnf packages I found.
-
-- git: git
-- g++: g++ (14.2.1/14.2.0)
-- cmake: cmake (3.30.8/3.28)
-- ncurses: ncurses-devel (for the 'select' command)
-- ZLib: zlib-devel
-- OpenSSL: openssl-devel
-
-The above can be installed as follows:
+The dependencies can be installed through the dnf packages as follows:
 
 ```console
 dnf update -y && \
@@ -260,6 +236,7 @@ dnf install -y \
     g++ \
     cmake \
     zlib-devel \
+    libdeflate-devel \
     ncurses-devel \
     openssl-devel
 ```
@@ -526,6 +503,7 @@ apt-get install -y --no-install-recommends \
     g++ \
     cmake \
     make \
+    libdeflate-dev \
     libssl-dev \
     libxml2-dev \
     r-base-dev \
@@ -567,6 +545,7 @@ apt-get install -y --no-install-recommends \
     libncurses5-dev \
     libssl-dev \
     zlib1g-dev \
+    libdeflate-dev \
     libgtest-dev
 ```
 
@@ -705,7 +684,8 @@ once. Otherwise please go line-by-line.
       make \
       libncurses5-dev \
       libssl-dev \
-      zlib1g-dev
+      zlib1g-dev \
+      libdeflate-dev
   # Download transferase
   git clone https://github.com/andrewdavidsmith/transferase && \
   cd transferase
@@ -732,6 +712,7 @@ once. Otherwise please go line-by-line.
       cmake \
       make \
       libssl-dev \
+      libdeflate-dev \
       python3.13-dev \
       python3.13-venv
   # Install Python dependencies

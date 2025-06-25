@@ -23,6 +23,7 @@
 
 #include "response.hpp"
 
+#include "config.h"
 #include "server_error_code.hpp"
 
 #include <algorithm>
@@ -39,8 +40,8 @@ namespace transferase {
 compose(char *first, const char *last,
         const response_header &hdr) noexcept -> std::error_code {
   // ADS: use to_chars here
-  const auto s = std::format("{}\t{}\t{}\t{}\n", hdr.status.value(), hdr.cols,
-                             hdr.rows, hdr.n_bytes);
+  const auto s = std::format("{}\t{}\t{}\t{}\t{}\n", hdr.status.value(),
+                             VERSION, hdr.cols, hdr.rows, hdr.n_bytes);
   assert(std::ranges::ssize(s) <
          std::distance(const_cast<const char *>(first), last));
   const auto data_end = std::ranges::copy(s, first);  // in_out_result
@@ -68,6 +69,14 @@ parse(const char *first, const char *last,
   hdr.status = static_cast<server_error_code>(tmp);
   if (*cursor != delim)
     return server_error_code::server_failure;
+  ++cursor;
+
+  // version
+  const auto ver_end = std::find(cursor, last, delim);
+  if (*ver_end != delim)
+    return server_error_code::server_failure;
+  hdr.xfr_version = std::string{cursor, ver_end};
+  cursor = ver_end;
   ++cursor;
 
   // response cols
@@ -121,9 +130,9 @@ parse(const response_header_buffer &buf,
 [[nodiscard]] auto
 response_header::summary() const noexcept -> std::string {
   static constexpr auto fmt =
-    R"({{"{}": "{}", "cols": {}, "rows": {}, "n_bytes": {}}})";
-  return std::format(fmt, status.category().name(), status.message(), cols,
-                     rows, n_bytes);
+    R"({{"{}": "{}", "VERSION": "{}", "cols": {}, "rows": {}, "n_bytes": {}}})";
+  return std::format(fmt, status.category().name(), status.message(),
+                     xfr_version, cols, rows, n_bytes);
 }
 
 }  // namespace transferase
