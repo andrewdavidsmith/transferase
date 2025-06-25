@@ -27,6 +27,7 @@
 #include "format_error_code.hpp"  // IWYU pragma: keep
 #include "nlohmann/json.hpp"      // IWYU pragma: keep
 
+#include <algorithm>  // for std::min
 #include <array>
 #include <cassert>
 #include <chrono>
