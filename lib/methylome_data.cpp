@@ -434,7 +434,7 @@ get_levels_impl(
   const std::uint32_t window_step,
   const genome_index &index,
   const methylome_data::vec &cpgs,
-  typename transferase::level_container<lvl_elem_t>::iterator res_itr
+  typename transferase::level_container<lvl_elem_t>::iterator &res_itr
   // clang-format on
   ) noexcept -> void {
   const auto zipped = std::views::zip(
@@ -473,9 +473,8 @@ auto
 methylome_data::get_levels<level_element_t>(
   const std::uint32_t window_size, const std::uint32_t window_step,
   const genome_index &index,
-  level_container<level_element_t>::iterator res_itr) const noexcept -> void {
-  get_levels_impl<level_element_t>(window_size, window_step, index, cpgs,
-                                   res_itr);
+  level_container<level_element_t>::iterator &res) const noexcept -> void {
+  get_levels_impl<level_element_t>(window_size, window_step, index, cpgs, res);
 }
 
 template <>
@@ -493,10 +492,10 @@ auto
 methylome_data::get_levels<level_element_covered_t>(
   const std::uint32_t window_size, const std::uint32_t window_step,
   const genome_index &index,
-  level_container<level_element_covered_t>::iterator res_itr) const noexcept
+  level_container<level_element_covered_t>::iterator &res) const noexcept
   -> void {
   get_levels_impl<level_element_covered_t>(window_size, window_step, index,
-                                           cpgs, res_itr);
+                                           cpgs, res);
 }
 
 // global code
