@@ -45,9 +45,14 @@ struct request {
   static constexpr auto max_methylomes_per_request = 50;
   static constexpr auto max_intervals_default = 2'000'000;
   static constexpr auto min_bin_size_default = 100;
+  static constexpr auto min_window_size_default = 100;
+  static constexpr auto min_window_step_default = 50;
 
   static std::uint32_t max_intervals;
   static std::uint32_t min_bin_size;
+  static std::uint32_t min_window_size;
+  static std::uint32_t min_window_step;
+
   request_type_code request_type{};
   std::uint64_t index_hash{};
   std::uint64_t aux_value{};
@@ -92,8 +97,15 @@ struct request {
 
   [[nodiscard]] auto
   is_valid_aux_value() const -> bool {
-    return is_intervals_request() ? aux_value < max_intervals
-                                  : aux_value >= min_bin_size;
+    if (is_intervals_request())
+      return aux_value < max_intervals;
+    if (is_bins_request())
+      return aux_value >= min_bin_size;
+    if (is_windows_request()) {
+      return window_size() >= min_window_size &&
+             window_step() >= min_window_step;
+    }
+    return false;  // std::unreachable{}?
   }
 
   [[nodiscard]] auto
