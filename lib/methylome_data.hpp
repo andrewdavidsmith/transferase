@@ -170,8 +170,7 @@ struct methylome_data {
   auto
   get_levels(const std::uint32_t window_size, const std::uint32_t window_step,
              const genome_index &index,
-             level_container<lvl_elem_t>::iterator d_first) const noexcept
-    -> void;
+             level_container<lvl_elem_t>::iterator &res) const noexcept -> void;
 
   [[nodiscard]] static auto
   compose_filename(auto wo_extension) {
