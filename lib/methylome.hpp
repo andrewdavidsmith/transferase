@@ -282,8 +282,8 @@ struct methylome {
   auto
   get_levels(const std::uint32_t window_size, const std::uint32_t window_step,
              const genome_index &index,
-             level_container<lvl_elem_t>::iterator d_first) const -> void {
-    data.get_levels<lvl_elem_t>(window_size, window_step, index, d_first);
+             level_container<lvl_elem_t>::iterator &res) const -> void {
+    data.get_levels<lvl_elem_t>(window_size, window_step, index, res);
   }
 
   /// @brief Returns true iff the methylome files exist for the given name.
