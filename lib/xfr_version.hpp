@@ -62,12 +62,12 @@ parse_version(It ver_beg, It ver_end, std::uint8_t &major, std::uint8_t &minor,
   using CharT = typename std::iterator_traits<It>::value_type;
   static_assert(std::is_same_v<CharT, char>, "Only char iterators supported");
 
-  const auto skip = [&](const char c) {
+  const auto skip_symbol = [&](const char c) {
     if (ver_beg != ver_end && *ver_beg == c)
       ++ver_beg;
   };
 
-  auto parse_uint = [&](auto &out) -> bool {
+  const auto parse_uint = [&](auto &out) -> bool {
     const char *first = &*ver_beg;
     const char *last = &*ver_end;
     const auto result = std::from_chars(first, last, out);
@@ -77,15 +77,15 @@ parse_version(It ver_beg, It ver_end, std::uint8_t &major, std::uint8_t &minor,
     return true;
   };
 
-  skip('v');  // optional leading 'v'
+  skip_symbol('v');  // optional leading 'v'
 
   std::uint32_t temp_major = 0, temp_minor = 0, temp_patch = 0;
   if (!parse_uint(temp_major))
     return false;
-  skip('.');
+  skip_symbol('.');
   if (!parse_uint(temp_minor))
     return false;
-  skip('.');
+  skip_symbol('.');
   if (!parse_uint(temp_patch))
     return false;
 
