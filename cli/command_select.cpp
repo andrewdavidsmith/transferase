@@ -1006,7 +1006,7 @@ multi_add(const int multi_mode) -> bool {
   return multi_mode == 1;
 }
 
-[[nodiscard]] static inline auto
+static inline auto
 toggle_multi_add(int &multi_mode, const std::vector<meth_meta> &filtered,
                  const std::int32_t cursor_pos,
                  std::unordered_set<std::string> &selected_keys) {
@@ -1020,7 +1020,7 @@ multi_remove(const int multi_mode) -> bool {
   return multi_mode == 2;
 }
 
-[[nodiscard]] static inline auto
+static inline auto
 toggle_multi_remove(int &multi_mode, const std::vector<meth_meta> &filtered,
                     const std::int32_t cursor_pos,
                     std::unordered_set<std::string> &selected_keys) {
