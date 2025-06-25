@@ -61,7 +61,7 @@ public:
                       : get_levels_remote_impl<lvl_elem_t>(req, query, ec);
   }
 
-  // bins: takes an index
+  // bins or windows: takes an index (bin/window sizes in request)
   template <typename lvl_elem_t>
   [[nodiscard]] auto
   get_levels(const request &req, const genome_index &index, std::error_code &ec)
@@ -138,13 +138,12 @@ private:
     const auto window_step = req.window_step();
     level_container<lvl_elem_t> results(index.get_n_windows(window_step),
                                         req.n_methylomes());
-    std::uint32_t col_id = 0;
+    auto col_itr = std::begin(results);
     for (const auto &methylome_name : req.methylome_names) {
       const auto meth = methylome::read(directory, methylome_name, ec);
       if (ec)
         return {};
-      meth.get_levels<lvl_elem_t>(window_size, window_step, index,
-                                  results.column_itr(col_id++));
+      meth.get_levels<lvl_elem_t>(window_size, window_step, index, col_itr);
     }
     return results;
   }
