@@ -39,8 +39,8 @@ namespace transferase {
 compose(char *first, const char *last,
         const response_header &hdr) noexcept -> std::error_code {
   // ADS: use to_chars here
-  const auto s =
-    std::format("{}\t{}\t{}\n", hdr.status.value(), hdr.cols, hdr.rows);
+  const auto s = std::format("{}\t{}\t{}\t{}\n", hdr.status.value(), hdr.cols,
+                             hdr.rows, hdr.n_bytes);
   assert(std::ranges::ssize(s) <
          std::distance(const_cast<const char *>(first), last));
   const auto data_end = std::ranges::copy(s, first);  // in_out_result
@@ -88,6 +88,15 @@ parse(const char *first, const char *last,
       return server_error_code::server_failure;
     cursor = ptr;
   }
+  ++cursor;
+
+  // response n_bytes
+  {
+    const auto [ptr, ec] = std::from_chars(cursor, last, hdr.n_bytes);
+    if (ec != std::errc{})
+      return server_error_code::server_failure;
+    cursor = ptr;
+  }
 
   // terminator
   if (*cursor != term)
@@ -111,9 +120,10 @@ parse(const response_header_buffer &buf,
 
 [[nodiscard]] auto
 response_header::summary() const noexcept -> std::string {
-  static constexpr auto fmt = R"({{"{}": "{}", "cols": {}, "rows": {}}})";
+  static constexpr auto fmt =
+    R"({{"{}": "{}", "cols": {}, "rows": {}, "n_bytes": {}}})";
   return std::format(fmt, status.category().name(), status.message(), cols,
-                     rows);
+                     rows, n_bytes);
 }
 
 }  // namespace transferase

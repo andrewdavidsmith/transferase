@@ -26,6 +26,7 @@
 #include "genome_index.hpp"
 #include "level_container.hpp"
 #include "level_element.hpp"
+#include "libdeflate_adapter.hpp"
 #include "logger.hpp"
 #include "methylome.hpp"
 #include "methylome_set.hpp"
@@ -34,6 +35,8 @@
 #include "response.hpp"
 #include "server_error_code.hpp"
 
+#include <cstring>
+#include <iterator>
 #include <memory>  // for std::shared_ptr
 #include <string>
 #include <system_error>
@@ -45,8 +48,7 @@ auto
 request_handler::handle_request(const request &req,
                                 response_header &resp_hdr) -> void {
   auto &lgr = logger::instance();
-  resp_hdr.rows = 0;
-  resp_hdr.cols = 0;
+  resp_hdr = {};  // clear the response header
 
   // verify that the request type makes sense
   if (!req.is_valid_type()) {
@@ -102,11 +104,14 @@ request_handler::handle_request(const request &req,
   }
 
   // TODO: this needs to be checked
+  // ensure we assign the appropriate number of rows and columns
   resp_hdr.rows = req.is_intervals_request() ? req.n_intervals()
                   : req.is_bins_request()
                     ? index->get_n_bins(req.bin_size())
                     : index->get_n_bins(req.window_size());
+
   resp_hdr.cols = req.n_methylomes();
+  // at this point we don't know n_bytes yet if we have a bins request
   resp_hdr.status = server_error_code::ok;
 }
 
@@ -118,7 +123,7 @@ request_handler::intervals_get_levels<level_element_t>(
   auto &lgr = logger::instance();
   std::error_code ec;
   resp_data.resize(resp_hdr.rows, resp_hdr.cols);
-  std::uint32_t col_id = 0;
+  auto col_itr = std::begin(resp_data);
   std::uint64_t index_hash = 0;  // check all methylomes use same genome
   for (const auto &methylome_name : req.methylome_names) {
     const auto meth = methylomes.get_methylome(methylome_name, ec);
@@ -135,8 +140,10 @@ request_handler::intervals_get_levels<level_element_t>(
       return;
     }
     lgr.debug("Computing levels for methylome: {} (intervals)", methylome_name);
-    meth->get_levels<level_element_t>(query, resp_data.column_itr(col_id++));
+    meth->get_levels<level_element_t>(query, col_itr);
   }
+  // we know n_bytes here (for intervals, we knew it earlier)
+  resp_hdr.n_bytes = sizeof(level_element_t) * resp_hdr.rows * resp_hdr.cols;
 }
 
 template <>
@@ -148,8 +155,8 @@ request_handler::intervals_get_levels<level_element_covered_t>(
   std::error_code ec;
 
   resp_data.resize(resp_hdr.rows, resp_hdr.cols);
-  std::uint32_t col_id = 0;
   std::uint64_t index_hash = 0;  // check all methylomes use same genome
+  auto col_itr = std::begin(resp_data);
   for (const auto &methylome_name : req.methylome_names) {
     const auto meth = methylomes.get_methylome(methylome_name, ec);
     if (ec) {
@@ -166,9 +173,10 @@ request_handler::intervals_get_levels<level_element_covered_t>(
     }
     lgr.debug("Computing levels for methylome: {} (intervals, covered)",
               methylome_name);
-    meth->get_levels<level_element_covered_t>(query,
-                                              resp_data.column_itr(col_id++));
+    meth->get_levels<level_element_covered_t>(query, col_itr);
   }
+  // we know n_bytes here (for intervals, we knew it earlier)
+  resp_hdr.n_bytes = sizeof(level_element_t) * resp_hdr.rows * resp_hdr.cols;
 }
 
 template <>
@@ -182,7 +190,7 @@ request_handler::bins_get_levels<level_element_t>(
   std::string genome_name;
 
   resp_data.resize(resp_hdr.rows, resp_hdr.cols);
-  [[maybe_unused]] std::uint32_t col_id = 0;
+  auto col_itr = std::begin(resp_data);
   for (const auto &methylome_name : req.methylome_names) {
     const auto meth = methylomes.get_methylome(methylome_name, ec);
     if (ec) {
@@ -208,8 +216,18 @@ request_handler::bins_get_levels<level_element_t>(
       return;
     }
     lgr.debug("Computing levels for methylome: {} (bins)", methylome_name);
-    meth->get_levels<level_element_t>(req.bin_size(), *index,
-                                      resp_data.column_itr(col_id++));
+    meth->get_levels<level_element_t>(req.bin_size(), *index, col_itr);
+  }
+  resp_hdr.n_bytes = sizeof(level_element_t) * resp_hdr.rows * resp_hdr.cols;
+  if (compress_bins_levels) {
+    std::vector<std::uint8_t> tmp;
+    const auto compress_err = libdeflate_compress(resp_data.v, tmp);
+    if (compress_err)
+      resp_hdr.status = compress_err;
+    resp_hdr.n_bytes = std::size(tmp);
+    // NOLINTNEXTLINE (*-reinterpret-cast)
+    std::memcpy(reinterpret_cast<std::uint8_t *>(resp_data.v.data()),
+                tmp.data(), std::size(tmp));
   }
 }
 
@@ -224,7 +242,7 @@ request_handler::bins_get_levels<level_element_covered_t>(
   std::string genome_name;
 
   resp_data.resize(resp_hdr.rows, resp_hdr.cols);
-  std::uint32_t col_id = 0;
+  auto col_itr = std::begin(resp_data);
   for (const auto &methylome_name : req.methylome_names) {
     const auto meth = methylomes.get_methylome(methylome_name, ec);
     if (ec) {
@@ -251,8 +269,18 @@ request_handler::bins_get_levels<level_element_covered_t>(
     }
     lgr.debug("Computing levels for methylome: {} (bins, covered)",
               methylome_name);
-    meth->get_levels<level_element_covered_t>(req.bin_size(), *index,
-                                              resp_data.column_itr(col_id++));
+    meth->get_levels<level_element_covered_t>(req.bin_size(), *index, col_itr);
+  }
+  resp_hdr.n_bytes = sizeof(level_element_t) * resp_hdr.rows * resp_hdr.cols;
+  if (compress_bins_levels) {
+    std::vector<std::uint8_t> tmp;
+    const auto compress_err = libdeflate_compress(resp_data.v, tmp);
+    if (compress_err)
+      resp_hdr.status = compress_err;
+    resp_hdr.n_bytes = std::size(tmp);
+    // NOLINTNEXTLINE (*-reinterpret-cast)
+    std::memcpy(reinterpret_cast<std::uint8_t *>(resp_data.v.data()),
+                tmp.data(), std::size(tmp));
   }
 }
 
