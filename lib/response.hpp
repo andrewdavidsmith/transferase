@@ -43,10 +43,11 @@ typedef std::array<char, resp_hdr_sz> response_header_buffer;
 
 struct response_header {
   std::error_code status{};
-  std::uint32_t xfr_version{};
+  std::string xfr_version{};
   std::uint32_t cols{};
   std::uint32_t rows{};
   std::uint32_t n_bytes{};
+
   [[nodiscard]] auto
   error() const noexcept -> bool {
     return (status) ? true : false;
@@ -54,6 +55,11 @@ struct response_header {
   [[nodiscard]] auto
   summary() const noexcept -> std::string;
 };
+
+[[nodiscard]] inline auto
+only_status(const std::error_code &status_arg) -> response_header {
+  return response_header{status_arg, {}, 0, 0, 0};
+}
 
 [[nodiscard]] auto
 compose(char *first, const char *last,
