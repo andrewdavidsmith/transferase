@@ -64,6 +64,7 @@ struct connection : public std::enable_shared_from_this<connection> {
   auto read_query() -> void;    // read payload of intervals query
   auto compute_intervals() -> void;
   auto compute_bins() -> void;
+  auto compute_windows() -> void;
   auto stop() -> void;                 // shutdown and close
   auto respond_with_header() -> void;  // send success header
   auto respond_with_error() -> void;   // send failure header
