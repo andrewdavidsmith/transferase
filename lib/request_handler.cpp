@@ -104,10 +104,12 @@ request_handler::handle_request(const request &req, response_header &resp_hdr)
   }
 
   // TODO: this needs to be checked
+  // ensure we assign the appropriate number of rows and columns
   resp_hdr.rows = req.is_intervals_request() ? req.n_intervals()
                   : req.is_bins_request()
                     ? index->get_n_bins(req.bin_size())
                     : index->get_n_bins(req.window_size());
+
   resp_hdr.cols = req.n_methylomes();
   // at this point we don't know n_bytes yet if we have a bins request
   resp_hdr.status = server_error_code::ok;

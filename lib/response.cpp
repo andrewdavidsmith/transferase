@@ -37,8 +37,8 @@
 namespace transferase {
 
 [[nodiscard]] auto
-compose(char *first, const char *last,
-        const response_header &hdr) noexcept -> std::error_code {
+compose(char *first, const char *last, const response_header &hdr) noexcept
+  -> std::error_code {
   // ADS: use to_chars here
   const auto s = std::format("{}\t{}\t{}\t{}\t{}\n", hdr.status.value(),
                              VERSION, hdr.cols, hdr.rows, hdr.n_bytes);
@@ -51,8 +51,8 @@ compose(char *first, const char *last,
 }
 
 [[nodiscard]] auto
-parse(const char *first, const char *last,
-      response_header &hdr) noexcept -> std::error_code {
+parse(const char *first, const char *last, response_header &hdr) noexcept
+  -> std::error_code {
   static constexpr auto delim = '\t';
   static constexpr auto term = '\n';
 
@@ -116,14 +116,14 @@ parse(const char *first, const char *last,
 }
 
 [[nodiscard]] auto
-compose(response_header_buffer &buf,
-        const response_header &hdr) noexcept -> std::error_code {
+compose(response_header_buffer &buf, const response_header &hdr) noexcept
+  -> std::error_code {
   return compose(buf.data(), buf.data() + resp_hdr_sz, hdr);
 }
 
 [[nodiscard]] auto
-parse(const response_header_buffer &buf,
-      response_header &hdr) noexcept -> std::error_code {
+parse(const response_header_buffer &buf, response_header &hdr) noexcept
+  -> std::error_code {
   return parse(buf.data(), buf.data() + resp_hdr_sz, hdr);
 }
 
