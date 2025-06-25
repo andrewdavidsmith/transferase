@@ -75,7 +75,7 @@ parse(const char *first, const char *last,
   const auto ver_end = std::find(cursor, last, delim);
   if (*ver_end != delim)
     return server_error_code::server_failure;
-  std::string version(cursor, ver_end);
+  hdr.xfr_version = std::string{cursor, ver_end};
   cursor = ver_end;
   ++cursor;
 
@@ -131,8 +131,8 @@ parse(const response_header_buffer &buf,
 response_header::summary() const noexcept -> std::string {
   static constexpr auto fmt =
     R"({{"{}": "{}", "VERSION": "{}", "cols": {}, "rows": {}, "n_bytes": {}}})";
-  return std::format(fmt, status.category().name(), status.message(), VERSION,
-                     cols, rows, n_bytes);
+  return std::format(fmt, status.category().name(), status.message(),
+                     xfr_version, cols, rows, n_bytes);
 }
 
 }  // namespace transferase
