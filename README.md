@@ -37,8 +37,8 @@ data. With a good network connection, queries to a remote transferase server
 can be faster than similar analysis of locally stored files.
 
 A public transferase server currently provides access to MethBase2, a
-methylome database with roughly 13,800 vertebrate methylomes (as of
-2025-05-27) that are whole-genome, sequencing-based and *high-quality*. Most
+methylome database with roughly 14,000 vertebrate methylomes (as of
+2025-06-25) that are whole-genome, sequencing-based and *high-quality*. Most
 of these are split between human and mouse. The transferase clients include
 tools to help identify which among those methylomes might be useful to inform
 specific biological questions.
@@ -56,58 +56,61 @@ specific biological questions.
 
 ## What's new
 
-* The options for query output formats and customization have been
-  significantly improved in v0.6.2.
+* **Important:** As of the release of v0.6.3, the server will not communicate
+  with previous versions.
 
-* The `select` command now allows users to make methylome groups as they
-  select them methylomes they want to query.
+* Sliding window queries have been introduced in v0.6.3.
 
-* The `select` command in the transferase command line app now includes more
-  details about available methylomes (hit 'd' to turn on details).
+* Remote query speed has been improved, and for "bins" or "windows" queries
+  this is by more than 3x.
 
 * The transferase Python package, pyxfr, can now be installed using
-  [pip](https://pypi.org/project/pyxfr/0.6.2) with Python >= 3.12 on Linux
+  [pip](https://pypi.org/project/pyxfr/0.6.3) with Python >= 3.12 on Linux
   and macOS:
   ```console
   pip install pyxfr
   ```
 
-* The Python and R packages each include a function that loads a data frame
-  with extra information about the methylomes available through the public
-  transferase server.
-
 ## Current status
 
-- Public server: It's open and currently serving a lot of high-quality
-  methylomes. Right now (2025-05-10) the only restriction on use is that
+- Public server: It's open and currently serving over 14,000 high-quality
+  methylomes. Right now (2025-06-25) the only restriction on use is that
   individual queries are limited to roughly 45 methylomes, and roughly 1M
-  query intervals. If you need more, just do multiple queries.
+  query intervals or bin/window size of 200bp. If you need more, do multiple
+  queries.
 
-- Linux: The binary installation for Linux should work on any Linux machine
-  going back 15 years.
+- Linux: The binary installation for Linux should work on any Linux machine.
 
-- macOS: The binary installation for macOS should work on any Mac hardware
-  that is running at least Ventura (macos-13; October 2022).
+- macOS: The binary installation for macOS should work on any Mac running at
+  least Ventura (macos-13; October 2022).
 
 - Python: The python package, pyxfr, can be installed with `pip install pyxfr`
   and requires Python >= 3.12 but otherwise should work on any Linux and
   macOS-13 or later.
 
-- R: The R package, Rxfr, can be installed on Linux and macOS, but it needs R
-  version >= 4.4 and is not yet easy to install. Popular Linux distributions,
-  and macOS 15, now include the right compilers. When the maintainers of R
-  update some of their configurations, installing Rxfr will become simpler.
+- R: Rxfr can be installed on Linux and macOS (R >= 4.4). Paste exactly this
+  into your terminal:
+  ```console
+  (CXX23=$(R CMD config CXX23) && [ -n "$CXX23" ] && $CXX23 --version)
+  ```
+  If you get output and it says version 14.2 or greater, you can install Rxfr
+  with devtools within R:
+  ```console
+  devtools::install_url('https://github.com/andrewdavidsmith/transferase/releases/download/v0.6.3/Rxfr_0.6.3.tar.gz')
+  ```
+  Alternatives for both Linux and macOS are covered in
+  [docs/installing_Rxfr.md](docs/installing_Rxfr.md).
 
 ## Installation
 
 - **Linux**
   The Linux binary releases should work on any Linux system. You
   can find installers
-  [here](https://github.com/andrewdavidsmith/transferase/releases/v0.6.2),
+  [here](https://github.com/andrewdavidsmith/transferase/releases/v0.6.3),
   including packages deb and rpm-based systems. The easiest is the [shell
-  installer](https://github.com/andrewdavidsmith/transferase/releases/download/v0.6.2/transferase-0.6.2-Linux.sh):
+  installer](https://github.com/andrewdavidsmith/transferase/releases/download/v0.6.3/transferase-0.6.3-Linux.sh):
   ```console
-  sh transferase-0.6.2-Linux.sh --prefix=/desired/install/location
+  sh transferase-0.6.3-Linux.sh --prefix=/desired/install/location
   /desired/install/location/bin/xfr  # check that it worked
   ```
 
@@ -115,15 +118,15 @@ specific biological questions.
   The transferase binary for Mac is a "universal binary" and
   should work on any Mac. It is built to work on Ventura or later, but it has
   worked on a much older system. The easiest is the [shell
-  installer](https://github.com/andrewdavidsmith/transferase/releases/download/v0.6.2/transferase-0.6.2-macOS.sh):
+  installer](https://github.com/andrewdavidsmith/transferase/releases/download/v0.6.3/transferase-0.6.3-macOS.sh):
   ```console
-  sh transferase-0.6.2-macOS.sh --prefix=/desired/install/location
+  sh transferase-0.6.3-macOS.sh --prefix=/desired/install/location
   /desired/install/location/bin/xfr  # check that it worked
   ```
 
 - **Python**
   pyxfr can be installed using
-  [pip](https://pypi.org/project/pyxfr/0.6.2) with Python (>= 3.12) on Linux
+  [pip](https://pypi.org/project/pyxfr/0.6.3) with Python (>= 3.12) on Linux
   and macOS:
   ```console
   pip install pyxfr
@@ -140,14 +143,14 @@ specific biological questions.
 - **Linux packages**
   ```console
   # Red Hat or Fedora (not sure SUSE has dnf)
-  rpm -i transferase-0.6.2-Linux.rpm              # See what will be installed
-  sudo dnf install ./transferase-0.6.2-Linux.rpm  # Install (note the dot-slash)
+  rpm -i transferase-0.6.3-Linux.rpm              # See what will be installed
+  sudo dnf install ./transferase-0.6.3-Linux.rpm  # Install (note the dot-slash)
   dnf info transferase                            # See what was installed
   sudo dnf remove transferase                     # Uninstall
 
   # Ubuntu or Debian
-  dpkg --info transferase-0.6.2-Linux.deb         # See what will be installed
-  sudo apt install ./transferase-0.6.2-Linux.deb  # Install (note the dot-slash)
+  dpkg --info transferase-0.6.3-Linux.deb         # See what will be installed
+  sudo apt install ./transferase-0.6.3-Linux.deb  # Install (note the dot-slash)
   apt info transferase                            # See what was installed
   sudo apt remove transferase                     # Uninstall
   ```
