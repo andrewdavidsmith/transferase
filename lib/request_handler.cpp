@@ -61,9 +61,7 @@ request_handler::handle_request(const request &req, response_header &resp_hdr)
   if (!req.is_valid_aux_value()) {
     lgr.warning("Aux value {} invalid for request type {}", req.aux_value,
                 req.request_type);
-    resp_hdr.status = req.is_intervals_request()
-                        ? server_error_code::too_many_intervals
-                        : server_error_code::bin_size_too_small;
+    resp_hdr.status = req.get_invalid_aux_error_code();
     return;
   }
 
