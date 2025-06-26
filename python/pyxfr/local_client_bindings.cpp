@@ -172,6 +172,30 @@ local_client_bindings(nb::class_<transferase::local_client> &cls) -> void {
     )doc",
     "methylomes"_a, "bin_size"_a);
 
+  cls.def("get_levels",
+          nb::overload_cast<const std::vector<std::string> &,
+                            const std::uint32_t, const std::uint32_t>(
+            &local_client::get_levels<xfr::level_element_t>, nb::const_),
+          R"doc(
+    Query a local directory for methylation levels in each sliding window of
+    the given size and with the given step for each slide, in each specified
+    methylome.
+
+    Parameters
+    ----------
+
+    methylomes (list[str]): A list of methylome names. These must be the names
+        of methylomes that exist in the methylome directory for this
+        MClientLocal.
+
+    window_size (int): A value specifying the size of sliding windows to
+        request levels for.
+
+    window_step (int): A value specifying how much to slide windows. This
+        value should be less than the window size.
+    )doc",
+          "methylomes"_a, "window_size"_a, "window_step"_a);
+
   cls.def(
     "get_levels_covered",
     nb::overload_cast<const std::vector<std::string> &,
@@ -242,6 +266,32 @@ local_client_bindings(nb::class_<transferase::local_client> &cls) -> void {
         200 to prevent server overload.
     )doc",
     "methylomes"_a, "bin_size"_a);
+
+  cls.def(
+    "get_levels_covered",
+    nb::overload_cast<const std::vector<std::string> &, const std::uint32_t,
+                      const std::uint32_t>(
+      &local_client::get_levels<xfr::level_element_covered_t>, nb::const_),
+    R"doc(
+    Query a local directory for methylation levels in each sliding window of
+    the given size and with the given step for each slide, in each specified
+    methylome. Additionally returns information about the number of sites
+    covered by reads in each interval.
+
+    Parameters
+    ----------
+
+    methylomes (list[str]): A list of methylome names. These must be the names
+        of methylomes that exist in the methylome directory for this
+        MClientLocal.
+
+    window_size (int): A value specifying the size of sliding windows to
+        request levels for.
+
+    window_step (int): A value specifying how much to slide windows. This
+        value should be less than the window size.
+    )doc",
+    "methylomes"_a, "window_size"_a, "window_step"_a);
 
   cls.doc() = R"doc(
     A MClientLocal object is an interface for querying methylomes stored in
