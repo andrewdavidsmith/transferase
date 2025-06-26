@@ -107,6 +107,13 @@ query_bins(const Rcpp::XPtr<transferase::remote_client> client,
 
 // [[Rcpp::export]]
 Rcpp::NumericMatrix
+query_windows(const Rcpp::XPtr<transferase::remote_client> client,
+              const std::string &genome,
+              const std::vector<std::string> &methylomes,
+              const std::size_t window_size, const std::size_t window_step);
+
+// [[Rcpp::export]]
+Rcpp::NumericMatrix
 query_preprocessed(const Rcpp::XPtr<transferase::remote_client> client,
                    const std::string &genome,
                    const std::vector<std::string> &methylomes,
@@ -127,6 +134,13 @@ query_bins_cov(const Rcpp::XPtr<transferase::remote_client> client,
                const std::string &genome,
                const std::vector<std::string> &methylomes,
                const std::size_t bin_size);
+
+// [[Rcpp::export]]
+Rcpp::NumericMatrix
+query_windows_cov(const Rcpp::XPtr<transferase::remote_client> client,
+                  const std::string &genome,
+                  const std::vector<std::string> &methylomes,
+                  const std::size_t window_size, const std::size_t window_step);
 
 // [[Rcpp::export]]
 Rcpp::NumericMatrix
