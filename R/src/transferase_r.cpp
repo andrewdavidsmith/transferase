@@ -211,6 +211,17 @@ query_bins(const Rcpp::XPtr<transferase::remote_client> client,
 }
 
 auto
+query_windows(const Rcpp::XPtr<transferase::remote_client> client,
+              const std::string &genome,
+              const std::vector<std::string> &methylomes,
+              const std::size_t window_size,
+              const std::size_t window_step) -> Rcpp::NumericMatrix {
+  const auto levels = client->get_levels<transferase::level_element_t>(
+    genome, methylomes, window_size, window_step);
+  return convert_to_numeric_matrix(levels);
+}
+
+auto
 query_preprocessed(
   const Rcpp::XPtr<transferase::remote_client> client,
   const std::string &genome, const std::vector<std::string> &methylomes,
@@ -252,6 +263,17 @@ query_bins_cov(const Rcpp::XPtr<transferase::remote_client> client,
                const std::size_t bin_size) -> Rcpp::NumericMatrix {
   const auto levels = client->get_levels<transferase::level_element_covered_t>(
     genome, methylomes, bin_size);
+  return convert_to_numeric_matrix(levels);
+}
+
+auto
+query_windows_cov(const Rcpp::XPtr<transferase::remote_client> client,
+                  const std::string &genome,
+                  const std::vector<std::string> &methylomes,
+                  const std::size_t window_size,
+                  const std::size_t window_step) -> Rcpp::NumericMatrix {
+  const auto levels = client->get_levels<transferase::level_element_covered_t>(
+    genome, methylomes, window_size, window_step);
   return convert_to_numeric_matrix(levels);
 }
 
