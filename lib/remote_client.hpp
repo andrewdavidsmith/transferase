@@ -108,7 +108,7 @@ public:
     return result;
   }
 
-  // bins: takes an index
+  // bins: takes a bin size
   template <typename lvl_elem_t>
   [[nodiscard]] auto
   get_levels(
@@ -129,7 +129,31 @@ public:
     return result;
   }
 
+  // windows: takes a window size and step
+  template <typename lvl_elem_t>
+  [[nodiscard]] auto
+  get_levels(
+    const std::string &genome, const std::vector<std::string> &methylome_names,
+    const std::uint32_t window_size,
+    const std::uint32_t window_step) const -> level_container<lvl_elem_t> {
+    request_type_code req_type = request_type_code::windows;
+    if constexpr (std::is_same_v<lvl_elem_t, level_element_covered_t>)
+      req_type = request_type_code::windows_covered;
+    std::error_code error{};
+    const auto index = indexes->get_genome_index(genome, error);
+    if (error)
+      throw std::system_error(error);
+    const auto aux_val = request::get_aux_for_windows(window_size, window_step);
+    const auto req =
+      request{req_type, index->get_hash(), aux_val, methylome_names};
+    auto result = get_levels_impl<lvl_elem_t>(req, error);
+    if (error)
+      throw std::system_error(error);
+    return result;
+  }
+
 private:
+  // intervals: needs a query container
   template <typename lvl_elem_t>
   [[nodiscard]] auto
   get_levels_impl(const request &req, const query_container &query,
@@ -142,6 +166,7 @@ private:
     return cl.take_levels();
   }
 
+  // bins and windows: does not need a query container
   template <typename lvl_elem_t>
   [[nodiscard]] auto
   get_levels_impl(const request &req, std::error_code &error) const noexcept
