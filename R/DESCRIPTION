@@ -1,8 +1,8 @@
 Package: Rxfr
 Type: Package
 Title: Rxfr: an R API for transferase
-Version: 0.6.2
-Date: 2025-04-07
+Version: 0.6.3
+Date: 2025-05-25
 Authors@R: person("Andrew", "Smith", role=c("aut", "cre"), email="andrewds@usc.edu")
 Description: This package is an API for transferase. Transferase enables
   access to massive volumes of remotely stored sequencing-based whole genome
@@ -13,8 +13,8 @@ Description: This package is an API for transferase. Transferase enables
   statistics. The client apps and APIs of transferase are designed to
   facilitate exploratory data analysis and hypothesis testing. The public
   transferase server interfaces with MethBase2, a database that includes over
-  13,000 high-quality WGBS methylomes from mammalian species (04/2025). Since
-  version 0.6.2, transferase clients include command line apps for Linux and
+  14,000 high-quality WGBS methylomes from mammalian species (06/2025). Since
+  version 0.6.3, transferase clients include command line apps for Linux and
   macOS, along with a Python package and an R package.
 License: MIT + file LICENSE
 Imports: R6, methods, Rcpp (>= 1.0.14)
