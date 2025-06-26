@@ -25,7 +25,7 @@ jobs:
         run: brew update
       - name: Install dependencies
         run: |
-          brew install zlib
+          brew install zlib libdeflate
       - name: Build openssl
         run: |
           # Get the source and make a build dir
