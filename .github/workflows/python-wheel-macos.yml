@@ -25,7 +25,7 @@ jobs:
         run: brew update
       - name: Install dependencies
         run: |
-          brew install zlib libdeflate
+          brew install zlib
       - name: Build openssl
         run: |
           # Get the source and make a build dir
@@ -42,6 +42,19 @@ jobs:
           CFLAGS="-Wall -Os -fomit-frame-pointer -ffunction-sections -fdata-sections -mmacosx-version-min=13" \
           CXXFLAGS="-Wall -Os -fomit-frame-pointer -ffunction-sections -fdata-sections -mmacosx-version-min=13"
           make install
+      - name: Build and install libdeflate
+        run: |
+          git clone https://github.com/ebiggers/libdeflate.git
+          cd libdeflate
+          cmake -B build \
+          -DLIBDEFLATE_BUILD_GZIP=off \
+          -DLIBDEFLATE_BUILD_TESTS=off \
+          -DLIBDEFLATE_BUILD_SHARED_LIB=off \
+          -DCMAKE_POSITION_INDEPENDENT_CODE=on \
+          -DCMAKE_VERBOSE_MAKEFILE=on \
+          -DCMAKE_BUILD_TYPE=Release
+          cmake --build build -j4
+          sudo cmake --install build --prefix=/usr/local
       - name: Install Python packages
         run: |
           python --version
