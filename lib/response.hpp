@@ -62,20 +62,20 @@ only_status(const std::error_code &status_arg) -> response_header {
 }
 
 [[nodiscard]] auto
-compose(char *first, const char *last, const response_header &hdr) noexcept
-  -> std::error_code;
+compose(char *first, const char *last,
+        const response_header &hdr) noexcept -> std::error_code;
 
 [[nodiscard]] auto
-parse(const char *first, const char *last, response_header &hdr) noexcept
-  -> std::error_code;
+parse(const char *first, const char *last,
+      response_header &hdr) noexcept -> std::error_code;
 
 [[nodiscard]] auto
-compose(response_header_buffer &buf, const response_header &hdr) noexcept
-  -> std::error_code;
+compose(response_header_buffer &buf,
+        const response_header &hdr) noexcept -> std::error_code;
 
 [[nodiscard]] auto
-parse(const response_header_buffer &buf, response_header &hdr) noexcept
-  -> std::error_code;
+parse(const response_header_buffer &buf,
+      response_header &hdr) noexcept -> std::error_code;
 
 struct response_payload {
   typedef std::byte value_type;
@@ -97,8 +97,8 @@ struct response_payload {
 
   template <typename lvl_elem>
   [[nodiscard]] static auto
-  from_levels(const level_container<lvl_elem> &levels, std::error_code &error)
-    -> response_payload {
+  from_levels(const level_container<lvl_elem> &levels,
+              std::error_code &error) -> response_payload {
     // ADS: slower than needed; copy happening here is not needed
     error = std::error_code{};  // clear this in case it was set
     const auto tot_bytes = std::size(levels) * sizeof(lvl_elem);
@@ -120,8 +120,8 @@ struct response_payload {
   }
 
   [[nodiscard]] auto
-  data_at(const std::size_t byte_offset, std::error_code &error) noexcept
-    -> char * {
+  data_at(const std::size_t byte_offset,
+          std::error_code &error) noexcept -> char * {
     if (byte_offset >= std::size(payload) * sizeof(value_type)) {
       error = std::make_error_code(std::errc::result_out_of_range);
       return nullptr;
@@ -132,8 +132,8 @@ struct response_payload {
   }
 
   [[nodiscard]] auto
-  data_at(const std::size_t byte_offset, std::error_code &error) const noexcept
-    -> const char * {
+  data_at(const std::size_t byte_offset,
+          std::error_code &error) const noexcept -> const char * {
     if (byte_offset >= std::size(payload) * sizeof(value_type)) {
       error = std::make_error_code(std::errc::result_out_of_range);
       return nullptr;

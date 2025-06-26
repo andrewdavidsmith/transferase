@@ -60,8 +60,8 @@ get_invalid_aux_error_code(const request &req) -> std::error_code {
 }
 
 auto
-request_handler::handle_request(const request &req, response_header &resp_hdr)
-  -> void {
+request_handler::handle_request(const request &req,
+                                response_header &resp_hdr) -> void {
   auto &lgr = logger::instance();
   resp_hdr = {};  // clear the response header
 
