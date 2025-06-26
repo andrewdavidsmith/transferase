@@ -35,15 +35,17 @@ enum class server_error_code : std::uint8_t {
   ok =                     0,
   invalid_methylome_name = 1,
   invalid_request_type =   2,
-  bin_size_too_small =     3,
-  too_many_intervals =     4,
-  invalid_index_hash =     5,
-  methylome_not_found =    6,
-  index_not_found =        7,
-  server_failure =         8,
-  bad_request =            9,
-  inconsistent_genomes =  10,
-  connection_timeout   =  11,
+  too_many_intervals =     3,
+  bin_size_too_small =     4,
+  window_size_too_small =  5,
+  window_step_too_small =  6,
+  invalid_index_hash =     7,
+  methylome_not_found =    8,
+  index_not_found =        9,
+  server_failure =        10,
+  bad_request =           11,
+  inconsistent_genomes =  12,
+  connection_timeout   =  13,
   // clang-format on
 };
 
@@ -59,15 +61,17 @@ struct server_error_category : std::error_category {
     case 0: return "ok"s;
     case 1: return "invalid methylome name"s;
     case 2: return "invalid request type"s;
-    case 3: return "bin size too small"s;
-    case 4: return "too many intervals"s;
-    case 5: return "invalid index hash"s;
-    case 6: return "methylome not found"s;
-    case 7: return "index not found"s;
-    case 8: return "server failure"s;
-    case 9: return "bad request"s;
-    case 10: return "inconsistent genomes"s;
-    case 11: return "connection timeout"s;
+    case 3: return "too many intervals"s;
+    case 4: return "bin size too small"s;
+    case 5: return "window size too small"s;
+    case 6: return "window step too small"s;
+    case 7: return "invalid index hash"s;
+    case 8: return "methylome not found"s;
+    case 9: return "index not found"s;
+    case 10: return "server failure"s;
+    case 11: return "bad request"s;
+    case 12: return "inconsistent genomes"s;
+    case 13: return "connection timeout"s;
     }
     std::unreachable();
   }
