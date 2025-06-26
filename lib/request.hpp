@@ -99,13 +99,11 @@ struct request {
   is_valid_aux_value() const -> bool {
     if (is_intervals_request())
       return aux_value < max_intervals;
-    if (is_bins_request())
+    else if (is_bins_request())
       return aux_value >= min_bin_size;
-    if (is_windows_request()) {
+    else  // if (is_windows_request())
       return window_size() >= min_window_size &&
              window_step() >= min_window_step;
-    }
-    std::unreachable();
   }
 
   [[nodiscard]] auto
