@@ -44,6 +44,20 @@
 
 namespace transferase {
 
+[[nodiscard]] static inline auto
+get_invalid_aux_error_code(const request &req) -> std::error_code {
+  if (req.is_intervals_request())
+    return server_error_code::too_many_intervals;
+  if (req.is_bins_request())
+    return server_error_code::bin_size_too_small;
+  if (req.is_windows_request()) {
+    return req.window_size() < request::min_window_size
+             ? server_error_code::window_size_too_small
+             : server_error_code::window_step_too_small;
+  }
+  std::unreachable();
+}
+
 auto
 request_handler::handle_request(const request &req, response_header &resp_hdr)
   -> void {
@@ -61,7 +75,7 @@ request_handler::handle_request(const request &req, response_header &resp_hdr)
   if (!req.is_valid_aux_value()) {
     lgr.warning("Aux value {} invalid for request type {}", req.aux_value,
                 req.request_type);
-    resp_hdr.status = req.get_invalid_aux_error_code();
+    resp_hdr.status = get_invalid_aux_error_code(req);
     return;
   }
 
