@@ -105,21 +105,7 @@ struct request {
       return window_size() >= min_window_size &&
              window_step() >= min_window_step;
     }
-    std::unreachable{};
-  }
-
-  [[nodiscard]] auto
-  get_invalid_aux_error_code() const -> std::error_code {
-    if (is_intervals_request())
-      return server_error_code::too_many_intervals;
-    if (is_bins_request())
-      return server_error_code::bin_size_too_small;
-    if (is_windows_request()) {
-      return window_size() < min_window_size
-        ? server_error_code::window_size_too_small
-        ? server_error_code::window_step_too_small;
-    }
-    std::unreachable{};
+    std::unreachable();
   }
 
   [[nodiscard]] auto
