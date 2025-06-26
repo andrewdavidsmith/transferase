@@ -3,7 +3,7 @@
 ## Installing
 
 The pyxfr package can be installed using
-[pip](https://pypi.org/project/pyxfr/0.6.2). It requires that the Python
+[pip](https://pypi.org/project/pyxfr/0.6.3). It requires that the Python
 version be at least 3.12. It will install on any Linux machine, and on Mac as
 long as the macOS version is 13 or greater (macOS-13 is Ventura; released in
 October 2022). The installation only requires you to do this:

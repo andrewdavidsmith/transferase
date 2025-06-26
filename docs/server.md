@@ -24,7 +24,7 @@ transferase from source, the installation with make or cmake should allow you
 to get the same outcome. The commands will begin by assuming the STGZ file:
 
 ```console
-sh transferase-0.6.2-Linux.sh --prefix=${PREFIX}
+sh transferase-0.6.3-Linux.sh --prefix=${PREFIX}
 ```
 
 Assuming `PREFIX=/usr/local` then the following files should have been
@@ -43,7 +43,7 @@ created:
     │   └── completions
     │       └── transferase
     └── transferase
-        └── transferase_data_0.6.2.json
+        └── transferase_data_0.6.3.json
 ```
 
 Not all of these files are needed to run the transferase server, but one other
