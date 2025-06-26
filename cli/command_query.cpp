@@ -425,6 +425,7 @@ get_methylome_names(const std::vector<std::string> &possibly_methylome_names,
 auto
 command_query_main(int argc, char *argv[]) -> int {  // NOLINT
   static constexpr auto command = "query";
+  static constexpr auto max_bin_window_step = 1'000'000;
   static const auto usage = std::format("Usage: xfr {} [options]", command);
   static const auto about_msg =
     std::format("xfr {}: {}", rstrip(command), rstrip(about));
@@ -486,21 +487,21 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
     app.add_option("-b,--bin-size", bin_size, "size of genomic bins in base pairs")
     ->option_text("INT")
     ->excludes(intervals_file_opt)
-    ->check(CLI::Range(1, 1'000'000));
+    ->check(CLI::Range(1, max_bin_window_step));
   const auto window_size_opt =
     app.add_option("-w,--window-size", window_size,
                    "size of sliding windows in base pairs")
     ->option_text("INT")
     ->excludes(intervals_file_opt)
     ->excludes(bin_size_opt)
-    ->check(CLI::Range(1, 1'000'000));
+    ->check(CLI::Range(1, max_bin_window_step));
   app.add_option("-t,--window-step", window_step,
                  "amount to slide windows (default: 1/2 window size)")
     ->option_text("INT")
     ->excludes(intervals_file_opt)
     ->excludes(bin_size_opt)
     ->needs(window_size_opt)
-    ->check(CLI::Range(1, 1'000'000));
+    ->check(CLI::Range(1, max_bin_window_step));
   // ADS: Genome will feel a bit redundant to users. Moving forward, if a
   // query consists of intervals and a methylome, if those are inconsistent
   // (e.g., specifying 'chr22' and asking for a mouse methylome), the "tie
