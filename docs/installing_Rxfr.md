@@ -24,7 +24,7 @@ apt-get install -y --no-install-recommends \
     r-cran-devtools \
     libssl-dev && \
 R -e "library(devtools); \
-devtools::install_url('https://github.com/andrewdavidsmith/transferase/releases/download/v0.6.2/Rxfr_0.6.2.tar.gz')"
+devtools::install_url('https://github.com/andrewdavidsmith/transferase/releases/download/v0.6.3/Rxfr_0.6.3.tar.gz')"
 ```
 
 - Linux Mint 22 (Wilma): `docker pull linuxmintd/mint22-amd64:latest`
@@ -45,8 +45,8 @@ mkdir -p ${HOME}/.R && \
 R CMD config --all | grep CXX17 | \
     sed "s/CXX17/CXX23/g; s/++17/++23/g" | \
     sed "s/^CXX23 = g++/CXX23 = g++-14/" >> ${HOME}/.R/Makevars && \
-wget https://github.com/andrewdavidsmith/transferase/releases/download/v0.6.2/Rxfr_0.6.2.tar.gz && \
-R CMD INSTALL Rxfr_0.6.2.tar.gz
+wget https://github.com/andrewdavidsmith/transferase/releases/download/v0.6.3/Rxfr_0.6.3.tar.gz && \
+R CMD INSTALL Rxfr_0.6.3.tar.gz
 ```
 
 - Fedora 42: `docker pull fedora:42`
@@ -62,7 +62,7 @@ dnf install -y \
     R-devtools \
     --setopt=tsflags= && \
 R -e "library(devtools); \
-devtools::install_url('https://github.com/andrewdavidsmith/transferase/releases/download/v0.6.2/Rxfr_0.6.2.tar.gz')"
+devtools::install_url('https://github.com/andrewdavidsmith/transferase/releases/download/v0.6.3/Rxfr_0.6.3.tar.gz')"
 ```
 
 ## Linux using Conda
@@ -96,8 +96,8 @@ mkdir -p ${HOME}/.R && \
 R CMD config --all | grep CXX17 | \
     sed "s/CXX17/CXX23/g; s/++17/++23/g" >> ${HOME}/.R/Makevars && \
 R -e "install.packages(c('Rcpp', 'R6'), repos = 'https://cloud.r-project.org')" && \
-wget https://github.com/andrewdavidsmith/transferase/releases/download/v0.6.2/Rxfr_0.6.2.tar.gz && \
-R CMD INSTALL Rxfr_0.6.2.tar.gz
+wget https://github.com/andrewdavidsmith/transferase/releases/download/v0.6.3/Rxfr_0.6.3.tar.gz && \
+R CMD INSTALL Rxfr_0.6.3.tar.gz
 ```
 
 ## macOS using Conda
@@ -115,8 +115,8 @@ mkdir -p ${HOME}/.R && \
 R CMD config --all | grep CXX17 | \
     sed "s/CXX17/CXX23/g; s/++17/++23/g" >> ${HOME}/.R/Makevars && \
 R -e "install.packages(c('Rcpp', 'R6'), repos = 'https://cloud.r-project.org')" && \
-wget https://github.com/andrewdavidsmith/transferase/releases/download/v0.6.2/Rxfr_0.6.2.tar.gz && \
-R CMD INSTALL Rxfr_0.6.2.tar.gz
+wget https://github.com/andrewdavidsmith/transferase/releases/download/v0.6.3/Rxfr_0.6.3.tar.gz && \
+R CMD INSTALL Rxfr_0.6.3.tar.gz
 ```
 
 ## macOS using Homebrew
@@ -133,8 +133,8 @@ mkdir -p ${HOME}/.R && \
 R CMD config --all | grep CXX17 | \
     sed "s/CXX17/CXX23/g; s/++17/++23/g" >> ${HOME}/.R/Makevars && \
 R -e "install.packages(c('Rcpp', 'R6'), repos = 'https://cloud.r-project.org')" && \
-wget https://github.com/andrewdavidsmith/transferase/releases/download/v0.6.2/Rxfr_0.6.2.tar.gz && \
-R CMD INSTALL Rxfr_0.6.2.tar.gz
+wget https://github.com/andrewdavidsmith/transferase/releases/download/v0.6.3/Rxfr_0.6.3.tar.gz && \
+R CMD INSTALL Rxfr_0.6.3.tar.gz
 ```
 
 The above commands work in a clean macos-15 image from GitHub. I had errors on
