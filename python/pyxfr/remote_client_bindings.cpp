@@ -170,11 +170,42 @@ remote_client_bindings(nb::class_<transferase::remote_client> &cls) -> void {
         that include letters other than [a-zA-Z0-9_].  Queries involving too
         many methylomes will be rejected; this number is roughly 45.
 
-    bin_size (int): A values specifying the size of non-overlapping intervals
+    bin_size (int): A value specifying the size of non-overlapping intervals
         to request levels for. There is a minimum size, likely between 100 and
         200 to prevent server overload.
     )doc",
     "genome"_a, "methylomes"_a, "bin_size"_a);
+
+  cls.def(
+    "get_levels",
+    nb::overload_cast<const std::string &, const std::vector<std::string> &,
+                      const std::uint32_t, const std::uint32_t>(
+      &remote_client::get_levels<xfr::level_element_t>, nb::const_),
+    R"doc(
+    Query the server for methylation levels in each sliding window of the
+    given size and with the given step for each slide, in each specified
+    methylome.
+
+    Parameters
+    ----------
+
+    genome (str): The name of the reference genome (e.g., hg38) corresponding
+        to the genomic intervals and methylomes involved in this query.
+
+    methylomes (list[str]): A list of methylome names. These must be the names
+        of methylomes that exist on the server. These will usually be SRA
+        accession numbers, and the server will immediately reject any names
+        that include letters other than [a-zA-Z0-9_].  Queries involving too
+        many methylomes will be rejected; this number is roughly 45.
+
+    window_size (int): A value specifying the size of windows to request
+        levels for. There is a minimum size, likely between 100 and 200 to
+        prevent server overload.
+
+    window_step (int): A value specifying how much to slide windows. This
+        value should be less than the window size.
+    )doc",
+    "genome"_a, "methylomes"_a, "window_size"_a, "window_step"_a);
 
   cls.def(
     "get_levels_covered",
@@ -255,11 +286,43 @@ remote_client_bindings(nb::class_<transferase::remote_client> &cls) -> void {
         that include letters other than [a-zA-Z0-9_].  Queries involving too
         many methylomes will be rejected; this number is roughly 45.
 
-    bin_size (int): A values specifying the size of non-overlapping intervals
+    bin_size (int): A value specifying the size of non-overlapping intervals
         to request levels for. There is a minimum size, likely between 100 and
         200 to prevent server overload.
     )doc",
     "genome"_a, "methylomes"_a, "bin_size"_a);
+
+  cls.def(
+    "get_levels_covered",
+    nb::overload_cast<const std::string &, const std::vector<std::string> &,
+                      const std::uint32_t, const std::uint32_t>(
+      &remote_client::get_levels<xfr::level_element_covered_t>, nb::const_),
+    R"doc(
+    Query the server for methylation levels in each sliding window of the
+    given size and with the given step for each slide, in each specified
+    methylome. Additionally returns information about the number of sites
+    covered by reads in each window.
+
+    Parameters
+    ----------
+
+    genome (str): The name of the reference genome (e.g., hg38) corresponding
+        to the genomic intervals and methylomes involved in this query.
+
+    methylomes (list[str]): A list of methylome names. These must be the names
+        of methylomes that exist on the server. These will usually be SRA
+        accession numbers, and the server will immediately reject any names
+        that include letters other than [a-zA-Z0-9_].  Queries involving too
+        many methylomes will be rejected; this number is roughly 45.
+
+    window_size (int): A value specifying the size of windows to request
+        levels for. There is a minimum size, likely between 100 and 200 to
+        prevent server overload.
+
+    window_step (int): A value specifying how much to slide windows. This
+        value should be less than the window size.
+    )doc",
+    "genome"_a, "methylomes"_a, "window_size"_a, "window_step"_a);
 
   cls.doc() = R"doc(
     An MClient object is an interface for querying a remote transferase
