@@ -54,7 +54,7 @@ jobs:
           -DCMAKE_VERBOSE_MAKEFILE=on \
           -DCMAKE_BUILD_TYPE=Release
           cmake --build build -j4
-          sudo cmake --install build --prefix=/usr/local
+          sudo cmake --install build --prefix=/tmp/libdeflate_custom
       - name: Install Python packages
         run: |
           python --version
@@ -63,7 +63,7 @@ jobs:
         run: |
           cmake -B build \
           -DCMAKE_VERBOSE_MAKEFILE=on \
-          -DCMAKE_PREFIX_PATH="/tmp/ncurses_custom;/tmp/openssl_custom" \
+          -DCMAKE_PREFIX_PATH="/tmp/libdeflate_custom;/tmp/ncurses_custom;/tmp/openssl_custom" \
           -DCMAKE_OSX_DEPLOYMENT_TARGET=13 \
           -DCMAKE_CXX_FLAGS="-I$(brew --prefix)/include" \
           -DCMAKE_EXE_LINKER_FLAGS="-L$(brew --prefix)/lib" \
