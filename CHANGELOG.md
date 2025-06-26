@@ -1,5 +1,23 @@
 # Changelog
 
+## transferase 0.6.3 (2025-06-25)
+
+Feature changes:
+* Sliding windows queries are now supported.
+* Better compression means faster responses for remote queries involving bins
+  and sliding windows.
+
+Changes:
+* Download policy objects have been replaced by strings in pyxfr.
+* More group manipulation features have been added to the select command.
+* The redundant bin end value has been removed from the output format for bins
+  queries.
+* The JSON input format for queries has been modified.
+* All forms of queries (local/remote; regular/covered) can be done with
+  sliding windows.
+* Responses for bins and sliding windows queries are compressed using
+  libdeflate.
+
 ## transferase 0.6.2 (2025-05-10)
 
 Feature changes:
