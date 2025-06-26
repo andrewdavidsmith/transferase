@@ -21,8 +21,8 @@
 # SOFTWARE.
 
 find_package(OpenSSL REQUIRED COMPONENTS SSL Crypto)
-
 find_package(Threads REQUIRED)
+find_package(LIBDEFLATE REQUIRED)
 
 message(STATUS "Adding external header-only project 'asio'")
 include(FetchContent)
@@ -53,6 +53,7 @@ foreach(cpp_file ${cpp_files})
     ${PROJECT_BINARY_DIR}
     ${ZLIB_INCLUDE_DIRS}
     ${ASIO_SOURCE_DIR}
+    ${LIBDEFLATE_INCLUDE_DIR}
   )
   target_compile_options(${BASE_NAME} PRIVATE ${GLOBAL_COMPILE_OPTIONS})
   list(APPEND LIBRARY_OBJECTS ${BASE_NAME})
@@ -68,7 +69,7 @@ target_link_libraries(transferase_system PUBLIC
   Threads::Threads
   OpenSSL::SSL
   OpenSSL::Crypto
-  deflate
+  LIBDEFLATE::LIBDEFLATE
 )
 
 if(TEST_LIB)

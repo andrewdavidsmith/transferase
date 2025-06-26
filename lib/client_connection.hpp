@@ -34,6 +34,8 @@
 #include "server_error_code.hpp"
 #include "transfer_stats.hpp"
 
+#include "config.h"
+
 #include <asio.hpp>
 
 #include <chrono>
@@ -213,6 +215,9 @@ private:
       return;
     }
     lgr.debug("Response header: {}", resp_hdr.summary());
+    if (resp_hdr.xfr_version != VERSION)
+      lgr.warning("Version mismatch (server={}, client={})",
+                  resp_hdr.xfr_version, VERSION);
     if (resp_hdr.status) {
       stop(resp_hdr.status);
       return;

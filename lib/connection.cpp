@@ -105,7 +105,7 @@ connection::read_request() -> void {
 
       if (const auto parse_err = parse(req_buf, req); parse_err) {
         lgr.warning("{} Request parse error: {}", conn_id, parse_err);
-        resp_hdr = {parse_err, 0, 0, 0};
+        resp_hdr = only_status(parse_err);
         respond_with_error();
         return;
       }
@@ -142,7 +142,7 @@ connection::read_query() -> void {
       query_stats.update(n_bytes);
       if (ec) {
         lgr.warning("{} Error reading query: {}", conn_id, ec);
-        resp_hdr = {request_error_code::error_reading_query, 0, 0, 0};
+        resp_hdr = only_status(request_error_code::error_reading_query);
         respond_with_error();
         return;
       }
