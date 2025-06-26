@@ -95,7 +95,7 @@ public:
     return result;
   }
 
-  // bins: takes an index
+  // bins: takes a bin size
   template <typename lvl_elem_t>
   [[nodiscard]] auto
   get_levels(const std::vector<std::string> &methylome_names,
@@ -116,7 +116,29 @@ public:
     return result;
   }
 
+  // windows: takes a window size and step
+  template <typename lvl_elem_t>
+  [[nodiscard]] auto
+  get_levels(const std::vector<std::string> &methylome_names,
+             const std::uint32_t window_size, const std::uint32_t window_step)
+    const -> level_container<lvl_elem_t> {
+    std::error_code error{};
+    const auto [genome_name, _] = methylome::get_genome_info(
+      config.get_methylome_dir(), methylome_names.at(0), error);
+    if (error)
+      return {};
+    const auto index = indexes->get_genome_index(genome_name, error);
+    if (error)
+      return {};
+    auto result = get_levels_impl<lvl_elem_t>(methylome_names, *index,
+                                              window_size, window_step, error);
+    if (error)
+      throw std::system_error(error);
+    return result;
+  }
+
 private:
+  // intervals
   template <typename lvl_elem_t>
   [[nodiscard]] auto
   get_levels_impl(const std::vector<std::string> &methylome_names,
@@ -145,6 +167,7 @@ private:
     return results;
   }
 
+  // bins
   template <typename lvl_elem_t>
   [[nodiscard]] auto
   get_levels_impl(const std::vector<std::string> &methylome_names,
@@ -170,6 +193,36 @@ private:
         return {};
       }
       meth.get_levels<lvl_elem_t>(bin_size, index, col_itr);
+    }
+    return results;
+  }
+
+  // windows
+  template <typename lvl_elem_t>
+  [[nodiscard]] auto
+  get_levels_impl(
+    const std::vector<std::string> &methylome_names, const genome_index &index,
+    const std::uint32_t window_size, const std::uint32_t window_step,
+    std::error_code &error) const noexcept -> level_container<lvl_elem_t> {
+    level_container<lvl_elem_t> results(index.get_n_windows(window_step),
+                                        std::size(methylome_names));
+    bool first_methylome = true;
+    std::uint64_t index_hash = 0;
+    auto col_itr = std::begin(results);
+    for (const auto &methylome_name : methylome_names) {
+      const auto meth =
+        methylome::read(config.get_methylome_dir(), methylome_name, error);
+      if (error)
+        return {};
+      if (first_methylome) {
+        index_hash = meth.get_index_hash();
+        first_methylome = false;
+      }
+      else if (index_hash != meth.get_index_hash()) {
+        error = client_error_code::inconsistent_methylome_metadata;
+        return {};
+      }
+      meth.get_levels<lvl_elem_t>(window_size, window_step, index, col_itr);
     }
     return results;
   }
