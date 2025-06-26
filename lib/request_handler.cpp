@@ -40,6 +40,7 @@
 #include <memory>  // for std::shared_ptr
 #include <string>
 #include <system_error>
+#include <utility>  // for std::unreachable
 #include <vector>
 
 namespace transferase {
