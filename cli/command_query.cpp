@@ -488,12 +488,14 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
     ->excludes(intervals_file_opt)
     ->check(CLI::Range(1, 1'000'000));
   const auto window_size_opt =
-    app.add_option("-w,--window-size", window_size, "size of sliding windows in base pairs")
+    app.add_option("-w,--window-size", window_size,
+                   "size of sliding windows in base pairs")
     ->option_text("INT")
     ->excludes(intervals_file_opt)
     ->excludes(bin_size_opt)
     ->check(CLI::Range(1, 1'000'000));
-  app.add_option("--window-step", window_step, "amount to slide windows (default: 1/2 window size)")
+  app.add_option("-t,--window-step", window_step,
+                 "amount to slide windows (default: 1/2 window size)")
     ->option_text("INT")
     ->excludes(intervals_file_opt)
     ->excludes(bin_size_opt)
