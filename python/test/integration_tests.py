@@ -30,6 +30,8 @@ methylome_names = ["ERX9474770","ERX9474769"]
 genome_name = "hg38"
 intervals_filename = "cpgIslandExtUnmasked_hg38.bed3"
 bin_size = 100000
+window_size = 30000
+window_step = 10000
 
 # Set the log level to debug to see all
 import pyxfr
@@ -55,15 +57,20 @@ intervals = GenomicInterval.read(genome_index, intervals_filename)
 # Do the query using the intervals
 levels = client.get_levels(genome_name, methylome_names, intervals)
 
+print("levels:")
 print("\n".join([str(levels.at(i, 1)) for i in range(10)]))
+print()
 
 query = genome_index.make_query(intervals)
 levels = client.get_levels_covered(genome_name, methylome_names, query)
 
-for j in range(levels.n_methylomes):
-    for i in range(10):
-        print(intervals[i].to_string(genome_index), levels.at(i, j))
+print("levels covered (with intervals):")
+for i in range(10):
+    print(intervals[i].to_string(genome_index), end="\t")
+    for j in range(levels.n_methylomes):
+        print(levels.at(i, j), end="\t")
     print()
+print()
 
 arr = levels.view_nparray()
 print("levels as nparray:")
@@ -77,12 +84,38 @@ print(means[0:10])
 print()
 
 ## Get the number of CpGs in query regions
-print("n_cpgs intervals:")
+print("n_cpgs (intervals):")
 n_cpgs_intervals = genome_index.get_n_cpgs(intervals)
 print("\n".join([str(i) for i in n_cpgs_intervals[0:10]]))
 print()
 
-print("n_cpgs bins:")
+## Get the number of CpGs in fixed-size bins
+print("n_cpgs (bins):")
 n_cpgs_bins = genome_index.get_n_cpgs(bin_size)
 print("\n".join([str(i) for i in n_cpgs_bins[0:10]]))
+print()
+
+## Get the number of CpGs in sliding windows
+print("n_cpgs (windows):")
+n_cpgs_windows = genome_index.get_n_cpgs(window_size, window_step)
+print("\n".join([str(i) for i in n_cpgs_windows[0:10]]))
+print()
+
+print("levels in bins:")
+levels_bins = client.get_levels(genome_name, methylome_names, bin_size)
+for i in range(10):
+    print(intervals[i].to_string(genome_index), end="\t")
+    for j in range(levels_bins.n_methylomes):
+        print(levels_bins.at(i, j), end='\t')
+    print()
+print()
+
+print("levels in windows:")
+levels_windows = client.get_levels(genome_name, methylome_names,
+                                   window_size, window_step)
+for i in range(10):
+    print(intervals[i].to_string(genome_index), end="\t")
+    for j in range(levels_windows.n_methylomes):
+        print(levels_windows.at(i, j), end='\t')
+    print()
 print()
