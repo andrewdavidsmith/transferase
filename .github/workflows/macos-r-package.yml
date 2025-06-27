@@ -45,6 +45,7 @@ jobs:
         run: |
           cmake -B build -DBUILD_R=on -DCMAKE_INSTALL_PREFIX=Rxfr -Wno-dev && \
           cmake --install build
+          find Rxfr
       - name: Build for making docs
         run: |
           R CMD INSTALL --no-inst Rxfr
