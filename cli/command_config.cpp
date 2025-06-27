@@ -251,7 +251,7 @@ command_config_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
     cfg.install(genomes, download_policy, empty_sys_config_dir, show_progress);
   }
   catch (const std::exception &e) {
-    lgr.error("Error: {}", e.what());
+    lgr.error("{}", e.what());
     return EXIT_FAILURE;
   }
   lgr.info("Completed configuration with status: {}",
