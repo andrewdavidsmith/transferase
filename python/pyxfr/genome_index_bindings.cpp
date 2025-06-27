@@ -120,6 +120,25 @@ genome_index_bindings(nanobind::class_<transferase::genome_index> &cls)
     bin_size (int): The size of bins for which to return the number of CpG sites.
     )doc",
           "bin_size"_a);
+  cls.def("get_n_cpgs",
+          nb::overload_cast<const std::uint32_t, const std::uint32_t>(
+            &xfr::genome_index::get_n_cpgs, nb::const_),
+          R"doc(
+    Get a list with the number of CpG sites in each sliding window of the
+    given window size and step size. Note: the number of CpG sites is purely a
+    function of the reference genome, the window size and step, and not
+    related to any particular methylome.
+
+    Parameters
+    ----------
+
+    window_size (int): The size of sliding windows for which to return the
+        number of CpG sites. This value is in base-pairs.
+
+    window_step (int): The by which to slide the windows. This value is in
+        base-pairs.
+    )doc",
+          "window_size"_a, "window_step"_a);
   cls.def_static("make_genome_index",
                  nb::overload_cast<const std::string &>(
                    &xfr::genome_index::make_genome_index),
