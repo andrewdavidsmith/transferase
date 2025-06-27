@@ -23,6 +23,8 @@
 library(Rxfr)
 
 bin_size <- 100000
+window_size <- 100000
+window_step <- 50000
 methylomes <- c("SRX3468816", "SRX3468835")
 
 # wget https://smithlabresearch.org/transferase/other/cpgIslandExtUnmasked_hg38.bed3
@@ -70,6 +72,10 @@ print(head(levels))
 levels <- client$do_query(methylomes, bin_size, genome)
 print(head(levels))
 
+levels <- client$do_query(methylomes, c(window_size, window_step),
+                          genome, add_rownames = TRUE)
+print(head(levels))
+
 levels <- client$do_query(methylomes, query)
 print(head(levels))
 
@@ -81,6 +87,10 @@ print(head(levels))
 
 levels <- client$do_query(methylomes, bin_size, genome,
                           covered = TRUE, add_rownames = TRUE)
+print(head(levels))
+
+levels <- client$do_query(methylomes, c(window_size, window_step), genome,
+                          covered = TRUE)
 print(head(levels))
 
 levels <- client$do_query(methylomes, query, covered = TRUE)
