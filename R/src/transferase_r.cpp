@@ -351,6 +351,43 @@ get_bin_names(const Rcpp::XPtr<transferase::remote_client> client,
 }
 
 [[nodiscard]] auto
+get_window_names(const Rcpp::XPtr<transferase::remote_client> client,
+                 const std::string &genome, const std::size_t window_size,
+                 const std::size_t window_step,
+                 const char sep) -> Rcpp::StringVector {
+  static constexpr auto total_buf_size{128};
+  static constexpr auto buf_size{total_buf_size - 10};  // allow max digits
+
+  std::array<char, total_buf_size> buf{};
+  const auto buf_beg = buf.data();
+  const auto buf_end = buf_beg + buf_size;
+
+  std::error_code error;
+  const auto idx_itr = client->indexes->get_genome_index(genome, error);
+  if (error) {
+    const auto msg = std::format("(check that {} is installed)", genome);
+    throw std::system_error(error, msg);
+  }
+  const auto &meta = idx_itr->get_metadata();
+  const auto n_windows = meta.get_n_windows(window_step);
+
+  Rcpp::StringVector names(n_windows);
+  std::size_t total_window_count = 0;
+
+  // ADS: not checking for errors in here...
+  const auto zipped = std::views::zip(meta.chrom_order, meta.chrom_size);
+  for (const auto [chrom_name, chrom_size] : zipped) {
+    auto cursor = std::ranges::copy(chrom_name, buf_beg).out;
+    *cursor++ = sep;
+    for (std::uint32_t i = 0; i < chrom_size; i += window_step) {
+      auto tcr = std::to_chars(cursor, buf_end, i);
+      names(total_window_count++) = std::string(buf_beg, tcr.ptr);
+    }
+  }
+  return names;
+}
+
+[[nodiscard]] auto
 get_interval_names(const Rcpp::DataFrame intervals,
                    const char sep) -> Rcpp::StringVector {
   static constexpr auto total_buf_size{128};
@@ -417,6 +454,23 @@ get_n_cpgs_bins(const Rcpp::XPtr<transferase::remote_client> client,
     throw std::system_error(error, msg);
   }
   const auto n_cpgs = idx_itr->get_n_cpgs(bin_size);
+  Rcpp::NumericMatrix m(std::size(n_cpgs), 1);
+  for (auto i = 0u; i < std::size(n_cpgs); ++i)
+    m(i, 0) = n_cpgs[i];
+  return m;
+}
+
+[[nodiscard]] auto
+get_n_cpgs_windows(const Rcpp::XPtr<transferase::remote_client> client,
+                   const std::string &genome, const std::uint32_t window_size,
+                   const std::uint32_t window_step) -> Rcpp::NumericMatrix {
+  std::error_code error{};
+  const auto idx_itr = client->indexes->get_genome_index(genome, error);
+  if (error) {
+    const auto msg = std::format("(check that {} is installed)", genome);
+    throw std::system_error(error, msg);
+  }
+  const auto n_cpgs = idx_itr->get_n_cpgs(window_size, window_step);
   Rcpp::NumericMatrix m(std::size(n_cpgs), 1);
   for (auto i = 0u; i < std::size(n_cpgs); ++i)
     m(i, 0) = n_cpgs[i];

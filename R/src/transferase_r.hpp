@@ -73,6 +73,12 @@ get_bin_names(const Rcpp::XPtr<transferase::remote_client> client,
 
 // [[Rcpp::export]]
 Rcpp::StringVector
+get_window_names(const Rcpp::XPtr<transferase::remote_client> client,
+                 const std::string &genome, const std::size_t window_size,
+                 const std::size_t window_step, const char sep);
+
+// [[Rcpp::export]]
+Rcpp::StringVector
 get_interval_names(const Rcpp::DataFrame intervals, const char sep);
 
 // [[Rcpp::export]]
@@ -84,6 +90,12 @@ get_n_cpgs(const Rcpp::XPtr<transferase::remote_client> client,
 Rcpp::NumericMatrix
 get_n_cpgs_bins(const Rcpp::XPtr<transferase::remote_client> client,
                 const std::string &genome, const std::uint32_t bin_size);
+
+// [[Rcpp::export]]
+Rcpp::NumericMatrix
+get_n_cpgs_windows(const Rcpp::XPtr<transferase::remote_client> client,
+                   const std::string &genome, const std::uint32_t window_size,
+                   const std::uint32_t window_step);
 
 // [[Rcpp::export]]
 Rcpp::NumericMatrix
