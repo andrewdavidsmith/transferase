@@ -295,6 +295,7 @@ MClient <- R6Class(
     #'
     #' @export
     #' @examples
+    #' set_xfr_log_level("debug")
     #' # Mostly leave the config_dir empty
     #' config_xfr(c("hg38"), "usually_left_empty")
     #' client <- MClient$new("usually_left_empty")
