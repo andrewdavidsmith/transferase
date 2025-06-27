@@ -248,8 +248,8 @@ MQuery <- R6Class(
     #' @param data This is the internal data of the MQuery object. It cannot be
     #' inspected or manipulated directly.
     #'
-    #' @param genome The corresponding reference genome. Do not use an MQuery object
-    #' to query methylomes for any other genome.
+    #' @param genome The corresponding reference genome. Do not use an MQuery
+    #' object to query methylomes for any other genome.
     #'
     #' @param size The number of intervals represented in the MQuery object.
     initialize = function(data, genome, size) {
@@ -280,9 +280,9 @@ MClient <- R6Class(
   ),
   public = list(
 
-    #' @field config_dir The name of the configuration directory associated with this
-    #' MClient object. Again, this would have been configured using `config_xfr`
-    #' or the command line transferase app.
+    #' @field config_dir The name of the configuration directory associated with
+    #' this MClient object. Again, this would have been configured using
+    #' `config_xfr` or the command line transferase app.
     config_dir = NULL,
 
     #' @description Create an MClient object
@@ -363,6 +363,23 @@ MClient <- R6Class(
     #' @param rowname_sep The separator character to use inside row names in
     #' the returned matrix.
     #'
+    #' @return A numeric matrix with rows corresponding to query intervals
+    #' (which might be bins or sliding windows) and columns corresponding to
+    #' methylomes in the query. Each methylome might be represented by multiple
+    #' columns, indicating methylated and unmethylated read counts, number of
+    #' sites covered, etc.
+    #'
+    #' @details
+    #' The 'query' may be one of the following:
+    #' 1. MQuery object (see MQuery class documentation). This should be
+    #'    obtained using the MClient$format_query() method.
+    #' 2. Data frame of genomic intervals (half-open). This has at least 3
+    #'    columns. The first gives chromosome name, the second and third are
+    #'    start and stop positions. See the example below.
+    #' 3. A positive integer indicating a bin size (e.g., 10000) in bp.
+    #' 4. A pair of positive integers indicating window size and step for a
+    #'    sliding window (e.g., c(10000, 2000)) in bp.
+    #'
     #' @export
     #' @examples
     #' # Mostly leave the config_dir empty
@@ -387,6 +404,15 @@ MClient <- R6Class(
 
       is_bins <- function(query) {
         is.atomic(query) && length(query) == 1 && is.numeric(query)
+      }
+
+      is_windows <- function(query) {
+        is.atomic(query) &&
+          (is.vector(query) || is.list(query)) &&
+          length(query) == 2 &&
+          all(is.numeric(query)) &&
+          all(query > 0) &&
+          all(query == as.integer(query))
       }
 
       is_mquery <- function(query) {
@@ -423,6 +449,16 @@ MClient <- R6Class(
             .Call(`_Rxfr_query_bins`, private$client, genome,
                   methylomes, query)
           }
+        } else if (is_windows(query)) {
+          if (covered) {
+            window_size <- query[1]
+            window_step <- query[2]
+            .Call(`_Rxfr_query_windows_cov`, private$client, genome,
+                  methylomes, window_size, window_step)
+          } else {
+            .Call(`_Rxfr_query_windows`, private$client, genome,
+                  methylomes, window_size, window_step)
+          }
         } else if (is_mquery(query)) {
           if (covered) {
             .Call(`_Rxfr_query_preprocessed_cov`, private$client, genome,
@@ -450,6 +486,12 @@ MClient <- R6Class(
           rownames(response) <- .Call(`_Rxfr_get_bin_names`,
                                       private$client, genome,
                                       query, rowname_sep)
+        } else if (is_windows(query)) {
+          window_size <- query[1]
+          window_step <- query[2]
+          rownames(response) <- .Call(`_Rxfr_get_window_names`,
+                                      private$client, genome,
+                                      window_size, window_step, rowname_sep)
         } else if (is_mquery(query)) {
           stop("Cannot add rownames if query is MQuery object", call. = FALSE)
         } else { # is_intervals(query)
@@ -462,6 +504,11 @@ MClient <- R6Class(
       get_n_cpgs <- function(client, genome, query) {
         if (is_bins(query)) {
           .Call(`_Rxfr_get_n_cpgs_bins`, client, genome, query)
+        } else if (is_windows(query)) {
+          window_size <- query[1]
+          window_step <- query[2]
+          .Call(`_Rxfr_get_n_cpgs_windows`, client, genome,
+                window_size, window_step)
         } else if (is_mquery(query)) {
           .Call(`_Rxfr_get_n_cpgs_query`, query)
         } else { # is_intervals(query)
