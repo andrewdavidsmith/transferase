@@ -160,7 +160,7 @@ read_intervals(const xfr::genome_index &index,
   auto &lgr = xfr::logger::instance();
   auto intervals = xfr::genomic_interval::read(index, intervals_file, error);
   if (error) {
-    lgr.error("Error reading intervals file {}: {}", intervals_file, error);
+    lgr.error("Failed to read intervals file {}: {}", intervals_file, error);
     return {};
   }
   if (!xfr::genomic_interval::are_sorted(intervals)) {
@@ -732,7 +732,7 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
   const auto invalid_name =
     std::ranges::find_if_not(methylomes, &xfr::methylome::is_valid_name);
   if (invalid_name != std::cend(methylomes)) {
-    lgr.error("Error: invalid methylome name \"{}\"", *invalid_name);
+    lgr.error("Invalid methylome name \"{}\"", *invalid_name);
     return EXIT_FAILURE;
   }
 
