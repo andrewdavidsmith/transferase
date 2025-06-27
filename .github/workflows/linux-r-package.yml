@@ -23,6 +23,7 @@ jobs:
           g++ \
           cmake \
           make \
+          libdeflate-dev \
           libssl-dev \
           libxml2-dev \
           r-base-dev \
