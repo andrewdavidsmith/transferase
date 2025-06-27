@@ -19,6 +19,9 @@ jobs:
       - name: Install OpenSSL
         run: |
           brew install openssl
+      - name: Install libdeflate
+        run: |
+          brew install libdeflate
       - name: Install LaTeX
         run: |
           brew install basictex
