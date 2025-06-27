@@ -118,7 +118,7 @@ jobs:
         run: brew update
       - name: Install dependencies
         run: |
-          brew install zlib
+          brew install zlib libdeflate
       - name: Configure for CPack
         run: |
           cmake -B build \
