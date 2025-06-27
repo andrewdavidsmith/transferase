@@ -202,6 +202,48 @@ n_cpgs_intervals = genome_index.get_n_cpgs(intervals)
 print("\n".join([str(i) for i in n_cpgs_intervals[0:10]]))
 ```
 
+Two other kinds of queries are supported: bins and windows. Bins are
+fixed-width intervals that tile the genome -- no CpG is in more than one
+bin. Windows slide, so each CpG can fall within multiple windows. These are
+based on genome coordinates and not the CpG identify. Here is an example of a
+bins query:
+
+```python
+bin_size = 10000
+genome_name = "hg38"
+methylome_names = ["ERX9474770","ERX9474769"]
+levels = client.get_levels(genome_name, methylome_names, bin_size)
+```
+
+Since the human genome is a bit more than 3G in size, this query will return a
+bit more than 300,000 level values for each of the two query methylomes. Be
+careful with a query like this, because you can easily create massive output
+files if your bins are too small. The public transferase server will also
+restrict queries for very small bin sizes -- 100bp bins could mean many GB of
+data transmitted.
+
+A windows query, added in v0.6.3, is like a bins query but the windows slide
+and are therefore overlapping. A step size is needed in addition to a window
+size:
+
+```python
+window_size = 30000
+window_step = 10000
+genome_name = "hg38"
+methylome_names = ["ERX9474770","ERX9474769"]
+levels = client.get_levels(genome_name, methylome_names, window_size, window_step)
+```
+
+The above command uses a window size of 30Kbp, and a step size of 10Kbp. The
+number of windows will be just over 300,000, because one window begins at each
+10Kbp offset. But in contrast with the bins query, each of the windows will
+span 30Kbp.
+
+The output format for bins and windows queries is the same as for queries
+based on a given set of genomic intervals. This means you can use the same
+functions to manipulate the levels, for example `get_wmean(i,j)` or
+`get_n_meth(i, j)`, and the conversion to numpy arrays.
+
 You can get the metadata for MethBase2 methylomes available on the public
 transferase server. Here is the command and along with what you might expect
 to see:
