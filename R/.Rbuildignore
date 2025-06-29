@@ -1,0 +1,5 @@
+^aclocal\.m4$
+^autom4te\.cache$
+^configure\.ac$
+^m4$
+^src/Makevars$
