@@ -97,10 +97,22 @@ install(
   FILES_MATCHING PATTERN "*.*pp"
 )
 
-# Put the Makevars in place in the R extension tree.
+# Put the files required for building by R in place in the R extension tree.
 install(
-  FILES ${PROJECT_SOURCE_DIR}/R/src/Makevars
+  FILES
+  ${PROJECT_SOURCE_DIR}/R/configure.ac
+  ${PROJECT_SOURCE_DIR}/R/.Rbuildignore
+  DESTINATION .
+)
+install(
+  FILES
+  ${PROJECT_SOURCE_DIR}/R/src/Makevars.in
   DESTINATION src
+)
+# Put the m4 scripts directory in place in the R extension tree.
+install(
+  DIRECTORY ${PROJECT_SOURCE_DIR}/R/m4
+  DESTINATION .
 )
 
 # Configure and install the 'config.h' in the R extension tree.
@@ -222,7 +234,8 @@ file(REMOVE ${FILES_TO_REMOVE})
 file(REMOVE_RECURSE ${CMAKE_INSTALL_PREFIX}/src/asio/experimental)
 ]])
 
-# Generate the Rcpp boilerplate Remove files that are not relevant for client (a temporary hack)
+# Generate the Rcpp boilerplate Remove files that are not relevant for client
+# (a temporary hack that is now not-so-temporary...)
 install(CODE [[
 message(STATUS "Generating RcppExports.cpp boilerplate")
 execute_process(
