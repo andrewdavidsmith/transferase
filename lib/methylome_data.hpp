@@ -67,6 +67,19 @@ struct mcount_pair {
   // ADS: need spaceship here because of constness
   [[nodiscard]] auto
   operator<=>(const mcount_pair &) const = default;
+
+  /// Number of observations contributing to either state.
+  [[nodiscard]] constexpr auto
+  n_reads() const noexcept -> mcount_t {
+    return n_meth + n_unmeth;
+  }
+
+  /// Get the methylation level
+  [[nodiscard]] constexpr auto
+  get_level() const noexcept -> float {
+    return static_cast<float>(n_meth) /
+           std::max(static_cast<mcount_t>(1), n_reads());
+  }
 };
 
 struct methylome_data {
