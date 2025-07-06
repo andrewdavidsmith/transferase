@@ -28,7 +28,7 @@
 
 #include <cstdint>  // std::uint32_t
 #include <memory>   // std::shared_ptr, std::swap
-#include <mutex>
+#include <shared_mutex>
 #include <string>
 #include <system_error>
 #include <unordered_map>
@@ -58,7 +58,7 @@ struct methylome_set {
 
   static constexpr std::uint32_t default_max_live_methylomes{128};
 
-  std::mutex mtx;
+  std::shared_mutex mtx;
   std::string methylome_dir;
   std::uint32_t max_live_methylomes{};
 
