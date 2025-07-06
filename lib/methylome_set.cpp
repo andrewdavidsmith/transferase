@@ -28,6 +28,7 @@
 #include <iterator>  // for std::cend
 #include <memory>    // for std::shared_ptr, std::make_shared
 #include <mutex>     // for std::scoped_lock
+#include <shared_mutex>
 #include <string>
 #include <unordered_map>
 #include <utility>  // for std::move, std::pair
@@ -38,7 +39,7 @@ namespace transferase {
 methylome_set::get_methylome(const std::string &methylome_name,
                              std::error_code &ec)
   -> std::shared_ptr<methylome> {
-  // ADS: error code passed by reference; make sure it starts out ok
+  // make sure error code is clear
   ec = std::error_code{};
 
   if (!methylome::is_valid_name(methylome_name)) {
@@ -46,16 +47,21 @@ methylome_set::get_methylome(const std::string &methylome_name,
     return nullptr;
   }
 
-  std::scoped_lock lock{mtx};
+  const auto cached = [&] {
+    std::shared_lock read_lock{mtx};
+    const auto meth_itr = accession_to_methylome.find(methylome_name);
+    if (meth_itr != std::cend(accession_to_methylome))
+      return meth_itr->second;
+    return std::shared_ptr<methylome>{};  // return nullptr
+  }();  // shared lock released here
 
-  // Easy case: methylome is already loaded
-  const auto meth_itr = accession_to_methylome.find(methylome_name);
-  if (meth_itr != std::cend(accession_to_methylome)) {
-    // current methylome becomes the most recently used
+  if (cached) {
+    std::unique_lock write_lock{mtx};
     accessions.move_to_front(methylome_name);
-    return meth_itr->second;
-  }
+    return cached;
+  }  // unique lock released here
 
+  // Not found in cache; load methylome (no lock needed during IO).
   // ADS: we need to load a methylome; make sure the file exists;
   // probably should check the directory in batch
   if (!methylome::files_exist(methylome_dir, methylome_name)) {
@@ -65,11 +71,22 @@ methylome_set::get_methylome(const std::string &methylome_name,
 
   auto loaded_meth = methylome::read(methylome_dir, methylome_name, ec);
   if (ec) {
-    // ADS: need to ensure the error code is sensibly propagated
     return nullptr;
   }
 
-  // remove loaded methylomes if we need to make room
+  // Now update cache with unique lock
+  std::unique_lock write_lock{mtx};
+
+  // Double-check if another thread inserted this methylome while we were
+  // loading
+  const auto meth_itr_after_load = accession_to_methylome.find(methylome_name);
+  if (meth_itr_after_load != std::cend(accession_to_methylome)) {
+    // Another thread won the race; update LRU and return existing
+    accessions.move_to_front(methylome_name);
+    return meth_itr_after_load->second;
+  }
+
+  // Evict if full
   if (accessions.full()) {
     const auto to_eject_itr = accession_to_methylome.find(accessions.back());
     if (to_eject_itr == std::cend(accession_to_methylome)) {
@@ -77,10 +94,11 @@ methylome_set::get_methylome(const std::string &methylome_name,
       return nullptr;
     }
     accession_to_methylome.erase(to_eject_itr);
-    // ADS: no need to pop from the accessions, it will happen on push
+    // no need to pop from the accessions, it will happen on push
     // since accessions was full.
   }
 
+  // Insert newly loaded methylome
   const auto insertion_result = accession_to_methylome.emplace(
     methylome_name, std::make_shared<methylome>(std::move(loaded_meth)));
   if (!insertion_result.second) {
@@ -88,8 +106,6 @@ methylome_set::get_methylome(const std::string &methylome_name,
     return nullptr;
   }
 
-  // ADS: if we are here, then everything went ok and we can insert
-  // the accession into the ring buffer
   accessions.push(methylome_name);
 
   return insertion_result.first->second;
