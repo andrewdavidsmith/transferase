@@ -33,8 +33,14 @@ option(BUILD_PYTHON "Build Python bindings" off)
 option(PACKAGE_PYTHON "Package the Python bindings" off)
 option(PYTHON_TESTS "Enable Python tests" off)
 option(LIB_ONLY "Skip building the cli" off)
+option(BENCHMARK "Enable benchmarking timers and logging" off)
+
 set(SANITIZER_TYPE "address"
   CACHE STRING "Choose sanitizer type (address, undefined)")
+
+if(BENCHMARK)
+  add_compile_definitions(BENCHMARK)
+endif()
 
 if(TEST_LIB OR TEST_CLI)
   set(UNIT_TESTS on)
