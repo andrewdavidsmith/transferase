@@ -49,7 +49,7 @@
 #include <utility>      // for pair, move
 #include <vector>
 
-#ifdef XFRASE_BENCHMARK
+#ifdef BENCHMARK
 #include <chrono>
 #include <iostream>  // for std::cerr
 #include <print>
@@ -106,8 +106,10 @@ methylome_data_read(const std::string &filename,
     ec = decompress(buf, meth.cpgs);
 #ifdef BENCHMARK
     const auto decompress_stop{std::chrono::high_resolution_clock::now()};
-    std::println("decompress(buf, cpgs) time: {}s",
-                 duration(decompress_start, decompress_stop));
+    const auto delta = decompress_stop - decompress_start;
+    std::println(
+      "decompress(buf, cpgs) time: {}us",
+      std::chrono::duration_cast<std::chrono::microseconds>(delta).count());
 #endif
     return meth;
   }
@@ -155,8 +157,10 @@ methylome_data::write(const std::string &filename,
     const auto compress_err = compress(cpgs, buf);
 #ifdef BENCHMARK
     const auto compress_stop{std::chrono::high_resolution_clock::now()};
-    std::println(std::cerr, "compress(cpgs, buf) time: {}s",
-                 duration(compress_start, compress_stop));
+    const auto delta = compress_stop - compress_start;
+    std::println(
+      std::cerr, "compress(cpgs, buf) time: {}us",
+      std::chrono::duration_cast<std::chrono::microseconds>(delta).count());
 #endif
     if (compress_err)
       return compress_err;
