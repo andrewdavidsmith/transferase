@@ -62,7 +62,7 @@ methylome_set::get_methylome(const std::string &methylome_name,
   if (cached) {
     std::unique_lock write_lock{mtx};
     accessions.move_to_front(methylome_name);
-    return cached;
+    return cached;  // NOLINT (performance-no-automatic-move)
   }  // unique lock released here
 
   // Not found in cache; load methylome (no lock needed during IO).
