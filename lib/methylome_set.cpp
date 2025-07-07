@@ -32,10 +32,9 @@
 #include <string>
 #include <unordered_map>
 #include <utility>  // for std::move, std::pair
-
 #ifdef BENCHMARK
-#include "logger.hpp"
 #include <chrono>
+#include <print>
 #endif
 
 namespace transferase {
@@ -75,14 +74,13 @@ methylome_set::get_methylome(const std::string &methylome_name,
   }
 
 #ifdef BENCHMARK
-  auto &lgr = logger::instance();
   const auto before_read = std::chrono::high_resolution_clock::now();
 #endif
   auto loaded_meth = methylome::read(methylome_dir, methylome_name, ec);
 #ifdef BENCHMARK
   const auto after_read = std::chrono::high_resolution_clock::now();
   auto delta = after_read - before_read;
-  lgr.debug(
+  std::println(
     "methylome read time: {}us",
     std::chrono::duration_cast<std::chrono::microseconds>(delta).count());
 #endif
@@ -91,17 +89,7 @@ methylome_set::get_methylome(const std::string &methylome_name,
   }
 
   // Now update cache with unique lock
-#ifdef BENCHMARK
-  const auto before_write_lock = std::chrono::high_resolution_clock::now();
-#endif
   std::unique_lock write_lock{mtx};
-#ifdef BENCHMARK
-  const auto after_write_lock = std::chrono::high_resolution_clock::now();
-  delta = after_write_lock - before_write_lock;
-  lgr.debug(
-    "write lock wait time: {}us",
-    std::chrono::duration_cast<std::chrono::microseconds>(delta).count());
-#endif
 
   // Double-check if another thread inserted this methylome while we were
   // loading
