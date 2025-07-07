@@ -23,8 +23,9 @@
 
 #include "response.hpp"
 
-#include "config.h"
 #include "server_error_code.hpp"
+
+#include <config.h>
 
 #include <algorithm>
 #include <cassert>

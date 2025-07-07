@@ -34,6 +34,8 @@
 #include <utility>  // for std::move
 #include <vector>
 
+#include <config.h>
+
 namespace transferase {
 
 template <typename level_element_type> struct level_container;
@@ -43,7 +45,7 @@ typedef std::array<char, resp_hdr_sz> response_header_buffer;
 
 struct response_header {
   std::error_code status{};
-  std::string xfr_version{};
+  std::string xfr_version{VERSION};
   std::uint32_t cols{};
   std::uint32_t rows{};
   std::uint32_t n_bytes{};
