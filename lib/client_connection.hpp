@@ -34,9 +34,9 @@
 #include "server_error_code.hpp"
 #include "transfer_stats.hpp"
 
-#include "config.h"
-
 #include <asio.hpp>
+
+#include <config.h>
 
 #include <chrono>
 #include <cstddef>  // std::size_t
