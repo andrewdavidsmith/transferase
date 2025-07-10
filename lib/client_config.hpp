@@ -49,7 +49,6 @@ struct client_config {
   static constexpr auto methbase_metadata_dataframe_default =
     "methbase_metadata_dataframe_{}.tsv";
   static constexpr auto select_metadata_default = "select_metadata_{}.json";
-  static constexpr auto methylome_list_default = "methylome_list_{}.json";
 
   std::string config_dir;
   std::string hostname;
@@ -57,7 +56,6 @@ struct client_config {
   std::string index_dir;
   std::string methbase_metadata_dataframe;
   std::string select_metadata;
-  std::string methylome_list;
   std::string methylome_dir;
   std::string log_file;
   log_level_t log_level{};
@@ -90,10 +88,6 @@ struct client_config {
   /// Get the path to the metadata dataframe file
   [[nodiscard]] auto
   get_methbase_metadata_dataframe_file() const noexcept -> std::string;
-
-  /// Get the path to the labels file
-  [[nodiscard]] auto
-  get_methylome_list_file() const noexcept -> std::string;
 
   /// Get the metadata file used by the 'select' command
   [[nodiscard]] auto
@@ -193,7 +187,7 @@ struct client_config {
   NLOHMANN_DEFINE_TYPE_INTRUSIVE(client_config, config_dir, hostname, port,
                                  index_dir, methylome_dir,
                                  methbase_metadata_dataframe, select_metadata,
-                                 methylome_list, log_file, log_level)
+                                 log_file, log_level)
 };
 
 }  // namespace transferase
