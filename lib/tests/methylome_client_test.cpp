@@ -24,7 +24,6 @@
 #include <remote_client.hpp>
 
 #include <logger.hpp>
-#include <methylome_name_list.hpp>
 
 #include <client_config.hpp>
 #include <gtest/gtest.h>
