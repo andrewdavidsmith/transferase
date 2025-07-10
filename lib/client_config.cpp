@@ -25,7 +25,6 @@
 #include "download.hpp"
 #include "genome_index_data.hpp"
 #include "genome_index_metadata.hpp"
-#include "methylome_name_list.hpp"
 #include "remote_data_resource.hpp"
 #include "system_config.hpp"
 
@@ -87,8 +86,6 @@ client_config::make_paths_absolute() noexcept -> void {
   if (!methbase_metadata_dataframe.empty())
     methbase_metadata_dataframe =
       fs::absolute(methbase_metadata_dataframe, ignored_error).string();
-  if (!methylome_list.empty())
-    methylome_list = fs::absolute(methylome_list, ignored_error).string();
   if (!select_metadata.empty())
     select_metadata = fs::absolute(select_metadata, ignored_error).string();
   if (!methylome_dir.empty())
@@ -118,13 +115,6 @@ client_config::get_index_dir() const noexcept -> std::string {
 client_config::get_methbase_metadata_dataframe_file() const noexcept
   -> std::string {
   return (std::filesystem::path(config_dir) / methbase_metadata_dataframe)
-    .lexically_normal();
-}
-
-/// Get the path to the methylome list file
-[[nodiscard]] auto
-client_config::get_methylome_list_file() const noexcept -> std::string {
-  return (std::filesystem::path(config_dir) / methylome_list)
     .lexically_normal();
 }
 
@@ -185,8 +175,6 @@ client_config::assign_defaults_to_missing(std::string sys_config_dir,
       std::format(methbase_metadata_dataframe_default, VERSION);
   if (select_metadata.empty())
     select_metadata = std::format(select_metadata_default, VERSION);
-  if (methylome_list.empty())
-    methylome_list = methylome_name_list::get_default_filename();
 }
 
 client_config::client_config(const std::string &config_dir_arg,
@@ -205,7 +193,6 @@ client_config::client_config(const std::string &config_dir_arg,
   methbase_metadata_dataframe =
     std::format(methbase_metadata_dataframe_default, VERSION);
   select_metadata = std::format(select_metadata_default, VERSION);
-  methylome_list = methylome_name_list::get_default_filename();
 }
 
 client_config::client_config(const std::string &config_dir_arg,
@@ -224,7 +211,6 @@ client_config::client_config(const std::string &config_dir_arg,
   methbase_metadata_dataframe =
     std::format(methbase_metadata_dataframe_default, VERSION);
   select_metadata = std::format(select_metadata_default, VERSION);
-  methylome_list = methylome_name_list::get_default_filename();
 }
 
 client_config::client_config(const std::string &config_dir_arg,
@@ -243,7 +229,6 @@ client_config::client_config(const std::string &config_dir_arg,
   methbase_metadata_dataframe =
     std::format(methbase_metadata_dataframe_default, VERSION);
   select_metadata = std::format(select_metadata_default, VERSION);
-  methylome_list = methylome_name_list::get_default_filename();
 }
 
 /// Create all the directories involved in the client config, if they
@@ -271,19 +256,6 @@ client_config::make_directories(std::error_code &error) const noexcept -> void {
       const auto methbase_metadata_dataframe_dir =
         methbase_metadata_dataframe_path.parent_path().string();
       create(methbase_metadata_dataframe_dir);
-      if (error)
-        return;
-    }
-  }
-
-  if (!methylome_list.empty()) {
-    const auto methylome_list_path = fs::path(methylome_list);
-    // If the path isn't absolute, we already have the directory by
-    // definition
-    if (methylome_list_path.is_absolute()) {
-      const auto methylome_list_dir =
-        methylome_list_path.parent_path().string();
-      create(methylome_list_dir);
       if (error)
         return;
     }
@@ -388,8 +360,6 @@ client_config::read_config_file_no_overwrite(std::error_code &error) noexcept
     methbase_metadata_dataframe = tmp.methbase_metadata_dataframe;
   if (select_metadata.empty())
     select_metadata = tmp.select_metadata;
-  if (methylome_list.empty())
-    methylome_list = tmp.methylome_list;
   if (methylome_dir.empty())
     methylome_dir = tmp.methylome_dir;
   if (log_file.empty())
@@ -429,8 +399,6 @@ client_config::save(std::error_code &error) const noexcept -> void {
       tmp.index_dir = index_dir;
     if (!methbase_metadata_dataframe.empty())
       tmp.methbase_metadata_dataframe = methbase_metadata_dataframe;
-    if (!methylome_list.empty())
-      tmp.methylome_list = methylome_list;
     if (!select_metadata.empty())
       tmp.select_metadata = select_metadata;
     if (!methylome_dir.empty())
@@ -602,55 +570,6 @@ download_methbase_metadata_dataframe_file(
   return {};
 }
 
-[[nodiscard, maybe_unused]] static auto
-download_methylome_list(
-  const remote_data_resource &remote, const std::string &dirname,
-  const download_policy_t download_policy) -> std::error_code {
-  const auto methylome_list = remote.form_methylome_list_target();
-  const auto local_methylome_list = std::filesystem::path{dirname} /
-                                    methylome_name_list::get_default_filename();
-  auto &lgr = transferase::logger::instance();
-
-  lgr.debug("Methylome list: {}", methylome_list);
-
-  std::error_code error;
-  const bool methylome_list_exists =
-    std::filesystem::exists(local_methylome_list, error);
-  if (error)
-    return error;
-
-  // ADS: why do this check for 'is_outdated' for such a small file?
-  // Maybe local modifications are only worth overwriting if the
-  // remote is newer?
-  const download_request dr{
-    remote.hostname,
-    remote.port,
-    methylome_list,
-    dirname,
-  };
-
-  const bool is_outdated = methylome_list_exists &&
-                           (download_policy == download_policy_t::update) &&
-                           check_is_outdated(dr, local_methylome_list, error);
-  if (error)
-    return error;
-
-  if (download_policy == download_policy_t::all ||
-      ((download_policy == download_policy_t::update ||
-        download_policy == download_policy_t::missing) &&
-       !methylome_list_exists) ||
-      (download_policy == download_policy_t::update && is_outdated)) {
-    lgr.debug("Download: {} to {}", remote.form_url(methylome_list), dirname);
-    lgr.debug("Reason: policy={}, file_exists={}, is_outdated={}",
-              to_string(download_policy), methylome_list_exists, is_outdated);
-
-    const auto [data_hdr, data_err] = download(dr);
-    if (data_err)
-      return dl_err(data_hdr, data_err, remote.form_url(methylome_list));
-  }
-  return {};
-}
-
 [[nodiscard]] static auto
 download_select_metadata_file(
   const remote_data_resource &remote, const std::string &dirname,
@@ -757,18 +676,8 @@ client_config::install(const std::vector<std::string> &genomes,
       lgr.debug("Error obtaining 'select' metadata file: {}",
                 select_metadata_err.message());
 
-    /// ADS: not currently populating the methylome list
-
-    // methylome list
-    // const auto methylome_list_err =
-    //   download_methylome_list(remote, metadata_dir, download_policy);
-    // if (methylome_list_err)
-    //   lgr.debug("Error obtaining methylome list file: {}",
-    //             methylome_list_err.message());
-
     // check that it all worked
-    if (!methbase_metadata_dataframe_err && !select_metadata_err
-        /* && !methylome_list_err*/) {
+    if (!methbase_metadata_dataframe_err && !select_metadata_err) {
       metadata_downloads_ok = true;
       break;
     }
@@ -807,7 +716,7 @@ client_config::validate(std::error_code &error) const noexcept -> bool {
   // validate the hostname
   if (hostname.empty() && port.empty() && index_dir.empty() &&
       methbase_metadata_dataframe.empty() && select_metadata.empty() &&
-      methylome_list.empty() && methylome_dir.empty() && log_file.empty()) {
+      methylome_dir.empty() && log_file.empty()) {
     error = client_config_error_code::invalid_client_config_information;
     return false;
   }
