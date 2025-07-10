@@ -40,8 +40,6 @@ local_client::validate(std::error_code &error) noexcept -> void {
     error = client_error_code::index_dir_not_configured;
     return;
   }
-  // ADS: no validation in local client for methylome_name_list; local
-  // clients do not need transferase metadata, only remote ones do.
 }
 
 }  // namespace transferase

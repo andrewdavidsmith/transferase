@@ -74,16 +74,6 @@ struct remote_data_resource {
       .string();
   }
 
-  /// Used to identify both the remote url and local relative path for labels
-  /// in JSON format. This will be deprecated in favor of only using one file
-  /// for all metadata.
-  [[nodiscard]] auto
-  form_methylome_list_target() const {
-    return (std::filesystem::path{path} / "metadata" / "latest" /
-            std::format(client_config::methylome_list_default, VERSION))
-      .string();
-  }
-
   /// The url is formed given a file path that includes a common directory
   /// expected to exist on the remote host as well as locally.
   [[nodiscard]] auto

@@ -45,10 +45,6 @@ remote_client::validate(std::error_code &error) noexcept -> void {
     error = client_error_code::index_dir_not_configured;
     return;
   }
-  // if (require_metadata && config.methylome_list.empty()) {
-  //   error = client_error_code::methylome_name_list_not_found;
-  //   return;
-  // }
 }
 
 }  // namespace transferase
