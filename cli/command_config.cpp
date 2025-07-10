@@ -129,8 +129,6 @@ command_config_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
                  "name of a directory to store genome index files");
   app.add_option("--methbase-metadata", cfg.methbase_metadata_dataframe,
                  "name of the MethBase2 metadata dataframe");
-  app.add_option("--methylome-list", cfg.methylome_list,
-                 "name of the methylome list file");
   app.add_option("--select-metadata", cfg.select_metadata,
                  "name of the 'select' metadata");
   app.add_option("-d,--methylome-dir", cfg.methylome_dir,
@@ -239,7 +237,6 @@ command_config_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
     {"Methylome dir", or_none(cfg.methylome_dir)},
     {"Metadata dataframe", or_none(cfg.methbase_metadata_dataframe)},
     {"Select metadata", or_none(cfg.select_metadata)},
-    {"Methylome list", or_none(cfg.methylome_list)},
     {"Log level", to_string(cfg.log_level)},
     {"Genomes", or_none(genomes_joined)},
     {"Download policy", xfr::get_download_policy_message(download_policy)},
