@@ -26,7 +26,6 @@
 #include <client_config.hpp>
 #include <download_policy.hpp>
 #include <logger.hpp>
-#include <methylome_name_list.hpp>
 #include <remote_data_resource.hpp>
 
 #include <gtest/gtest.h>
@@ -54,7 +53,6 @@ protected:
     "log_file": "",
     "log_level": "debug",
     "methbase_metadata_dataframe": "",
-    "methylome_list": "",
     "select_metadata": "",
     "labels_file": "",
     "methylome_dir": "",
@@ -221,7 +219,5 @@ TEST_F(client_config_mock, re_read_config_file_success) {
   EXPECT_EQ(cfg.port, "9000") << cfg.tostring() << "\n";
   EXPECT_EQ(cfg.index_dir, "indexes") << cfg.tostring() << "\n";
   EXPECT_EQ(cfg.methbase_metadata_dataframe, std::string{})
-    << cfg.tostring() << "\n";
-  EXPECT_EQ(cfg.methylome_list, std::format("methylome_list_{}.json", VERSION))
     << cfg.tostring() << "\n";
 }
