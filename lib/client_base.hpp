@@ -29,7 +29,6 @@
 #include "genome_index_set.hpp"
 #include "genomic_interval.hpp"
 #include "level_container.hpp"
-#include "methylome_name_list.hpp"
 #include "query_container.hpp"  // for transferase::size
 #include "request.hpp"
 #include "request_type_code.hpp"  // for transferase::request_type_code
