@@ -114,8 +114,7 @@ client_config_bindings(nanobind::class_<transferase::client_config> &cls)
     configuration will be written using the 'save' or 'install' functions, and
     unless you change the values, this determines the values for 'index_dir'
     (needed for both local and remote queries), along with 'methylome_dir'
-    (needed for local queries) and 'methylome_list' ((which assists remote
-    queries).
+    (needed for local queries).
     )doc");
   cls.def_rw("hostname", &xfr::client_config::hostname,
              R"doc(
@@ -139,17 +138,6 @@ client_config_bindings(nanobind::class_<transferase::client_config> &cls)
     '${HOME}/.config/transferase/indexes' and there is no reason to change it
     unless you are working with your own methylomes and started the data
     analysis with your own reference genome.
-    )doc");
-  cls.def_rw("methylome_list", &xfr::client_config::methylome_list,
-             R"doc(
-    If this value is non-empty, it is the name of a JSON file that contains
-    each species/genome with data in the configured remote database (which
-    might be running on the local server). For each species, this file has a
-    list of available methylomes that can be queried through the server.  By
-    default, if transferase is configured for the public server, this file is
-    pulled from a remote configuration server and can be updated. As with
-    'index_dir' there is no reason to change this unless you are working with
-    your own data.
     )doc");
   cls.def_rw("methbase_metadata_dataframe",
              &xfr::client_config::methbase_metadata_dataframe,
