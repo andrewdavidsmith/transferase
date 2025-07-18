@@ -23,6 +23,7 @@ jobs:
           g++ \
           cmake \
           make \
+          automake \
           libdeflate-dev \
           libssl-dev \
           libxml2-dev \
@@ -36,7 +37,8 @@ jobs:
       - name: Generate R API source tree
         run: |
           cmake -B build -DBUILD_R=on -DCMAKE_INSTALL_PREFIX=Rxfr -Wno-dev && \
-          cmake --install build
+          cmake --install build && \
+          autoreconf -i Rxfr
       - name: Build for making docs
         run: |
           R CMD INSTALL --no-inst Rxfr && \
