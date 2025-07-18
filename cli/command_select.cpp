@@ -146,27 +146,41 @@ validate_groups(const std::string &genome, const std::string &metadata_file,
 }
 
 struct meth_meta {
+  // ADS: the metadata is currently stored as a json object instead of a
+  // string because of plans to allow the user to change which fields will be
+  // displayed.
   static constexpr auto sep = " | ";
   static constexpr std::int32_t sep_size = 3;
   std::string accession;
   std::string label;
-  std::string details;
+  nlohmann::json metadata;
 
   [[nodiscard]] auto
-  detail_size() const -> std::int32_t {
+  metadata_size() const -> std::int32_t {
     // ADS: the "+ 3" below is for the separator std::size(" | ");
     // NOLINTNEXTLINE (*-narrowing-conversions)
-    return std::size(label) + std::size(details) + sep_size;
+    return std::size(label) + std::size(serialize_metadata()) + sep_size;
+  }
+
+  [[nodiscard]] auto
+  serialize_metadata() const -> std::string {
+    std::string serialized;
+    for (const auto &[k, v] : metadata.items()) {
+      if (!serialized.empty())
+        serialized += sep;
+      serialized += std::format(R"({}: {})", k, v.get<std::string>());
+    }
+    return serialized;
   }
 
   [[nodiscard]] auto
   format(const std::int32_t horiz_pos,
-         const bool show_details) const -> std::string {
+         const bool show_metadata) const -> std::string {
     // Form the label by appending the colon
     auto acn = std::format("{}: ", accession);
     auto sample_name = label;
-    if (show_details)
-      sample_name += std::format("{}{}", sep, details);
+    if (show_metadata)
+      sample_name += std::format("{}{}", sep, serialize_metadata());
     // If the horizontal position within the sample would be larger than the
     // sample name, just return the label
     if (horiz_pos > std::ssize(sample_name))
@@ -192,26 +206,26 @@ load_data(const std::string &json_filename)
   if (payload.is_discarded())
     throw std::runtime_error("Failed to parse file: " + json_filename);
 
-  std::map<std::string, std::map<std::string, std::vector<std::string>>> data;
+  std::map<std::string, std::vector<meth_meta>> r;
+  auto to_vec_key_vals = [&](auto &x) -> std::vector<meth_meta> {
+    std::vector<meth_meta> v;
+    for (const auto &[key, value] : x.items()) {
+      const auto label_itr = value.find("label");
+      const auto metadata_itr = value.find("metadata");
+      if (label_itr != std::cend(value) && metadata_itr != std::cend(value))
+        v.emplace_back(key, *label_itr, *metadata_itr);
+    }
+    return v;
+  };
 
   try {
-    data = payload;
+    for (const auto &[k, v] : payload.items())
+      r.emplace(k, to_vec_key_vals(v));
   }
   catch (const nlohmann::json::exception &_) {
     throw std::runtime_error(std::format(err_msg_fmt, json_filename));
   }
 
-  std::map<std::string, std::vector<meth_meta>> r;
-  const auto to_vec_key_vals = [&](const auto &x) -> std::vector<meth_meta> {
-    std::vector<meth_meta> v;
-    for (const auto &u : x)
-      if (!u.second.empty())
-        v.emplace_back(u.first, u.second.front(), u.second.back());
-    return v;
-  };
-  std::ranges::for_each(data, [&](const auto &d) {
-    r.emplace(d.first, to_vec_key_vals(d.second));
-  });
   return r;
 }
 
@@ -258,25 +272,6 @@ get_elements_to_display(const auto &filtered, const auto disp_start,
                         const auto disp_end) {
   const auto i = std::cbegin(filtered);
   return std::ranges::subrange(i + disp_start, i + disp_end);
-}
-
-[[nodiscard]] static inline auto
-format_current_entry(const auto &entry, const auto horiz_pos,
-                     const bool show_details) {
-  // Form the label by appending the colon
-  auto label = std::format("{}: ", entry.accession);
-
-  auto sample_name = entry.label;
-  if (show_details)
-    sample_name += std::format(" | {}", entry.details);
-
-  // If the horizontal position within the sample would be larger than the
-  // same name, just return the label
-  if (horiz_pos > std::ssize(sample_name))
-    return label;
-
-  // Full line starting at the horizontal position in the sampel name
-  return std::format("{}{}", label, sample_name.substr(horiz_pos));
 }
 
 static inline auto
@@ -495,7 +490,7 @@ show_group(const std::string &group_name, auto &group, const auto &info) {
   static constexpr auto escape_key_code = 27;
   static constexpr auto hdr_fmt =
     "group: {} | esc to exit | arrows to navigate | del to remove entry | "
-    "d to toggle detail | item {}/{}";
+    "d to toggle metadata | item {}/{}";
   clear();
 
   // NOLINTNEXTLINE (*-narrowing-conversions)
@@ -539,7 +534,8 @@ show_group(const std::string &group_name, auto &group, const auto &info) {
         extra_line += std::format("{}", info_itr->second.label);
       }
       if (display_mode >= 2)
-        extra_line += std::format("{}{}", sep, info_itr->second.details);
+        extra_line +=
+          std::format("{}{}", sep, info_itr->second.serialize_metadata());
 
       if (data_idx == cursor_pos) {
         // NOLINTNEXTLINE (*-narrowing-conversions)
@@ -741,7 +737,7 @@ show_help() {
     std::pair{"c"sv, "Clear current selections"sv},
     std::pair{"v"sv, "View selections"sv},
     std::pair{"V"sv, "View groups"sv},
-    std::pair{"d"sv, "Toggle detailed view"sv},
+    std::pair{"d"sv, "Toggle metadata view"sv},
     std::pair{"a"sv, "Toggle multi-add mode"sv},
     std::pair{"r"sv, "Toggle multi-remove mode"sv},
     std::pair{"s"sv, "Enter search phrase"sv},
@@ -1030,12 +1026,9 @@ toggle_multi_remove(int &multi_mode, const std::vector<meth_meta> &filtered,
 }
 
 auto
-main_loop(
-  // const std::vector<std::tuple<std::string, std::string, std::string>>
-  // &data,
-  const std::vector<meth_meta> &data,
-  std::map<std::string, std::map<std::string, std::string>> &groups,
-  std::string &filename) -> std::vector<std::string> {
+main_loop(const std::vector<meth_meta> &data,
+          std::map<std::string, std::map<std::string, std::string>> &groups,
+          std::string &filename) -> std::vector<std::string> {
   static constexpr auto extra_margin_space = 2;  // colon, space and safety?
   static constexpr auto escape_key_code = 27;
   static constexpr auto escape_delay{25};
@@ -1071,7 +1064,7 @@ main_loop(
   for (const auto &d : data)
     info.emplace(d.accession, d);
 
-  bool show_details = false;  // show detailed sample info
+  bool show_metadata = false;  // show metadata sample info
   std::unordered_set<std::string> selected_keys;
   std::vector<std::string> queries;
   std::string query_update;
@@ -1089,9 +1082,14 @@ main_loop(
         (queries.empty() || query_update != queries.back())) {
       // Filter data based on the query
       const auto query_found = [&](const meth_meta &x) -> bool {
+        if (std::regex_search(x.label, query_re))
+          return true;
         // ADS: need to take care of upper/lower case here
-        return std::regex_search(x.label, query_re) ||
-               std::regex_search(x.details, query_re);
+        for (const auto &[k, v] : x.metadata.items())
+          if (v.is_string() &&
+              std::regex_search(v.get<std::string>(), query_re))
+            return true;
+        return false;
       };
       filtered.push_back({});
       assert(std::size(filtered) >= 2u);
@@ -1153,7 +1151,7 @@ main_loop(
       }
 
       // Display (key: paragraph) with horizontal range
-      mvprintw_wrap(y_pos, 0, entry.format(horiz_pos, show_details));
+      mvprintw_wrap(y_pos, 0, entry.format(horiz_pos, show_metadata));
 
       // Reset attribute
       if (reset_color) {
@@ -1181,7 +1179,7 @@ main_loop(
       horiz_pos = 0;
     }
     else if (ch == KEY_RIGHT) {  // Scroll right
-      const auto width = filtered.back()[cursor_pos].detail_size();
+      const auto width = filtered.back()[cursor_pos].metadata_size();
       if (margin + width + 1 > COLS)
         horiz_pos = std::min(horiz_pos + 1, (margin + width) + 1 - COLS);
     }
@@ -1253,8 +1251,8 @@ main_loop(
     else if (ch == ' ') {  // Select/deselect current item
       do_select(filtered.back(), cursor_pos, selected_keys);
     }
-    else if (ch == 'd') {  // Toggle detailed view
-      show_details = !show_details;
+    else if (ch == 'd') {  // Toggle metadata view
+      show_metadata = !show_metadata;
     }
     else if (ch == 'c') {  // Clear selected keys
       selected_keys.clear();
@@ -1427,7 +1425,7 @@ command_select_main(int argc,
     main_loop(data_itr->second, groups, output_file);
   }
   catch (std::runtime_error &e) {
-    std::println("{}", e.what());
+    std::println(std::cerr, "{}", e.what());
     signal_handler(SIGTERM);
     return EXIT_FAILURE;
   }
