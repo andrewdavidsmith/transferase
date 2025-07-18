@@ -1,0 +1,44 @@
+{
+    "eFlareon": {
+        "eFlareon_brain": {
+            "label": "Brain",
+            "metadata": "Yeah, it's a briain. Fire brain."
+        },
+        "eFlareon_tail": {
+            "label": "Tail",
+            "metadata": "Tail! Tail!"
+        },
+        "eFlareon_ear": {
+            "label": "Ear",
+            "metadata": "Do I hear a fire stone?"
+        }
+    },
+    "eJolteon": {
+        "eJolteon_brain": {
+            "label": "Brain",
+            "metadata": "Electric brain."
+        },
+        "eJolteon_tail": {
+            "label": "Tail",
+            "metadata": "But it's the feet that are quick."
+        },
+        "eJolteon_ear": {
+            "label": "Ear",
+            "metadata": "Nobody should have such an ear... Volt Absorb!"
+        }
+    },
+    "eVaporeon": {
+        "eVaporeon_brain": {
+            "label": "Brain",
+            "metadata": "Brain isn't what I expected. Watery brain."
+        },
+        "eVaporeon_tail": {
+            "label": "Tail",
+            "metadata": "That tail is for swimming! Water Absorb!"
+        },
+        "eVaporeon_ear": {
+            "label": "Ear",
+            "metadata": "Why have ears if you live underwater? Hydration!"
+        }
+    }
+}
