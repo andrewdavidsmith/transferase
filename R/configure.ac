@@ -20,7 +20,7 @@ dnl LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM
 dnl OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 dnl SOFTWARE.
 
-AC_INIT([Rxfr], [0.6.3], [andrewds@usc.edu],
+AC_INIT([Rxfr], [0.6.4], [andrewds@usc.edu],
         [Rxfr], [https://github.com/andrewdavidsmith/transferase])
 
 ## AM_INIT_AUTOMAKE([subdir-objects foreign])
