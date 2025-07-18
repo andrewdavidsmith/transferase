@@ -1,5 +1,15 @@
 # Changelog
 
+## transferase 0.6.4 (2025-07-17)
+
+Changes:
+* Changed thread behavior related to file IO in server code, improving server
+  performance.
+* Modified the format for the metadata file for the 'select' command. This is
+  a breaking change.
+* Rxfr now builds and installs using the autotools approach with a configure
+  script.
+
 ## transferase 0.6.3 (2025-06-25)
 
 Feature changes:
