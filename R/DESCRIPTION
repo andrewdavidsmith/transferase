@@ -1,7 +1,7 @@
 Package: Rxfr
 Type: Package
 Title: Rxfr: an R API for transferase
-Version: 0.6.3
+Version: 0.6.4
 Date: 2025-06-25
 Authors@R: person("Andrew", "Smith", role=c("aut", "cre"), email="andrewds@usc.edu")
 Description: This package is an API for transferase. Transferase is a database

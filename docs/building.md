@@ -114,9 +114,9 @@ on your system to cleanly uninstall it. You can use `dpkg`:
 
 ```console
 # Examine what will be installed
-dpkg --info build/transferase-0.6.3-Linux.deb
+dpkg --info build/transferase-0.6.4-Linux.deb
 # Do the install
-dpkg --install build/transferase-0.6.3-Linux.deb
+dpkg --install build/transferase-0.6.4-Linux.deb
 # See what has been installed
 dpkg --status transferase
 # Remove it
@@ -126,7 +126,7 @@ dpkg --remove transferase
 Or `apt` (note how the path is formed):
 
 ```console
-apt install ./build/transferase-0.6.3-Linux.deb
+apt install ./build/transferase-0.6.4-Linux.deb
 apt info transferase
 apt remove transferase
 ```
@@ -176,7 +176,7 @@ installed with pip. Here is what I got and how to install it (we are still in
 a venv):
 
 ```console
-pip install build/python/dist/pyxfr-0.6.3-cp312-none-manylinux_2_38_x86_64.whl
+pip install build/python/dist/pyxfr-0.6.4-cp312-none-manylinux_2_38_x86_64.whl
 ```
 
 In the above naming, the `cp312` is the Python version. The `none` means no
@@ -190,7 +190,7 @@ python3 -c "from pyxfr import *; help(pyxfr)"
 
 Full Python build, from dependencies to test, in Ubuntu 24.04 is the
 following. Note that the final built filename
-(`pyxfr-0.6.3-cp312-none-manylinux_2_38_x86_64.whl`) depends on using Ubuntu
+(`pyxfr-0.6.4-cp312-none-manylinux_2_38_x86_64.whl`) depends on using Ubuntu
 24.04 and all the earlier steps:
 
 ```console
@@ -214,7 +214,7 @@ export CC=gcc-14 && \
 cmake -B build -DCMAKE_CXX_COMPILER=g++-14 \
     -DPACKAGE_PYTHON=on -DCMAKE_BUILD_TYPE=Release && \
 cmake --build build -j32 && \
-pip install build/python/dist/pyxfr-0.6.3-cp312-none-manylinux_2_38_x86_64.whl && \
+pip install build/python/dist/pyxfr-0.6.4-cp312-none-manylinux_2_38_x86_64.whl && \
 python3 -c "from pyxfr import *; help(pyxfr)"
 ```
 
@@ -282,7 +282,7 @@ cpack -B build --config build/CPackConfig.cmake
 You can install/remove the RPM with `dnf`:
 
 ```console
-dnf install build/transferase-0.6.3-Linux.rpm
+dnf install build/transferase-0.6.4-Linux.rpm
 dnf info transferase
 dnf remove transferase
 ```
@@ -290,7 +290,7 @@ dnf remove transferase
 Or with `rpm`:
 
 ```console
-rpm -i build/transferase-0.6.3-Linux.rpm
+rpm -i build/transferase-0.6.4-Linux.rpm
 rpm -qi transferase  # Info
 rpm -e transferase  # Remove
 ```
@@ -446,23 +446,23 @@ R CMD build Rxfr
 ```
 
 The `build` above is a sub-command to `R CMD` and not the name of a CMake
-build directory. This command generates a file named `Rxfr_0.6.3.tar.gz`
+build directory. This command generates a file named `Rxfr_0.6.4.tar.gz`
 (unless I forgot to update these docs with a new version number...).
 
 The final step tells us how well we did by running the "check" command:
 
 ```console
-MAKEFLAGS="-j32" R CMD check Rxfr_0.6.3.tar.gz
+MAKEFLAGS="-j32" R CMD check Rxfr_0.6.4.tar.gz
 ```
 
 Since the above command will build all the code, using the `-j32` helps with
 speed.
 
 If the above command works without "warnings", congratulate both yourself and
-me. Now you can use the `Rxfr_0.6.3.tar.gz` as follows to install:
+me. Now you can use the `Rxfr_0.6.4.tar.gz` as follows to install:
 
 ```R
-install.packages("Rxfr_0.6.3.tar.gz")
+install.packages("Rxfr_0.6.4.tar.gz")
 library(Rxfr)
 library(help=Rxfr)
 ```
@@ -519,7 +519,7 @@ R -e "library(roxygen2, R6); roxygen2::roxygenize('Rxfr')" && \
 mkdir Rxfr/doc && \
 R CMD Rd2pdf -o Rxfr/doc/Rxfr.pdf --no-preview Rxfr && \
 R CMD build Rxfr && \
-R CMD check Rxfr_0.6.3.tar.gz
+R CMD check Rxfr_0.6.4.tar.gz
 ```
 
 ## Building for tests
@@ -726,7 +726,7 @@ once. Otherwise please go line-by-line.
   cmake -B build -DCMAKE_CXX_COMPILER=g++ -DPACKAGE_PYTHON=on \
       -DCMAKE_BUILD_TYPE=Release && \
   cmake --build build -j32
-  pip install build/python/dist/pyxfr-0.6.3-cp313-none-manylinux_2_38_x86_64.whl
+  pip install build/python/dist/pyxfr-0.6.4-cp313-none-manylinux_2_38_x86_64.whl
   # Test that it worked
   python3 -c "from pyxfr import *; help(pyxfr)"
   ```

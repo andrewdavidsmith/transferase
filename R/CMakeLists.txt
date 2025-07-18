@@ -41,7 +41,7 @@ message(STATUS "Configuring to build R API")
 #
 # R CMD build Rxfr
 #
-# will produce a file like: 'Rxfr_0.6.3.tar.gz' which will have the
+# will produce a file like: 'Rxfr_0.6.4.tar.gz' which will have the
 # same name as a file from 'cpack -B build --config build/CPackConfig.cmake'
 
 # Check that required R packages have been installed

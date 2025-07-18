@@ -222,9 +222,8 @@ files if your bins are too small. The public transferase server will also
 restrict queries for very small bin sizes -- 100bp bins could mean many GB of
 data transmitted.
 
-A windows query, added in v0.6.3, is like a bins query but the windows slide
-and are therefore overlapping. A step size is needed in addition to a window
-size:
+A windows query is like a bins query but the windows slide and are therefore
+overlapping. A step size is needed in addition to a window size:
 
 ```python
 window_size = 30000
