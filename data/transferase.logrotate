@@ -1,0 +1,7 @@
+/var/log/transferase/transferase_server.log {
+    weekly
+    rotate 24
+    size 10M
+    compress
+    copytruncate
+}

@@ -47,4 +47,9 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
   install(FILES ${PROJECT_SOURCE_DIR}/data/transferase.service
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/systemd/system
   )
+  # Logrotate config file (i.e., /etc/logrotate.d/)
+  install(FILES ${PROJECT_SOURCE_DIR}/data/transferase.logrotate
+    DESTINATION /etc/logrotate.d
+    RENAME transferase
+  )
 endif()
