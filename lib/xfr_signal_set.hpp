@@ -21,6 +21,9 @@
  * SOFTWARE.
  */
 
+#ifndef LIB_XFR_SIGNAL_SET_HPP_
+#define LIB_XFR_SIGNAL_SET_HPP_
+
 #include <asio.hpp>
 #include <csignal>
 
@@ -54,3 +57,5 @@ add_signal_set(asio::signal_set &signals) -> void {
   signals.add(SIGPIPE);  // Broken pipe
 #endif
 }
+
+#endif  // LIB_XFR_SIGNAL_SET_HPP_
