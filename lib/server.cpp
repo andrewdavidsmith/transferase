@@ -120,7 +120,7 @@ server::server(const std::string &address, const std::string &port,
   // io_context ios uses default constructor
   n_threads{n_threads}, signals(ioc), acceptor(ioc),
   handler(methylome_dir, genome_index_file_dir, max_live_methylomes), lgr{lgr} {
-
+  // ADS: add all signals defined in xfr_signal_set.hpp
   add_signal_set(signals);
 
   // ADS: after calling do_await_stop, must raise signal before any return
@@ -183,7 +183,7 @@ server::server(const std::string &address, const std::string &port,
   acceptor(ioc),
   handler(methylome_dir, genome_index_file_dir, max_live_methylomes), lgr{lgr},
   pid_filename{pid_filename} {
-
+  // ADS: add all signals defined in xfr_signal_set.hpp
   add_signal_set(signals);
 
   // ADS: standard workflow for daemonizing
