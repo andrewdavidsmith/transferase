@@ -26,6 +26,7 @@
 #include "connection.hpp"
 #include "logger.hpp"
 #include "server_config.hpp"
+#include "xfr_signal_set.hpp"
 
 #include <asio.hpp>
 
@@ -117,14 +118,11 @@ server::server(const std::string &address, const std::string &port,
                const std::uint32_t max_live_methylomes, logger &lgr,
                std::error_code &ec) :
   // io_context ios uses default constructor
-  n_threads{n_threads},
-#if defined(SIGQUIT)
-  signals(ioc, SIGINT, SIGTERM, SIGQUIT),
-#else
-  signals(ioc, SIGINT, SIGTERM),
-#endif
-  acceptor(ioc),
+  n_threads{n_threads}, signals(ioc), acceptor(ioc),
   handler(methylome_dir, genome_index_file_dir, max_live_methylomes), lgr{lgr} {
+
+  add_signal_set(signals);
+
   // ADS: after calling do_await_stop, must raise signal before any return
   do_await_stop();  // start waiting for signals
 
@@ -181,15 +179,13 @@ server::server(const std::string &address, const std::string &port,
                const std::string &pid_filename) :
   // io_context ioc uses default constructor
   n_threads{n_threads},
-#if defined(SIGQUIT)
-  // ADS: (todo) SIGHUP should re-read config file
-  signals(ioc, SIGINT, SIGTERM, SIGQUIT),
-#else
-  signals(ioc, SIGINT, SIGTERM),
-#endif
+  signals(ioc),  // ADS: (todo) SIGHUP re-read config file?
   acceptor(ioc),
   handler(methylome_dir, genome_index_file_dir, max_live_methylomes), lgr{lgr},
   pid_filename{pid_filename} {
+
+  add_signal_set(signals);
+
   // ADS: standard workflow for daemonizing
   do_daemon_await_stop();  // signals setup; start waiting for them
 
