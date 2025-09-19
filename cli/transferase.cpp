@@ -113,12 +113,12 @@ main(int argc, char *argv[]) {  // NOLINT(*-c-arrays)
 
   const auto cmd_itr = std::ranges::find_if(
     // NOLINTNEXTLINE(*-pointer-arithmetic)
-    commands, [&command](const auto &c) { return get<0>(c) == command; });
+    commands, [&command](const auto &c) { return std::get<0>(c) == command; });
 
   if (cmd_itr == std::cend(commands)) {
     format_help(program, commands);
     return EXIT_FAILURE;
   }
 
-  return get<1>(*cmd_itr)(argc - 1, argv + 1);
+  return std::get<1>(*cmd_itr)(argc - 1, argv + 1);
 }
