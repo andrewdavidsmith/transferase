@@ -25,12 +25,13 @@
 message(STATUS "Enabling static linkage for all non-system libraries")
 
 # required
-set(ZLIB_USE_STATIC_LIBS on)
+set(ZLIB_USE_STATIC_LIBS ON)
+set(LIBDEFLATE_USE_STATIC_LIBS ON)
 
 # Python3 and nanobind: not relevant here
 
 # optional
-set(Curses_USE_STATIC_LIBS on)  # cmake-lint: disable=C0103
+set(Curses_USE_STATIC_LIBS ON)  # cmake-lint: disable=C0103
 
 # Set static for the linker so the compiler's libraries will be static
 ## ADS: using this instead of forcing -static for everything avoids the static
