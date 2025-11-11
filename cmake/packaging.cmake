@@ -110,7 +110,9 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
   else()
     list(APPEND CPACK_GENERATOR "DEB")
     set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Andrew D Smith <andrewds@usc.edu>")
-    set(CPACK_DEBIAN_PACKAGE_HOMEPAGE "https://github.com/andrewdavidsmith/transferase")
+    set(CPACK_DEBIAN_PACKAGE_HOMEPAGE
+      "https://github.com/andrewdavidsmith/transferase"
+    )
     # Set dependency libc6 with the version constraint
     set(CPACK_DEBIAN_PACKAGE_DEPENDS "libc6 (>= ${GLIBC_VERSION})")
     # Check if the architecture is x86_64 and set to amd64 for Debian
