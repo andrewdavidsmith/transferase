@@ -26,7 +26,7 @@ jobs:
             -DCMAKE_CXX_COMPILER=g++ \
             -DUSE_XTERM=on \
             -DPACKAGE=on \
-            -DCMAKE_BUILD_TYPE=Debug
+            -DCMAKE_BUILD_TYPE=Release
             cmake --build build -j4
             cpack -B build --config build/CPackConfig.cmake
         run: |
