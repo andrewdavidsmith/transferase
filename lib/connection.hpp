@@ -37,7 +37,8 @@
 #include <chrono>
 #include <cstdint>
 #include <memory>
-#include <sstream>
+#include <string>
+#include <system_error>
 #include <utility>  // for std::move
 
 namespace transferase {
@@ -76,13 +77,14 @@ struct connection : public std::enable_shared_from_this<connection> {
 
   auto
   start() -> void {
+    static constexpr auto err_msg_fmt = R"(Connection lost: id={} error="{}")";
     std::error_code ec{};
     const auto ep = socket.remote_endpoint(ec);
     if (ec) {  // ADS: handle immediate connection loss
-      lgr.info(R"(Immediate connection lost: id={} error="{}")", conn_id, ec);
+      lgr.info(err_msg_fmt, conn_id, ec);
       return;
     }
-    lgr.info(R"(Connection id: {}. Request endpoint: {}:{})", conn_id,
+    lgr.info("Connection id: {}. Request endpoint: {}:{}", conn_id,
              ep.address().to_string(), ep.port());
     read_request();
     watchdog();
