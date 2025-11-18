@@ -53,10 +53,7 @@ struct connection : public std::enable_shared_from_this<connection> {
              logger &lgr, std::uint32_t conn_id) :
     // ADS: 'socket_to_move' has a different name to avoid use after move
     socket{std::move(socket_to_move)}, watchdog_timer{socket.get_executor()},
-    handler{handler}, lgr{lgr}, conn_id{conn_id} {
-    lgr.info("Connection id: {}. Request endpoint: {}", conn_id,
-             (std::ostringstream() << socket.remote_endpoint()).str());
-  }
+    handler{handler}, lgr{lgr}, conn_id{conn_id} {}
 
   // clang-format off
   auto watchdog() -> void;      // run the timer
@@ -79,6 +76,14 @@ struct connection : public std::enable_shared_from_this<connection> {
 
   auto
   start() -> void {
+    std::error_code ec{};
+    const auto ep = socket.remote_endpoint(ec);
+    if (ec) {  // ADS: handle immediate connection loss
+      lgr.info(R"(Immediate connection lost: id={} error="{}")", conn_id, ec);
+      return;
+    }
+    lgr.info(R"(Connection id: {}. Request endpoint: {}:{})", conn_id,
+             ep.address().to_string(), ep.port());
     read_request();
     watchdog();
   }
