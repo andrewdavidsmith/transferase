@@ -47,7 +47,7 @@ execute_process(
   ERROR_QUIET
 )
 if (NOT nanobind_ROOT)
-  message(FATAL_ERROR "Failed to find nanobind on (install with pip in .venv)")
+  message(FATAL_ERROR "Failed to find nanobind (install with pip in .venv)")
 endif()
 
 find_package(nanobind CONFIG)
