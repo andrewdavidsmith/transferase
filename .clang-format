@@ -32,3 +32,4 @@ BraceWrapping:
 BreakBeforeBraces: Custom
 BreakConstructorInitializers: AfterColon
 SpacesBeforeTrailingComments: 2
+ReflowComments: false
