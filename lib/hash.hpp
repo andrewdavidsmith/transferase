@@ -30,6 +30,9 @@
 #include <string>
 #include <system_error>
 
+// ADS: The approach here might be wrong. The 'adler32_z' does its own combine
+// and should be ok in this setting if the data is always processed in the same order.
+
 namespace transferase {
 
 [[nodiscard]] inline auto
