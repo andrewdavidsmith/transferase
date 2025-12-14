@@ -34,7 +34,9 @@ namespace transferase {
 
 [[nodiscard]] inline auto
 get_adler(const auto &data, const auto data_size) -> std::uint64_t {
-  return adler32_z(0, reinterpret_cast<const std::uint8_t *>(data), data_size);
+  return adler32_z(
+    0, data_size > 0 ? reinterpret_cast<const std::uint8_t *>(data) : nullptr,
+    data_size);
 }
 
 [[nodiscard]] inline auto
