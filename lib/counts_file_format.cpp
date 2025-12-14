@@ -121,7 +121,9 @@ is_counts_format(const std::string &filename) -> bool {
 
 [[nodiscard]] STATIC auto
 is_xcounts_format(const std::string &filename) -> bool {
-  static constexpr auto max_lines_to_read = 100000;
+  // ADS: need to be careful here. There should be no reason to assume more
+  // than 10M chromosomes, but who knows...
+  static constexpr auto max_lines_to_read = 10'000'000;
 
   std::error_code unused_error{};
   gzinfile in(filename, unused_error);
@@ -132,13 +134,13 @@ is_xcounts_format(const std::string &filename) -> bool {
   std::uint32_t n_lines{};
   bool found_chrom{false};
   bool found_coords{false};
-  while (n_lines++ < max_lines_to_read && getline(in, line)) {
+  while (n_lines++ < max_lines_to_read && (!found_coords || !found_chrom) &&
+         getline(in, line)) {
     if (line[0] == '#')
       continue;
     if (!std::isdigit(line[0])) {  // chrom line
-      if (line.find_first_of(" \t") != std::string::npos) {
+      if (line.find_first_of(" \t") != std::string::npos)
         return false;
-      }
       found_chrom = true;
     }
     else {
