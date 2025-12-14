@@ -46,9 +46,7 @@ get_adler(const std::string &filename) -> std::uint64_t {
   std::vector<char> buf(filesize);
   std::ifstream in(filename);
   in.read(buf.data(), filesize);
-  // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
-  return adler32_z(0, reinterpret_cast<std::uint8_t *>(buf.data()), filesize);
-  // NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)
+  return get_adler(buf.data(), filesize);
 }
 
 // ADS: this function should be replaced by one that can operate on a
@@ -69,9 +67,7 @@ get_adler(const std::string &filename, std::error_code &ec) -> std::uint64_t {
     ec = std::make_error_code(std::errc(errno));
     return 0;
   }
-  // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
-  return adler32_z(0, reinterpret_cast<std::uint8_t *>(buf.data()), filesize);
-  // NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)
+  return get_adler(buf.data(), filesize);
 }
 
 }  // namespace transferase
