@@ -84,4 +84,16 @@ get_timestamp(const download_request &dr)
 
 }  // namespace transferase
 
+template <>
+struct std::formatter<transferase::download_request>
+  : std::formatter<std::string> {
+  auto
+  format(const transferase::download_request &x, auto &ctx) const {
+    return std::formatter<std::string>::format(
+      std::format("{}:{}{} {} {}", x.host, x.port, x.target, x.outdir,
+                  x.timeout),
+      ctx);
+  }
+};
+
 #endif  // LIB_DOWNLOAD_HPP_
