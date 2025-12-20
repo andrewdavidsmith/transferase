@@ -92,9 +92,9 @@ TEST(download_test, download_non_existent_file) {
   const std::filesystem::path outdir{"/tmp"};
   // clang-format off
   const download_request dr{
-    "httpbin.org", // host
+    "httpbin.org",     // host
     // "example.com",  // doesn't work anymore
-    "80",           // port
+    "80",              // port
     target,
     outdir,
     timeout,
@@ -130,13 +130,15 @@ TEST(download_test, download_success) {
   // ADS: need to make sure this will be unique; got caught with an
   // pre-existing filename
   const auto outdir = std::filesystem::path{"/tmp"};
+  // clang-format off
   const download_request dr{
-    "httpbin.org",  // host
+    "httpbin.org",     // host
     // "example.com",  // doesn't work anymore
-    "80",  // port
+    "80",              // port
     target,
     outdir,
   };
+  // clang-format on
   const auto expected_outfile = outdir / target.filename();
 
   const auto [headers, ec] = download(dr);  // do the download
