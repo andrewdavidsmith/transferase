@@ -25,6 +25,7 @@
 #define LIB_DOWNLOAD_HPP_
 
 #include <chrono>
+#include <format>
 #include <string>
 #include <system_error>
 #include <tuple>
