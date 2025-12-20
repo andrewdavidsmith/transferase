@@ -68,11 +68,16 @@ TEST(download_test, send_request_timeout) {
   // Simulate the download
   const auto [headers, ec] = download(dr);
 
+  // clang-format off
   EXPECT_TRUE(ec.value() ==
               std::to_underlying(http_error_code::inactive_timeout))
-    << to_string(headers) << '\t' << "message=" << ec.message() << '\t'
-    << "value=" << ec.value() << '\t' << "underlying: \""
+    << std::format("{}", dr) << '\n'
+    << to_string(headers) << '\n'
+    << "message: \"" << ec.message() << "\"\n"
+    << "value: \"" << ec.value() << "\""
+    << "underlying: \""
     << http_error_code::inactive_timeout << "\"\n";
+  // clang-format on
   std::error_code error;
   remove_file(expected_outfile, error);
   EXPECT_FALSE(error);
@@ -87,7 +92,8 @@ TEST(download_test, download_non_existent_file) {
   const std::filesystem::path outdir{"/tmp"};
   // clang-format off
   const download_request dr{
-    "example.com",  // host
+    "httpbin.org", // host
+    // "example.com",  // doesn't work anymore
     "80",           // port
     target,
     outdir,
@@ -106,9 +112,13 @@ TEST(download_test, download_non_existent_file) {
     << to_string(headers);
 
   // randomly generated filename should not exist as a uri
-  EXPECT_TRUE(timeout_happened || headers.at("status") == "404" ||
-              headers.at("status") == "400")
-    << to_string(headers);
+  EXPECT_TRUE(timeout_happened ||
+              (headers.contains("status") && (headers.at("status") == "404" ||
+                                              headers.at("status") == "400")))
+    << std::format("{}", dr) << '\n'
+    << "headers: \"" << to_string(headers) << "\"\n"
+    << "message: \"" << ec.message() << "\"\n"
+    << "value: \"" << ec.value() << "\"";
 
   std::error_code error;
   remove_file(expected_outfile, error);
@@ -116,13 +126,14 @@ TEST(download_test, download_non_existent_file) {
 }
 
 TEST(download_test, download_success) {
-  const auto target = std::filesystem::path{"/index.html"};
+  const auto target = std::filesystem::path{"/html"};
   // ADS: need to make sure this will be unique; got caught with an
   // pre-existing filename
   const auto outdir = std::filesystem::path{"/tmp"};
   const download_request dr{
-    "example.com",  // host
-    "80",           // port
+    "httpbin.org",  // host
+    // "example.com",  // doesn't work anymore
+    "80",  // port
     target,
     outdir,
   };
@@ -139,8 +150,14 @@ TEST(download_test, download_success) {
     << to_string(headers);
 
   // index.html should exist
-  EXPECT_TRUE(timeout_happened || headers.at("status") == "200")
-    << to_string(headers);
+  // clang-format off
+  EXPECT_TRUE(timeout_happened ||
+              (headers.contains("status") && headers.at("status") == "200"))
+    << std::format("{}", dr) << '\n'
+    << "headers: \"" << to_string(headers) << "\"\n"
+    << "message: \"" << ec.message() << "\"\n"
+    << "value: \"" << ec.value() << "\"";
+  // clang-format on
 
   std::error_code error;
   remove_file(expected_outfile, error);
