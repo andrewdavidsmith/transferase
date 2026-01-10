@@ -7,7 +7,10 @@ on:
 
 jobs:
   macos-build:
-    runs-on: macos-15
+    strategy:
+      matrix:
+        os: [macos-15, macos-26]
+    runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
     - name: Update Homebrew
