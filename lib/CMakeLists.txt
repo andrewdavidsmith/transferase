@@ -59,6 +59,11 @@ foreach(cpp_file ${cpp_files})
   list(APPEND LIBRARY_OBJECTS ${BASE_NAME})
 endforeach()
 
+# macOS GCC-15 has problems with the a zero-sized array in mount.h
+get_target_property(target_options find_path_to_binary COMPILE_OPTIONS)
+list(REMOVE_ITEM target_options "-Wpedantic")
+set_property(TARGET find_path_to_binary PROPERTY COMPILE_OPTIONS ${target_options})
+
 # Create the initial static library linking the individual objects
 add_library(transferase_system STATIC)
 target_include_directories(transferase_system PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
