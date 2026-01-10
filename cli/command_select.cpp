@@ -23,6 +23,8 @@
 
 #include "command_select.hpp"
 
+#ifdef HAVE_NCURSES
+
 static constexpr auto about = R"(
 select methylomes based on metadata related to biological samples
 )";
@@ -42,19 +44,6 @@ Examples:
 
 xfr select -o output_file.txt -g hg38
 )";
-
-#ifndef HAVE_NCURSES
-
-#include <print>
-auto
-command_select_main([[maybe_unused]] int argc,
-                    [[maybe_unused]] char *argv[])
-  -> int {  // NOLINT(*-c-arrays)
-  std::println("the 'select' command was not built");
-  return EXIT_SUCCESS;
-}
-
-#else
 
 #include "cli_common.hpp"
 #include "client_config.hpp"
@@ -174,8 +163,8 @@ struct meth_meta {
   }
 
   [[nodiscard]] auto
-  format(const std::int32_t horiz_pos,
-         const bool show_metadata) const -> std::string {
+  format(const std::int32_t horiz_pos, const bool show_metadata) const
+    -> std::string {
     // Form the label by appending the colon
     auto acn = std::format("{}: ", accession);
     auto sample_name = label;
@@ -247,8 +236,8 @@ mvprintw_wrap(int y, const int x, const std::vector<std::string> &lines) {
 
 [[nodiscard]] static inline auto
 update_cursor_pos(const int ch, const std::int32_t cursor_pos,
-                  const std::int32_t n_items,
-                  const std::int32_t n_lines) -> std::int32_t {
+                  const std::int32_t n_items, const std::int32_t n_lines)
+  -> std::int32_t {
   switch (ch) {
   case KEY_DOWN:
     return (cursor_pos + 1) % n_items;
@@ -1430,6 +1419,18 @@ command_select_main(int argc,
     return EXIT_FAILURE;
   }
 
+  return EXIT_SUCCESS;
+}
+
+#else
+
+#include <print>
+
+auto
+command_select_main([[maybe_unused]] int argc,
+                    [[maybe_unused]] char *argv[])
+  -> int {  // NOLINT(*-c-arrays)
+  std::println("the 'select' command was not built");
   return EXIT_SUCCESS;
 }
 
