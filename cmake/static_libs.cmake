@@ -27,6 +27,12 @@ message(STATUS "Enabling static linkage for all non-system libraries")
 # required
 set(ZLIB_USE_STATIC_LIBS ON)
 set(LIBDEFLATE_USE_STATIC_LIBS ON)
+set(OPENSSL_USE_STATIC_LIBS ON)
+
+find_package(Iconv REQUIRED)
+if (NOT Iconv_IS_BUILT_IN)
+  message(FATAL_ERROR "Static build of xfr requires built-in iconv")
+endif()
 
 # Python3 and nanobind: not relevant here
 
@@ -36,8 +42,8 @@ set(Curses_USE_STATIC_LIBS ON)  # cmake-lint: disable=C0103
 # Set static for the linker so the compiler's libraries will be static
 ## ADS: using this instead of forcing -static for everything avoids the static
 ## linkage that Aiso warns against, but also means it's not 100% static linked
-## ADS: can't do this if the compiler is AppleClang because they don't
+## ADS: can't do this if the **compiler** is AppleClang because they don't
 ## have the libc++.a and the libgcc wouldn't make sense anyway.
-if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")  # macOS
+if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")  # macOS compiler
   list(APPEND GLOBAL_LINKER_OPTIONS -static-libgcc -static-libstdc++)
 endif()
