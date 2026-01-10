@@ -29,11 +29,6 @@ set(ZLIB_USE_STATIC_LIBS ON)
 set(LIBDEFLATE_USE_STATIC_LIBS ON)
 set(OPENSSL_USE_STATIC_LIBS ON)
 
-find_package(Iconv REQUIRED)
-if (NOT Iconv_IS_BUILT_IN)
-  message(FATAL_ERROR "Static build of xfr requires built-in iconv")
-endif()
-
 # Python3 and nanobind: not relevant here
 
 # optional
