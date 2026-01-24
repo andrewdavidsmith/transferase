@@ -1424,7 +1424,7 @@ command_select_main(int argc,
 
 #else
 
-#include <print>
+#include <print>  // NOLINT(build/include)
 
 auto
 command_select_main([[maybe_unused]] int argc,
