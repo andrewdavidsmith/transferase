@@ -1,13 +1,13 @@
 /* MIT License
  *
- * Copyright (c) 2024 Andrew D Smith
+ * Copyright (c) 2024-2026 Andrew D Smith
  *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -16,9 +16,9 @@
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
  * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
  */
 
 #include "command_query.hpp"
@@ -703,9 +703,8 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
     return EXIT_FAILURE;
   }
 
-  std::vector<std::tuple<std::string, std::string>> args_to_log{
-    // clang-format off
-    {"Config dir", cfg.config_dir},
+  xfr::log_args<xfr::log_level_t::debug>(std::vector{
+    std::tuple{"Config dir", cfg.config_dir},
     {"Server", cfg.hostname},
     {"Port", cfg.port},
     {"Methylome dir", cfg.methylome_dir},
@@ -724,9 +723,7 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
     {"Output format", std::format("{}", outopts.outfmt)},
     {"Min reads", std::format("{}", outopts.min_reads)},
     {"Local mode", std::format("{}", local_mode)},
-    // clang-format on
-  };
-  xfr::log_args<xfr::log_level_t::debug>(args_to_log);
+  });
 
   // validate the methylome names
   const auto invalid_name =
@@ -774,8 +771,7 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
     std::unreachable();
   }();
 
-  // ADS: below is because error code '0' is printed as "Undefined
-  // error" on macos.
+  // ADS: (below) error code '0' is printed as "Undefined error" on macOS
   if (error) {
     lgr.error("Failed to complete query: {}", error);
     return EXIT_FAILURE;
