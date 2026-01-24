@@ -1,13 +1,13 @@
 /* MIT License
  *
- * Copyright (c) 2024 Andrew D Smith
+ * Copyright (c) 2024-2026 Andrew D Smith
  *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -16,9 +16,9 @@
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
  * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
  */
 
 #include "command_config.hpp"
@@ -37,8 +37,8 @@ configuration or reset a configuration to default values. Note: configuration
 is not strictly needed, as most other commands can run with all information
 provided on the command line. If you are interacting with multiple servers,
 for example a private server with your own data, and the public transferase
-server, you should run this command twice, specifying different directires
-for the configuration.
+server, you should run this command twice, specifying different directires for
+the configuration.
 )";
 
 static constexpr auto examples = R"(
@@ -100,12 +100,12 @@ command_config_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
   xfr::client_config cfg;
   cfg.log_level = log_level_default;
   std::vector<std::string> genomes;
-  bool quiet{false};
-  bool debug{false};
-  bool update_config{false};
-  bool no_defaults{false};
-  bool all_defaults{false};
-  bool show_progress{false};
+  bool quiet{};
+  bool debug{};
+  bool update_config{};
+  bool no_defaults{};
+  bool all_defaults{};
+  bool show_progress{};
   xfr::download_policy_t download_policy{download_policy_default};
 
   CLI::App app{about_msg};
@@ -212,8 +212,8 @@ command_config_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
       cfg = tmp_cfg;
   }
 
-  // If the user is allowing defeaults, any args are left unspecified
-  // that can be defaulted are.
+  // If the user is allowing defeaults, any args are left unspecified that can
+  // be defaulted are.
   const std::string empty_sys_config_dir;
   if (!no_defaults) {
     lgr.debug("Assigning defaults to remaining unspecified required values");
@@ -224,13 +224,11 @@ command_config_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
   //   genomes | std::views::join_with(',') | std::ranges::to<std::string>();
   const auto genomes_joined = join_with(genomes, ',');
 
-  using std::string_literals::operator""s;
   constexpr auto or_none = [](const auto &s) {
-    return s.empty() ? "none specified"s : s;
+    return s.empty() ? std::string{"none specified"} : s;
   };
-  const std::vector<std::tuple<std::string, std::string>> args_to_log{
-    // clang-format off
-    {"Config dir", or_none(cfg.config_dir)},
+  xfr::log_args<transferase::log_level_t::info>(std::vector{
+    std::tuple{"Config dir", or_none(cfg.config_dir)},
     {"Hostname", or_none(cfg.hostname)},
     {"Port", or_none(cfg.port)},
     {"Index dir", or_none(cfg.index_dir)},
@@ -240,9 +238,7 @@ command_config_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
     {"Log level", to_string(cfg.log_level)},
     {"Genomes", or_none(genomes_joined)},
     {"Download policy", xfr::get_download_policy_message(download_policy)},
-    // clang-format on
-  };
-  xfr::log_args<transferase::log_level_t::info>(args_to_log);
+  });
 
   try {
     cfg.install(genomes, download_policy, empty_sys_config_dir, show_progress);

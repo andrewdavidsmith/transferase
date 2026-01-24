@@ -1,13 +1,13 @@
 /* MIT License
  *
- * Copyright (c) 2024 Andrew D Smith
+ * Copyright (c) 2024-2026 Andrew D Smith
  *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -16,9 +16,9 @@
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
  * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
  */
 
 #include "command_index.hpp"
@@ -28,15 +28,14 @@ make an index for a given reference genome
 )";
 
 static constexpr auto description = R"(
-The genome index is used to accelerate searches within methylomes and
-must be created from the same reference genome that was used
-originally to map the reads and generate the single-CpG methylation
-levels. The order of chromosomes within the reference genome is not
-relevant as long as each chromosome is correct. The index is in two
-files, one a binary file (size just over 100MB for hg38), and the
-other a metadata file in JSON format file that can be examined with
-any JSON formatter (e.g., jq or json_pp).  These two files must reside
-together in the same directory.
+The genome index is used to accelerate searches within methylomes and must be
+created from the same reference genome that was used originally to map the
+reads and generate the single-CpG methylation levels. The order of chromosomes
+within the reference genome is not relevant as long as each chromosome is
+correct. The index is in two files, one a binary file (size just over 100MB
+for hg38), and the other a metadata file in JSON format file that can be
+examined with any JSON formatter (e.g., jq or json_pp).  These two files must
+reside together in the same directory.
 )";
 
 static constexpr auto examples = R"(
@@ -115,14 +114,10 @@ command_index_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
     lgr.error("Failure initializing logging: {}.", lgr.get_status());
     return EXIT_FAILURE;
   }
-
-  std::vector<std::tuple<std::string, std::string>> args_to_log{
-    // clang-format off
-    {"Genome", genome_filename},
+  xfr::log_args<xfr::log_level_t::info>(std::vector{
+    std::tuple{"Genome", genome_filename},
     {"Index directory", index_directory},
-    // clang-format on
-  };
-  xfr::log_args<xfr::log_level_t::info>(args_to_log);
+  });
 
   std::error_code error;
   const auto genome_name =

@@ -1,13 +1,13 @@
 /* MIT License
  *
- * Copyright (c) 2024 Andrew D Smith
+ * Copyright (c) 2024-2026 Andrew D Smith
  *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -16,9 +16,9 @@
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
  * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
  */
 
 #include "command_server.hpp"
@@ -160,13 +160,13 @@ command_server_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
   CLI11_PARSE(app, argc, argv);
 
   // Attempting to load values from config file in cfg.config_file but
-  // deferring error reporting as all values might have been specified
-  // on the command line.
+  // deferring error reporting as all values might have been specified on the
+  // command line.
   std::error_code error;
   if (!config_file.empty()) {
-    // make any assigned paths absolute so that subsequent composition
-    // with any config_dir will not overwrite any relative path
-    // specified on the command line.
+    // make any assigned paths absolute so that subsequent composition with
+    // any config_dir will not overwrite any relative path specified on the
+    // command line.
     cfg.make_paths_absolute();
     cfg.read_config_file_no_overwrite(config_file, error);
     if (error) {
@@ -205,9 +205,12 @@ command_server_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
   if (error)
     return EXIT_FAILURE;
 
-  std::vector<std::tuple<std::string, std::string>> args_to_log{
-    // clang-format off
-    {"Config file", config_file},
+  if (cfg.version != VERSION)
+    lgr.warning("Version ({}) not the same as found in config file ({})",
+                VERSION, cfg.version);
+
+  xfr::log_args<transferase::log_level_t::info>(std::vector{
+    std::tuple{"Config file", config_file},
     {"VERSION", VERSION},
     {"Version from config file", cfg.version},
     {"Port", cfg.port},
@@ -220,14 +223,7 @@ command_server_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
     {"Max resident", std::format("{}", cfg.max_resident)},
     {"Min bin size", std::format("{}", cfg.min_bin_size)},
     {"Max intervals", std::format("{}", cfg.max_intervals)},
-    // clang-format on
-  };
-
-  if (cfg.version != VERSION)
-    lgr.warning("Version ({}) not the same as found in config file ({})",
-                VERSION, cfg.version);
-
-  xfr::log_args<transferase::log_level_t::info>(args_to_log);
+  });
 
   if (daemonize) {
     auto s = xfr::server(cfg.hostname, cfg.port, cfg.n_threads, methylome_dir,
