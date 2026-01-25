@@ -30,14 +30,14 @@ query methylation levels in genomic intervals
 static constexpr auto description = R"(
 The central command in transferase.  The input has two parts:
 
-- A BED format file of genomic intervals or a bin size.
-- Methylome names specified directly or in a file.
+- Query intervals: (i) BED format file, (ii) bin size, or (iii) window size.
+- Methylomes: specified on the command line or in a file.
 
-The output format is highly customizable.  A server should be configured,
-either in the default location or a specified directory. Alternatively, all
-server information can be specified.  A local most exists, and does not use
-any network communication, but even if all data is on the same machine, local
-mode is only advantageous in special situations.
+The output format is highly customizable.  The identity of the server should
+be configured, either in the default location or a specified directory.
+Alternatively, all server information can be specified.  A local mode exists
+and can be used if all data is local, but local mode is only advantageous in
+special situations.
 )";
 
 static constexpr auto examples = R"(
