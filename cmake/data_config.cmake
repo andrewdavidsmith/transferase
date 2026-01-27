@@ -35,7 +35,7 @@ set(DATADIR "${CMAKE_INSTALL_DATADIR}")
 # needed in the right place with the version in the filename
 set(BUILD_DATA_DIR "${PROJECT_BINARY_DIR}/${DATADIR}/transferase")
 file(MAKE_DIRECTORY ${BUILD_DATA_DIR})
-configure_file(${CMAKE_SOURCE_DIR}/data/transferase_data.json
+configure_file(${PROJECT_SOURCE_DIR}/data/transferase_data.json
   ${BUILD_DATA_DIR}/transferase_data_${PROJECT_VERSION}.json
   COPYONLY
 )
