@@ -75,7 +75,7 @@ xfr config -c ./local_server_config --download none \
 #include <string_view>
 #include <system_error>
 #include <tuple>
-#include <variant>  // for std::tuple
+#include <variant>  // IWYU pragma: keep
 #include <vector>
 
 auto

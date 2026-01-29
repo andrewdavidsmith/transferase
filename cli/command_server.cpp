@@ -71,7 +71,7 @@ xfr server -s localhost -d methylomes -x indexes
 #include <string_view>
 #include <system_error>
 #include <tuple>
-#include <variant>
+#include <variant>  // IWYU pragma: keep
 #include <vector>
 
 [[nodiscard]] static auto

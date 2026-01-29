@@ -60,7 +60,7 @@ xfr check -x index_dir -d methylome_dir
 
 #include <cstdlib>  // for EXIT_FAILURE, EXIT_SUCCESS
 #include <format>
-#include <iterator>  // for std::cbegin, std::cend
+#include <iterator>  // IWYU pragma: keep
 #include <map>
 #include <memory>  // for std::shared_ptr
 #include <print>
