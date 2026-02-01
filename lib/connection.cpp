@@ -47,11 +47,9 @@ connection::set_deadline(const std::chrono::seconds delta) -> void {
 
 [[nodiscard]] auto
 connection::get_send_buf() const -> const char * {
-  // NOLINTBEGIN (*-reinterpret-cast)
-  return req.is_covered_request()
-           ? reinterpret_cast<const char *>(resp_cov.data())
-           : reinterpret_cast<const char *>(resp.data());
-  // NOLINTEND (*-reinterpret-cast)
+  // NOLINTNEXTLINE (*-reinterpret-cast)
+  return reinterpret_cast<const char *>(
+    req.is_covered_request() ? resp_cov.data() : resp.data());
 }
 
 auto
