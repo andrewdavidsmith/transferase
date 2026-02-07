@@ -203,7 +203,7 @@ public:
       std::lock_guard lck{mtx};
       format_time();
       const auto end_pos = fill_buffer<the_level>(msg);
-      log_file->write(std::data(buf), std::distance(std::data(buf), end_pos));
+      log_file->write(buf.data(), std::distance(buf.data(), end_pos));
       log_file->flush();
     }
   }
@@ -216,7 +216,7 @@ public:
       std::lock_guard lck{mtx};
       format_time();
       const auto end_pos = fill_buffer<the_level>(msg);
-      log_file->write(std::data(buf), std::distance(std::data(buf), end_pos));
+      log_file->write(buf.data(), std::distance(buf.data(), end_pos));
       log_file->flush();
     }
   }
