@@ -36,7 +36,7 @@
 
 #include <chrono>
 #include <cstdint>
-#include <iterator>  // for std::data
+#include <iterator>  // IWYU pragma: keep
 #include <memory>
 #include <string>
 #include <system_error>
