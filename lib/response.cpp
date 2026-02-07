@@ -117,14 +117,15 @@ parse(const char *first, const char *last,
 }
 
 [[nodiscard]] auto
-compose(response_header_buffer &buf,
-        const response_header &hdr) noexcept -> std::error_code {
+compose(
+  response_header_buffer &buf,  // cppcheck-suppress constParameterReference
+  const response_header &hdr) noexcept -> std::error_code {
   return compose(std::data(buf), std::data(buf) + resp_hdr_sz, hdr);
 }
 
 [[nodiscard]] auto
-parse(const response_header_buffer &buf,
-      response_header &hdr) noexcept -> std::error_code {
+parse(const response_header_buffer &buf, response_header &hdr) noexcept
+  -> std::error_code {
   return parse(std::data(buf), std::data(buf) + resp_hdr_sz, hdr);
 }
 
