@@ -262,7 +262,7 @@ private:
 
   [[nodiscard]] auto
   levels_buffer() -> char * {
-    return resp_container.data();
+    return std::data(resp_container);
   }
 
 private:
@@ -314,7 +314,7 @@ private:
   write_query() -> void {
     base_t::reset_deadline();
     asio::async_write(
-      base_t::socket, asio::buffer(query.data(), query.n_bytes()),
+      base_t::socket, asio::buffer(std::data(query), query.n_bytes()),
       [this](const auto ec, const auto n_bytes) -> std::size_t {
         query_stats.update(n_bytes);
         base_t::reset_deadline();

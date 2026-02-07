@@ -148,7 +148,7 @@ public:
       return;
     }
 
-    header = http_header(std::string(buf.data(), n_bytes));
+    header = http_header(std::string(std::data(buf), n_bytes));
     if (header_only) {
       stop(std::error_code{});
       return;
@@ -159,7 +159,7 @@ public:
     }
     buf_pos = std::size(buf) - n_bytes;
     // NOLINTNEXTLINE (*-pointer-arithmetic)
-    std::memcpy(buf.data(), buf.data() + n_bytes, buf_pos);
+    std::memcpy(std::data(buf), std::data(buf) + n_bytes, buf_pos);
     buf.resize(header.content_length);
     content_remaining = header.content_length - buf_pos;
 
@@ -239,7 +239,7 @@ public:
     reset_deadline();
     asio::async_read(
       // NOLINTNEXTLINE (*-pointer-arithmetic)
-      sock, asio::buffer(buf.data() + buf_pos, content_remaining),
+      sock, asio::buffer(std::data(buf) + buf_pos, content_remaining),
       [this](const auto ec, const auto n_bytes) -> std::size_t {
         // custom completion condition updates deadline
         reset_deadline();
@@ -322,7 +322,7 @@ public:
     reset_deadline();
     asio::async_read(
       // NOLINTNEXTLINE (*-pointer-arithmetic)
-      sock, asio::buffer(buf.data() + buf_pos, content_remaining),
+      sock, asio::buffer(std::data(buf) + buf_pos, content_remaining),
       [this](const auto ec, const auto n_bytes) -> std::size_t {
         // custom completion condition is to update deadline
         reset_deadline();
@@ -388,7 +388,7 @@ download_http(const std::string &host, const std::string &port,
   if (!out)
     return {http_header{}, std::make_error_code(std::errc(errno))};
 
-  out.write(data.data(), std::ssize(data));
+  out.write(std::data(data), std::ssize(data));
 
   return {header, status};
 }

@@ -55,8 +55,8 @@ operator>>(std::istream &in,
 
   if (std::ranges::all_of(tmp, is_digit)) {
     std::underlying_type_t<transferase::output_format_t> num{};
-    const auto last = tmp.data() + std::size(tmp);  // NOLINT
-    const auto res = std::from_chars(tmp.data(), last, num);
+    const auto last = std::data(tmp) + std::size(tmp);  // NOLINT
+    const auto res = std::from_chars(std::data(tmp), last, num);
     if (res.ptr != last) {
       in.setstate(std::ios::failbit);
       return in;

@@ -1,13 +1,13 @@
 /* MIT License
  *
- * Copyright (c) 2025 Andrew D Smith
+ * Copyright (c) 2025-2026 Andrew D Smith
  *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -16,9 +16,9 @@
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
  * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
  */
 
 #include "command_select.hpp"
@@ -221,7 +221,7 @@ load_data(const std::string &json_filename)
 static auto
 mvprintw_wrap(const int y, const int x, const std::string &s) {
   // NOLINTNEXTLINE (*-vararg)
-  const auto ret = mvprintw(y, x, "%s", s.substr(0, COLS - 1).data());
+  const auto ret = mvprintw(y, x, "%s", std::data(s.substr(0, COLS - 1)));
   if (ret != OK)
     throw std::runtime_error(
       std::format("Error updating display (writing: {})", s));
@@ -1328,6 +1328,7 @@ command_select_main(int argc,
   std::string output_file;
   std::string config_dir;
   std::string selected_groups_file;
+  bool list_genomes{};
 
   CLI::App app{about_msg};
   argv = app.ensure_utf8(argv);
@@ -1338,7 +1339,6 @@ command_select_main(int argc,
   app.get_formatter()->label("REQUIRED", "");
   app.set_help_flag("-h,--help", "Print a detailed help message and exit");
   // clang-format off
-  app.add_option("-g,--genome", genome_name, "use this genome")->required();
   app.add_option("-s,--selected", selected_groups_file, "previously selected groups");
   app.add_option("-o,--output", output_file, "output file (you will be promoted before saving)");
   const auto input_file_opt =
@@ -1349,6 +1349,10 @@ command_select_main(int argc,
     ->option_text("DIR")
     ->check(CLI::ExistingDirectory)
     ->excludes(input_file_opt);
+  auto group = app.add_option_group("+group");
+  group->add_option("-g,--genome", genome_name, "use this genome");
+  group->add_flag("-l,--list-genomes", list_genomes, "list genomes available");
+  group->require_option(1);
   // clang-format on
 
   if (argc < 2) {
@@ -1377,13 +1381,16 @@ command_select_main(int argc,
     }
 
     const auto all_data = load_data(input_file);
+    if (list_genomes) {
+      for (const auto &g : all_data)
+        std::println("{}", g.first);
+      return EXIT_SUCCESS;
+    }
 
     const auto data_itr = all_data.find(genome_name);
     if (data_itr == std::cend(all_data)) {
       std::println("Data not found for genome: {}", genome_name);
-      std::println("Available genomes are:");
-      for (const auto &g : all_data)
-        std::println("{}", g.first);
+      std::println("Use --list-genomes for available genomes");
       return EXIT_FAILURE;
     }
 

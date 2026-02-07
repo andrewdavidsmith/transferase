@@ -51,14 +51,14 @@ is_gzip_file(const std::string &filename) -> bool {
       std::terminate();
   };
 
-  std::unique_ptr<FILE, decltype(closer)> f(std::fopen(filename.data(), "rb"),
-                                            closer);
+  std::unique_ptr<FILE, decltype(closer)> f(
+    std::fopen(std::data(filename), "rb"), closer);
   if (f == nullptr)
     return false;
 
   // Read the first two bytes of the file
   std::array<std::uint8_t, 2> buf{};
-  if (std::fread(buf.data(), 1, 2, f.get()) != 2)
+  if (std::fread(std::data(buf), 1, 2, f.get()) != 2)
     return false;
 
   // Check if the first two bytes match the gzip magic number
@@ -66,7 +66,7 @@ is_gzip_file(const std::string &filename) -> bool {
 }
 
 gzinfile::gzinfile(const std::string &filename, std::error_code &ec) :
-  in{gzopen(filename.data(), "rb")} {
+  in{gzopen(std::data(filename), "rb")} {
   // ADS: need to check errnum by gzerror
   ec = (in == nullptr) ? zlib_adapter_error_code::z_errno
                        : zlib_adapter_error_code::ok;
@@ -81,7 +81,7 @@ gzinfile::~gzinfile() {
 
 [[nodiscard]] auto
 gzinfile::read() -> int {
-  len = gzread(in, buf.data(), buf_size);
+  len = gzread(in, std::data(buf), buf_size);
   // ADS: check errnum from gzerror and use zlib_adapter_error_code;
   pos = 0;
   return len;
@@ -120,7 +120,7 @@ read_gzfile_into_buffer(const std::string &filename)
   -> std::tuple<std::vector<char>, std::error_code> {
   static constexpr auto buf_size = 1024 * 1024;
 
-  gzFile gz = gzopen(filename.data(), "rb");
+  gzFile gz = gzopen(std::data(filename), "rb");
   if (!gz)
     return {std::vector<char>{}, std::make_error_code(std::errc(errno))};
 
@@ -128,8 +128,8 @@ read_gzfile_into_buffer(const std::string &filename)
   std::vector<char> buffer;
   buffer.reserve(std::filesystem::file_size(filename));
   std::int32_t n_bytes{};
-  while ((n_bytes = gzread(gz, buf.data(), buf_size)) > 0)
-    std::ranges::copy_n(buf.data(), n_bytes, std::back_inserter(buffer));
+  while ((n_bytes = gzread(gz, std::data(buf), buf_size)) > 0)
+    std::ranges::copy_n(std::data(buf), n_bytes, std::back_inserter(buffer));
   gzclose(gz);
 
   if (n_bytes < 0)

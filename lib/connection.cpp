@@ -49,7 +49,7 @@ connection::set_deadline(const std::chrono::seconds delta) -> void {
 connection::get_send_buf() const -> const char * {
   // NOLINTNEXTLINE (*-reinterpret-cast)
   return reinterpret_cast<const char *>(
-    req.is_covered_request() ? resp_cov.data() : resp.data());
+    req.is_covered_request() ? std::data(resp_cov) : std::data(resp));
 }
 
 auto
@@ -149,7 +149,7 @@ connection::read_query() -> void {
   set_deadline(comm_timeout_sec);
   auto self = shared_from_this();
   asio::async_read(
-    socket, asio::buffer(query.data(), query.n_bytes()),
+    socket, asio::buffer(std::data(query), query.n_bytes()),
     [this, self](const auto ec, const auto n_bytes) -> std::size_t {
       query_stats.update(n_bytes);
       set_deadline(comm_timeout_sec);

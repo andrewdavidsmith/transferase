@@ -130,12 +130,12 @@ parse(char const *first, char const *last, request &req) -> std::error_code {
 
 [[nodiscard]] auto
 compose(request_buffer &buf, const request &req) -> std::error_code {
-  return compose(buf.data(), buf.data() + std::size(buf), req);
+  return compose(std::data(buf), std::data(buf) + std::size(buf), req);
 }
 
 [[nodiscard]] auto
 parse(const request_buffer &buf, request &req) -> std::error_code {
-  return parse(buf.data(), buf.data() + std::size(buf), req);
+  return parse(std::data(buf), std::data(buf) + std::size(buf), req);
 }
 
 [[nodiscard]] auto

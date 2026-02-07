@@ -224,7 +224,7 @@ write_bedlike_bins_impl(
 
   std::vector<char> line(bins_writer::output_buffer_size);
   // NOLINTNEXTLINE (*-pointer-arithmetic)
-  const auto line_end = line.data() + std::size(line);
+  const auto line_end = std::data(line) + std::size(line);
   auto error = std::errc{};
 
   const auto n_levels = levels.n_cols;
@@ -232,7 +232,7 @@ write_bedlike_bins_impl(
 
   const auto zipped = std::views::zip(meta.chrom_size, meta.chrom_order);
   for (const auto [chrom_size, chrom_name] : zipped) {
-    auto line_beg = line.data();
+    auto line_beg = std::data(line);
     push_buffer(line_beg, line_end, error, chrom_name, rowname_delim);
 
     for (std::uint32_t bin_beg = 0; bin_beg < chrom_size; bin_beg += bin_size) {
@@ -246,7 +246,7 @@ write_bedlike_bins_impl(
       if (write_n_cpgs)
         push_buffer(cursor, line_end, error, delim, n_cpgs[i]);
       push_buffer(cursor, line_end, error, newline);
-      out.write(line.data(), std::distance(line.data(), cursor));
+      out.write(std::data(line), std::distance(std::data(line), cursor));
       ++i;
     }
   }
@@ -283,7 +283,7 @@ write_bins_dfscores_impl(
 
   std::vector<char> line(bins_writer::output_buffer_size);
   // NOLINTNEXTLINE (*-pointer-arithmetic)
-  const auto line_end = line.data() + std::size(line);
+  const auto line_end = std::data(line) + std::size(line);
   auto error = std::errc{};
 
   const auto n_levels = levels.n_cols;
@@ -291,7 +291,7 @@ write_bins_dfscores_impl(
 
   const auto zipped = std::views::zip(meta.chrom_size, meta.chrom_order);
   for (const auto [chrom_size, chrom_name] : zipped) {
-    auto line_beg = line.data();
+    auto line_beg = std::data(line);
     push_buffer(line_beg, line_end, error, chrom_name, rowname_delim);
     for (std::uint32_t bin_beg = 0; bin_beg < chrom_size; bin_beg += bin_size) {
       auto cursor = line_beg;
@@ -302,7 +302,7 @@ write_bins_dfscores_impl(
       if (write_n_cpgs)
         push_buffer(cursor, line_end, error, delim, n_cpgs[i]);
       push_buffer(cursor, line_end, error, newline);
-      out.write(line.data(), std::distance(line.data(), cursor));
+      out.write(std::data(line), std::distance(std::data(line), cursor));
       ++i;
     }
   }
@@ -352,7 +352,7 @@ write_bins_dataframe_impl(
 
   std::vector<char> line(bins_writer::output_buffer_size);
   // NOLINTNEXTLINE (*-pointer-arithmetic)
-  const auto line_end = line.data() + std::size(line);
+  const auto line_end = std::data(line) + std::size(line);
   auto error = std::errc{};
 
   const auto n_levels = levels.n_cols;
@@ -360,7 +360,7 @@ write_bins_dataframe_impl(
 
   const auto zipped = std::views::zip(meta.chrom_size, meta.chrom_order);
   for (const auto [chrom_size, chrom_name] : zipped) {
-    auto line_beg = line.data();
+    auto line_beg = std::data(line);
     push_buffer(line_beg, line_end, error, chrom_name, rowname_delim);
     for (std::uint32_t bin_beg = 0; bin_beg < chrom_size; bin_beg += bin_size) {
       auto cursor = line_beg;
@@ -370,7 +370,7 @@ write_bins_dataframe_impl(
       if (write_n_cpgs)
         push_buffer(cursor, line_end, error, delim, n_cpgs[i]);
       push_buffer(cursor, line_end, error, newline);
-      out.write(line.data(), std::distance(line.data(), cursor));
+      out.write(std::data(line), std::distance(std::data(line), cursor));
       ++i;
     }
   }

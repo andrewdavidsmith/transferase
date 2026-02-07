@@ -47,18 +47,19 @@ find_path_to_binary() -> std::string {
 
 #if defined(__linux__)
   const ssize_t length =
-    readlink("/proc/self/exe", path_buf.data(), path_buf_len - 1);
+    readlink("/proc/self/exe", std::data(path_buf), path_buf_len - 1);
   if (length != -1)
-    return std::string{path_buf.data()};
+    return std::string{std::data(path_buf)};
 #elif defined(__APPLE__)
   const pid_t pid = getpid();
-  const ssize_t length = proc_pidpath(pid, path_buf.data(), path_buf_len);
+  const ssize_t length = proc_pidpath(pid, std::data(path_buf), path_buf_len);
   if (length > 0)
-    return std::string{path_buf.data()};
+    return std::string{std::data(path_buf)};
 #elif defined(_WIN32)
-  const DWORD size = GetModuleFileName(nullptr, path_buf.data(), path_buf_len);
+  const DWORD size =
+    GetModuleFileName(nullptr, std::data(path_buf), path_buf_len);
   if (size > 0)
-    return std::string{path_buf.data()};
+    return std::string{std::data(path_buf)};
 #else
   (void)path_buf;
 #endif

@@ -48,7 +48,7 @@ get_username() -> std::tuple<std::string, std::error_code> {
   struct passwd pwd;  // NOLINT
   struct passwd *result = nullptr;
   std::array<char, bufsize> buf{};
-  const auto s = getpwuid_r(getuid(), &pwd, buf.data(), bufsize, &result);
+  const auto s = getpwuid_r(getuid(), &pwd, std::data(buf), bufsize, &result);
   if (result == nullptr)
     return {std::string{},
             std::make_error_code(s == 0 ? std::errc::invalid_argument

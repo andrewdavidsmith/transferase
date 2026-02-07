@@ -203,7 +203,7 @@ public:
       std::lock_guard lck{mtx};
       format_time();
       const auto end_pos = fill_buffer<the_level>(msg);
-      log_file->write(buf.data(), std::distance(buf.data(), end_pos));
+      log_file->write(std::data(buf), std::distance(std::data(buf), end_pos));
       log_file->flush();
     }
   }
@@ -216,7 +216,7 @@ public:
       std::lock_guard lck{mtx};
       format_time();
       const auto end_pos = fill_buffer<the_level>(msg);
-      log_file->write(buf.data(), std::distance(buf.data(), end_pos));
+      log_file->write(std::data(buf), std::distance(std::data(buf), end_pos));
       log_file->flush();
     }
   }
@@ -295,7 +295,7 @@ private:
     static constexpr auto lvl = level_name[std::to_underlying(the_level)];
     static constexpr auto sz = std::size(lvl);
     auto buf_data_itr = cursor;
-    std::memcpy(buf_data_itr, lvl.data(), sz);
+    std::memcpy(buf_data_itr, std::data(lvl), sz);
     buf_data_itr += sz;
     *buf_data_itr++ = delim;
     // current message might be larger than remaining part of buffer, so
@@ -303,7 +303,7 @@ private:
     const auto n_bytes =
       std::min(std::size(msg),
                static_cast<std::size_t>(std::distance(buf_data_itr, buf_lim)));
-    std::memcpy(buf_data_itr, msg.data(), n_bytes);
+    std::memcpy(buf_data_itr, std::data(msg), n_bytes);
     buf_data_itr += n_bytes;
     *buf_data_itr++ = '\n';
     return buf_data_itr;
@@ -315,7 +315,7 @@ private:
     const auto now_time_t = std::chrono::system_clock::to_time_t(now);
     struct tm tm;
     localtime_r(&now_time_t, &tm);  // localtime_r is thread-safe
-    std::strftime(buf.data(), std::size(buf), "%Y-%m-%d %H:%M:%S", &tm);
+    std::strftime(std::data(buf), std::size(buf), "%Y-%m-%d %H:%M:%S", &tm);
     buf[date_time_fmt_size] = delim;  // without this, we always get a
                                       // '\0' in the log message
   }

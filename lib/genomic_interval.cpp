@@ -45,9 +45,9 @@ parse(const genome_index_metadata &meta, const std::string &line,
       std::error_code &ec) noexcept -> genomic_interval {
   // NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 
-  auto cursor = line.data();
+  auto cursor = std::data(line);
   const auto line_sz = std::size(line);
-  const auto line_end = line.data() + line_sz;
+  const auto line_end = std::data(line) + line_sz;
 
   // Parse chromosome name
   auto first_space_pos = line.find_first_of(" \t");

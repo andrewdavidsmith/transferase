@@ -119,13 +119,13 @@ parse(const char *first, const char *last,
 [[nodiscard]] auto
 compose(response_header_buffer &buf,
         const response_header &hdr) noexcept -> std::error_code {
-  return compose(buf.data(), buf.data() + resp_hdr_sz, hdr);
+  return compose(std::data(buf), std::data(buf) + resp_hdr_sz, hdr);
 }
 
 [[nodiscard]] auto
 parse(const response_header_buffer &buf,
       response_header &hdr) noexcept -> std::error_code {
-  return parse(buf.data(), buf.data() + resp_hdr_sz, hdr);
+  return parse(std::data(buf), std::data(buf) + resp_hdr_sz, hdr);
 }
 
 [[nodiscard]] auto

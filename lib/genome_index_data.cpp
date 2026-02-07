@@ -69,7 +69,7 @@ genome_index_data::read(const std::string &data_file,
     const auto n_bytes_expected =
       static_cast<std::streamsize>(n_cpgs_chrom * sizeof(std::uint32_t));
     // NOLINTNEXTLINE(*-reinterpret-cast)
-    in.read(reinterpret_cast<char *>(data.positions.back().data()),
+    in.read(reinterpret_cast<char *>(std::data(data.positions.back())),
             n_bytes_expected);
     const auto read_ok = static_cast<bool>(in);
     const auto n_bytes = in.gcount();
@@ -109,7 +109,7 @@ genome_index_data::write(const std::string &data_file) const noexcept
   for (const auto &cpgs : positions) {
     out.write(
       // NOLINTNEXTLINE(*-reinterpret-cast)
-      reinterpret_cast<const char *>(cpgs.data()),
+      reinterpret_cast<const char *>(std::data(cpgs)),
       static_cast<std::streamsize>(sizeof(std::uint32_t) * std::size(cpgs)));
     const auto write_ok = static_cast<bool>(out);
     if (!write_ok)
@@ -193,7 +193,7 @@ genome_index_data::hash() const noexcept -> std::uint64_t {
   std::uint64_t combined = 1;  // from the zlib docs to init
   for (const auto &p : positions)
     combined =
-      update_adler(combined, p.data(), std::size(p) * sizeof(genome_pos_t));
+      update_adler(combined, std::data(p), std::size(p) * sizeof(genome_pos_t));
   return combined;
 }
 

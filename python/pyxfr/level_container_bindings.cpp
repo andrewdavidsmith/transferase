@@ -65,7 +65,7 @@ level_container_bindings(
     [](level_container &self) {
       using nparray = nb::ndarray<std::uint32_t, nb::numpy,
                                   nb::shape<-1, -1, 2>, nb::c_contig>;
-      return nparray(self.v.data(), {self.n_cols, self.n_rows, 2}).cast();
+      return nparray(std::data(self.v), {self.n_cols, self.n_rows, 2}).cast();
     },
     nb::rv_policy::reference_internal);
   cls.def(
@@ -161,7 +161,7 @@ level_container_bindings(
       using nparray =
         nb::ndarray<float, nb::numpy, nb::shape<-1, -1, 2>, nb::c_contig>;
       auto m = self.get_wmeans(min_reads);
-      return nparray(m.data(), {self.n_cols, self.n_rows, 2}).cast();
+      return nparray(std::data(m), {self.n_cols, self.n_rows, 2}).cast();
     },
     nb::rv_policy::reference_internal,
     R"doc(
@@ -209,7 +209,7 @@ level_container_covered_bindings(
     [](level_container &self) {
       using nparray = nb::ndarray<std::uint32_t, nb::numpy,
                                   nb::shape<-1, -1, 3>, nb::c_contig>;
-      return nparray(self.v.data(), {self.n_cols, self.n_rows, 3}).cast();
+      return nparray(std::data(self.v), {self.n_cols, self.n_rows, 3}).cast();
     },
     nb::rv_policy::reference_internal);
   cls.def(
@@ -328,7 +328,7 @@ level_container_covered_bindings(
       using nparray =
         nb::ndarray<float, nb::numpy, nb::shape<-1, -1, 2>, nb::c_contig>;
       auto m = self.get_wmeans(min_reads);
-      return nparray(m.data(), {self.n_cols, self.n_rows, 2}).cast();
+      return nparray(std::data(m), {self.n_cols, self.n_rows, 2}).cast();
     },
     nb::rv_policy::reference_internal,
     R"doc(

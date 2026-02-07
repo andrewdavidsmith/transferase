@@ -104,7 +104,8 @@ write_pid_to_file(const std::string &pid_filename,
   }
   lgr.info("transferase daemon pid file: {}", pid_filename);
   const auto pid_str = std::format("{}", pid);
-  out.write(pid_str.data(), static_cast<std::streamsize>(std::size(pid_str)));
+  out.write(std::data(pid_str),
+            static_cast<std::streamsize>(std::size(pid_str)));
   if (!out) {
     ec = std::make_error_code(std::errc{errno});
     lgr.error("Error writing pid file {}: {}", pid_filename, ec);
@@ -215,7 +216,7 @@ server::server(const std::string &address, const std::string &port,
   // from being unmounted. Changing to root dir avoids this problem.
   // chdir("/");
   const int chdir_ret =
-    chdir(std::filesystem::current_path().root_path().string().data());
+    chdir(std::data(std::filesystem::current_path().root_path().string()));
   if (chdir_ret) {
     ec = std::make_error_code(std::errc(errno));
     lgr.error("Server failed to change directory: {}", ec);
@@ -277,7 +278,7 @@ server::server(const std::string &address, const std::string &port,
   }
   const int flags = O_WRONLY | O_CREAT | O_APPEND;
   const mode_t mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;  // 644
-  open_value = open(output.data(), flags, mode);
+  open_value = open(std::data(output), flags, mode);
   if (open_value < 0) {
     ec = std::make_error_code(std::errc(errno));
     lgr.error("Unable to open output file {}: {}", output, ec);
@@ -402,7 +403,7 @@ server::do_daemon_await_stop() -> void {
     lgr.warning("Received signal {} ({})", strsignal(signo), ec);
     const auto message = std::format("Daemon stopped (pid: {})", getpid());
     // NOLINTBEGIN(cppcoreguidelines-pro-type-vararg)
-    syslog(LOG_INFO | LOG_USER, "%s", message.data());
+    syslog(LOG_INFO | LOG_USER, "%s", std::data(message));
     // NOLINTEND(cppcoreguidelines-pro-type-vararg)
     lgr.info(message);
     const auto pid_file_exists = std::filesystem::exists(pid_filename, ec);

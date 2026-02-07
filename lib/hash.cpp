@@ -43,8 +43,8 @@ get_adler(const std::string &filename) -> std::uint64_t {
   assert(ec == std::error_code{});
   std::vector<char> buf(filesize);
   std::ifstream in(filename);
-  in.read(buf.data(), filesize);
-  return get_adler(buf.data(), filesize);
+  in.read(std::data(buf), filesize);
+  return get_adler(std::data(buf), filesize);
 }
 
 // ADS: this function should be replaced by one that can operate on a
@@ -61,11 +61,11 @@ get_adler(const std::string &filename, std::error_code &ec) -> std::uint64_t {
     ec = std::make_error_code(std::errc(errno));
     return 0;
   }
-  if (!in.read(buf.data(), filesize)) {
+  if (!in.read(std::data(buf), filesize)) {
     ec = std::make_error_code(std::errc(errno));
     return 0;
   }
-  return get_adler(buf.data(), filesize);
+  return get_adler(std::data(buf), filesize);
 }
 
 }  // namespace transferase
