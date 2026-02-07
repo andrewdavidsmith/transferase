@@ -31,8 +31,9 @@
 #include <ctime>
 #include <filesystem>
 #include <fstream>
-#include <print>    // IWYU pragma: keep
-#include <sstream>  // IWYU pragma: keep
+#include <iterator>  // for std::data
+#include <print>     // IWYU pragma: keep
+#include <sstream>   // IWYU pragma: keep
 #include <string>
 #include <system_error>
 #include <tuple>  // IWYU pragma: keep

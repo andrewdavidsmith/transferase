@@ -36,6 +36,7 @@
 
 #include <chrono>
 #include <cstdint>
+#include <iterator>  // for std::data
 #include <memory>
 #include <string>
 #include <system_error>

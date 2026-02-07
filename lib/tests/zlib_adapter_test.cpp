@@ -43,13 +43,13 @@ using namespace transferase;  // NOLINT
 static auto
 create_gzipped_file(const std::string &content) -> std::string {
   const auto filename = generate_temp_filename("test_file", "gz");
-  gzFile gz = gzopen(filename.data(), "wb");
+  gzFile gz = gzopen(std::data(filename), "wb");
   assert(gz != nullptr);
   const std::int64_t content_size =
     // NOLINT (cppcoreguidelines-narrowing-conversions)
     static_cast<std::int64_t>(std::size(content));
   [[maybe_unused]] const std::int64_t bytes_written =
-    gzwrite(gz, content.data(), content_size);
+    gzwrite(gz, std::data(content), content_size);
   assert(bytes_written == content_size);
   gzclose(gz);
   return filename;
@@ -98,7 +98,7 @@ TEST(zlib_adapter_test, corrupted_gz_file) {
   const auto gzfile = generate_temp_filename("corrupted", "gz");
   {
     std::unique_ptr<FILE, decltype(closer)> file(
-      std::fopen(gzfile.data(), "wb"), closer);
+      std::fopen(std::data(gzfile), "wb"), closer);
     EXPECT_NE(file, nullptr);  // NOLINT
     // Write the gzip header: Magic Number (0x1F 0x8B), Compression Method
     // (DEFLATE)
@@ -179,7 +179,7 @@ TEST(zlib_adapter_test, empty_file) {
 
   {
     std::unique_ptr<FILE, decltype(closer)> file(
-      std::fopen(gzfile.data(), "wb"), closer);
+      std::fopen(std::data(gzfile), "wb"), closer);
     EXPECT_NE(file, nullptr);  // NOLINT
   }
 

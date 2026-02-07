@@ -71,7 +71,7 @@ protected:
     if (!out)
       throw std::runtime_error("failed to open config file to write mock");
     const auto sz = static_cast<std::streamsize>(std::size(payload));
-    out.write(payload.data(), sz);
+    out.write(std::data(payload), sz);
   }
 
   auto

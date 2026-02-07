@@ -43,7 +43,6 @@ TEST(command_check_test, basic_test) {
 
   // Define command line arguments
   const auto argv = std::array{
-    // clang-format off
     "check",
     "-v",
     "error",
@@ -54,15 +53,15 @@ TEST(command_check_test, basic_test) {
     "-d",
     methylome_directory,
     "-m",
-    methylome_names[0].data(),
-    methylome_names[1].data(),
-    methylome_names[2].data(),
-    // clang-format on
+    std::data(methylome_names[0]),
+    std::data(methylome_names[1]),
+    std::data(methylome_names[2]),
   };
   const int argc = sizeof(argv) / sizeof(argv[0]);
 
   // Run the main function
   // NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast)
-  const int result = command_check_main(argc, const_cast<char **>(argv.data()));
+  const int result =
+    command_check_main(argc, const_cast<char **>(std::data(argv)));
   EXPECT_EQ(result, EXIT_SUCCESS);
 }

@@ -64,7 +64,7 @@ TEST(command_query_test, intervals_basic_local_test) {
     "-i",
     intervals_file,
     "-o",
-    output_file.data(),
+    std::data(output_file),
     "--bed",
     // clang-format on
   };
@@ -72,7 +72,8 @@ TEST(command_query_test, intervals_basic_local_test) {
 
   // Run the main function
   // NOLINTNEXTLINE(*-const-cast)
-  const int result = command_query_main(argc, const_cast<char **>(argv.data()));
+  const int result =
+    command_query_main(argc, const_cast<char **>(std::data(argv)));
 
   // Check that the output file is created
   EXPECT_EQ(result, EXIT_SUCCESS);
@@ -126,7 +127,8 @@ TEST(command_query_test, intervals_basic_local_test_scores) {
 
   // Run the main function
   // NOLINTNEXTLINE(*-const-cast)
-  const int result = command_query_main(argc, const_cast<char **>(argv.data()));
+  const int result =
+    command_query_main(argc, const_cast<char **>(std::data(argv)));
 
   // Check that the output file is created
   EXPECT_EQ(result, EXIT_SUCCESS);
@@ -177,7 +179,8 @@ TEST(command_query_test, intervals_failing_remote_test) {
 
   // Run the main function
   // NOLINTNEXTLINE(*-const-cast)
-  const int result = command_query_main(argc, const_cast<char **>(argv.data()));
+  const int result =
+    command_query_main(argc, const_cast<char **>(std::data(argv)));
 
   // Check that the output file is created
   EXPECT_NE(result, EXIT_SUCCESS);
@@ -225,7 +228,8 @@ TEST(command_query_test, bins_basic_local_test) {
 
   // Run the main function
   // NOLINTNEXTLINE(*-const-cast)
-  const int result = command_query_main(argc, const_cast<char **>(argv.data()));
+  const int result =
+    command_query_main(argc, const_cast<char **>(std::data(argv)));
 
   // Check that the output file is created
   EXPECT_EQ(result, EXIT_SUCCESS);

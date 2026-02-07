@@ -23,6 +23,10 @@
 
 #include "find_path_to_binary.hpp"
 
+#include <array>
+#include <iterator>  // for std::data
+#include <string>
+
 #if defined(__linux__)
 #include <limits.h>  // IWYU pragma: keep
 #include <unistd.h>
@@ -33,9 +37,6 @@
 #include <iostream>
 #include <windows.h>
 #endif
-
-#include <array>
-#include <string>
 #include <sys/types.h>  // for ssize_t
 
 namespace transferase {

@@ -35,6 +35,7 @@
 #include <cerrno>
 #include <chrono>
 #include <format>
+#include <iterator>  // for std::data
 #include <string>
 #include <system_error>
 #include <tuple>

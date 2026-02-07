@@ -322,7 +322,7 @@ get_bin_names(const Rcpp::XPtr<transferase::remote_client> client,
   static constexpr auto buf_size{total_buf_size - 10};  // allow max digits
 
   std::array<char, total_buf_size> buf{};
-  const auto buf_beg = buf.data();
+  const auto buf_beg = std::data(buf);
   const auto buf_end = buf_beg + buf_size;
 
   std::error_code error;
@@ -359,7 +359,7 @@ get_window_names(const Rcpp::XPtr<transferase::remote_client> client,
   static constexpr auto buf_size{total_buf_size - 10};  // allow max digits
 
   std::array<char, total_buf_size> buf{};
-  const auto buf_beg = buf.data();
+  const auto buf_beg = std::data(buf);
   const auto buf_end = buf_beg + buf_size;
 
   std::error_code error;
@@ -394,7 +394,7 @@ get_interval_names(const Rcpp::DataFrame intervals,
   static constexpr auto buf_size{total_buf_size - 10};  // allow max digits
 
   std::array<char, total_buf_size> buf{};
-  const auto buf_beg = buf.data();
+  const auto buf_beg = std::data(buf);
   const auto buf_end = buf_beg + buf_size;
 
   const Rcpp::CharacterVector chroms = intervals[0];
