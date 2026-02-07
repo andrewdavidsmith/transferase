@@ -64,7 +64,7 @@ logger::set_attributes(const std::string_view appname) -> std::error_code {
   // NOLINTBEGIN(*-pointer-arithmetic)
 
   // fill the buffer (after the time fields)
-  cursor = std::data(buf) + date_time_fmt_size;
+  cursor = buf.data() + date_time_fmt_size;
   *cursor++ = delim;
 
   // hostname in buffer
