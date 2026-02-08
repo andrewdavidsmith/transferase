@@ -1,13 +1,13 @@
 /* MIT License
  *
- * Copyright (c) 2024 Andrew D Smith
+ * Copyright (c) 2024-2026 Andrew D Smith
  *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -16,9 +16,9 @@
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
  * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
  */
 
 #ifndef LIB_LOGGER_HPP_
@@ -203,7 +203,7 @@ public:
       std::lock_guard lck{mtx};
       format_time();
       const auto end_pos = fill_buffer<the_level>(msg);
-      log_file->write(std::data(buf), std::distance(std::data(buf), end_pos));
+      log_file->write(buf.data(), std::distance(buf.data(), end_pos));
       log_file->flush();
     }
   }
@@ -216,7 +216,7 @@ public:
       std::lock_guard lck{mtx};
       format_time();
       const auto end_pos = fill_buffer<the_level>(msg);
-      log_file->write(std::data(buf), std::distance(std::data(buf), end_pos));
+      log_file->write(buf.data(), std::distance(buf.data(), end_pos));
       log_file->flush();
     }
   }
@@ -316,8 +316,8 @@ private:
     struct tm tm;
     localtime_r(&now_time_t, &tm);  // localtime_r is thread-safe
     std::strftime(std::data(buf), std::size(buf), "%Y-%m-%d %H:%M:%S", &tm);
-    buf[date_time_fmt_size] = delim;  // without this, we always get a
-                                      // '\0' in the log message
+    buf[date_time_fmt_size] = delim;  // without this, we always get a '\0' in
+                                      // the log message
   }
 };  // struct logger
 
