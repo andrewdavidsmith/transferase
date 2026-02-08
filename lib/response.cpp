@@ -124,8 +124,8 @@ compose(
 }
 
 [[nodiscard]] auto
-parse(const response_header_buffer &buf,
-      response_header &hdr) noexcept -> std::error_code {
+parse(const response_header_buffer &buf, response_header &hdr) noexcept
+  -> std::error_code {
   return parse(std::data(buf), std::data(buf) + resp_hdr_sz, hdr);
 }
 
