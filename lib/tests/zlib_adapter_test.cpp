@@ -127,7 +127,7 @@ TEST(zlib_adapter_test, corrupted_gz_file) {
   // Should return an error
   EXPECT_TRUE(ec);
   // Protocol error (invalid gzip format)
-  EXPECT_EQ(ec, zlib_adapter_error_code::unexpected_return_code);
+  EXPECT_EQ(ec, zlib_adapter_error_code::z_data_error) << ec.message();
 
   if (std::filesystem::exists(gzfile)) {
     const bool remove_ok = std::filesystem::remove(gzfile);
