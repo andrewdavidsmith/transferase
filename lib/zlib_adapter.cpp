@@ -120,31 +120,32 @@ read_gzfile_into_buffer(const std::string &filename)
   -> std::tuple<std::vector<char>, std::error_code> {
   static constexpr auto buf_size = 1024 * 1024;
 
+  std::error_code ec{};
+  const auto filesize = std::filesystem::file_size(filename, ec);
+  if (ec || filesize == 0)
+    return std::make_tuple(std::vector<char>{}, ec);
+
   gzFile gz = gzopen(filename.data(), "rb");
   if (!gz)
     return {std::vector<char>{}, std::make_error_code(std::errc(errno))};
 
   std::array<char, buf_size> buf{};
   std::vector<char> buffer;
-  const auto filesize = std::filesystem::file_size(filename);
   buffer.reserve(filesize);
 
-  // ADS: now tracking total bytes because ZLib v1.3.2 is behaving strangely
-  std::uint64_t total_bytes{};
   std::int32_t n_bytes{};
-  while ((n_bytes = gzread(gz, buf.data(), buf_size)) > 0) {
+
+  // ADS: now tracking gz_error state because ZLib v1.3.2 is behaving strangely
+  int errnum{};
+  while (errnum == 0 && (n_bytes = gzread(gz, buf.data(), buf_size)) > 0) {
     std::ranges::copy_n(buf.data(), n_bytes, std::back_inserter(buffer));
-    total_bytes += n_bytes;
+    gzerror(gz, &errnum);
   }
+  gzerror(gz, &errnum);
   gzclose(gz);
 
-  // ADS: checking that any bytes are read because the error code logic seems
-  // a bit broken in ZLib v1.3.2
-  if (n_bytes < 0 || (filesize > 0 && total_bytes == 0))
-    return {std::vector<char>{},
-            std::error_code{zlib_adapter_error_code::unexpected_return_code}};
-
-  return std::make_tuple(std::move(buffer), std::error_code{});
+  return std::make_tuple(std::move(buffer),
+                         std::error_code{zlib_adapter_error_code(errnum)});
 }
 
 }  // namespace transferase
