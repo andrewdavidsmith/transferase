@@ -49,17 +49,16 @@
 // #define Z_BUF_ERROR    (-5)
 // #define Z_VERSION_ERROR (-6)
 // clang-format on
-enum class zlib_adapter_error_code : std::uint8_t {
+enum class zlib_adapter_error_code : std::int8_t {
+  z_version_error = -6,
+  z_buf_error = -5,
+  z_mem_error = -4,
+  z_data_error = -3,
+  z_stream_error = -2,
+  z_errno = -1,
   ok = 0,
   z_stream_end = 1,
   z_need_dict = 2,
-  z_errno = 3,
-  z_stream_error = 4,
-  z_data_error = 5,
-  z_mem_error = 6,
-  z_buf_error = 7,
-  z_version_error = 8,
-  unexpected_return_code = 9,
 };
 
 template <>
@@ -75,13 +74,12 @@ struct zlib_adapter_error_category : std::error_category {
     case 0: return "ok"s;
     case 1: return "Z_STREAM_END"s;
     case 2: return "Z_NEED_DICT"s;
-    case 3: return "Z_ERRNO"s;
-    case 4: return "Z_STREAM_ERROR"s;
-    case 5: return "Z_DATA_ERROR"s;
-    case 6: return "Z_MEM_ERROR"s;
-    case 7: return "Z_BUF_ERROR"s;
-    case 8: return "Z_VERSION_ERROR"s;
-    case 9: return "unexpected return code from zlib"s;
+    case -6: return "Z_VERSION_ERROR"s;
+    case -5: return "Z_BUF_ERROR"s;
+    case -4: return "Z_MEM_ERROR"s;
+    case -3: return "Z_DATA_ERROR"s;
+    case -2: return "Z_STREAM_ERROR"s;
+    case -1: return "Z_ERRNO"s;
     }
     std::unreachable();
   }
