@@ -37,9 +37,7 @@ namespace transferase {
 
 template <typename T> class lru_tracker {
 public:
-  explicit lru_tracker(const std::size_t capacity) : capacity{capacity} {
-    assert(capacity > 0);
-  }
+  explicit lru_tracker(const std::size_t capacity) : capacity{capacity} {}
 
   [[nodiscard]] auto
   size() const noexcept -> std::size_t {
