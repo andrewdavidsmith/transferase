@@ -34,12 +34,11 @@
 using namespace transferase;  // NOLINT
 
 TEST(methylome_data_test, basic_assertions) {
-  // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
-  std::uint32_t n_meth{65536};
-  std::uint32_t n_unmeth{65536};
-  const std::uint32_t rounded_n_meth{65535};
-  const std::uint32_t rounded_n_unmeth{65535};
-  // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
+  static constexpr std::uint32_t max_value_for_counts = 65535;
+  std::uint32_t n_meth{max_value_for_counts};
+  std::uint32_t n_unmeth{max_value_for_counts};
+  const std::uint32_t rounded_n_meth{max_value_for_counts};
+  const std::uint32_t rounded_n_unmeth{max_value_for_counts};
   conditional_round_to_fit<mcount_t>(n_meth, n_unmeth);
   EXPECT_EQ(std::make_pair(n_meth, n_unmeth),
             std::make_pair(rounded_n_meth, rounded_n_unmeth));
@@ -57,5 +56,5 @@ TEST(methylome_data_test, valid_read) {
   const auto data = methylome_data::read(dirname, methylome_name, meta, ec);
   EXPECT_FALSE(ec);
 
-  EXPECT_EQ(size(data), expected_data_size);
+  EXPECT_EQ(std::size(data), expected_data_size);
 }

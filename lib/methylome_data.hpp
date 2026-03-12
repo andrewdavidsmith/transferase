@@ -47,7 +47,7 @@ struct genome_index;
 struct methylome_metadata;
 struct query_container;
 
-typedef std::uint16_t mcount_t;
+using mcount_t = std::uint16_t;
 
 /// @brief A pair of counts for methylated and unmethylated observations at a
 /// single site (e.g., CpG) in the genome.
@@ -197,6 +197,11 @@ struct methylome_data {
     return std::format("{}{}", wo_extn, filename_extension);
   }
 
+  [[nodiscard]] auto
+  size() const {
+    return std::size(cpgs);
+  }
+
   methylome_data::vec cpgs{};
   static constexpr auto record_size = sizeof(mcount_pair);
 };
@@ -226,11 +231,6 @@ conditional_round_to_fit(U &a, U &b) noexcept -> void {
   // ADS: optimization possible here?
   if (std::max(a, b) > std::numeric_limits<T>::max())
     round_to_fit<T>(a, b);
-}
-
-[[nodiscard]] inline auto
-size(const methylome_data &data) {
-  return std::size(data.cpgs);
 }
 
 }  // namespace transferase
