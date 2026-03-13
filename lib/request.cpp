@@ -1,13 +1,13 @@
 /* MIT License
  *
- * Copyright (c) 2024 Andrew D Smith
+ * Copyright (c) 2024-2026 Andrew D Smith
  *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -16,9 +16,9 @@
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
  * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
  */
 
 #include "request.hpp"
@@ -43,21 +43,21 @@ std::uint32_t request::min_window_size = request::min_window_size_default;
 std::uint32_t request::min_window_step = request::min_window_step_default;
 
 [[nodiscard]] STATIC INLINE auto
-compose(char *first, char const *last, const request &req) -> std::error_code {
+compose(char *buffer, const char *last, const request &req) -> std::error_code {
   // ADS: use to_chars here
-  const std::string s = std::format("{}\n", req.tostring());
+  const auto s = req.tostring();
   if (std::size(s) >= request_buffer_size)
     return request_error_code::request_too_large;
 
 #ifndef NDEBUG
   typedef std::iterator_traits<char *>::difference_type diff_type;
-  const auto first_const = static_cast<char const *>(first);
+  const auto buffer_const = static_cast<const char *>(buffer);
   const auto dt_size_s = static_cast<diff_type>(std::size(s));
-  assert(dt_size_s < std::distance(first_const, last));
+  assert(dt_size_s < std::distance(buffer_const, last));
 #endif
 
   // std::ranges::in_out_result
-  auto data_end = std::ranges::copy(s, first);
+  auto data_end = std::ranges::copy(s, buffer);
   if (data_end.out == last)
     return std::make_error_code(std::errc::result_out_of_range);
   *data_end.out = '\0';  // enables strlen, convenient for debugging
@@ -65,13 +65,13 @@ compose(char *first, char const *last, const request &req) -> std::error_code {
 }
 
 [[nodiscard]] STATIC inline auto
-parse(char const *first, char const *last, request &req) -> std::error_code {
+parse(const char *buffer, const char *last, request &req) -> std::error_code {
   static constexpr auto delim = '\t';
   static constexpr auto term = '\n';
 
   req = request{};  // reset everything
 
-  auto cursor = first;
+  auto cursor = buffer;
 
   // request type
   {
