@@ -141,6 +141,7 @@ struct request {
     auto s =
       std::format("{}\t{}\t{}", to_string(request_type), index_hash, aux_value);
     for (const auto &methylome_name : methylome_names)
+      // cppcheck-suppress useStlAlgorithm
       s += std::format("\t{}", methylome_name);
     s += '\n';
     return s;
