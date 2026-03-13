@@ -58,7 +58,7 @@ static constexpr std::underlying_type_t<request_type_code> n_xfr_request_types =
 
 [[nodiscard]] inline auto
 to_string(const request_type_code c) -> std::string {
-  return std::format("{}", std::to_underlying(c));
+  return std::to_string(std::to_underlying(c));
 }
 
 }  // namespace transferase
