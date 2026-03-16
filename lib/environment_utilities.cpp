@@ -25,16 +25,15 @@
 
 #include <config.h>
 
-#include <asio.hpp>  // asio::ip::host_name();
-
 // getpwuid_r
 #include <pwd.h>
-#include <unistd.h>  // for getuid
+#include <unistd.h>  // for getuid, gethostname
 
 #include <array>
 #include <cerrno>
 #include <chrono>
 #include <format>
+#include <iterator>
 #include <string>
 #include <system_error>
 #include <tuple>
@@ -48,7 +47,7 @@ get_username() -> std::tuple<std::string, std::error_code> {
   struct passwd pwd;  // NOLINT
   struct passwd *result = nullptr;
   std::array<char, bufsize> buf{};
-  const auto s = getpwuid_r(getuid(), &pwd, buf.data(), bufsize, &result);
+  const auto s = getpwuid_r(getuid(), &pwd, std::data(buf), bufsize, &result);
   if (result == nullptr)
     return {std::string{},
             std::make_error_code(s == 0 ? std::errc::invalid_argument
@@ -70,11 +69,12 @@ get_time_as_string() -> std::string {
 
 [[nodiscard]] auto
 get_hostname() -> std::tuple<std::string, std::error_code> {
-  std::error_code ec;
-  const auto host = asio::ip::host_name(ec);
-  if (ec)
-    return {std::string{}, ec};
-  return {host, std::error_code{}};
+  static constexpr auto hostname_max = 64;
+  std::array<char, hostname_max> host{};
+  const int result = gethostname(std::data(host), hostname_max);
+  if (result)
+    return {std::string{}, std::make_error_code(std::errc(errno))};
+  return {std::string{std::data(host)}, std::error_code{}};
 }
 
 [[nodiscard]] auto
