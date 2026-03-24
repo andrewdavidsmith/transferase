@@ -390,13 +390,15 @@ command_format_main(int argc, char *argv[]) -> int {  // NOLINT(*-c-arrays)
 
   CLI::App app{about_msg};
   argv = app.ensure_utf8(argv);
+  app.formatter(std::make_shared<transferase_formatter>());
   app.usage(usage);
   if (argc >= 2)
     app.footer(description_msg);
   app.get_formatter()->column_width(column_width_default);
   app.get_formatter()->label("REQUIRED", "REQD");
-  app.set_help_flag("-h,--help", "Print a detailed help message and exit");
+
   // clang-format off
+  app.set_help_flag("-h,--help", "Print a detailed help message and exit");
   const auto config_dir_opt =
     app.add_option("-c,--config-dir", config_dir,
                    "specify a config directory")

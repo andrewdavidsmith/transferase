@@ -1332,6 +1332,7 @@ command_select_main(int argc,
 
   CLI::App app{about_msg};
   argv = app.ensure_utf8(argv);
+  app.formatter(std::make_shared<transferase_formatter>());
   app.usage(usage);
   if (argc >= 2)
     app.footer(description_msg);
