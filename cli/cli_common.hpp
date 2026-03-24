@@ -29,10 +29,14 @@
 #include <string>
 #include <vector>
 
-static const int column_width_default = 30;
+static constexpr auto column_width_default = 30;
 
 class transferase_formatter : public CLI::Formatter {
 public:
+  transferase_formatter() : Formatter() {
+    long_option_alignment_ratio(0.2);
+    enable_footer_formatting(false);
+  }
   auto
   make_option_desc(const CLI::Option *opt) const -> std::string override {
     static constexpr auto max_descr_width = 50;
