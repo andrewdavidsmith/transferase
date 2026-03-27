@@ -38,7 +38,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
       - name: Upload the packages
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: transferase-${{ steps.get-vn.outputs.vn }}-Linux
           path: build/transferase-${{ steps.get-vn.outputs.vn }}-Linux.*
