@@ -10,7 +10,7 @@ jobs:
   linux-releases:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Start docker container
         # Pull the container, run it in detached mode, mount the workspace
         run: |
