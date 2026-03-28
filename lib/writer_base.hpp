@@ -45,7 +45,7 @@ template <typename T> struct writer_base {
   static constexpr auto max_digits = 10;
   static constexpr auto max_cols = 3;
   // ADS: below = (max_digits) x (max_methylomes) x (max_cols)
-  // <= 10 x 200 x 3;
+  // <= 10 x 50 x 3;
   static constexpr auto output_buffer_size{
     max_digits * request::max_methylomes_per_request * max_cols};
 
