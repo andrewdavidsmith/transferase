@@ -38,11 +38,11 @@
 
 namespace transferase {
 
-static constexpr std::uint32_t request_buffer_size{4096};
+static constexpr std::uint32_t request_buffer_size{512};
 typedef std::array<char, request_buffer_size> request_buffer;
 
 struct request {
-  static constexpr auto max_methylomes_per_request = 200;
+  static constexpr auto max_methylomes_per_request = 50;
   static constexpr auto max_intervals_default = 2'000'000;
   static constexpr auto min_bin_size_default = 100;
   static constexpr auto min_window_size_default = 100;
@@ -84,8 +84,8 @@ struct request {
   }
 
   [[nodiscard]] static auto
-  get_aux_for_windows(const std::uint64_t sz, const std::uint64_t stp)
-    -> std::uint64_t {
+  get_aux_for_windows(const std::uint64_t sz,
+                      const std::uint64_t stp) -> std::uint64_t {
     return sz << 32 | stp;
   };
 
