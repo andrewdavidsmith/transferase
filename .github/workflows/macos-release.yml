@@ -14,7 +14,7 @@ jobs:
         os: [macos-15-intel, macos-14]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Update Homebrew
         run: brew update
       - name: Install dependencies
@@ -103,7 +103,7 @@ jobs:
         run: |
           mv build/cli/xfr build/cli/xfr_$(uname -m)
       - name: Upload the binaries
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: transferase-${{ steps.vars.outputs.vn }}-${{ matrix.os }}-${{ steps.vars.outputs.arch }}
           path: |
@@ -112,7 +112,7 @@ jobs:
     needs: build-macos-releases
     runs-on: macos-15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Update Homebrew
         run: brew update
       - name: Install dependencies
@@ -124,7 +124,7 @@ jobs:
           -DZLIB_LIBRARY=$(brew --prefix zlib)/lib/libz.a \
           -DPACKAGE=on
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           path: binaries
           pattern: transferase-*
@@ -148,7 +148,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
       - name: Upload the package files
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: transferase-${{ steps.get-vn.outputs.vn }}-macOS
           path: build/transferase-${{ steps.get-vn.outputs.vn }}*
