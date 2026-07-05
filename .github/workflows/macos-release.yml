@@ -16,7 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Update Homebrew
-        run: brew update
+        run: brew update && brew untap aws/tap
       - name: Install dependencies
         run: |
           brew install zlib
@@ -114,7 +114,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Update Homebrew
-        run: brew update
+        run: brew update && brew untap aws/tap
       - name: Install dependencies
         run: |
           brew install zlib libdeflate
