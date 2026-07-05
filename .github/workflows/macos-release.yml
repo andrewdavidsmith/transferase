@@ -16,7 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Update Homebrew
-        run: brew update && brew untap aws/tap
+        run: brew untap aws/tap && brew update
       - name: Install dependencies
         run: |
           brew install zlib
