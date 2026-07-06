@@ -48,6 +48,7 @@ TEST(command_server_test, failing_server_missing_directory) {
   };
   const int argc = static_cast<int>(std::size(argv));
   // NOLINTNEXTLINE(*-const-cast)
-  const int res = command_server_main(argc, const_cast<char **>(argv.data()));
+  const int res =
+    command_server_main(argc, const_cast<char **>(std::data(argv)));
   EXPECT_NE(res, EXIT_SUCCESS);
 }

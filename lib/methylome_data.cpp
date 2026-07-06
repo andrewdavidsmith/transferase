@@ -93,7 +93,7 @@ methylome_data_read(const std::string &filename,
   if (metadata.is_compressed) {
     std::vector<std::uint8_t> buf(filesize);
     const bool read_ok = static_cast<bool>(
-      in.read(reinterpret_cast<char *>(buf.data()), filesize));
+      in.read(reinterpret_cast<char *>(std::data(buf)), filesize));
     const auto n_bytes = in.gcount();
     if (!read_ok || n_bytes != static_cast<std::streamsize>(filesize)) {
       ec = io_error;
@@ -115,7 +115,7 @@ methylome_data_read(const std::string &filename,
   }
   meth.cpgs.resize(metadata.n_cpgs);
   const bool read_ok = static_cast<bool>(
-    in.read(reinterpret_cast<char *>(meth.cpgs.data()), filesize));
+    in.read(reinterpret_cast<char *>(std::data(meth.cpgs)), filesize));
   const auto n_bytes = in.gcount();
   if (!read_ok || n_bytes != static_cast<std::streamsize>(filesize)) {
     ec = io_error;
@@ -173,13 +173,13 @@ methylome_data::write(const std::string &filename,
   // NOLINTBEGIN(*-reinterpret-cast)
   if (zip) {
     const auto n_bytes = static_cast<std::streamsize>(std::size(buf));
-    if (!out.write(reinterpret_cast<const char *>(buf.data()), n_bytes))
+    if (!out.write(reinterpret_cast<const char *>(std::data(buf)), n_bytes))
       return io_error;
   }
   else {
     const auto n_bytes =
       static_cast<std::streamsize>(std::size(cpgs) * record_size);
-    if (!out.write(reinterpret_cast<const char *>(cpgs.data()), n_bytes))
+    if (!out.write(reinterpret_cast<const char *>(std::data(cpgs)), n_bytes))
       return io_error;
   }
   // NOLINTEND(*-reinterpret-cast)
@@ -534,7 +534,7 @@ methylome_data::global_levels<level_element_t>() const noexcept
 
 [[nodiscard]] auto
 methylome_data::hash() const noexcept -> std::uint64_t {
-  return get_adler(cpgs.data(), std::size(cpgs) * record_size);
+  return get_adler(std::data(cpgs), std::size(cpgs) * record_size);
 }
 
 [[nodiscard]] auto

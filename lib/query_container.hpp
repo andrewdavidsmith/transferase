@@ -81,14 +81,14 @@ struct query_container {
   /// @brief Get a pointer to the underlying memory used by this container.
   [[nodiscard]] auto
   data(std::uint32_t n_bytes = 0) -> char * {
-    return reinterpret_cast<char *>(v.data()) + n_bytes;  // NOLINT
+    return reinterpret_cast<char *>(std::data(v)) + n_bytes;  // NOLINT
   }
 
   /// @brief Get a const pointer to the underlying memory used by this
   /// container.
   [[nodiscard]] auto
   data(std::uint32_t n_bytes = 0) const -> const char * {
-    return reinterpret_cast<const char *>(v.data()) + n_bytes;  // NOLINT
+    return reinterpret_cast<const char *>(std::data(v)) + n_bytes;  // NOLINT
   }
 
   // clang-format off

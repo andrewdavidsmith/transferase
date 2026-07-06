@@ -1,6 +1,6 @@
 /* MIT License
  *
- * Copyright (c) 2024 Andrew D Smith
+ * Copyright (c) 2026 Andrew D Smith
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -43,22 +43,24 @@ namespace transferase {
 [[nodiscard]] auto
 find_path_to_binary() -> std::string {
   static constexpr auto path_buf_len = 1024;
-  std::array<char, path_buf_len> path_buf{0};  // init to zeros
+  std::array<char, path_buf_len> path_buf{};
 
 #if defined(__linux__)
+  static constexpr auto exe_path = "/proc/self/exe";
   const ssize_t length =
-    readlink("/proc/self/exe", path_buf.data(), path_buf_len - 1);
+    readlink(exe_path, std::data(path_buf), path_buf_len - 1);
   if (length != -1)
-    return std::string{path_buf.data()};
+    return std::string{std::data(path_buf)};
 #elif defined(__APPLE__)
   const pid_t pid = getpid();
-  const ssize_t length = proc_pidpath(pid, path_buf.data(), path_buf_len);
+  const ssize_t length = proc_pidpath(pid, std::data(path_buf), path_buf_len);
   if (length > 0)
-    return std::string{path_buf.data()};
+    return std::string{std::data(path_buf)};
 #elif defined(_WIN32)
-  const DWORD size = GetModuleFileName(nullptr, path_buf.data(), path_buf_len);
+  const DWORD size =
+    GetModuleFileName(nullptr, std::data(path_buf), path_buf_len);
   if (size > 0)
-    return std::string{path_buf.data()};
+    return std::string{std::data(path_buf)};
 #else
   (void)path_buf;
 #endif

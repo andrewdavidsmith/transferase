@@ -56,7 +56,7 @@ TEST(command_index_test, basic_test) {
     "-x",
     output_directory,
     "-g",
-    "data/lutions/raw/eFlareon.fa.gz",  // genome_path.string().data(),
+    "data/lutions/raw/eFlareon.fa.gz",  // std::data(genome_path.string()),
     "-v",
     "debug",
     // clang-format on
@@ -66,7 +66,7 @@ TEST(command_index_test, basic_test) {
   // Run the main function
   // NOLINTBEGIN(cppcoreguidelines-pro-type-const-cast)
   const int result =
-    command_index_main(command_argc, const_cast<char **>(argv.data()));
+    command_index_main(command_argc, const_cast<char **>(std::data(argv)));
   // NOLINTEND(cppcoreguidelines-pro-type-const-cast)
 
   const auto data_outfile =

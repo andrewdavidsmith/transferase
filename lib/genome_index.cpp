@@ -158,7 +158,7 @@ genome_index::parse_genome_name(
 
 [[nodiscard]] STATIC auto
 mmap_genome(const std::string &filename) noexcept -> genome_file {
-  const int fd = open(filename.data(), O_RDONLY, 0);
+  const int fd = open(std::data(filename), O_RDONLY, 0);
   if (fd < 0)
     return {std::make_error_code(std::errc(errno)), nullptr, 0};
 
@@ -355,9 +355,10 @@ make_genome_index_gzip(const std::string &genome_filename,
   }
 
   // get start and stop positions of chrom names in the file
-  const auto name_starts = get_chrom_name_starts(raw.data(), std::size(raw));
+  const auto name_starts =
+    get_chrom_name_starts(std::data(raw), std::size(raw));
   const auto name_stops =
-    get_chrom_name_stops(name_starts, raw.data(), std::size(raw));
+    get_chrom_name_stops(name_starts, std::data(raw), std::size(raw));
   if (name_starts.empty() || name_stops.empty()) {
     error = genome_index_error_code::failure_processing_fasta_file;
     return {};
@@ -370,7 +371,7 @@ make_genome_index_gzip(const std::string &genome_filename,
        const auto [start, stop] : std::views::zip(name_starts, name_stops))
     // ADS: "+1" below to skip the ">" character
     chrom_sorter.emplace_back(
-      idx++, std::string(raw.data() + start + 1, raw.data() + stop));
+      idx++, std::string(std::data(raw) + start + 1, std::data(raw) + stop));
   std::ranges::sort(chrom_sorter, [](const auto &a, const auto &b) {
     return a.second < b.second;
   });
@@ -380,8 +381,9 @@ make_genome_index_gzip(const std::string &genome_filename,
   meta.chrom_order =
     chrom_sorter | std::views::elements<1> | std::ranges::to<std::vector>();
 
-  // chroms is a view into 'raw.data()' so don't release raw too early
-  auto chroms = get_chroms(raw.data(), std::size(raw), name_starts, name_stops);
+  // chroms is a view into 'std::data(raw)' so don't release raw too early
+  auto chroms =
+    get_chroms(std::data(raw), std::size(raw), name_starts, name_stops);
 
   // order chrom sequences by the sorted order of their names
   chroms = std::views::transform(chrom_sorter | std::views::elements<0>,

@@ -55,7 +55,8 @@ TEST(command_config_test, run_success) {
 
   EXPECT_EQ(argv[0], "config");
   // NOLINTNEXTLINE(*-const-cast)
-  const int ret = command_config_main(argc, const_cast<char **>(argv.data()));
+  const int ret =
+    command_config_main(argc, const_cast<char **>(std::data(argv)));
   EXPECT_EQ(ret, EXIT_SUCCESS);
 
   std::error_code error;

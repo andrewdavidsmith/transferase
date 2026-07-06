@@ -52,7 +52,7 @@ logger::set_attributes(const std::string_view appname) -> std::error_code {
   static constexpr std::uint32_t max_hostname_size{256};
   std::string hostname;
   hostname.resize(max_hostname_size);
-  if (gethostname(hostname.data(), max_hostname_size))  // unistd.h
+  if (gethostname(std::data(hostname), max_hostname_size))  // unistd.h
     return std::make_error_code(std::errc(errno));
   hostname.resize(hostname.find('\0'));
 
@@ -64,16 +64,16 @@ logger::set_attributes(const std::string_view appname) -> std::error_code {
   // NOLINTBEGIN(*-pointer-arithmetic)
 
   // fill the buffer (after the time fields)
-  cursor = buf.data() + date_time_fmt_size;
+  cursor = std::data(buf) + date_time_fmt_size;
   *cursor++ = delim;
 
   // hostname in buffer
-  std::memcpy(cursor, hostname.data(), std::size(hostname));
+  std::memcpy(cursor, std::data(hostname), std::size(hostname));
   cursor += std::size(hostname);
   *cursor++ = delim;
 
   // appname in buffer
-  std::memcpy(cursor, appname.data(), std::size(appname));
+  std::memcpy(cursor, std::data(appname), std::size(appname));
   cursor += std::size(appname);
   *cursor++ = delim;
 

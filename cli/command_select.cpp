@@ -221,7 +221,8 @@ load_data(const std::string &json_filename)
 static auto
 mvprintw_wrap(const int y, const int x, const std::string &s) {
   // NOLINTNEXTLINE (*-vararg)
-  const auto ret = mvprintw(y, x, "%s", s.substr(0, COLS - 1).data());
+  const auto s_cols = s.substr(0, COLS - 1);
+  const auto ret = mvprintw(y, x, "%s", std::data(s_cols));
   if (ret != OK)
     throw std::runtime_error(
       std::format("Error updating display (writing: {})", s));
