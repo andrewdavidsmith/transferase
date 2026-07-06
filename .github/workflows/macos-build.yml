@@ -12,11 +12,12 @@ jobs:
         os: [macos-15, macos-26]
     runs-on: ${{ matrix.os }}
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
     - name: Update Homebrew
       run: brew update
     - name: Install dependencies
       run: |
+        brew untap aws/tap && brew update
         brew install zlib libdeflate
     # ADS: homebrew might install libz in an "opt" dir, so specify the brew
     # prefix and then the path to the static lib
