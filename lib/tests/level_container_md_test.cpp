@@ -132,10 +132,10 @@ TEST_F(level_container_mock, get_n_bytes) {
 }
 
 TEST_F(level_container_mock, data_methods) {
-  const auto data_ptr = container.data();
+  const auto data_ptr = std::data(container);
   EXPECT_NE(data_ptr, nullptr);
   const auto const_data_ptr =
-    static_cast<const level_container<level_element_t> &>(container).data();
+    std::data(static_cast<const level_container<level_element_t> &>(container));
   EXPECT_NE(const_data_ptr, nullptr);
 }
 

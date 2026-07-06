@@ -130,8 +130,8 @@ http_header::http_header(const std::string &header_block) {
 }
 
 http_header::http_header(const asio::streambuf &data, const std::size_t size) :
-  http_header(std::string(asio::buffers_begin(data.data()),
-                          asio::buffers_begin(data.data()) +
+  http_header(std::string(asio::buffers_begin(std::data(data)),
+                          asio::buffers_begin(std::data(data)) +
                             static_cast<std::ptrdiff_t>(size))) {}
 
 auto

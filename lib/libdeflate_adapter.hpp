@@ -83,7 +83,7 @@ libdeflate_compress(const T &in,
   if (!compressor)
     return libdeflate_error_code::compression_failed;
 
-  const auto input_data = reinterpret_cast<const void *>(in.data());
+  const auto input_data = reinterpret_cast<const void *>(std::data(in));
   const std::size_t input_size = std::size(in) * sizeof(typename T::value_type);
 
   // estimate max output size
@@ -92,7 +92,7 @@ libdeflate_compress(const T &in,
 
   out.resize(max_compressed_size);
   const std::size_t actual_compressed_size = libdeflate_deflate_compress(
-    compressor, input_data, input_size, out.data(), max_compressed_size);
+    compressor, input_data, input_size, std::data(out), max_compressed_size);
 
   // release the compressor
   libdeflate_free_compressor(compressor);
@@ -112,13 +112,13 @@ libdeflate_decompress(std::vector<std::uint8_t> &in,
   if (!decompressor)
     return libdeflate_error_code::decompression_failed;
 
-  auto out_buf = reinterpret_cast<void *>(out.data());
+  auto out_buf = reinterpret_cast<void *>(std::data(out));
   const std::size_t out_size = std::size(out) * sizeof(typename T::value_type);
 
   // clang-format off
   const libdeflate_result result = libdeflate_deflate_decompress(
     decompressor,
-    in.data(),
+    std::data(in),
     std::size(in),
     out_buf,
     out_size,

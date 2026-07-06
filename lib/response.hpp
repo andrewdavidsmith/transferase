@@ -105,20 +105,20 @@ struct response_payload {
     error = std::error_code{};  // clear this in case it was set
     const auto tot_bytes = std::size(levels) * sizeof(lvl_elem);
     response_payload rp(tot_bytes);
-    std::memcpy(rp.data(), levels.data(), levels.get_n_bytes());
+    std::memcpy(std::data(rp), std::data(levels), levels.get_n_bytes());
     return rp;
   }
 
   [[nodiscard]] auto
   data() noexcept -> char * {
     // NOLINTNEXTLINE(*-reinterpret-cast)
-    return reinterpret_cast<char *>(payload.data());
+    return reinterpret_cast<char *>(std::data(payload));
   }
 
   [[nodiscard]] auto
   data() const noexcept -> const char * {
     // NOLINTNEXTLINE(*-reinterpret-cast)
-    return reinterpret_cast<const char *>(payload.data());
+    return reinterpret_cast<const char *>(std::data(payload));
   }
 
   [[nodiscard]] auto
@@ -130,7 +130,7 @@ struct response_payload {
     }
     error = std::error_code{};
     // NOLINTNEXTLINE(*-reinterpret-cast)
-    return reinterpret_cast<char *>(payload.data()) + byte_offset;
+    return reinterpret_cast<char *>(std::data(payload)) + byte_offset;
   }
 
   [[nodiscard]] auto
@@ -142,7 +142,7 @@ struct response_payload {
     }
     error = std::error_code{};
     // NOLINTNEXTLINE(*-reinterpret-cast)
-    return reinterpret_cast<const char *>(payload.data()) + byte_offset;
+    return reinterpret_cast<const char *>(std::data(payload)) + byte_offset;
   }
 
   [[nodiscard]] auto

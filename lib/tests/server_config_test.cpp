@@ -67,7 +67,7 @@ protected:
       throw std::runtime_error(std::format(
         "failed to open config file to write mock: {}", config_file));
     const auto sz = static_cast<std::streamsize>(std::size(with_version));
-    out.write(with_version.data(), sz);
+    out.write(std::data(with_version), sz);
   }
 
   auto

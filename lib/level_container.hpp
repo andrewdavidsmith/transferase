@@ -123,7 +123,7 @@ template <typename level_element_type> struct level_container {
 
   [[nodiscard]] auto
   data() const noexcept -> const char * {
-    return reinterpret_cast<const char *>(v.data());
+    return reinterpret_cast<const char *>(std::data(v));
   }
 
   [[nodiscard]] auto
@@ -144,7 +144,7 @@ template <typename level_element_type> struct level_container {
 
   [[nodiscard]] auto
   data() noexcept -> char * {
-    return reinterpret_cast<char *>(v.data());
+    return reinterpret_cast<char *>(std::data(v));
   }
 
   [[nodiscard]] auto

@@ -64,9 +64,9 @@ TEST(command_merge_test, basic_local_test) {
     "-d",
     methylome_directory,
     "-m",
-    methylome_names[0].data(),
-    methylome_names[1].data(),
-    methylome_names[2].data(),
+    std::data(methylome_names[0]),
+    std::data(methylome_names[1]),
+    std::data(methylome_names[2]),
     "-n",
     merged_name,
     "-v",
@@ -77,7 +77,8 @@ TEST(command_merge_test, basic_local_test) {
 
   // Run the main function
   // NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast)
-  const int result = command_merge_main(argc, const_cast<char **>(argv.data()));
+  const int result =
+    command_merge_main(argc, const_cast<char **>(std::data(argv)));
   EXPECT_EQ(result, EXIT_SUCCESS);
 
   std::error_code ec;

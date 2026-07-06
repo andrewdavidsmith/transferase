@@ -237,8 +237,8 @@ request_handler::bins_get_levels<level_element_t>(
       resp_hdr.status = compress_err;
     resp_hdr.n_bytes = std::size(tmp);
     // NOLINTNEXTLINE (*-reinterpret-cast)
-    std::memcpy(reinterpret_cast<std::uint8_t *>(resp_data.v.data()),
-                tmp.data(), std::size(tmp));
+    std::memcpy(reinterpret_cast<std::uint8_t *>(std::data(resp_data.v)),
+                std::data(tmp), std::size(tmp));
   }
 }
 
@@ -290,8 +290,8 @@ request_handler::bins_get_levels<level_element_covered_t>(
       resp_hdr.status = compress_err;
     resp_hdr.n_bytes = std::size(tmp);
     // NOLINTNEXTLINE (*-reinterpret-cast)
-    std::memcpy(reinterpret_cast<std::uint8_t *>(resp_data.v.data()),
-                tmp.data(), std::size(tmp));
+    std::memcpy(reinterpret_cast<std::uint8_t *>(std::data(resp_data.v)),
+                std::data(tmp), std::size(tmp));
   }
 }
 
@@ -343,8 +343,8 @@ request_handler::windows_get_levels<level_element_t>(
       resp_hdr.status = compress_err;
     resp_hdr.n_bytes = std::size(tmp);
     // NOLINTNEXTLINE (*-reinterpret-cast)
-    std::memcpy(reinterpret_cast<std::uint8_t *>(resp_data.v.data()),
-                tmp.data(), std::size(tmp));
+    std::memcpy(reinterpret_cast<std::uint8_t *>(std::data(resp_data.v)),
+                std::data(tmp), std::size(tmp));
   }
 }
 
@@ -397,8 +397,8 @@ request_handler::windows_get_levels<level_element_covered_t>(
       resp_hdr.status = compress_err;
     resp_hdr.n_bytes = std::size(tmp);
     // NOLINTNEXTLINE (*-reinterpret-cast)
-    std::memcpy(reinterpret_cast<std::uint8_t *>(resp_data.v.data()),
-                tmp.data(), std::size(tmp));
+    std::memcpy(reinterpret_cast<std::uint8_t *>(std::data(resp_data.v)),
+                std::data(tmp), std::size(tmp));
   }
 }
 

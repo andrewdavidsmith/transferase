@@ -89,12 +89,12 @@ template <typename level_element_type> struct level_container_flat {
 
   [[nodiscard]] auto
   data() const -> const char * {
-    return reinterpret_cast<const char *>(v.data());
+    return reinterpret_cast<const char *>(std::data(v));
   }
 
   [[nodiscard]] auto
   data() -> char * {
-    return reinterpret_cast<char *>(v.data());
+    return reinterpret_cast<char *>(std::data(v));
   }
 
   [[nodiscard]] auto

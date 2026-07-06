@@ -235,9 +235,9 @@ write_bedlike_intervals_impl(
   const auto write_n_cpgs = !n_cpgs.empty();
 
   std::vector<char> line(intervals_writer::output_buffer_size);
-  auto line_beg = line.data();
+  auto line_beg = std::data(line);
   // NOLINTNEXTLINE (*-pointer-arithmetic)
-  const auto line_end = line.data() + std::size(line);
+  const auto line_end = std::data(line) + std::size(line);
   auto error = std::errc{};
 
   const auto n_levels = levels.n_cols;
@@ -250,7 +250,7 @@ write_bedlike_intervals_impl(
     if (interval.ch_id != prev_ch_id) {
       chrom_name = meta.chrom_order[interval.ch_id];
       prev_ch_id = interval.ch_id;
-      line_beg = line.data();
+      line_beg = std::data(line);
       push_buffer(line_beg, line_end, error, chrom_name, rowname_delim);
     }
     auto cursor = line_beg;
@@ -263,7 +263,7 @@ write_bedlike_intervals_impl(
     if (write_n_cpgs)
       push_buffer(cursor, line_end, error, delim, n_cpgs[i]);
     push_buffer(cursor, line_end, error, newline);
-    out.write(line.data(), std::distance(line.data(), cursor));
+    out.write(std::data(line), std::distance(std::data(line), cursor));
     ++i;
   }
   return {};
@@ -305,9 +305,9 @@ write_intervals_dfscores_impl(
   }
 
   std::vector<char> line(intervals_writer::output_buffer_size);
-  auto line_beg = line.data();
+  auto line_beg = std::data(line);
   // NOLINTNEXTLINE (*-pointer-arithmetic)
-  const auto line_end = line.data() + std::size(line);
+  const auto line_end = std::data(line) + std::size(line);
   auto error = std::errc{};
 
   const auto n_levels = levels.n_cols;
@@ -319,7 +319,7 @@ write_intervals_dfscores_impl(
     if (interval.ch_id != prev_ch_id) {
       chrom_name = meta.chrom_order[interval.ch_id];
       prev_ch_id = interval.ch_id;
-      line_beg = line.data();
+      line_beg = std::data(line);
       push_buffer(line_beg, line_end, error, chrom_name, rowname_delim);
     }
     auto cursor = line_beg;
@@ -331,7 +331,7 @@ write_intervals_dfscores_impl(
     if (write_n_cpgs)
       push_buffer(cursor, line_end, error, delim, n_cpgs[i]);
     push_buffer(cursor, line_end, error, newline);
-    out.write(line.data(), std::distance(line.data(), cursor));
+    out.write(std::data(line), std::distance(std::data(line), cursor));
     ++i;
   }
   return {};
@@ -379,9 +379,9 @@ write_intervals_dataframe_impl(
   }
 
   std::vector<char> line(intervals_writer::output_buffer_size);
-  auto line_beg = line.data();
+  auto line_beg = std::data(line);
   // NOLINTNEXTLINE (*-pointer-arithmetic)
-  const auto line_end = line.data() + std::size(line);
+  const auto line_end = std::data(line) + std::size(line);
   auto error = std::errc{};
 
   const auto n_levels = levels.n_cols;
@@ -394,7 +394,7 @@ write_intervals_dataframe_impl(
     if (interval.ch_id != prev_ch_id) {
       chrom_name = meta.chrom_order[interval.ch_id];
       prev_ch_id = interval.ch_id;
-      line_beg = line.data();
+      line_beg = std::data(line);
       push_buffer(line_beg, line_end, error, chrom_name, rowname_delim);
     }
     auto cursor = line_beg;
@@ -406,7 +406,7 @@ write_intervals_dataframe_impl(
     if (write_n_cpgs)
       push_buffer(cursor, line_end, error, delim, n_cpgs[i]);
     push_buffer(cursor, line_end, error, newline);
-    out.write(line.data(), std::distance(line.data(), cursor));
+    out.write(std::data(line), std::distance(std::data(line), cursor));
     ++i;
   }
   return {};

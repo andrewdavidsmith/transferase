@@ -48,8 +48,8 @@ parse_counts_line(const std::string &line, std::uint32_t &pos,
   constexpr auto is_sep = [](const char x) { return x == ' ' || x == '\t'; };
 
   // NOLINTBEGIN(*-pointer-arithmetic)
-  const auto c_end = line.data() + std::size(line);
-  auto field_s = line.data();
+  const auto c_end = std::data(line) + std::size(line);
+  auto field_s = std::data(line);
 
   auto field_e = std::find_if(std::min(field_s + 1, c_end), c_end, is_sep);
   bool failed = (field_e == c_end);
