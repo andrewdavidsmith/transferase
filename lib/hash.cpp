@@ -27,6 +27,7 @@
 #include <cerrno>
 #include <filesystem>
 #include <fstream>
+#include <iterator>
 #include <string>
 #include <system_error>
 #include <vector>

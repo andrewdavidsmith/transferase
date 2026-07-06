@@ -34,7 +34,8 @@
 #include <chrono>
 #include <compare>  // for operator<=
 #include <cstddef>  // for std::size_t
-#include <new>      // for operator new
+#include <iterator>
+#include <new>  // for operator new
 #include <string>
 #include <system_error>
 

@@ -35,6 +35,7 @@
 #endif
 
 #include <array>
+#include <iterator>
 #include <string>
 #include <sys/types.h>  // for ssize_t
 
