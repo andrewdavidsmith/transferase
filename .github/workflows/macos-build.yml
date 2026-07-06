@@ -29,6 +29,7 @@ jobs:
         -DZLIB_LIBRARY=$(brew --prefix zlib)/lib/libz.a \
         -DCMAKE_CXX_COMPILER=clang++ \
         -DBUILD_CLI=on \
+        -DCMAKE_CXX_FLAGS="-DCLI11_HAS_CODECVT=0" \
         -DCMAKE_BUILD_TYPE=Build
     - name: Build transferase
       run: |
