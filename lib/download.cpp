@@ -31,6 +31,7 @@
 #include <ctime>
 #include <filesystem>
 #include <fstream>
+#include <iterator>
 #include <print>    // IWYU pragma: keep
 #include <sstream>  // IWYU pragma: keep
 #include <string>
