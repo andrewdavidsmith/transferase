@@ -129,7 +129,8 @@ parse(const char *buffer, const char *last, request &req) -> std::error_code {
 }
 
 [[nodiscard]] auto
-compose(request_buffer &buf, const request &req) -> std::error_code {
+compose(request_buffer &buf,  // cppcheck-suppress constParameterReference
+        const request &req) -> std::error_code {
   return compose(std::data(buf), std::data(buf) + std::size(buf), req);
 }
 
