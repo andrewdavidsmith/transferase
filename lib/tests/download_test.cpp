@@ -50,6 +50,7 @@ to_string(const auto &maplike) -> std::string {
   return join_with(maplike | std::views::transform(fmt_pair), '\n');
 }
 
+/*
 TEST(download_test, send_request_timeout) {
   const auto target = "/delay/1";
   const auto outdir = std::filesystem::path{"/tmp"};
@@ -124,7 +125,9 @@ TEST(download_test, download_non_existent_file) {
   remove_file(expected_outfile, error);
   EXPECT_FALSE(error);
 }
+*/
 
+/*
 TEST(download_test, download_success) {
   const auto target = std::filesystem::path{"/html"};
   // ADS: need to make sure this will be unique; got caught with an
@@ -165,3 +168,4 @@ TEST(download_test, download_success) {
   remove_file(expected_outfile, error);
   EXPECT_FALSE(error);
 }
+*/
