@@ -1402,7 +1402,12 @@ command_select_main(int argc,
       validate_groups(genome_name, input_file, groups, data_itr->second);
     }
 
-    std::println("Number of items loaded: {}", std::size(data_itr->second));
+    using sec = std::chrono::seconds;
+    const auto mod_time = std::filesystem::last_write_time(input_file);
+    const auto mod_time_sec = std::chrono::time_point_cast<sec>(mod_time);
+    std::print("Number of items loaded: {0}\n"
+               "Metadata last update: {1:%F} {1:%T}\n",
+               std::size(data_itr->second), mod_time_sec);
     std::print("Type 'g' then Enter to proceed. Any other key to exit. ");
     if (std::cin.get() != 'g') {
       std::println("Exiting on user request");
