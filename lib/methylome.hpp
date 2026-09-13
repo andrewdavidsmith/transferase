@@ -35,6 +35,7 @@
 #include <cstdint>  // std::uint32_t
 #include <format>
 #include <string>
+#include <string_view>
 #include <system_error>
 #include <tuple>
 #include <type_traits>
@@ -119,8 +120,8 @@ struct methylome {
   /// @return A methylome object.
   /// @throw std::system_error if any error is encountered while reading.
   static auto
-  read(const std::string &directory_name,
-       const std::string &methylome_name) -> methylome {
+  read(const std::string &directory_name, const std::string &methylome_name)
+    -> methylome {
     std::error_code error;
     auto meth = read(directory_name, methylome_name, error);
     if (error)
@@ -184,8 +185,8 @@ struct methylome {
   /// written.
   /// @throw std::system_error if any error is encountered while writing.
   auto
-  write(const std::string &directory_name,
-        const std::string &name) const -> void {
+  write(const std::string &directory_name, const std::string &name) const
+    -> void {
     std::error_code error;
     write(directory_name, name, error);
     if (error)
@@ -261,8 +262,8 @@ struct methylome {
   /// windows, which may overlap).
   template <typename lvl_elem_t>
   [[nodiscard]] auto
-  get_levels(const std::uint32_t bin_size,
-             const genome_index &index) const -> level_container<lvl_elem_t> {
+  get_levels(const std::uint32_t bin_size, const genome_index &index) const
+    -> level_container<lvl_elem_t> {
     return data.get_levels<lvl_elem_t>(bin_size, index);
   }
 
@@ -300,8 +301,8 @@ struct methylome {
   /// searching the directory.
   /// @return A vector of strings holding methylome names.
   [[nodiscard]] static auto
-  list(const std::string &directory_name,
-       std::error_code &error) noexcept -> std::vector<std::string>;
+  list(const std::string &directory_name, std::error_code &error) noexcept
+    -> std::vector<std::string>;
 
 #ifndef TRANSFERASE_NOEXCEPT
   /// @brief List the names of methylomes that can be read from the given
@@ -323,9 +324,10 @@ struct methylome {
   /// @brief Get the genome information associated with the given methylome
   /// name, without instantiating a methylome object.
   [[nodiscard]] static auto
-  get_genome_info(
-    const std::string &methylome_dir, const std::string &methylome_name,
-    std::error_code &error) noexcept -> std::tuple<std::string, std::uint64_t>;
+  get_genome_info(const std::string &methylome_dir,
+                  const std::string &methylome_name,
+                  std::error_code &error) noexcept
+    -> std::tuple<std::string, std::uint64_t>;
 
   /// @brief Parse a methylome name from a filename.
   [[nodiscard]] static auto
