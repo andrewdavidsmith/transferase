@@ -59,9 +59,11 @@ xfr select -o output_file.txt -g hg38
 #include <array>
 #include <cassert>
 #include <cctype>  // for std::isprint
+#include <chrono>
 #include <csignal>
 #include <cstdint>
 #include <cstdlib>
+#include <filesystem>
 #include <format>
 #include <fstream>
 #include <iostream>
@@ -163,8 +165,8 @@ struct meth_meta {
   }
 
   [[nodiscard]] auto
-  format(const std::int32_t horiz_pos,
-         const bool show_metadata) const -> std::string {
+  format(const std::int32_t horiz_pos, const bool show_metadata) const
+    -> std::string {
     // Form the label by appending the colon
     auto acn = std::format("{}: ", accession);
     auto sample_name = label;
@@ -237,8 +239,8 @@ mvprintw_wrap(int y, const int x, const std::vector<std::string> &lines) {
 
 [[nodiscard]] static inline auto
 update_cursor_pos(const int ch, const std::int32_t cursor_pos,
-                  const std::int32_t n_items,
-                  const std::int32_t n_lines) -> std::int32_t {
+                  const std::int32_t n_items, const std::int32_t n_lines)
+  -> std::int32_t {
   switch (ch) {
   case KEY_DOWN:
     return (cursor_pos + 1) % n_items;
