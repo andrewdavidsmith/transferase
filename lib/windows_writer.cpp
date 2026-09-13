@@ -57,8 +57,8 @@ write_bedlike_windows_impl(const std::string &outfile,
                            const std::uint32_t window_size,
                            const std::uint32_t window_step,
                            const std::vector<std::uint32_t> &n_cpgs,
-                           const auto &levels,
-                           const level_element_mode mode) -> std::error_code {
+                           const auto &levels, const level_element_mode mode)
+  -> std::error_code {
   static constexpr auto delim{'\t'};
   const auto lvl_to_string = [mode](const auto &l) {
     return mode == level_element_mode::classic ? l.tostring_classic()
@@ -75,7 +75,7 @@ write_bedlike_windows_impl(const std::string &outfile,
   std::uint32_t i = 0;
   const auto zipped = std::views::zip(meta.chrom_size, meta.chrom_order);
   for (const auto [chrom_size, chrom_name] : zipped) {
-    for (std::uint32_t window_beg = 0; window_beg < chrom_size;
+    for (auto window_beg = 0U; window_beg < chrom_size;
          window_beg += window_step) {
       const auto window_end = std::min(window_beg + window_size, chrom_size);
       std::print(out, "{}{}{}{}{}", chrom_name, delim, window_beg, delim,
@@ -130,7 +130,7 @@ write_windows_dfscores_impl(
   std::uint32_t i = 0;
   const auto zipped = std::views::zip(meta.chrom_size, meta.chrom_order);
   for (const auto [chrom_size, chrom_name] : zipped) {
-    for (std::uint32_t window_beg = 0; window_beg < chrom_size;
+    for (auto window_beg = 0U; window_beg < chrom_size;
          window_beg += window_step) {
       const auto window_end = std::min(window_beg + window_size, chrom_size);
       std::print(out, "{}{}{}{}{}", chrom_name, rowname_delim, window_beg,
@@ -199,7 +199,7 @@ write_windows_dataframe_impl(
   std::uint32_t i = 0;
   const auto zipped = std::views::zip(meta.chrom_size, meta.chrom_order);
   for (const auto [chrom_size, chrom_name] : zipped)
-    for (std::uint32_t window_beg = 0; window_beg < chrom_size;
+    for (auto window_beg = 0U; window_beg < chrom_size;
          window_beg += window_step) {
       const auto window_end = std::min(window_beg + window_size, chrom_size);
       std::print(out, "{}{}{}{}{}", chrom_name, rowname_delim, window_beg,
@@ -255,7 +255,7 @@ write_bedlike_windows_impl(
     auto line_beg = std::data(line);
     push_buffer(line_beg, line_end, error, chrom_name, rowname_delim);
 
-    for (std::uint32_t window_beg = 0; window_beg < chrom_size;
+    for (auto window_beg = 0U; window_beg < chrom_size;
          window_beg += window_step) {
       const auto window_end = std::min(window_beg + window_size, chrom_size);
       auto cursor = line_beg;
@@ -323,7 +323,7 @@ write_windows_dfscores_impl(
   for (const auto [chrom_size, chrom_name] : zipped) {
     auto line_beg = std::data(line);
     push_buffer(line_beg, line_end, error, chrom_name, rowname_delim);
-    for (std::uint32_t window_beg = 0; window_beg < chrom_size;
+    for (auto window_beg = 0U; window_beg < chrom_size;
          window_beg += window_step) {
       const auto window_end = std::min(window_beg + window_size, chrom_size);
       auto cursor = line_beg;
@@ -396,7 +396,7 @@ write_windows_dataframe_impl(
   for (const auto [chrom_size, chrom_name] : zipped) {
     auto line_beg = std::data(line);
     push_buffer(line_beg, line_end, error, chrom_name, rowname_delim);
-    for (std::uint32_t window_beg = 0; window_beg < chrom_size;
+    for (auto window_beg = 0U; window_beg < chrom_size;
          window_beg += window_step) {
       const auto window_end = std::min(window_beg + window_size, chrom_size);
       auto cursor = line_beg;
@@ -456,8 +456,8 @@ template <>
 [[nodiscard]] auto
 windows_writer::write_dfscores_impl(
   const std::vector<level_container_flat<level_element_t>> &levels,
-  const char rowname_delim,
-  const bool write_header) const noexcept -> std::error_code {
+  const char rowname_delim, const bool write_header) const noexcept
+  -> std::error_code {
   return write_windows_dfscores_impl(
     outfile, names, index.get_metadata(), window_size, window_step, min_reads,
     n_cpgs, levels, rowname_delim, write_header);
@@ -467,8 +467,8 @@ template <>
 [[nodiscard]] auto
 windows_writer::write_dfscores_impl(
   const std::vector<level_container_flat<level_element_covered_t>> &levels,
-  const char rowname_delim,
-  const bool write_header) const noexcept -> std::error_code {
+  const char rowname_delim, const bool write_header) const noexcept
+  -> std::error_code {
   return write_windows_dfscores_impl(
     outfile, names, index.get_metadata(), window_size, window_step, min_reads,
     n_cpgs, levels, rowname_delim, write_header);
@@ -488,8 +488,8 @@ template <>
 [[nodiscard]] auto
 windows_writer::write_dfscores_impl(
   const level_container<level_element_covered_t> &levels,
-  const char rowname_delim,
-  const bool write_header) const noexcept -> std::error_code {
+  const char rowname_delim, const bool write_header) const noexcept
+  -> std::error_code {
   return write_windows_dfscores_impl(
     outfile, names, index.get_metadata(), window_size, window_step, min_reads,
     n_cpgs, levels, rowname_delim, write_header);
@@ -521,8 +521,8 @@ template <>
 [[nodiscard]] auto
 windows_writer::write_dataframe_impl(
   const level_container<level_element_t> &levels, const level_element_mode mode,
-  const char rowname_delim,
-  const bool write_header) const noexcept -> std::error_code {
+  const char rowname_delim, const bool write_header) const noexcept
+  -> std::error_code {
   return write_windows_dataframe_impl(outfile, names, index.get_metadata(),
                                       window_size, window_step, n_cpgs, levels,
                                       mode, rowname_delim, write_header);
