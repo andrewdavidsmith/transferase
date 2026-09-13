@@ -32,10 +32,10 @@
 #include <format>
 #include <initializer_list>
 #include <string>
+#include <string_view>  // for std::hash
 #include <system_error>
 #include <type_traits>  // for std::true_type
 #include <utility>      // for std::pair
-#include <variant>      // for std::hash
 #include <vector>
 
 namespace transferase {
@@ -74,8 +74,8 @@ struct genome_index_data {
 
   [[nodiscard]] static auto
   read(const std::string &dirname, const std::string &genomic_name,
-       const genome_index_metadata &meta,
-       std::error_code &ec) noexcept -> genome_index_data;
+       const genome_index_metadata &meta, std::error_code &ec) noexcept
+    -> genome_index_data;
 
   [[nodiscard]] auto
   write(const std::string &index_file) const noexcept -> std::error_code;
@@ -92,8 +92,9 @@ struct genome_index_data {
     -> std::vector<std::uint32_t>;
 
   [[nodiscard]] auto
-  get_n_cpgs(const genome_index_metadata &meta, const std::uint32_t bin_size)
-    const noexcept -> std::vector<std::uint32_t>;
+  get_n_cpgs(const genome_index_metadata &meta,
+             const std::uint32_t bin_size) const noexcept
+    -> std::vector<std::uint32_t>;
 
   [[nodiscard]] auto
   get_n_cpgs(const genome_index_metadata &meta, const std::uint32_t window_size,
