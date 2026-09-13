@@ -39,6 +39,7 @@
 #include <memory>
 #include <string>
 #include <system_error>
+#include <tuple>
 #include <vector>
 
 // forward declarations
@@ -120,8 +121,9 @@ public:
   template <typename lvl_elem_t>
   [[nodiscard]] auto
   get_levels(const std::vector<std::string> &methylome_names,
-             const std::uint32_t window_size, const std::uint32_t window_step)
-    const -> level_container<lvl_elem_t> {
+             const std::uint32_t window_size,
+             const std::uint32_t window_step) const
+    -> level_container<lvl_elem_t> {
     std::error_code error{};
     const auto [genome_name, _] = methylome::get_genome_info(
       config.get_methylome_dir(), methylome_names.at(0), error);
@@ -142,8 +144,9 @@ private:
   template <typename lvl_elem_t>
   [[nodiscard]] auto
   get_levels_impl(const std::vector<std::string> &methylome_names,
-                  const query_container &query, std::error_code &error)
-    const noexcept -> level_container<lvl_elem_t> {
+                  const query_container &query,
+                  std::error_code &error) const noexcept
+    -> level_container<lvl_elem_t> {
     level_container<lvl_elem_t> results(std::size(query),
                                         std::size(methylome_names));
     bool first_methylome = true;
@@ -200,10 +203,11 @@ private:
   // windows
   template <typename lvl_elem_t>
   [[nodiscard]] auto
-  get_levels_impl(
-    const std::vector<std::string> &methylome_names, const genome_index &index,
-    const std::uint32_t window_size, const std::uint32_t window_step,
-    std::error_code &error) const noexcept -> level_container<lvl_elem_t> {
+  get_levels_impl(const std::vector<std::string> &methylome_names,
+                  const genome_index &index, const std::uint32_t window_size,
+                  const std::uint32_t window_step,
+                  std::error_code &error) const noexcept
+    -> level_container<lvl_elem_t> {
     level_container<lvl_elem_t> results(index.get_n_windows(window_step),
                                         std::size(methylome_names));
     bool first_methylome = true;
