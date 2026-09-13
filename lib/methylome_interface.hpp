@@ -64,8 +64,9 @@ public:
   // bins or windows: takes an index (bin/window sizes in request)
   template <typename lvl_elem_t>
   [[nodiscard]] auto
-  get_levels(const request &req, const genome_index &index, std::error_code &ec)
-    const noexcept -> level_container<lvl_elem_t> {
+  get_levels(const request &req, const genome_index &index,
+             std::error_code &ec) const noexcept
+    -> level_container<lvl_elem_t> {
     return local_mode ? get_levels_local_impl<lvl_elem_t>(req, index, ec)
                       : get_levels_remote_impl<lvl_elem_t>(req, ec);
   }
@@ -158,6 +159,7 @@ private:
              : get_levels_local_impl_windows<lvl_elem_t>(req, index, ec);
   }
 
+public:
   NLOHMANN_DEFINE_TYPE_INTRUSIVE(methylome_interface, directory, hostname,
                                  port_number)
 };
