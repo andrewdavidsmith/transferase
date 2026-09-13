@@ -42,6 +42,7 @@
 #include <stdexcept>
 #include <string>
 #include <system_error>
+#include <tuple>
 #include <unordered_map>
 #include <vector>
 
@@ -155,7 +156,8 @@ client_config::get_config_file(const std::string &config_dir,
 
 auto
 client_config::assign_defaults_to_missing(std::string sys_config_dir,
-                                          std::error_code &error) -> void {
+                                          const std::error_code &error)
+  -> void {
   if (hostname.empty() || port.empty()) {
     if (sys_config_dir.empty()) {
       sys_config_dir = get_default_system_config_dirname();
@@ -322,8 +324,8 @@ client_config::read_config_file(const std::string &config_file,
 }
 
 [[nodiscard]] auto
-client_config::read(std::string config_dir,
-                    std::error_code &error) noexcept -> client_config {
+client_config::read(std::string config_dir, std::error_code &error) noexcept
+  -> client_config {
   namespace fs = std::filesystem;
   // If config dir is empty, get the default
   if (config_dir.empty()) {
@@ -572,9 +574,10 @@ download_methbase_metadata_dataframe_file(
 }
 
 [[nodiscard]] static auto
-download_select_metadata_file(
-  const remote_data_resource &remote, const std::string &dirname,
-  const download_policy_t download_policy) -> std::error_code {
+download_select_metadata_file(const remote_data_resource &remote,
+                              const std::string &dirname,
+                              const download_policy_t download_policy)
+  -> std::error_code {
   const auto select_metadata_file = remote.form_select_metadata_target();
   const auto local_select_metadata_file =
     std::filesystem::path{dirname} /
