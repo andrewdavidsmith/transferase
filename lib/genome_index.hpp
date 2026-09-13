@@ -35,10 +35,10 @@
 #include <format>   // for std::vector(??)
 #include <ranges>   // IWYU pragma: keep
 #include <string>
+#include <string_view>  // for std::hash
 #include <system_error>
 #include <type_traits>  // for std::true_type
 #include <utility>      // for std::to_underlying, std::unreachable
-#include <variant>      // for std::hash
 #include <vector>
 
 namespace transferase {
@@ -121,8 +121,8 @@ struct genome_index {
   /// @return A genome_index object.
   /// @throw std::system_error if any error is encountered while reading.
   static auto
-  read(const std::string &directory,
-       const std::string &genome_name) -> genome_index {
+  read(const std::string &directory, const std::string &genome_name)
+    -> genome_index {
     std::error_code ec;
     auto index = read(directory, genome_name, ec);
     if (ec)
@@ -160,8 +160,8 @@ struct genome_index {
   /// @param genome_name The name of the genome; determines filenames written
   /// @throw std::system_error if any error is encountered while writing
   auto
-  write(const std::string &directory,
-        const std::string &genome_name) const -> void {
+  write(const std::string &directory, const std::string &genome_name) const
+    -> void {
     std::error_code ec;
     write(directory, genome_name, ec);
     if (ec)
@@ -210,8 +210,9 @@ struct genome_index {
   /// @param window_step Step size for sliding windows.
   /// @return A vector of counts of CpG sites in each bin
   [[nodiscard]] auto
-  get_n_cpgs(const std::uint32_t window_size, const std::uint32_t window_step)
-    const noexcept -> std::vector<std::uint32_t> {
+  get_n_cpgs(const std::uint32_t window_size,
+             const std::uint32_t window_step) const noexcept
+    -> std::vector<std::uint32_t> {
     return data.get_n_cpgs(meta, window_size, window_step);
   }
 
@@ -305,8 +306,8 @@ struct genome_index {
   /// searching the directory.
   /// @return A vector of strings holding genome names.
   [[nodiscard]] static auto
-  list(const std::string &directory,
-       std::error_code &error) noexcept -> std::vector<std::string>;
+  list(const std::string &directory, std::error_code &error) noexcept
+    -> std::vector<std::string>;
 
 #ifndef TRANSFERASE_NOEXCEPT
   /// @brief List the names of genomes for which genome_index objects
