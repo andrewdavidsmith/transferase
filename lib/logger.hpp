@@ -200,7 +200,7 @@ public:
   auto
   log(const std::string_view msg) -> void {
     if (the_level >= min_log_level) {
-      std::lock_guard lck{mtx};
+      std::lock_guard l{mtx};  // cppcheck-suppress[unreadVariable]
       format_time();
       const auto end_pos = fill_buffer<the_level>(msg);
       log_file->write(std::data(buf), std::distance(std::data(buf), end_pos));
@@ -213,7 +213,7 @@ public:
   log(const std::string_view fmt_str, Args &&...args) -> void {
     if (the_level >= min_log_level) {
       const auto msg = std::vformat(fmt_str, std::make_format_args(args...));
-      std::lock_guard lck{mtx};
+      std::lock_guard l{mtx};  // cppcheck-suppress[unreadVariable]
       format_time();
       const auto end_pos = fill_buffer<the_level>(msg);
       log_file->write(std::data(buf), std::distance(std::data(buf), end_pos));
@@ -244,27 +244,33 @@ public:
 
   template <typename... Args>
   auto
-  debug(const std::string_view fmt_str, Args &&...args) -> void {
+  debug(const std::string_view fmt_str,  // cppcheck-suppress[functionStatic]
+        Args &&...args) -> void {
     log<log_level_t::debug>(fmt_str, args...);
   }
+
   template <typename... Args>
   auto
-  info(const std::string_view fmt_str, Args &&...args) -> void {
+  info(const std::string_view fmt_str,  // cppcheck-suppress[functionStatic]
+       Args &&...args) -> void {
     log<log_level_t::info>(fmt_str, args...);
   }
   template <typename... Args>
   auto
-  warning(const std::string_view fmt_str, Args &&...args) -> void {
+  warning(const std::string_view fmt_str,  // cppcheck-suppress[functionStatic]
+          Args &&...args) -> void {
     log<log_level_t::warning>(fmt_str, args...);
   }
   template <typename... Args>
   auto
-  error(const std::string_view fmt_str, Args &&...args) -> void {
+  error(const std::string_view fmt_str,  // cppcheck-suppress[functionStatic]
+        Args &&...args) -> void {
     log<log_level_t::error>(fmt_str, args...);
   }
   template <typename... Args>
   auto
-  critical(const std::string_view fmt_str, Args &&...args) -> void {
+  critical(const std::string_view fmt_str,  // cppcheck-suppress[functionStatic]
+           Args &&...args) -> void {
     log<log_level_t::critical>(fmt_str, args...);
   }
 
