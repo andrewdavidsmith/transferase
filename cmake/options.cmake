@@ -173,8 +173,6 @@ if(STATIC_ANALYSIS)
 
   message(STATUS "Requested static analysis: ${STATIC_ANALYSIS_CHECKS}")
 
-  # Options on
-  set(UNIT_TESTS on)
   # Options off
   set(STRIP_PATHS_FROM_BINARIES off)
   set(STRIP_SUB_LIST "")
