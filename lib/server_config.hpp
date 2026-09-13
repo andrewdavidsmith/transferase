@@ -75,12 +75,12 @@ struct server_config {
   get_log_file() const noexcept -> std::string;
 
   /// Get the path to the default pid file
-  [[nodiscard]] auto
-  get_default_pid_file() const noexcept -> std::string;
+  [[nodiscard]] static auto
+  get_default_pid_file() noexcept -> std::string;
 
   /// Get the path to the default log file
-  [[nodiscard]] auto
-  get_default_log_file() const noexcept -> std::string;
+  [[nodiscard]] static auto
+  get_default_log_file() noexcept -> std::string;
 
   /// Initialize any empty values by reading the config file
   auto
@@ -89,8 +89,8 @@ struct server_config {
 
   /// Read the server configuration.
   [[nodiscard]] static auto
-  read(const std::string &config_file,
-       std::error_code &error) noexcept -> server_config;
+  read(const std::string &config_file, std::error_code &error) noexcept
+    -> server_config;
 
 #ifndef TRANSFERASE_NOEXCEPT
   /// Read the server configuration.

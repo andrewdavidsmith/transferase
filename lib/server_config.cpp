@@ -127,8 +127,9 @@ server_config::read(const std::string &config_file,
 }
 
 auto
-server_config::read_config_file_no_overwrite(
-  const std::string &config_file, std::error_code &error) noexcept -> void {
+server_config::read_config_file_no_overwrite(const std::string &config_file,
+                                             std::error_code &error) noexcept
+  -> void {
   const auto tmp = server_config::read(config_file, error);
   if (error)
     return;
@@ -234,13 +235,13 @@ server_config::validate(std::error_code &error) const noexcept -> bool {
 }
 
 [[nodiscard]] auto
-server_config::get_default_pid_file() const noexcept -> std::string {
+server_config::get_default_pid_file() noexcept -> std::string {
   return std::filesystem::path{"var"} / std::filesystem::path{"run"} /
          std::filesystem::path{"TRANSFERASE_SERVER_PID"};
 }
 
 [[nodiscard]] auto
-server_config::get_default_log_file() const noexcept -> std::string {
+server_config::get_default_log_file() noexcept -> std::string {
   return std::filesystem::path{"var"} / std::filesystem::path{"log"} /
          std::filesystem::path{"transferase_server.log"};
 }
