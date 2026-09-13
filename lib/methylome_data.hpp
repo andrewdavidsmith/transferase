@@ -36,9 +36,10 @@
 #include <iterator>  // for std::size
 #include <limits>    // for std::numeric_limits
 #include <string>
+#include <string_view>
 #include <system_error>
 #include <utility>  // std::move
-#include <variant>  // for std::hash
+// #include <variant>  // for std::hash
 #include <vector>
 
 namespace transferase {
@@ -105,8 +106,8 @@ struct methylome_data {
 
   [[nodiscard]] static auto
   read(const std::string &dirname, const std::string &methylome_name,
-       const methylome_metadata &meta,
-       std::error_code &ec) noexcept -> methylome_data;
+       const methylome_metadata &meta, std::error_code &ec) noexcept
+    -> methylome_data;
 
 #ifndef TRANSFERASE_NOEXCEPT
   [[nodiscard]] static auto
@@ -121,8 +122,8 @@ struct methylome_data {
 #endif
 
   [[nodiscard]] auto
-  write(const std::string &filename,
-        const bool zip = false) const noexcept -> std::error_code;
+  write(const std::string &filename, const bool zip = false) const noexcept
+    -> std::error_code;
 
   [[nodiscard]] static auto
   get_n_cpgs_from_file(const std::string &filename) noexcept -> std::uint32_t;
@@ -160,8 +161,9 @@ struct methylome_data {
   /// @brief Get methylation levels for each fixed size bin in the genome.
   template <typename lvl_elem_t>
   [[nodiscard]] auto
-  get_levels(const std::uint32_t bin_size, const genome_index &index)
-    const noexcept -> level_container<lvl_elem_t>;
+  get_levels(const std::uint32_t bin_size,
+             const genome_index &index) const noexcept
+    -> level_container<lvl_elem_t>;
 
   /// @brief Get methylation levels for each fixed size bin in the genome.
   template <typename lvl_elem_t>
