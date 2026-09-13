@@ -76,7 +76,7 @@ struct client_config {
 
   auto
   assign_defaults_to_missing(std::string sys_config_dir,
-                             std::error_code &error) -> void;
+                             const std::error_code &error) -> void;
 
   [[nodiscard]] auto
   tostring() const -> std::string;
@@ -108,8 +108,8 @@ struct client_config {
 
   /// Read the client configuration.
   [[nodiscard]] static auto
-  read(std::string config_dir,
-       std::error_code &error) noexcept -> client_config;
+  read(std::string config_dir, std::error_code &error) noexcept
+    -> client_config;
 
   /// Initialize any empty values by reading the config file
   auto
@@ -179,8 +179,8 @@ struct client_config {
   get_config_file(const std::string &config_dir) noexcept -> std::string;
 
   [[nodiscard]] static auto
-  get_config_file(const std::string &config_dir,
-                  std::error_code &error) -> std::string;
+  get_config_file(const std::string &config_dir, std::error_code &error)
+    -> std::string;
 
   client_config() = default;
 
