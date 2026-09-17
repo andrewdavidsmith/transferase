@@ -75,6 +75,7 @@ target_link_libraries(transferase_system PUBLIC
   OpenSSL::SSL
   OpenSSL::Crypto
   LIBDEFLATE::LIBDEFLATE
+  spdlog::spdlog
 )
 
 if(TEST_LIB)
