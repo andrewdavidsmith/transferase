@@ -27,6 +27,8 @@
 #include "format_error_code.hpp"  // IWYU pragma: keep
 #include "nlohmann/json.hpp"      // IWYU pragma: keep
 
+#include <spdlog/spdlog.h>
+
 #include <algorithm>  // for std::min
 #include <array>
 #include <cassert>
@@ -223,55 +225,70 @@ public:
 
   auto
   debug(const std::string_view message) -> void {
-    log<log_level_t::debug>(message);
+    spdlog::debug(message);
+    // log<log_level_t::debug>(message);
   }
   auto
   info(const std::string_view message) -> void {
-    log<log_level_t::info>(message);
+    spdlog::info(message);
+    //log<log_level_t::info>(message);
   }
   auto
   warning(const std::string_view message) -> void {
-    log<log_level_t::warning>(message);
+    spdlog::warn(message);
+    // log<log_level_t::warning>(message);
   }
   auto
   error(const std::string_view message) -> void {
-    log<log_level_t::error>(message);
+    spdlog::error(message);
+    // log<log_level_t::error>(message);
   }
   auto
   critical(const std::string_view message) -> void {
-    log<log_level_t::critical>(message);
+    spdlog::critical(message);
+    // log<log_level_t::critical>(message);
   }
 
   template <typename... Args>
   auto
   debug(const std::string_view fmt_str,  // cppcheck-suppress[functionStatic]
         Args &&...args) -> void {
-    log<log_level_t::debug>(fmt_str, args...);
+    const auto s = std::vformat(fmt_str, std::make_format_args(args...));
+    spdlog::debug(s);
+    // log<log_level_t::debug>(fmt_str, args...);
   }
 
   template <typename... Args>
   auto
   info(const std::string_view fmt_str,  // cppcheck-suppress[functionStatic]
        Args &&...args) -> void {
-    log<log_level_t::info>(fmt_str, args...);
+    const auto s = std::vformat(fmt_str, std::make_format_args(args...));
+    spdlog::info(s);
+    // log<log_level_t::info>(fmt_str, args...);
   }
   template <typename... Args>
   auto
   warning(const std::string_view fmt_str,  // cppcheck-suppress[functionStatic]
           Args &&...args) -> void {
-    log<log_level_t::warning>(fmt_str, args...);
+    const auto s = std::vformat(fmt_str, std::make_format_args(args...));
+    spdlog::info(s);
+    // log<log_level_t::warning>(fmt_str, args...);
   }
   template <typename... Args>
   auto
   error(const std::string_view fmt_str,  // cppcheck-suppress[functionStatic]
         Args &&...args) -> void {
-    log<log_level_t::error>(fmt_str, args...);
+    const auto s = std::vformat(fmt_str, std::make_format_args(args...));
+    spdlog::info(s);
+    // log<log_level_t::error>(fmt_str, args...);
   }
   template <typename... Args>
   auto
   critical(const std::string_view fmt_str,  // cppcheck-suppress[functionStatic]
            Args &&...args) -> void {
-    log<log_level_t::critical>(fmt_str, args...);
+    const auto s = std::vformat(fmt_str, std::make_format_args(args...));
+    spdlog::info(s);
+    // log<log_level_t::critical>(fmt_str, args...);
   }
 
 private:
