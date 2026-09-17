@@ -135,8 +135,8 @@ format_methylome_names_brief(const std::vector<std::string> &names)
 }
 
 [[nodiscard]] inline auto
-read_methylomes_file(const std::string &filename,
-                     std::error_code &ec) -> std::vector<std::string> {
+read_methylomes_file(const std::string &filename, std::error_code &ec)
+  -> std::vector<std::string> {
   std::ifstream in(filename);
   if (!in) {
     ec = std::make_error_code(std::errc(errno));
@@ -155,8 +155,8 @@ read_methylomes_file(const std::string &filename,
 /// Read query intervals, check that they are sorted and valid
 [[nodiscard]] static auto
 read_intervals(const xfr::genome_index &index,
-               const std::string &intervals_file,
-               std::error_code &error) -> std::vector<xfr::genomic_interval> {
+               const std::string &intervals_file, std::error_code &error)
+  -> std::vector<xfr::genomic_interval> {
   auto &lgr = xfr::logger::instance();
   auto intervals = xfr::genomic_interval::read(index, intervals_file, error);
   if (error) {
@@ -589,6 +589,13 @@ command_query_main(int argc, char *argv[]) -> int {  // NOLINT
     else
       return xfr::log_level_t::info;
   }();
+
+  if (verbose)
+    spdlog::set_level(spdlog::level::debug);
+  else if (quiet)
+    spdlog::set_level(spdlog::level::err);
+  else
+    spdlog::set_level(spdlog::level::info);
 
   // set the output format based on combination of user options
   outopts.outfmt = [&] {
