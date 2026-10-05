@@ -29,6 +29,7 @@
 #include <asio.hpp>
 #include <asio/ssl.hpp>  // IWYU pragma: keep
 
+#include <algorithm>
 #include <cerrno>
 #include <chrono>
 #include <compare>
@@ -158,8 +159,7 @@ public:
       return;
     }
     buf_pos = std::size(buf) - n_bytes;
-    // NOLINTNEXTLINE (*-pointer-arithmetic)
-    std::memcpy(std::data(buf), std::data(buf) + n_bytes, buf_pos);
+    std::copy(std::cbegin(buf) + n_bytes, std::cend(buf), std::begin(buf));
     buf.resize(header.content_length);
     content_remaining = header.content_length - buf_pos;
 
