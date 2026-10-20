@@ -1,28 +1,19 @@
-# MIT License
-#
-# Copyright (c) 2024 Andrew Smith
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in all
-# copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
+# SPDX-License-Identifier: MIT; Copyright 2026 Andrew D Smith
 
-find_package(OpenSSL REQUIRED COMPONENTS SSL Crypto)
 find_package(Threads REQUIRED)
 find_package(LIBDEFLATE REQUIRED)
+
+if(USE_MBEDTLS)
+  find_package(MbedTLS REQUIRED)
+else()
+  find_package(OpenSSL REQUIRED COMPONENTS SSL Crypto)
+endif()
+
+if(LIBCURL_ROOT_DIR)
+  find_package(CURL PATHS ${LIBCURL_ROOT_DIR} NO_DEFAULT_PATH REQUIRED)
+else()
+  find_package(CURL REQUIRED)
+endif()
 
 message(STATUS "Adding external header-only project 'asio'")
 include(FetchContent)
@@ -54,6 +45,7 @@ foreach(cpp_file ${cpp_files})
     ${ZLIB_INCLUDE_DIRS}
     ${ASIO_SOURCE_DIR}
     ${LIBDEFLATE_INCLUDE_DIR}
+    ${CURL_INCLUDE_DIRS}
   )
   target_compile_options(${BASE_NAME} PRIVATE ${GLOBAL_COMPILE_OPTIONS})
   list(APPEND LIBRARY_OBJECTS ${BASE_NAME})
@@ -72,10 +64,22 @@ target_link_libraries(transferase_system PUBLIC
   ${LIBRARY_OBJECTS}
   ZLIB::ZLIB
   Threads::Threads
-  OpenSSL::SSL
-  OpenSSL::Crypto
   LIBDEFLATE::LIBDEFLATE
+  CURL::libcurl
 )
+if(USE_MBEDTLS)
+  target_link_libraries(transferase_system PUBLIC
+    MbedTLS::mbedtls
+    MbedTLS::tfpsacrypto
+    MbedTLS::mbedx509
+  )
+else()
+  target_link_libraries(transferase_system PUBLIC
+    OpenSSL::SSL
+    OpenSSL::Crypto
+    zstd
+  )
+endif()
 
 if(TEST_LIB)
   # The UNIT_TEST preprocessor variable turns off the static and inline
