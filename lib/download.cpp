@@ -72,8 +72,8 @@ download(const download_request &dr)
       return {m, out_ec};
   }
 
-  const auto [header, error] = download_http(
-    dr.host, dr.port, dr.target, outfile, dr.timeout, dr.show_progress);
+  const auto [header, error] =
+    download_http(dr.host, dr.port, dr.target, outfile, dr.timeout);
 
   if (error)
     return {m, error};
