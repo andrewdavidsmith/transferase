@@ -32,7 +32,7 @@
 namespace transferase {
 
 struct http_header {
-  std::string status_line;       // HTTP/2 200
+  // (removed) std::string status_line;       // HTTP/2 200
   std::string status_code;       // 200
   std::string last_modified;     // last-modified: Sun, 02 Feb 2025 20:10:46 GMT
   std::size_t content_length{};  // content-length: 117607180
