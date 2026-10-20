@@ -4,12 +4,21 @@ find_package(Threads REQUIRED)
 find_package(LIBDEFLATE REQUIRED)
 
 if(USE_MBEDTLS)
+  if(NOT EXISTS MBEDTLS_ROOT)
+    set(MBEDTLS_ROOT "${PROJECT_SOURCE_DIR}/${MBEDTLS_ROOT}")
+  endif()
   find_package(MbedTLS REQUIRED)
 else()
+  if(PACKAGE)
+    message(FATAL_ERROR "PACKAGE requires using -DUSE_MBEDTLS=on")
+  endif()
   find_package(OpenSSL REQUIRED COMPONENTS SSL Crypto)
 endif()
 
 if(LIBCURL_ROOT_DIR)
+  if(NOT EXISTS LIBCURL_ROOT_DIR)
+    set(LIBCURL_ROOT_DIR "${PROJECT_SOURCE_DIR}/${LIBCURL_ROOT_DIR}")
+  endif()
   find_package(CURL PATHS ${LIBCURL_ROOT_DIR} NO_DEFAULT_PATH REQUIRED)
 else()
   find_package(CURL REQUIRED)
@@ -77,7 +86,6 @@ else()
   target_link_libraries(transferase_system PUBLIC
     OpenSSL::SSL
     OpenSSL::Crypto
-    zstd
   )
 endif()
 
