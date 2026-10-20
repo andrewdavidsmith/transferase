@@ -39,6 +39,7 @@ enum class http_error_code : std::uint8_t {
   unknown_content_length = 5,
   reading_content_failed = 6,
   inactive_timeout = 7,
+  other_http_error = 8,
 };
 
 template <>
@@ -58,6 +59,7 @@ struct http_error_category : std::error_category {
     case 5: return "unknown content length"s;
     case 6: return "reading content failed"s;
     case 7: return "inactive timeout"s;
+    case 8: return "http(s) error"s;
     }
     std::unreachable();
   }
