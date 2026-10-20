@@ -47,7 +47,7 @@ struct download_request {
   std::string port;
   std::string target;
   std::string outdir;
-  std::chrono::microseconds timeout{10'000'000};
+  std::chrono::microseconds timeout{};
   bool show_progress{};
 
   download_request(const std::string &host, const std::string &port,
