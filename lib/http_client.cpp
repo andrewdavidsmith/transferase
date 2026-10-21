@@ -48,7 +48,7 @@ download_http(const std::string &url,
               const std::string &outfile = "") -> http_header {
   static constexpr auto time_buf_size = 1024;
   using curl_uptr = std::unique_ptr<CURL, decltype(&curl_easy_cleanup)>;
-  using FILE_uptr = std::unique_ptr<std::FILE, decltype(&std::fclose)>;
+  using FILE_uptr = std::unique_ptr<std::FILE, int (*)(std::FILE *)>;
   FILE_uptr f{nullptr, &std::fclose};
   curl_uptr curl(curl_easy_init(), &curl_easy_cleanup);
 
