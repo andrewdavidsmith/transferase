@@ -19,7 +19,7 @@ jobs:
         run: brew untap aws/tap && brew update
       - name: Install dependencies
         run: |
-          brew install zlib
+          brew install zlib mbedtls
       - name: Build and install libdeflate
         run: |
           git clone https://github.com/ebiggers/libdeflate.git
@@ -87,6 +87,7 @@ jobs:
           -DZLIB_LIBRARY=$(brew --prefix zlib)/lib/libz.a \
           -DUSE_XTERM=on \
           -DCMAKE_CXX_COMPILER=g++-14 \
+          -DUSE_MBEDTLS=on \
           -DPACKAGE=on \
           -DCMAKE_BUILD_TYPE=Release
       - name: Get version number
@@ -117,11 +118,12 @@ jobs:
         run: brew update && brew untap aws/tap
       - name: Install dependencies
         run: |
-          brew install zlib libdeflate
+          brew install zlib libdeflate mbedtls
       - name: Configure for CPack
         run: |
           cmake -B build \
           -DZLIB_LIBRARY=$(brew --prefix zlib)/lib/libz.a \
+          -DUSE_MBEDTLS=on \
           -DPACKAGE=on
       - name: Download artifacts
         uses: actions/download-artifact@v8
