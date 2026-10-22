@@ -89,7 +89,7 @@ download_http(const std::string &url, const std::chrono::microseconds timeout,
   auto buf = std::array<char, time_buf_size>{};
   struct tm tm{};
   std::ignore = localtime_r(&ts, &tm);  // localtime_r is thread-safe
-  if (std::strftime(std::data(buf), std::size(buf), "%Y-%m-%d %H:%M:%S", &tm))
+  if (!std::strftime(std::data(buf), std::size(buf), "%Y-%m-%d %H:%M:%S", &tm))
     throw std::runtime_error("failed to format time from http header");
   hdr.last_modified = std::string(std::data(buf));
   return hdr;
