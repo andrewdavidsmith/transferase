@@ -19,7 +19,7 @@ jobs:
         run: brew untap aws/tap && brew update
       - name: Install dependencies
         run: |
-          brew install zlib mbedtls
+          brew install zlib
       - name: Build and install libdeflate
         run: |
           git clone https://github.com/ebiggers/libdeflate.git
@@ -76,6 +76,55 @@ jobs:
           CFLAGS="-Wall -O2 -DNDEBUG -ffunction-sections -fdata-sections -mmacosx-version-min=13" \
           CXXFLAGS="-Wall -O2 -DNDEBUG -ffunction-sections -fdata-sections -mmacosx-version-min=13"
           make install
+      - name: Build Mbed-TLS
+        run: |
+          git clone --recursive https://github.com/Mbed-TLS/mbedtls.git &&
+          cd mbedtls &&
+          python3.13 -m pip install -r scripts/basic.requirements.txt &&
+          export CC=gcc &&
+          cmake -B build \
+          -DUSE_STATIC_MBEDTLS_LIBRARY=on \
+          -DENABLE_TESTING=off \
+          -DENABLE_PROGRAMS=off \
+          -DCMAKE_C_COMPILER=gcc \
+          -DCMAKE_POSITION_INDEPENDENT_CODE=on \
+          -DCMAKE_BUILD_TYPE=Release &&
+          cmake --build build -j4 &&
+          cmake --install build
+      - name: Build libcurl
+        run: |
+          git clone https://github.com/curl/curl.git &&
+          cd curl &&
+          cmake -B build \
+          -DBUILD_CURL_EXE=off \
+          -DBUILD_LIBCURL_DOCS=off \
+          -DBUILD_MISC_DOCS=off \
+          -DENABLE_CURL_MANUAL=off \
+          -DBUILD_EXAMPLES=off \
+          -DBUILD_TESTING=off \
+          -DCURL_USE_LIBSSH2=off \
+          -DCURL_USE_PKGCONFIG=off \
+          -DCURL_ZLIB=off \
+          -DCURL_ZSTD=off \
+          -DCURL_BROTLI=off \
+          -DCURL_USE_LIBPSL=off \
+          -DCURL_DISABLE_FTP=on \
+          -DCURL_DISABLE_IMAP=on \
+          -DCURL_DISABLE_POP3=on \
+          -DCURL_DISABLE_PROGRESS_METER=on \
+          -DCURL_DISABLE_RTSP=on \
+          -DCURL_DISABLE_SMTP=on \
+          -DCURL_DISABLE_TELNET=on \
+          -DCURL_DISABLE_TFTP=on \
+          -DCURL_DISABLE_WEBSOCKETS=on \
+          -DBUILD_STATIC_LIBS=on \
+          -DBUILD_SHARED_LIBS=off \
+          -DCURL_USE_MBEDTLS=on \
+          -DMBEDTLS_USE_STATIC_LIBS=on \
+          -DCMAKE_C_COMPILER=gcc \
+          -DCMAKE_BUILD_TYPE=Release &&
+          cmake --build build -j4 &&
+          cmake --install build
       - name: Configure transferase
         run: |
           cmake -B build \
@@ -118,7 +167,7 @@ jobs:
         run: brew update && brew untap aws/tap
       - name: Install dependencies
         run: |
-          brew install zlib libdeflate mbedtls
+          brew install zlib libdeflate
       - name: Configure for CPack
         run: |
           cmake -B build \
