@@ -1,25 +1,4 @@
-/* MIT License
- *
- * Copyright (c) 2024-2026 Andrew D Smith
- *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- */
+// SPDX-License-Identifier: MIT; Copyright 2026 Andrew D Smith
 
 #include "request.hpp"
 
@@ -28,12 +7,14 @@
 
 #include <algorithm>
 #include <cassert>
-#include <cctype>    // for isalnum, std::isalnum
-#include <charconv>  // std::from_chars
+#include <cctype>
+#include <charconv>
+#include <cstddef>
 #include <format>
-#include <iterator>  // for std::size, std::distance, std::iterator_traits
-#include <ranges>    // IWYU pragma: keep
+#include <iterator>
+#include <ranges>  // IWYU pragma: keep
 #include <string>
+#include <string_view>
 
 namespace transferase {
 
@@ -43,35 +24,32 @@ std::uint32_t request::min_window_size = request::min_window_size_default;
 std::uint32_t request::min_window_step = request::min_window_step_default;
 
 [[nodiscard]] STATIC INLINE auto
-compose(char *buffer, const char *last, const request &req) -> std::error_code {
+compose(char *buffer, const std::size_t size, const request &req)
+  -> std::error_code {
   // ADS: use to_chars here
   const auto s = req.tostring();
   if (std::size(s) >= request_buffer_size)
     return request_error_code::request_too_large;
 
-#ifndef NDEBUG
-  typedef std::iterator_traits<char *>::difference_type diff_type;
-  const auto buffer_const = static_cast<const char *>(buffer);
-  const auto dt_size_s = static_cast<diff_type>(std::size(s));
-  assert(dt_size_s < std::distance(buffer_const, last));
-#endif
+  assert(std::size(s) < size);
 
   // std::ranges::in_out_result
   auto data_end = std::ranges::copy(s, buffer);
-  if (data_end.out == last)
+  if (std::distance(buffer, data_end.out) == static_cast<std::ptrdiff_t>(size))
     return std::make_error_code(std::errc::result_out_of_range);
   *data_end.out = '\0';  // enables strlen, convenient for debugging
   return std::error_code{};
 }
 
 [[nodiscard]] STATIC inline auto
-parse(const char *buffer, const char *last, request &req) -> std::error_code {
+parse(const std::string_view buffer, request &req) -> std::error_code {
   static constexpr auto delim = '\t';
   static constexpr auto term = '\n';
 
   req = request{};  // reset everything
 
-  auto cursor = buffer;
+  auto cursor = std::cbegin(buffer);
+  const auto last = std::cend(buffer);
 
   // request type
   {
@@ -86,7 +64,7 @@ parse(const char *buffer, const char *last, request &req) -> std::error_code {
   // index hash
   if (*cursor != delim)
     return request_error_code::parse_error_index_hash;
-  ++cursor;
+  cursor = std::next(cursor);
   {
     const auto [ptr, ec] = std::from_chars(cursor, last, req.index_hash);
     if (ec != std::errc{})
@@ -97,7 +75,7 @@ parse(const char *buffer, const char *last, request &req) -> std::error_code {
   // aux value (either n_intervals or bin_size)
   if (*cursor != delim)
     return request_error_code::parse_error_aux_value;
-  ++cursor;
+  cursor = std::next(cursor);
   {
     const auto [ptr, ec] = std::from_chars(cursor, last, req.aux_value);
     if (ec != std::errc{})
@@ -112,8 +90,8 @@ parse(const char *buffer, const char *last, request &req) -> std::error_code {
     if (*cursor != delim)
       break;
     // didn't break; we have another methylome name
-    ++cursor;              // move beyond delim
-    if (*cursor == delim)  // two delims in a row not allowed
+    cursor = std::next(cursor);  // move beyond delim
+    if (*cursor == delim)        // two delims in a row not allowed
       break;
     // find where the methylome name ends
     const auto methylome_name_end = std::find_if_not(cursor, last, ok_name);
@@ -131,12 +109,12 @@ parse(const char *buffer, const char *last, request &req) -> std::error_code {
 [[nodiscard]] auto
 compose(request_buffer &buf,  // cppcheck-suppress constParameterReference
         const request &req) -> std::error_code {
-  return compose(std::data(buf), std::data(buf) + std::size(buf), req);
+  return compose(std::data(buf), std::size(buf), req);
 }
 
 [[nodiscard]] auto
 parse(const request_buffer &buf, request &req) -> std::error_code {
-  return parse(std::data(buf), std::data(buf) + std::size(buf), req);
+  return parse(std::string_view(std::data(buf), std::size(buf)), req);
 }
 
 [[nodiscard]] auto
@@ -156,3 +134,25 @@ request::summary() const -> std::string {
 }
 
 }  // namespace transferase
+
+// parse(const char *buffer, const char *last, request &req) -> std::error_code
+// { +parse(const std::string_view buffer, request &req) -> std::error_code {
+//    static constexpr auto delim = '\t';
+//    static constexpr auto term = '\n';
+
+//    req = request{};  // reset everything
+
+// -  auto cursor = buffer;
+// +  auto cursor = std::cbegin(buffer);
+// +  const auto last = std::cend(buffer);
+
+//    // request type
+//    {
+// @@ -136,7 +138,7 @@ compose(request_buffer &buf,  // cppcheck-suppress
+// constParameterReference
+
+//  [[nodiscard]] auto
+//  parse(const request_buffer &buf, request &req) -> std::error_code {
+// -  return parse(std::data(buf), std::data(buf) + std::size(buf), req);
+// +  return parse(std::string_view(std::data(buf), std::size(buf)), req);
+//  }
