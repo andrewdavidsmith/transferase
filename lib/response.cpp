@@ -38,26 +38,27 @@
 namespace transferase {
 
 [[nodiscard]] auto
-compose(char *first, const char *last,
+compose(char *buffer, const std::size_t size,
         const response_header &hdr) noexcept -> std::error_code {
   // ADS: use to_chars here
   const auto s = std::format("{}\t{}\t{}\t{}\t{}\n", hdr.status.value(),
                              VERSION, hdr.cols, hdr.rows, hdr.n_bytes);
-  assert(std::ranges::ssize(s) <
-         std::distance(const_cast<const char *>(first), last));
-  const auto data_end = std::ranges::copy(s, first);  // in_out_result
-  if (data_end.out == last)
+  assert(std::size(s) < size);
+  const auto data_end = std::ranges::copy(s, buffer);  // in_out_result
+  if (std::distance(buffer, data_end.out) == static_cast<std::ptrdiff_t>(size))
     return std::make_error_code(std::errc::result_out_of_range);
   return std::error_code{};
 }
 
 [[nodiscard]] auto
-parse(const char *first, const char *last,
+parse(const std::string_view buffer,  // const char *first, const char *last,
       response_header &hdr) noexcept -> std::error_code {
   static constexpr auto delim = '\t';
   static constexpr auto term = '\n';
 
-  auto cursor = first;
+  auto cursor = std::cbegin(buffer);
+  const auto last = std::cend(buffer);
+  // auto cursor = first;
 
   // status
   std::underlying_type_t<server_error_code> tmp{};
@@ -70,7 +71,7 @@ parse(const char *first, const char *last,
   hdr.status = static_cast<server_error_code>(tmp);
   if (*cursor != delim)
     return server_error_code::server_failure;
-  ++cursor;
+  cursor = std::next(cursor);
 
   // version
   const auto ver_end = std::find(cursor, last, delim);
@@ -78,7 +79,7 @@ parse(const char *first, const char *last,
     return server_error_code::server_failure;
   hdr.xfr_version = std::string{cursor, ver_end};
   cursor = ver_end;
-  ++cursor;
+  cursor = std::next(cursor);
 
   // response cols
   {
@@ -89,7 +90,7 @@ parse(const char *first, const char *last,
   }
   if (*cursor != delim)
     return server_error_code::server_failure;
-  ++cursor;
+  cursor = std::next(cursor);
 
   // response rows
   {
@@ -98,7 +99,7 @@ parse(const char *first, const char *last,
       return server_error_code::server_failure;
     cursor = ptr;
   }
-  ++cursor;
+  cursor = std::next(cursor);
 
   // response n_bytes
   {
@@ -111,7 +112,6 @@ parse(const char *first, const char *last,
   // terminator
   if (*cursor != term)
     return server_error_code::server_failure;
-  ++cursor;
 
   return server_error_code::ok;
 }
@@ -120,13 +120,13 @@ parse(const char *first, const char *last,
 compose(
   response_header_buffer &buf,  // cppcheck-suppress constParameterReference
   const response_header &hdr) noexcept -> std::error_code {
-  return compose(std::data(buf), std::data(buf) + resp_hdr_sz, hdr);
+  return compose(std::data(buf), std::size(buf), hdr);
 }
 
 [[nodiscard]] auto
-parse(const response_header_buffer &buf,
-      response_header &hdr) noexcept -> std::error_code {
-  return parse(std::data(buf), std::data(buf) + resp_hdr_sz, hdr);
+parse(const response_header_buffer &buf, response_header &hdr) noexcept
+  -> std::error_code {
+  return parse(std::string_view(std::data(buf), std::size(buf)), hdr);
 }
 
 [[nodiscard]] auto
