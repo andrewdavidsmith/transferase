@@ -1,36 +1,16 @@
-/* MIT License
- *
- * Copyright (c) 2024 Andrew D Smith
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
+// SPDX-License-Identifier: MIT; Copyright 2026 Andrew D Smith
 
 #include "logger.hpp"
 
+#include <unistd.h>
+
 #include <cerrno>
-#include <charconv>  // for std::to_chars_result, std::to_chars
-#include <cstring>   // for std::memcpy
-#include <memory>    // for std::shared_ptr
+#include <charconv>
+#include <cstring>
+#include <memory>
 #include <string>
 #include <string_view>
 #include <system_error>
-#include <unistd.h>  // for gethostname, getpid
 
 namespace transferase {
 
@@ -59,7 +39,7 @@ logger::set_attributes(const std::string_view appname) -> std::error_code {
   // ADS TODO: error conditions on buffer sizes
 
   // set the end of the buffer; minus 1 because we use a newline in the buffer
-  buf_lim = std::begin(buf) + buf_size - 1;
+  buf_lim = std::next(std::begin(buf), buf_size - 1);
 
   // NOLINTBEGIN(*-pointer-arithmetic)
 
@@ -89,7 +69,8 @@ logger::set_attributes(const std::string_view appname) -> std::error_code {
 #pragma GCC diagnostic pop
 #endif
   // ADS: no complaints from gcc because it can't find buff?
-  *tcr.ptr++ = delim;
+  tcr.ptr = std::next(tcr.ptr);
+  *tcr.ptr = delim;
 
   // NOLINTEND(*-pointer-arithmetic)
 
