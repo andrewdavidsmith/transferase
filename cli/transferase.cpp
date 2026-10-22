@@ -120,5 +120,6 @@ main(int argc, char *argv[]) {  // NOLINT(*-c-arrays)
     return EXIT_FAILURE;
   }
 
+  // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-pointer-arithmetic)
   return std::get<1>(*cmd_itr)(argc - 1, argv + 1);
 }
