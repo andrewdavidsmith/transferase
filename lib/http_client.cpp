@@ -1,28 +1,23 @@
 // SPDX-License-Identifier: MIT; Copyright 2026 Andrew D Smith
 
 #include "http_client.hpp"
-#include "download_progress.hpp"
 #include "http_error_code.hpp"
 #include "http_header.hpp"
 
 #include <curl/curl.h>
 
-#include <algorithm>
-#include <cerrno>
+#include <array>
 #include <chrono>
-#include <compare>
-#include <cstring>
-#include <filesystem>
+#include <cstdio>
+#include <ctime>
 #include <format>
-#include <fstream>
-#include <functional>
 #include <iterator>
-#include <new>
+#include <memory>
+#include <stdexcept>
 #include <string>
 #include <system_error>
 #include <tuple>
 #include <utility>
-#include <vector>
 
 namespace transferase {
 
@@ -32,6 +27,12 @@ struct curl_setup_teardown {
     if (const auto r = curl_global_init(CURL_GLOBAL_DEFAULT); r != CURLE_OK)
       throw std::runtime_error(curl_easy_strerror(r));
   }
+  // clang-format off
+  curl_setup_teardown(const curl_setup_teardown &) = delete;
+  curl_setup_teardown &operator=(const curl_setup_teardown &) = delete;
+  curl_setup_teardown(curl_setup_teardown &&) noexcept = default;
+  curl_setup_teardown &operator=(curl_setup_teardown &&) noexcept = default;
+  // clang-format on
   ~curl_setup_teardown() { curl_global_cleanup(); }
 };
 }  // namespace
@@ -43,8 +44,7 @@ init_download() -> void {
 }
 
 [[nodiscard]] static auto
-download_http(const std::string &url,
-              const std::chrono::microseconds timeout,
+download_http(const std::string &url, const std::chrono::microseconds timeout,
               const std::string &outfile = "") -> http_header {
   static constexpr auto time_buf_size = 1024;
   using curl_uptr = std::unique_ptr<CURL, decltype(&curl_easy_cleanup)>;
@@ -88,23 +88,21 @@ download_http(const std::string &url,
 
   auto buf = std::array<char, time_buf_size>{};
   struct tm tm{};
-  localtime_r(&ts, &tm);  // localtime_r is thread-safe
-  std::strftime(std::data(buf), std::size(buf), "%Y-%m-%d %H:%M:%S", &tm);
+  std::ignore = localtime_r(&ts, &tm);  // localtime_r is thread-safe
+  if (!std::strftime(std::data(buf), std::size(buf), "%Y-%m-%d %H:%M:%S", &tm))
+    throw std::runtime_error("failed to format time from http header");
   hdr.last_modified = std::string(std::data(buf));
-
   return hdr;
 }
 
 static constexpr auto
-get_protocol(const auto port) {
+get_protocol(const auto &port) {
   return port == "443" ? "https" : "http";
 }
 
 [[nodiscard]] auto
-download_http(const std::string &host,
-              const std::string &port,
-              const std::string &target,
-              const std::string &outfile,
+download_http(const std::string &host, const std::string &port,
+              const std::string &target, const std::string &outfile,
               const std::chrono::microseconds timeout)
   -> std::tuple<http_header, std::error_code> {
   init_download();
@@ -114,8 +112,7 @@ download_http(const std::string &host,
 }
 
 [[nodiscard]] auto
-download_header_http(const std::string &host,
-                     const std::string &port,
+download_header_http(const std::string &host, const std::string &port,
                      const std::string &target,
                      const std::chrono::microseconds timeout) -> http_header {
   init_download();
