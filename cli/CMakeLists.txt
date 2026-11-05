@@ -78,7 +78,9 @@ target_link_options(transferase_cli PRIVATE ${GLOBAL_LINKER_OPTIONS})
 target_link_libraries(transferase_cli PUBLIC ${LIBRARY_OBJECTS})
 
 # Create the executable
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
 add_executable(xfr transferase.cpp)
+
 # Make sure that the 'config.h' is visible to include
 target_include_directories(xfr PRIVATE ${PROJECT_BINARY_DIR})
 target_link_libraries(xfr PRIVATE transferase_cli)
